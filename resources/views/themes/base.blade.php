@@ -11,20 +11,27 @@
     <meta name="keywords"
         content="admin template, Kuiraweb Admin Template, dashboard template, flat admin template, responsive admin template, web app">
     <meta name="author" content="KUIRAWEB">
+    {{-- <link href="https://unpkg.com/filepond/dist/filepond.min.css" rel="stylesheet"> --}}
 
     <title>@yield('title') | EF Services</title>
     {{-- @yield('head') --}}
+
 
     <!-- BEGIN: CSS Assets-->
     @stack('styles')
     <!-- END: CSS Assets-->
 
-    @vite('resources/css/app.css')
+    <!-- Scripts -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <!-- Styles -->
+    @livewireStyles
 </head>
 <!-- END: Head -->
 
 <body>
-    <x-theme-switcher />
+
+    {{-- <x-theme-switcher /> --}}
 
     @yield('content')
 
@@ -38,6 +45,10 @@
     @vite('resources/js/components/base/theme-color.js')
     @stack('scripts')
     <!-- END: Pages, layouts, components JS Assets-->
+    
+
+    @livewireScripts
+
 </body>
 
 </html>

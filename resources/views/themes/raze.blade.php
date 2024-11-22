@@ -50,7 +50,7 @@
                             </div>
                             <div
                                 class="ml-3.5 font-medium text-white transition-opacity group-[.side-menu--collapsed.side-menu--on-hover]:xl:opacity-100 group-[.side-menu--collapsed]:xl:opacity-0">
-                                RAZE
+                                EF SERVICES
                             </div>
                         </a>
                         <a class="toggle-compact-menu ml-auto hidden h-[20px] w-[20px] items-center justify-center rounded-full border border-white/40 text-white transition-[opacity,transform] hover:bg-white/5 group-[.side-menu--collapsed]:xl:rotate-180 group-[.side-menu--collapsed.side-menu--on-hover]:xl:opacity-100 group-[.side-menu--collapsed]:xl:opacity-0 3xl:flex"
@@ -69,8 +69,7 @@
                                     <li class="side-menu__divider">
                                         {{ $menu }}
                                     </li>
-                                    
-                                @else                                    
+                                @else
                                     <li>
                                         <a href="{{ isset($menu['route_name']) && Route::has($menu['route_name']) ? route($menu['route_name'], $menu['params']) : 'javascript:;' }}"
                                             @class([
@@ -185,13 +184,17 @@
                                 </a>
                             </div>
                             <!-- BEGIN: Breadcrumb -->
-                            <x-base.breadcrumb class="hidden flex-1 xl:block">
+                            {{-- <x-base.breadcrumb class="hidden flex-1 xl:block">
                                 <x-base.breadcrumb.link :index="0">App</x-base.breadcrumb.link>
                                 <x-base.breadcrumb.link :index="1">Dashboards</x-base.breadcrumb.link>
                                 <x-base.breadcrumb.link :index="2" :active="true">
-                                    Analytics
+                                    EF Services
                                 </x-base.breadcrumb.link>
-                            </x-base.breadcrumb>
+                            </x-base.breadcrumb> --}}
+
+                            <x-base.breadcrumb class="hidden flex-1 xl:block" :links="$breadcrumbLinks ?? []" />
+
+
                             <!-- END: Breadcrumb -->
                             <!-- BEGIN: Search -->
                             <div class="relative hidden flex-1 justify-center xl:flex" data-tw-toggle="modal"
@@ -232,11 +235,13 @@
                                             Switch Account
                                         </x-base.menu.item>
                                         <x-base.menu.divider />
-                                        <x-base.menu.item href="{{ route('admin.settings', ['page' => 'connected-services']) }}">
+                                        <x-base.menu.item
+                                            href="{{ route('admin.settings', ['page' => 'connected-services']) }}">
                                             <x-base.lucide class="mr-2 h-4 w-4" icon="Settings" />
                                             Connected Services
                                         </x-base.menu.item>
-                                        <x-base.menu.item href="{{ route('admin.settings', ['page' => 'email-settings']) }}">
+                                        <x-base.menu.item
+                                            href="{{ route('admin.settings', ['page' => 'email-settings']) }}">
                                             <x-base.lucide class="mr-2 h-4 w-4" icon="Inbox" />
                                             Email Settings
                                         </x-base.menu.item>
@@ -277,6 +282,8 @@
         </div>
     </div>
 @endsection
+
+
 
 @pushOnce('styles')
     @vite('resources/css/vendors/simplebar.css')

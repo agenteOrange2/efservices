@@ -31,6 +31,8 @@ Route::resource('users', UserController::class);
 Route::resource('carrier', CarrierController::class);
 
 
+
+
 Route::controller(PageController::class)->group(function () {
     //Route::get('/', 'dashboardOverview1')->name('dashboard-overview-1');
     Route::get('dashboard-overview-4', 'dashboardOverview4')->name('dashboard-overview-4');
@@ -40,7 +42,7 @@ Route::controller(PageController::class)->group(function () {
     Route::get('dashboard-overview-6', 'dashboardOverview6')->name('dashboard-overview-6');
     Route::get('dashboard-overview-7', 'dashboardOverview7')->name('dashboard-overview-7');
     Route::get('dashboard-overview-8', 'dashboardOverview8')->name('dashboard-overview-8');
-    //Route::get('users', 'users')->name('users');
+    Route::get('userstemplate', 'users')->name('users');
     Route::get('departments', 'departments')->name('departments');
     Route::get('add-user', 'addUser')->name('add-user');
     Route::get('profile-overview', 'profileOverview')->name('profile-overview');

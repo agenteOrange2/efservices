@@ -4,6 +4,14 @@
     <title>Tailwise - Admin Dashboard Template</title>
 @endsection
 
+
+@php
+    $breadcrumbLinks = [
+        ['label' => 'App', 'url' => route('admin.dashboard')],        
+        ['label' => 'Dashboard', 'active' => true],
+    ];
+@endphp
+
 @section('subcontent')
     <div class="grid grid-cols-12 gap-x-6 gap-y-10">
         <div class="col-span-12 lg:col-span-8 2xl:col-span-6">

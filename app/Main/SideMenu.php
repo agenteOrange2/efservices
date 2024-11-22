@@ -17,19 +17,153 @@ class SideMenu
                 'params' => [],
                 'title' => "Dashboard",
             ],
+            "CARRIERS MANAGEMENT",
+            [
+                'icon' => "users",
+                'route_name' => "admin.users",
+                'params' => [],
+                'title' => "Transporters",
+                'sub_menu' => [
+                    [
+                        'icon' => "user-plus",
+                        'route_name' => "admin.product-list",
+                        'params' => [],
+                        'title' => "Registration",
+                    ],
+                    [
+                        'icon' => "user-check",
+                        'route_name' => "admin.product-grid",
+                        'params' => [],
+                        'title' => "Permisos",
+                    ],
+                    [
+                        'icon' => "vote",
+                        'route_name' => "admin.product-grid",
+                        'params' => [],
+                        'title' => "Politics",
+                    ],
+                ],
+            ],
+            "DRIVERS MANAGEMENT",
+            [
+                'icon' => "car-front",
+                'route_name' => "admin.users",
+                'params' => [],
+                'title' => "Drivers",
+                'sub_menu' => [
+                    [
+                        'icon' => "user-plus",
+                        'route_name' => "admin.product-list",
+                        'params' => [],
+                        'title' => "Drivers",
+                    ],
+                    [
+                        'icon' => "user-check",
+                        'route_name' => "admin.product-grid",
+                        'params' => [],
+                        'title' => "Recruitment",
+                    ],
+                    [
+                        'icon' => "file-warning",
+                        'route_name' => "admin.product-grid",
+                        'params' => [],
+                        'title' => "Accidents",
+                    ],
+                    [
+                        'icon' => "badge-info",
+                        'route_name' => "admin.product-grid",
+                        'params' => [],
+                        'title' => "Testing",
+                    ],
+                    [
+                        'icon' => "view",
+                        'route_name' => "admin.product-grid",
+                        'params' => [],
+                        'title' => "Inspections",
+                    ],
+                    [
+                        'icon' => "book-marked",
+                        'route_name' => "admin.product-grid",
+                        'params' => [],
+                        'title' => "Training",
+                    ],
+                    [
+                        'icon' => "shield-check",
+                        'route_name' => "admin.product-grid",
+                        'params' => [],
+                        'title' => "Safety Scoring",
+                    ],
+                    [
+                        'icon' => "clock-1",
+                        'route_name' => "admin.product-grid",
+                        'params' => [],
+                        'title' => "Travel Time ",
+                    ],
+                ],
+            ],
+            "VEHICLES MANAGEMENT",
+            [
+                'icon' => "bus",
+                'route_name' => "admin.users",
+                'params' => [],
+                'title' => "Vehicles",
+                'sub_menu' => [
+                    [
+                        'icon' => "car-front",
+                        'route_name' => "admin.product-list",
+                        'params' => [],
+                        'title' => "Vehicle Profile",
+                    ],
+                    [
+                        'icon' => "wrench",
+                        'route_name' => "admin.product-grid",
+                        'params' => [],
+                        'title' => "Services Items",
+                    ],
+                    [
+                        'icon' => "file-text",
+                        'route_name' => "admin.product-grid",
+                        'params' => [],
+                        'title' => "Documentation",
+                    ],
+                    [
+                        'icon' => "vote",
+                        'route_name' => "admin.product-grid",
+                        'params' => [],
+                        'title' => "Maintenance",
+                    ],
+                ],
+            ],
+            "REPORT GENERATOR",
+            [
+                'icon' => "file-text",
+                'route_name' => "admin.users",
+                'params' => [],
+                'title' => "Report Generator",
+            ],
+
+            "MEMBERSHIPS",
+            [
+                'icon' => "package-search",
+                'route_name' => "admin.users",
+                'params' => [],
+                'title' => "Memberships",
+            ],
+             
+            "USER MANAGEMENT",
             [
                 'icon' => "UserSquare",
                 'route_name' => "admin.users.index",
                 'params' => [],
                 'title' => "Users",
             ],
-            "USER MANAGEMENT",
             [
                 'icon' => "UserSquare",
                 'route_name' => "admin.users",
                 'params' => [],
                 'title' => "Users",
             ],
+            
             [
                 'icon' => "CakeSlice",
                 'route_name' => "admin.departments",
@@ -42,6 +176,7 @@ class SideMenu
                 'params' => [],
                 'title' => "Add User",
             ],
+            /*
             "PERSONAL DASHBOARD",
             [
                 'icon' => "Presentation",
@@ -239,6 +374,7 @@ class SideMenu
                 'params' => [],
                 'title' => "Register",
             ],
+            */
         ];
     }
 }

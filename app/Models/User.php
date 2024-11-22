@@ -9,17 +9,20 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class User extends Authenticatable
+class User extends Authenticatable implements HasMedia
 {
-    use HasApiTokens;
+    use HasApiTokens, HasFactory, Notifiable, InteractsWithMedia;
 
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory;
     use HasProfilePhoto;
     use Notifiable;
     use TwoFactorAuthenticatable;
-
+    use InteractsWithMedia;
     /**
      * The attributes that are mass assignable.
      *
@@ -29,7 +32,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'status',
     ];
+
+    protected $dates = ['created_at', 'updated_at'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -63,5 +69,30 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('profile_photos')
+            ->useDisk('public');
+    }
+
+    public function registerMediaConversions(Media $media = null): void
+    {
+        $this->addMediaConversion('webp')
+            ->format('webp')
+            ->keepOriginalImageFormat()
+            ->performOnCollections('profile_photos');
+    }
+
+    public function getMediaDirectoryAttribute(): string
+    {
+        return "images/users/{$this->id}/";
+    }
+
+    public function getMediaFileNameAttribute(): string
+    {
+        return "{$this->name}.webp";
     }
 }

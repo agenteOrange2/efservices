@@ -1,3 +1,4 @@
+/*
 (function () {
     "use strict";
 
@@ -123,3 +124,73 @@
         }).showToast();
     });
 })();
+*/
+
+import Toastify from 'toastify-js';
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Definir comportamientos de las notificaciones
+  const createNotification = (node, { sticky = false, duration = 3000 } = {}) => {
+    if (!node) return;
+    Toastify({
+      node: node.cloneNode(true),
+      duration: sticky ? -1 : duration,
+      newWindow: true,
+      close: true,
+      gravity: "top",
+      position: "right",
+      stopOnFocus: true,
+    }).showToast();
+  };
+
+  const createDismissableNotification = (node) => {
+    if (!node) return;
+    const toast = Toastify({
+      node: node.cloneNode(true),
+      duration: -1,
+      newWindow: true,
+      close: false,
+      gravity: "top",
+      position: "right",
+      stopOnFocus: true,
+    }).showToast();
+
+    // Agregar manejo para cerrar manualmente
+    toast.toastElement
+      .querySelector('[data-dismiss="notification"]')
+      ?.addEventListener('click', () => toast.hideToast());
+  };
+
+  // Vincular acciones
+  document
+    .getElementById("basic-non-sticky-notification-toggle")
+    ?.addEventListener("click", () => {
+      const content = document.getElementById("basic-non-sticky-notification-content");
+      createNotification(content);
+    });
+
+  document
+    .getElementById("basic-sticky-notification-toggle")
+    ?.addEventListener("click", () => {
+      const content = document.getElementById("basic-non-sticky-notification-content");
+      createNotification(content, { sticky: true });
+    });
+
+  document
+    .getElementById("success-notification-toggle")
+    ?.addEventListener("click", () => {
+      const content = document.getElementById("success-notification-content");
+      createNotification(content, { sticky: true });
+    });
+
+  // Notificaciones avanzadas
+  document
+    .getElementById("notification-with-avatar-toggle")
+    ?.addEventListener("click", () => {
+      const content = document.getElementById("notification-with-avatar-content");
+      createDismissableNotification(content);
+    });
+});
+
+
+

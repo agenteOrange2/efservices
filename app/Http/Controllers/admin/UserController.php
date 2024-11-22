@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -13,11 +14,11 @@ class UserController extends Controller
      */
     public function index()
     {
-     
-    // Obtener usuarios paginados
-    $users = User::paginate(1); // Pagina de 10 en 10
-    //
-    return view('admin.users.index', compact('users'));
+
+        // Obtener usuarios paginados
+        $users = User::paginate(1); // Pagina de 10 en 10
+        //
+        return view('admin.users.index', compact('users'));
     }
 
     /**
@@ -33,23 +34,43 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+
+        //dd($request->all());
+
+        // Validación de los datos del formulario
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:8|confirmed',
+            'email' => 'required|email|unique:users,email', // Verifica que el correo sea único en la tabla `users`
+            'password' => 'required|min:8|confirmed', // Asegura que la contraseña coincida con el campo `password_confirmation`
+            'status' => 'required|boolean',
+            'profile_photo' => 'nullable|image|max:2048',
         ]);
-    
+
+        // Crear el usuario en la base de datos
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => bcrypt($validated['password']),
+            'password' => Hash::make($validated['password']),
+            'status' => $validated['status'],
         ]);
-    
-        // Asignar rol de superadmin
-        $user->assignRole('superadmin');
-    
-        return redirect()->route('admin.users.index')->with('success', 'Superadmin creado con éxito');
+
+        if ($request->hasFile('profile_photo')) {
+            $user->addMedia($request->file('profile_photo'))
+                ->usingFileName("{$user->name}.webp")
+                ->toMediaCollection('profile_photos');
+        }
+
+        // Redireccionar con un mensaje de éxito
+        // Mensaje dinámico para la notificación
+        return redirect()
+            ->route('admin.users.edit', $user->id)
+            ->with('notification', [
+                'type' => 'success',
+                'message' => 'User created successfully!',
+                'details' => 'The user data has been saved correctly.',
+            ]);
     }
+
 
 
     /**
@@ -57,7 +78,8 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        return view('admin.users.edit', compact('user'));
+        $profilePhotoUrl = $user->getFirstMediaUrl('profile_photos', 'webp');
+        return view('admin.users.edit', compact('user', 'profilePhotoUrl'));
     }
 
     /**
@@ -70,14 +92,31 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|min:8|confirmed',
         ]);
-    
+
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => $validated['password'] ? bcrypt($validated['password']) : $user->password,
+            'password' => $validated['password'] ? Hash::make($validated['password']) : $user->password,
         ]);
-    
-        return redirect()->route('admin.users.index')->with('success', 'Superadmin actualizado con éxito');
+
+        // Actualizar la foto de perfil
+        if ($request->hasFile('profile_photo')) {
+            // Eliminar foto previa
+            $user->clearMediaCollection('profile_photos');
+        
+            // Subir nueva foto
+            $user->addMediaFromRequest('profile_photo')
+                ->usingFileName('profile_photo.' . $request->file('profile_photo')->getClientOriginalExtension())
+                ->toMediaCollection('profile_photos', 'public');
+        }
+
+        return redirect()
+            ->route('admin.users.edit', $user->id)
+            ->with('notification', [
+                'type' => 'success',
+                'message' => 'User updated successfully!',
+                'details' => 'The user details have been updated.',
+            ]);
     }
 
     /**
@@ -86,6 +125,10 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         $user->delete();
-        return redirect()->route('admin.users.index')->with('success', 'Superadmin eliminado con éxito');
+
+        return redirect()->route('admin.users.index')->with('notification', [
+            'type' => 'error',
+            'message' => 'User deleted successfully!',
+        ]);
     }
 }

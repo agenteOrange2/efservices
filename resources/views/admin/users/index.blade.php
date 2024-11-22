@@ -2,6 +2,16 @@
 
 @section('title', 'Super Admins')
 
+@php
+    $breadcrumbLinks = [
+        ['label' => 'App', 'url' => route('admin.dashboard')],
+        ['label' => 'Users', 'url' => route('admin.users.index')],
+        ['label' => 'Super Admins', 'active' => true],
+    ];
+@endphp
+
+
+
 @section('subcontent')
     <div class="grid grid-cols-12 gap-x-6 gap-y-10">
         <div class="col-span-12">
@@ -18,14 +28,38 @@
                     </x-base.button>
                 </div>
             </div>
-            <div class="box box--stacked flex flex-col">
-                <livewire:generic-table model="App\Models\User" :columns="['name', 'email', 'created_at', 'updated_at']" :searchableFields="['name', 'email','created_at']" />
+            <div class="box box--stacked flex flex-col mt-5">
+                <livewire:generic-table model="App\Models\User" :columns="['name', 'email', 'status', 'created_at', 'updated_at']" :searchableFields="['name', 'email','created_at']" />
             </div>
 
         </div>
     </div>
 
-    
+    @if (session('notification'))
+    <x-base.notification 
+        id="dynamic-notification" 
+        :type="session('notification')['type']" 
+        :message="session('notification')['message']" 
+        :details="session('notification')['details'] ?? ''" 
+    />
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const notificationElement = document.getElementById('dynamic-notification');
+            if (notificationElement) {
+                Toastify({
+                    node: notificationElement.cloneNode(true),
+                    duration: 3000,
+                    close: true,
+                    gravity: "top",
+                    position: "right",
+                    stopOnFocus: true,
+                }).showToast();
+            }
+        });
+    </script>
+@endif
+
+
 @endsection
 
 

@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Builder;
 
 class GenericTable extends Component
@@ -14,40 +15,47 @@ class GenericTable extends Component
     public $columns;
     public $search = '';
     public $perPage = 10;
+    public $perPageOptions = [10, 20, 30, 100, 200];
     public $searchableFields = [];
-    public $selected = []; // IDs seleccionados
-    public $selectAll = false; // Control para seleccionar todos
-    public $openMenu = []; // Array para manejar el estado de los menús desplegables por fila
+    public $selected = [];
+    public $selectAll = false;
+    public $openMenu = [];
 
     protected $listeners = ['resetPage'];
 
     public function updatingSearch()
     {
-        $this->resetPage(); // Resetea la paginación, manteniendo el estado
+        $this->resetPage(); // Resetea la paginación al buscar
+    }
+
+    public function updatingPerPage($value)
+    {
+        $this->resetPage(); // Esto asegura que se reinicie a la primera página
+        Log::info('Updating perPage:', [$value]); // Confirmación en los logs
     }
 
     public function toggleMenu($id)
     {
-        // Alterna el estado del menú específico
         $this->openMenu[$id] = isset($this->openMenu[$id]) ? !$this->openMenu[$id] : true;
     }
 
     public function closeAllMenus()
     {
-        // Cierra todos los menús al cambiar la página o al buscar
         $this->openMenu = [];
     }
 
     public function deleteSingle($id)
     {
         $this->model::find($id)->delete();
-        $this->closeAllMenus(); // Cierra todos los menús después de eliminar
+        $this->closeAllMenus();
     }
 
     public function render()
     {
+        Log::info('Rendering with perPage:', [$this->perPage]);
+    
         $query = $this->model::query();
-
+    
         if ($this->search && !empty($this->searchableFields)) {
             $query->where(function (Builder $q) {
                 foreach ($this->searchableFields as $field) {
@@ -55,15 +63,15 @@ class GenericTable extends Component
                 }
             });
         }
-
+    
         $data = $query->paginate($this->perPage);
-
-        // Cierra todos los menús si se cambia de página
-        $this->closeAllMenus();
-
+    
         return view('livewire.generic-table', [
             'data' => $data,
             'columns' => $this->columns,
+            'perPageOptions' => $this->perPageOptions,
         ]);
     }
+    
+    
 }

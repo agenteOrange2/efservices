@@ -7,17 +7,14 @@ use Illuminate\Support\Facades\Log;
 
 
 Route::get('/', function () {
-    return view ('welcome');
-});
-
-Route::middleware([
-    'auth:sanctum',
-    config('jetstream.auth_session'),
-    'verified',
-])->group(function () {
-    Route::get('/admin', function () {
-        return view('pages.dashboard-overview-4');
-    });
+    return view('welcome');
 });
 
 
+Route::group(['middleware' => ['auth:sanctum', config('jetstream.auth_session'), 'verified'],
+'prefix' => 'dashboard'], function(){
+    Route::get('/', function(){
+        return view('dashboard');
+    })->name('dashboard');
+
+});

@@ -13,37 +13,16 @@ export default defineConfig({
                 'resources/css/vendors/simplebar.css',
                 'resources/css/vendors/zoom-vanilla.css',
                 'resources/css/vendors/full-calendar.css',
-                'resources/css/themes/echo.css',
-                'resources/css/themes/hurricane.css',
-                'resources/css/themes/ravage.css',
-                'resources/css/themes/hook.css',
-                'resources/css/themes/razor.css',
-                'resources/css/themes/havoc.css',
-                'resources/css/themes/dagger.css',
-                'resources/css/themes/shuriken.css',
                 'resources/css/themes/raze.css',
-                'resources/css/themes/exort.css',
-                'resources/css/themes/viper.css',
                 'resources/css/vendors/dropzone.css',
                 'resources/css/vendors/toastify.css',
                 'resources/css/vendors/leaflet.css',
                 'resources/css/vendors/ckeditor.css',
                 'resources/css/vendors/highlight.css',
-                'resources/css/vendors/tabulator.css',
-
+                'resources/css/vendors/tabulator.css',                
                 'resources/js/vendors/ckeditor/classic.js',
                 'resources/js/components/base/classic-editor.js',                
-                'resources/js/themes/echo.js',
-                'resources/js/themes/hurricane.js',
-                'resources/js/themes/ravage.js',
-                'resources/js/themes/hook.js',
-                'resources/js/themes/razor.js',
-                'resources/js/themes/havoc.js',
-                'resources/js/themes/dagger.js',
-                'resources/js/themes/shuriken.js',
                 'resources/js/themes/raze.js',
-                'resources/js/themes/exort.js',
-                'resources/js/themes/viper.js',
                 'resources/js/components/base/theme-color.js',
                 'resources/js/components/base/leaflet-map-loader.js',
 
@@ -112,12 +91,16 @@ export default defineConfig({
                 'resources/js/vendors/highlight.js',
                 'resources/js/vendors/toastify.js',
                 'resources/js/vendors/accordion.js',
+                'resources/js/vendors/pristine.js',
 
                 //Pages
                 'resources/js/pages/tabulator.js',
                 'resources/js/pages/modal.js',
                 'resources/js/pages/slideover.js',
                 'resources/js/pages/validation.js',
+
+                'resources/js/modules/notification.js', // Módulo reutilizable
+                'resources/js/pages/notification.js',  // Script para la página
                 
                 // Archivo utilitario de colores
                 'resources/js/utils/helper.js',
@@ -133,7 +116,9 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            'tailwind-config': path.resolve(__dirname, 'tailwind.config.js')
+            'tailwind-config': path.resolve(__dirname, 'tailwind.config.js'),
+            $: "jquery", // Resolver jQuery correctamente
+            Pristine: "pristinejs", // Resolver Pristine correctamente
         }
     }
 });

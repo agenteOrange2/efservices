@@ -15,7 +15,7 @@ class ThemeController extends Controller
     public function switch(Request $request): RedirectResponse
     {
         session([
-            'activeTheme' => $request->activeTheme
+            'activeTheme' => 'raze'
         ]);
 
         return redirect("/admin");
