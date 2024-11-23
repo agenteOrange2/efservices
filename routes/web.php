@@ -10,7 +10,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-
+/*
 Route::group(['middleware' => ['auth:sanctum', config('jetstream.auth_session'), 'verified'],
 'prefix' => 'dashboard'], function(){
     Route::get('/', function(){
@@ -18,3 +18,4 @@ Route::group(['middleware' => ['auth:sanctum', config('jetstream.auth_session'),
     })->name('dashboard');
 
 });
+*/

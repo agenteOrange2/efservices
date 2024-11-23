@@ -12,10 +12,13 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\Permission\Traits\HasRoles;
+
+
 
 class User extends Authenticatable implements HasMedia
 {
-    use HasApiTokens, HasFactory, Notifiable, InteractsWithMedia;
+    use HasApiTokens, HasFactory, Notifiable, InteractsWithMedia, HasRoles;
 
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory;
@@ -75,22 +78,20 @@ class User extends Authenticatable implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('profile_photos')
-            ->useDisk('public');
+            ->useDisk('public'); // Asegúrate de usar el disco público
     }
-
+    
     public function registerMediaConversions(Media $media = null): void
     {
         $this->addMediaConversion('webp')
             ->format('webp')
-            ->keepOriginalImageFormat()
-            ->performOnCollections('profile_photos');
+            ->keepOriginalImageFormat();
     }
-
     public function getMediaDirectoryAttribute(): string
     {
-        return "images/users/{$this->id}/";
+        return "users/{$this->id}/";
     }
-
+    
     public function getMediaFileNameAttribute(): string
     {
         return "{$this->name}.webp";

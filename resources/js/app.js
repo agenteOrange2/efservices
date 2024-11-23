@@ -9,8 +9,6 @@ window.$ = window.jQuery = $;
 window.Pristine = Pristine;
 
 // Validación en consola
-console.log("jQuery:", window.$); // Debe mostrar una función
-console.log("Pristine:", window.Pristine); // Debe mostrar la clase Pristine
 window.Toastify = Toastify;
 
 if (typeof $ === "undefined" || typeof Pristine === "undefined") {

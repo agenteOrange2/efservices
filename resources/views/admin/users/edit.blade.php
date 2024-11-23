@@ -16,7 +16,7 @@
 
 @section('subcontent')
 
-<x-base.notificationtoast.notification-toast :notification="session('notification')" />
+    <x-base.notificationtoast.notification-toast :notification="session('notification')" />
 
     <div class="grid grid-cols-12 gap-x-6 gap-y-10">
         <div class="col-span-12 sm:col-span-10 sm:col-start-2">
@@ -43,41 +43,41 @@
                                         <div x-data="imagePreview()" class="flex items-center">
                                             <div
                                                 class="relative flex h-24 w-24 items-center justify-center rounded-full border border-primary/10 bg-primary/5">
-                                                <!-- Preview de imagen -->
+                                                <!-- Mostrar imagen cargada -->
                                                 <template x-if="photoPreview">
-                                                    <img :src="photoPreview" alt="Preview" class="h-full w-full rounded-full object-cover">
+                                                    <img :src="photoPreview" alt="Preview"
+                                                        class="h-full w-full rounded-full object-cover">
                                                 </template>
-                                                <!-- Mostrar la foto del usuario si existe -->
-                                                <template x-if="!photoPreview">
-                                                    <img src="{{ $profilePhotoUrl ?: asset('images/default-avatar.png') }}" 
-                                                         alt="User Profile Photo" 
-                                                         class="h-full w-full rounded-full object-cover">
+                                                <!-- Mostrar imagen original si existe y no hay nueva imagen cargada -->
+                                                <template x-if="!photoPreview && originalPhoto">
+                                                    <img :src="originalPhoto" alt="Original Photo"
+                                                        class="h-full w-full rounded-full object-cover">
                                                 </template>
-                                                <!-- Placeholder si no hay foto -->
-                                                <template x-if="!photoPreview && !$profilePhotoUrl">
+                                                <!-- Mostrar SVG predeterminado si no hay imagen -->
+                                                <template x-if="!photoPreview && !originalPhoto">
                                                     <x-base.lucide
                                                         class="-mt-1.5 h-[65%] w-[65%] fill-slate-300/70 stroke-slate-400/50 stroke-[0.5]"
                                                         icon="User" />
                                                 </template>
                                                 <!-- Botón para cargar imagen -->
                                                 <label for="profile_photo_input"
-                                                       class="box absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full cursor-pointer">
-                                                    <x-base.lucide class="h-3.5 w-3.5 stroke-[1.3] text-slate-500" icon="Pencil" />
+                                                    class="box absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full cursor-pointer">
+                                                    <x-base.lucide class="h-3.5 w-3.5 stroke-[1.3] text-slate-500"
+                                                        icon="Pencil" />
                                                 </label>
                                             </div>
                                             <!-- Campo de carga de imagen -->
                                             <input type="file" name="profile_photo" id="profile_photo_input"
-                                                   class="hidden" accept="image/*" @change="updatePhotoPreview">
-                                            <!-- Botón para eliminar la imagen -->
+                                                class="hidden" accept="image/*" @change="updatePhotoPreview">
+                                            <!-- Botón para eliminar imagen -->
                                             <x-base.button class="ml-8 mr-2 h-8 pl-3.5 pr-4" variant="outline-secondary"
-                                                           size="sm" @click.prevent="clearPhoto">
+                                                size="sm" @click.prevent="resetToOriginalPhoto">
                                                 <x-base.lucide class="mr-1.5 h-3.5 w-3.5 stroke-[1.3]" icon="Trash2" />
                                                 Remove
                                             </x-base.button>
                                         </div>
                                     </div>
                                 </div>
-                                
                             </div>
 
                             <!-- Full Name -->
@@ -215,9 +215,7 @@
                                     @enderror
                                 </div>
                             </div>
-
                         </div>
-
                         <!-- Submit Button -->
                         <div class="flex border-t border-slate-200/80 px-7 py-5 md:justify-end">
                             <x-base.button type="submit" class="w-full border-primary/50 px-10 md:w-auto"
@@ -227,6 +225,43 @@
                             </x-base.button>
                         </div>
                     </form>
+
+                    @php
+                    // Determina si el usuario actual está viendo su propio perfil
+                    $isCurrentUser = $user->id === Auth::id();
+                @endphp
+                
+                @if ($isCurrentUser)
+                    {{-- TWO FACTOR AUTHENTICATION --}}
+                    <x-action-section class="mt-5">
+                        <x-slot name="description">
+                            {{ __('Add additional security to your account using two factor authentication.') }}
+                        </x-slot>
+                        <x-slot name="content">
+                            @livewire('profile.two-factor-authentication-form')
+                        </x-slot>
+                    </x-action-section>
+                
+                    {{-- BROWSER SESSIONS --}}
+                    <x-action-section class="mt-5">
+                        <x-slot name="description">
+                            {{ __('Manage and log out your active sessions on other browsers and devices.') }}
+                        </x-slot>
+                        <x-slot name="content">
+                            @livewire('profile.logout-other-browser-sessions-form')
+                        </x-slot>
+                    </x-action-section>
+                
+                    {{-- DELETE ACCOUNT --}}
+                    <x-action-section class="mt-5">
+                        <x-slot name="description">
+                            {{ __('Permanently delete your account.') }}
+                        </x-slot>
+                        <x-slot name="content">
+                            @livewire('profile.delete-user-form')
+                        </x-slot>
+                    </x-action-section>
+                @endif                                                                        
                 </div>
             </div>
         </div>
@@ -235,26 +270,31 @@
 
 @push('scripts')
     <script>
-function imagePreview() {
-    return {
-        photoPreview: "{{ $profilePhotoUrl }}",
-        updatePhotoPreview(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    this.photoPreview = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        },
-        clearPhoto() {
-            this.photoPreview = null;
-            document.getElementById('profile_photo_input').value = "";
-        },
-    };
-}
-
+        function imagePreview() {
+            return {
+                photoPreview: null,
+                originalPhoto: '{{ $user->getFirstMediaUrl('profile_photos') }}', // La imagen original si existe
+                updatePhotoPreview(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.photoPreview = e.target.result; // Muestra la nueva imagen cargada
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                },
+                clearPhoto() {
+                    this.photoPreview = null; // Limpia la imagen cargada
+                    document.getElementById('profile_photo_input').value = ""; // Resetea el input
+                },
+                resetToOriginalPhoto() {
+                    this.photoPreview = null; // Limpia la nueva vista previa
+                    this.originalPhoto = null; // No hay imagen activa, se mostrará el SVG
+                    document.getElementById('profile_photo_input').value = ""; // Resetea el input
+                },
+            };
+        }
     </script>
 @endpush
 

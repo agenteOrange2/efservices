@@ -4,14 +4,18 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ThemeController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CarrierController;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\RolePermissionController;
 
 Route::get('theme-switcher/{activeTheme}', [ThemeController::class, 'switch'])->name('theme-switcher');
 
 Route::get('/', function () {
     return view('admin.dashboard');
 })->name('dashboard');
+
 
 
 /*
@@ -21,6 +25,17 @@ Route::get('/', function () {
 */
 
 Route::resource('users', UserController::class);
+
+/*
+    |--------------------------------------------------------------------------
+    | RUTAS ADMIN ROLES
+    |--------------------------------------------------------------------------    
+*/
+Route::resource('permissions', PermissionController::class);
+Route::resource('roles', RoleController::class);
+
+
+// Route::resource('roles', RolePermissionController::class)->except(['show']);
 
 /*
     |--------------------------------------------------------------------------

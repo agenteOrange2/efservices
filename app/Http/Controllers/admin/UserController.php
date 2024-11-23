@@ -54,13 +54,16 @@ class UserController extends Controller
             'status' => $validated['status'],
         ]);
 
+
         if ($request->hasFile('profile_photo')) {
-            $user->addMedia($request->file('profile_photo'))
-                ->usingFileName("{$user->name}.webp")
+            $fileName = strtolower(str_replace(' ', '_', $user->name)) . '.webp'; // Genera el nombre basado en el usuario
+
+            $user->addMediaFromRequest('profile_photo')
+                ->usingFileName($fileName) // Usa el nombre basado en el usuario
                 ->toMediaCollection('profile_photos');
         }
 
-        // Redireccionar con un mensaje de éxito
+
         // Mensaje dinámico para la notificación
         return redirect()
             ->route('admin.users.edit', $user->id)
@@ -99,15 +102,18 @@ class UserController extends Controller
             'password' => $validated['password'] ? Hash::make($validated['password']) : $user->password,
         ]);
 
-        // Actualizar la foto de perfil
+
+
         if ($request->hasFile('profile_photo')) {
-            // Eliminar foto previa
+            $fileName = strtolower(str_replace(' ', '_', $user->name)) . '.webp'; // Genera el nombre basado en el usuario
+
+            // Limpiar la colección anterior
             $user->clearMediaCollection('profile_photos');
-        
-            // Subir nueva foto
+
+            // Guardar la nueva foto con el nombre personalizado
             $user->addMediaFromRequest('profile_photo')
-                ->usingFileName('profile_photo.' . $request->file('profile_photo')->getClientOriginalExtension())
-                ->toMediaCollection('profile_photos', 'public');
+                ->usingFileName($fileName) // Usa el nombre basado en el usuario
+                ->toMediaCollection('profile_photos');
         }
 
         return redirect()
@@ -131,4 +137,5 @@ class UserController extends Controller
             'message' => 'User deleted successfully!',
         ]);
     }
+
 }

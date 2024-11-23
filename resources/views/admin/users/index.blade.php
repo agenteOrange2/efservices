@@ -1,7 +1,5 @@
 @extends('../themes/' . $activeTheme)
-
 @section('title', 'Super Admins')
-
 @php
     $breadcrumbLinks = [
         ['label' => 'App', 'url' => route('admin.dashboard')],
@@ -9,10 +7,10 @@
         ['label' => 'Super Admins', 'active' => true],
     ];
 @endphp
-
-
-
 @section('subcontent')
+
+<x-base.notificationtoast.notification-toast :notification="session('notification')" />
+
     <div class="grid grid-cols-12 gap-x-6 gap-y-10">
         <div class="col-span-12">
             <div class="flex flex-col gap-y-3 md:h-10 md:flex-row md:items-center">
@@ -31,10 +29,8 @@
             <div class="box box--stacked flex flex-col mt-5">
                 <livewire:generic-table model="App\Models\User" :columns="['name', 'email', 'status', 'created_at', 'updated_at']" :searchableFields="['name', 'email','created_at']" />
             </div>
-
         </div>
     </div>
-
     @if (session('notification'))
     <x-base.notification 
         id="dynamic-notification" 
@@ -58,8 +54,4 @@
         });
     </script>
 @endif
-
-
 @endsection
-
-
