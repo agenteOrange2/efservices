@@ -4,6 +4,7 @@ import $ from "jquery";
 import Pristine from "pristinejs";
 import Toastify from 'toastify-js';
 
+Alpine.start()
 
 window.$ = window.jQuery = $;
 window.Pristine = Pristine;

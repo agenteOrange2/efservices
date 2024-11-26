@@ -24,8 +24,9 @@ Route::get('/', function () {
     |--------------------------------------------------------------------------    
 */
 
+Route::get('users/export-excel', [UserController::class, 'exportToExcel'])->name('users.export.excel');
+Route::get('users/export-pdf', [UserController::class, 'exportToPdf'])->name('users.export.pdf');
 Route::resource('users', UserController::class);
-
 /*
     |--------------------------------------------------------------------------
     | RUTAS ADMIN ROLES
@@ -50,6 +51,7 @@ Route::resource('carrier', CarrierController::class);
 
 Route::controller(PageController::class)->group(function () {
     //Route::get('/', 'dashboardOverview1')->name('dashboard-overview-1');
+    
     Route::get('dashboard-overview-4', 'dashboardOverview4')->name('dashboard-overview-4');
     Route::get('dashboard-overview-2', 'dashboardOverview2')->name('dashboard-overview-2');
     Route::get('dashboard-overview-3', 'dashboardOverview3')->name('dashboard-overview-3');
@@ -122,4 +124,5 @@ Route::controller(PageController::class)->group(function () {
     Route::get('landing-page', 'landingPage')->name('landing-page');
     Route::get('login', 'login')->name('login');
     Route::get('register', 'register')->name('register');
+    
 });

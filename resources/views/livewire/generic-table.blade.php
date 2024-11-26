@@ -1,14 +1,40 @@
 <div class="p-5 overflow-x-auto">
-    <!-- Barra de búsqueda -->
-    <div class="relative">
-        <svg class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3] text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 10l6 6m-6-6l6-6m-2.828 6.828a4 4 0 110 5.656 4 4 0 010-5.656z" />
-        </svg>
-        <input wire:model.live.debounce.250ms="search" type="text" placeholder="Search users..." class="rounded-[0.5rem] pl-9 sm:w-64 border border-gray-300 px-4 py-2">
-    </div>
+    <div class="flex flex-col gap-y-2 p-5 sm:flex-row sm:items-center">
+        <div>
+            <!-- Barra de búsqueda -->
+            <div class="relative">
+                <svg class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3] text-slate-500"
+                    viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                    <g id="SVGRepo_iconCarrier">
+                        <g clip-path="url(#clip0_15_152)">
+                            <rect width="24" height="24" fill="white"></rect>
+                            <circle cx="10.5" cy="10.5" r="6.5" stroke="#ababab" stroke-linejoin="round">
+                            </circle>
+                            <path
+                                d="M19.6464 20.3536C19.8417 20.5488 20.1583 20.5488 20.3536 20.3536C20.5488 20.1583 20.5488 19.8417 20.3536 19.6464L19.6464 20.3536ZM20.3536 19.6464L15.3536 14.6464L14.6464 15.3536L19.6464 20.3536L20.3536 19.6464Z"
+                                fill="#ababab"></path>
+                        </g>
+                        <defs>
+                            <clipPath id="clip0_15_152">
+                                <rect width="24" height="24" fill="white"></rect>
+                            </clipPath>
+                        </defs>
+                    </g>
+                </svg>
+                <input wire:model.live.debounce.250ms="search" type="text" placeholder="Search users..."
+                    class="rounded-[0.5rem] pl-9 sm:w-64 border border-gray-300 px-4 py-2">
+            </div>
+        </div>
+        <div class="flex flex-col gap-x-3 gap-y-2 sm:ml-auto sm:flex-row">
+            <livewire:menu-export :exportExcel="true" :exportPdf="true" />
+            <livewire:filter-popover :filterOptions="$customFilters" />
+        </div>
 
+    </div>
     <!-- Botón de eliminación masiva -->
-    @if(count($selected) > 0)
+    @if (count($selected) > 0)
         <button wire:click="deleteSelected" class="mt-2 mb-4 px-4 py-2 bg-red-500 text-white rounded">
             Delete Selected ({{ count($selected) }})
         </button>
@@ -19,56 +45,98 @@
         <thead>
             <tr>
                 <th class="w-5 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500 text-center">
-                    <input type="checkbox" wire:model="selectAll" class="shadow-sm border-slate-200 cursor-pointer rounded transition-all duration-100 ease-in-out focus:ring-4 focus:ring-offset-0 focus:ring-primary focus:ring-opacity-20">
+                    <input type="checkbox" wire:model.live="selectAll"
+                        class="shadow-sm border-slate-200 cursor-pointer rounded transition-all duration-100 ease-in-out focus:ring-4 focus:ring-offset-0 focus:ring-primary focus:ring-opacity-20">
                 </th>
                 @foreach ($columns as $column)
-                    <th class="px-4 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500 text-left">
-                        {{ $column }}
-                    </th>
-                @endforeach
-                <th class="w-20 px-4 border-t border-slate-200/60 bg-slate-50 py-4 text-center font-medium text-slate-500">
+                <th class="px-4 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500 text-left cursor-pointer"
+                    wire:click="sortBy('{{ $column }}')">
+                    {{ $column }}
+                    @if ($sortField === $column)
+                        @if ($sortDirection === 'asc')
+                            <!-- Ícono de orden ascendente -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" class="inline h-4 w-4 ml-2">
+                                <rect width="18" height="18" x="3" y="3" rx="2" />
+                                <path d="m8 14 4-4 4 4" />
+                            </svg>
+                        @else
+                            <!-- Ícono de orden descendente -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" class="inline h-4 w-4 ml-2">
+                                <rect width="18" height="18" x="3" y="3" rx="2" />
+                                <path d="m16 10-4 4-4-4" />
+                            </svg>
+                        @endif
+                    @else
+                        <!-- Ícono inactivo por defecto -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="inline h-4 w-4 ml-2 text-gray-400">
+                            <rect width="18" height="18" x="3" y="3" rx="2" />
+                            <path d="m16 10-4 4-4-4" />
+                        </svg>
+                    @endif
+                </th>
+            @endforeach
+            
+                <th
+                    class="w-20 px-4 border-t border-slate-200/60 bg-slate-50 py-4 text-center font-medium text-slate-500">
                     Actions
                 </th>
             </tr>
         </thead>
 
+
         <tbody>
-            @foreach ($data as $item)
+            @forelse ($data as $item)
                 <tr class="hover:bg-gray-50">
                     <td class="border-dashed py-4 px-4 text-center">
-                        <input type="checkbox" wire:model="selected" value="{{ $item->id }}" class="shadow-sm border-slate-200 cursor-pointer rounded transition-all duration-100 ease-in-out focus:ring-4 focus:ring-offset-0 focus:ring-primary focus:ring-opacity-20">
+                        <input type="checkbox" wire:model="selected" value="{{ $item->id }}"
+                            class="shadow-sm border-slate-200 cursor-pointer rounded transition-all duration-100 ease-in-out focus:ring-4 focus:ring-offset-0 focus:ring-primary focus:ring-opacity-20">
                     </td>
-        
+
                     @foreach ($columns as $column)
                         <td class="border-dashed py-4 px-4">
-                            @if(in_array($column, ['created_at', 'updated_at']) && $item[$column])
+                            @if (in_array($column, ['created_at', 'updated_at']) && $item[$column])
                                 {{ \Carbon\Carbon::parse($item[$column])->format('d/m/Y') }}
                             @else
                                 {{ $item[$column] }}
                             @endif
                         </td>
                     @endforeach
-        
+
                     <td class="relative border-dashed py-4 px-4">
                         <div x-data="{ openMenu: false }" class="flex items-center justify-center relative">
                             <button @click="openMenu = !openMenu" class="cursor-pointer h-5 w-5 text-slate-500">
-                                <svg class="h-5 w-5 fill-slate-400/70 stroke-slate-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5v14" />
+                                <svg class="h-5 w-5 fill-slate-400/70 stroke-slate-400/70" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 12h14M12 5v14" />
                                 </svg>
                             </button>
-                            
+
                             <!-- Menú desplegable -->
-                            <div x-show="openMenu" @click.away="openMenu = false" class="w-40 bg-white shadow rounded mt-2 absolute z-10">
+                            <div x-show="openMenu" @click.away="openMenu = false"
+                                class="w-40 bg-white shadow rounded mt-2 absolute z-10">
                                 <div class="py-2">
-                                    <a href="{{ route('admin.users.edit', $item['id']) }}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
-                                        <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    <a href="{{ route($editRoute, $item['id']) }}"
+                                        class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                        <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 13l4 4L19 7" />
                                         </svg>
                                         Edit
                                     </a>
-                                    <button wire:click="deleteSingle({{ $item->id }})" class="flex items-center px-4 py-2 text-red-600 hover:bg-red-50">
-                                        <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    <button wire:click="deleteSingle({{ $item->id }})"
+                                        class="flex items-center px-4 py-2 text-red-600 hover:bg-red-50">
+                                        <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M6 18L18 6M6 6l12 12" />
                                         </svg>
                                         Delete
                                     </button>
@@ -77,11 +145,16 @@
                         </div>
                     </td>
                 </tr>
-            @endforeach
+
+            @empty
+                <tr>
+                    <td colspan="{{ count($columns) + 2 }}" class="text-center py-4">
+                        No records found.
+                    </td>
+                </tr>
+            @endforelse
         </tbody>
-        
     </table>
-    
     <!-- Paginación -->
     <div class="mt-4">
         {{ $data->links('vendor.pagination.custom-pagination', ['perPageOptions' => $perPageOptions]) }}

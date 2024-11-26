@@ -9,7 +9,7 @@
 @endphp
 @section('subcontent')
 
-<x-base.notificationtoast.notification-toast :notification="session('notification')" />
+    <x-base.notificationtoast.notification-toast :notification="session('notification')" />
 
     <div class="grid grid-cols-12 gap-x-6 gap-y-10">
         <div class="col-span-12">
@@ -27,31 +27,44 @@
                 </div>
             </div>
             <div class="box box--stacked flex flex-col mt-5">
-                <livewire:generic-table model="App\Models\User" :columns="['name', 'email', 'status', 'created_at', 'updated_at']" :searchableFields="['name', 'email','created_at']" />
+
+                <livewire:generic-table 
+                model="App\Models\User" 
+                :columns="['name', 'email', 'status', 'created_at']" 
+                :searchableFields="['name', 'email']"
+                editRoute="admin.users.edit" 
+                exportExcelRoute="admin.users.export.excel"
+                exportPdfRoute="admin.users.export.pdf"
+                :customFilters="[
+                    'status' => [
+                        'type' => 'select',
+                        'label' => 'Status',
+                        'options' => [
+                            'active' => 'Active',
+                            'inactive' => 'Inactive'
+                        ]
+                    ]
+                ]"
+            />
             </div>
         </div>
     </div>
     @if (session('notification'))
-    <x-base.notification 
-        id="dynamic-notification" 
-        :type="session('notification')['type']" 
-        :message="session('notification')['message']" 
-        :details="session('notification')['details'] ?? ''" 
-    />
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const notificationElement = document.getElementById('dynamic-notification');
-            if (notificationElement) {
-                Toastify({
-                    node: notificationElement.cloneNode(true),
-                    duration: 3000,
-                    close: true,
-                    gravity: "top",
-                    position: "right",
-                    stopOnFocus: true,
-                }).showToast();
-            }
-        });
-    </script>
-@endif
+        <x-base.notification id="dynamic-notification" :type="session('notification')['type']" :message="session('notification')['message']" :details="session('notification')['details'] ?? ''" />
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const notificationElement = document.getElementById('dynamic-notification');
+                if (notificationElement) {
+                    Toastify({
+                        node: notificationElement.cloneNode(true),
+                        duration: 3000,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        stopOnFocus: true,
+                    }).showToast();
+                }
+            });
+        </script>
+    @endif
 @endsection

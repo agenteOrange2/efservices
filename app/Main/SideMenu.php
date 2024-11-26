@@ -20,7 +20,7 @@ class SideMenu
             "CARRIERS MANAGEMENT",
             [
                 'icon' => "users",
-                'route_name' => "admin.users",
+                'route_name' => "#",
                 'params' => [],
                 'title' => "Transporters",
                 'sub_menu' => [
@@ -47,7 +47,7 @@ class SideMenu
             "DRIVERS MANAGEMENT",
             [
                 'icon' => "car-front",
-                'route_name' => "admin.users",
+                'route_name' => "#",
                 'params' => [],
                 'title' => "Drivers",
                 'sub_menu' => [
@@ -104,7 +104,7 @@ class SideMenu
             "VEHICLES MANAGEMENT",
             [
                 'icon' => "bus",
-                'route_name' => "admin.users",
+                'route_name' => "#",
                 'params' => [],
                 'title' => "Vehicles",
                 'sub_menu' => [
@@ -149,32 +149,50 @@ class SideMenu
                 'params' => [],
                 'title' => "Memberships",
             ],
-             
+
             "USER MANAGEMENT",
             [
                 'icon' => "UserSquare",
-                'route_name' => "admin.users.index",
+                'route_name' => "#",
                 'params' => [],
                 'title' => "Users",
-            ],
-            [
-                'icon' => "UserSquare",
-                'route_name' => "admin.users",
-                'params' => [],
-                'title' => "Users",
-            ],
-            
-            [
-                'icon' => "CakeSlice",
-                'route_name' => "admin.departments",
-                'params' => [],
-                'title' => "Departments",
-            ],
-            [
-                'icon' => "PackagePlus",
-                'route_name' => "admin.add-user",
-                'params' => [],
-                'title' => "Add User",
+                'sub_menu' => [
+                    /*
+                    [
+                        'icon' => "UserSquare",
+                        'route_name' => "#",
+                        'params' => [],
+                        'title' => "Users",
+                        'sub_menu' => [
+                            [
+                                'icon' => "CakeSlice",
+                                'route_name' => "admin.departments",
+                                'params' => [],
+                                'title' => "Departments",
+                            ],
+                        ],
+                    ],
+                    */
+                    [
+                        'icon' => "UserSquare",
+                        'route_name' => "admin.users.index",
+                        'params' => [],
+                        'title' => "Users",
+                    ],
+                    [
+                        'icon' => "shield-ban",
+                        'route_name' => "admin.permissions.index",
+                        'params' => [],
+                        'title' => "Permissions",
+                    ],
+                    [
+                        'icon' => "users",
+                        'route_name' => "admin.roles.index",
+                        'params' => [],
+                        'title' => "Roles",
+                    ],
+
+                ],
             ],
             /*
             "PERSONAL DASHBOARD",
