@@ -33,6 +33,7 @@ class GenericTable extends Component
     protected $listeners = [
         'resetPage',
         'filtersUpdated' => 'applyFilters',
+        'clearFilters' => 'clearFilters',
         'exportToExcel',
         'exportToPdf'
     ];
@@ -76,15 +77,18 @@ class GenericTable extends Component
         foreach ($this->customFilters as $key => $filter) {
             $this->filters[$key] = $filter['default'] ?? null;
         }
-
+    
         // Reiniciar filtro de rango de fechas si existe
         if (isset($this->filters['date_range'])) {
             $this->filters['date_range'] = ['start' => null, 'end' => null];
         }
-
+    
+        // Emitir evento al hijo para reiniciar filtros
         $this->dispatch('filtersUpdated', $this->filters);
+    
         $this->resetPage();
     }
+    
 
     public function applyFilters($filters)
     {
@@ -178,12 +182,19 @@ class GenericTable extends Component
         // Aplicar filtros personalizados si existen
         foreach ($this->customFilters as $key => $filter) {
             if (
-                !empty($this->filters[$key]) &&
+                !is_null($this->filters[$key]) &&
                 $modelInstance->getConnection()->getSchemaBuilder()->hasColumn($modelInstance->getTable(), $key)
             ) {
-                $query->where($key, $this->filters[$key]);
+                // Si es el filtro de `status`, convertir a 0 o 1
+                if ($key === 'status' && in_array($this->filters[$key], [0, 1], true)) {
+                    $query->where($key, $this->filters[$key]);
+                } else {
+                    $query->where($key, $this->filters[$key]);
+                }
             }
         }
+
+        $this->dispatch('resetFilters', $this->filters);
 
         // Ordenamiento
         $query->orderBy($this->sortField, $this->sortDirection);

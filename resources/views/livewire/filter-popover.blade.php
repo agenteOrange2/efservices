@@ -1,8 +1,15 @@
 <div>
-    <x-base.popover class="inline-block">
+    <x-base.popover class="inline-block w-full">
         <x-base.popover.button class="w-full sm:w-auto" as="x-base.button" variant="outline-secondary">
-            <svg class="mr-2 h-4 w-4 stroke-[1.3]" xmlns="http://www.w3.org/2000/svg"  width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h4"/><path d="M11 8h7"/><path d="M11 12h10"/></svg>            
-            
+            <svg class="mr-2 h-4 w-4 stroke-[1.3]" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="m3 16 4 4 4-4" />
+                <path d="M7 20V4" />
+                <path d="M11 4h4" />
+                <path d="M11 8h7" />
+                <path d="M11 12h10" />
+            </svg>
             Filter
             <span class="ml-2 flex h-5 items-center justify-center rounded-full border bg-slate-100 px-1.5 text-xs font-medium">
                 {{ count(array_filter($filters)) }}
@@ -14,10 +21,10 @@
                 <div class="mb-4">
                     <label class="text-left text-slate-500 block">Date Range</label>
                     <div class="flex gap-2 mt-2">
-                        <input type="date" class="w-1/2 rounded border-gray-300" 
-                               wire:model.live="filters.date_range.start">
-                        <input type="date" class="w-1/2 rounded border-gray-300" 
-                               wire:model.live="filters.date_range.end">
+                        <input type="date" class="w-1/2 rounded border-gray-300"
+                            wire:model.live="filters.date_range.start">
+                        <input type="date" class="w-1/2 rounded border-gray-300"
+                            wire:model.live="filters.date_range.end">
                     </div>
                 </div>
                 {{-- Filtros personalizados --}}
@@ -32,18 +39,24 @@
                                 @endforeach
                             </x-base.form-select>
                         @elseif ($option['type'] === 'input')
-                            <input type="text" class="w-full rounded border-gray-300 mt-2" 
-                                   placeholder="{{ $option['placeholder'] ?? '' }}" 
-                                   wire:model.live="filters.{{ $key }}">
+                            <input type="text" class="w-full rounded border-gray-300 mt-2"
+                                placeholder="{{ $option['placeholder'] ?? '' }}"
+                                wire:model.live="filters.{{ $key }}">
                         @endif
                     </div>
                 @endforeach
 
+                {{-- Botón para borrar filtros --}}
+                @if (count(array_filter($filters)))
                 <div class="mt-4 flex items-center">
-                    <x-base.button class="ml-auto w-32" wire:click="applyFilters" variant="primary">
-                        Apply
-                    </x-base.button>
+                    <button class="ml-auto w-32 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded px-4 py-2"
+                            wire:click="$emit('clearFilters')">
+                        Clear Filters
+                    </button>
                 </div>
+            @endif
+            
+            
             </div>
         </x-base.popover.panel>
     </x-base.popover>

@@ -14,12 +14,8 @@
                 <div class="flex flex-col gap-x-3 gap-y-2 sm:flex-row md:ml-auto">
                     <x-base.button
                         class="group-[.mode--light]:!border-transparent group-[.mode--light]:!bg-white/[0.12] group-[.mode--light]:!text-slate-200"
-                        variant="primary"
-                    >
-                        <x-base.lucide
-                            class="mr-2 h-4 w-4 stroke-[1.3]"
-                            icon="PenLine"
-                        />
+                        variant="primary">
+                        <x-base.lucide class="mr-2 h-4 w-4 stroke-[1.3]" icon="PenLine" />
                         Add New User
                     </x-base.button>
                 </div>
@@ -35,10 +31,7 @@
                                 <div
                                     class="flex items-center rounded-full border border-danger/10 bg-danger/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-danger">
                                     3%
-                                    <x-base.lucide
-                                        class="ml-px h-4 w-4 stroke-[1.5]"
-                                        icon="ChevronDown"
-                                    />
+                                    <x-base.lucide class="ml-px h-4 w-4 stroke-[1.5]" icon="ChevronDown" />
                                 </div>
                             </div>
                         </div>
@@ -50,10 +43,7 @@
                                 <div
                                     class="flex items-center rounded-full border border-success/10 bg-success/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-success">
                                     2%
-                                    <x-base.lucide
-                                        class="ml-px h-4 w-4 stroke-[1.5]"
-                                        icon="ChevronUp"
-                                    />
+                                    <x-base.lucide class="ml-px h-4 w-4 stroke-[1.5]" icon="ChevronUp" />
                                 </div>
                             </div>
                         </div>
@@ -65,10 +55,7 @@
                                 <div
                                     class="flex items-center rounded-full border border-danger/10 bg-danger/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-danger">
                                     3%
-                                    <x-base.lucide
-                                        class="ml-px h-4 w-4 stroke-[1.5]"
-                                        icon="ChevronDown"
-                                    />
+                                    <x-base.lucide class="ml-px h-4 w-4 stroke-[1.5]" icon="ChevronDown" />
                                 </div>
                             </div>
                         </div>
@@ -80,10 +67,7 @@
                                 <div
                                     class="flex items-center rounded-full border border-success/10 bg-success/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-success">
                                     8%
-                                    <x-base.lucide
-                                        class="ml-px h-4 w-4 stroke-[1.5]"
-                                        icon="ChevronUp"
-                                    />
+                                    <x-base.lucide class="ml-px h-4 w-4 stroke-[1.5]" icon="ChevronUp" />
                                 </div>
                             </div>
                         </div>
@@ -95,63 +79,36 @@
                             <div class="relative">
                                 <x-base.lucide
                                     class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3] text-slate-500"
-                                    icon="Search"
-                                />
-                                <x-base.form-input
-                                    class="rounded-[0.5rem] pl-9 sm:w-64"
-                                    type="text"
-                                    placeholder="Search users..."
-                                />
+                                    icon="Search" />
+                                <x-base.form-input class="rounded-[0.5rem] pl-9 sm:w-64" type="text"
+                                    placeholder="Search users..." />
                             </div>
                         </div>
                         <div class="flex flex-col gap-x-3 gap-y-2 sm:ml-auto sm:flex-row">
                             <x-base.menu>
-                                <x-base.menu.button
-                                    class="w-full sm:w-auto"
-                                    as="x-base.button"
-                                    variant="outline-secondary"
-                                >
-                                    <x-base.lucide
-                                        class="mr-2 h-4 w-4 stroke-[1.3]"
-                                        icon="Download"
-                                    />
+                                <x-base.menu.button class="w-full sm:w-auto" as="x-base.button" variant="outline-secondary">
+                                    <x-base.lucide class="mr-2 h-4 w-4 stroke-[1.3]" icon="Download" />
                                     Export
-                                    <x-base.lucide
-                                        class="ml-2 h-4 w-4 stroke-[1.3]"
-                                        icon="ChevronDown"
-                                    />
+                                    <x-base.lucide class="ml-2 h-4 w-4 stroke-[1.3]" icon="ChevronDown" />
                                 </x-base.menu.button>
                                 <x-base.menu.items class="w-40">
                                     <x-base.menu.item>
-                                        <x-base.lucide
-                                            class="mr-2 h-4 w-4"
-                                            icon="FileBarChart"
-                                        />
+                                        <x-base.lucide class="mr-2 h-4 w-4" icon="FileBarChart" />
                                         PDF
                                     </x-base.menu.item>
                                     <x-base.menu.item>
-                                        <x-base.lucide
-                                            class="mr-2 h-4 w-4"
-                                            icon="FileBarChart"
-                                        />
+                                        <x-base.lucide class="mr-2 h-4 w-4" icon="FileBarChart" />
                                         CSV
                                     </x-base.menu.item>
                                 </x-base.menu.items>
                             </x-base.menu>
                             <x-base.popover class="inline-block">
-                                <x-base.popover.button
-                                    class="w-full sm:w-auto"
-                                    as="x-base.button"
-                                    variant="outline-secondary"
-                                >
-                                    <x-base.lucide
-                                        class="mr-2 h-4 w-4 stroke-[1.3]"
-                                        icon="ArrowDownWideNarrow"
-                                    />
+                                <x-base.popover.button class="w-full sm:w-auto" as="x-base.button"
+                                    variant="outline-secondary">
+                                    <x-base.lucide class="mr-2 h-4 w-4 stroke-[1.3]" icon="ArrowDownWideNarrow" />
                                     Filter
                                     <span
-                                        class="ml-2 flex h-5 items-center justify-center rounded-full border bg-slate-100 px-1.5 text-xs font-medium"
-                                    >
+                                        class="ml-2 flex h-5 items-center justify-center rounded-full border bg-slate-100 px-1.5 text-xs font-medium">
                                         3
                                     </span>
                                 </x-base.popover.button>
@@ -182,16 +139,10 @@
                                             </x-base.form-select>
                                         </div>
                                         <div class="mt-4 flex items-center">
-                                            <x-base.button
-                                                class="ml-auto w-32"
-                                                variant="secondary"
-                                            >
+                                            <x-base.button class="ml-auto w-32" variant="secondary">
                                                 Close
                                             </x-base.button>
-                                            <x-base.button
-                                                class="ml-2 w-32"
-                                                variant="primary"
-                                            >
+                                            <x-base.button class="ml-2 w-32" variant="primary">
                                                 Apply
                                             </x-base.button>
                                         </div>
@@ -205,38 +156,31 @@
                             <x-base.table.thead>
                                 <x-base.table.tr>
                                     <x-base.table.td
-                                        class="w-5 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500"
-                                    >
+                                        class="w-5 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
                                         <x-base.form-check.input type="checkbox" />
                                     </x-base.table.td>
                                     <x-base.table.td
-                                        class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500"
-                                    >
+                                        class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
                                         Name
                                     </x-base.table.td>
                                     <x-base.table.td
-                                        class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500"
-                                    >
+                                        class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
                                         Position
                                     </x-base.table.td>
                                     <x-base.table.td
-                                        class="w-52 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500"
-                                    >
+                                        class="w-52 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
                                         Profile Completeness
                                     </x-base.table.td>
                                     <x-base.table.td
-                                        class="border-t border-slate-200/60 bg-slate-50 py-4 text-center font-medium text-slate-500"
-                                    >
+                                        class="border-t border-slate-200/60 bg-slate-50 py-4 text-center font-medium text-slate-500">
                                         Status
                                     </x-base.table.td>
                                     <x-base.table.td
-                                        class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500"
-                                    >
+                                        class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
                                         Joined Date
                                     </x-base.table.td>
                                     <x-base.table.td
-                                        class="w-20 border-t border-slate-200/60 bg-slate-50 py-4 text-center font-medium text-slate-500"
-                                    >
+                                        class="w-20 border-t border-slate-200/60 bg-slate-50 py-4 text-center font-medium text-slate-500">
                                         Action
                                     </x-base.table.td>
                                 </x-base.table.tr>
@@ -253,16 +197,11 @@
                                                     <x-base.tippy
                                                         class="rounded-full shadow-[0px_0px_0px_2px_#fff,_1px_1px_5px_rgba(0,0,0,0.32)]"
                                                         src="{{ Vite::asset($faker['photo']) }}"
-                                                        alt="Tailwise - Admin Dashboard Template"
-                                                        as="img"
-                                                        content="{{ $faker['name'] }}"
-                                                    />
+                                                        alt="Tailwise - Admin Dashboard Template" as="img"
+                                                        content="{{ $faker['name'] }}" />
                                                 </div>
                                                 <div class="ml-3.5">
-                                                    <a
-                                                        class="whitespace-nowrap font-medium"
-                                                        href=""
-                                                    >
+                                                    <a class="whitespace-nowrap font-medium" href="">
                                                         {{ $faker['name'] }}
                                                     </a>
                                                     <div class="mt-0.5 whitespace-nowrap text-xs text-slate-500">
@@ -272,10 +211,7 @@
                                             </div>
                                         </x-base.table.td>
                                         <x-base.table.td class="border-dashed py-4">
-                                            <a
-                                                class="whitespace-nowrap font-medium"
-                                                href=""
-                                            >
+                                            <a class="whitespace-nowrap font-medium" href="">
                                                 {{ $faker['position'] }}
                                             </a>
                                             <div class="mt-0.5 whitespace-nowrap text-xs text-slate-500">
@@ -300,10 +236,7 @@
                                                 'flex items-center justify-center',
                                                 ['text-success', 'text-danger'][mt_rand(0, 1)],
                                             ])>
-                                                <x-base.lucide
-                                                    class="h-3.5 w-3.5 stroke-[1.7]"
-                                                    icon="Database"
-                                                />
+                                                <x-base.lucide class="h-3.5 w-3.5 stroke-[1.7]" icon="Database" />
                                                 <div class="ml-1.5 whitespace-nowrap">
                                                     {{ mt_rand(0, 1) ? 'Active' : 'Inactive' }}
                                                 </div>
@@ -320,22 +253,15 @@
                                                     <x-base.menu.button class="h-5 w-5 text-slate-500">
                                                         <x-base.lucide
                                                             class="h-5 w-5 fill-slate-400/70 stroke-slate-400/70"
-                                                            icon="MoreVertical"
-                                                        />
+                                                            icon="MoreVertical" />
                                                     </x-base.menu.button>
                                                     <x-base.menu.items class="w-40">
                                                         <x-base.menu.item>
-                                                            <x-base.lucide
-                                                                class="mr-2 h-4 w-4"
-                                                                icon="CheckSquare"
-                                                            />
+                                                            <x-base.lucide class="mr-2 h-4 w-4" icon="CheckSquare" />
                                                             Edit
                                                         </x-base.menu.item>
                                                         <x-base.menu.item class="text-danger">
-                                                            <x-base.lucide
-                                                                class="mr-2 h-4 w-4"
-                                                                icon="Trash2"
-                                                            />
+                                                            <x-base.lucide class="mr-2 h-4 w-4" icon="Trash2" />
                                                             Delete
                                                         </x-base.menu.item>
                                                     </x-base.menu.items>
@@ -350,16 +276,10 @@
                     <div class="flex-reverse flex flex-col-reverse flex-wrap items-center gap-y-2 p-5 sm:flex-row">
                         <x-base.pagination class="mr-auto w-full flex-1 sm:w-auto">
                             <x-base.pagination.link>
-                                <x-base.lucide
-                                    class="h-4 w-4"
-                                    icon="ChevronsLeft"
-                                />
+                                <x-base.lucide class="h-4 w-4" icon="ChevronsLeft" />
                             </x-base.pagination.link>
                             <x-base.pagination.link>
-                                <x-base.lucide
-                                    class="h-4 w-4"
-                                    icon="ChevronLeft"
-                                />
+                                <x-base.lucide class="h-4 w-4" icon="ChevronLeft" />
                             </x-base.pagination.link>
                             <x-base.pagination.link>...</x-base.pagination.link>
                             <x-base.pagination.link>1</x-base.pagination.link>
@@ -367,16 +287,10 @@
                             <x-base.pagination.link>3</x-base.pagination.link>
                             <x-base.pagination.link>...</x-base.pagination.link>
                             <x-base.pagination.link>
-                                <x-base.lucide
-                                    class="h-4 w-4"
-                                    icon="ChevronRight"
-                                />
+                                <x-base.lucide class="h-4 w-4" icon="ChevronRight" />
                             </x-base.pagination.link>
                             <x-base.pagination.link>
-                                <x-base.lucide
-                                    class="h-4 w-4"
-                                    icon="ChevronsRight"
-                                />
+                                <x-base.lucide class="h-4 w-4" icon="ChevronsRight" />
                             </x-base.pagination.link>
                         </x-base.pagination>
                         <x-base.form-select class="rounded-[0.5rem] sm:w-20">

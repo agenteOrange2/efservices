@@ -6,8 +6,11 @@ use Livewire\Component;
 
 class FilterPopover extends Component
 {
+
+    protected $listeners = ['resetFilters'];
+
     public $filters = [
-        'date_range' => ['start' => null, 'end' => null],        
+        'date_range' => ['start' => null, 'end' => null],
         'status' => null, // Status inicial
     ];
 
@@ -29,13 +32,30 @@ class FilterPopover extends Component
         $this->dispatch('filtersUpdated', $this->transformFilters());
     }
 
-    public function applyFilters()
+    public function clearFilters()
     {
-        $this->dispatch('filtersUpdated', $this->transformFilters()); // Emitir los filtros al componente padre
+        $this->filters = [
+            'date_range' => ['start' => null, 'end' => null],
+            'status' => null,
+        ];
+    
+        foreach ($this->filterOptions as $key => $option) {
+            $this->filters[$key] = $option['default'] ?? null;
+        }
+    
+        // Emitir un evento global para el componente padre
+        $this->dispatch('filtersUpdated', $this->filters);
+    }
+    
+
+
+    public function resetFilters($filters)
+    {
+        $this->filters = $filters;
     }
 
     /**
-     * Transformar los filtros para enviarlos al componente padre
+     * Transformar los filtros para enviarlos al componente padre.
      */
     private function transformFilters()
     {

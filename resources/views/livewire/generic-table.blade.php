@@ -1,5 +1,5 @@
 <div class="p-5 overflow-x-auto">
-    <div class="flex flex-col gap-y-2 p-5 sm:flex-row sm:items-center">
+    <div class="flex flex-col gap-y-2 sm:flex-row sm:items-center">
         <div>
             <!-- Barra de búsqueda -->
             <div class="relative">
@@ -24,7 +24,7 @@
                     </g>
                 </svg>
                 <input wire:model.live.debounce.250ms="search" type="text" placeholder="Search users..."
-                    class="rounded-[0.5rem] pl-9 sm:w-64 border border-gray-300 px-4 py-2">
+                    class="rounded-[0.5rem] pl-9 sm:w-64 border border-gray-300 px-4 py-2 w-full">
             </div>
         </div>
         <div class="flex flex-col gap-x-3 gap-y-2 sm:ml-auto sm:flex-row">
