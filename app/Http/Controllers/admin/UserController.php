@@ -37,9 +37,7 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-
         //dd($request->all());
-
         // Validación de los datos del formulario
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -57,7 +55,6 @@ class UserController extends Controller
             'status' => $validated['status'],
         ]);
 
-
         if ($request->hasFile('profile_photo')) {
             $fileName = strtolower(str_replace(' ', '_', $user->name)) . '.webp'; // Genera el nombre basado en el usuario
 
@@ -65,7 +62,6 @@ class UserController extends Controller
                 ->usingFileName($fileName) // Usa el nombre basado en el usuario
                 ->toMediaCollection('profile_photos');
         }
-
 
         // Mensaje dinámico para la notificación
         return redirect()
@@ -76,9 +72,6 @@ class UserController extends Controller
                 'details' => 'The user data has been saved correctly.',
             ]);
     }
-
-
-
     /**
      * Show the form for editing the specified resource.
      */
@@ -87,7 +80,6 @@ class UserController extends Controller
         $profilePhotoUrl = $user->getFirstMediaUrl('profile_photos', 'webp');
         return view('admin.users.edit', compact('user', 'profilePhotoUrl'));
     }
-
     /**
      * Update the specified resource in storage.
      */
@@ -105,8 +97,6 @@ class UserController extends Controller
             'password' => $validated['password'] ? Hash::make($validated['password']) : $user->password,
             'status' => $request->boolean('status'),
         ]);
-
-
 
         if ($request->hasFile('profile_photo')) {
             $fileName = strtolower(str_replace(' ', '_', $user->name)) . '.webp'; // Genera el nombre basado en el usuario
@@ -143,8 +133,7 @@ class UserController extends Controller
     
         return response()->json(['message' => 'No photo to delete.'], 404);
     }
-    
-    
+        
     /**
      * Remove the specified resource from storage.
      */

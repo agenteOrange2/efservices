@@ -39,4 +39,9 @@ class Carrier extends Model
     {
         return $this->hasMany(CarrierDocument::class);
     }
+
+    public function membership()
+    {
+        return $this->belongsTo(Membership::class, 'id_plan');
+    }
 }

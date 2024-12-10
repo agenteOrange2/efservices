@@ -26,9 +26,9 @@ class SideMenu
                 'sub_menu' => [
                     [
                         'icon' => "user-plus",
-                        'route_name' => "admin.product-list",
+                        'route_name' => "admin.carrier.index",
                         'params' => [],
-                        'title' => "Registration",
+                        'title' => "Carriers",
                     ],
                     [
                         'icon' => "user-check",

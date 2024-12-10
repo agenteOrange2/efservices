@@ -15,6 +15,10 @@ class CustomPathGenerator implements PathGenerator
             return "users/{$model->id}/";
         }
 
+        if ($model instanceof \App\Models\Membership) {
+            return "memberships/{$model->id}/";
+        }
+
         return "others/{$model->id}/";
     }
 

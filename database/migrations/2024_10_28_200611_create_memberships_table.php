@@ -14,9 +14,13 @@ return new class extends Migration
         Schema::create('memberships', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('description');
             $table->decimal('price', 10, 2);
+            $table->integer('max_carrier');
             $table->integer('max_drivers');
             $table->integer('max_vehicles');            
+            $table->string('image_membership')->nullable();
+            $table->boolean('status')->default(true);
             $table->timestamps();
         });
     }

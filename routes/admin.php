@@ -55,7 +55,7 @@ Route::resource('carrier', CarrierController::class);
     |--------------------------------------------------------------------------    
 */
 Route::resource('membership', MembershipController::class);
-
+Route::post('membership/{membership}/delete-photo', [MembershipController::class, 'deletePhoto'])->name('membership.delete-photo');
 
 Route::controller(PageController::class)->group(function () {
     //Route::get('/', 'dashboardOverview1')->name('dashboard-overview-1');
