@@ -103,6 +103,7 @@ class UserController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => $validated['password'] ? Hash::make($validated['password']) : $user->password,
+            'status' => $request->boolean('status'),
         ]);
 
 
@@ -128,6 +129,22 @@ class UserController extends Controller
             ]);
     }
 
+    public function deletePhoto(User $user)
+    {
+        $media = $user->getFirstMedia('profile_photos');
+    
+        if ($media) {
+            $media->delete(); // Elimina la foto
+            return response()->json([
+                'message' => 'Photo deleted successfully.',
+                'defaultPhotoUrl' => asset('build/default_profile.png'), // Retorna la foto predeterminada
+            ]);
+        }
+    
+        return response()->json(['message' => 'No photo to delete.'], 404);
+    }
+    
+    
     /**
      * Remove the specified resource from storage.
      */
@@ -140,8 +157,4 @@ class UserController extends Controller
             'message' => 'User deleted successfully!',
         ]);
     }
-
-
-    
-    
 }

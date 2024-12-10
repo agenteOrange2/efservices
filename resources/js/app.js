@@ -1,17 +1,25 @@
-// Exponer globales
-import Alpine from "alpinejs";
+// Exponer global
 import $ from "jquery";
 import Pristine from "pristinejs";
 import Toastify from 'toastify-js';
 
-Alpine.start()
+// Evitar inicialización duplicada
+if (!window.Livewire) {
+    Livewire.start(); // Inicializa Livewire primero
+}
 
+if (!window.Alpine) {
+    window.Alpine = Alpine;
+    Alpine.start();   // Luego inicializa Alpine
+}
+
+// window.Alpine = Alpine;
 window.$ = window.jQuery = $;
 window.Pristine = Pristine;
 
 // Validación en consola
 window.Toastify = Toastify;
-
+/*
 if (typeof $ === "undefined" || typeof Pristine === "undefined") {
   console.error("jQuery o Pristine no están disponibles.");
 } else {
@@ -38,3 +46,4 @@ try {
 } catch (error) {
   console.warn("Error al cargar librerías opcionales:", error);
 }
+*/

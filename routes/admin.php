@@ -7,6 +7,7 @@ use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CarrierController;
+use App\Http\Controllers\Admin\MembershipController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\RolePermissionController;
 
@@ -26,6 +27,7 @@ Route::get('/', function () {
 
 Route::get('users/export-excel', [UserController::class, 'exportToExcel'])->name('users.export.excel');
 Route::get('users/export-pdf', [UserController::class, 'exportToPdf'])->name('users.export.pdf');
+Route::post('users/{user}/delete-photo', [UserController::class, 'deletePhoto'])->name('users.delete-photo');
 Route::resource('users', UserController::class);
 /*
     |--------------------------------------------------------------------------
@@ -47,6 +49,12 @@ Route::resource('roles', RoleController::class);
 Route::resource('carrier', CarrierController::class);
 
 
+/*
+    |--------------------------------------------------------------------------
+    | RUTAS ADMIN MEMBERSHIP
+    |--------------------------------------------------------------------------    
+*/
+Route::resource('membership', MembershipController::class);
 
 
 Route::controller(PageController::class)->group(function () {
@@ -126,3 +134,4 @@ Route::controller(PageController::class)->group(function () {
     Route::get('register', 'register')->name('register');
     
 });
+

@@ -8,9 +8,7 @@
     ];
 @endphp
 @section('subcontent')
-
-    <x-base.notificationtoast.notification-toast :notification="session('notification')" />
-
+<x-base.notificationtoast.notification-toast :notification="session('notification')" />
     <div class="grid grid-cols-12 gap-x-6 gap-y-10">
         <div class="col-span-12">
             <div class="flex flex-col gap-y-3 md:h-10 md:flex-row md:items-center">
@@ -27,44 +25,63 @@
                 </div>
             </div>
             <div class="box box--stacked flex flex-col mt-5">
+                <div class="flex flex-col gap-y-2 p-5 sm:flex-row sm:items-center">
+                    <div class="relative">
+                        <livewire:search-bar placeholder="Search users..." />
+                    </div>
 
-                <livewire:generic-table 
-                model="App\Models\User" 
-                :columns="['name', 'email', 'status', 'created_at']" 
-                :searchableFields="['name', 'email']"
-                editRoute="admin.users.edit" 
-                exportExcelRoute="admin.users.export.excel"
-                exportPdfRoute="admin.users.export.pdf"
-                :customFilters="[
-                    'status' => [
-                        'type' => 'select',
-                        'label' => 'Status',
-                        'options' => [
-                            'active' => 'Active',
-                            'inactive' => 'Inactive'
+                    <div class="flex flex-col gap-x-3 gap-y-2 sm:ml-auto sm:flex-row">                        
+                        <livewire:menu-export :exportExcel="true" :exportPdf="true" wire:ignore />            
+                        <livewire:filter-popover :filter-options="[
+                            'status' => [
+                                'type' => 'select',
+                                'label' => 'Status',
+                                'options' => [
+                                    'active' => 'Active',
+                                    'inactive' => 'Inactive'
+                                ],                                
+                            ]
+                        ]" />            
+                    </div>
+                </div>
+                <livewire:generic-table  class="p-0"
+                    model="App\Models\User" 
+                    :columns="['name', 'email', 'status', 'created_at']"   
+                    :searchableFields="['name', 'email','status', 'created_at']"                  
+                    editRoute="admin.users.edit" 
+                    exportExcelRoute="admin.users.export.excel"
+                    exportPdfRoute="admin.users.export.pdf"
+                    :customFilters="[ 
+                        'status' => [
+                            'type' => 'select',
+                            'label' => 'Status',
+                            'options' => [
+                                'active' => 'Active',
+                                'inactive' => 'Inactive'
+                            ]
                         ]
-                    ]
-                ]"
-            />
+                    ]"
+                />
             </div>
         </div>
     </div>
-    @if (session('notification'))
-        <x-base.notification id="dynamic-notification" :type="session('notification')['type']" :message="session('notification')['message']" :details="session('notification')['details'] ?? ''" />
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const notificationElement = document.getElementById('dynamic-notification');
-                if (notificationElement) {
-                    Toastify({
-                        node: notificationElement.cloneNode(true),
-                        duration: 3000,
-                        close: true,
-                        gravity: "top",
-                        position: "right",
-                        stopOnFocus: true,
-                    }).showToast();
-                }
-            });
-        </script>
-    @endif
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('livewire:load', function () {
+        console.log('Livewire is loaded and listening for notify events');
+        Livewire.on('notify', notification => {
+            console.log('Notification received:', notification);
+            Toastify({
+                text: `${notification.message}\n${notification.details}`,
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                backgroundColor: notification.type === 'success' ? "green" : "orange",
+                stopOnFocus: true,
+            }).showToast();
+        });
+    });
+</script>
+@endpush

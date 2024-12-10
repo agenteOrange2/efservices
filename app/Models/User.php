@@ -74,13 +74,27 @@ class User extends Authenticatable implements HasMedia
         ];
     }
 
+    // Relación con carriers (managers de carriers)
+    public function carriers()
+    {
+        return $this->belongsToMany(Carrier::class, 'user_carrier')
+            ->withPivot('status')
+            ->withTimestamps();
+    }
+
+    // Relación con Driver
+    public function driver()
+    {
+        return $this->hasOne(Driver::class);
+    }
+
 
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('profile_photos')
             ->useDisk('public'); // Asegúrate de usar el disco público
     }
-    
+
     public function registerMediaConversions(Media $media = null): void
     {
         $this->addMediaConversion('webp')
@@ -91,7 +105,7 @@ class User extends Authenticatable implements HasMedia
     {
         return "users/{$this->id}/";
     }
-    
+
     public function getMediaFileNameAttribute(): string
     {
         return "{$this->name}.webp";

@@ -6,70 +6,70 @@ use Livewire\Component;
 
 class FilterPopover extends Component
 {
-
-    protected $listeners = ['resetFilters'];
-
     public $filters = [
         'date_range' => ['start' => null, 'end' => null],
-        'status' => null, // Status inicial
+        'status' => null,
     ];
-
-    public $filterOptions = []; // Opciones personalizadas de filtros
+    public $filterOptions = [];
+    public $openPopover = false;
+    
+    protected $listeners = ['filtersUpdated','updateDateRange' => 'updateDateRange'];
 
     public function mount($filterOptions = [])
     {
         $this->filterOptions = $filterOptions;
 
-        // Inicializar filtros personalizados con valores predeterminados
         foreach ($filterOptions as $key => $option) {
             $this->filters[$key] = $option['default'] ?? null;
         }
     }
 
+    public function togglePopover()
+    {
+        $this->openPopover = !$this->openPopover;
+    }
+
     public function updated($propertyName)
     {
-        // Emitir los filtros cada vez que se actualice uno
+        // Transform and emit updated filters
         $this->dispatch('filtersUpdated', $this->transformFilters());
     }
 
+    public function updateDateRange($dates)
+    {
+        logger()->info('Datos recibidos en updateDateRange:', $dates);
+    
+        if (isset($dates['start'], $dates['end'])) {
+            $this->filters['date_range']['start'] = $dates['start'];
+            $this->filters['date_range']['end'] = $dates['end'];
+    
+            // Emitir evento para que la tabla se actualice
+            $this->dispatch('filtersUpdated', $this->filters);
+        } else {
+            $this->addError('date_range', 'Invalid date range provided.');
+        }
+    }
+    
     public function clearFilters()
     {
         $this->filters = [
-            'date_range' => ['start' => null, 'end' => null],
-            'status' => null,
+            'date_range' => ['start' => null, 'end' => null], // Reiniciar fechas
+            'status' => null, // Reiniciar status u otros filtros
         ];
-    
+
         foreach ($this->filterOptions as $key => $option) {
             $this->filters[$key] = $option['default'] ?? null;
         }
-    
-        // Emitir un evento global para el componente padre
+
         $this->dispatch('filtersUpdated', $this->filters);
     }
-    
 
-
-    public function resetFilters($filters)
-    {
-        $this->filters = $filters;
-    }
-
-    /**
-     * Transformar los filtros para enviarlos al componente padre.
-     */
     private function transformFilters()
     {
         $transformed = $this->filters;
 
-        // Convertir el filtro de status si existe
         if (isset($this->filters['status'])) {
-            if ($this->filters['status'] === 'active') {
-                $transformed['status'] = 1;
-            } elseif ($this->filters['status'] === 'inactive') {
-                $transformed['status'] = 0;
-            } else {
-                $transformed['status'] = null; // Sin filtro
-            }
+            $transformed['status'] = $this->filters['status'] === 'active' ? 1 : ($this->filters['status'] === 'inactive' ? 0 : null);
         }
 
         return $transformed;

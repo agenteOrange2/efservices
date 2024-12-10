@@ -19,7 +19,7 @@
                 Permissions
             </div>
             <div class="flex flex-col gap-x-3 gap-y-2 sm:flex-row md:ml-auto">
-                <x-base.button as="a" href="{{ route('admin.roles.create') }}"
+                <x-base.button as="a" href="{{ route('admin.permissions.create') }}"
                     class="group-[.mode--light]:!border-transparent group-[.mode--light]:!bg-white/[0.12] group-[.mode--light]:!text-slate-200"
                     variant="primary">
                     <x-base.lucide class="mr-2 h-4 w-4 stroke-[1.3]" icon="PenLine" />
@@ -38,3 +38,22 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('livewire:load', function () {
+        console.log('Livewire is loaded and listening for notify events');
+        Livewire.on('notify', notification => {
+            console.log('Notification received:', notification);
+            Toastify({
+                text: `${notification.message}\n${notification.details}`,
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                backgroundColor: notification.type === 'success' ? "green" : "orange",
+                stopOnFocus: true,
+            }).showToast();
+        });
+    });
+</script>
+@endpush

@@ -7,6 +7,8 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/js/app.js',
+                'resources/js/components/user/image-preview.js',
+                'resources/js/pages/users/user-delete.js',                               
                 'resources/css/app.css',
                 'resources/css/vendors/tippy.css',
                 'resources/css/vendors/tom-select.css',

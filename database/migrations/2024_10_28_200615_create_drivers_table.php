@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('drivers', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('carrier_id')->constrained('carriers')->onDelete('cascade');
+            $table->id(); // unsignedBigInteger
+            $table->foreignId('carrier_id')->constrained('carriers')->onDelete('cascade'); // unsignedBigInteger
             $table->string('first_name');
             $table->string('last_name');
             $table->string('email')->unique();

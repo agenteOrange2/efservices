@@ -36,19 +36,17 @@
     @yield('content')
 
     <!-- BEGIN: Vendor JS Assets-->
+    @vite('resources/js/app.js')
     @vite('resources/js/vendors/dom.js')
     @vite('resources/js/vendors/tailwind-merge.js')
     @stack('vendors')
     <!-- END: Vendor JS Assets-->
-
     <!-- BEGIN: Pages, layouts, components JS Assets-->
     @vite('resources/js/components/base/theme-color.js')
     @stack('scripts')
     <!-- END: Pages, layouts, components JS Assets-->
-    
 
-    @livewireScripts
-
+    @livewireScripts    
 </body>
 
 </html>

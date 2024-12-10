@@ -145,7 +145,7 @@ class SideMenu
             "MEMBERSHIPS",
             [
                 'icon' => "package-search",
-                'route_name' => "admin.users",
+                'route_name' => "admin.membership.index",
                 'params' => [],
                 'title' => "Memberships",
             ],

@@ -14,8 +14,19 @@ class RoleController extends Controller
      */
     public function index()
     {
+        $customFilters = [
+            'status' => [
+                'type' => 'select',
+                'label' => 'Status',
+                'options' => [
+                    'active' => 'Active',
+                    'inactive' => 'Inactive',
+                ],
+            ],
+        ];
+
         $roles = Role::paginate(10);
-        return view('admin.roles.index', compact('roles'));
+        return view('admin.roles.index', compact('roles', 'customFilters'));
     }
 
     /**
@@ -41,10 +52,19 @@ class RoleController extends Controller
         $role = Role::create(['name' => $validated['name']]);
 
         if (!empty($validated['permissions'])) {
-            $role->syncPermissions($validated['permissions']);
+            $permissions = Permission::whereIn('id', $validated['permissions'])->pluck('name')->toArray();
+            $role->syncPermissions($permissions);
+
         }
 
-        return redirect()->route('admin.roles.index')->with('success', 'Role created successfully.');
+        // Mensaje dinámico para la notificación
+        return redirect()
+            ->route('admin.roles.edit', $role->id)
+            ->with('notification', [
+                'type' => 'success',
+                'message' => 'Role created',
+                'details' => 'Role created successfully.',
+            ]);        
     }
 
     /**
@@ -72,12 +92,19 @@ class RoleController extends Controller
         $role->update(['name' => $validated['name']]);
 
         if (!empty($validated['permissions'])) {
-            $role->syncPermissions($validated['permissions']);
+            $permissions = Permission::whereIn('id', $validated['permissions'])->pluck('name')->toArray();
+            $role->syncPermissions($permissions);
         } else {
             $role->syncPermissions([]);
         }
 
-        return redirect()->route('admin.roles.index')->with('success', 'Role updated successfully.');
+        return redirect()
+        ->route('admin.roles.edit', $role->id)
+        ->with('notification', [
+            'type' => 'success',
+            'message' => 'Role updated',
+            'details' => 'Role updated successfully.',
+        ]);
     }
 
     /**

@@ -34,9 +34,16 @@ class PermissionController extends Controller
             'name' => 'required|string|unique:permissions,name|max:255',
         ]);
 
-        Permission::create(['name' => $validated['name']]);
+        $permission = Permission::create(['name' => $validated['name']]);
 
-        return redirect()->route('admin.permissions.index')->with('success', 'Permission created successfully.');
+        // Mensaje dinámico para la notificación
+        return redirect()
+            ->route('admin.permissions.edit', $permission->id)
+            ->with('notification', [
+                'type' => 'success',
+                'message' => 'Permission created',
+                'details' => 'Created successfully.',
+            ]);        
     }
 
     /**
@@ -58,7 +65,13 @@ class PermissionController extends Controller
 
         $permission->update(['name' => $validated['name']]);
 
-        return redirect()->route('admin.permissions.index')->with('success', 'Permission updated successfully.');
+        return redirect()
+        ->route('admin.permissions.edit', $permission->id)
+        ->with('notification', [
+            'type' => 'success',
+            'message' => 'Permission updated',
+            'details' => 'Permission updated successfully.',
+        ]);        
     }
 
     /**

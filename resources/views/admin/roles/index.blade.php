@@ -7,8 +7,6 @@
 @endphp
 @section('subcontent')
 
-    <x-base.notificationtoast.notification-toast :notification="session('notification')" />
-
     <div class="grid grid-cols-12 gap-x-6 gap-y-10">
         <div class="col-span-12">
             <div class="flex flex-col gap-y-3 md:h-10 md:flex-row md:items-center">
@@ -25,14 +23,21 @@
                 </div>
             </div>
             <div class="box box--stacked flex flex-col mt-5">
-                <livewire:generic-table 
-                model="Spatie\Permission\Models\Role" 
-                :columns="['name', 'created_at', 'updated_at']" 
-                :searchableFields="['name']"
-                editRoute="admin.roles.edit" 
-                exportExcelRoute="admin.roles.export.excel"
-                exportPdfRoute="admin.roles.export.pdf" 
-            />
+                <div class="flex flex-col gap-y-2 p-5 sm:flex-row sm:items-center">
+                    <div class="relative">
+                        <livewire:search-bar placeholder="Search users..." />
+                    </div>
+
+                    <div class="flex flex-col gap-x-3 gap-y-2 sm:ml-auto sm:flex-row">                        
+                        <livewire:menu-export :exportExcel="true" :exportPdf="true" wire:ignore />            
+                        <livewire:filter-popover />            
+                    </div>
+                </div>
+
+
+                <livewire:generic-table model="Spatie\Permission\Models\Role" :columns="['name', 'created_at', 'updated_at']" :searchableFields="['name']"
+                    editRoute="admin.roles.edit" exportExcelRoute="admin.roles.export.excel"
+                    exportPdfRoute="admin.roles.export.pdf" />
             </div>
         </div>
     </div>
@@ -73,3 +78,22 @@
     </div>
 </div> --}}
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('livewire:load', function () {
+        console.log('Livewire is loaded and listening for notify events');
+        Livewire.on('notify', notification => {
+            console.log('Notification received:', notification);
+            Toastify({
+                text: `${notification.message}\n${notification.details}`,
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                backgroundColor: notification.type === 'success' ? "green" : "orange",
+                stopOnFocus: true,
+            }).showToast();
+        });
+    });
+</script>
+@endpush

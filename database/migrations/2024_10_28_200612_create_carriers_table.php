@@ -13,15 +13,18 @@ return new class extends Migration
     {
         Schema::create('carriers', function (Blueprint $table) {
             $table->id();
-            $table->string('company_name');
+            $table->string('name');
             $table->string('address');
-            $table->string('phone');
-            $table->string('email')->unique();
-            $table->string('password');
-            $table->foreignId('membership_id')->constrained('memberships')->onDelete('cascade');            
-            $table->boolean('status')->default(true);
-            $table->string('custom_url')->unique();
-            $table->string('client_id')->unique();
+            $table->string('state');
+            $table->string('zipcode');
+            $table->string('ein_number');
+            $table->string('dot_number');
+            $table->string('mc_number')->nullable();
+            $table->string('state_dot')->nullable();
+            $table->string('ifta_account')->nullable();
+            $table->string('logo_img')->nullable();
+            $table->foreignId('id_plan')->nullable()->constrained('memberships')->onDelete('set null');
+            $table->enum('status', ['pending', 'active', 'inactive'])->default('pending');
             $table->timestamps();
         });
     }

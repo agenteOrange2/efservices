@@ -9,8 +9,18 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class MenuExport extends Component
 {
-    public $exportExcel = false;
-    public $exportPdf = false;
+    public $exportExcel;
+    public $exportPdf;
+
+    public function downloadExcel()
+    {
+        return redirect()->route($this->exportExcelRoute);
+    }
+
+    public function downloadPdf()
+    {
+        return redirect()->route($this->exportPdfRoute);
+    }
 
     public function render()
     {

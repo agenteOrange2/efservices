@@ -15,9 +15,9 @@ class GenericTable extends Component
     public $model; // Modelo dinámico
     public $columns; // Columnas de la tabla
     public $search = ''; // Campo de búsqueda
+    public $searchableFields = []; // Campos permitidos para búsqueda
     public $perPage = 10; // Resultados por página
     public $perPageOptions = [10, 20, 30, 100, 200]; // Opciones de paginación
-    public $searchableFields = []; // Campos permitidos para búsqueda
     public $filters = []; // Filtros dinámicos
     public $customFilters = []; // Configuración de filtros personalizados
     public $sortField = 'id'; // Campo para ordenamiento
@@ -35,13 +35,15 @@ class GenericTable extends Component
         'filtersUpdated' => 'applyFilters',
         'clearFilters' => 'clearFilters',
         'exportToExcel',
-        'exportToPdf'
+        'exportToPdf',
+        'search-updated' => 'updateSearch'
     ];
 
-    public function mount($model, $columns, $customFilters = [])
+    public function mount($model, $columns, $searchableFields = [], $customFilters = [])
     {
         $this->model = $model;
         $this->columns = $columns;
+        $this->searchableFields = $searchableFields;
         $this->customFilters = $customFilters;
 
         $modelInstance = new $this->model;
@@ -61,8 +63,9 @@ class GenericTable extends Component
         }
     }
 
-    public function updatingSearch()
+    public function updateSearch($search)
     {
+        $this->search = $search;
         $this->resetPage();
     }
 
@@ -77,24 +80,27 @@ class GenericTable extends Component
         foreach ($this->customFilters as $key => $filter) {
             $this->filters[$key] = $filter['default'] ?? null;
         }
-    
+
         // Reiniciar filtro de rango de fechas si existe
         if (isset($this->filters['date_range'])) {
             $this->filters['date_range'] = ['start' => null, 'end' => null];
         }
-    
+
         // Emitir evento al hijo para reiniciar filtros
         $this->dispatch('filtersUpdated', $this->filters);
-    
+
         $this->resetPage();
     }
-    
+
 
     public function applyFilters($filters)
     {
-        $this->filters = array_merge($this->filters, $filters);
-        $this->resetPage();
+        logger()->info('Filtros aplicados:', $filters);
+
+        $this->filters = $filters;
+        $this->resetPage(); // Reiniciar paginación
     }
+
 
     public function sortBy($field)
     {
@@ -104,10 +110,28 @@ class GenericTable extends Component
 
     public function deleteSingle($id)
     {
-        if ($this->deleteMethod) {
-            $this->model::findOrFail($id)->{$this->deleteMethod}();
-        }
-        $this->closeAllMenus();
+        logger()->info('deleteSingle called', ['id' => $id]); // Log antes de eliminar
+        
+        $this->model::findOrFail($id)->delete();
+        
+        logger()->info('Dispatching notify event for single delete', [
+            'type' => 'success',
+            'message' => 'Record deleted successfully!',
+            'details' => "The record with ID $id has been removed.",
+        ]); // Log antes del dispatch
+    
+        $this->dispatch('notify', [
+            'type' => 'success',
+            'message' => 'Record deleted successfully!',
+            'details' => "The record with ID $id has been removed.",
+        ]);
+        
+        logger()->info('Notify event dispatched for single delete'); // Log después del dispatch
+    }
+
+    public function closeAllMenus()
+    {
+        $this->openMenu = [];
     }
 
     public function exportToExcel()
@@ -153,13 +177,54 @@ class GenericTable extends Component
         );
     }
 
+    public function deleteSelected()
+    {
+        logger()->info('deleteSelected called', ['selected' => $this->selected]); // Log inicial
+    
+        if (count($this->selected) > 0) {
+            foreach ($this->selected as $id) {
+                logger()->info('Deleting record', ['id' => $id]); // Log antes de cada eliminación
+                $this->model::findOrFail($id)->delete();
+            }
+    
+            $deletedCount = count($this->selected);
+            $this->selected = [];
+            $this->selectAll = false;
+    
+            logger()->info('Dispatching notify event for multiple delete', [
+                'type' => 'success',
+                'message' => "$deletedCount records deleted successfully!",
+                'details' => 'The selected records have been removed.',
+            ]); // Log antes del dispatch
+    
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => "$deletedCount records deleted successfully!",
+                'details' => 'The selected records have been removed.',
+            ]);
+    
+            logger()->info('Notify event dispatched for multiple delete'); // Log después del dispatch
+        } else {
+            logger()->info('No records selected for deletion'); // Log en caso de no haber selección
+    
+            $this->dispatch('notify', [
+                'type' => 'warning',
+                'message' => 'No records selected!',
+                'details' => 'Please select at least one record to delete.',
+            ]);
+    
+            logger()->info('Notify event dispatched for no records selected'); // Log después del dispatch
+        }
+    }
+    
+    
     public function render()
     {
         $query = $this->model::query();
         $modelInstance = new $this->model;
 
         // Aplicar búsqueda
-        if ($this->search && !empty($this->searchableFields)) {
+        if (!empty($this->search) && !empty($this->searchableFields)) {
             $query->where(function (Builder $q) {
                 foreach ($this->searchableFields as $field) {
                     $q->orWhere($field, 'like', '%' . $this->search . '%');
@@ -167,16 +232,19 @@ class GenericTable extends Component
             });
         }
 
-        // Aplicar filtro de rango de fechas si está disponible
-        if (
-            !empty($this->filters['date_range']['start']) &&
-            !empty($this->filters['date_range']['end']) &&
-            $modelInstance->getConnection()->getSchemaBuilder()->hasColumn($modelInstance->getTable(), 'created_at')
-        ) {
+        // Aplicar filtros de rango de fechas
+        if (!empty($this->filters['date_range']['start']) && !empty($this->filters['date_range']['end'])) {
             $query->whereBetween('created_at', [
                 $this->filters['date_range']['start'],
                 $this->filters['date_range']['end'],
             ]);
+        }
+
+        // Aplicar otros filtros personalizados
+        foreach ($this->filters as $key => $value) {
+            if ($key !== 'date_range' && !is_null($value)) {
+                $query->where($key, $value);
+            }
         }
 
         // Aplicar filtros personalizados si existen
