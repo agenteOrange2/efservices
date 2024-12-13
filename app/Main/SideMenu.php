@@ -42,6 +42,12 @@ class SideMenu
                         'params' => [],
                         'title' => "Politics",
                     ],
+                    [
+                        'icon' => "UserSquare",
+                        'route_name' => "admin.user_carrier.index",
+                        'params' => [],
+                        'title' => "Users Carriers",
+                    ],
                 ],
             ],
             "DRIVERS MANAGEMENT",

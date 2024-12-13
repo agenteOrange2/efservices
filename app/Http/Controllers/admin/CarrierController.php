@@ -15,8 +15,9 @@ class CarrierController extends Controller
     // Mostrar todos los transportistas
     public function index()
     {
-        $carriers = Carrier::with('documents', 'managers', 'membership')->get();
-        return view('admin.carrier.index', compact('carriers'));
+        //$carriers = Carrier::with('documents', 'managers', 'membership')->get();
+        //return view('admin.carrier.index', compact('carriers'));
+        return view('admin.carrier.index');
     }
 
     /**
@@ -25,9 +26,11 @@ class CarrierController extends Controller
     // Mostrar el formulario para crear un nuevo transportista
     public function create()
     {
-        $memberships = Membership::all(); // Obtener todos los planes
-        return view('admin.carriers.create', compact('memberships'));
+
+        $memberships = Membership::where('status', 1)->select('id', 'name')->get(); // Obtener todos los planes        
+        return view('admin.carrier.create', compact('memberships'));
     }
+
 
     /**
      * Store a newly created resource in storage.
@@ -35,6 +38,7 @@ class CarrierController extends Controller
     // Guardar un nuevo transportista
     public function store(Request $request)
     {
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:255',
@@ -47,16 +51,27 @@ class CarrierController extends Controller
             'ifta_account' => 'nullable|string|max:255',
             'logo_img' => 'nullable|image|max:2048',
             'id_plan' => 'required|exists:memberships,id',
-            'status' => 'required|in:pending,active,inactive',
+            'status' => 'required|integer|in:0,1,3',
         ]);
 
-        if ($request->hasFile('logo_img')) {
-            $validated['logo_img'] = $request->file('logo_img')->store('logos', 'public');
+        $carrier = Carrier::create($validated);
+
+        if ($request->hasFile('logo_carrier')) {
+            $fileName = strtolower(str_replace(' ', '_', $carrier->name)) . '.webp'; // Genera el nombre basado en el nombre del plan
+
+            $carrier->addMediaFromRequest('logo_carrier')
+                ->usingFileName($fileName) // Usa el nombre personalizado
+                ->toMediaCollection('logo_carrier');
         }
 
-        Carrier::create($validated);
-
-        return redirect()->route('admin.carriers.index')->with('success', 'Carrier created successfully!');
+        // Mensaje dinámico para la notificación
+        return redirect()
+            ->route('admin.carrier.edit', $carrier->id)
+            ->with('notification', [
+                'type' => 'success',
+                'message' => 'Carrier created successfully!',
+                'details' => 'The Carrier data has been saved correctly.',
+            ]);
     }
 
     /**
@@ -65,9 +80,26 @@ class CarrierController extends Controller
     // Mostrar el formulario para editar un transportista
     public function edit(Carrier $carrier)
     {
-        $memberships = Membership::all(); // Obtener todos los planes
-        return view('admin.carriers.edit', compact('carrier', 'memberships'));
+        $memberships = Membership::where('status', 1)->select('id', 'name')->get(); // Solo carriers activos
+        return view('admin.carrier.edit', compact('carrier', 'memberships'));
     }
+
+    public function users(Carrier $carrier)
+    {
+        // Obtenemos los registros de UserCarrier asociados al Carrier
+        $userCarriers = $carrier->userCarriers()->paginate(10);
+    
+        return view('admin.carrier.tabs.users', compact('carrier', 'userCarriers'));
+    }
+
+    /*
+public function documents(Carrier $carrier)
+{
+    $documents = $carrier->documents()->paginate(10);
+
+    return view('admin.carrier.tabs.documents', compact('carrier', 'documents'));
+}
+    */
 
     /**
      * Update the specified resource in storage.
@@ -87,21 +119,53 @@ class CarrierController extends Controller
             'ifta_account' => 'nullable|string|max:255',
             'logo_img' => 'nullable|image|max:2048',
             'id_plan' => 'required|exists:memberships,id',
-            'status' => 'required|in:pending,active,inactive',
+            'status' => 'required|integer|in:0,1,3',
         ]);
 
-        if ($request->hasFile('logo_img')) {
-            $validated['logo_img'] = $request->file('logo_img')->store('logos', 'public');
+
+        if ($request->hasFile('logo_carrier')) {
+            $fileName = strtolower(str_replace(' ', '_', $carrier->name)) . '.webp';
+
+            // Limpiar la colección anterior
+            $carrier->clearMediaCollection('logo_carrier');
+
+            // Guardar la nueva foto con el nombre personalizado
+            $carrier->addMediaFromRequest('logo_carrier')
+                ->usingFileName($fileName)
+                ->toMediaCollection('logo_carrier');
         }
 
         $carrier->update($validated);
 
-        return redirect()->route('admin.carriers.index')->with('success', 'Carrier updated successfully!');
+        // Mensaje dinámico para la notificación
+        return redirect()
+            ->route('admin.carrier.edit', $carrier->id)
+            ->with('notification', [
+                'type' => 'success',
+                'message' => 'Carrier updated successfully!',
+                'details' => 'The Updated data has been saved correctly.',
+            ]);
     }
 
-        /**
+    /**
      * Remove the specified resource from storage.
      */
+
+    public function deletePhoto(Carrier $carrier)
+    {
+        $media = $carrier->getFirstMedia('logo_carrier');
+
+        if ($media) {
+            $media->delete(); // Elimina la foto
+            return response()->json([
+                'message' => 'Photo deleted successfully.',
+                'defaultPhotoUrl' => asset('build/default_profile.png'), // Retorna la foto predeterminada
+            ]);
+        }
+
+        return response()->json(['message' => 'No photo to delete.'], 404);
+    }
+
 
     // Eliminar un transportista
     public function destroy(Carrier $carrier)
@@ -110,6 +174,4 @@ class CarrierController extends Controller
 
         return redirect()->route('admin.carriers.index')->with('success', 'Carrier deleted successfully!');
     }
-
-
 }

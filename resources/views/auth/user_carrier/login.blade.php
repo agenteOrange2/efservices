@@ -19,21 +19,17 @@
                         </div>
                     </div>
                 </div>
-
-
-
-
                 {{-- JETSTREAM --}}
 
                 <div class="mt-10">
-                    <div class="text-2xl font-medium">Sign In</div>
+                    <div class="text-2xl font-medium">Sign In Carrier EF Services</div>
                     <div class="mt-2.5 text-slate-600">
                         Don't have an account?
                         <a class="font-medium text-primary" href="">
                             Sign Up
                         </a>
                     </div>
-                    <x-base.alert
+                    {{-- <x-base.alert
                         class="my-7 flex items-center rounded-[0.6rem] border-primary/20 bg-primary/5 px-4 py-3 leading-[1.7]"
                         variant="outline-primary">
                         <div class="">
@@ -48,10 +44,11 @@
                         <x-base.alert.dismiss-button class="btn-close text-primary">
                             <x-base.lucide class="w-5 h-5" icon="X" />
                         </x-base.alert.dismiss-button>
-                    </x-base.alert>
+                    </x-base.alert> --}}
 
-                    <form method="POST" action="{{ route('login') }}">
+                    <form method="POST" action="{{ route('user_carrier.login') }}">
                         @csrf
+
                         <x-validation-errors class="mb-4" />
 
                         @session('status')
@@ -59,6 +56,7 @@
                                 {{ $value }}
                             </div>
                         @endsession
+
                         <div>
                             <x-label for="email" value="{{ __('Email') }}" />
                             <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-3.5"
@@ -74,21 +72,6 @@
                                 name="password" required autocomplete="current-password" />
                         </div>
 
-                        <div class="flex mt-4 text-xs text-slate-500 sm:text-sm">
-                            <div class="flex items-center mr-auto">
-                                <label for="remember_me" class="flex items-center">
-                                    <x-base.form-check.input class="mr-2.5 border" id="remember-me" type="checkbox"
-                                        name="remember" />
-                                    <label class="cursor-pointer select-none">{{ __('Remember me') }}</label>
-                                </label>
-                            </div>
-
-                            @if (Route::has('password.request'))
-                                <a href="{{ route('password.request') }}">
-                                    {{ __('Forgot your password?') }}
-                                </a>
-                            @endif
-                        </div>
                         <div class="mt-5 text-center xl:mt-8 xl:text-left">
                             <x-base.button
                                 class="w-full bg-gradient-to-r from-theme-1/70 to-theme-2/70 py-3.5 xl:mr-3 text-white">
@@ -96,6 +79,47 @@
                             </x-base.button>
                         </div>
                     </form>
+
+                    {{-- <form method="POST" action="{{ route('login') }}">
+                                @csrf
+
+                                <div>
+                                    <x-label for="email" value="{{ __('Email') }}" />
+                                    <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-3.5"
+                                        placeholder="user@efservices.com" id="email" class="block mt-1 w-full"
+                                        type="email" name="email" :value="old('email')" required autofocus
+                                        autocomplete="username" />
+                                </div>
+
+                                <div class="mt-4">
+                                    <x-label for="password" value="{{ __('Password') }}" />
+                                    <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-3.5"
+                                        placeholder="************" id="password" class="block mt-1 w-full"
+                                        type="password" name="password" required autocomplete="current-password" />
+                                </div>
+
+                                <div class="flex mt-4 text-xs text-slate-500 sm:text-sm">
+                                    <div class="flex items-center mr-auto">
+                                        <label for="remember_me" class="flex items-center">
+                                            <x-base.form-check.input class="mr-2.5 border" id="remember-me"
+                                                type="checkbox" name="remember" />
+                                            <label class="cursor-pointer select-none">{{ __('Remember me') }}</label>
+                                        </label>
+                                    </div>
+
+                                    @if (Route::has('password.request'))
+                                        <a href="{{ route('password.request') }}">
+                                            {{ __('Forgot your password?') }}
+                                        </a>
+                                    @endif
+                                </div>
+                                <div class="mt-5 text-center xl:mt-8 xl:text-left">
+                                    <x-base.button
+                                        class="w-full bg-gradient-to-r from-theme-1/70 to-theme-2/70 py-3.5 xl:mr-3 text-white">
+                                        {{ __('Log in') }}
+                                    </x-base.button>
+                                </div>
+                            </form> --}}
                 </div>
 
             </div>

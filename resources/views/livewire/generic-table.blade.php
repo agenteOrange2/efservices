@@ -98,50 +98,54 @@
                             class="shadow-sm border-slate-200 cursor-pointer rounded transition-all duration-100 ease-in-out focus:ring-4 focus:ring-offset-0 focus:ring-primary focus:ring-opacity-20">
                     </td>
                     @foreach ($columns as $column)
-                        <td class="px-5 border-b border-dashed py-4">
-                            @if ($column === 'status')
-                                @if ($item[$column] == 1)
-                                    <!-- Status Activo -->
-                                    <div class="flex items-center justify-center text-success text-start">
-                                        <svg class="h-4 w-4 " xmlns="http://www.w3.org/2000/svg" width="24"
-                                            height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                            data-lucide="database">
-                                            <ellipse cx="12" cy="5" rx="9" ry="3">
-                                            </ellipse>
-                                            <path d="M3 5V19A9 3 0 0 0 21 19V5"></path>
-                                            <path d="M3 12A9 3 0 0 0 21 12"></path>
-                                        </svg>
-                                        <div class="ml-1 5 whitespace-nowrap">
-                                            Active
-                                        </div>
-
-                                    </div>
-                                @else
-                                    <!-- Status Inactivo -->
-                                    <div class="flex items-center justify-center text-danger text-start">
-                                        <svg class="h-4 w-4 " xmlns="http://www.w3.org/2000/svg" width="24"
-                                            height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                            data-lucide="database">
-                                            <ellipse cx="12" cy="5" rx="9" ry="3">
-                                            </ellipse>
-                                            <path d="M3 5V19A9 3 0 0 0 21 19V5"></path>
-                                            <path d="M3 12A9 3 0 0 0 21 12"></path>
-                                        </svg>
-                                        <div class="ml-1 5 whitespace-nowrap">
-                                            Inactive
-                                        </div>
-                                    </div>
-                                @endif
-                            @elseif (in_array($column, ['created_at', 'updated_at']) && $item[$column])
-                                <div class="whitespace-nowrap">
-                                    {{ \Carbon\Carbon::parse($item[$column])->format('d/m/Y') }}
+                    <td class="px-5 border-b border-dashed py-4">
+                        @if ($column === 'status')
+                            @if ($item[$column] == 1)
+                                <!-- Status Activo -->
+                                <div class="flex items-center justify-start text-success text-start">
+                                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                                        <path d="M3 5V19A9 3 0 0 0 21 19V5"></path>
+                                        <path d="M3 12A9 3 0 0 0 21 12"></path>
+                                    </svg>
+                                    <div class="ml-1 whitespace-nowrap">Active</div>
                                 </div>
-                            @else
-                                {{ $item[$column] }}
+                            @elseif ($item[$column] == 0)
+                                <!-- Status Inactivo -->
+                                <div class="flex items-center justify-start text-danger text-start">
+                                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                                        <path d="M3 5V19A9 3 0 0 0 21 19V5"></path>
+                                        <path d="M3 12A9 3 0 0 0 21 12"></path>
+                                    </svg>
+                                    <div class="ml-1 whitespace-nowrap">Inactive</div>
+                                </div>
+                            @elseif ($item[$column] == 3)
+                                <!-- Status Pending -->
+                                <div class="flex items-center justify-start text-warning text-start">
+                                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                                        <path d="M3 5V19A9 3 0 0 0 21 19V5"></path>
+                                        <path d="M3 12A9 3 0 0 0 21 12"></path>
+                                    </svg>
+                                    <div class="ml-1 whitespace-nowrap">Pending</div>
+                                </div>
                             @endif
-                        </td>
+                        @elseif (in_array($column, ['created_at', 'updated_at']) && $item[$column])
+                            <div class="whitespace-nowrap">
+                                {{ \Carbon\Carbon::parse($item[$column])->format('d/m/Y') }}
+                            </div>
+                        @else
+                            {{ $item[$column] }}
+                        @endif
+                    </td>
+                    
                     @endforeach
 
                     <td class="relative border-b border-dashed py-4 px-4">

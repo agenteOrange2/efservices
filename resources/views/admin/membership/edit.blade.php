@@ -39,8 +39,7 @@
                                         id="image_membership_input"
                                         currentPhotoUrl="{{ $membership->getFirstMediaUrl('image_membership') ?? asset('build/default_profile.png') }}"
                                         defaultPhotoUrl="{{ asset('build/default_profile.png') }}"
-                                        deleteUrl="{{ route('admin.membership.delete-photo', ['membership' => $membership->id]) }}" />
-                                    
+                                        deleteUrl="{{ route('admin.membership.delete-photo', ['membership' => $membership->id]) }}" />                                    
                                     </div>
                                 </div>
                             </div>

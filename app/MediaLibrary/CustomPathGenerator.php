@@ -19,6 +19,14 @@ class CustomPathGenerator implements PathGenerator
             return "memberships/{$model->id}/";
         }
 
+        if ($model instanceof \App\Models\Carrier) {
+            return "carriers/{$model->id}/";
+        }
+
+        if ($model instanceof \App\Models\UserCarrier) {
+            return "user_carriers/{$model->id}/";
+        }
+
         return "others/{$model->id}/";
     }
 

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_driver', function (Blueprint $table) {
+        Schema::create('user_drivers', function (Blueprint $table) {
             $table->id(); // unsignedBigInteger
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); // unsignedBigInteger
             $table->string('license_number')->nullable(); // Número de licencia del conductor
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_driver');
+        Schema::dropIfExists('user_drivers');
     }
 };

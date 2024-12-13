@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('ifta_account')->nullable();
             $table->string('logo_img')->nullable();
             $table->foreignId('id_plan')->nullable()->constrained('memberships')->onDelete('set null');
-            $table->enum('status', ['pending', 'active', 'inactive'])->default('pending');
+            $table->unsignedTinyInteger('status')->default(3); // 0: inactive, 1: active, 3: pending
             $table->timestamps();
         });
     }

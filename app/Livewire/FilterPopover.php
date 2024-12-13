@@ -12,8 +12,8 @@ class FilterPopover extends Component
     ];
     public $filterOptions = [];
     public $openPopover = false;
-    
-    protected $listeners = ['filtersUpdated','updateDateRange' => 'updateDateRange'];
+
+    protected $listeners = ['filtersUpdated', 'updateDateRange' => 'updateDateRange'];
 
     public function mount($filterOptions = [])
     {
@@ -38,18 +38,18 @@ class FilterPopover extends Component
     public function updateDateRange($dates)
     {
         logger()->info('Datos recibidos en updateDateRange:', $dates);
-    
+
         if (isset($dates['start'], $dates['end'])) {
             $this->filters['date_range']['start'] = $dates['start'];
             $this->filters['date_range']['end'] = $dates['end'];
-    
+
             // Emitir evento para que la tabla se actualice
             $this->dispatch('filtersUpdated', $this->filters);
         } else {
             $this->addError('date_range', 'Invalid date range provided.');
         }
     }
-    
+
     public function clearFilters()
     {
         $this->filters = [
@@ -67,13 +67,19 @@ class FilterPopover extends Component
     private function transformFilters()
     {
         $transformed = $this->filters;
-
+    
         if (isset($this->filters['status'])) {
-            $transformed['status'] = $this->filters['status'] === 'active' ? 1 : ($this->filters['status'] === 'inactive' ? 0 : null);
+            $transformed['status'] = match ($this->filters['status']) {
+                'inactive' => 0,
+                'active' => 1,
+                'pending' => 3,
+                default => null,
+            };
         }
-
+    
         return $transformed;
     }
+    
 
     public function render()
     {

@@ -3,60 +3,33 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable; // Para autenticar
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 
-class Carrier extends Model implements HasMedia
+class UserCarrier extends Authenticatable implements HasMedia
 {
-    use HasFactory, InteractsWithMedia;
-
+    use HasFactory, Notifiable, InteractsWithMedia;
 
     protected $fillable = [
+        'carrier_id',
         'name',
-        'address',
-        'state',
-        'zipcode',
-        'ein_number',
-        'dot_number',
-        'mc_number',
-        'state_dot',
-        'ifta_account',
-        'logo_img',
-        'id_plan',
+        'email',
+        'password',
+        'phone',
+        'job_position',
         'status',
+        'photo',
     ];
 
     // Constantes para los valores de status
     public const STATUS_INACTIVE = 0;
     public const STATUS_ACTIVE = 1;
     public const STATUS_PENDING = 3;
-
-    // Relación con usuarios (manager)
-    public function managers()
-    {
-        return $this->belongsToMany(User::class, 'user_carrier')
-            ->withPivot('status')
-            ->withTimestamps();
-    }
-
-    // Relación con documentos
-    public function documents()
-    {
-        return $this->hasMany(CarrierDocument::class);
-    }
-
-    public function userCarriers()
-    {
-        return $this->hasMany(UserCarrier::class, 'carrier_id');
-    }
-
-    public function membership()
-    {
-        return $this->belongsTo(Membership::class, 'id_plan');
-    }
 
     // Método de acceso para obtener el nombre del status
     public function getStatusNameAttribute(): string
@@ -69,10 +42,26 @@ class Carrier extends Model implements HasMedia
         };
     }
 
+    // Relación con Carrier
+    public function carrier()
+    {
+        return $this->belongsTo(Carrier::class, 'carrier_id');
+    }
+
+    // Encriptar contraseña automáticamente
+    protected static function booted()
+    {
+        static::creating(function ($userCarrier) {
+            if ($userCarrier->isDirty('password')) {
+                $userCarrier->password = bcrypt($userCarrier->password);
+            }
+        });
+    }
+
     //Media library
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('logo_carrier')
+        $this->addMediaCollection('profile_photo_carrier')
             ->useDisk('public') // Asegúrate de usar el disco público
             ->singleFile(); // Solo permite un archivo por colección
     }
@@ -85,7 +74,7 @@ class Carrier extends Model implements HasMedia
     }
     public function getMediaDirectoryAttribute(): string
     {
-        return "carrier/{$this->id}/";
+        return "userCarrier/{$this->id}/";
     }
 
     public function getMediaFileNameAttribute(): string

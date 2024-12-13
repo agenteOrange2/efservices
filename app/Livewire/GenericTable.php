@@ -254,7 +254,7 @@ class GenericTable extends Component
                 $modelInstance->getConnection()->getSchemaBuilder()->hasColumn($modelInstance->getTable(), $key)
             ) {
                 // Si es el filtro de `status`, convertir a 0 o 1
-                if ($key === 'status' && in_array($this->filters[$key], [0, 1], true)) {
+                if ($key === 'status' && in_array($this->filters[$key], [0, 1, 3], true)) {
                     $query->where($key, $this->filters[$key]);
                 } else {
                     $query->where($key, $this->filters[$key]);

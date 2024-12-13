@@ -242,6 +242,5 @@
 
 @pushOnce('scripts')
     @vite('resources/js/app.js') {{-- Este debe ir primero --}}
-    @vite('resources/js/pages/notification.js')
-    @vite('resources/js/components/user/image-preview.js')
+    @vite('resources/js/pages/notification.js')    
 @endPushOnce

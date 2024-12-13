@@ -78,7 +78,7 @@ class User extends Authenticatable implements HasMedia
     public function carriers()
     {
         return $this->belongsToMany(Carrier::class, 'user_carrier')
-            ->withPivot('status')
+        ->withPivot('phone', 'job_position', 'photo', 'status')
             ->withTimestamps();
     }
 
@@ -88,6 +88,7 @@ class User extends Authenticatable implements HasMedia
         return $this->hasOne(Driver::class);
     }
 
+    //Registro de Media Library
 
     public function registerMediaCollections(): void
     {

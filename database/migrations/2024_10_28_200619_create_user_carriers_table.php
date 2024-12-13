@@ -11,14 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_carrier', function (Blueprint $table) {
+        Schema::create('user_carriers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Relación con users
             $table->foreignId('carrier_id')->constrained()->onDelete('cascade'); // Relación con carriers
-            $table->string('phone'); // Teléfono del usuario transportista
+            $table->string('name'); // Nombre del user_carrier
+            $table->string('email')->unique(); // Email único
+            $table->string('password'); // Contraseña encriptada
+            $table->string('phone'); // Teléfono
             $table->string('job_position'); // Cargo o puesto
-            $table->string('photo')->nullable(); // Foto del usuario transportista
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending'); // Estado
+            $table->string('photo')->nullable(); // Foto del user_carrier
+            $table->unsignedTinyInteger('status')->default(3); // 0: inactive, 1: active, 3: pending
             $table->timestamps();
         });
     }
@@ -28,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_carrier');
+        Schema::dropIfExists('user_carriers');
     }
 };

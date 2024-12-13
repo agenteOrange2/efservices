@@ -1,3 +1,12 @@
+<form method="POST" action="{{ route('user_carrier.login') }}">
+    @csrf
+    <input type="email" name="email" placeholder="Email" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <button type="submit">Login</button>
+</form>
+
+
+
 <x-guest-layout>
 
     <div
@@ -12,28 +21,25 @@
                     <div
                         class="relative flex h-[50px] w-[50px] items-center justify-center rounded-[0.6rem] bg-white bg-gradient-to-b from-theme-1/90 to-theme-2/90">
                         <div class="relative h-[26px] w-[26px] -rotate-45 [&_div]:bg-white">
-                            <div class="absolute inset-y-0 left-0 my-auto h-[75%] w-[20%] rounded-full opacity-50"></div>
+                            <div class="absolute inset-y-0 left-0 my-auto h-[75%] w-[20%] rounded-full opacity-50">
+                            </div>
                             <div class="absolute inset-0 m-auto h-[120%] w-[20%] rounded-full"></div>
                             <div class="absolute inset-y-0 right-0 my-auto h-[75%] w-[20%] rounded-full opacity-50">
                             </div>
                         </div>
                     </div>
                 </div>
-
-
-
-
                 {{-- JETSTREAM --}}
 
                 <div class="mt-10">
-                    <div class="text-2xl font-medium">Sign In</div>
+                    <div class="text-2xl font-medium">Sign In Carrier EF Services</div>
                     <div class="mt-2.5 text-slate-600">
                         Don't have an account?
                         <a class="font-medium text-primary" href="">
                             Sign Up
                         </a>
                     </div>
-                    <x-base.alert
+                    {{-- <x-base.alert
                         class="my-7 flex items-center rounded-[0.6rem] border-primary/20 bg-primary/5 px-4 py-3 leading-[1.7]"
                         variant="outline-primary">
                         <div class="">
@@ -48,9 +54,8 @@
                         <x-base.alert.dismiss-button class="btn-close text-primary">
                             <x-base.lucide class="w-5 h-5" icon="X" />
                         </x-base.alert.dismiss-button>
-                    </x-base.alert>
-
-                    <form method="POST" action="{{ route('login') }}">
+                    </x-base.alert> --}}
+                    <form method="POST" action="{{ route('user_driver.login') }}">
                         @csrf
                         <x-validation-errors class="mb-4" />
 
@@ -74,21 +79,6 @@
                                 name="password" required autocomplete="current-password" />
                         </div>
 
-                        <div class="flex mt-4 text-xs text-slate-500 sm:text-sm">
-                            <div class="flex items-center mr-auto">
-                                <label for="remember_me" class="flex items-center">
-                                    <x-base.form-check.input class="mr-2.5 border" id="remember-me" type="checkbox"
-                                        name="remember" />
-                                    <label class="cursor-pointer select-none">{{ __('Remember me') }}</label>
-                                </label>
-                            </div>
-
-                            @if (Route::has('password.request'))
-                                <a href="{{ route('password.request') }}">
-                                    {{ __('Forgot your password?') }}
-                                </a>
-                            @endif
-                        </div>
                         <div class="mt-5 text-center xl:mt-8 xl:text-left">
                             <x-base.button
                                 class="w-full bg-gradient-to-r from-theme-1/70 to-theme-2/70 py-3.5 xl:mr-3 text-white">
@@ -96,6 +86,7 @@
                             </x-base.button>
                         </div>
                     </form>
+
                 </div>
 
             </div>
