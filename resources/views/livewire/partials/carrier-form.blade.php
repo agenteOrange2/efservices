@@ -20,7 +20,7 @@
                         <div class="mt-3 w-full flex-1 xl:mt-0">
                             <div x-data="{
                                 photoPreview: null,
-                                originalPhoto: '{{ $this->getLogoUrl() }}',
+                                originalPhoto: '{{ $originalPhotoUrl ?? asset('build/default_profile.png') }}',
                                 defaultPhoto: '{{ asset('build/default_profile.png') }}',
                                 updatePreview(event) {
                                     const file = event.target.files[0];
@@ -37,6 +37,7 @@
                                     this.photoPreview = null;
                                     this.originalPhoto = this.defaultPhoto;
                                 }
+                            
                             }" class="flex items-center">
                                 <!-- Imagen actual o vista previa -->
                                 <div

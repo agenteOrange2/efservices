@@ -56,9 +56,15 @@ Route::resource('roles', RoleController::class);
 
 Route::resource('carrier', CarrierController::class);
 
-Route::get('carriers', CarrierManager::class)->name('carriers.index');
-Route::get('carriers/create', CarrierManager::class)->name('carrier.create');
-Route::get('carriers/{carrier}/edit', CarrierManager::class)->name('carrier.edit');
+
+
+
+
+Route::get('carrier', CarrierManager::class)->name('carrier.index');
+Route::get('carrier/create/{slug}', CarrierManager::class)->name('carrier.create');
+Route::get('carrier/{slug}/edit', CarrierManager::class)->name('carrier.edit');
+
+
 Route::get('carriers/{carrier}/users', UserManager::class)->name('carrier.users');
 Route::post('carrier/{carrier}/delete-photo', [CarrierController::class, 'deletePhoto'])->name('carrier.delete-photo');
 Route::get('carriers/{carrier}/documents', DocumentManager::class)->name('carrier.documents');

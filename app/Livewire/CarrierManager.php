@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Carrier;
 use Livewire\Component;
 use App\Models\Membership;
+use Livewire\Attributes\Url;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Log;
@@ -13,11 +14,16 @@ class CarrierManager extends Component
 {
     use WithPagination, WithFileUploads;
 
+    #[Url(history: true)] // Sincroniza con la URL
+    public $carrierId = null; // ID para editar o null para crear
+
+    #[Url(history: true)] // Sincroniza con la URL    
+    public $isCreating = false; // Modo creación/edición
+
     public $search = '';
-    public $carrier; // Datos del carrier
+    public $carrier = []; // Datos del carrier
     public $plans; // Planes de membresía
     public $logoFile; // Archivo subido para el logo
-    public $isCreating = false; // Modo creación/edición
     public $activeTab = 'carrier'; // Tab activo
 
     protected $rules = [
@@ -35,10 +41,42 @@ class CarrierManager extends Component
         'logoFile' => 'nullable|image|max:2048',
     ];
 
-    public function mount()
+    public function mount($slug = null)
     {
-        $this->resetCarrier();
         $this->plans = Membership::all();
+    
+        if ($slug) {
+            if (request()->routeIs('admin.carrier.edit')) {
+                // Modo edición
+                $carrier = Carrier::where('slug', $slug)->first();
+                if ($carrier) {
+                    $this->carrierId = $carrier->id;
+                    $this->carrier = $carrier->toArray();
+                    $this->isCreating = true;
+                } else {
+                    session()->flash('error', 'Carrier not found.');
+                    return redirect()->route('admin.carrier.index');
+                }
+            } elseif (request()->routeIs('admin.carrier.create')) {
+                // Modo creación
+                $this->isCreating = true;
+                $this->resetCarrier();
+            }
+        }
+    }
+    
+
+    private function loadCarrier($carrierId)
+    {
+        $carrier = Carrier::find($carrierId);
+
+        if ($carrier) {
+            $this->carrier = $carrier->toArray();
+        } else {
+            session()->flash('error', 'Carrier not found.');
+            $this->resetCarrier();
+            $this->isCreating = false;
+        }
     }
 
     public function updatedSearch()
@@ -48,44 +86,49 @@ class CarrierManager extends Component
 
     public function createCarrier()
     {
-        $this->resetCarrier();
         $this->isCreating = true;
-        $this->activeTab = 'carrier';
+        $this->carrierId = null;
+        $this->resetCarrier();
     }
 
-    public function editCarrier(Carrier $carrier)
+    public function editCarrier($carrierId)
     {
-        $this->carrier = $carrier->toArray();
+        $this->carrierId = $carrierId;
         $this->isCreating = true;
-        $this->activeTab = 'carrier';
+        $this->loadCarrier($carrierId);
     }
 
     public function saveCarrier()
     {
         $this->validate();
-
-        $carrier = isset($this->carrier['id'])
-            ? Carrier::findOrFail($this->carrier['id'])
+    
+        $carrier = $this->carrierId
+            ? Carrier::findOrFail($this->carrierId)
             : new Carrier();
-
+    
         $carrier->fill($this->carrier);
+    
+        // Generar slug único para el carrier
+        if (!$this->carrierId) {
+            $carrier->slug = strtolower(str_replace(' ', '-', $carrier->name)) . '-' . uniqid();
+        }
+    
         $carrier->save();
-
+    
         if ($this->logoFile) {
             $carrier->clearMediaCollection('logo_carrier');
-            $fileName = strtolower(str_replace(' ', '_', $carrier->name)) . '.webp';
             $carrier->addMedia($this->logoFile->getRealPath())
-                ->usingFileName($fileName)
+                ->usingFileName(strtolower(str_replace(' ', '_', $carrier->name)) . '.webp')
                 ->toMediaCollection('logo_carrier');
         }
-
-        Log::info('Current Carrier:', ['carrier' => $this->carrier]);
-        Log::info('Logo File:', ['logoFile' => $this->logoFile ? $this->logoFile->getRealPath() : null]);
-
-        session()->flash('success', isset($this->carrier['id']) ? 'Carrier updated successfully!' : 'Carrier created successfully!');
-        $this->resetCarrier();
-        $this->isCreating = false;
+    
+        session()->flash('success', $this->carrierId ? 'Carrier updated successfully!' : 'Carrier created successfully!');
+    
+        // Redirigir a la URL semántica de edición
+        return redirect()->route('admin.carrier.edit', ['slug' => $carrier->slug]);
     }
+    
+    
 
 
     public function getLogoUrl()
@@ -93,20 +136,19 @@ class CarrierManager extends Component
         if (isset($this->carrier['id'])) {
             $carrier = Carrier::find($this->carrier['id']);
             if ($carrier) {
-                return $carrier->getFirstMediaUrl('logo_carrier') ?: null;
+                return $carrier->getFirstMediaUrl('logo_carrier') ?: asset('build/default_profile.png');
             }
         }
-        return null;
+        return asset('build/default_profile.png'); // Retorna un valor predeterminado si no hay imagen
     }
+    
 
     public function deletePhoto()
     {
-        if (isset($this->carrier['id'])) {
-            $carrier = Carrier::findOrFail($this->carrier['id']);
-    
-            // Eliminar la colección de imágenes
+        if ($this->carrierId) {
+            $carrier = Carrier::findOrFail($this->carrierId);
             $carrier->clearMediaCollection('logo_carrier');
-    
+            $this->logoFile = null;
             session()->flash('success', 'Logo deleted successfully!');
         }
     }
@@ -133,6 +175,7 @@ class CarrierManager extends Component
             'status' => Carrier::STATUS_PENDING,
         ];
         $this->logoFile = null;
+        $this->carrierId = null;
     }
 
     public function render()
@@ -141,6 +184,10 @@ class CarrierManager extends Component
             'carriers' => Carrier::query()
                 ->when($this->search, fn($query) => $query->where('name', 'like', "%{$this->search}%"))
                 ->paginate(10),
-        ]);
+            'originalPhotoUrl' => $this->getLogoUrl(), // Aquí se pasa la URL
+        ])->layout('livewire.partials.carrier-form'); // Apunta al layout correcto
     }
+    
+
+    
 }
