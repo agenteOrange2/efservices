@@ -73,9 +73,6 @@ class CarrierController extends Controller
     
     }
     
-    
-
-
     /**
      * Generar documentos base para el carrier basado en los tipos predefinidos.
      */
@@ -89,9 +86,22 @@ class CarrierController extends Controller
                 'document_type_id' => $type->id,
                 'filename' => 'placeholder.pdf', // Asignar un valor predeterminado
                 'status' => CarrierDocument::STATUS_PENDING,
+                'date' => now(),
             ]);
         }
     }
+
+    public function documents(Carrier $carrier)
+{
+    // Obtener documentos relacionados al Carrier
+    $documents = CarrierDocument::where('carrier_id', $carrier->id)
+        ->with('documentType') // Incluye el tipo de documento
+        ->get();
+
+    // Renderiza la vista con los datos
+    return view('admin.carrier.documents.index', compact('carrier', 'documents'));
+}
+
     
 
     /**

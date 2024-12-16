@@ -23,32 +23,39 @@
                     <ul class="border-b border-slate-200 w-full flex">
                         <!-- Tab Carrier -->
                         <li class="visible:outline-none flex-1 -mb-px">
-                            <a class="cursor-pointer block px-3 py-2 text-slate-600 transition-colors border border-transparent rounded-t-md [&.active]:bg-white [&.active]:border-slate-200 [&.active]:border-b-transparent [&.active]:font-medium [&.active]:text-slate-700 [&.active]:dark:text-white [&.active]:dark:bg-transparent [&.active]:dark:border-t-darkmode-400 [&.active]:dark:border-b-darkmode-600 [&.active]:dark:border-x-darkmode-400 [&:not(.active)]:hover:bg-slate-100 [&:not(.active)]:dark:hover:bg-darkmode-400 [&:not(.active)]:dark:hover:border-transparent active w-full py-2 {{ request()->routeIs('carrier.edit') ? 'active' : '' }}"
-                                href="{{ isset($carrier) ? route('admin.carrier.edit', $carrier->id) : route('carrier.create') }}">
+                            <a class="cursor-pointer block px-3 py-2 text-slate-600 transition-colors border border-transparent rounded-t-md
+                                {{ request()->routeIs('admin.carrier.edit') ? 'active bg-white border-slate-200 border-b-transparent font-medium text-slate-700' : '' }} "
+                                href="{{ route('admin.carrier.edit', $carrier->slug) }}">
                                 Carrier
                             </a>
                         </li>
-                
+
                         <!-- Tab Users -->
                         <li class="visible:outline-none flex-1 -mb-px">
-                            <a class="cursor-pointer block px-3 py-2 text-slate-600 transition-colors border border-transparent rounded-t-md [&.active]:bg-white [&.active]:border-slate-200 [&.active]:border-b-transparent [&.active]:font-medium [&.active]:text-slate-700 [&.active]:dark:text-white [&.active]:dark:bg-transparent [&.active]:dark:border-t-darkmode-400 [&.active]:dark:border-b-darkmode-600 [&.active]:dark:border-x-darkmode-400 [&:not(.active)]:hover:bg-slate-100 [&:not(.active)]:dark:hover:bg-darkmode-400 [&:not(.active)]:dark:hover:border-transparent {{ isset($carrier) ? '' : 'disabled pointer-events-none' }}"
-                                href="{{ isset($carrier) ? route('admin.carrier.users', $carrier->id) : '#' }}">
+                            <a class="cursor-pointer block px-3 py-2 text-slate-600 transition-colors border border-transparent rounded-t-md
+                                {{ request()->routeIs('admin.carrier.user_carriers.*') ? 'active bg-white border-slate-200 border-b-transparent font-medium text-slate-700' : '' }}
+                            "
+                                href="{{ route('admin.carrier.user_carriers.index', $carrier->slug) }}">
                                 Users
                             </a>
                         </li>
-                
+
                         <!-- Tab Documents -->
                         <li class="visible:outline-none flex-1 -mb-px">
-                            <a class="cursor-pointer block px-3 py-2 text-slate-600 transition-colors border border-transparent rounded-t-md [&.active]:bg-white [&.active]:border-slate-200 [&.active]:border-b-transparent [&.active]:font-medium [&.active]:text-slate-700 [&.active]:dark:text-white [&.active]:dark:bg-transparent [&.active]:dark:border-t-darkmode-400 [&.active]:dark:border-b-darkmode-600 [&.active]:dark:border-x-darkmode-400 [&:not(.active)]:hover:bg-slate-100 [&:not(.active)]:dark:hover:bg-darkmode-400 [&:not(.active)]:dark:hover:border-transparent {{ isset($carrier) ? '' : 'disabled pointer-events-none' }}"
-                                href="{{ isset($carrier) ? route('admin.carrier.documents', $carrier->id) : '#' }}">
+                            <a class="cursor-pointer block px-3 py-2 text-slate-600 transition-colors border border-transparent rounded-t-md
+                            [&.active]:bg-white [&.active]:border-slate-200 [&.active]:border-b-transparent [&.active]:font-medium [&.active]:text-slate-700
+                            [&:not(.active)]:hover:bg-slate-100"
+                            href="{{ route('admin.carrier.admin.user_documents.index', $carrier->slug) }}">
                                 Documents
                             </a>
                         </li>
+                        
+                        
                     </ul>
                 </div>
-                
+
                 <div class="box box--stacked flex flex-col">
-                    <form action="{{ route('admin.carrier.update', $carrier->id) }}" method="POST"
+                    <form action="{{ route('admin.carrier.update', $carrier) }}" method="POST"
                         enctype="multipart/form-data" id="userForm">
                         @csrf
                         @method('PUT')

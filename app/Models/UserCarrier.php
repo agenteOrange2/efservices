@@ -71,6 +71,12 @@ class UserCarrier extends Authenticatable implements HasMedia
         return $query->where('status', self::STATUS_ACTIVE);
     }
 
+    public function getProfilePhotoUrlAttribute()
+    {
+        $media = $this->getFirstMedia('profile_photo_carrier');
+        return $media ? $media->getUrl() : asset('build/default_profile.png'); // Ruta predeterminada si no hay foto
+    }
+
 
     //Media library
     public function registerMediaCollections(): void

@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\UserCarrierController;
 use App\Http\Controllers\Admin\DocumentTypeController;
 use App\Http\Controllers\Admin\RolePermissionController;
 use App\Http\Controllers\Admin\CarrierDocumentController;
+use App\Http\Controllers\Admin\UserCarrierDocumentController;
 
 
 Route::get('theme-switcher/{activeTheme}', [ThemeController::class, 'switch'])->name('theme-switcher');
@@ -99,12 +100,25 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
         Route::put('/{userCarrier}', [UserCarrierController::class, 'update'])->name('update'); // Actualizar UserCarrier
         Route::delete('/{userCarrier}', [UserCarrierController::class, 'destroy'])->name('destroy'); // Eliminar UserCarrier
     });
-
     // Rutas anidadas para Documentos
-    Route::get('{carrier:slug}/documents', [CarrierController::class, 'documents'])->name('documents');
+    // Route::get('{carrier:slug}/documents', [CarrierController::class, 'documents'])->name('documents');
 });
 
+Route::prefix('carrier/{carrier:slug}')->group(function () {
+    // Documentos para usuario
+    Route::prefix('user-documents')->name('carrier.user_documents.')->group(function () {
+        Route::get('/', [UserCarrierDocumentController::class, 'index'])->name('index'); // Vista principal
+        Route::post('/upload/{documentType}', [UserCarrierDocumentController::class, 'upload'])->name('upload');
+        
+    });
 
+    // Documentos para superadmin
+    Route::prefix('admin-documents')->name('carrier.admin_documents.')->group(function () {
+        Route::get('/', [CarrierDocumentController::class, 'all'])->name('all');
+        Route::get('/{document}/review', [CarrierDocumentController::class, 'review'])->name('review');
+        Route::post('/{document}/review', [CarrierDocumentController::class, 'processReview'])->name('process-review');
+    });
+});
 
 
 

@@ -12,6 +12,39 @@
 
     <div class="grid grid-cols-12 gap-x-6 gap-y-10">
         <div class="col-span-12">
+
+            <div class="tabs">
+                <ul class="border-b border-slate-200 w-full flex">
+                    <!-- Tab Carrier -->
+                    <li class="visible:outline-none flex-1 -mb-px">
+                        <a class="cursor-pointer block px-3 py-2 text-slate-600 transition-colors border border-transparent rounded-t-md
+                            {{ request()->routeIs('admin.carrier.edit') ? 'active bg-white border-slate-200 border-b-transparent font-medium text-slate-700' : '' }} "
+                             href="{{ route('admin.carrier.edit', $carrier->slug) }}">
+                            Carrier
+                        </a>
+                    </li>
+
+                    <!-- Tab Users -->
+                    <li class="visible:outline-none flex-1 -mb-px">
+                        <a class="cursor-pointer block px-3 py-2 text-slate-600 transition-colors border border-transparent rounded-t-md
+                            {{ request()->routeIs('admin.carrier.user_carriers.*') ? 'active bg-white border-slate-200 border-b-transparent font-medium text-slate-700' : '' }}
+                        "
+                            href="{{ route('admin.carrier.user_carriers.index', $carrier->slug) }}">
+                            Users
+                        </a>
+                    </li>
+
+                    <!-- Tab Documents -->
+                    <li class="visible:outline-none flex-1 -mb-px">
+                        <a class="cursor-pointer block px-3 py-2 text-slate-600 transition-colors border border-transparent rounded-t-md
+                            {{ request()->routeIs('admin.carrier.documents') ? 'active bg-white border-slate-200 border-b-transparent font-medium text-slate-700' : '' }}
+                        "
+                            href="{{ route('admin.carrier.documents', $carrier->slug) }}">
+                            Documents
+                        </a>
+                    </li>
+                </ul>
+            </div>
             <div class="p-7">
             <div class="flex flex-col gap-y-3 md:h-10 md:flex-row md:items-center">
                 <div class="text-base font-medium group-[.mode--light]:text-white">
