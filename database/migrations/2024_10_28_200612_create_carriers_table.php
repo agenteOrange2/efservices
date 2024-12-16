@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('carriers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('slug')->nullable();
+            $table->string('referrer_token')->nullable();
             $table->string('address');
             $table->string('state');
             $table->string('zipcode');
@@ -24,7 +26,8 @@ return new class extends Migration
             $table->string('ifta_account')->nullable();
             $table->string('logo_img')->nullable();
             $table->foreignId('id_plan')->nullable()->constrained('memberships')->onDelete('set null');
-            $table->unsignedTinyInteger('status')->default(3); // 0: inactive, 1: active, 3: pending
+            $table->unsignedTinyInteger('status')->default(2)->index();
+            $table->timestamp('referrer_token_expires_at')->nullable();
             $table->timestamps();
         });
     }

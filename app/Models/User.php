@@ -78,7 +78,7 @@ class User extends Authenticatable implements HasMedia
     public function carriers()
     {
         return $this->belongsToMany(Carrier::class, 'user_carrier')
-        ->withPivot('phone', 'job_position', 'photo', 'status')
+            ->withPivot('phone', 'job_position', 'photo', 'status')
             ->withTimestamps();
     }
 
@@ -110,5 +110,10 @@ class User extends Authenticatable implements HasMedia
     public function getMediaFileNameAttribute(): string
     {
         return "{$this->name}.webp";
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'id';
     }
 }

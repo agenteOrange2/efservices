@@ -38,12 +38,12 @@
                         </li>
                 
                         <!-- Tab Documents -->
-                        {{-- <li class="visible:outline-none flex-1 -mb-px">
+                        <li class="visible:outline-none flex-1 -mb-px">
                             <a class="cursor-pointer block px-3 py-2 text-slate-600 transition-colors border border-transparent rounded-t-md [&.active]:bg-white [&.active]:border-slate-200 [&.active]:border-b-transparent [&.active]:font-medium [&.active]:text-slate-700 [&.active]:dark:text-white [&.active]:dark:bg-transparent [&.active]:dark:border-t-darkmode-400 [&.active]:dark:border-b-darkmode-600 [&.active]:dark:border-x-darkmode-400 [&:not(.active)]:hover:bg-slate-100 [&:not(.active)]:dark:hover:bg-darkmode-400 [&:not(.active)]:dark:hover:border-transparent {{ isset($carrier) ? '' : 'disabled pointer-events-none' }}"
-                                href="{{ isset($carrier) ? route('carrier.documents', $carrier->id) : '#' }}">
+                                href="{{ isset($carrier) ? route('admin.carrier.documents', $carrier->id) : '#' }}">
                                 Documents
                             </a>
-                        </li> --}}
+                        </li>
                     </ul>
                 </div>
                 

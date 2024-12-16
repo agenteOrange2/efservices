@@ -3,7 +3,7 @@
 
         <div class="box box--stacked flex flex-col">
             <div class="p-7">
-                <div class="flex justify-between items-center mb-4">
+                {{-- <div class="flex justify-between items-center mb-4">
                     <input type="text" wire:model.live.debounce.500ms="search" placeholder="Search Carriers..."
                         class="border p-2 rounded">
                         <x-base.button wire:click="createCarrier"
@@ -13,7 +13,7 @@
                         
                         Add New Carrier
                     </x-base.button>                    
-                </div>
+                </div> --}}
                 <div class="overflow-auto xl:overflow-visible">
                     <table class="w-full text-left border-b border-slate-200/60">
                         <thead>

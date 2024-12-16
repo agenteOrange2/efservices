@@ -1,5 +1,8 @@
 <?php
 
+use App\Livewire\UserManager;
+use App\Livewire\CarrierManager;
+use App\Livewire\DocumentManager;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PageController;
@@ -8,13 +11,12 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CarrierController;
 use App\Http\Controllers\Admin\MembershipController;
+
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\UserCarrierController;
+use App\Http\Controllers\Admin\DocumentTypeController;
 use App\Http\Controllers\Admin\RolePermissionController;
-
-use App\Livewire\CarrierManager;
-use App\Livewire\UserManager;
-use App\Livewire\DocumentManager;
+use App\Http\Controllers\Admin\CarrierDocumentController;
 
 
 Route::get('theme-switcher/{activeTheme}', [ThemeController::class, 'switch'])->name('theme-switcher');
@@ -22,8 +24,6 @@ Route::get('theme-switcher/{activeTheme}', [ThemeController::class, 'switch'])->
 Route::get('/', function () {
     return view('admin.dashboard');
 })->name('dashboard');
-
-
 
 /*
     |--------------------------------------------------------------------------
@@ -35,6 +35,7 @@ Route::get('users/export-excel', [UserController::class, 'exportToExcel'])->name
 Route::get('users/export-pdf', [UserController::class, 'exportToPdf'])->name('users.export.pdf');
 Route::post('users/{user}/delete-photo', [UserController::class, 'deletePhoto'])->name('users.delete-photo');
 Route::resource('users', UserController::class);
+
 /*
     |--------------------------------------------------------------------------
     | RUTAS ADMIN ROLES
@@ -55,14 +56,7 @@ Route::resource('roles', RoleController::class);
 // Gestión de Carriers
 
 Route::resource('carrier', CarrierController::class);
-
-Route::get('carriers', CarrierManager::class)->name('carriers.index');
-Route::get('carriers/create', CarrierManager::class)->name('carrier.create');
-Route::get('carriers/{carrier}/edit', CarrierManager::class)->name('carrier.edit');
-Route::get('carriers/{carrier}/users', UserManager::class)->name('carrier.users');
 Route::post('carrier/{carrier}/delete-photo', [CarrierController::class, 'deletePhoto'])->name('carrier.delete-photo');
-Route::get('carriers/{carrier}/documents', DocumentManager::class)->name('carrier.documents');
-
 
 
 /*
@@ -88,11 +82,45 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
     |--------------------------------------------------------------------------    
 */
 
+Route::prefix('carrier')->name('carrier.')->group(function () {
+    Route::get('/', [CarrierController::class, 'index'])->name('index');
+    Route::get('/create', [CarrierController::class, 'create'])->name('create');
+    Route::post('/', [CarrierController::class, 'store'])->name('store');
+    Route::get('/{carrier:slug}', [CarrierController::class, 'edit'])->name('edit');
+    Route::put('/{carrier:slug}', [CarrierController::class, 'update'])->name('update');
+    Route::delete('/{carrier:slug}', [CarrierController::class, 'destroy'])->name('destroy');
+
+    // Rutas anidadas para UserCarriers
+    Route::prefix('{carrier:slug}/user-carriers')->name('user_carriers.')->group(function () {
+        Route::get('/', [UserCarrierController::class, 'index'])->name('index'); // Listado
+        Route::get('/create', [UserCarrierController::class, 'create'])->name('create'); // Formulario de creación
+        Route::post('/', [UserCarrierController::class, 'store'])->name('store'); // Guardar nuevo UserCarrier
+        Route::get('/{userCarrier}/edit', [UserCarrierController::class, 'edit'])->name('edit'); // Formulario de edición
+        Route::put('/{userCarrier}', [UserCarrierController::class, 'update'])->name('update'); // Actualizar UserCarrier
+        Route::delete('/{userCarrier}', [UserCarrierController::class, 'destroy'])->name('destroy'); // Eliminar UserCarrier
+    });
+
+    // Rutas anidadas para Documentos
+    Route::get('{carrier:slug}/documents', [CarrierController::class, 'documents'])->name('documents');
+});
 
 
-Route::resource('user_carrier', UserCarrierController::class);
-Route::post('user_carrier/{user_carrier}/delete-photo', [UserCarrierController::class, 'deletePhoto'])->name('user_carrier.delete-photo');
 
+
+
+/*
+    |--------------------------------------------------------------------------
+    | RUTAS ADMIN DOCUMENT
+    |--------------------------------------------------------------------------    
+*/
+Route::get('carriers-documents', [CarrierDocumentController::class, 'all'])
+    ->name('carriers.documents.all');
+Route::resource('carriers.documents', CarrierDocumentController::class)
+    ->parameters(['documents' => 'document'])->except('show');
+
+
+Route::resource('document-types', DocumentTypeController::class)
+    ->except('show');
 
 /*
     |--------------------------------------------------------------------------
@@ -103,9 +131,8 @@ Route::resource('membership', MembershipController::class);
 Route::post('membership/{membership}/delete-photo', [MembershipController::class, 'deletePhoto'])->name('membership.delete-photo');
 
 
-
-
-
+// Route::resource('user_carrier', UserCarrierController::class);
+Route::post('user_carrier/{user_carrier}/delete-photo', [UserCarrierController::class, 'deletePhoto'])->name('user_carrier.delete-photo');
 
 Route::controller(PageController::class)->group(function () {
     //Route::get('/', 'dashboardOverview1')->name('dashboard-overview-1');

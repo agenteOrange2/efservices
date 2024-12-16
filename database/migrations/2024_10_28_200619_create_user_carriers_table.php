@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('phone'); // Teléfono
             $table->string('job_position'); // Cargo o puesto
             $table->string('photo')->nullable(); // Foto del user_carrier
-            $table->unsignedTinyInteger('status')->default(3); // 0: inactive, 1: active, 3: pending
+            $table->unsignedTinyInteger('status')->default(0)->index(); // 0: inactive, 1: active, 2: pending            
             $table->timestamps();
         });
     }

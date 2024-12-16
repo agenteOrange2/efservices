@@ -16,19 +16,32 @@
                 <div class="text-base font-medium group-[.mode--light]:text-white">
                     Carriers
                 </div>
-                {{-- <div class="flex flex-col gap-x-3 gap-y-2 sm:flex-row md:ml-auto">
+                <div class="flex flex-col gap-x-3 gap-y-2 sm:flex-row md:ml-auto">
                     <x-base.button as="a" href="{{ route('admin.carrier.create') }}"
                         class="group-[.mode--light]:!border-transparent group-[.mode--light]:!bg-white/[0.12] group-[.mode--light]:!text-slate-200"
                         variant="primary">
                         <x-base.lucide class="mr-2 h-4 w-4 stroke-[1.3]" icon="PenLine" />
                         Add New Carrier
                     </x-base.button>
-                </div> --}}
+                </div> 
             </div>
 
             <!-- Reemplaza el contenido de la tabla con el componente Livewire -->
-            <div class="box box--stacked flex flex-col mt-5">
-                <livewire:carrier-manager />
+            <div class="box box--stacked flex flex-col mt-5">                
+                {{-- <livewire:carrier-manager /> --}}
+
+                <livewire:generic-table class="p-0" model="App\Models\Carrier" :columns="['name', 'email', 'status', 'created_at']" :searchableFields="['name', 'email', 'status', 'created_at']"
+                editRoute="admin.carrier.edit" exportExcelRoute="admin.carrier.export.excel"
+                exportPdfRoute="admin.carrier.export.pdf" :customFilters="[
+                    'status' => [
+                        'type' => 'select',
+                        'label' => 'Status',
+                        'options' => [
+                            'active' => 'Active',
+                            'inactive' => 'Inactive',
+                        ],
+                    ],
+                ]" />
             </div>
         </div>
     </div>
