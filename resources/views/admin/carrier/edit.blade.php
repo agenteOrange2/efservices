@@ -41,14 +41,14 @@
                         </li>
 
                         <!-- Tab Documents -->
-                        <li class="visible:outline-none flex-1 -mb-px">
+                        {{-- <li class="visible:outline-none flex-1 -mb-px">
                             <a class="cursor-pointer block px-3 py-2 text-slate-600 transition-colors border border-transparent rounded-t-md
                             [&.active]:bg-white [&.active]:border-slate-200 [&.active]:border-b-transparent [&.active]:font-medium [&.active]:text-slate-700
                             [&:not(.active)]:hover:bg-slate-100"
                             href="{{ route('admin.carrier.admin.user_documents.index', $carrier->slug) }}">
                                 Documents
                             </a>
-                        </li>
+                        </li> --}}
                         
                         
                     </ul>

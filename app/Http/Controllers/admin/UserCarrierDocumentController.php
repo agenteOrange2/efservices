@@ -66,8 +66,8 @@ class UserCarrierDocumentController extends Controller
     
         // Redirigir al listado de documentos (index)
         return redirect()
-        ->route('admin.carrier.documents', $carrier->slug)
-        ->with('success', 'Documento subido correctamente.');
+            ->route('admin.carrier.user_documents.index', $carrier->slug)
+            ->with('success', 'Documento subido correctamente.');
     }
     
     

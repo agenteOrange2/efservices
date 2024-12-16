@@ -35,14 +35,14 @@
                     </li>
 
                     <!-- Tab Documents -->
-                    <li class="visible:outline-none flex-1 -mb-px">
+                    {{-- <li class="visible:outline-none flex-1 -mb-px">
                         <a class="cursor-pointer block px-3 py-2 text-slate-600 transition-colors border border-transparent rounded-t-md
                             {{ request()->routeIs('admin.carrier.documents') ? 'active bg-white border-slate-200 border-b-transparent font-medium text-slate-700' : '' }}
                         "
                             href="{{ route('admin.carrier.documents', $carrier->slug) }}">
                             Documents
                         </a>
-                    </li>
+                    </li> --}}
                 </ul>
             </div>
             <div class="p-7">
