@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
         $this->call(UsersTableSeeder::class);
         $this->call(RolesAndPermissionsSeeder::class);
+        $this->call(MembershipSeeder::class);
+        $this->call(DocumentTypeSeeder::class);
         
         \App\Models\User::factory()->create([
             'name' => 'Elliot Alderson',

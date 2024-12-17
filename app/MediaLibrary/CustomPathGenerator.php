@@ -27,6 +27,10 @@ class CustomPathGenerator implements PathGenerator
             return "user_carriers/{$model->id}/";
         }
 
+        if ($model instanceof \App\Models\CarrierDocument) {
+            return "carrier_document/{$model->id}/";
+        }
+
         return "others/{$model->id}/";
     }
 

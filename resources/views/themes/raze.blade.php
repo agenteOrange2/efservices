@@ -41,12 +41,13 @@
                             <div
                                 class="flex h-[34px] w-[34px] items-center justify-center rounded-lg bg-white/[0.08] transition-transform ease-in-out group-[.side-menu--collapsed.side-menu--on-hover]:xl:-rotate-180">
                                 <div class="relative h-[16px] w-[16px] -rotate-45 [&_div]:bg-white">
-                                    <div class="absolute inset-y-0 left-0 my-auto h-[75%] w-[21%] rounded-full opacity-50">
+                                    {{-- <div class="absolute inset-y-0 left-0 my-auto h-[75%] w-[21%] rounded-full opacity-50">
                                     </div>
                                     <div class="absolute inset-0 m-auto h-[120%] w-[21%] rounded-full"></div>
                                     <div class="absolute inset-y-0 right-0 my-auto h-[75%] w-[21%] rounded-full opacity-50">
-                                    </div>
+                                    </div> --}}
                                 </div>
+                                <img src="{{ asset('build/img/logo_efservices_logo.png') }}" class="w-[80px]" alt="">
                             </div>
                             <div
                                 class="ml-3.5 font-medium text-white transition-opacity group-[.side-menu--collapsed.side-menu--on-hover]:xl:opacity-100 group-[.side-menu--collapsed]:xl:opacity-0">
@@ -257,7 +258,17 @@
                                         <x-base.menu.item href="{{ route('login') }}">
                                             <x-base.lucide class="mr-2 h-4 w-4" icon="Power" />
                                             Logout
+                                            <!-- Authentication -->
+
                                         </x-base.menu.item>
+                                        <form method="POST" action="{{ route('logout') }}" x-data>
+                                            @csrf
+
+                                            <x-responsive-nav-link href="{{ route('logout') }}"
+                                                @click.prevent="$root.submit();">
+                                                {{ __('Log Out') }}
+                                            </x-responsive-nav-link>
+                                        </form>
                                     </x-base.menu.items>
                                 </x-base.menu>
                             </div>

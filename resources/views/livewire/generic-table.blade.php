@@ -124,7 +124,7 @@
                                     </svg>
                                     <div class="ml-1 whitespace-nowrap">Inactive</div>
                                 </div>
-                            @elseif ($item[$column] == 3)
+                            @elseif ($item[$column] == 2)
                                 <!-- Status Pending -->
                                 <div class="flex items-center justify-start text-warning text-start">
                                     <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
@@ -162,7 +162,7 @@
                             <div x-show="openMenu" @click.away="openMenu = false"
                                 class="w-40 bg-white shadow rounded mt-2 absolute z-10">
                                 <div class="py-2">
-                                    <a href="{{ route($editRoute, $item['id']) }}"
+                                    <a href="{{ route($editRoute, $item) }}"
                                         class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
                                         <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24"
                                             stroke="currentColor">

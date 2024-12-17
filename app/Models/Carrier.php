@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
+use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 
@@ -16,6 +17,7 @@ class Carrier extends Model implements HasMedia
 
     protected $fillable = [
         'name',
+        'slug',
         'address',
         'state',
         'zipcode',
@@ -29,10 +31,18 @@ class Carrier extends Model implements HasMedia
         'status',
     ];
 
+    // Boot para generar el referrer_token y slug automáticamente
+    protected static function booted()
+    {
+        static::creating(function ($carrier) {
+            $carrier->referrer_token = $carrier->referrer_token ?? Str::random(16);
+            $carrier->slug = $carrier->slug ?? Str::slug($carrier->name);
+        });
+    }
     // Constantes para los valores de status
     public const STATUS_INACTIVE = 0;
     public const STATUS_ACTIVE = 1;
-    public const STATUS_PENDING = 3;
+    public const STATUS_PENDING = 2;
 
     // Relación con usuarios (manager)
     public function managers()
@@ -69,6 +79,14 @@ class Carrier extends Model implements HasMedia
         };
     }
 
+    public function generateReferrerToken(): void
+    {
+        $this->referrer_token = Str::random(16);
+        $this->save();
+    }
+
+
+
     //Media library
     public function registerMediaCollections(): void
     {
@@ -91,5 +109,16 @@ class Carrier extends Model implements HasMedia
     public function getMediaFileNameAttribute(): string
     {
         return "{$this->name}.webp";
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
+
+    // Relación con usuarios asignados
+    public function assignedUsers()
+    {
+        return $this->belongsToMany(User::class, 'user_carrier_access');
     }
 }

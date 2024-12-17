@@ -29,7 +29,7 @@ class UserCarrier extends Authenticatable implements HasMedia
     // Constantes para los valores de status
     public const STATUS_INACTIVE = 0;
     public const STATUS_ACTIVE = 1;
-    public const STATUS_PENDING = 3;
+    public const STATUS_PENDING = 2;
 
     // Método de acceso para obtener el nombre del status
     public function getStatusNameAttribute(): string
@@ -57,6 +57,26 @@ class UserCarrier extends Authenticatable implements HasMedia
             }
         });
     }
+
+    //Para la relacion del usuario al registrarse con el carrier
+    public function scopeFromReferrer($query, string $token)
+    {
+        return $query->whereHas('carrier', function ($query) use ($token) {
+            $query->where('referrer_token', $token);
+        });
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', self::STATUS_ACTIVE);
+    }
+
+    public function getProfilePhotoUrlAttribute()
+    {
+        $media = $this->getFirstMedia('profile_photo_carrier');
+        return $media ? $media->getUrl() : asset('build/default_profile.png'); // Ruta predeterminada si no hay foto
+    }
+
 
     //Media library
     public function registerMediaCollections(): void

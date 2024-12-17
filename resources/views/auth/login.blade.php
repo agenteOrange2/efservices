@@ -7,8 +7,8 @@
             "before:content-[''] before:absolute before:inset-0 before:-mb-3.5 before:bg-white/40 before:rounded-2xl before:mx-5",
         ])>
             <div class="relative z-10 flex flex-col justify-center w-full h-full py-2 lg:py-32">
-                <div
-                    class="flex h-[55px] w-[55px] items-center justify-center rounded-[0.8rem] border border-primary/30">
+                {{-- <div
+                    class="flex h-[55px] w-[55px] items-center justify-center rounded-[0.8rem] border border-primary/30">                    
                     <div
                         class="relative flex h-[50px] w-[50px] items-center justify-center rounded-[0.6rem] bg-white bg-gradient-to-b from-theme-1/90 to-theme-2/90">
                         <div class="relative h-[26px] w-[26px] -rotate-45 [&_div]:bg-white">
@@ -18,18 +18,20 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> --}}
 
 
 
 
                 {{-- JETSTREAM --}}
 
+
                 <div class="mt-10">
+                    <img src="{{asset('build/img/logo_efservices_logo.png')}}" class="w-[80px]" alt="">
                     <div class="text-2xl font-medium">Sign In</div>
                     <div class="mt-2.5 text-slate-600">
                         Don't have an account?
-                        <a class="font-medium text-primary" href="">
+                        <a class="font-medium text-primary">
                             Sign Up
                         </a>
                     </div>
@@ -40,7 +42,7 @@
                             <x-base.lucide class="mr-2 h-7 w-7 fill-primary/10 stroke-[0.8]" icon="Lightbulb" />
                         </div>
                         <div class="ml-1 mr-8">
-                            Welcome to <span class="font-medium">Tailwise</span>
+                            Welcome to <span class="font-medium">EF Services</span>
                             demo! Simply click
                             <span class="font-medium">Sign In</span> to explore
                             and access our documentation.
@@ -115,13 +117,10 @@
         ])>
             <div class="sticky top-0 z-10 flex-col justify-center hidden h-screen ml-16 lg:flex xl:ml-28 2xl:ml-36">
                 <div class="text-[2.6rem] font-medium leading-[1.4] text-white xl:text-5xl xl:leading-[1.2]">
-                    Embrace Excellence <br> in Dashboard Development
+                    Welcome to EF Services
                 </div>
                 <div class="mt-5 text-base leading-relaxed text-white/70 xl:text-lg">
-                    Unlock the potential of Tailwise, where developers craft
-                    meticulously structured, visually stunning dashboards with
-                    feature-rich modules. Join us today to shape the future of your
-                    application development.
+                    Our dedicated team is committed to guiding you at every turn. We go above and beyond to ensure complete customer satisfaction, delivering tailored transport solutions designed to keep you moving forward.
                 </div>
                 <div class="flex flex-col gap-3 mt-10 xl:flex-row xl:items-center">
                     {{-- <div class="flex items-center">
@@ -151,7 +150,7 @@
                             </div>
                         </div> --}}
                     <div class="text-base text-white/70 xl:ml-2 2xl:ml-3">
-                        Over 7k+ strong and growing! Your journey begins here.
+                        Log in now and experience the difference that passion, reliability, and innovation can bring to your operations.
                     </div>
                 </div>
             </div>

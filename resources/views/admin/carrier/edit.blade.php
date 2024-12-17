@@ -19,36 +19,49 @@
     <div class="grid grid-cols-12 gap-x-6 gap-y-10">
         <div class="col-span-12 sm:col-span-10 sm:col-start-2">
             <div class="mt-7">
-                <div class="tabs">
-                    <ul class="border-b border-slate-200 w-full flex">
-                        <!-- Tab Carrier -->
-                        <li class="visible:outline-none flex-1 -mb-px">
-                            <a class="cursor-pointer block px-3 py-2 text-slate-600 transition-colors border border-transparent rounded-t-md [&.active]:bg-white [&.active]:border-slate-200 [&.active]:border-b-transparent [&.active]:font-medium [&.active]:text-slate-700 [&.active]:dark:text-white [&.active]:dark:bg-transparent [&.active]:dark:border-t-darkmode-400 [&.active]:dark:border-b-darkmode-600 [&.active]:dark:border-x-darkmode-400 [&:not(.active)]:hover:bg-slate-100 [&:not(.active)]:dark:hover:bg-darkmode-400 [&:not(.active)]:dark:hover:border-transparent active w-full py-2 {{ request()->routeIs('carrier.edit') ? 'active' : '' }}"
-                                href="{{ isset($carrier) ? route('admin.carrier.edit', $carrier->id) : route('carrier.create') }}">
-                                Carrier
-                            </a>
-                        </li>
+            {{-- TABS --}}
+            <div class="border-b border-gray-200 dark:border-gray-700">
+                <ul class="flex flex-wrap text-sm font-medium text-center text-gray-500 dark:text-gray-400">
+                    <!-- Tab Carrier -->
+                    <li class="flex-grow">
+                        <a href="{{ route('admin.carrier.edit', $carrier->slug) }}"
+                            class="inline-flex items-center justify-center w-full p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group
+                            {{ request()->routeIs('admin.carrier.edit') ? 'text-primary border-blue-600 dark:text-blue-500 dark:border-blue-500' : '' }}">
+                            <svg class="w-6 h-6 me-2 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300 {{ request()->routeIs('admin.carrier.edit') ? 'text-primary dark:text-primary' : '' }}" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 0a10 10 0 1 0 10 10A10.011 10.011 0 0 0 10 0Zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 13a8.949 8.949 0 0 1-4.951-1.488A3.987 3.987 0 0 1 9 13h2a3.987 3.987 0 0 1 3.951 3.512A8.949 8.949 0 0 1 10 18Z"/>
+                            </svg>
+                            Profile Carrier
+                        </a>
+                    </li>
+                    <!-- Tab Users -->
+                    <li class="flex-grow">
+                        <a href="{{ route('admin.carrier.user_carriers.index', $carrier->slug) }}"
+                            class="inline-flex items-center justify-center w-full p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group
+                            {{ request()->routeIs('admin.carrier.user_carriers.*') ? 'text-primary border-blue-600 dark:text-primary dark:border-primary' : '' }}">
+                            <svg class="w-6 h-6 me-2 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300 {{ request()->routeIs('admin.carrier.user_carriers.*') ? 'text-primary dark:text-primary' : '' }}" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 18">
+                                <path d="M6.143 0H1.857A1.857 1.857 0 0 0 0 1.857v4.286C0 7.169.831 8 1.857 8h4.286A1.857 1.857 0 0 0 8 6.143V1.857A1.857 1.857 0 0 0 6.143 0Zm10 0h-4.286A1.857 1.857 0 0 0 10 1.857v4.286C10 7.169 10.831 8 11.857 8h4.286A1.857 1.857 0 0 0 18 6.143V1.857A1.857 1.857 0 0 0 16.143 0Zm-10 10H1.857A1.857 1.857 0 0 0 0 11.857v4.286C0 17.169.831 18 1.857 18h4.286A1.857 1.857 0 0 0 8 16.143v-4.286A1.857 1.857 0 0 0 6.143 10Zm10 0h-4.286A1.857 1.857 0 0 0 10 11.857v4.286c0 1.026.831 1.857 1.857 1.857h4.286A1.857 1.857 0 0 0 18 16.143v-4.286A1.857 1.857 0 0 0 16.143 10Z"/>
+                            </svg>
+                            Users
+                        </a>
+                    </li>
+                    <!-- Tab Documents -->
+                    {{-- Uncomment if needed --}}
+                    <li class="flex-grow">
+                        <a href="{{ route('admin.carrier.documents', $carrier->slug) }}"
+                            class="inline-flex items-center justify-center w-full p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group
+                            {{ request()->routeIs('admin.carrier.documents') ? 'text-primary border-blue-600 dark:text-primary dark:border-primary' : '' }}">
+                            <svg class="w-6 h-6 me-2 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300 {{ request()->routeIs('admin.carrier.documents') ? 'text-primary dark:text-primary' : '' }}" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 20">
+                                <path d="M16 1h-3.278A1.992 1.992 0 0 0 11 0H7a1.993 1.993 0 0 0-1.722 1H2a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2Zm-3 14H5a1 1 0 0 1 0-2h8a1 1 0 0 1 0 2Zm0-4H5a1 1 0 0 1 0-2h8a1 1 0 1 1 0 2Zm0-5H5a1 1 0 0 1 0-2h2V2h4v2h2a1 1 0 1 1 0 2Z"/>
+                            </svg>
+                            Documents
+                        </a>
+                    </li>
+                </ul>
+            </div>
                 
-                        <!-- Tab Users -->
-                        <li class="visible:outline-none flex-1 -mb-px">
-                            <a class="cursor-pointer block px-3 py-2 text-slate-600 transition-colors border border-transparent rounded-t-md [&.active]:bg-white [&.active]:border-slate-200 [&.active]:border-b-transparent [&.active]:font-medium [&.active]:text-slate-700 [&.active]:dark:text-white [&.active]:dark:bg-transparent [&.active]:dark:border-t-darkmode-400 [&.active]:dark:border-b-darkmode-600 [&.active]:dark:border-x-darkmode-400 [&:not(.active)]:hover:bg-slate-100 [&:not(.active)]:dark:hover:bg-darkmode-400 [&:not(.active)]:dark:hover:border-transparent {{ isset($carrier) ? '' : 'disabled pointer-events-none' }}"
-                                href="{{ isset($carrier) ? route('admin.carrier.users', $carrier->id) : '#' }}">
-                                Users
-                            </a>
-                        </li>
-                
-                        <!-- Tab Documents -->
-                        {{-- <li class="visible:outline-none flex-1 -mb-px">
-                            <a class="cursor-pointer block px-3 py-2 text-slate-600 transition-colors border border-transparent rounded-t-md [&.active]:bg-white [&.active]:border-slate-200 [&.active]:border-b-transparent [&.active]:font-medium [&.active]:text-slate-700 [&.active]:dark:text-white [&.active]:dark:bg-transparent [&.active]:dark:border-t-darkmode-400 [&.active]:dark:border-b-darkmode-600 [&.active]:dark:border-x-darkmode-400 [&:not(.active)]:hover:bg-slate-100 [&:not(.active)]:dark:hover:bg-darkmode-400 [&:not(.active)]:dark:hover:border-transparent {{ isset($carrier) ? '' : 'disabled pointer-events-none' }}"
-                                href="{{ isset($carrier) ? route('carrier.documents', $carrier->id) : '#' }}">
-                                Documents
-                            </a>
-                        </li> --}}
-                    </ul>
-                </div>
-                
+
                 <div class="box box--stacked flex flex-col">
-                    <form action="{{ route('admin.carrier.update', $carrier->id) }}" method="POST"
+                    <form action="{{ route('admin.carrier.update', $carrier) }}" method="POST"
                         enctype="multipart/form-data" id="userForm">
                         @csrf
                         @method('PUT')
@@ -98,12 +111,278 @@
                                     @enderror
                                 </div>
                             </div>
+
                             <!-- Address -->
                             <div class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
                                 <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
                                     <div class="text-left">
                                         <div class="flex items-center">
-                                            <div class="font-medium">Address</div>
+                                            <div class="font-medium">Carrier Address</div>
+                                            <div
+                                                class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                                                Required
+                                            </div>
+                                        </div>
+                                        <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
+                                            Enter your Address
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 w-full flex-1 xl:mt-0">
+                                    <x-base.form-input name="address" type="text" placeholder="Enter full Address"
+                                        id="address" value="{{ old('address', $carrier->address) }}" />
+                                    @error('address')
+                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- State-->
+                            <div class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                                <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                                    <div class="text-left">
+                                        <div class="flex items-center">
+                                            <div class="font-medium">State</div>
+                                            <div
+                                                class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                                                Required
+                                            </div>
+                                        </div>
+                                        <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
+                                            Select a State
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 w-full flex-1 xl:mt-0">
+                                    <select data-tw-merge aria-label="Default select example"
+                                        class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&amp;[readonly]]:bg-slate-100 [&amp;[readonly]]:cursor-not-allowed [&amp;[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1 mt-2 sm:mr-2 mt-2 sm:mr-2"
+                                        name="state" id="state">
+                                        <option value="">Select a State</option>
+                                        @foreach ($usStates as $abbr => $name)
+                                            <option value="{{ $abbr }}"
+                                                {{ old('state', $carrier->state ?? '') == $abbr ? 'selected' : '' }}>
+                                                {{ $name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('state')
+                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+
+
+                            <!-- Zip Code-->
+                            <div class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                                <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                                    <div class="text-left">
+                                        <div class="flex items-center">
+                                            <div class="font-medium">Zip Code</div>
+                                            <div
+                                                class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                                                Required
+                                            </div>
+                                        </div>
+                                        <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
+                                            Enter your Address
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 w-full flex-1 xl:mt-0">
+                                    <x-base.input-group>
+                                        <x-base.input-group.text>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round"
+                                                class="lucide lucide-search stroke-[1] h-[18px] w-[18px]">
+                                                <path
+                                                    d="M15 22a1 1 0 0 1-1-1v-4a1 1 0 0 1 .445-.832l3-2a1 1 0 0 1 1.11 0l3 2A1 1 0 0 1 22 17v4a1 1 0 0 1-1 1z" />
+                                                <path
+                                                    d="M18 10a8 8 0 0 0-16 0c0 4.993 5.539 10.193 7.399 11.799a1 1 0 0 0 .601.2" />
+                                                <path d="M18 22v-3" />
+                                                <circle cx="10" cy="10" r="3" />
+                                            </svg></x-base.input-group.text>
+                                        <x-base.form-input class="w-full" type="text" name="zipcode" id="zipcode"
+                                            value="{{ old('zipcode', $carrier->zipcode) }}" placeholder="ZIP Code" />
+                                    </x-base.input-group>
+                                    @error('zipcode')
+                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- EIN Number-->
+                            <div
+                                class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                                <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                                    <div class="text-left">
+                                        <div class="flex items-center">
+                                            <div class="font-medium">EIN Number</div>
+                                            <div
+                                                class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                                                Required
+                                            </div>
+                                        </div>
+                                        <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
+                                            Enter your Address
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 w-full flex-1 xl:mt-0">
+                                    <x-base.input-group>
+                                        <x-base.input-group.text>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                class="lucide lucide-search stroke-[1] h-[18px] w-[18px]">
+                                                <line x1="4" x2="20" y1="9" y2="9" />
+                                                <line x1="4" x2="20" y1="15" y2="15" />
+                                                <line x1="10" x2="8" y1="3" y2="21" />
+                                                <line x1="16" x2="14" y1="3" y2="21" />
+                                            </svg>
+                                        </x-base.input-group.text>
+                                        <x-base.form-input class="w-full" type="text" name="ein_number"
+                                            id="ein_number" value="{{ old('ein_number', $carrier->ein_number) }}"
+                                            placeholder="EIN Number" />
+                                    </x-base.input-group>
+                                    @error('ein_number')
+                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- Dot Number-->
+                            <div
+                                class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                                <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                                    <div class="text-left">
+                                        <div class="flex items-center">
+                                            <div class="font-medium">DOT Number</div>
+                                            <div
+                                                class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                                                Required
+                                            </div>
+                                        </div>
+                                        <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
+                                            Enter your Address
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 w-full flex-1 xl:mt-0">
+                                    <x-base.input-group>
+                                        <x-base.input-group.text>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                class="lucide lucide-search stroke-[1] h-[18px] w-[18px]">
+                                                <line x1="4" x2="20" y1="9" y2="9" />
+                                                <line x1="4" x2="20" y1="15" y2="15" />
+                                                <line x1="10" x2="8" y1="3" y2="21" />
+                                                <line x1="16" x2="14" y1="3" y2="21" />
+                                            </svg>
+                                        </x-base.input-group.text>
+                                        <x-base.form-input class="w-full" type="text" name="dot_number"
+                                            id="dot_number" value="{{ old('dot_number', $carrier->dot_number) }}"
+                                            placeholder="DOT Number" />
+                                    </x-base.input-group>
+                                    @error('dot_number')
+                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- MC Number-->
+                            <div
+                                class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                                <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                                    <div class="text-left">
+                                        <div class="flex items-center">
+                                            <div class="font-medium">MC Number</div>
+                                            <div
+                                                class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                                                Required
+                                            </div>
+                                        </div>
+                                        <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
+                                            Enter your MC Number
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 w-full flex-1 xl:mt-0">
+                                    <x-base.input-group>
+                                        <x-base.input-group.text>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                class="lucide lucide-search stroke-[1] h-[18px] w-[18px]">
+                                                <line x1="4" x2="20" y1="9" y2="9" />
+                                                <line x1="4" x2="20" y1="15" y2="15" />
+                                                <line x1="10" x2="8" y1="3" y2="21" />
+                                                <line x1="16" x2="14" y1="3" y2="21" />
+                                            </svg>
+                                        </x-base.input-group.text>
+                                        <x-base.form-input class="w-full" type="text" name="mc_number" id="mc_number"
+                                            value="{{ old('mc_number', $carrier->mc_number) }}"
+                                            placeholder="MC Number" />
+                                    </x-base.input-group>
+                                    @error('mc_number')
+                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- State DOT-->
+                            <div
+                                class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                                <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                                    <div class="text-left">
+                                        <div class="flex items-center">
+                                            <div class="font-medium">State DOT</div>
+                                            <div
+                                                class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                                                Required
+                                            </div>
+                                        </div>
+                                        <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
+                                            Enter your MC Number
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 w-full flex-1 xl:mt-0">
+                                    <x-base.input-group>
+                                        <x-base.input-group.text>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                class="lucide lucide-search stroke-[1] h-[18px] w-[18px]">
+                                                <path d="M2 6h4" />
+                                                <path d="M2 10h4" />
+                                                <path d="M2 14h4" />
+                                                <path d="M2 18h4" />
+                                                <rect width="16" height="20" x="4" y="2" rx="2" />
+                                                <path d="M15 2v20" />
+                                                <path d="M15 7h5" />
+                                                <path d="M15 12h5" />
+                                                <path d="M15 17h5" />
+                                            </svg>
+                                        </x-base.input-group.text>
+                                        <x-base.form-input class="w-full" type="text" name="state_dot" id="state_dot"
+                                            value="{{ old('state_dot', $carrier->state_dot) }}"
+                                            placeholder="State DOT" />
+                                    </x-base.input-group>
+                                    @error('state_dot')
+                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- IFTA -->
+                            <div
+                                class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                                <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                                    <div class="text-left">
+                                        <div class="flex items-center">
+                                            <div class="font-medium">IFTA</div>
                                             <div
                                                 class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
                                                 Required
@@ -116,129 +395,26 @@
                                     </div>
                                 </div>
                                 <div class="mt-3 w-full flex-1 xl:mt-0">
-                                    <x-base.form-input name="address" type="text" placeholder="Enter Address"
-                                        id="address" value="{{ old('address', $carrier->address) }}" />
-                                    @error('address')
-                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                    @enderror
+                                    <x-base.input-group>
+                                        <x-base.input-group.text>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                class="lucide lucide-search stroke-[1] h-[18px] w-[18px]">
+                                                <path d="M18 20a6 6 0 0 0-12 0" />
+                                                <circle cx="12" cy="10" r="4" />
+                                                <circle cx="12" cy="12" r="10" />
+                                            </svg>
+                                        </x-base.input-group.text>
+                                        <x-base.form-input class="w-full" type="text" name="ifta_account"
+                                            id="ifta_account" value="{{ old('ifta_account', $carrier->ifta_account) }}"
+                                            placeholder="Enter IFTA account" />
+                                    </x-base.input-group>
 
-                                    <x-base.form-input class="mt-4" name="state" type="text"
-                                        placeholder="Enter State" id="state"
-                                        value="{{ old('state', $carrier->state) }}" />
-                                    @error('state')
-                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                    @enderror
-
-                                    <div class="grid-cols-2 gap-2 sm:grid my-6">
-                                        <x-base.input-group>
-                                            <x-base.input-group.text>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="lucide lucide-search stroke-[1] h-[18px] w-[18px]">
-                                                    <path
-                                                        d="M15 22a1 1 0 0 1-1-1v-4a1 1 0 0 1 .445-.832l3-2a1 1 0 0 1 1.11 0l3 2A1 1 0 0 1 22 17v4a1 1 0 0 1-1 1z" />
-                                                    <path
-                                                        d="M18 10a8 8 0 0 0-16 0c0 4.993 5.539 10.193 7.399 11.799a1 1 0 0 0 .601.2" />
-                                                    <path d="M18 22v-3" />
-                                                    <circle cx="10" cy="10" r="3" />
-                                                </svg></x-base.input-group.text>
-                                            <x-base.form-input class="w-full" type="text" name="zipcode" id="zipcode"
-                                                value="{{ old('zipcode', $carrier->zipcode) }}" placeholder="ZIP Code" />
-                                        </x-base.input-group>
-                                        <x-base.input-group>
-                                            <x-base.input-group.text>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="lucide lucide-search stroke-[1] h-[18px] w-[18px]">
-                                                    <line x1="4" x2="20" y1="9" y2="9" />
-                                                    <line x1="4" x2="20" y1="15" y2="15" />
-                                                    <line x1="10" x2="8" y1="3" y2="21" />
-                                                    <line x1="16" x2="14" y1="3" y2="21" />
-                                                </svg>
-                                            </x-base.input-group.text>
-                                            <x-base.form-input class="w-full" type="text" name="ein_number"
-                                                id="ein_number" value="{{ old('ein_number', $carrier->ein_number) }}"
-                                                placeholder="EIN Number" />
-                                        </x-base.input-group>
-                                        <x-base.input-group>
-                                            <x-base.input-group.text>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="lucide lucide-search stroke-[1] h-[18px] w-[18px]">
-                                                    <line x1="4" x2="20" y1="9" y2="9" />
-                                                    <line x1="4" x2="20" y1="15" y2="15" />
-                                                    <line x1="10" x2="8" y1="3" y2="21" />
-                                                    <line x1="16" x2="14" y1="3" y2="21" />
-                                                </svg>
-                                            </x-base.input-group.text>
-                                            <x-base.form-input class="w-full" type="text" name="dot_number"
-                                                id="dot_number" value="{{ old('dot_number', $carrier->dot_number) }}"
-                                                placeholder="DOT Number" />
-                                        </x-base.input-group>
-
-                                        <x-base.input-group>
-                                            <x-base.input-group.text>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="lucide lucide-search stroke-[1] h-[18px] w-[18px]">
-                                                    <line x1="4" x2="20" y1="9" y2="9" />
-                                                    <line x1="4" x2="20" y1="15" y2="15" />
-                                                    <line x1="10" x2="8" y1="3" y2="21" />
-                                                    <line x1="16" x2="14" y1="3" y2="21" />
-                                                </svg>
-                                            </x-base.input-group.text>
-                                            <x-base.form-input class="w-full" type="text" name="mc_number"
-                                                id="mc_number" value="{{ old('mc_number', $carrier->mc_number) }}"
-                                                placeholder="MC Number" />
-                                        </x-base.input-group>
-
-                                        <x-base.input-group>
-                                            <x-base.input-group.text>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="lucide lucide-search stroke-[1] h-[18px] w-[18px]">
-                                                    <path d="M2 6h4" />
-                                                    <path d="M2 10h4" />
-                                                    <path d="M2 14h4" />
-                                                    <path d="M2 18h4" />
-                                                    <rect width="16" height="20" x="4" y="2" rx="2" />
-                                                    <path d="M15 2v20" />
-                                                    <path d="M15 7h5" />
-                                                    <path d="M15 12h5" />
-                                                    <path d="M15 17h5" />
-                                                </svg>
-                                            </x-base.input-group.text>
-                                            <x-base.form-input class="w-full" type="text" name="state_dot"
-                                                id="state_dot" value="{{ old('state_dot', $carrier->state_dot) }}"
-                                                placeholder="State DOT" />
-                                        </x-base.input-group>
-
-                                        <x-base.input-group>
-                                            <x-base.input-group.text>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="lucide lucide-search stroke-[1] h-[18px] w-[18px]">
-                                                    <path d="M18 20a6 6 0 0 0-12 0" />
-                                                    <circle cx="12" cy="10" r="4" />
-                                                    <circle cx="12" cy="12" r="10" />
-                                                </svg>
-                                            </x-base.input-group.text>
-                                            <x-base.form-input class="w-full" type="text" name="ifta_account"
-                                                id="ifta_account"
-                                                value="{{ old('ifta_account', $carrier->ifta_account) }}"
-                                                placeholder="Enter IFTA account" />
-                                        </x-base.input-group>
-                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Full Name -->
+                            <!-- Membership -->
                             <div
                                 class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
                                 <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
@@ -310,6 +486,11 @@
                                 variant="outline-primary">
                                 <x-base.lucide class="-ml-2 mr-2 h-4 w-4 stroke-[1.3]" icon="Pocket" />
                                 Updated Carrier
+                            </x-base.button>
+                            <x-base.button as="a" href="{{ route('admin.carrier.index') }}"
+                                class="w-full border-primary/50 px-10 md:w-auto" variant="outline-primary">
+                                <x-base.lucide class="-ml-2 mr-2 h-4 w-4 stroke-[1.3]" icon="Pocket" />
+                                Cancel
                             </x-base.button>
                         </div>
                     </form>

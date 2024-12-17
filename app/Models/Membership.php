@@ -11,23 +11,34 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class Membership extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
-    
+
     protected $fillable = [
         'name',
         'description',
         'price',
         'max_carrier',
         'max_drivers',
-        'max_vehicles',        
+        'max_vehicles',
         'status',
     ];
     //Relación con los transportistas
     public function carriers()
-    {  
+    {
         return $this->hasMany(Carrier::class, 'id_plan');
     }
 
+    public function canAddDrivers(int $currentCount): bool
+    {
+        return $currentCount < $this->max_drivers;
+    }
 
+
+    public function canAddVehicles(int $currentCount): bool
+    {
+        return $currentCount < $this->max_vehicles;
+    }
+
+    //Media 
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('image_membership')

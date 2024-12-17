@@ -21,4 +21,15 @@ class DocumentType extends Model
     {
         return $this->hasMany(CarrierDocument::class);
     }
+
+    public function scopeRequired($query)
+    {
+        return $query->where('requirement', true);
+    }
+
+    public function documentType()
+{
+    return $this->belongsTo(DocumentType::class, 'document_type_id');
+}
+    
 }

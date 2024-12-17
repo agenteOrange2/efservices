@@ -44,9 +44,9 @@ class SideMenu
                     ],
                     [
                         'icon' => "UserSquare",
-                        'route_name' => "admin.user_carrier.index",
+                        'route_name' => "admin.document-types.index",
                         'params' => [],
-                        'title' => "Users Carriers",
+                        'title' => "Document Type",
                     ],
                 ],
             ],

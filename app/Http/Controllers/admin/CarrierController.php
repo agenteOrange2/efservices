@@ -2,43 +2,42 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\Constants;
 use App\Models\Carrier;
 use App\Models\Membership;
+use App\Models\DocumentType;
+use App\Models\CarrierDocument;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Str;
 
 class CarrierController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Mostrar todos los carriers.
      */
-    // Mostrar todos los transportistas
     public function index()
     {
-        //$carriers = Carrier::with('documents', 'managers', 'membership')->get();
-        //return view('admin.carrier.index', compact('carriers'));
-        return view('admin.carrier.index');
+        $carriers = Carrier::with('membership')->paginate(10);
+        return view('admin.carrier.index', compact('carriers'));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Mostrar el formulario para crear un nuevo carrier.
      */
-    // Mostrar el formulario para crear un nuevo transportista
     public function create()
     {
-
-        $memberships = Membership::where('status', 1)->select('id', 'name')->get(); // Obtener todos los planes        
-        return view('admin.carrier.create', compact('memberships'));
+        $memberships = Membership::where('status', 1)->select('id', 'name')->get();
+        $usStates = Constants::usStates();
+        return view('admin.carrier.create', compact('memberships', 'usStates'));
     }
 
-
     /**
-     * Store a newly created resource in storage.
+     * Guardar un nuevo carrier y asignar documentos base.
      */
-    // Guardar un nuevo transportista
     public function store(Request $request)
     {
-
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:255',
@@ -51,60 +50,75 @@ class CarrierController extends Controller
             'ifta_account' => 'nullable|string|max:255',
             'logo_img' => 'nullable|image|max:2048',
             'id_plan' => 'required|exists:memberships,id',
-            'status' => 'required|integer|in:0,1,3',
+            'status' => 'required|integer|in:0,1,2',
         ]);
-
-        $carrier = Carrier::create($validated);
-
+    
+        // Crear el carrier
+        $carrier = Carrier::create(array_merge($validated, [
+            'slug' => Str::slug($validated['name']),
+            'referrer_token' => Str::random(16),
+        ]));
+    
+        // Generar documentos base automáticamente
+        $this->generateBaseDocuments($carrier);
+    
+        // Subir logo (si se envió)
         if ($request->hasFile('logo_carrier')) {
-            $fileName = strtolower(str_replace(' ', '_', $carrier->name)) . '.webp'; // Genera el nombre basado en el nombre del plan
-
             $carrier->addMediaFromRequest('logo_carrier')
-                ->usingFileName($fileName) // Usa el nombre personalizado
+                ->usingFileName(Str::slug($carrier->name) . '.webp')
                 ->toMediaCollection('logo_carrier');
         }
-
-        // Mensaje dinámico para la notificación
-        return redirect()
-            ->route('admin.carrier.edit', $carrier->id)
-            ->with('notification', [
-                'type' => 'success',
-                'message' => 'Carrier created successfully!',
-                'details' => 'The Carrier data has been saved correctly.',
+    
+        // Redirigir al tab de usuarios del carrier
+        return redirect()->route('admin.carrier.user_carriers.index', $carrier)
+        ->with('success', 'Carrier creado exitosamente. Ahora puedes administrar los usuarios asociados.');
+    
+    }
+    
+    /**
+     * Generar documentos base para el carrier basado en los tipos predefinidos.
+     */
+    private function generateBaseDocuments(Carrier $carrier)
+    {
+        $documentTypes = DocumentType::all();
+    
+        foreach ($documentTypes as $type) {
+            CarrierDocument::create([
+                'carrier_id' => $carrier->id,
+                'document_type_id' => $type->id,
+                'filename' => 'placeholder.pdf', // Asignar un valor predeterminado
+                'status' => CarrierDocument::STATUS_PENDING,
+                'date' => now(),
             ]);
+        }
     }
 
+    public function documents(Carrier $carrier)
+{
+    // Obtener documentos relacionados al Carrier
+    $documents = CarrierDocument::where('carrier_id', $carrier->id)
+        ->with('documentType') // Incluye el tipo de documento
+        ->get();
+
+    // Renderiza la vista con los datos
+    return view('admin.carrier.documents.index', compact('carrier', 'documents'));
+}
+
+    
+
     /**
-     * Show the form for editing the specified resource.
+     * Mostrar el formulario para editar un carrier.
      */
-    // Mostrar el formulario para editar un transportista
     public function edit(Carrier $carrier)
     {
-        $memberships = Membership::where('status', 1)->select('id', 'name')->get(); // Solo carriers activos
-        return view('admin.carrier.edit', compact('carrier', 'memberships'));
+        $memberships = Membership::where('status', 1)->select('id', 'name')->get();
+        $usStates = Constants::usStates();
+        return view('admin.carrier.edit', compact('carrier', 'memberships', 'usStates'));
     }
-
-    public function users(Carrier $carrier)
-    {
-        // Obtenemos los registros de UserCarrier asociados al Carrier
-        $userCarriers = $carrier->userCarriers()->paginate(10);
-    
-        return view('admin.carrier.tabs.users', compact('carrier', 'userCarriers'));
-    }
-
-    /*
-public function documents(Carrier $carrier)
-{
-    $documents = $carrier->documents()->paginate(10);
-
-    return view('admin.carrier.tabs.documents', compact('carrier', 'documents'));
-}
-    */
 
     /**
-     * Update the specified resource in storage.
+     * Actualizar un carrier existente.
      */
-    // Actualizar un transportista existente
     public function update(Request $request, Carrier $carrier)
     {
         $validated = $request->validate([
@@ -119,10 +133,15 @@ public function documents(Carrier $carrier)
             'ifta_account' => 'nullable|string|max:255',
             'logo_img' => 'nullable|image|max:2048',
             'id_plan' => 'required|exists:memberships,id',
-            'status' => 'required|integer|in:0,1,3',
+            'status' => 'required|integer|in:0,1,2',
         ]);
 
+        // Actualizar slug solo si cambia el nombre
+        if ($carrier->name !== $validated['name']) {
+            $validated['slug'] = Str::slug($validated['name']);
+        }
 
+        // Subir logo (si se envió)
         if ($request->hasFile('logo_carrier')) {
             $fileName = strtolower(str_replace(' ', '_', $carrier->name)) . '.webp';
 
@@ -137,41 +156,18 @@ public function documents(Carrier $carrier)
 
         $carrier->update($validated);
 
-        // Mensaje dinámico para la notificación
         return redirect()
-            ->route('admin.carrier.edit', $carrier->id)
-            ->with('notification', [
-                'type' => 'success',
-                'message' => 'Carrier updated successfully!',
-                'details' => 'The Updated data has been saved correctly.',
-            ]);
+            ->route('admin.carrier.user_carriers.index', $carrier)
+            ->with('success', 'Carrier actualizado exitosamente.');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Eliminar un carrier.
      */
-
-    public function deletePhoto(Carrier $carrier)
-    {
-        $media = $carrier->getFirstMedia('logo_carrier');
-
-        if ($media) {
-            $media->delete(); // Elimina la foto
-            return response()->json([
-                'message' => 'Photo deleted successfully.',
-                'defaultPhotoUrl' => asset('build/default_profile.png'), // Retorna la foto predeterminada
-            ]);
-        }
-
-        return response()->json(['message' => 'No photo to delete.'], 404);
-    }
-
-
-    // Eliminar un transportista
     public function destroy(Carrier $carrier)
     {
         $carrier->delete();
 
-        return redirect()->route('admin.carriers.index')->with('success', 'Carrier deleted successfully!');
+        return redirect()->route('admin.carriers.index')->with('success', 'Carrier eliminado exitosamente.');
     }
 }

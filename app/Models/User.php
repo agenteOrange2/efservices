@@ -78,7 +78,7 @@ class User extends Authenticatable implements HasMedia
     public function carriers()
     {
         return $this->belongsToMany(Carrier::class, 'user_carrier')
-        ->withPivot('phone', 'job_position', 'photo', 'status')
+            ->withPivot('phone', 'job_position', 'photo', 'status')
             ->withTimestamps();
     }
 
@@ -111,4 +111,17 @@ class User extends Authenticatable implements HasMedia
     {
         return "{$this->name}.webp";
     }
+
+    public function getRouteKeyName()
+    {
+        return 'id';
+    }
+
+    // Relación con carriers asignados
+    public function assignedCarriers()
+    {
+        return $this->belongsToMany(Carrier::class, 'user_carrier_access');
+    }
+
+    
 }
