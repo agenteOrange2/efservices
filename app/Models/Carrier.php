@@ -115,4 +115,10 @@ class Carrier extends Model implements HasMedia
     {
         return 'slug';
     }
+
+    // Relación con usuarios asignados
+    public function assignedUsers()
+    {
+        return $this->belongsToMany(User::class, 'user_carrier_access');
+    }
 }

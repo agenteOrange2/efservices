@@ -13,24 +13,26 @@ class CarrierDocumentController extends Controller
     /**
      * Mostrar todos los documentos de todos los carriers (Solo para Super Admin).
      */
-    public function all()
-    {
-        $documents = CarrierDocument::with(['carrier', 'documentType'])->get();
-        return view('admin.carrier_documents.all', compact('documents'));
-    }
 
     /**
      * Mostrar los documentos de un carrier específico (Área del Carrier/User Carrier).
      */
     public function index(Carrier $carrier)
     {
-        $documents = CarrierDocument::with('documentType')
-            ->where('carrier_id', $carrier->id)
+        // Mostrar documentos de un carrier específico
+        $carrierDocuments = CarrierDocument::where('carrier_id', $carrier->id)
+            ->with('documentType')
             ->get();
 
-        return view('admin.carrier.documents.index', compact('carrier', 'documents'));
+        return view('admin.carrier.documents.index', compact('carrier', 'carrierDocuments'));
     }
 
+    public function all()
+    {
+        // Mostrar todos los documentos para el superadmin
+        $documents = CarrierDocument::with(['carrier', 'documentType'])->get();
+        return view('admin.carrier_documents.all', compact('documents'));
+    }
     /**
      * Crear un nuevo documento (Solo para Super Admin).
      */
@@ -67,8 +69,7 @@ class CarrierDocumentController extends Controller
                 ->toMediaCollection('carrier_documents', 'public');
         }
 
-        return redirect()->route('admin.carrier.documents.index', $carrier->slug)
-            ->with('success', 'Documento subido exitosamente.');
+        return back()->with('success', 'Documento subido exitosamente.');
     }
 
     /**
@@ -105,9 +106,46 @@ class CarrierDocumentController extends Controller
             'date' => $validated['date'] ?? $document->date,
         ]));
 
-        return redirect()->route('admin.carrier.documents.index', $carrier->slug)
-            ->with('success', 'Documento actualizado exitosamente.');
+        return back()->with('success', 'Documento subido exitosamente.');
     }
+
+
+
+    public function listCarriersForDocuments()
+    {
+        // Obtenemos los carriers con los documentos y primer user_carrier
+        $carriers = Carrier::with(['userCarriers', 'documents'])->get();
+
+        // Calculamos el estado general de los archivos (verde, amarillo, rojo)
+        foreach ($carriers as $carrier) {
+            $approved = $carrier->documents->where('status', CarrierDocument::STATUS_APPROVED)->count();
+            $totalDocuments = DocumentType::count();
+
+            // Semáforo de estados
+            if ($approved == $totalDocuments && $totalDocuments > 0) {
+                $carrier->document_status = 'active'; // Verde
+            } elseif ($approved > 0) {
+                $carrier->document_status = 'pending'; // Amarillo
+            } else {
+                $carrier->document_status = 'inactive'; // Rojo
+            }
+
+            // Obtener el primer User Carrier si existe
+            $carrier->first_user_carrier = $carrier->userCarriers->first();
+        }
+
+        return view('admin.carrier.admin_documents_list', compact('carriers'));
+    }
+
+
+    public function reviewDocuments(Carrier $carrier)
+    {
+        $documents = CarrierDocument::with('documentType')->where('carrier_id', $carrier->id)->get();
+        $documentTypes = DocumentType::all(); // Necesario para cargar tipos de documentos
+    
+        return view('admin.carrier.review_documents', compact('carrier', 'documents', 'documentTypes'));
+    }
+    
 
     /**
      * Revisar y cambiar el estado de un documento (Solo para Super Admin).
@@ -125,11 +163,38 @@ class CarrierDocumentController extends Controller
         ]);
 
         $document->update($validated);
-
-        return redirect()->route('admin.carrier.documents.review', [$carrier->slug, $document->id])
-            ->with('success', 'Estado del documento actualizado correctamente.');
     }
 
+    public function upload(Request $request, Carrier $carrier, DocumentType $documentType)
+    {
+        $validated = $request->validate([
+            'document' => 'required|file|mimes:pdf,jpg,png|max:2048',
+        ]);
+    
+        // Crear o actualizar el documento
+        $carrierDocument = CarrierDocument::updateOrCreate(
+            [
+                'carrier_id' => $carrier->id,
+                'document_type_id' => $documentType->id,
+            ],
+            [
+                'status' => CarrierDocument::STATUS_PENDING,
+            ]
+        );
+    
+        // Subir el archivo usando Media Library
+        if ($request->hasFile('document')) {
+            $carrierDocument->clearMediaCollection('carrier_documents');
+            $carrierDocument
+                ->addMediaFromRequest('document')
+                ->usingFileName(strtolower(str_replace(' ', '_', $documentType->name)) . '.pdf')
+                ->toMediaCollection('carrier_documents', 'public');
+        }
+    
+        return back()->with('success', 'Documento subido exitosamente.');
+    }
+    
+    
     /**
      * Eliminar un documento (Solo para Super Admin).
      */

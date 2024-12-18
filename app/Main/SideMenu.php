@@ -38,9 +38,9 @@ class SideMenu
                     ],
                     [
                         'icon' => "vote",
-                        'route_name' => "admin.product-grid",
+                        'route_name' => "admin.admin_documents.list",
                         'params' => [],
-                        'title' => "Politics",
+                        'title' => "All Documents",
                     ],
                     [
                         'icon' => "UserSquare",

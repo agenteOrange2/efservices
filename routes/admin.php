@@ -100,46 +100,53 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
         Route::put('/{userCarrier}', [UserCarrierController::class, 'update'])->name('update'); // Actualizar UserCarrier
         Route::delete('/{userCarrier}', [UserCarrierController::class, 'destroy'])->name('destroy'); // Eliminar UserCarrier
     });
-    // Rutas anidadas para Documentos
-    // Route::get('{carrier:slug}/documents', [CarrierController::class, 'documents'])->name('documents');
+
 });
-
-Route::prefix('carrier/{carrier:slug}')->group(function () {
-    // Documentos para usuario
-    Route::prefix('user-documents')->name('carrier.user_documents.')->group(function () {
-        Route::get('/', [UserCarrierDocumentController::class, 'index'])->name('index'); // Vista principal
-        Route::post('/upload/{documentType}', [UserCarrierDocumentController::class, 'upload'])->name('upload');
-        
-    });
-
-    // Documentos para superadmin
-    Route::prefix('admin-documents')->name('carrier.admin_documents.')->group(function () {
-        Route::get('/', [CarrierDocumentController::class, 'all'])->name('all');
-        Route::get('/{document}/review', [CarrierDocumentController::class, 'review'])->name('review');
-        Route::post('/{document}/review', [CarrierDocumentController::class, 'processReview'])->name('process-review');
-    });
-});
-
-
 
 /*
-    |--------------------------------------------------------------------------
-    | RUTAS ADMIN DOCUMENT
-    |--------------------------------------------------------------------------    
+|--------------------------------------------------------------------------
+| RUTAS PARA SUPERADMIN: ADMIN DOCUMENTS
+|--------------------------------------------------------------------------
 */
-Route::get('carriers-documents', [CarrierDocumentController::class, 'all'])
-    ->name('carriers.documents.all');
+
+// Listado de todos los carriers con estado de archivos
+Route::get('carriers-documents', [CarrierDocumentController::class, 'listCarriersForDocuments'])
+    ->name('admin_documents.list');
+
+// Ver los documentos subidos por un carrier específico
+Route::prefix('carrier/{carrier:slug}')->name('carrier.')->group(function () {
+    Route::get('admin-documents', [CarrierDocumentController::class, 'reviewDocuments'])
+        ->name('admin_documents.review');
+});
+
+Route::post('carrier/{carrier:slug}/admin-documents/upload/{documentType}', [CarrierDocumentController::class, 'upload'])
+    ->name('carrier.admin_documents.upload');
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS PARA USUARIOS: USER DOCUMENTS
+|--------------------------------------------------------------------------
+*/
+Route::prefix('carrier/{carrier:slug}')->name('carrier.user_documents.')->group(function () {
+    Route::get('user-documents', [UserCarrierDocumentController::class, 'index'])->name('index');
+    Route::post('user-documents/upload/{documentType}', [UserCarrierDocumentController::class, 'upload'])
+        ->name('upload');
+});
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS ADMIN DOCUMENTS (CRUD)
+|--------------------------------------------------------------------------
+*/
 Route::resource('carriers.documents', CarrierDocumentController::class)
     ->parameters(['documents' => 'document'])->except('show');
 
 
-Route::resource('document-types', DocumentTypeController::class)
-    ->except('show');
 
 /*
-    |--------------------------------------------------------------------------
-    | RUTAS ADMIN MEMBERSHIP
-    |--------------------------------------------------------------------------    
+|--------------------------------------------------------------------------
+| RUTAS ADMIN MEMBERSHIP
+|--------------------------------------------------------------------------    
 */
 Route::resource('membership', MembershipController::class);
 Route::post('membership/{membership}/delete-photo', [MembershipController::class, 'deletePhoto'])->name('membership.delete-photo');

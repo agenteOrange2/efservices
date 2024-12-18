@@ -230,11 +230,11 @@
                                 Update User
                             </x-base.button>
 
-                            <x-base.button class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                            {{-- <x-base.button class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
                                 onclick="confirmDelete(event, '{{ route('admin.users.destroy', $user->id) }}')">
                                 <x-base.lucide icon="Trash2" class="w-4 h-4 mr-2" />
                                 Delete User
-                            </x-base.button>
+                            </x-base.button> --}}
                         </div>
                     </form>
 

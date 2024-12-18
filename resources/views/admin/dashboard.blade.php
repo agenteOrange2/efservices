@@ -1,8 +1,5 @@
 @extends('../themes/' . $activeTheme)
-
-@section('subhead')
-    <title>Tailwise - Admin Dashboard Template</title>
-@endsection
+@section('title', 'Dashboard EF Services ')
 
 
 @php

@@ -86,11 +86,11 @@
                                     Save User
                                 </x-base.button>
 
-                                <x-base.button as="a" href="{{ route('admin.document-types.index') }}" class="w-full border-primary/50 px-10 md:w-auto"
-                                variant="outline-primary">
-                                <x-base.lucide class="-ml-2 mr-2 h-4 w-4 stroke-[1.3]" icon="Pocket" />
-                                Cancel
-                            </x-base.button>
+                                <x-base.button as="a" href="{{ route('admin.document-types.index') }}"
+                                    class="w-full border-primary/50 px-10 md:w-auto" variant="outline-primary">
+                                    <x-base.lucide class="-ml-2 mr-2 h-4 w-4 stroke-[1.3]" icon="Pocket" />
+                                    Cancel
+                                </x-base.button>
                             </div>
                         </div>
                     </form>
@@ -99,4 +99,3 @@
         </div>
     </div>
 @endsection
-

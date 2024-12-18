@@ -34,9 +34,9 @@ class CarrierDocument extends Model implements HasMedia
     // Relación con el tipo de documento
     public function documentType()
     {
-        return $this->belongsTo(DocumentType::class);
+        return $this->belongsTo(DocumentType::class, 'document_type_id');
     }
-
+    
     public function getStatusNameAttribute(): string
     {
         return match ($this->status) {

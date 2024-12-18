@@ -116,4 +116,12 @@ class User extends Authenticatable implements HasMedia
     {
         return 'id';
     }
+
+    // Relación con carriers asignados
+    public function assignedCarriers()
+    {
+        return $this->belongsToMany(Carrier::class, 'user_carrier_access');
+    }
+
+    
 }

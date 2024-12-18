@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\Constants;
 use App\Models\Carrier;
 use App\Models\Membership;
 use App\Models\DocumentType;
@@ -27,7 +28,8 @@ class CarrierController extends Controller
     public function create()
     {
         $memberships = Membership::where('status', 1)->select('id', 'name')->get();
-        return view('admin.carrier.create', compact('memberships'));
+        $usStates = Constants::usStates();
+        return view('admin.carrier.create', compact('memberships', 'usStates'));
     }
 
     /**
@@ -92,15 +94,12 @@ class CarrierController extends Controller
     }
 
     public function documents(Carrier $carrier)
-{
-    // Obtener documentos relacionados al Carrier
-    $documents = CarrierDocument::where('carrier_id', $carrier->id)
-        ->with('documentType') // Incluye el tipo de documento
-        ->get();
-
-    // Renderiza la vista con los datos
-    return view('admin.carrier.documents.index', compact('carrier', 'documents'));
-}
+    {
+        $documents = CarrierDocument::where('carrier_id', $carrier->id)->with('documentType')->get();
+        $documentTypes = DocumentType::all(); // Aquí cargamos los tipos de documentos
+    
+        return view('admin.carrier.documents.index', compact('carrier', 'documents', 'documentTypes'));
+    }
 
     
 
@@ -110,7 +109,8 @@ class CarrierController extends Controller
     public function edit(Carrier $carrier)
     {
         $memberships = Membership::where('status', 1)->select('id', 'name')->get();
-        return view('admin.carrier.edit', compact('carrier', 'memberships'));
+        $usStates = Constants::usStates();
+        return view('admin.carrier.edit', compact('carrier', 'memberships', 'usStates'));
     }
 
     /**
@@ -154,7 +154,7 @@ class CarrierController extends Controller
         $carrier->update($validated);
 
         return redirect()
-            ->route('admin.carrier.user_carriers.index', $carrier->slug)
+            ->route('admin.carrier.user_carriers.index', $carrier)
             ->with('success', 'Carrier actualizado exitosamente.');
     }
 

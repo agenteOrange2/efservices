@@ -4,7 +4,7 @@
 @php
     $breadcrumbLinks = [
         ['label' => 'App', 'url' => route('admin.dashboard')],
-        
+
         ['label' => 'Create User Carrier', 'active' => true],
     ];
 @endphp
@@ -20,7 +20,7 @@
             <div class="mt-7">
                 <div class="box box--stacked flex flex-col">
                     <div class="box-body">
-                        <form action="{{ route('admin.carrier.user_carriers.store', $carrier->id) }}" method="POST"
+                        <form action="{{ route('admin.carrier.user_carriers.store', $carrier) }}" method="POST"
                             enctype="multipart/form-data">
                             @csrf
                             <div class="p-7">
@@ -236,10 +236,16 @@
                                     <div class="mt-3 w-full flex-1 xl:mt-0">
                                         <select data-tw-merge aria-label="Default select example"
                                             class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&amp;[readonly]]:bg-slate-100 [&amp;[readonly]]:cursor-not-allowed [&amp;[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1 mt-2 sm:mr-2 mt-2 sm:mr-2"
-                                            id="status" name="status">                                    
-                                            <option value="{{ App\Models\Carrier::STATUS_PENDING }}" {{ old('status') == App\Models\Carrier::STATUS_PENDING ? 'selected' : '' }}>Pending</option>
-                                            <option value="{{ App\Models\Carrier::STATUS_ACTIVE }}" {{ old('status') == App\Models\Carrier::STATUS_ACTIVE ? 'selected' : '' }}>Active</option>
-                                            <option value="{{ App\Models\Carrier::STATUS_INACTIVE }}" {{ old('status') == App\Models\Carrier::STATUS_INACTIVE ? 'selected' : '' }}>Inactive</option>
+                                            id="status" name="status">
+                                            <option value="{{ App\Models\Carrier::STATUS_PENDING }}"
+                                                {{ old('status') == App\Models\Carrier::STATUS_PENDING ? 'selected' : '' }}>
+                                                Pending</option>
+                                            <option value="{{ App\Models\Carrier::STATUS_ACTIVE }}"
+                                                {{ old('status') == App\Models\Carrier::STATUS_ACTIVE ? 'selected' : '' }}>
+                                                Active</option>
+                                            <option value="{{ App\Models\Carrier::STATUS_INACTIVE }}"
+                                                {{ old('status') == App\Models\Carrier::STATUS_INACTIVE ? 'selected' : '' }}>
+                                                Inactive</option>
                                         </select>
                                         @error('status')
                                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -253,6 +259,12 @@
                                         <x-base.lucide class="-ml-2 mr-2 h-4 w-4 stroke-[1.3]" icon="Pocket" />
                                         Save User
                                     </x-base.button>
+                                    
+                                    <x-base.button as="a" href="{{ route('admin.carrier.user_carriers.index', $carrier) }}"
+                                    class="w-full border-primary/50 px-10 md:w-auto" variant="outline-primary">
+                                    <x-base.lucide class="-ml-2 mr-2 h-4 w-4 stroke-[1.3]" icon="Pocket" />
+                                    Cancel
+                                </x-base.button>
                                 </div>
                             </div>
                         </form>

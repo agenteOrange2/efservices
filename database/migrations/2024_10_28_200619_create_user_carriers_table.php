@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('user_carriers', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('carrier_id')->constrained()->onDelete('cascade'); // Relación con carriers
+            $table->id();            
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->foreignId('carrier_id')->constrained('carriers')->onDelete('cascade'); // Carrier asignado
+            $table->foreignId('role_id')->nullable()->constrained('roles')->onDelete('set null');            
             $table->string('name'); // Nombre del user_carrier
             $table->string('email')->unique(); // Email único
             $table->string('password'); // Contraseña encriptada

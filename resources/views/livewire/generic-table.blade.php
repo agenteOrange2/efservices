@@ -124,7 +124,7 @@
                                     </svg>
                                     <div class="ml-1 whitespace-nowrap">Inactive</div>
                                 </div>
-                            @elseif ($item[$column] == 3)
+                            @elseif ($item[$column] == 2)
                                 <!-- Status Pending -->
                                 <div class="flex items-center justify-start text-warning text-start">
                                     <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
