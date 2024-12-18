@@ -94,15 +94,12 @@ class CarrierController extends Controller
     }
 
     public function documents(Carrier $carrier)
-{
-    // Obtener documentos relacionados al Carrier
-    $documents = CarrierDocument::where('carrier_id', $carrier->id)
-        ->with('documentType') // Incluye el tipo de documento
-        ->get();
-
-    // Renderiza la vista con los datos
-    return view('admin.carrier.documents.index', compact('carrier', 'documents'));
-}
+    {
+        $documents = CarrierDocument::where('carrier_id', $carrier->id)->with('documentType')->get();
+        $documentTypes = DocumentType::all(); // Aquí cargamos los tipos de documentos
+    
+        return view('admin.carrier.documents.index', compact('carrier', 'documents', 'documentTypes'));
+    }
 
     
 
