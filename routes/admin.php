@@ -100,7 +100,6 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
         Route::put('/{userCarrier}', [UserCarrierController::class, 'update'])->name('update'); // Actualizar UserCarrier
         Route::delete('/{userCarrier}', [UserCarrierController::class, 'destroy'])->name('destroy'); // Eliminar UserCarrier
     });
-
 });
 
 /*
@@ -142,6 +141,8 @@ Route::resource('carriers.documents', CarrierDocumentController::class)
     ->parameters(['documents' => 'document'])->except('show');
 
 
+Route::resource('document-types', DocumentTypeController::class)
+    ->except('show');
 
 /*
 |--------------------------------------------------------------------------

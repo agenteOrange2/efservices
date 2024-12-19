@@ -28,7 +28,15 @@ class CustomPathGenerator implements PathGenerator
         }
 
         if ($model instanceof \App\Models\CarrierDocument) {
-            return "carrier_document/{$model->id}/";
+            $carrierName = strtolower(str_replace(' ', '_', $model->carrier->name));
+            $documentTypeName = strtolower(str_replace(' ', '_', $model->documentType->name));
+    
+            return "carrier_document/{$carrierName}/{$documentTypeName}/";
+        }
+    
+        if ($model instanceof \App\Models\DocumentType) {
+            $documentTypeName = strtolower(str_replace(' ', '_', $model->name));
+            return "carrier_document/default/{$documentTypeName}/";
         }
 
         return "others/{$model->id}/";

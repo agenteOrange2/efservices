@@ -10,7 +10,7 @@
         content="Kuiraweb admin is super flexible, powerful, clean & modern responsive tailwind admin template with unlimited possibilities.">
     <meta name="keywords"
         content="admin template, Kuiraweb Admin Template, dashboard template, flat admin template, responsive admin template, web app">
-    <meta name="author" content="KUIRAWEB">
+    <meta name="author" content="KUIRAWEB">    
 
     <link rel="mask-icon" href="{{asset('build/img/favicon_efservices.png')}}" color="#000000">
     <link rel="alternate icon" class="js-site-favicon" type="image/png" href="{{asset('build/img/favicon_efservices.png')}}">

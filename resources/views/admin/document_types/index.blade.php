@@ -39,16 +39,7 @@
                     </div>
 
                     <div class="flex flex-col gap-x-3 gap-y-2 sm:ml-auto sm:flex-row">                                                      
-                        <livewire:filter-popover :filter-options="[
-                            'status' => [
-                                'type' => 'select',
-                                'label' => 'Status',
-                                'options' => [
-                                    'active' => 'Active',
-                                    'inactive' => 'Inactive'
-                                ],                                
-                            ]
-                        ]" />            
+                        <livewire:filter-popover />            
                     </div>
                 </div>
                 <livewire:generic-table  class="p-0"

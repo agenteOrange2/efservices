@@ -10,22 +10,46 @@
     ];
 @endphp
 
+@pushOnce('styles')
+    @vite('resources/css/vendors/toastify.css')
+@endPushOnce
+
 @section('subcontent')
+
+    <!-- Success Notification Content -->
+    <div id="success-notification-content" class="hidden">
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-green-100 border border-green-400 text-green-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path>
+            </svg>
+            <span>File uploaded successfully!</span>
+        </div>
+    </div>
+
+    <!-- Error Notification Content -->
+    <div id="error-notification-content" class="hidden">
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-red-100 border border-red-400 text-red-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 8v4m0 4h.01M12 2a10 10 0 11-10 10A10 10 0 0112 2z"></path>
+            </svg>
+            <span>Error uploading the file. Please try again.</span>
+        </div>
+    </div>
+
+
     <h1 class="text-xl font-semibold">
         Documents for {{ $carrier->name }}</h1>
-    <h1>hey</h1>
-
-    {{-- 
-    <div class="px-7">
-        <div class="box box--stacked flex flex-col">
-            <div class="overflow-auto xl:overflow-visible">
+    <div class="col-span-12">
+        <div class="mt-2 overflow-auto lg:overflow-visible">
+            <x-base.table class="border-separate border-spacing-y-[10px]">
                 <div class="border-b border-gray-200 dark:border-gray-700">
                     <ul class="flex flex-wrap text-sm font-medium text-center text-gray-500 dark:text-gray-400">
                         <!-- Tab Carrier -->
                         <li class="flex-grow">
                             <a href="{{ route('admin.carrier.edit', $carrier->slug) }}"
                                 class="inline-flex items-center justify-center w-full p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group
-                            {{ request()->routeIs('admin.carrier.edit') ? 'text-primary border-primary dark:text-primary dark:border-primary' : '' }}">
+                        {{ request()->routeIs('admin.carrier.edit') ? 'text-primary border-primary dark:text-primary dark:border-primary' : '' }}">
 
                                 <svg class="w-6 h-6 me-2 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300 {{ request()->routeIs('admin.carrier.edit') ? 'text-primary dark:text-primary' : '' }}"
                                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
@@ -42,7 +66,7 @@
                         <li class="flex-grow">
                             <a href="{{ route('admin.carrier.user_carriers.index', $carrier->slug) }}"
                                 class="inline-flex items-center justify-center w-full p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group
-                            {{ request()->routeIs('admin.carrier.user_carriers.*') ? 'text-primary border-blue-600 dark:text-primary dark:border-primary' : '' }}">
+                        {{ request()->routeIs('admin.carrier.user_carriers.*') ? 'text-primary border-blue-600 dark:text-primary dark:border-primary' : '' }}">
                                 <svg class="w-6 h-6 me-2 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300 {{ request()->routeIs('admin.carrier.user_carriers.*') ? 'text-primary dark:text-primary' : '' }}"
                                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -55,11 +79,12 @@
                                 Users
                             </a>
                         </li>
-                        <!-- Tab Documents -->                        
+                        <!-- Tab Documents -->
+                        {{-- Uncomment if needed --}}
                         <li class="flex-grow">
                             <a href="{{ route('admin.carrier.documents', $carrier->slug) }}"
                                 class="inline-flex items-center justify-center w-full p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group
-                            {{ request()->routeIs('admin.carrier.documents') ? 'text-primary border-blue-600 dark:text-primary dark:border-primary' : '' }}">
+                        {{ request()->routeIs('admin.carrier.documents') ? 'text-primary border-blue-600 dark:text-primary dark:border-primary' : '' }}">
                                 <svg class="w-6 h-6 me-2 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300 {{ request()->routeIs('admin.carrier.documents') ? 'text-primary dark:text-primary' : '' }}"
                                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -73,129 +98,20 @@
                         </li>
                     </ul>
                 </div>
-                <table class="w-full text-left border-b border-slate-200/60">
-                    <thead>
-                        <tr>
-                            <th
-                                class="px-5 border-b border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                                Name</th>
-                            <th
-                                class="px-5 border-b border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                                Status</th>
-                            <th
-                                class="px-5 border-b border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                                Notes</th>
-                            <th
-                                class="px-5 border-b border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                                Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($documents as $document)
-                            <tr>
-                                <td
-                                    class="px-5 py-3 border-b box rounded-l-none rounded-r-none border-x-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
-                                    {{ $document->documentType->name }}</td>
-                                <td class="px-5 border-b border-dashed py-4">{{ $document->status_name }}</td>
-                                <td class="px-5 border-b border-dashed py-4">
-                                    @if ($document->notes)
-                                        <p class="text-gray-600">Notes: {{ $document->notes }}</p>
-                                    @endif
-                                </td>
-                                <td class="px-5 border-b border-dashed py-4">
-                                    @if (!$document->getFirstMediaUrl('carrier_documents'))
-                                        <!-- Mostrar formulario si no hay archivo subido -->
-                                        <form action="{{ route('admin.carrier.admin_documents.upload', [$carrier->slug, $document->documentType->id]) }}"
-                                            method="POST" enctype="multipart/form-data">
-                                            @csrf
-                                            <input type="file" name="document" class="block mb-2" required>
-                                            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Upload
-                                                File
-                                            </button>
-                                        </form>
-                                    @else
-                                        <!-- Mostrar enlace si el archivo está subido -->
-                                        <a href="{{ $document->getFirstMediaUrl('document') }}" target="_blank"
-                                            class="text-blue-500 underline">
-                                            View Uploaded File
-                                        </a>
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="px-5 border-b border-dashed py-4 text-center">
-                                    No documents available for this carrier.</td>
-                            </tr>
-                        @endforelse
-
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    --}}
-    <!-- Modal Trigger -->
-
-    <table class="w-full text-left border-separate border-spacing-y-[10px]">
-        <thead>
-            <tr>
-                <th class="px-5 py-4 font-medium text-slate-500">Document Type</th>
-                <th class="px-5 py-4 font-medium text-slate-500">Status</th>
-                <th class="px-5 py-4 font-medium text-slate-500">File</th>
-                <th class="px-5 py-4 font-medium text-slate-500">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($documents as $document)
-                <tr>
-                    <td>{{ $document->documentType->name }}</td>
-                    <td>{{ $document->status_name }}</td>
-                    <td>
-                        @if ($document->getFirstMediaUrl('carrier_documents'))
-                            <a href="{{ $document->getFirstMediaUrl('carrier_documents') }}" target="_blank"
-                                class="text-blue-500 underline">
-                                View File
-                            </a>
-                        @else
-                            <span class="text-gray-500">No file uploaded</span>
-                        @endif
-                    </td>
-                    <td>
-                        <!-- Formulario dinámico por fila -->
-                        <form
-                            action="{{ route('admin.carrier.admin_documents.upload', [$carrier->slug, $document->documentType->id]) }}"
-                            method="POST" enctype="multipart/form-data">
-                            @csrf
-                            <input type="file" name="document" required class="block mb-2">
-                            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
-                                {{ $document->getFirstMediaUrl('carrier_documents') ? 'Replace File' : 'Upload File' }}
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-    <div class="col-span-12">
-        <h1>Performance Insights</h1>
-        <div class="mt-2 overflow-auto lg:overflow-visible">
-            <x-base.table class="border-separate border-spacing-y-[10px]">
                 <x-base.table.tbody>
                     @foreach ($documents as $document)
                         <x-base.table.tr>
                             <x-base.table.td
                                 class="box rounded-l-none rounded-r-none border-x-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
                                 <div class="flex items-center">
-                                    {{-- <x-base.lucide class="h-6 w-6 fill-primary/10 stroke-[0.8] text-theme-1"
-                                        icon="{{ $faker['category']['icon'] }}" /> --}}
+                                    <x-base.lucide class="h-6 w-6 fill-primary/10 stroke-[0.8] text-theme-1"
+                                        icon="FileText" />
                                     <div class="ml-3.5">
                                         <a class="font-medium whitespace-nowrap" href="">
                                             {{ $document->documentType->name }}
                                         </a>
                                         <div class="mt-1 text-xs whitespace-nowrap text-slate-500">
-                                            {{ $document->documentType->name }}
+                                            {{ $document->documentType->requirement ? 'Obligatory' : 'Optional' }}
                                         </div>
                                     </div>
                                 </div>
@@ -206,109 +122,233 @@
                                     File
                                 </div>
                                 {{-- Corregir --}}
-                                <a class="flex items-center text-primary" href="">
+                                <div class="flex items-center text-primary">
                                     <x-base.lucide class="h-3.5 w-3.5 stroke-[1.7]" icon="ExternalLink" />
                                     <div class="ml-1.5 whitespace-nowrap">
                                         @if ($document->getFirstMediaUrl('carrier_documents'))
-                                        <a href="{{ $document->getFirstMediaUrl('carrier_documents') }}" target="_blank"
-                                            class="text-blue-500 underline">
-                                            View File
-                                        </a>
+                                            <a href="{{ $document->getFirstMediaUrl('carrier_documents') }}"
+                                                target="_blank" class="text-blue-500 underline">
+                                                View File
+                                            </a>
                                     </div>
-                                    @else
+                                @else
                                     <div class="ml-1.5 whitespace-nowrap">
                                         <span class="text-gray-500">No file uploaded</span>
                                     </div>
-                                    @endif
-                                        {{-- {{ $faker['user']['name'] }} --}}
-                                    </div>
-                                </a>
-                            </x-base.table.td>
-                            <x-base.table.td
-                                class="box w-44 rounded-l-none rounded-r-none border-x-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
-                                <div class="mb-1.5 whitespace-nowrap text-xs text-slate-500">
-                                    Purchased Items
-                                </div>
-                                <div class="flex mb-1">
-                                    <div class="w-5 h-5 image-fit zoom-in">
-                                        {{-- <x-base.tippy
-                                            class="rounded-full shadow-[0px_0px_0px_2px_#fff,_1px_1px_5px_rgba(0,0,0,0.32)]"
-                                            src="{{ Vite::asset($faker['products'][0]['images'][0]['path']) }}"
-                                            alt="Tailwise - Admin Dashboard Template"
-                                            as="img"
-                                            content="{{ $faker['products'][0]['name'] }}"
-                                        /> --}}
-                                    </div>
-                                    <div class="image-fit zoom-in -ml-1.5 h-5 w-5">
-                                        {{-- <x-base.tippy
-                                            class="rounded-full shadow-[0px_0px_0px_2px_#fff,_1px_1px_5px_rgba(0,0,0,0.32)]"
-                                            src="{{ Vite::asset($faker['products'][1]['images'][0]['path']) }}"
-                                            alt="Tailwise - Admin Dashboard Template"
-                                            as="img"
-                                            content="{{ $faker['products'][1]['name'] }}"
-                                        /> --}}
-                                    </div>
-                                    <div class="image-fit zoom-in -ml-1.5 h-5 w-5">
-                                        {{-- <x-base.tippy
-                                            class="rounded-full shadow-[0px_0px_0px_2px_#fff,_1px_1px_5px_rgba(0,0,0,0.32)]"
-                                            src="{{ Vite::asset($faker['products'][2]['images'][0]['path']) }}"
-                                            alt="Tailwise - Admin Dashboard Template"
-                                            as="img"
-                                            content="{{ $faker['products'][2]['name'] }}"
-                                        /> --}}
-                                    </div>
-                                </div>
-                            </x-base.table.td>
-                            <x-base.table.td
-                                class="box w-44 rounded-l-none rounded-r-none border-x-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
-                                <div class="mb-1 text-xs whitespace-nowrap text-slate-500">
-                                    Status
-                                </div>
-                                {{-- <div @class(['flex items-center', $faker['orderStatus']['textColor']])>
-                                    <x-base.lucide class="h-3.5 w-3.5 stroke-[1.7]"
-                                        icon="{{ $faker['orderStatus']['icon'] }}" />
-                                        <div class="ml-1.5 whitespace-nowrap">
-                                            {{ $faker['orderStatus']['name'] }}
-                                        </div>
-                                    </div> 
-                                    --}}
-                            </x-base.table.td>
-                            <x-base.table.td
-                                class="box w-44 rounded-l-none rounded-r-none border-x-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
-                                <div class="mb-1 text-xs whitespace-nowrap text-slate-500">
-                                    Date
-                                </div>
-                                <div class="whitespace-nowrap">{{ $document->created_at }}</div>
-                            </x-base.table.td>
-                            <x-base.table.td
-                                class="box relative w-20 rounded-l-none rounded-r-none border-x-0 py-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
-                                <div class="flex items-center justify-center">
-                                    <x-base.menu class="h-5">
-                                        <x-base.menu.button class="w-5 h-5 text-slate-500">
-                                            <x-base.lucide class="w-5 h-5 fill-slate-400/70 stroke-slate-400/70"
-                                                icon="MoreVertical" />
-                                        </x-base.menu.button>
-                                        <x-base.menu.items class="w-40">
-                                            <x-base.menu.item>
-                                                <x-base.lucide class="w-4 h-4 mr-2" icon="WalletCards" />
-                                                View Details
-                                            </x-base.menu.item>
-                                            <x-base.menu.item>
-                                                <x-base.lucide class="w-4 h-4 mr-2" icon="FileSignature" />
-                                                Edit Order
-                                            </x-base.menu.item>
-                                            <x-base.menu.item>
-                                                <x-base.lucide class="w-4 h-4 mr-2" icon="Printer" />
-                                                Print Invoice
-                                            </x-base.menu.item>
-                                        </x-base.menu.items>
-                                    </x-base.menu>
-                                </div>
-                            </x-base.table.td>
-                        </x-base.table.tr>
-                    @endforeach
-                </x-base.table.tbody>
-            </x-base.table>
+                    @endif
+                    {{-- {{ $faker['user']['name'] }} --}}
         </div>
     </div>
+    </x-base.table.td>
+    <x-base.table.td
+        class="box w-44 rounded-l-none rounded-r-none border-x-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
+        <div class="mb-1.5 whitespace-nowrap text-xs text-slate-500">
+            Notes
+        </div>
+        <div class="relative group">
+            <span class="cursor-pointer text-blue-500 underline">View Notes</span>
+            <div class="absolute hidden w-48 p-2 text-sm text-white bg-black rounded-lg shadow-lg group-hover:block">
+                {{ $document->notes ?? 'No notes available' }}
+            </div>
+        </div>
+    </x-base.table.td>
+    <x-base.table.td
+        class="box w-44 rounded-l-none rounded-r-none border-x-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
+        <div class="mb-1 text-xs whitespace-nowrap text-slate-500">
+            Status
+        </div>
+
+
+        <div class="flex items-center {{ $document->status_name == 'Pending' ? 'text-orange-500' : 'text-green-500' }}">
+            <x-base.lucide class="h-3.5 w-3.5 stroke-[1.7]"
+                icon="{{ $document->status_name == 'Pending' ? 'AlertCircle' : 'CheckCircle' }}" />
+            <div class="ml-1.5 whitespace-nowrap">
+                {{ $document->status_name }}
+            </div>
+        </div>
+
+    </x-base.table.td>
+    <x-base.table.td
+        class="box w-44 rounded-l-none rounded-r-none border-x-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
+        <div class="mb-1 text-xs whitespace-nowrap text-slate-500">
+            Date
+        </div>
+        <div class="whitespace-nowrap">{{ \Carbon\Carbon::parse($document->created_at)->format('d M Y') }}</div>
+    </x-base.table.td>
+    <x-base.table.td
+        class="box relative w-20 rounded-l-none rounded-r-none border-x-0 py-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
+        <div class="flex items-center justify-center">
+            <x-base.menu class="h-5">
+                <x-base.menu.button class="w-5 h-5 text-slate-500">
+                    <x-base.lucide class="w-5 h-5 fill-slate-400/70 stroke-slate-400/70" icon="MoreVertical" />
+                </x-base.menu.button>
+                <x-base.menu.items class="w-40">
+                    {{-- <button data-modal-target="uploadModal-{{ $document->documentType->id }}"
+                        data-modal-toggle="uploadModal-{{ $document->documentType->id }}"
+                        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        Upload/Replace
+                    </button> --}}
+                    <x-base.menu.item data-modal-target="uploadModal-{{ $document->documentType->id }}"
+                        data-modal-toggle="uploadModal-{{ $document->documentType->id }}">
+                        <x-base.lucide class="w-4 h-4 mr-2" icon="FileSignature" />
+                        Upload/Replace
+                    </x-base.menu.item>
+                </x-base.menu.items>
+            </x-base.menu>
+        </div>
+    </x-base.table.td>
+    </x-base.table.tr>
+    @endforeach
+    </x-base.table.tbody>
+    </x-base.table>
+    </div>
+    </div>
+
+    <!-- Modals -->
+    @foreach ($documents as $document)
+        <!-- Modal -->
+        <div id="uploadModal-{{ $document->documentType->id }}" tabindex="-1"
+            class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
+                <!-- Botón para cerrar el modal -->
+                <button type="button" data-modal-toggle="uploadModal-{{ $document->documentType->id }}"
+                    class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-2xl font-semibold">
+                    &times;
+                </button>
+
+                <!-- Título -->
+                <h3 class="text-lg font-semibold mb-4 text-gray-900">Upload or Replace File</h3>
+
+                <!-- Diseño de Input para subir archivos -->
+                <form id="upload-form-{{ $document->documentType->id }}"
+                    action="{{ route('admin.carrier.admin_documents.upload', [$carrier->slug, $document->documentType->id]) }}"
+                    method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="w-full mb-5">
+                        <label for="file-input-{{ $document->documentType->id }}"
+                            class="flex flex-col items-center justify-center py-9 w-full border border-gray-300 border-dashed rounded-2xl cursor-pointer bg-gray-50 hover:border-indigo-600 transition">
+                            <!-- Icono -->
+                            <div class="mb-3 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none"
+                                    stroke="#4F46E5" stroke-width="1.6">
+                                    <path
+                                        d="M16.296 25.3935L19.9997 21.6667L23.7034 25.3935M19.9997 35V21.759M10.7404 27.3611H9.855C6.253 27.3611 3.33301 24.4411 3.33301 20.8391C3.33301 17.2371 6.253 14.3171 9.855 14.3171V14.3171C10.344 14.3171 10.736 13.9195 10.7816 13.4326C11.2243 8.70174 15.1824 5 19.9997 5C25.1134 5 29.2589 9.1714 29.2589 14.3171H30.1444C33.7463 14.3171 36.6663 17.2371 36.6663 20.8391C36.6663 24.4411 33.7463 27.3611 30.1444 27.3611H29.2589" />
+                                </svg>
+                            </div>
+                            <!-- Texto de ayuda -->
+                            <h2 class="text-center text-gray-400 text-xs font-normal mb-1">
+                                PNG, JPG, PDF, smaller than 15MB
+                            </h2>
+                            <h4 class="text-center text-gray-900 text-sm font-medium leading-snug">
+                                Drag and Drop your file here or
+                                <span class="text-indigo-600 underline">click to upload</span>
+                            </h4>
+                            <!-- Input oculto -->
+                            <input id="file-input-{{ $document->documentType->id }}" type="file" name="document"
+                                class="hidden">
+                        </label>
+                        <!-- Área para mostrar el nombre del archivo -->
+                        <p id="file-name-{{ $document->documentType->id }}"
+                            class="mt-2 text-gray-600 text-sm italic text-center hidden"></p>
+                    </div>
+
+                    <!-- Botón de Acción -->
+                    <div class="flex justify-end">
+                        <button type="submit"
+                            class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                            Upload File
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endforeach
+
+
 @endsection
+
+@pushOnce('scripts')
+    @vite('resources/js/app.js') {{-- Este debe ir primero --}}
+    @vite('resources/js/pages/notification.js')
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const toggleButtons = document.querySelectorAll("[data-modal-toggle]");
+
+            // Abrir/Cerrar Modales
+            toggleButtons.forEach(button => {
+                const modalId = button.getAttribute("data-modal-toggle");
+                const modal = document.getElementById(modalId);
+
+                button.addEventListener("click", () => {
+                    modal.classList.toggle("hidden");
+                });
+            });
+
+            // Mostrar nombre del archivo
+            const fileInputs = document.querySelectorAll("input[type='file']");
+            fileInputs.forEach(input => {
+                input.addEventListener("change", (e) => {
+                    const fileName = e.target.files[0]?.name || "No file selected";
+                    const fileNameDisplay = document.getElementById(
+                        `file-name-${input.id.split("file-input-")[1]}`
+                    );
+                    fileNameDisplay.textContent = `Selected File: ${fileName}`;
+                    fileNameDisplay.classList.remove("hidden");
+                });
+            });
+
+            // Lógica del formulario con Fetch y Toastify
+            const forms = document.querySelectorAll("form[id^='upload-form']");
+            forms.forEach(form => {
+                form.addEventListener("submit", async (e) => {
+                    e.preventDefault();
+
+                    const formData = new FormData(form);
+
+                    try {
+                        const response = await fetch(form.action, {
+                            method: "POST",
+                            body: formData,
+                            headers: {
+                                "X-CSRF-TOKEN": document.querySelector(
+                                    'input[name="_token"]').value,
+                            },
+                        });
+
+                        if (response.ok) {
+                            const successContent = document
+                                .getElementById("success-notification-content")
+                                .cloneNode(true);
+                            successContent.classList.remove("hidden");
+
+                            Toastify({
+                                node: successContent,
+                                duration: 3000,
+                                gravity: "top",
+                                position: "right",
+                                stopOnFocus: true,
+                            }).showToast();
+
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            throw new Error("Upload failed. Please try again.");
+                        }
+                    } catch (error) {
+                        const errorContent = document
+                            .getElementById("error-notification-content")
+                            .cloneNode(true);
+                        errorContent.classList.remove("hidden");
+
+                        Toastify({
+                            node: errorContent,
+                            duration: 3000,
+                            gravity: "top",
+                            position: "right",
+                            stopOnFocus: true,
+                        }).showToast();
+                    }
+                });
+            });
+        });
+    </script>
+@endPushOnce

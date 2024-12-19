@@ -106,7 +106,12 @@ class CarrierDocumentController extends Controller
             'date' => $validated['date'] ?? $document->date,
         ]));
 
-        return back()->with('success', 'Documento subido exitosamente.');
+        return back()        
+        ->with('notification', [
+            'type' => 'success',
+            'message' => 'Documento subido exitosamente.',
+            'details' => 'The document data has been saved correctly.',
+        ]);          
     }
 
 
@@ -191,7 +196,12 @@ class CarrierDocumentController extends Controller
                 ->toMediaCollection('carrier_documents', 'public');
         }
     
-        return back()->with('success', 'Documento subido exitosamente.');
+        return back()        
+        ->with('notification', [
+            'type' => 'success',
+            'message' => 'Document upload successfully!',
+            'details' => 'The document data has been saved correctly.',
+        ]);                
     }
     
     
