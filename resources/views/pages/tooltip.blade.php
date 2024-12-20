@@ -29,17 +29,10 @@
                                     Basic Tooltip
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-1"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-1">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-1"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-1" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -51,19 +44,15 @@
                                     This section explains how to implement basic tooltips in
                                     your web application.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
                                     <div class="mt-4 flex flex-col gap-3.5 px-5 py-2">
                                         <x-base.preview>
                                             <div class="text-center">
-                                                <x-base.tippy
-                                                    as="x-base.button"
-                                                    variant="primary"
-                                                    content="This is awesome tooltip example!"
-                                                >
+                                                <x-base.tippy as="x-base.button" variant="primary"
+                                                    content="This is awesome tooltip example!">
                                                     Show Tooltip
                                                 </x-base.tippy>
                                             </div>
@@ -71,11 +60,8 @@
                                         <x-base.source>
                                             <x-base.highlight>
                                                 <div class="text-center">
-                                                    <x-base.tippy
-                                                        as="x-base.button"
-                                                        variant="primary"
-                                                        content="This is awesome tooltip example!"
-                                                    >
+                                                    <x-base.tippy as="x-base.button" variant="primary"
+                                                        content="This is awesome tooltip example!">
                                                         Show Tooltip
                                                     </x-base.tippy>
                                                 </div>
@@ -103,17 +89,10 @@
                                     On Click Tooltip
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-2"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-2">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-2"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-2" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -124,20 +103,15 @@
                                     to implement tooltips that appear on click events in
                                     your web application.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
                                     <div class="mt-4 flex flex-col gap-3.5 px-5 py-2">
                                         <x-base.preview>
                                             <div class="text-center">
-                                                <x-base.tippy
-                                                    data-trigger="click"
-                                                    as="x-base.button"
-                                                    variant="primary"
-                                                    content="This is awesome tooltip example!"
-                                                >
+                                                <x-base.tippy data-trigger="click" as="x-base.button" variant="primary"
+                                                    content="This is awesome tooltip example!">
                                                     Show Tooltip
                                                 </x-base.tippy>
                                             </div>
@@ -145,12 +119,8 @@
                                         <x-base.source>
                                             <x-base.highlight>
                                                 <div class="text-center">
-                                                    <x-base.tippy
-                                                        data-trigger="click"
-                                                        as="x-base.button"
-                                                        variant="primary"
-                                                        content="This is awesome tooltip example!"
-                                                    >
+                                                    <x-base.tippy data-trigger="click" as="x-base.button" variant="primary"
+                                                        content="This is awesome tooltip example!">
                                                         Show Tooltip
                                                     </x-base.tippy>
                                                 </div>
@@ -177,17 +147,10 @@
                                     Light Tooltip
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-3"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-3">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-3"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-3" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -198,20 +161,15 @@
                                     minimalistic appearance. This section explains how to
                                     implement Light Tooltips in your web application.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
                                     <div class="mt-4 flex flex-col gap-3.5 px-5 py-2">
                                         <x-base.preview>
                                             <div class="text-center">
-                                                <x-base.tippy
-                                                    data-theme="light"
-                                                    as="x-base.button"
-                                                    variant="primary"
-                                                    content="This is awesome tooltip example!"
-                                                >
+                                                <x-base.tippy data-theme="light" as="x-base.button" variant="primary"
+                                                    content="This is awesome tooltip example!">
                                                     Show Tooltip
                                                 </x-base.tippy>
                                             </div>
@@ -219,12 +177,8 @@
                                         <x-base.source>
                                             <x-base.highlight>
                                                 <div class="text-center">
-                                                    <x-base.tippy
-                                                        data-theme="light"
-                                                        as="x-base.button"
-                                                        variant="primary"
-                                                        content="This is awesome tooltip example!"
-                                                    >
+                                                    <x-base.tippy data-theme="light" as="x-base.button" variant="primary"
+                                                        content="This is awesome tooltip example!">
                                                         Show Tooltip
                                                     </x-base.tippy>
                                                 </div>
@@ -251,17 +205,10 @@
                                     Custom Tooltip Content
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-4"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-4">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-4"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-4" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -273,8 +220,7 @@
                                     components. This section explains how to implement
                                     Custom Tooltip Content in your web application.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -282,10 +228,7 @@
                                         <x-base.preview>
                                             <!-- BEGIN: Custom Tooltip Toggle -->
                                             <div class="text-center">
-                                                <x-base.button
-                                                    data-tooltip="custom-tooltip-content"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button data-tooltip="custom-tooltip-content" variant="primary">
                                                     Show Tooltip
                                                 </x-base.button>
                                             </div>
@@ -295,20 +238,14 @@
                                                 <x-base.tippy-content to="custom-tooltip-content">
                                                     <div class="relative flex items-center py-1">
                                                         <div class="image-fit h-12 w-12">
-                                                            <img
-                                                                class="rounded-full"
-                                                                src="#"
-                                                                {{-- src="{{ Vite::asset($products[0]['images'][0]['path']) }}" --}}
-                                                                alt="Tailwise - Admin Dashboard Template"
-                                                            >
+                                                            <img class="rounded-full" src="#" {{-- src="{{ Vite::asset($products[0]['images'][0]['path']) }}" --}}
+                                                                alt="Tailwise - Admin Dashboard Template">
                                                         </div>
                                                         <div class="ml-4 mr-auto">
-                                                            <div
-                                                                class="whitespace-nowrap font-medium leading-normal">
+                                                            <div class="whitespace-nowrap font-medium leading-normal">
                                                                 {{ $users[0]['name'] }}
                                                             </div>
-                                                            <div
-                                                                class="mt-0.5 whitespace-nowrap text-xs text-slate-500">
+                                                            <div class="mt-0.5 whitespace-nowrap text-xs text-slate-500">
                                                                 TailwindCSS 3+ HTML Admin Template
                                                             </div>
                                                         </div>
@@ -321,10 +258,8 @@
                                             <x-base.highlight>
                                                 <!-- BEGIN: Custom Tooltip Toggle -->
                                                 <div class="text-center">
-                                                    <x-base.button
-                                                        data-tooltip="custom-tooltip-content"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button data-tooltip="custom-tooltip-content"
+                                                        variant="primary">
                                                         Show Tooltip
                                                     </x-base.button>
                                                 </div>
@@ -334,16 +269,12 @@
                                                     <x-base.tippy-content to="custom-tooltip-content">
                                                         <div class="relative flex items-center py-1">
                                                             <div class="image-fit h-12 w-12">
-                                                                <img
-                                                                    class="rounded-full"
-                                                                    src="#"
+                                                                <img class="rounded-full" src="#"
                                                                     {{-- src="{{ Vite::asset($products[0]['images'][0]['path']) }}" --}}
-                                                                    alt="Tailwise - Admin Dashboard Template"
-                                                                >
+                                                                    alt="Tailwise - Admin Dashboard Template">
                                                             </div>
                                                             <div class="ml-4 mr-auto">
-                                                                <div
-                                                                    class="whitespace-nowrap font-medium leading-normal">
+                                                                <div class="whitespace-nowrap font-medium leading-normal">
                                                                     {{ $users[0]['name'] }}
                                                                 </div>
                                                                 <div
@@ -378,17 +309,10 @@
                                     Chart Tooltip
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-5"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-5">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-5"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-5" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -399,8 +323,7 @@
                                     explains how to implement and customize chart tooltips
                                     in your web application.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -408,20 +331,14 @@
                                         <x-base.preview>
                                             <!-- BEGIN: Custom Tooltip Toggle -->
                                             <div class="text-center">
-                                                <x-base.button
-                                                    data-tooltip="chart-tooltip"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button data-tooltip="chart-tooltip" variant="primary">
                                                     Show Tooltip
                                                 </x-base.button>
                                             </div>
                                             <!-- END: Custom Tooltip Toggle -->
                                             <!-- BEGIN: Custom Tooltip Content -->
                                             <div class="tooltip-content">
-                                                <x-base.tippy-content
-                                                    class="py-1"
-                                                    to="chart-tooltip"
-                                                >
+                                                <x-base.tippy-content class="py-1" to="chart-tooltip">
                                                     <div class="font-medium">
                                                         Net Worth
                                                     </div>
@@ -444,20 +361,14 @@
                                             <x-base.highlight>
                                                 <!-- BEGIN: Custom Tooltip Toggle -->
                                                 <div class="text-center">
-                                                    <x-base.button
-                                                        data-tooltip="chart-tooltip"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button data-tooltip="chart-tooltip" variant="primary">
                                                         Show Tooltip
                                                     </x-base.button>
                                                 </div>
                                                 <!-- END: Custom Tooltip Toggle -->
                                                 <!-- BEGIN: Custom Tooltip Content -->
                                                 <div class="tooltip-content">
-                                                    <x-base.tippy-content
-                                                        class="py-1"
-                                                        to="chart-tooltip"
-                                                    >
+                                                    <x-base.tippy-content class="py-1" to="chart-tooltip">
                                                         <div class="font-medium">
                                                             Net Worth
                                                         </div>
@@ -506,8 +417,7 @@
                             <p class="mt-2 leading-relaxed">
                                 Below is a list of props that can be passed to the component:
                             </p>
-                            <div
-                                class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                            <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                 <div class="absolute left-0 -mt-2.5 ml-4 bg-white px-3 font-medium text-slate-500">
                                     <div class="-mt-px">Tippy</div>
                                 </div>
@@ -563,8 +473,7 @@
                                     </x-base.table>
                                 </div>
                             </div>
-                            <div
-                                class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                            <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                 <div class="absolute left-0 -mt-2.5 ml-4 bg-white px-3 font-medium text-slate-500">
                                     <div class="-mt-px">TippyContent</div>
                                 </div>
@@ -625,10 +534,7 @@
                                 'relative pl-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white active',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Basic Tooltip
                                 </a>
                             </li>
@@ -636,10 +542,7 @@
                                 'relative px-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     On Click Tooltip
                                 </a>
                             </li>
@@ -647,10 +550,7 @@
                                 'relative px-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Light Tooltip
                                 </a>
                             </li>
@@ -658,10 +558,7 @@
                                 'relative px-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Custom Tooltip Content
                                 </a>
                             </li>
@@ -669,10 +566,7 @@
                                 'relative px-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Chart Tooltip
                                 </a>
                             </li>
@@ -680,10 +574,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Component API
                                 </a>
                             </li>

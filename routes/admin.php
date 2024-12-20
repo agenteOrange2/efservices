@@ -141,6 +141,13 @@ Route::resource('carriers.documents', CarrierDocumentController::class)
     ->parameters(['documents' => 'document'])->except('show');
 
 
+    Route::post('/carrier/{carrier}/document/{document}/approve', [CarrierDocumentController::class, 'approveDefaultDocument'])
+    ->name('carrier.approveDefaultDocument');
+    Route::get('/carrier/documents/refresh', [CarrierDocumentController::class, 'refresh'])->name('carrier.admin_documents.refresh');
+
+
+
+
 Route::resource('document-types', DocumentTypeController::class)
     ->except('show');
 

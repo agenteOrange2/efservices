@@ -3,7 +3,7 @@
 
 @php
     $breadcrumbLinks = [
-        ['label' => 'App', 'url' => route('admin.dashboard')],               
+        ['label' => 'App', 'url' => route('admin.dashboard')],
         ['label' => 'Document Type Carriers', 'active' => true],
     ];
 @endphp
@@ -16,7 +16,7 @@
 
 
 
-<x-base.notificationtoast.notification-toast :notification="session('notification')" />
+    <x-base.notificationtoast.notification-toast :notification="session('notification')" />
     <div class="grid grid-cols-12 gap-x-6 gap-y-10">
         <div class="col-span-12">
             <div class="flex flex-col gap-y-3 md:h-10 md:flex-row md:items-center">
@@ -38,26 +38,40 @@
                         <livewire:search-bar placeholder="Search Document Type..." />
                     </div>
 
-                    <div class="flex flex-col gap-x-3 gap-y-2 sm:ml-auto sm:flex-row">                                                      
-                        <livewire:filter-popover />            
+                    <div class="flex flex-col gap-x-3 gap-y-2 sm:ml-auto sm:flex-row">
+                        <livewire:filter-popover :filter-options="[
+                            'status' => [
+                                'type' => 'select',
+                                'label' => 'Status',
+                                'options' => [
+                                    'active' => 'Active',
+                                    'inactive' => 'Inactive',
+                                ],
+                                'default' => null,
+                            ],
+                            'requirement' => [
+                                'type' => 'select',
+                                'label' => 'Requirement',
+                                'options' => [
+                                    '1' => 'Yes',
+                                    '0' => 'No',
+                                ],
+                                'default' => null,
+                            ],
+                        ]" />
                     </div>
                 </div>
-                <livewire:generic-table  class="p-0"
-                    model="App\Models\DocumentType" 
-                    :columns="['name', 'requirement','created_at']"   
-                    :searchableFields="['name','requirement', 'created_at']"                  
-                    editRoute="admin.document-types.edit" 
-                    :customFilters="[ 
+                <livewire:generic-table class="p-0" model="App\Models\DocumentType" :columns="['name', 'requirement', 'created_at']" :searchableFields="['name', 'requirement', 'created_at']"
+                    editRoute="admin.document-types.edit" :customFilters="[
                         'status' => [
                             'type' => 'select',
                             'label' => 'Status',
                             'options' => [
                                 'active' => 'Active',
-                                'inactive' => 'Inactive'
-                            ]
-                        ]
-                    ]"
-                />
+                                'inactive' => 'Inactive',
+                            ],
+                        ],
+                    ]" />
             </div>
         </div>
     </div>

@@ -92,12 +92,13 @@ class CarrierController extends Controller
             ]);
     
             // Verificar si el DocumentType tiene un archivo predeterminado
-            $media = $type->getFirstMedia('default_documents');
+            $defaultMedia = $type->getFirstMedia('default_documents');
     
-            if ($media && !$carrierDocument->getFirstMedia('carrier_documents')) {
-                // Usar el método copy para duplicar el archivo
-                $media->copy($carrierDocument, 'carrier_documents');
-            }
+        // NO copiar el archivo predeterminado; se usa la referencia desde 'default_documents'.
+        if ($defaultMedia && !$carrierDocument->getFirstMedia('carrier_documents')) {
+            // Simplemente registramos que este documento tiene un predeterminado.
+            $carrierDocument->update(['status' => CarrierDocument::STATUS_PENDING]);
+        }
         }
     }
     

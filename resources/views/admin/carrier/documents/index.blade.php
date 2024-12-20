@@ -40,11 +40,12 @@
 
     <h1 class="text-xl font-semibold">
         Documents for {{ $carrier->name }}</h1>
+
     <div class="col-span-12">
         <div class="mt-2 overflow-auto lg:overflow-visible">
             <x-base.table class="border-separate border-spacing-y-[10px]">
                 <div class="border-b border-gray-200 dark:border-gray-700">
-                    <ul class="flex flex-wrap text-sm font-medium text-center text-gray-500 dark:text-gray-400">
+                    <ul class="flex flex-wrap text-sm font-medium text-center bg-white text-gray-500 dark:text-gray-400">
                         <!-- Tab Carrier -->
                         <li class="flex-grow">
                             <a href="{{ route('admin.carrier.edit', $carrier->slug) }}"
@@ -121,88 +122,118 @@
                                 <div class="mb-1 text-xs whitespace-nowrap text-slate-500">
                                     File
                                 </div>
-                                {{-- Corregir --}}
                                 <div class="flex items-center text-primary">
-                                    <x-base.lucide class="h-3.5 w-3.5 stroke-[1.7]" icon="ExternalLink" />
                                     <div class="ml-1.5 whitespace-nowrap">
+                                        {{-- <div class="flex items-center text-primary"> --}}
                                         @if ($document->getFirstMediaUrl('carrier_documents'))
-                                            <a href="{{ $document->getFirstMediaUrl('carrier_documents') }}"
-                                                target="_blank" class="text-blue-500 underline">
-                                                View File
-                                            </a>
+                                            <div class="flex items-center text-primary">
+                                                <x-base.lucide class="h-3.5 w-3.5 stroke-[1.7]" icon="ExternalLink" />
+                                                <a href="{{ $document->getFirstMediaUrl('carrier_documents') }}"
+                                                    target="_blank" class="ml-3 text-primary underline ">
+                                                    View File
+                                                </a>
+                                            </div>
+                                        @elseif ($document->documentType->getFirstMediaUrl('default_documents'))
+                                            <!-- Archivo predeterminado -->
+                                            <div class="flex items-center text-primary mb-5">
+                                                <x-base.lucide class="h-3.5 w-3.5 stroke-[1.7]" icon="ExternalLink" />
+                                                <a href="{{ $document->documentType->getFirstMediaUrl('default_documents') }}"
+                                                    target="_blank" class="ml-3 text-primary underline">View Default
+                                                    File</a>
+                                            </div>
+                                            @if ($document->documentType->getFirstMediaUrl('default_documents'))
+                                                <div class="flex items-center">
+                                                    <input type="checkbox" id="approve-{{ $document->id }}"
+                                                        {{ $document->status === \App\Models\CarrierDocument::STATUS_APPROVED ? 'checked' : '' }}
+                                                        onchange="toggleApproval('{{ route('admin.carrier.approveDefaultDocument', [$carrier, $document]) }}', this)"
+                                                        class="transition-all duration-100 ease-in-out shadow-sm border-slate-200 cursor-pointer rounded focus:ring-4 focus:ring-offset-0 focus:ring-primary focus:ring-opacity-20 [&[type='radio']]:checked:bg-primary [&[type='radio']]:checked:border-primary [&[type='radio']]:checked:border-opacity-10 [&[type='checkbox']]:checked:bg-primary [&[type='checkbox']]:checked:border-primary [&[type='checkbox']]:checked:border-opacity-10 [&:disabled:not(:checked)]:bg-slate-100 [&:disabled:not(:checked)]:cursor-not-allowed [&:disabled:not(:checked)]:dark:bg-darkmode-800/50 [&:disabled:checked]:opacity-70 [&:disabled:checked]:cursor-not-allowed [&:disabled:checked]:dark:bg-darkmode-800/50">
+
+                                                    <div class="flex items-center">
+                                                        <label for="approve-{{ $document->id }}" class="ml-3">
+                                                            Approve Default
+                                                        </label>
+                                                        <x-base.tippy variant="primary"
+                                                            content="If you have your own {{ $document->documentType->name }} file please upload it otherwise if you agree with the default file, just check the checkbox">
+                                                            <div class="col-span-6 sm:col-span-3 lg:col-span-2 ml-4">
+                                                                <i data-tw-merge data-lucide="alert-circle"
+                                                                    class="stroke-[1] w-5 h-5 mx-auto block mx-auto block"></i>
+                                                            </div>
+                                                        </x-base.tippy>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        @else
+                                            <span class="text-gray-500">No file uploaded</span>
+                                        @endif
+                                        {{-- </div> --}}
                                     </div>
-                                @else
+                            </x-base.table.td>
+                            <x-base.table.td
+                                class="box w-44 rounded-l-none rounded-r-none border-x-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
+                                <div class="mb-1.5 whitespace-nowrap text-xs text-slate-500">
+                                    Notes
+                                </div>
+                                <div class="relative group">
+                                    <div class="flex items-center">
+                                        <span class="cursor-pointer text-primary text-decoration-none">View Notes</span>
+                                        <x-base.tippy variant="primary"
+                                            content=" {{ $document->notes ?? 'No notes available' }}">
+                                            <div class="col-span-6 sm:col-span-3 lg:col-span-2 ml-4">
+                                                <i data-tw-merge data-lucide="alert-circle"
+                                                    class="stroke-[1] w-5 h-5 mx-auto block mx-auto block"></i>
+                                            </div>
+                                        </x-base.tippy>
+                                    </div>
+                                </div>
+                            </x-base.table.td>
+                            <x-base.table.td
+                                class="box w-44 rounded-l-none rounded-r-none border-x-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
+                                <div class="mb-1 text-xs whitespace-nowrap text-slate-500">
+                                    Status
+                                </div>
+                                <div
+                                    class="flex items-center {{ $document->status_name == 'Pending' ? 'text-orange-500' : ($document->status_name == 'Approved' ? 'text-green-500' : 'text-red-500') }}">
+                                    <x-base.lucide class="h-3.5 w-3.5 stroke-[1.7]"
+                                        icon="{{ $document->status_name == 'Pending' ? 'AlertCircle' : ($document->status_name == 'Approved' ? 'CheckCircle' : 'XCircle') }}" />
                                     <div class="ml-1.5 whitespace-nowrap">
-                                        <span class="text-gray-500">No file uploaded</span>
+                                        {{ $document->status_name }}
                                     </div>
-                    @endif
-                    {{-- {{ $faker['user']['name'] }} --}}
+                                </div>
+                            </x-base.table.td>
+                            <x-base.table.td
+                                class="box w-44 rounded-l-none rounded-r-none border-x-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
+                                <div class="mb-1 text-xs whitespace-nowrap text-slate-500">
+                                    Date
+                                </div>
+                                <div class="whitespace-nowrap">
+                                    {{ \Carbon\Carbon::parse($document->updated_at)->format('d M Y') }}</div>
+                            </x-base.table.td>
+                            <x-base.table.td
+                                class="box relative w-20 rounded-l-none rounded-r-none border-x-0 py-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
+                                <div class="flex items-center justify-center">
+                                    <x-base.menu class="h-5">
+                                        <x-base.menu.button class="w-5 h-5 text-slate-500">
+                                            <x-base.lucide class="w-5 h-5 fill-slate-400/70 stroke-slate-400/70"
+                                                icon="MoreVertical" />
+                                        </x-base.menu.button>
+                                        <x-base.menu.items class="w-40">
+                                            <x-base.menu.item
+                                                data-modal-target="uploadModal-{{ $document->documentType->id }}"
+                                                data-modal-toggle="uploadModal-{{ $document->documentType->id }}">
+                                                <x-base.lucide class="w-4 h-4 mr-2" icon="FileSignature" />
+                                                Upload/Replace
+                                            </x-base.menu.item>
+                                        </x-base.menu.items>
+                                    </x-base.menu>
+                                </div>
+                            </x-base.table.td>
+                        </x-base.table.tr>
+                    @endforeach
+                </x-base.table.tbody>
+            </x-base.table>
         </div>
     </div>
-    </x-base.table.td>
-    <x-base.table.td
-        class="box w-44 rounded-l-none rounded-r-none border-x-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
-        <div class="mb-1.5 whitespace-nowrap text-xs text-slate-500">
-            Notes
-        </div>
-        <div class="relative group">
-            <span class="cursor-pointer text-blue-500 underline">View Notes</span>
-            <div class="absolute hidden w-48 p-2 text-sm text-white bg-black rounded-lg shadow-lg group-hover:block">
-                {{ $document->notes ?? 'No notes available' }}
-            </div>
-        </div>
-    </x-base.table.td>
-    <x-base.table.td
-        class="box w-44 rounded-l-none rounded-r-none border-x-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
-        <div class="mb-1 text-xs whitespace-nowrap text-slate-500">
-            Status
-        </div>
 
-
-        <div class="flex items-center {{ $document->status_name == 'Pending' ? 'text-orange-500' : 'text-green-500' }}">
-            <x-base.lucide class="h-3.5 w-3.5 stroke-[1.7]"
-                icon="{{ $document->status_name == 'Pending' ? 'AlertCircle' : 'CheckCircle' }}" />
-            <div class="ml-1.5 whitespace-nowrap">
-                {{ $document->status_name }}
-            </div>
-        </div>
-
-    </x-base.table.td>
-    <x-base.table.td
-        class="box w-44 rounded-l-none rounded-r-none border-x-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
-        <div class="mb-1 text-xs whitespace-nowrap text-slate-500">
-            Date
-        </div>
-        <div class="whitespace-nowrap">{{ \Carbon\Carbon::parse($document->created_at)->format('d M Y') }}</div>
-    </x-base.table.td>
-    <x-base.table.td
-        class="box relative w-20 rounded-l-none rounded-r-none border-x-0 py-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
-        <div class="flex items-center justify-center">
-            <x-base.menu class="h-5">
-                <x-base.menu.button class="w-5 h-5 text-slate-500">
-                    <x-base.lucide class="w-5 h-5 fill-slate-400/70 stroke-slate-400/70" icon="MoreVertical" />
-                </x-base.menu.button>
-                <x-base.menu.items class="w-40">
-                    {{-- <button data-modal-target="uploadModal-{{ $document->documentType->id }}"
-                        data-modal-toggle="uploadModal-{{ $document->documentType->id }}"
-                        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
-                        Upload/Replace
-                    </button> --}}
-                    <x-base.menu.item data-modal-target="uploadModal-{{ $document->documentType->id }}"
-                        data-modal-toggle="uploadModal-{{ $document->documentType->id }}">
-                        <x-base.lucide class="w-4 h-4 mr-2" icon="FileSignature" />
-                        Upload/Replace
-                    </x-base.menu.item>
-                </x-base.menu.items>
-            </x-base.menu>
-        </div>
-    </x-base.table.td>
-    </x-base.table.tr>
-    @endforeach
-    </x-base.table.tbody>
-    </x-base.table>
-    </div>
-    </div>
 
     <!-- Modals -->
     @foreach ($documents as $document)
@@ -349,6 +380,37 @@
                     }
                 });
             });
+
+            window.toggleApproval = async (url, checkbox) => {
+                // Determina si el documento está aprobado o pendiente
+                const approved = checkbox.checked ? 1 : 0;
+
+                try {
+                    const response = await fetch(url, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')
+                                .content,
+                        },
+                        body: JSON.stringify({
+                            approved
+                        }),
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        location.reload();
+                        console.log(result.message); // Puedes añadir un mensaje de éxito aquí
+                    } else {
+                        throw new Error("Failed to update document status.");
+                    }
+                } catch (error) {
+                    console.error(error);
+                    // Revertir el estado del checkbox si ocurre un error
+                    checkbox.checked = !checkbox.checked;
+                }
+            };
         });
     </script>
 @endPushOnce

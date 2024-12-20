@@ -33,6 +33,7 @@ class FilterPopover extends Component
     {
         // Transform and emit updated filters
         $this->dispatch('filtersUpdated', $this->transformFilters());
+        $this->dispatch('filtersUpdated', $this->filters);
     }
 
     public function updateDateRange($dates)
