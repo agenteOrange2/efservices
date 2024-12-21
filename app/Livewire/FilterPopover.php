@@ -31,10 +31,9 @@ class FilterPopover extends Component
 
     public function updated($propertyName)
     {
-        // Transform and emit updated filters
         $this->dispatch('filtersUpdated', $this->transformFilters());
-        $this->dispatch('filtersUpdated', $this->filters);
     }
+    
 
     public function updateDateRange($dates)
     {
@@ -73,7 +72,7 @@ class FilterPopover extends Component
             $transformed['status'] = match ($this->filters['status']) {
                 'inactive' => 0,
                 'active' => 1,
-                'pending' => 3,
+                'pending' => 2,
                 default => null,
             };
         }
@@ -81,7 +80,7 @@ class FilterPopover extends Component
         return $transformed;
     }
     
-
+    
     public function render()
     {
         return view('livewire.filter-popover');

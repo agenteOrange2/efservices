@@ -57,6 +57,8 @@ Route::resource('roles', RoleController::class);
 // Gestión de Carriers
 
 Route::resource('carrier', CarrierController::class);
+Route::get('carrier/export-excel', [CarrierController::class, 'exportToExcel'])->name('carrier.export.excel');
+Route::get('carrier/export-pdf', [CarrierController::class, 'exportToPdf'])->name('carrier.export.pdf');
 Route::post('carrier/{carrier}/delete-photo', [CarrierController::class, 'deletePhoto'])->name('carrier.delete-photo');
 
 

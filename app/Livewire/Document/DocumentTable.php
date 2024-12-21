@@ -7,29 +7,56 @@ use Livewire\WithPagination;
 use App\Models\Carrier;
 use App\Models\CarrierDocument;
 use App\Models\DocumentType;
+use Carbon\Carbon;
 
 class DocumentTable extends Component
 {
-
     use WithPagination;
 
-    public $search = '';
+    public $search = ''; // Campo de búsqueda
     public $filters = [
-        'status' => null, // Filtro por estado (approved, pending, etc.)
-        'carrier' => null, // Filtro por nombre del carrier
+        'status' => null, // Estado del carrier: active, pending
         'date_range' => ['start' => null, 'end' => null], // Rango de fechas
     ];
-    public $perPage = 10;
-    public $sortField = 'created_at';
-    public $sortDirection = 'desc';
+    public $perPage = 10; // Resultados por página
+    public $sortField = 'id'; // Campo de ordenamiento
+    public $sortDirection = 'asc'; // Dirección del ordenamiento
 
-    public function updatingSearch()
+    protected $listeners = ['filtersUpdated', 'updateDateRange']; // Listener para actualizar filtros
+
+    public function updating($property)
     {
+        if (in_array($property, ['search', 'filters', 'perPage'])) {
+            $this->resetPage();
+        }
+    }
+
+    public function updateDateRange($dates)
+    {
+        // Actualizar el rango de fechas en los filtros
+        $this->filters['date_range']['start'] = $dates['start'];
+        $this->filters['date_range']['end'] = $dates['end'];
+
+        // Emitir los filtros actualizados
+        $this->dispatch('filtersUpdated', $this->filters);
         $this->resetPage();
     }
 
-    public function updatingFilters()
+    public function applyFilters($filters)
     {
+        $this->filters = $filters; // Aplica los filtros directamente
+        $this->resetPage();
+    }
+
+    public function resetFilters()
+    {
+
+        $this->filters = [
+            'status' => null,
+            'date_range' => ['start' => null, 'end' => null],
+        ];
+        
+        $this->reset(['search', 'filters']);
         $this->resetPage();
     }
 
@@ -45,46 +72,55 @@ class DocumentTable extends Component
 
     public function render()
     {
-        // Obtener documentos con filtros
-        $query = CarrierDocument::with(['carrier', 'documentType'])
-            ->when($this->search, function ($q) {
-                $q->whereHas('carrier', function ($query) {
-                    $query->where('name', 'like', '%' . $this->search . '%');
-                });
-            })
-            ->when($this->filters['status'], function ($q) {
-                $q->where('status', $this->filters['status']);
-            })
-            ->when($this->filters['carrier'], function ($q) {
-                $q->whereHas('carrier', function ($query) {
-                    $query->where('id', $this->filters['carrier']);
-                });
-            })
-            ->when($this->filters['date_range']['start'] && $this->filters['date_range']['end'], function ($q) {
-                $q->whereBetween('created_at', [
-                    $this->filters['date_range']['start'],
-                    $this->filters['date_range']['end']
-                ]);
+        $totalDocuments = DocumentType::count();
+        $query = Carrier::with(['documents', 'userCarriers']);
+
+        // Filtro de búsqueda
+        if (!empty($this->search)) {
+            $query->where('name', 'like', '%' . $this->search . '%');
+        }
+
+        // Filtro de estado
+        if (!empty($this->filters['status'])) {
+            $query->whereHas('documents', function ($subQuery) use ($totalDocuments) {
+                if ($this->filters['status'] === 'active') {
+                    $subQuery->havingRaw('COUNT(*) = ?', [$totalDocuments])
+                             ->where('status', CarrierDocument::STATUS_APPROVED);
+                } elseif ($this->filters['status'] === 'pending') {
+                    $subQuery->where('status', CarrierDocument::STATUS_PENDING);
+                }
             });
+        }
 
-        $documents = $query->orderBy($this->sortField, $this->sortDirection)
-            ->paginate($this->perPage);
+        // Filtro de rango de fechas
+        if (!empty($this->filters['date_range']['start']) && !empty($this->filters['date_range']['end'])) {
+            $query->whereBetween('created_at', [
+                Carbon::parse($this->filters['date_range']['start'])->startOfDay(),
+                Carbon::parse($this->filters['date_range']['end'])->endOfDay(),
+            ]);
+        }
 
-        // Calcular el progreso de los carriers
-        $documents->getCollection()->transform(function ($document) {
-            $totalDocuments = DocumentType::count();
-            $approvedDocuments = CarrierDocument::where('carrier_id', $document->carrier_id)
-                ->where('status', CarrierDocument::STATUS_APPROVED)
-                ->count();
+        // Ordenamiento
+        $query->orderBy($this->sortField, $this->sortDirection);
 
-            $document->progress = $totalDocuments > 0 ? ($approvedDocuments / $totalDocuments) * 100 : 0;
+        // Paginación
+        $carriers = $query->paginate($this->perPage);
 
-            return $document;
+        // Transformar datos adicionales
+        $carriers->getCollection()->transform(function ($carrier) use ($totalDocuments) {
+            $approvedDocuments = $carrier->documents->where('status', CarrierDocument::STATUS_APPROVED)->count();
+
+            $carrier->completion_percentage = $totalDocuments > 0
+                ? ($approvedDocuments / $totalDocuments) * 100
+                : 0;
+
+            $carrier->document_status = $approvedDocuments === $totalDocuments ? 'active' : 'pending';
+
+            return $carrier;
         });
 
         return view('livewire.document.document-table', [
-            'documents' => $documents,
-            'carriers' => Carrier::all(), // Opcional: para filtros relacionados
+            'carriers' => $carriers,
         ]);
     }
 }
