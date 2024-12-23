@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name'); // Nombre del tipo de documento
             $table->boolean('requirement')->default(false); // Si es obligatorio
+            $table->string('default_file_path')->nullable();
             $table->timestamps();
         });
     }

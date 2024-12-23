@@ -1,6 +1,6 @@
 (function () {
     "use strict";
-
+    
     // Dropzone
     Dropzone.autoDiscover = false;
     $(".dropzone").each(function () {

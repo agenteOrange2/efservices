@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\DocumentType;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage;
 
 class DocumentTypeController extends Controller
 {
@@ -34,19 +35,30 @@ class DocumentTypeController extends Controller
         $request->validate([
             'name' => 'required|string|max:255|unique:document_types',
             'requirement' => 'required|boolean',
+            'allow_default_file' => 'required|boolean',
+            'default_file' => 'nullable|file|mimes:pdf,jpg,png|max:1048',
         ]);
-
-        DocumentType::create($request->all());
-
-        // Mensaje dinámico para la notificación
+    
+        $documentType = new DocumentType($request->only(['name', 'requirement']));
+        $documentType->save(); // Guardar para obtener el ID.
+    
+        if ($request->hasFile('default_file') && $request->allow_default_file) {
+            $fileName = strtolower(str_replace(' ', '_', $request->name)) . '.' . $request->file('default_file')->getClientOriginalExtension();
+    
+            $documentType->addMediaFromRequest('default_file')
+                ->usingFileName($fileName)
+                ->toMediaCollection('default_documents');
+        }
+    
         return redirect()
-        ->route('admin.document-types.index')
-        ->with('notification', [
-            'type' => 'success',
-            'message' => 'Document Type created successfully!',
-            'details' => 'The Document Type data has been saved correctly.',
-        ]);
+            ->route('admin.document-types.index')
+            ->with('notification', [
+                'type' => 'success',
+                'message' => 'Document Type created successfully!',
+                'details' => 'The Document Type data has been saved correctly.',
+            ]);
     }
+    
     
 
     /**
@@ -65,20 +77,38 @@ class DocumentTypeController extends Controller
         $request->validate([
             'name' => 'required|string|max:255|unique:document_types,name,' . $documentType->id,
             'requirement' => 'required|boolean',
+            'allow_default_file' => 'required|boolean',
+            'default_file' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
         ]);
-
-        $documentType->update($request->all());
-
-
-        
+    
+        $documentType->fill($request->only(['name', 'requirement']));
+    
+        if ($request->hasFile('default_file') && $request->allow_default_file) {
+            // Eliminar el archivo anterior si existe
+            $documentType->clearMediaCollection('default_documents');
+    
+            $fileName = strtolower(str_replace(' ', '_', $documentType->name)) . '.' . $request->file('default_file')->getClientOriginalExtension();
+    
+            $documentType->addMediaFromRequest('default_file')
+                ->usingFileName($fileName)
+                ->toMediaCollection('default_documents');
+        } elseif (!$request->allow_default_file) {
+            // Limpiar la colección si se desactiva
+            $documentType->clearMediaCollection('default_documents');
+        }
+    
+        $documentType->save();
+    
         return redirect()
-        ->route('admin.document-types.index')
-        ->with('notification', [
-            'type' => 'success',
-            'message' => 'Document Type updated successfully!',
-            'details' => 'The Document Type data has been saved correctly.',
-        ]);
+            ->route('admin.document-types.index')
+            ->with('notification', [
+                'type' => 'success',
+                'message' => 'Document Type updated successfully!',
+                'details' => 'The Document Type data has been saved correctly.',
+            ]);
     }
+    
+    
 
     /**
      * Eliminar un tipo de documento.

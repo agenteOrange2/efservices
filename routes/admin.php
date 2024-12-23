@@ -57,6 +57,8 @@ Route::resource('roles', RoleController::class);
 // Gestión de Carriers
 
 Route::resource('carrier', CarrierController::class);
+Route::get('carrier/export-excel', [CarrierController::class, 'exportToExcel'])->name('carrier.export.excel');
+Route::get('carrier/export-pdf', [CarrierController::class, 'exportToPdf'])->name('carrier.export.pdf');
 Route::post('carrier/{carrier}/delete-photo', [CarrierController::class, 'deletePhoto'])->name('carrier.delete-photo');
 
 
@@ -100,7 +102,6 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
         Route::put('/{userCarrier}', [UserCarrierController::class, 'update'])->name('update'); // Actualizar UserCarrier
         Route::delete('/{userCarrier}', [UserCarrierController::class, 'destroy'])->name('destroy'); // Eliminar UserCarrier
     });
-
 });
 
 /*
@@ -142,6 +143,15 @@ Route::resource('carriers.documents', CarrierDocumentController::class)
     ->parameters(['documents' => 'document'])->except('show');
 
 
+    Route::post('/carrier/{carrier}/document/{document}/approve', [CarrierDocumentController::class, 'approveDefaultDocument'])
+    ->name('carrier.approveDefaultDocument');
+    Route::get('/carrier/documents/refresh', [CarrierDocumentController::class, 'refresh'])->name('carrier.admin_documents.refresh');
+
+
+
+
+Route::resource('document-types', DocumentTypeController::class)
+    ->except('show');
 
 /*
 |--------------------------------------------------------------------------

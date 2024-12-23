@@ -42,6 +42,22 @@ class CarrierDocumentController extends Controller
         return view('admin.carrier_documents.create', compact('carrier', 'documentTypes'));
     }
 
+
+    public function approveDefaultDocument(Request $request, Carrier $carrier, CarrierDocument $document)
+    {
+        $request->validate(['approved' => 'required|boolean']);
+
+        $document->status = $request->approved ? CarrierDocument::STATUS_APPROVED : CarrierDocument::STATUS_PENDING;
+        $document->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Document status updated successfully.',
+            'newStatus' => $document->status,
+        ]);
+    }
+
+
     /**
      * Guardar un nuevo documento (Área del Carrier y Super Admin).
      */
@@ -106,46 +122,75 @@ class CarrierDocumentController extends Controller
             'date' => $validated['date'] ?? $document->date,
         ]));
 
-        return back()->with('success', 'Documento subido exitosamente.');
+        return back()
+            ->with('notification', [
+                'type' => 'success',
+                'message' => 'Documento subido exitosamente.',
+                'details' => 'The document data has been saved correctly.',
+            ]);
     }
-
-
 
     public function listCarriersForDocuments()
     {
-        // Obtenemos los carriers con los documentos y primer user_carrier
         $carriers = Carrier::with(['userCarriers', 'documents'])->get();
 
-        // Calculamos el estado general de los archivos (verde, amarillo, rojo)
         foreach ($carriers as $carrier) {
-            $approved = $carrier->documents->where('status', CarrierDocument::STATUS_APPROVED)->count();
             $totalDocuments = DocumentType::count();
+            $approvedDocuments = $carrier->documents
+                ->where('status', CarrierDocument::STATUS_APPROVED)
+                ->count();
 
-            // Semáforo de estados
-            if ($approved == $totalDocuments && $totalDocuments > 0) {
+            $carrier->completion_percentage = $totalDocuments > 0 ? ($approvedDocuments / $totalDocuments) * 100 : 0;
+
+            // Estado general del carrier
+            if ($approvedDocuments === $totalDocuments && $totalDocuments > 0) {
                 $carrier->document_status = 'active'; // Verde
-            } elseif ($approved > 0) {
+            } elseif ($approvedDocuments > 0) {
                 $carrier->document_status = 'pending'; // Amarillo
             } else {
                 $carrier->document_status = 'inactive'; // Rojo
             }
-
-            // Obtener el primer User Carrier si existe
-            $carrier->first_user_carrier = $carrier->userCarriers->first();
         }
 
         return view('admin.carrier.admin_documents_list', compact('carriers'));
     }
 
 
+    public function refresh()
+    {
+        // Obtener los carriers con los documentos actualizados
+        $carriers = Carrier::with(['documents'])->get();
+
+        // Procesar los datos para enviar el progreso y estado
+        $data = $carriers->map(function ($carrier) {
+            $totalDocuments = DocumentType::count();
+            $approvedDocuments = $carrier->documents
+                ->where('status', CarrierDocument::STATUS_APPROVED)
+                ->count();
+
+            return [
+                'id' => $carrier->id,
+                'completion_percentage' => $totalDocuments > 0 ? ($approvedDocuments / $totalDocuments) * 100 : 0,
+                'document_status' => $approvedDocuments === $totalDocuments
+                    ? 'active'
+                    : ($approvedDocuments > 0 ? 'pending' : 'inactive'),
+            ];
+        });
+
+        // Retornar los datos en formato JSON
+        return response()->json($data);
+    }
+
+
+
     public function reviewDocuments(Carrier $carrier)
     {
         $documents = CarrierDocument::with('documentType')->where('carrier_id', $carrier->id)->get();
         $documentTypes = DocumentType::all(); // Necesario para cargar tipos de documentos
-    
+
         return view('admin.carrier.review_documents', compact('carrier', 'documents', 'documentTypes'));
     }
-    
+
 
     /**
      * Revisar y cambiar el estado de un documento (Solo para Super Admin).
@@ -170,7 +215,7 @@ class CarrierDocumentController extends Controller
         $validated = $request->validate([
             'document' => 'required|file|mimes:pdf,jpg,png|max:2048',
         ]);
-    
+
         // Crear o actualizar el documento
         $carrierDocument = CarrierDocument::updateOrCreate(
             [
@@ -181,7 +226,7 @@ class CarrierDocumentController extends Controller
                 'status' => CarrierDocument::STATUS_PENDING,
             ]
         );
-    
+
         // Subir el archivo usando Media Library
         if ($request->hasFile('document')) {
             $carrierDocument->clearMediaCollection('carrier_documents');
@@ -190,11 +235,16 @@ class CarrierDocumentController extends Controller
                 ->usingFileName(strtolower(str_replace(' ', '_', $documentType->name)) . '.pdf')
                 ->toMediaCollection('carrier_documents', 'public');
         }
-    
-        return back()->with('success', 'Documento subido exitosamente.');
+
+        return back()
+            ->with('notification', [
+                'type' => 'success',
+                'message' => 'Document upload successfully!',
+                'details' => 'The document data has been saved correctly.',
+            ]);
     }
-    
-    
+
+
     /**
      * Eliminar un documento (Solo para Super Admin).
      */

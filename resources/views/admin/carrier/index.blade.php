@@ -27,10 +27,32 @@
             </div>
 
             <!-- Reemplaza el contenido de la tabla con el componente Livewire -->
-            <div class="box box--stacked flex flex-col mt-5">                
+            <div class="box box--stacked flex flex-col mt-5">  
+                <div class="flex flex-col gap-y-2 p-5 sm:flex-row sm:items-center">
+                    <div class="relative">
+                        <livewire:search-bar placeholder="Search users..." />
+                    </div>
+
+                    <div class="flex flex-col gap-x-3 gap-y-2 sm:ml-auto sm:flex-row">
+                        <livewire:menu-export :exportExcel="true" :exportPdf="true" wire:ignore />
+                        <livewire:filter-popover :filter-options="[
+                            'status' => [
+                                'type' => 'select',
+                                'label' => 'Status',
+                                'options' => [
+                                    'pending' => 'Pending',
+                                    'active' => 'Active',
+                                    'inactive' => 'Inactive',
+                                ],
+                            ],
+                        ]" />
+                    </div>
+                </div>              
                 {{-- <livewire:carrier-manager /> --}}
 
-                <livewire:generic-table class="p-0" model="App\Models\Carrier" :columns="['name', 'address', 'status', 'created_at']" :searchableFields="['name', 'email', 'status', 'created_at']"
+                <livewire:generic-table class="p-0" model="App\Models\Carrier" 
+                :columns="['name', 'address', 'status', 'created_at']" 
+                :searchableFields="['name', 'address', 'status', 'created_at']"
                 editRoute="admin.carrier.edit" exportExcelRoute="admin.carrier.export.excel"
                 exportPdfRoute="admin.carrier.export.pdf" :customFilters="[
                     'status' => [

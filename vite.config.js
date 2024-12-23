@@ -8,6 +8,7 @@ export default defineConfig({
             input: [
                 'resources/js/app.js',
                 'resources/js/components/user/image-preview.js',
+                'resources/js/components/base/dropzone-file-upload.js',
                 'resources/js/pages/users/user-delete.js',                               
                 'resources/css/app.css',
                 'resources/css/vendors/tippy.css',

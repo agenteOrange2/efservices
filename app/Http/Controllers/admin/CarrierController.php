@@ -37,7 +37,7 @@ class CarrierController extends Controller
      */
     public function store(Request $request)
     {
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:255',
@@ -52,29 +52,28 @@ class CarrierController extends Controller
             'id_plan' => 'required|exists:memberships,id',
             'status' => 'required|integer|in:0,1,2',
         ]);
-    
+
         // Crear el carrier
         $carrier = Carrier::create(array_merge($validated, [
             'slug' => Str::slug($validated['name']),
             'referrer_token' => Str::random(16),
         ]));
-    
+
         // Generar documentos base automáticamente
         $this->generateBaseDocuments($carrier);
-    
+
         // Subir logo (si se envió)
         if ($request->hasFile('logo_carrier')) {
             $carrier->addMediaFromRequest('logo_carrier')
                 ->usingFileName(Str::slug($carrier->name) . '.webp')
                 ->toMediaCollection('logo_carrier');
         }
-    
+
         // Redirigir al tab de usuarios del carrier
         return redirect()->route('admin.carrier.user_carriers.index', $carrier)
-        ->with('success', 'Carrier creado exitosamente. Ahora puedes administrar los usuarios asociados.');
-    
+            ->with('success', 'Carrier creado exitosamente. Ahora puedes administrar los usuarios asociados.');
     }
-    
+
     /**
      * Generar documentos base para el carrier basado en los tipos predefinidos.
      */
@@ -83,25 +82,34 @@ class CarrierController extends Controller
         $documentTypes = DocumentType::all();
     
         foreach ($documentTypes as $type) {
-            CarrierDocument::create([
+            // Crear el CarrierDocument si no existe
+            $carrierDocument = CarrierDocument::firstOrCreate([
                 'carrier_id' => $carrier->id,
                 'document_type_id' => $type->id,
-                'filename' => 'placeholder.pdf', // Asignar un valor predeterminado
+            ], [
                 'status' => CarrierDocument::STATUS_PENDING,
                 'date' => now(),
             ]);
+    
+            // Verificar si el DocumentType tiene un archivo predeterminado
+            $defaultMedia = $type->getFirstMedia('default_documents');
+    
+        // NO copiar el archivo predeterminado; se usa la referencia desde 'default_documents'.
+        if ($defaultMedia && !$carrierDocument->getFirstMedia('carrier_documents')) {
+            // Simplemente registramos que este documento tiene un predeterminado.
+            $carrierDocument->update(['status' => CarrierDocument::STATUS_PENDING]);
+        }
         }
     }
+    
 
     public function documents(Carrier $carrier)
     {
         $documents = CarrierDocument::where('carrier_id', $carrier->id)->with('documentType')->get();
         $documentTypes = DocumentType::all(); // Aquí cargamos los tipos de documentos
-    
+
         return view('admin.carrier.documents.index', compact('carrier', 'documents', 'documentTypes'));
     }
-
-    
 
     /**
      * Mostrar el formulario para editar un carrier.
