@@ -1,7 +1,5 @@
 @extends('../themes/' . $activeTheme)
-
 @section('title', 'Documents for ' . $carrier->name)
-
 @php
     $breadcrumbLinks = [
         ['label' => 'App', 'url' => route('admin.dashboard')],
@@ -15,7 +13,6 @@
 @endPushOnce
 
 @section('subcontent')
-
     <!-- Success Notification Content -->
     <div id="success-notification-content" class="hidden">
         <div class="flex items-center gap-3 p-3 rounded-lg bg-green-100 border border-green-400 text-green-700">
@@ -37,7 +34,6 @@
         </div>
     </div>
 
-
     <h1 class="text-xl font-semibold">
         Documents for {{ $carrier->name }}</h1>
 
@@ -49,7 +45,7 @@
                         <!-- Tab Carrier -->
                         <li class="flex-grow">
                             <a href="{{ route('admin.carrier.edit', $carrier->slug) }}"
-                                class="inline-flex items-center justify-center w-full p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group
+                                class="inline-flex items-center justify-center w-full p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group
                         {{ request()->routeIs('admin.carrier.edit') ? 'text-primary border-primary dark:text-primary dark:border-primary' : '' }}">
 
                                 <svg class="w-6 h-6 me-2 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300 {{ request()->routeIs('admin.carrier.edit') ? 'text-primary dark:text-primary' : '' }}"
@@ -68,7 +64,7 @@
                             <a href="{{ route('admin.carrier.user_carriers.index', $carrier->slug) }}"
                                 class="inline-flex items-center justify-center w-full p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group
                         {{ request()->routeIs('admin.carrier.user_carriers.*') ? 'text-primary border-blue-600 dark:text-primary dark:border-primary' : '' }}">
-                                <svg class="w-6 h-6 me-2 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300 {{ request()->routeIs('admin.carrier.user_carriers.*') ? 'text-primary dark:text-primary' : '' }}"
+                                <svg class="w-6 h-6 me-2 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300 {{ request()->routeIs('admin.carrier.user_carriers.*') ? 'text-primary border-primary dark:text-primary' : '' }}"
                                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round">
@@ -84,9 +80,9 @@
                         {{-- Uncomment if needed --}}
                         <li class="flex-grow">
                             <a href="{{ route('admin.carrier.documents', $carrier->slug) }}"
-                                class="inline-flex items-center justify-center w-full p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group
-                        {{ request()->routeIs('admin.carrier.documents') ? 'text-primary border-blue-600 dark:text-primary dark:border-primary' : '' }}">
-                                <svg class="w-6 h-6 me-2 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300 {{ request()->routeIs('admin.carrier.documents') ? 'text-primary dark:text-primary' : '' }}"
+                                class="inline-flex items-center justify-center w-full p-4 border-b-2  rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group
+                        {{ request()->routeIs('admin.carrier.documents') ? 'text-primary border-primary dark:text-primary dark:border-primary' : '' }}">
+                                <svg class="w-6 h-6 me-2 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300 {{ request()->routeIs('admin.carrier.documents') ? 'text-primary border-primary dark:text-primary' : '' }}"
                                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round">
@@ -206,7 +202,8 @@
                                     Date
                                 </div>
                                 <div class="whitespace-nowrap">
-                                    {{ \Carbon\Carbon::parse($document->updated_at)->format('d M Y') }}</div>
+                                    {{ \Carbon\Carbon::parse($document->updated_at)->format('d M Y') }}
+                                </div>
                             </x-base.table.td>
                             <x-base.table.td
                                 class="box relative w-20 rounded-l-none rounded-r-none border-x-0 py-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">
@@ -233,7 +230,6 @@
             </x-base.table>
         </div>
     </div>
-
 
     <!-- Modals -->
     @foreach ($documents as $document)
@@ -294,8 +290,6 @@
             </div>
         </div>
     @endforeach
-
-
 @endsection
 
 @pushOnce('scripts')
@@ -384,7 +378,6 @@
             window.toggleApproval = async (url, checkbox) => {
                 // Determina si el documento está aprobado o pendiente
                 const approved = checkbox.checked ? 1 : 0;
-
                 try {
                     const response = await fetch(url, {
                         method: "POST",

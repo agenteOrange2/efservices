@@ -22,8 +22,8 @@ class UserCarrier extends Authenticatable implements HasMedia
         'password',
         'phone',
         'job_position',
-        'status',
-        'photo',
+        'status',        
+        'confirmation_token',
     ];
 
     // Constantes para los valores de status
@@ -70,6 +70,12 @@ class UserCarrier extends Authenticatable implements HasMedia
     {
         return $query->where('status', self::STATUS_ACTIVE);
     }
+    
+    public function scopeVerified($query)
+    {
+        return $query->whereNotNull('email_verified_at');
+    }
+
 
     public function getProfilePhotoUrlAttribute()
     {

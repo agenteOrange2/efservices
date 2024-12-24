@@ -27,12 +27,6 @@ class CarrierDocumentController extends Controller
         return view('admin.carrier.documents.index', compact('carrier', 'carrierDocuments'));
     }
 
-    public function all()
-    {
-        // Mostrar todos los documentos para el superadmin
-        $documents = CarrierDocument::with(['carrier', 'documentType'])->get();
-        return view('admin.carrier_documents.all', compact('documents'));
-    }
     /**
      * Crear un nuevo documento (Solo para Super Admin).
      */

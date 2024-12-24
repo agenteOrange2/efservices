@@ -2,10 +2,10 @@
 
 @section('title', 'Upload Documents for ' . $carrier->name)
 
-@section('subcontent')
-    <h1 class="text-xl font-semibold">Documents for {{ $carrier->name }}</h1>
 
-    <h1>Hey</h1>
+
+@section('subcontent')
+    <h1 class="text-xl font-semibold">Documents for {{ $carrier->name }}</h1>    
     <div class="mt-4">
         @foreach ($documents as $item)
             <div class="border-b py-4">

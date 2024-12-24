@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\CarrierController;
 use App\Http\Controllers\Admin\MembershipController;
 
 use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Auth\CustomLoginController;
 use App\Http\Controllers\Admin\UserCarrierController;
 use App\Http\Controllers\Admin\DocumentTypeController;
 use App\Http\Controllers\Admin\RolePermissionController;
@@ -145,6 +146,9 @@ Route::resource('carriers.documents', CarrierDocumentController::class)
 
     Route::post('/carrier/{carrier}/document/{document}/approve', [CarrierDocumentController::class, 'approveDefaultDocument'])
     ->name('carrier.approveDefaultDocument');
+    Route::post('carrier/{carrier}/document/{document}/approve-default', [CarrierDocumentController::class, 'approveDefaultDocument'])
+    ->name('admin.carrier.approveDefaultDocument');
+
     Route::get('/carrier/documents/refresh', [CarrierDocumentController::class, 'refresh'])->name('carrier.admin_documents.refresh');
 
 
@@ -164,6 +168,29 @@ Route::post('membership/{membership}/delete-photo', [MembershipController::class
 
 // Route::resource('user_carrier', UserCarrierController::class);
 Route::post('user_carrier/{user_carrier}/delete-photo', [UserCarrierController::class, 'deletePhoto'])->name('user_carrier.delete-photo');
+
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS USER CARRIER
+|--------------------------------------------------------------------------    
+*/
+
+/*
+Route::prefix('user-carrier')->name('user_carrier.')->group(function () {
+    Route::get('/dashboard', function () {
+        return view('user_carrier.dashboard');
+    })->middleware('auth:user_carrier')->name('dashboard');
+
+    Route::get('/register', [CustomLoginController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [CustomLoginController::class, 'register']);
+    Route::get('/confirm/{token}', [CustomLoginController::class, 'confirmEmail'])->name('confirm');    
+    Route::get('/complete-registration', [CustomLoginController::class, 'showCompleteRegistrationForm'])->name('complete_registration');
+    Route::post('/complete-registration', [CustomLoginController::class, 'completeRegistration']);
+});
+*/
+
+
 
 Route::controller(PageController::class)->group(function () {
     //Route::get('/', 'dashboardOverview1')->name('dashboard-overview-1');

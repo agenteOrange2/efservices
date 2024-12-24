@@ -19,6 +19,7 @@ class Carrier extends Model implements HasMedia
     protected $fillable = [
         'name',
         'slug',
+        'referrer_token',
         'address',
         'state',
         'zipcode',
@@ -26,10 +27,10 @@ class Carrier extends Model implements HasMedia
         'dot_number',
         'mc_number',
         'state_dot',
-        'ifta_account',
-        'logo_img',
+        'ifta_account',        
         'id_plan',
         'status',
+        'referrer_token_expires_at',
     ];
 
     // Boot para generar el referrer_token y slug automáticamente
@@ -39,34 +40,6 @@ class Carrier extends Model implements HasMedia
             $carrier->referrer_token = $carrier->referrer_token ?? Str::random(16);
             $carrier->slug = $carrier->slug ?? Str::slug($carrier->name);
         });
-    
-        // static::created(function ($carrier) {
-        //     $documentTypes = DocumentType::all();
-    
-        //     foreach ($documentTypes as $documentType) {
-        //         // Crear el CarrierDocument
-        //         $carrierDocument = CarrierDocument::create([
-        //             'carrier_id' => $carrier->id,
-        //             'document_type_id' => $documentType->id,
-        //             'status' => CarrierDocument::STATUS_PENDING,
-        //             'date' => now(),
-        //         ]);
-    
-        //         // Verificar si el DocumentType tiene un archivo predeterminado
-        //         if ($documentType->getFirstMedia('default_documents')) {
-        //             $media = $documentType->getFirstMedia('default_documents');
-    
-        //             // Asegúrate de que el archivo predeterminado exista
-        //             if (file_exists($media->getPath())) {
-        //                 $carrierDocument->addMedia($media->getPath())
-        //                     ->usingFileName(strtolower(str_replace(' ', '_', $documentType->name)) . '.' . $media->extension)
-        //                     ->toMediaCollection('carrier_documents');
-        //             } else {
-        //                 Log::error("El archivo predeterminado para el DocumentType {$documentType->name} no existe.");
-        //             }
-        //         }
-        //     }
-        // });
     }
     
     // Constantes para los valores de status
@@ -114,8 +87,6 @@ class Carrier extends Model implements HasMedia
         $this->referrer_token = Str::random(16);
         $this->save();
     }
-
-
 
     //Media library
     public function registerMediaCollections(): void

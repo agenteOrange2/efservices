@@ -42,7 +42,7 @@ return [
         ],
         'user_carrier' => [
             'driver' => 'session',
-            'provider' => 'user_carriers', // Debe coincidir con el provider definido abajo.
+            'provider' => 'user_carriers',
         ],
         'user_driver' => [
             'driver' => 'session',
