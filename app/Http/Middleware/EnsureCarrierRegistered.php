@@ -4,8 +4,9 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
 
 class EnsureCarrierRegistered
 {
@@ -14,16 +15,18 @@ class EnsureCarrierRegistered
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next)
+    public function handle($request, Closure $next)
     {
-        $userCarrier = Auth::guard('user_carrier')->user();
+        $user = Auth::guard('user_carrier')->user();
+        // Log::info("Middleware ejecutado para el usuario {$user->id}. Carrier ID: {$user->carrier_id}");
     
-        if (!$userCarrier || !$userCarrier->carrier_id) {
+        if (!$user->carrier_id) {
+            // Log::info("Redirigiendo al usuario {$user->id} a la página de completar registro.");
             return redirect()->route('user_carrier.complete_registration')
-                ->with('status', 'You must complete your carrier registration first.');
+                ->with('status', 'Please complete your carrier registration.');
         }
     
         return $next($request);
     }
-    
+      
 }

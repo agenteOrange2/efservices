@@ -29,46 +29,42 @@
                             Sign Up
                         </a>
                     </div>
-                    {{-- <x-base.alert
-                        class="my-7 flex items-center rounded-[0.6rem] border-primary/20 bg-primary/5 px-4 py-3 leading-[1.7]"
-                        variant="outline-primary">
-                        <div class="">
-                            <x-base.lucide class="mr-2 h-7 w-7 fill-primary/10 stroke-[0.8]" icon="Lightbulb" />
-                        </div>
-                        <div class="ml-1 mr-8">
-                            Welcome to <span class="font-medium">Tailwise</span>
-                            demo! Simply click
-                            <span class="font-medium">Sign In</span> to explore
-                            and access our documentation.
-                        </div>
-                        <x-base.alert.dismiss-button class="btn-close text-primary">
-                            <x-base.lucide class="w-5 h-5" icon="X" />
-                        </x-base.alert.dismiss-button>
-                    </x-base.alert> --}}
 
                     <form method="POST" action="{{ route('user_carrier.login') }}">
                         @csrf
 
                         <x-validation-errors class="mb-4" />
 
-                        @session('status')
+                        {{-- @session('status')
                             <div class="mb-4 font-medium text-sm text-green-600">
                                 {{ $value }}
                             </div>
-                        @endsession
+                        @endsession --}}
+
+                        @if (session('status'))
+                            <div class="alert alert-info text-sm text-green-600">
+                                {{ session('status') }}
+                            </div>
+                        @endif
+
+                        @if ($errors->any())
+                            <div class="alert alert-danger">
+                                {{ $errors->first() }}
+                            </div>
+                        @endif
 
                         <div>
                             <x-label for="email" value="{{ __('Email') }}" />
-                            <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-3.5"
-                                placeholder="user@efservices.com" id="email" class="block mt-1 w-full"
+                            <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-3.5 mt-1 w-full"
+                                placeholder="user@efservices.com" id="email" 
                                 type="email" name="email" :value="old('email')" required autofocus
                                 autocomplete="username" />
                         </div>
 
                         <div class="mt-4">
                             <x-label for="password" value="{{ __('Password') }}" />
-                            <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-3.5"
-                                placeholder="************" id="password" class="block mt-1 w-full" type="password"
+                            <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-3.5 mt-1 w-full"
+                                placeholder="************" id="password"  type="password"
                                 name="password" required autocomplete="current-password" />
                         </div>
 
@@ -79,47 +75,7 @@
                             </x-base.button>
                         </div>
                     </form>
-
-                    {{-- <form method="POST" action="{{ route('login') }}">
-                                @csrf
-
-                                <div>
-                                    <x-label for="email" value="{{ __('Email') }}" />
-                                    <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-3.5"
-                                        placeholder="user@efservices.com" id="email" class="block mt-1 w-full"
-                                        type="email" name="email" :value="old('email')" required autofocus
-                                        autocomplete="username" />
-                                </div>
-
-                                <div class="mt-4">
-                                    <x-label for="password" value="{{ __('Password') }}" />
-                                    <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-3.5"
-                                        placeholder="************" id="password" class="block mt-1 w-full"
-                                        type="password" name="password" required autocomplete="current-password" />
-                                </div>
-
-                                <div class="flex mt-4 text-xs text-slate-500 sm:text-sm">
-                                    <div class="flex items-center mr-auto">
-                                        <label for="remember_me" class="flex items-center">
-                                            <x-base.form-check.input class="mr-2.5 border" id="remember-me"
-                                                type="checkbox" name="remember" />
-                                            <label class="cursor-pointer select-none">{{ __('Remember me') }}</label>
-                                        </label>
-                                    </div>
-
-                                    @if (Route::has('password.request'))
-                                        <a href="{{ route('password.request') }}">
-                                            {{ __('Forgot your password?') }}
-                                        </a>
-                                    @endif
-                                </div>
-                                <div class="mt-5 text-center xl:mt-8 xl:text-left">
-                                    <x-base.button
-                                        class="w-full bg-gradient-to-r from-theme-1/70 to-theme-2/70 py-3.5 xl:mr-3 text-white">
-                                        {{ __('Log in') }}
-                                    </x-base.button>
-                                </div>
-                            </form> --}}
+            
                 </div>
 
             </div>

@@ -26,7 +26,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $superAdmin = Role::create(['name' => 'superadmin']);
         $superAdmin->givePermissionTo(Permission::all());
 
-        $carrierAdmin = Role::create(['name' => 'carrier']);
+        $carrierAdmin = Role::create(['name' => 'user_carrier']);
         $carrierAdmin->givePermissionTo(['manage carriers']);
 
         $driver = Role::create(['name' => 'driver']);

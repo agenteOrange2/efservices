@@ -97,13 +97,19 @@
                             </x-base.table.td>
                             <x-base.table.td class="border-dashed py-4">
                                 <div
-                                    class="flex items-center {{ $document->status_name == 'Pending' ? 'text-orange-500' : ($document->status_name == 'Approved' ? 'text-green-500' : 'text-red-500') }}">
-                                    <x-base.lucide class="h-3.5 w-3.5 stroke-[1.7]"
-                                        icon="{{ $document->status_name == 'Pending' ? 'AlertCircle' : ($document->status_name == 'Approved' ? 'CheckCircle' : 'XCircle') }}" />
-                                    <div class="ml-1.5 whitespace-nowrap">
-                                        {{ $document->status_name }}
-                                    </div>
+                                class="flex items-center 
+                                    {{ $document->status_name == 'Pending' ? 'text-orange-500' : 
+                                       ($document->status_name == 'Approved' ? 'text-green-500' : 
+                                       ($document->status_name == 'In Process' ? 'text-blue-500' : 'text-red-500')) }}">
+                                <x-base.lucide class="h-3.5 w-3.5 stroke-[1.7]"
+                                    icon="{{ $document->status_name == 'Pending' ? 'AlertCircle' : 
+                                           ($document->status_name == 'Approved' ? 'CheckCircle' : 
+                                           ($document->status_name == 'In Process' ? 'RefreshCw' : 'XCircle')) }}" />
+                                <div class="ml-1.5 whitespace-nowrap">
+                                    {{ $document->status_name }}
                                 </div>
+                            </div>
+                            
                             </x-base.table.td>
                             <x-base.table.td class="border-dashed py-4">
                                 <div class="whitespace-nowrap">
@@ -171,6 +177,7 @@
                             class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1">
                             <option value="1" {{ $document->status == 1 ? 'selected' : '' }}>Approved</option>
                             <option value="2" {{ $document->status == 2 ? 'selected' : '' }}>Rejected</option>
+                            <option value="3" {{ $document->status == 3 ? 'selected' : '' }}>In Process</option>
                             <option value="0" {{ $document->status == 0 ? 'selected' : '' }}>Pending</option>
                         </select>
                     </div>

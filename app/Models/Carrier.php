@@ -33,6 +33,21 @@ class Carrier extends Model implements HasMedia
         'referrer_token_expires_at',
     ];
 
+        /**
+     * Relación con los usuarios (UserCarrier).
+     */
+    public function users()
+    {
+        return $this->hasManyThrough(
+            User::class, 
+            UserCarrierDetail::class, // Tabla intermedia
+            'carrier_id', // Foreign key en UserCarrierDetail
+            'id',         // Foreign key en User
+            'id',         // Local key en Carrier
+            'user_id'     // Local key en UserCarrierDetail
+        );
+    }
+
     // Boot para generar el referrer_token y slug automáticamente
     protected static function booted()
     {

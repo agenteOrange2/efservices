@@ -228,6 +228,9 @@ class CarrierDocumentController extends Controller
                 ->addMediaFromRequest('document')
                 ->usingFileName(strtolower(str_replace(' ', '_', $documentType->name)) . '.pdf')
                 ->toMediaCollection('carrier_documents', 'public');
+
+            // Actualizar el estado a "In Process"
+            $carrierDocument->update(['status' => CarrierDocument::STATUS_IN_PROCCESS]);
         }
 
         return back()

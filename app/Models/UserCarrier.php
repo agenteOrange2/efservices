@@ -2,18 +2,29 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Auth\User as Authenticatable; // Para autenticar
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\HasMedia;
+use Laravel\Jetstream\HasProfilePhoto;
+use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Laravel\Fortify\TwoFactorAuthenticatable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable; // Para autenticar
 
 
 class UserCarrier extends Authenticatable implements HasMedia
-{
-    use HasFactory, Notifiable, InteractsWithMedia;
+{    
+    use HasRoles, HasFactory, Notifiable, InteractsWithMedia;
+
+    use HasFactory;
+    use HasProfilePhoto;
+    use Notifiable;
+    use TwoFactorAuthenticatable;
+    use InteractsWithMedia;
+
+    
 
     protected $fillable = [
         'carrier_id',
@@ -25,6 +36,23 @@ class UserCarrier extends Authenticatable implements HasMedia
         'status',        
         'confirmation_token',
     ];
+
+    protected $dates = ['created_at', 'updated_at'];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+        'two_factor_recovery_codes',
+        'two_factor_secret',
+    ];
+
+    protected static function booted()
+    {
+        static::created(function ($userCarrier) {
+            // Asignar automáticamente el rol al crear un usuario
+            $userCarrier->assignRole('user_carrier');
+        });
+    }
 
     // Constantes para los valores de status
     public const STATUS_INACTIVE = 0;
@@ -49,13 +77,12 @@ class UserCarrier extends Authenticatable implements HasMedia
     }
 
     // Encriptar contraseña automáticamente
-    protected static function booted()
+    protected function casts(): array
     {
-        static::creating(function ($userCarrier) {
-            if ($userCarrier->isDirty('password')) {
-                $userCarrier->password = bcrypt($userCarrier->password);
-            }
-        });
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed', // Usa el sistema automático de hashing.
+        ];
     }
 
     //Para la relacion del usuario al registrarse con el carrier
@@ -107,4 +134,6 @@ class UserCarrier extends Authenticatable implements HasMedia
     {
         return "{$this->name}.webp";
     }
+
+
 }

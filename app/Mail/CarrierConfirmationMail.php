@@ -41,10 +41,10 @@ class CarrierConfirmationMail extends Mailable
     {
         return new Content(
             view: 'emails.carrier_confirmation',
-            with: [
+            with: [                
                 'url' => route('user_carrier.confirm', ['token' => $this->userCarrier->confirmation_token]), // Cambiar el alias
                 'userCarrier' => $this->userCarrier,
-            ],
+            ],            
         );
         
     }

@@ -21,9 +21,7 @@ class DocumentTypeSeeder extends Seeder
             ['name' => 'SUPERVISOR TRAINING', 'requirement' => true],
             ['name' => 'Certificate of Filing', 'requirement' => true],
             ['name' => 'COI', 'requirement' => true],
-            ['name' => 'Hazmat Certificate', 'requirement' => true],
-            ['name' => 'Prueba 1', 'requirement' => false],
-            ['name' => 'Prueba 2', 'requirement' => false],
+            ['name' => 'Hazmat Certificate', 'requirement' => false],
         ];
 
         // Insertar los tipos de documentos en la base de datos

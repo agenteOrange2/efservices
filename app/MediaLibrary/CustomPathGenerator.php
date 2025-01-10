@@ -11,7 +11,18 @@ class CustomPathGenerator implements PathGenerator
     {
         $model = $media->model;
 
+        if ($model instanceof \App\Models\UserCarrierDetail) {
+            // Almacena específicamente en `user_carrier/{id}`
+            return "user_carrier/{$model->id}/";
+        }
+    
         if ($model instanceof \App\Models\User) {
+            // Verificar si el usuario tiene un UserCarrierDetail relacionado
+            if ($model->carrierDetails()->exists()) {
+                return "user_carrier/{$model->id}/";
+            }
+        
+            // Default para usuarios "superadmin" u otros
             return "users/{$model->id}/";
         }
 
@@ -21,10 +32,6 @@ class CustomPathGenerator implements PathGenerator
 
         if ($model instanceof \App\Models\Carrier) {
             return "carriers/{$model->id}/";
-        }
-
-        if ($model instanceof \App\Models\UserCarrier) {
-            return "user_carriers/{$model->id}/";
         }
 
         if ($model instanceof \App\Models\CarrierDocument) {
