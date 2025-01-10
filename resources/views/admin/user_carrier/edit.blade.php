@@ -50,7 +50,7 @@
                                             id="profile_photo_carrier_input"
                                             currentPhotoUrl="{{ $userCarrier->user->profile_photo_url }}" {{-- Ahora el modelo selecciona la colección correcta --}}
                                             defaultPhotoUrl="{{ asset('build/default_profile.png') }}" 
-                                            deleteUrl="{{ route('admin.carrier.user_carriers.delete-photo', ['carrier' => $carrier->slug, 'userCarrierDetails' => $userCarrier->id]) }}" 
+                                            deleteUrl="{{ route('admin.carrier.user_carriers.delete-photo', ['carrier' => $carrier->slug, 'userCarrierDetails' => $userCarrierDetails->id]) }}"                                            
                                         />
                                                                                 
                                         </div>                                                                                                                  

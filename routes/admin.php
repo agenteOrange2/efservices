@@ -99,13 +99,15 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
         Route::get('/', [UserCarrierController::class, 'index'])->name('index'); // Listado
         Route::get('/create', [UserCarrierController::class, 'create'])->name('create'); // Formulario de creación
         Route::post('/', [UserCarrierController::class, 'store'])->name('store'); // Guardar nuevo UserCarrier           
-        Route::get('/{userCarrierDetails}/edit', [UserCarrierController::class, 'edit'])->name('edit');                     
-        Route::put('/{userCarrierDetails}', [UserCarrierController::class, 'update'])->name('update');        
+        Route::get('/{userCarrierDetails}/edit', [UserCarrierController::class, 'edit'])->name('edit');
+        Route::put('/{userCarrierDetails}', [UserCarrierController::class, 'update'])->name('update');
         Route::delete('/{userCarrier}', [UserCarrierController::class, 'destroy'])->name('destroy'); // Eliminar UserCarrier
         Route::delete('{carrier:slug}/user-carriers/{userCarrier}', [UserCarrierController::class, 'destroy'])
-    ->name('carrier.user_carriers.destroy');
+            ->name('carrier.user_carriers.destroy');
 
-    Route::post('/{userCarrierDetails}/delete-photo', [UserCarrierController::class, 'deletePhoto'])->name('delete-photo');
+        // Ruta para eliminar foto
+        Route::post('/{userCarrierDetails}/delete-photo', [UserCarrierController::class, 'deletePhoto'])
+            ->name('delete-photo');
     });
 });
 
@@ -148,12 +150,12 @@ Route::resource('carriers.documents', CarrierDocumentController::class)
     ->parameters(['documents' => 'document'])->except('show');
 
 
-    Route::post('/carrier/{carrier}/document/{document}/approve', [CarrierDocumentController::class, 'approveDefaultDocument'])
+Route::post('/carrier/{carrier}/document/{document}/approve', [CarrierDocumentController::class, 'approveDefaultDocument'])
     ->name('carrier.approveDefaultDocument');
-    Route::post('carrier/{carrier}/document/{document}/approve-default', [CarrierDocumentController::class, 'approveDefaultDocument'])
+Route::post('carrier/{carrier}/document/{document}/approve-default', [CarrierDocumentController::class, 'approveDefaultDocument'])
     ->name('admin.carrier.approveDefaultDocument');
 
-    Route::get('/carrier/documents/refresh', [CarrierDocumentController::class, 'refresh'])->name('carrier.admin_documents.refresh');
+Route::get('/carrier/documents/refresh', [CarrierDocumentController::class, 'refresh'])->name('carrier.admin_documents.refresh');
 
 
 

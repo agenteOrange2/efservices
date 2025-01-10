@@ -118,19 +118,19 @@ class UserCarrierController extends Controller
     public function edit(Carrier $carrier, UserCarrierDetail $userCarrierDetails)
     {
         $userCarrierDetails->load('user');
-    
+
         Log::info('Cargando UserCarrierDetail', [
             'carrier_id' => $carrier->id,
             'userCarrierDetail_id' => $userCarrierDetails->id,
             'profile_photo_url' => $userCarrierDetails->user->profile_photo_url,
         ]);
-    
+
         return view('admin.user_carrier.edit', [
             'carrier' => $carrier,
             'userCarrier' => $userCarrierDetails,
         ]);
     }
-    
+
 
     /**
      * Actualizar un registro existente.
@@ -217,6 +217,31 @@ class UserCarrierController extends Controller
             return redirect()->back()->withErrors('Error al actualizar el usuario.');
         }
     }
+
+
+    public function deletePhoto(UserCarrierDetail $userCarrierDetails)
+    {
+        // Cargar el usuario relacionado
+        $user = $userCarrierDetails->user;
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found.'], 404);
+        }
+
+        // Obtener la foto de perfil del UserCarrier
+        $media = $userCarrierDetails->getFirstMedia('profile_photo_carrier');
+
+        if ($media) {
+            $media->delete(); // Elimina la foto
+            return response()->json([
+                'message' => 'Photo deleted successfully.',
+                'defaultPhotoUrl' => asset('build/default_profile.png'),
+            ]);
+        }
+
+        return response()->json(['message' => 'No photo to delete.'], 404);
+    }
+
 
     /**
      * Eliminar un registro.

@@ -217,7 +217,6 @@ class UserCarrierController extends Controller
         return response()->json(['message' => 'No photo to delete.'], 404);
     }
     
-    
 
     /*
     public function destroy(UserCarrier $userCarrier)
