@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\CarrierController;
 use App\Http\Controllers\Admin\MembershipController;
 
 use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Auth\CustomLoginController;
 use App\Http\Controllers\Admin\UserCarrierController;
 use App\Http\Controllers\Admin\DocumentTypeController;
 use App\Http\Controllers\Admin\RolePermissionController;
@@ -97,10 +98,16 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
     Route::prefix('{carrier:slug}/user-carriers')->name('user_carriers.')->group(function () {
         Route::get('/', [UserCarrierController::class, 'index'])->name('index'); // Listado
         Route::get('/create', [UserCarrierController::class, 'create'])->name('create'); // Formulario de creación
-        Route::post('/', [UserCarrierController::class, 'store'])->name('store'); // Guardar nuevo UserCarrier
-        Route::get('/{userCarrier}/edit', [UserCarrierController::class, 'edit'])->name('edit'); // Formulario de edición
-        Route::put('/{userCarrier}', [UserCarrierController::class, 'update'])->name('update'); // Actualizar UserCarrier
+        Route::post('/', [UserCarrierController::class, 'store'])->name('store'); // Guardar nuevo UserCarrier           
+        Route::get('/{userCarrierDetails}/edit', [UserCarrierController::class, 'edit'])->name('edit');
+        Route::put('/{userCarrierDetails}', [UserCarrierController::class, 'update'])->name('update');
         Route::delete('/{userCarrier}', [UserCarrierController::class, 'destroy'])->name('destroy'); // Eliminar UserCarrier
+        Route::delete('{carrier:slug}/user-carriers/{userCarrier}', [UserCarrierController::class, 'destroy'])
+            ->name('carrier.user_carriers.destroy');
+
+        // Ruta para eliminar foto
+        Route::post('/{userCarrierDetails}/delete-photo', [UserCarrierController::class, 'deletePhoto'])
+            ->name('delete-photo');
     });
 });
 
@@ -143,9 +150,12 @@ Route::resource('carriers.documents', CarrierDocumentController::class)
     ->parameters(['documents' => 'document'])->except('show');
 
 
-    Route::post('/carrier/{carrier}/document/{document}/approve', [CarrierDocumentController::class, 'approveDefaultDocument'])
+Route::post('/carrier/{carrier}/document/{document}/approve', [CarrierDocumentController::class, 'approveDefaultDocument'])
     ->name('carrier.approveDefaultDocument');
-    Route::get('/carrier/documents/refresh', [CarrierDocumentController::class, 'refresh'])->name('carrier.admin_documents.refresh');
+Route::post('carrier/{carrier}/document/{document}/approve-default', [CarrierDocumentController::class, 'approveDefaultDocument'])
+    ->name('admin.carrier.approveDefaultDocument');
+
+Route::get('/carrier/documents/refresh', [CarrierDocumentController::class, 'refresh'])->name('carrier.admin_documents.refresh');
 
 
 
@@ -164,6 +174,29 @@ Route::post('membership/{membership}/delete-photo', [MembershipController::class
 
 // Route::resource('user_carrier', UserCarrierController::class);
 Route::post('user_carrier/{user_carrier}/delete-photo', [UserCarrierController::class, 'deletePhoto'])->name('user_carrier.delete-photo');
+
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS USER CARRIER
+|--------------------------------------------------------------------------    
+*/
+
+/*
+Route::prefix('user-carrier')->name('user_carrier.')->group(function () {
+    Route::get('/dashboard', function () {
+        return view('user_carrier.dashboard');
+    })->middleware('auth:user_carrier')->name('dashboard');
+
+    Route::get('/register', [CustomLoginController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [CustomLoginController::class, 'register']);
+    Route::get('/confirm/{token}', [CustomLoginController::class, 'confirmEmail'])->name('confirm');    
+    Route::get('/complete-registration', [CustomLoginController::class, 'showCompleteRegistrationForm'])->name('complete_registration');
+    Route::post('/complete-registration', [CustomLoginController::class, 'completeRegistration']);
+});
+*/
+
+
 
 Route::controller(PageController::class)->group(function () {
     //Route::get('/', 'dashboardOverview1')->name('dashboard-overview-1');

@@ -5,7 +5,7 @@
     $breadcrumbLinks = [
         ['label' => 'App', 'url' => route('admin.dashboard')],
         ['label' => 'Carriers', 'url' => route('admin.carrier.user_carriers.index', $carrier->slug)],
-        ['label' => 'User Carriers for Carrier: ' . $carrier->name, 'active' => true],
+        ['label' => 'User Carriers: ' . $carrier->name, 'active' => true],
     ];
 @endphp
 
@@ -169,18 +169,23 @@
                                     <tr>
                                         <td class="px-5 border-b border-dashed py-4">{{ $userCarrier->name }}</td>
                                         <td class="px-5 border-b border-dashed py-4">{{ $userCarrier->email }}</td>
-                                        <td class="px-5 border-b border-dashed py-4">{{ $userCarrier->job_position }}</td>
-                                        <td class="px-5 border-b border-dashed py-4">{{ $userCarrier->status_name }}</td>
+                                        <td class="px-5 border-b border-dashed py-4">{{ $userCarrier->carrierDetails->job_position ?? 'N/A' }}</td>
                                         <td class="px-5 border-b border-dashed py-4">
-                                            <a href="{{ route('admin.carrier.user_carriers.edit', [$carrier->slug, $userCarrier->id]) }}"
-                                                class="btn btn-sm btn-warning">Edit</a>
+                                            {{ $userCarrier->carrierDetails->status_name ?? 'N/A' }}
+                                        </td>
+                                        <td class="px-5 border-b border-dashed py-4">
+                                            <a href="{{ route('admin.carrier.user_carriers.edit', ['carrier' => $carrier->slug, 'userCarrierDetails' => $userCarrier->carrierDetails->id]) }}">
+                                                Editar
+                                            </a>
+                                                                               
                                             <form
-                                                action="{{ route('admin.carrier.user_carriers.destroy', [$carrier->id, $userCarrier->id]) }}"
+                                                action="{{ route('admin.carrier.user_carriers.destroy', [$carrier->slug, $userCarrier->id]) }}"
                                                 method="POST" style="display: inline-block;">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger"
-                                                    onclick="return confirm('Are you sure?')">Delete</button>
+                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                                                    Delete
+                                                </button>
                                             </form>
                                         </td>
                                     </tr>

@@ -21,11 +21,11 @@ class UsersTableSeeder extends Seeder
 
         // Creamos 10 usuarios
         
-        for($i = 0; $i < 30; $i++){
+        for($i = 0; $i < 5; $i++){
             User::create([
                 'name' => $faker->name,
                 'email' => $faker->unique()->safeEmail,
-                'password' => Hash::make('password'), // Usar un hash para la contraseña
+                'password' => Hash::make('password'), // Usar un hash para la contraseña                
                 'created_at' => Carbon::now()->subDays(rand(1, 100)), // Fecha aleatoria dentro de los últimos 100 días
                 'updated_at' => Carbon::now(),
             ]);            

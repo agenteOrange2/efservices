@@ -29,17 +29,10 @@
                                     Blank Modal
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-21"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-21">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-21"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-21" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -50,8 +43,7 @@
                                     users. This modal type serves as a foundation for
                                     creating customized modal experiences.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -59,12 +51,8 @@
                                         <x-base.preview>
                                             <!-- BEGIN: Modal Toggle -->
                                             <div class="text-center">
-                                                <x-base.button
-                                                    data-tw-toggle="modal"
-                                                    data-tw-target="#basic-modal-preview"
-                                                    as="a"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button data-tw-toggle="modal" data-tw-target="#basic-modal-preview"
+                                                    as="a" variant="primary">
                                                     Show Modal
                                                 </x-base.button>
                                             </div>
@@ -81,12 +69,9 @@
                                             <x-base.highlight>
                                                 <!-- BEGIN: Modal Toggle -->
                                                 <div class="text-center">
-                                                    <x-base.button
-                                                        data-tw-toggle="modal"
-                                                        data-tw-target="#basic-modal-preview"
-                                                        as="a"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button data-tw-toggle="modal"
+                                                        data-tw-target="#basic-modal-preview" as="a"
+                                                        variant="primary">
                                                         Show Modal
                                                     </x-base.button>
                                                 </div>
@@ -119,17 +104,10 @@
                                     Modal Size
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-2"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-2">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-2"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-2" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -141,8 +119,7 @@
                                     Super Large, ensuring flexibility in displaying your
                                     content.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -150,59 +127,36 @@
                                         <x-base.preview>
                                             <div class="text-center">
                                                 <!-- BEGIN: Small Modal Toggle -->
-                                                <x-base.button
-                                                    class="mb-2 mr-1"
-                                                    data-tw-toggle="modal"
-                                                    data-tw-target="#small-modal-size-preview"
-                                                    href="#"
-                                                    as="a"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button class="mb-2 mr-1" data-tw-toggle="modal"
+                                                    data-tw-target="#small-modal-size-preview" href="#" as="a"
+                                                    variant="primary">
                                                     Show Small Modal
                                                 </x-base.button>
                                                 <!-- END: Small Modal Toggle -->
                                                 <!-- BEGIN: Medium Modal Toggle -->
-                                                <x-base.button
-                                                    class="mb-2 mr-1"
-                                                    data-tw-toggle="modal"
-                                                    data-tw-target="#medium-modal-size-preview"
-                                                    href="#"
-                                                    as="a"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button class="mb-2 mr-1" data-tw-toggle="modal"
+                                                    data-tw-target="#medium-modal-size-preview" href="#"
+                                                    as="a" variant="primary">
                                                     Show Medium Modal
                                                 </x-base.button>
                                                 <!-- END: Medium Modal Toggle -->
                                                 <!-- BEGIN: Large Modal Toggle -->
-                                                <x-base.button
-                                                    class="mb-2 mr-1"
-                                                    data-tw-toggle="modal"
-                                                    data-tw-target="#large-modal-size-preview"
-                                                    href="#"
-                                                    as="a"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button class="mb-2 mr-1" data-tw-toggle="modal"
+                                                    data-tw-target="#large-modal-size-preview" href="#" as="a"
+                                                    variant="primary">
                                                     Show Large Modal
                                                 </x-base.button>
                                                 <!-- END: Large Modal Toggle -->
                                                 <!-- BEGIN: Super Large Modal Toggle -->
-                                                <x-base.button
-                                                    class="mb-2 mr-1"
-                                                    data-tw-toggle="modal"
-                                                    data-tw-target="#superlarge-modal-size-preview"
-                                                    href="#"
-                                                    as="a"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button class="mb-2 mr-1" data-tw-toggle="modal"
+                                                    data-tw-target="#superlarge-modal-size-preview" href="#"
+                                                    as="a" variant="primary">
                                                     Show Superlarge Modal
                                                 </x-base.button>
                                                 <!-- END: Super Large Modal Toggle -->
                                             </div>
                                             <!-- BEGIN: Small Modal Content -->
-                                            <x-base.dialog
-                                                id="small-modal-size-preview"
-                                                size="sm"
-                                            >
+                                            <x-base.dialog id="small-modal-size-preview" size="sm">
                                                 <x-base.dialog.panel class="p-10 text-center">
                                                     This is totally awesome small modal!
                                                 </x-base.dialog.panel>
@@ -216,20 +170,14 @@
                                             </x-base.dialog>
                                             <!-- END: Medium Modal Content -->
                                             <!-- BEGIN: Large Modal Content -->
-                                            <x-base.dialog
-                                                id="large-modal-size-preview"
-                                                size="lg"
-                                            >
+                                            <x-base.dialog id="large-modal-size-preview" size="lg">
                                                 <x-base.dialog.panel class="p-10 text-center">
                                                     This is totally awesome large modal!
                                                 </x-base.dialog.panel>
                                             </x-base.dialog>
                                             <!-- END: Large Modal Content -->
                                             <!-- BEGIN: Super Large Modal Content -->
-                                            <x-base.dialog
-                                                id="superlarge-modal-size-preview"
-                                                size="xl"
-                                            >
+                                            <x-base.dialog id="superlarge-modal-size-preview" size="xl">
                                                 <x-base.dialog.panel class="p-10 text-center">
                                                     This is totally awesome superlarge modal!
                                                 </x-base.dialog.panel>
@@ -240,59 +188,36 @@
                                             <x-base.highlight>
                                                 <div class="text-center">
                                                     <!-- BEGIN: Small Modal Toggle -->
-                                                    <x-base.button
-                                                        class="mb-2 mr-1"
-                                                        data-tw-toggle="modal"
-                                                        data-tw-target="#small-modal-size-preview"
-                                                        href="#"
-                                                        as="a"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button class="mb-2 mr-1" data-tw-toggle="modal"
+                                                        data-tw-target="#small-modal-size-preview" href="#"
+                                                        as="a" variant="primary">
                                                         Show Small Modal
                                                     </x-base.button>
                                                     <!-- END: Small Modal Toggle -->
                                                     <!-- BEGIN: Medium Modal Toggle -->
-                                                    <x-base.button
-                                                        class="mb-2 mr-1"
-                                                        data-tw-toggle="modal"
-                                                        data-tw-target="#medium-modal-size-preview"
-                                                        href="#"
-                                                        as="a"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button class="mb-2 mr-1" data-tw-toggle="modal"
+                                                        data-tw-target="#medium-modal-size-preview" href="#"
+                                                        as="a" variant="primary">
                                                         Show Medium Modal
                                                     </x-base.button>
                                                     <!-- END: Medium Modal Toggle -->
                                                     <!-- BEGIN: Large Modal Toggle -->
-                                                    <x-base.button
-                                                        class="mb-2 mr-1"
-                                                        data-tw-toggle="modal"
-                                                        data-tw-target="#large-modal-size-preview"
-                                                        href="#"
-                                                        as="a"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button class="mb-2 mr-1" data-tw-toggle="modal"
+                                                        data-tw-target="#large-modal-size-preview" href="#"
+                                                        as="a" variant="primary">
                                                         Show Large Modal
                                                     </x-base.button>
                                                     <!-- END: Large Modal Toggle -->
                                                     <!-- BEGIN: Super Large Modal Toggle -->
-                                                    <x-base.button
-                                                        class="mb-2 mr-1"
-                                                        data-tw-toggle="modal"
-                                                        data-tw-target="#superlarge-modal-size-preview"
-                                                        href="#"
-                                                        as="a"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button class="mb-2 mr-1" data-tw-toggle="modal"
+                                                        data-tw-target="#superlarge-modal-size-preview" href="#"
+                                                        as="a" variant="primary">
                                                         Show Superlarge Modal
                                                     </x-base.button>
                                                     <!-- END: Super Large Modal Toggle -->
                                                 </div>
                                                 <!-- BEGIN: Small Modal Content -->
-                                                <x-base.dialog
-                                                    id="small-modal-size-preview"
-                                                    size="sm"
-                                                >
+                                                <x-base.dialog id="small-modal-size-preview" size="sm">
                                                     <x-base.dialog.panel class="p-10 text-center">
                                                         This is totally awesome small modal!
                                                     </x-base.dialog.panel>
@@ -306,20 +231,14 @@
                                                 </x-base.dialog>
                                                 <!-- END: Medium Modal Content -->
                                                 <!-- BEGIN: Large Modal Content -->
-                                                <x-base.dialog
-                                                    id="large-modal-size-preview"
-                                                    size="lg"
-                                                >
+                                                <x-base.dialog id="large-modal-size-preview" size="lg">
                                                     <x-base.dialog.panel class="p-10 text-center">
                                                         This is totally awesome large modal!
                                                     </x-base.dialog.panel>
                                                 </x-base.dialog>
                                                 <!-- END: Large Modal Content -->
                                                 <!-- BEGIN: Super Large Modal Content -->
-                                                <x-base.dialog
-                                                    id="superlarge-modal-size-preview"
-                                                    size="xl"
-                                                >
+                                                <x-base.dialog id="superlarge-modal-size-preview" size="xl">
                                                     <x-base.dialog.panel class="p-10 text-center">
                                                         This is totally awesome superlarge modal!
                                                     </x-base.dialog.panel>
@@ -346,17 +265,10 @@
                                     Warning Modal
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-31"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-31">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-31"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-31" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -367,8 +279,7 @@
                                     attention-grabbing design, ensuring that critical
                                     information is communicated effectively.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -376,13 +287,9 @@
                                         <x-base.preview>
                                             <!-- BEGIN: Modal Toggle -->
                                             <div class="text-center">
-                                                <x-base.button
-                                                    data-tw-toggle="modal"
-                                                    data-tw-target="#warning-modal-preview"
-                                                    href="#"
-                                                    as="a"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button data-tw-toggle="modal"
+                                                    data-tw-target="#warning-modal-preview" href="#" as="a"
+                                                    variant="primary">
                                                     Show Modal
                                                 </x-base.button>
                                             </div>
@@ -391,31 +298,21 @@
                                             <x-base.dialog id="warning-modal-preview">
                                                 <x-base.dialog.panel>
                                                     <div class="p-5 text-center">
-                                                        <x-base.lucide
-                                                            class="mx-auto mt-3 h-16 w-16 text-warning"
-                                                            icon="XCircle"
-                                                        />
+                                                        <x-base.lucide class="mx-auto mt-3 h-16 w-16 text-warning"
+                                                            icon="XCircle" />
                                                         <div class="mt-5 text-3xl">Oops...</div>
                                                         <div class="mt-2 text-slate-500">
                                                             Something went wrong!
                                                         </div>
                                                     </div>
                                                     <div class="px-5 pb-8 text-center">
-                                                        <x-base.button
-                                                            class="w-24"
-                                                            data-tw-dismiss="modal"
-                                                            type="button"
-                                                            variant="primary"
-                                                        >
+                                                        <x-base.button class="w-24" data-tw-dismiss="modal"
+                                                            type="button" variant="primary">
                                                             Ok
                                                         </x-base.button>
                                                     </div>
-                                                    <div
-                                                        class="border-t border-slate-200/60 p-5 text-center">
-                                                        <a
-                                                            class="text-primary"
-                                                            href=""
-                                                        >
+                                                    <div class="border-t border-slate-200/60 p-5 text-center">
+                                                        <a class="text-primary" href="">
                                                             Why do I have this issue?
                                                         </a>
                                                     </div>
@@ -427,13 +324,9 @@
                                             <x-base.highlight>
                                                 <!-- BEGIN: Modal Toggle -->
                                                 <div class="text-center">
-                                                    <x-base.button
-                                                        data-tw-toggle="modal"
-                                                        data-tw-target="#warning-modal-preview"
-                                                        href="#"
-                                                        as="a"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button data-tw-toggle="modal"
+                                                        data-tw-target="#warning-modal-preview" href="#"
+                                                        as="a" variant="primary">
                                                         Show Modal
                                                     </x-base.button>
                                                 </div>
@@ -442,31 +335,21 @@
                                                 <x-base.dialog id="warning-modal-preview">
                                                     <x-base.dialog.panel>
                                                         <div class="p-5 text-center">
-                                                            <x-base.lucide
-                                                                class="mx-auto mt-3 h-16 w-16 text-warning"
-                                                                icon="XCircle"
-                                                            />
+                                                            <x-base.lucide class="mx-auto mt-3 h-16 w-16 text-warning"
+                                                                icon="XCircle" />
                                                             <div class="mt-5 text-3xl">Oops...</div>
                                                             <div class="mt-2 text-slate-500">
                                                                 Something went wrong!
                                                             </div>
                                                         </div>
                                                         <div class="px-5 pb-8 text-center">
-                                                            <x-base.button
-                                                                class="w-24"
-                                                                data-tw-dismiss="modal"
-                                                                type="button"
-                                                                variant="primary"
-                                                            >
+                                                            <x-base.button class="w-24" data-tw-dismiss="modal"
+                                                                type="button" variant="primary">
                                                                 Ok
                                                             </x-base.button>
                                                         </div>
-                                                        <div
-                                                            class="border-t border-slate-200/60 p-5 text-center">
-                                                            <a
-                                                                class="text-primary"
-                                                                href=""
-                                                            >
+                                                        <div class="border-t border-slate-200/60 p-5 text-center">
+                                                            <a class="text-primary" href="">
                                                                 Why do I have this issue?
                                                             </a>
                                                         </div>
@@ -495,17 +378,10 @@
                                     Modal with Close Button
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-3"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-3">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-3"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-3" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -517,8 +393,7 @@
                                     is useful for displaying messages, alerts, or additional
                                     information without the need for complex interactions.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -526,13 +401,9 @@
                                         <x-base.preview>
                                             <!-- BEGIN: Modal Toggle -->
                                             <div class="text-center">
-                                                <x-base.button
-                                                    data-tw-toggle="modal"
-                                                    data-tw-target="#button-modal-preview"
-                                                    href="#"
-                                                    as="a"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button data-tw-toggle="modal"
+                                                    data-tw-target="#button-modal-preview" href="#" as="a"
+                                                    variant="primary">
                                                     Show Modal
                                                 </x-base.button>
                                             </div>
@@ -540,33 +411,21 @@
                                             <!-- BEGIN: Modal Content -->
                                             <x-base.dialog id="button-modal-preview">
                                                 <x-base.dialog.panel>
-                                                    <a
-                                                        class="absolute right-0 top-0 mr-3 mt-3"
-                                                        data-tw-dismiss="modal"
-                                                        href="#"
-                                                    >
-                                                        <x-base.lucide
-                                                            class="h-8 w-8 text-slate-400"
-                                                            icon="X"
-                                                        />
+                                                    <a class="absolute right-0 top-0 mr-3 mt-3" data-tw-dismiss="modal"
+                                                        href="#">
+                                                        <x-base.lucide class="h-8 w-8 text-slate-400" icon="X" />
                                                     </a>
                                                     <div class="p-5 text-center">
-                                                        <x-base.lucide
-                                                            class="mx-auto mt-3 h-16 w-16 text-success"
-                                                            icon="CheckCircle"
-                                                        />
+                                                        <x-base.lucide class="mx-auto mt-3 h-16 w-16 text-success"
+                                                            icon="CheckCircle" />
                                                         <div class="mt-5 text-3xl">Modal Example</div>
                                                         <div class="mt-2 text-slate-500">
                                                             Modal with close button
                                                         </div>
                                                     </div>
                                                     <div class="px-5 pb-8 text-center">
-                                                        <x-base.button
-                                                            class="w-24"
-                                                            data-tw-dismiss="modal"
-                                                            type="button"
-                                                            variant="primary"
-                                                        >
+                                                        <x-base.button class="w-24" data-tw-dismiss="modal"
+                                                            type="button" variant="primary">
                                                             Ok
                                                         </x-base.button>
                                                     </div>
@@ -578,13 +437,9 @@
                                             <x-base.highlight>
                                                 <!-- BEGIN: Modal Toggle -->
                                                 <div class="text-center">
-                                                    <x-base.button
-                                                        data-tw-toggle="modal"
-                                                        data-tw-target="#button-modal-preview"
-                                                        href="#"
-                                                        as="a"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button data-tw-toggle="modal"
+                                                        data-tw-target="#button-modal-preview" href="#"
+                                                        as="a" variant="primary">
                                                         Show Modal
                                                     </x-base.button>
                                                 </div>
@@ -592,33 +447,22 @@
                                                 <!-- BEGIN: Modal Content -->
                                                 <x-base.dialog id="button-modal-preview">
                                                     <x-base.dialog.panel>
-                                                        <a
-                                                            class="absolute right-0 top-0 mr-3 mt-3"
-                                                            data-tw-dismiss="modal"
-                                                            href="#"
-                                                        >
-                                                            <x-base.lucide
-                                                                class="h-8 w-8 text-slate-400"
-                                                                icon="X"
-                                                            />
+                                                        <a class="absolute right-0 top-0 mr-3 mt-3"
+                                                            data-tw-dismiss="modal" href="#">
+                                                            <x-base.lucide class="h-8 w-8 text-slate-400"
+                                                                icon="X" />
                                                         </a>
                                                         <div class="p-5 text-center">
-                                                            <x-base.lucide
-                                                                class="mx-auto mt-3 h-16 w-16 text-success"
-                                                                icon="CheckCircle"
-                                                            />
+                                                            <x-base.lucide class="mx-auto mt-3 h-16 w-16 text-success"
+                                                                icon="CheckCircle" />
                                                             <div class="mt-5 text-3xl">Modal Example</div>
                                                             <div class="mt-2 text-slate-500">
                                                                 Modal with close button
                                                             </div>
                                                         </div>
                                                         <div class="px-5 pb-8 text-center">
-                                                            <x-base.button
-                                                                class="w-24"
-                                                                data-tw-dismiss="modal"
-                                                                type="button"
-                                                                variant="primary"
-                                                            >
+                                                            <x-base.button class="w-24" data-tw-dismiss="modal"
+                                                                type="button" variant="primary">
                                                                 Ok
                                                             </x-base.button>
                                                         </div>
@@ -647,17 +491,10 @@
                                     Static Backdrop Modal
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-4"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-4">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-4"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-4" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -672,8 +509,7 @@
                                     your message stays in the spotlight until it's
                                     acknowledged.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -681,32 +517,22 @@
                                         <x-base.preview>
                                             <!-- BEGIN: Modal Toggle -->
                                             <div class="text-center">
-                                                <x-base.button
-                                                    data-tw-toggle="modal"
-                                                    data-tw-target="#static-backdrop-modal-preview"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button data-tw-toggle="modal"
+                                                    data-tw-target="#static-backdrop-modal-preview" variant="primary">
                                                     Show Modal
                                                 </x-base.button>
                                             </div>
                                             <!-- END: Modal Toggle -->
                                             <!-- BEGIN: Modal Content -->
-                                            <x-base.dialog
-                                                id="static-backdrop-modal-preview"
-                                                staticBackdrop
-                                            >
+                                            <x-base.dialog id="static-backdrop-modal-preview" staticBackdrop>
                                                 <x-base.dialog.panel class="px-5 py-10">
                                                     <div class="text-center">
                                                         <div class="mb-5">
                                                             I will not close if you click outside me. Don't even
                                                             try to press escape key.
                                                         </div>
-                                                        <x-base.button
-                                                            class="w-24"
-                                                            data-tw-dismiss="modal"
-                                                            type="button"
-                                                            variant="primary"
-                                                        >
+                                                        <x-base.button class="w-24" data-tw-dismiss="modal"
+                                                            type="button" variant="primary">
                                                             Ok
                                                         </x-base.button>
                                                     </div>
@@ -718,32 +544,22 @@
                                             <x-base.highlight>
                                                 <!-- BEGIN: Modal Toggle -->
                                                 <div class="text-center">
-                                                    <x-base.button
-                                                        data-tw-toggle="modal"
-                                                        data-tw-target="#static-backdrop-modal-preview"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button data-tw-toggle="modal"
+                                                        data-tw-target="#static-backdrop-modal-preview" variant="primary">
                                                         Show Modal
                                                     </x-base.button>
                                                 </div>
                                                 <!-- END: Modal Toggle -->
                                                 <!-- BEGIN: Modal Content -->
-                                                <x-base.dialog
-                                                    id="static-backdrop-modal-preview"
-                                                    staticBackdrop
-                                                >
+                                                <x-base.dialog id="static-backdrop-modal-preview" staticBackdrop>
                                                     <x-base.dialog.panel class="px-5 py-10">
                                                         <div class="text-center">
                                                             <div class="mb-5">
                                                                 I will not close if you click outside me. Don't even
                                                                 try to press escape key.
                                                             </div>
-                                                            <x-base.button
-                                                                class="w-24"
-                                                                data-tw-dismiss="modal"
-                                                                type="button"
-                                                                variant="primary"
-                                                            >
+                                                            <x-base.button class="w-24" data-tw-dismiss="modal"
+                                                                type="button" variant="primary">
                                                                 Ok
                                                             </x-base.button>
                                                         </div>
@@ -770,17 +586,10 @@
                                     Overlapping Modal
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-5"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-5">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-5"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-5" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -792,8 +601,7 @@
                                     once. This feature enables you to create guided
                                     experiences or step-by-step processes seamlessly.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -801,13 +609,9 @@
                                         <x-base.preview>
                                             <!-- BEGIN: Modal Toggle -->
                                             <div class="text-center">
-                                                <x-base.button
-                                                    data-tw-toggle="modal"
-                                                    data-tw-target="#overlapping-modal-preview"
-                                                    href="#"
-                                                    as="a"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button data-tw-toggle="modal"
+                                                    data-tw-target="#overlapping-modal-preview" href="#"
+                                                    as="a" variant="primary">
                                                     Show Modal
                                                 </x-base.button>
                                             </div>
@@ -820,13 +624,9 @@
                                                             Click button bellow to show overlapping modal!
                                                         </div>
                                                         <!-- BEGIN: Overlapping Modal Toggle -->
-                                                        <x-base.button
-                                                            data-tw-toggle="modal"
+                                                        <x-base.button data-tw-toggle="modal"
                                                             data-tw-target="#next-overlapping-modal-preview"
-                                                            href="#"
-                                                            as="a"
-                                                            variant="primary"
-                                                        >
+                                                            href="#" as="a" variant="primary">
                                                             Show Overlapping Modal
                                                         </x-base.button>
                                                         <!-- END: Overlapping Modal Toggle -->
@@ -846,13 +646,9 @@
                                             <x-base.highlight>
                                                 <!-- BEGIN: Modal Toggle -->
                                                 <div class="text-center">
-                                                    <x-base.button
-                                                        data-tw-toggle="modal"
-                                                        data-tw-target="#overlapping-modal-preview"
-                                                        href="#"
-                                                        as="a"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button data-tw-toggle="modal"
+                                                        data-tw-target="#overlapping-modal-preview" href="#"
+                                                        as="a" variant="primary">
                                                         Show Modal
                                                     </x-base.button>
                                                 </div>
@@ -865,13 +661,9 @@
                                                                 Click button bellow to show overlapping modal!
                                                             </div>
                                                             <!-- BEGIN: Overlapping Modal Toggle -->
-                                                            <x-base.button
-                                                                data-tw-toggle="modal"
+                                                            <x-base.button data-tw-toggle="modal"
                                                                 data-tw-target="#next-overlapping-modal-preview"
-                                                                href="#"
-                                                                as="a"
-                                                                variant="primary"
-                                                            >
+                                                                href="#" as="a" variant="primary">
                                                                 Show Overlapping Modal
                                                             </x-base.button>
                                                             <!-- END: Overlapping Modal Toggle -->
@@ -910,17 +702,10 @@
                                     Header & Footer Modal
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-6"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-6">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-6"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-6" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -930,8 +715,7 @@
                                     footers. These sections are perfect for adding titles,
                                     actions, and extra information to your modal dialogs.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -939,13 +723,9 @@
                                         <x-base.preview>
                                             <!-- BEGIN: Modal Toggle -->
                                             <div class="text-center">
-                                                <x-base.button
-                                                    data-tw-toggle="modal"
-                                                    data-tw-target="#header-footer-modal-preview"
-                                                    href="#"
-                                                    as="a"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button data-tw-toggle="modal"
+                                                    data-tw-target="#header-footer-modal-preview" href="#"
+                                                    as="a" variant="primary">
                                                     Show Modal
                                                 </x-base.button>
                                             </div>
@@ -957,32 +737,18 @@
                                                         <h2 class="mr-auto text-base font-medium">
                                                             Broadcast Message
                                                         </h2>
-                                                        <x-base.button
-                                                            class="hidden sm:flex"
-                                                            variant="outline-secondary"
-                                                        >
-                                                            <x-base.lucide
-                                                                class="mr-2 h-4 w-4"
-                                                                icon="File"
-                                                            />
+                                                        <x-base.button class="hidden sm:flex" variant="outline-secondary">
+                                                            <x-base.lucide class="mr-2 h-4 w-4" icon="File" />
                                                             Download Docs
                                                         </x-base.button>
                                                         <x-base.menu class="sm:hidden">
-                                                            <x-base.menu.button
-                                                                class="block h-5 w-5"
-                                                                href="#"
-                                                            >
-                                                                <x-base.lucide
-                                                                    class="h-5 w-5 text-slate-500"
-                                                                    icon="MoreHorizontal"
-                                                                />
+                                                            <x-base.menu.button class="block h-5 w-5" href="#">
+                                                                <x-base.lucide class="h-5 w-5 text-slate-500"
+                                                                    icon="MoreHorizontal" />
                                                             </x-base.menu.button>
                                                             <x-base.menu.items class="w-40">
                                                                 <x-base.menu.item>
-                                                                    <x-base.lucide
-                                                                        class="mr-2 h-4 w-4"
-                                                                        icon="File"
-                                                                    />
+                                                                    <x-base.lucide class="mr-2 h-4 w-4" icon="File" />
                                                                     Download Docs
                                                                 </x-base.menu.item>
                                                             </x-base.menu.items>
@@ -991,49 +757,34 @@
                                                     <x-base.dialog.description class="grid grid-cols-12 gap-4 gap-y-3">
                                                         <div class="col-span-12 sm:col-span-6">
                                                             <x-base.form-label for="modal-form-1">From</x-base.form-label>
-                                                            <x-base.form-input
-                                                                id="modal-form-1"
-                                                                type="text"
-                                                                placeholder="example@gmail.com"
-                                                            />
+                                                            <x-base.form-input id="modal-form-1" type="text"
+                                                                placeholder="example@gmail.com" />
                                                         </div>
                                                         <div class="col-span-12 sm:col-span-6">
                                                             <x-base.form-label for="modal-form-2">To</x-base.form-label>
-                                                            <x-base.form-input
-                                                                id="modal-form-2"
-                                                                type="text"
-                                                                placeholder="example@gmail.com"
-                                                            />
+                                                            <x-base.form-input id="modal-form-2" type="text"
+                                                                placeholder="example@gmail.com" />
                                                         </div>
                                                         <div class="col-span-12 sm:col-span-6">
                                                             <x-base.form-label for="modal-form-3">
                                                                 Subject
                                                             </x-base.form-label>
-                                                            <x-base.form-input
-                                                                id="modal-form-3"
-                                                                type="text"
-                                                                placeholder="Important Meeting"
-                                                            />
+                                                            <x-base.form-input id="modal-form-3" type="text"
+                                                                placeholder="Important Meeting" />
                                                         </div>
                                                         <div class="col-span-12 sm:col-span-6">
                                                             <x-base.form-label for="modal-form-4">
                                                                 Has the Words
                                                             </x-base.form-label>
-                                                            <x-base.form-input
-                                                                id="modal-form-4"
-                                                                type="text"
-                                                                placeholder="Job, Work, Documentation"
-                                                            />
+                                                            <x-base.form-input id="modal-form-4" type="text"
+                                                                placeholder="Job, Work, Documentation" />
                                                         </div>
                                                         <div class="col-span-12 sm:col-span-6">
                                                             <x-base.form-label for="modal-form-5">
                                                                 Doesn't Have
                                                             </x-base.form-label>
-                                                            <x-base.form-input
-                                                                id="modal-form-5"
-                                                                type="text"
-                                                                placeholder="Job, Work, Documentation"
-                                                            />
+                                                            <x-base.form-input id="modal-form-5" type="text"
+                                                                placeholder="Job, Work, Documentation" />
                                                         </div>
                                                         <div class="col-span-12 sm:col-span-6">
                                                             <x-base.form-label for="modal-form-6">Size</x-base.form-label>
@@ -1046,19 +797,11 @@
                                                         </div>
                                                     </x-base.dialog.description>
                                                     <x-base.dialog.footer>
-                                                        <x-base.button
-                                                            class="mr-1 w-20"
-                                                            data-tw-dismiss="modal"
-                                                            type="button"
-                                                            variant="outline-secondary"
-                                                        >
+                                                        <x-base.button class="mr-1 w-20" data-tw-dismiss="modal"
+                                                            type="button" variant="outline-secondary">
                                                             Cancel
                                                         </x-base.button>
-                                                        <x-base.button
-                                                            class="w-20"
-                                                            type="button"
-                                                            variant="primary"
-                                                        >
+                                                        <x-base.button class="w-20" type="button" variant="primary">
                                                             Send
                                                         </x-base.button>
                                                     </x-base.dialog.footer>
@@ -1070,13 +813,9 @@
                                             <x-base.highlight>
                                                 <!-- BEGIN: Modal Toggle -->
                                                 <div class="text-center">
-                                                    <x-base.button
-                                                        data-tw-toggle="modal"
-                                                        data-tw-target="#header-footer-modal-preview"
-                                                        href="#"
-                                                        as="a"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button data-tw-toggle="modal"
+                                                        data-tw-target="#header-footer-modal-preview" href="#"
+                                                        as="a" variant="primary">
                                                         Show Modal
                                                     </x-base.button>
                                                 </div>
@@ -1088,32 +827,20 @@
                                                             <h2 class="mr-auto text-base font-medium">
                                                                 Broadcast Message
                                                             </h2>
-                                                            <x-base.button
-                                                                class="hidden sm:flex"
-                                                                variant="outline-secondary"
-                                                            >
-                                                                <x-base.lucide
-                                                                    class="mr-2 h-4 w-4"
-                                                                    icon="File"
-                                                                />
+                                                            <x-base.button class="hidden sm:flex"
+                                                                variant="outline-secondary">
+                                                                <x-base.lucide class="mr-2 h-4 w-4" icon="File" />
                                                                 Download Docs
                                                             </x-base.button>
                                                             <x-base.menu class="sm:hidden">
-                                                                <x-base.menu.button
-                                                                    class="block h-5 w-5"
-                                                                    href="#"
-                                                                >
-                                                                    <x-base.lucide
-                                                                        class="h-5 w-5 text-slate-500"
-                                                                        icon="MoreHorizontal"
-                                                                    />
+                                                                <x-base.menu.button class="block h-5 w-5" href="#">
+                                                                    <x-base.lucide class="h-5 w-5 text-slate-500"
+                                                                        icon="MoreHorizontal" />
                                                                 </x-base.menu.button>
                                                                 <x-base.menu.items class="w-40">
                                                                     <x-base.menu.item>
-                                                                        <x-base.lucide
-                                                                            class="mr-2 h-4 w-4"
-                                                                            icon="File"
-                                                                        />
+                                                                        <x-base.lucide class="mr-2 h-4 w-4"
+                                                                            icon="File" />
                                                                         Download Docs
                                                                     </x-base.menu.item>
                                                                 </x-base.menu.items>
@@ -1124,51 +851,36 @@
                                                                 <x-base.form-label for="modal-form-1">
                                                                     From
                                                                 </x-base.form-label>
-                                                                <x-base.form-input
-                                                                    id="modal-form-1"
-                                                                    type="text"
-                                                                    placeholder="example@gmail.com"
-                                                                />
+                                                                <x-base.form-input id="modal-form-1" type="text"
+                                                                    placeholder="example@gmail.com" />
                                                             </div>
                                                             <div class="col-span-12 sm:col-span-6">
                                                                 <x-base.form-label for="modal-form-2">
                                                                     To
                                                                 </x-base.form-label>
-                                                                <x-base.form-input
-                                                                    id="modal-form-2"
-                                                                    type="text"
-                                                                    placeholder="example@gmail.com"
-                                                                />
+                                                                <x-base.form-input id="modal-form-2" type="text"
+                                                                    placeholder="example@gmail.com" />
                                                             </div>
                                                             <div class="col-span-12 sm:col-span-6">
                                                                 <x-base.form-label for="modal-form-3">
                                                                     Subject
                                                                 </x-base.form-label>
-                                                                <x-base.form-input
-                                                                    id="modal-form-3"
-                                                                    type="text"
-                                                                    placeholder="Important Meeting"
-                                                                />
+                                                                <x-base.form-input id="modal-form-3" type="text"
+                                                                    placeholder="Important Meeting" />
                                                             </div>
                                                             <div class="col-span-12 sm:col-span-6">
                                                                 <x-base.form-label for="modal-form-4">
                                                                     Has the Words
                                                                 </x-base.form-label>
-                                                                <x-base.form-input
-                                                                    id="modal-form-4"
-                                                                    type="text"
-                                                                    placeholder="Job, Work, Documentation"
-                                                                />
+                                                                <x-base.form-input id="modal-form-4" type="text"
+                                                                    placeholder="Job, Work, Documentation" />
                                                             </div>
                                                             <div class="col-span-12 sm:col-span-6">
                                                                 <x-base.form-label for="modal-form-5">
                                                                     Doesn't Have
                                                                 </x-base.form-label>
-                                                                <x-base.form-input
-                                                                    id="modal-form-5"
-                                                                    type="text"
-                                                                    placeholder="Job, Work, Documentation"
-                                                                />
+                                                                <x-base.form-input id="modal-form-5" type="text"
+                                                                    placeholder="Job, Work, Documentation" />
                                                             </div>
                                                             <div class="col-span-12 sm:col-span-6">
                                                                 <x-base.form-label for="modal-form-6">
@@ -1183,19 +895,12 @@
                                                             </div>
                                                         </x-base.dialog.description>
                                                         <x-base.dialog.footer>
-                                                            <x-base.button
-                                                                class="mr-1 w-20"
-                                                                data-tw-dismiss="modal"
-                                                                type="button"
-                                                                variant="outline-secondary"
-                                                            >
+                                                            <x-base.button class="mr-1 w-20" data-tw-dismiss="modal"
+                                                                type="button" variant="outline-secondary">
                                                                 Cancel
                                                             </x-base.button>
-                                                            <x-base.button
-                                                                class="w-20"
-                                                                type="button"
-                                                                variant="primary"
-                                                            >
+                                                            <x-base.button class="w-20" type="button"
+                                                                variant="primary">
                                                                 Send
                                                             </x-base.button>
                                                         </x-base.dialog.footer>
@@ -1221,17 +926,10 @@
                                     Delete Modal
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-7"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-7">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-7"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-7" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -1242,8 +940,7 @@
                                     modal prompts users to make a deliberate decision before
                                     proceeding with an action.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -1251,13 +948,9 @@
                                         <x-base.preview>
                                             <!-- BEGIN: Modal Toggle -->
                                             <div class="text-center">
-                                                <x-base.button
-                                                    data-tw-toggle="modal"
-                                                    data-tw-target="#delete-modal-preview"
-                                                    href="#"
-                                                    as="a"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button data-tw-toggle="modal"
+                                                    data-tw-target="#delete-modal-preview" href="#" as="a"
+                                                    variant="primary">
                                                     Show Modal
                                                 </x-base.button>
                                             </div>
@@ -1266,10 +959,8 @@
                                             <x-base.dialog id="delete-modal-preview">
                                                 <x-base.dialog.panel>
                                                     <div class="p-5 text-center">
-                                                        <x-base.lucide
-                                                            class="mx-auto mt-3 h-16 w-16 text-danger"
-                                                            icon="XCircle"
-                                                        />
+                                                        <x-base.lucide class="mx-auto mt-3 h-16 w-16 text-danger"
+                                                            icon="XCircle" />
                                                         <div class="mt-5 text-3xl">Are you sure?</div>
                                                         <div class="mt-2 text-slate-500">
                                                             Do you really want to delete these records? <br>
@@ -1277,19 +968,11 @@
                                                         </div>
                                                     </div>
                                                     <div class="px-5 pb-8 text-center">
-                                                        <x-base.button
-                                                            class="mr-1 w-24"
-                                                            data-tw-dismiss="modal"
-                                                            type="button"
-                                                            variant="outline-secondary"
-                                                        >
+                                                        <x-base.button class="mr-1 w-24" data-tw-dismiss="modal"
+                                                            type="button" variant="outline-secondary">
                                                             Cancel
                                                         </x-base.button>
-                                                        <x-base.button
-                                                            class="w-24"
-                                                            type="button"
-                                                            variant="danger"
-                                                        >
+                                                        <x-base.button class="w-24" type="button" variant="danger">
                                                             Delete
                                                         </x-base.button>
                                                     </div>
@@ -1301,13 +984,9 @@
                                             <x-base.highlight>
                                                 <!-- BEGIN: Modal Toggle -->
                                                 <div class="text-center">
-                                                    <x-base.button
-                                                        data-tw-toggle="modal"
-                                                        data-tw-target="#delete-modal-preview"
-                                                        href="#"
-                                                        as="a"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button data-tw-toggle="modal"
+                                                        data-tw-target="#delete-modal-preview" href="#"
+                                                        as="a" variant="primary">
                                                         Show Modal
                                                     </x-base.button>
                                                 </div>
@@ -1316,10 +995,8 @@
                                                 <x-base.dialog id="delete-modal-preview">
                                                     <x-base.dialog.panel>
                                                         <div class="p-5 text-center">
-                                                            <x-base.lucide
-                                                                class="mx-auto mt-3 h-16 w-16 text-danger"
-                                                                icon="XCircle"
-                                                            />
+                                                            <x-base.lucide class="mx-auto mt-3 h-16 w-16 text-danger"
+                                                                icon="XCircle" />
                                                             <div class="mt-5 text-3xl">Are you sure?</div>
                                                             <div class="mt-2 text-slate-500">
                                                                 Do you really want to delete these records? <br>
@@ -1327,19 +1004,12 @@
                                                             </div>
                                                         </div>
                                                         <div class="px-5 pb-8 text-center">
-                                                            <x-base.button
-                                                                class="mr-1 w-24"
-                                                                data-tw-dismiss="modal"
-                                                                type="button"
-                                                                variant="outline-secondary"
-                                                            >
+                                                            <x-base.button class="mr-1 w-24" data-tw-dismiss="modal"
+                                                                type="button" variant="outline-secondary">
                                                                 Cancel
                                                             </x-base.button>
-                                                            <x-base.button
-                                                                class="w-24"
-                                                                type="button"
-                                                                variant="danger"
-                                                            >
+                                                            <x-base.button class="w-24" type="button"
+                                                                variant="danger">
                                                                 Delete
                                                             </x-base.button>
                                                         </div>
@@ -1368,17 +1038,10 @@
                                     Success Modal
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-8"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-8">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-8"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-8" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -1390,8 +1053,7 @@
                                     users confirmation that they've completed a task or
                                     action.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -1399,13 +1061,9 @@
                                         <x-base.preview>
                                             <!-- BEGIN: Modal Toggle -->
                                             <div class="text-center">
-                                                <x-base.button
-                                                    data-tw-toggle="modal"
-                                                    data-tw-target="#success-modal-preview"
-                                                    href="#"
-                                                    as="a"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button data-tw-toggle="modal"
+                                                    data-tw-target="#success-modal-preview" href="#" as="a"
+                                                    variant="primary">
                                                     Show Modal
                                                 </x-base.button>
                                             </div>
@@ -1414,22 +1072,16 @@
                                             <x-base.dialog id="success-modal-preview">
                                                 <x-base.dialog.panel>
                                                     <div class="p-5 text-center">
-                                                        <x-base.lucide
-                                                            class="mx-auto mt-3 h-16 w-16 text-success"
-                                                            icon="CheckCircle"
-                                                        />
+                                                        <x-base.lucide class="mx-auto mt-3 h-16 w-16 text-success"
+                                                            icon="CheckCircle" />
                                                         <div class="mt-5 text-3xl">Good job!</div>
                                                         <div class="mt-2 text-slate-500">
                                                             You clicked the button!
                                                         </div>
                                                     </div>
                                                     <div class="px-5 pb-8 text-center">
-                                                        <x-base.button
-                                                            class="w-24"
-                                                            data-tw-dismiss="modal"
-                                                            type="button"
-                                                            variant="primary"
-                                                        >
+                                                        <x-base.button class="w-24" data-tw-dismiss="modal"
+                                                            type="button" variant="primary">
                                                             Ok
                                                         </x-base.button>
                                                     </div>
@@ -1441,13 +1093,9 @@
                                             <x-base.highlight>
                                                 <!-- BEGIN: Modal Toggle -->
                                                 <div class="text-center">
-                                                    <x-base.button
-                                                        data-tw-toggle="modal"
-                                                        data-tw-target="#success-modal-preview"
-                                                        href="#"
-                                                        as="a"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button data-tw-toggle="modal"
+                                                        data-tw-target="#success-modal-preview" href="#"
+                                                        as="a" variant="primary">
                                                         Show Modal
                                                     </x-base.button>
                                                 </div>
@@ -1456,22 +1104,16 @@
                                                 <x-base.dialog id="success-modal-preview">
                                                     <x-base.dialog.panel>
                                                         <div class="p-5 text-center">
-                                                            <x-base.lucide
-                                                                class="mx-auto mt-3 h-16 w-16 text-success"
-                                                                icon="CheckCircle"
-                                                            />
+                                                            <x-base.lucide class="mx-auto mt-3 h-16 w-16 text-success"
+                                                                icon="CheckCircle" />
                                                             <div class="mt-5 text-3xl">Good job!</div>
                                                             <div class="mt-2 text-slate-500">
                                                                 You clicked the button!
                                                             </div>
                                                         </div>
                                                         <div class="px-5 pb-8 text-center">
-                                                            <x-base.button
-                                                                class="w-24"
-                                                                data-tw-dismiss="modal"
-                                                                type="button"
-                                                                variant="primary"
-                                                            >
+                                                            <x-base.button class="w-24" data-tw-dismiss="modal"
+                                                                type="button" variant="primary">
                                                                 Ok
                                                             </x-base.button>
                                                         </div>
@@ -1499,17 +1141,10 @@
                                     Tiny Slider Modal
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-9"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-9">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-9"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-9" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -1520,8 +1155,7 @@
                                     in a visually appealing and interactive way within a
                                     modal.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -1529,13 +1163,9 @@
                                         <x-base.preview>
                                             <!-- BEGIN: Modal Toggle -->
                                             <div class="text-center">
-                                                <x-base.button
-                                                    data-tw-toggle="modal"
-                                                    data-tw-target="#tiny-slider-modal-preview"
-                                                    href="#"
-                                                    as="a"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button data-tw-toggle="modal"
+                                                    data-tw-target="#tiny-slider-modal-preview" href="#"
+                                                    as="a" variant="primary">
                                                     Show Modal
                                                 </x-base.button>
                                             </div>
@@ -1547,38 +1177,26 @@
                                                         <x-base.tiny-slider config="multiple-items">
                                                             <div class="h-56 px-2">
                                                                 <div class="image-fit h-full overflow-hidden rounded-md">
-                                                                    <img
-                                                                        src="#"
-                                                                        {{-- src="{{ Vite::asset($products[0]['images'][0]['path']) }}" --}}
-                                                                        alt="Tailwise - Admin Dashboard Template"
-                                                                    >
+                                                                    <img src="#" {{-- src="{{ Vite::asset($products[0]['images'][0]['path']) }}" --}}
+                                                                        alt="Tailwise - Admin Dashboard Template">
                                                                 </div>
                                                             </div>
                                                             <div class="h-56 px-2">
                                                                 <div class="image-fit h-full overflow-hidden rounded-md">
-                                                                    <img
-                                                                        src="#"
-                                                                        {{-- src="{{ Vite::asset($products[1]['images'][0]['path']) }}" --}}
-                                                                        alt="Tailwise - Admin Dashboard Template"
-                                                                    >
+                                                                    <img src="#" {{-- src="{{ Vite::asset($products[1]['images'][0]['path']) }}" --}}
+                                                                        alt="Tailwise - Admin Dashboard Template">
                                                                 </div>
                                                             </div>
                                                             <div class="h-56 px-2">
                                                                 <div class="image-fit h-full overflow-hidden rounded-md">
-                                                                    <img
-                                                                        src="#"
-                                                                        {{-- src="{{ Vite::asset($products[2]['images'][0]['path']) }}" --}}
-                                                                        alt="Tailwise - Admin Dashboard Template"
-                                                                    >
+                                                                    <img src="#" {{-- src="{{ Vite::asset($products[2]['images'][0]['path']) }}" --}}
+                                                                        alt="Tailwise - Admin Dashboard Template">
                                                                 </div>
                                                             </div>
                                                             <div class="h-56 px-2">
                                                                 <div class="image-fit h-full overflow-hidden rounded-md">
-                                                                    <img
-                                                                        src="#"
-                                                                        {{-- src="{{ Vite::asset($products[3]['images'][0]['path']) }}" --}}
-                                                                        alt="Tailwise - Admin Dashboard Template"
-                                                                    >
+                                                                    <img src="#" {{-- src="{{ Vite::asset($products[3]['images'][0]['path']) }}" --}}
+                                                                        alt="Tailwise - Admin Dashboard Template">
                                                                 </div>
                                                             </div>
                                                         </x-base.tiny-slider>
@@ -1591,13 +1209,9 @@
                                             <x-base.highlight>
                                                 <!-- BEGIN: Modal Toggle -->
                                                 <div class="text-center">
-                                                    <x-base.button
-                                                        data-tw-toggle="modal"
-                                                        data-tw-target="#tiny-slider-modal-preview"
-                                                        href="#"
-                                                        as="a"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button data-tw-toggle="modal"
+                                                        data-tw-target="#tiny-slider-modal-preview" href="#"
+                                                        as="a" variant="primary">
                                                         Show Modal
                                                     </x-base.button>
                                                 </div>
@@ -1610,41 +1224,29 @@
                                                                 <div class="h-56 px-2">
                                                                     <div
                                                                         class="image-fit h-full overflow-hidden rounded-md">
-                                                                        <img 
-                                                                            src="#"
-                                                                            {{-- src="{{ Vite::asset($products[0]['images'][0]['path']) }}" --}}
-                                                                            alt="Tailwise - Admin Dashboard Template"
-                                                                        >
+                                                                        <img src="#" {{-- src="{{ Vite::asset($products[0]['images'][0]['path']) }}" --}}
+                                                                            alt="Tailwise - Admin Dashboard Template">
                                                                     </div>
                                                                 </div>
                                                                 <div class="h-56 px-2">
                                                                     <div
                                                                         class="image-fit h-full overflow-hidden rounded-md">
-                                                                        <img 
-                                                                            src="#"
-                                                                            {{-- src="{{ Vite::asset($products[1]['images'][0]['path']) }}" --}}
-                                                                            alt="Tailwise - Admin Dashboard Template"
-                                                                        >
+                                                                        <img src="#" {{-- src="{{ Vite::asset($products[1]['images'][0]['path']) }}" --}}
+                                                                            alt="Tailwise - Admin Dashboard Template">
                                                                     </div>
                                                                 </div>
                                                                 <div class="h-56 px-2">
                                                                     <div
                                                                         class="image-fit h-full overflow-hidden rounded-md">
-                                                                        <img 
-                                                                            src="#"
-                                                                            {{-- src="{{ Vite::asset($products[2]['images'][0]['path']) }}" --}}
-                                                                            alt="Tailwise - Admin Dashboard Template"
-                                                                        >
+                                                                        <img src="#" {{-- src="{{ Vite::asset($products[2]['images'][0]['path']) }}" --}}
+                                                                            alt="Tailwise - Admin Dashboard Template">
                                                                     </div>
                                                                 </div>
                                                                 <div class="h-56 px-2">
                                                                     <div
                                                                         class="image-fit h-full overflow-hidden rounded-md">
-                                                                        <img
-                                                                            src="#"
-                                                                            {{-- src="{{ Vite::asset($products[3]['images'][0]['path']) }}" --}}
-                                                                            alt="Tailwise - Admin Dashboard Template"
-                                                                        >
+                                                                        <img src="#" {{-- src="{{ Vite::asset($products[3]['images'][0]['path']) }}" --}}
+                                                                            alt="Tailwise - Admin Dashboard Template">
                                                                     </div>
                                                                 </div>
                                                             </x-base.tiny-slider>
@@ -1676,17 +1278,10 @@
                                     Programmatically Show/Hide Modal
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-10"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-10">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-10"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-10" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -1697,8 +1292,7 @@
                                     This section explains how to programmatically manage the
                                     display of modals.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -1706,13 +1300,8 @@
                                         <x-base.preview>
                                             <!-- BEGIN: Show Modal Toggle -->
                                             <div class="text-center">
-                                                <x-base.button
-                                                    class="mb-2 mr-1"
-                                                    id="programmatically-show-modal"
-                                                    href="#"
-                                                    as="a"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button class="mb-2 mr-1" id="programmatically-show-modal"
+                                                    href="#" as="a" variant="primary">
                                                     Show Modal
                                                 </x-base.button>
                                             </div>
@@ -1721,24 +1310,14 @@
                                             <x-base.dialog id="programmatically-modal">
                                                 <x-base.dialog.panel class="p-10 text-center">
                                                     <!-- BEGIN: Hide Modal Toggle -->
-                                                    <x-base.button
-                                                        class="mr-1"
-                                                        id="programmatically-hide-modal"
-                                                        href="#"
-                                                        as="a"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button class="mr-1" id="programmatically-hide-modal"
+                                                        href="#" as="a" variant="primary">
                                                         Hide Modal
                                                     </x-base.button>
                                                     <!-- END: Hide Modal Toggle -->
                                                     <!-- BEGIN: Toggle Modal Toggle -->
-                                                    <x-base.button
-                                                        class="mr-1"
-                                                        id="programmatically-toggle-modal"
-                                                        href="#"
-                                                        as="a"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button class="mr-1" id="programmatically-toggle-modal"
+                                                        href="#" as="a" variant="primary">
                                                         Toggle Modal
                                                     </x-base.button>
                                                     <!-- END: Toggle Modal Toggle -->
@@ -1750,13 +1329,8 @@
                                             <x-base.highlight>
                                                 <!-- BEGIN: Show Modal Toggle -->
                                                 <div class="text-center">
-                                                    <x-base.button
-                                                        class="mb-2 mr-1"
-                                                        id="programmatically-show-modal"
-                                                        href="#"
-                                                        as="a"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button class="mb-2 mr-1" id="programmatically-show-modal"
+                                                        href="#" as="a" variant="primary">
                                                         Show Modal
                                                     </x-base.button>
                                                 </div>
@@ -1765,24 +1339,14 @@
                                                 <x-base.dialog id="programmatically-modal">
                                                     <x-base.dialog.panel class="p-10 text-center">
                                                         <!-- BEGIN: Hide Modal Toggle -->
-                                                        <x-base.button
-                                                            class="mr-1"
-                                                            id="programmatically-hide-modal"
-                                                            href="#"
-                                                            as="a"
-                                                            variant="primary"
-                                                        >
+                                                        <x-base.button class="mr-1" id="programmatically-hide-modal"
+                                                            href="#" as="a" variant="primary">
                                                             Hide Modal
                                                         </x-base.button>
                                                         <!-- END: Hide Modal Toggle -->
                                                         <!-- BEGIN: Toggle Modal Toggle -->
-                                                        <x-base.button
-                                                            class="mr-1"
-                                                            id="programmatically-toggle-modal"
-                                                            href="#"
-                                                            as="a"
-                                                            variant="primary"
-                                                        >
+                                                        <x-base.button class="mr-1" id="programmatically-toggle-modal"
+                                                            href="#" as="a" variant="primary">
                                                             Toggle Modal
                                                         </x-base.button>
                                                         <!-- END: Toggle Modal Toggle -->
@@ -1821,8 +1385,7 @@
                             <p class="mt-2 leading-relaxed">
                                 Below is a list of props that can be passed to the component:
                             </p>
-                            <div
-                                class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                            <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                 <div class="absolute left-0 -mt-2.5 ml-4 bg-white px-3 font-medium text-slate-500">
                                     <div class="-mt-px">Dialog</div>
                                 </div>
@@ -1884,8 +1447,7 @@
                                     </x-base.table>
                                 </div>
                             </div>
-                            <div
-                                class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                            <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                 <div class="absolute left-0 -mt-2.5 ml-4 bg-white px-3 font-medium text-slate-500">
                                     <div class="-mt-px">Dialog.Panel</div>
                                 </div>
@@ -1917,8 +1479,7 @@
                                     </x-base.table>
                                 </div>
                             </div>
-                            <div
-                                class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                            <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                 <div class="absolute left-0 -mt-2.5 ml-4 bg-white px-3 font-medium text-slate-500">
                                     <div class="-mt-px">Dialog.Title</div>
                                 </div>
@@ -1950,8 +1511,7 @@
                                     </x-base.table>
                                 </div>
                             </div>
-                            <div
-                                class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                            <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                 <div class="absolute left-0 -mt-2.5 ml-4 bg-white px-3 font-medium text-slate-500">
                                     <div class="-mt-px">Dialog.Description</div>
                                 </div>
@@ -1983,8 +1543,7 @@
                                     </x-base.table>
                                 </div>
                             </div>
-                            <div
-                                class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                            <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                 <div class="absolute left-0 -mt-2.5 ml-4 bg-white px-3 font-medium text-slate-500">
                                     <div class="-mt-px">Dialog.Footer</div>
                                 </div>
@@ -2027,10 +1586,7 @@
                                 'relative pl-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white active',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Blank Modal
                                 </a>
                             </li>
@@ -2038,10 +1594,7 @@
                                 'relative px-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Modal Size
                                 </a>
                             </li>
@@ -2049,10 +1602,7 @@
                                 'relative px-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Warning Modal
                                 </a>
                             </li>
@@ -2060,10 +1610,7 @@
                                 'relative px-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Modal with Close Button
                                 </a>
                             </li>
@@ -2071,10 +1618,7 @@
                                 'relative px-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Static Backdrop Modal
                                 </a>
                             </li>
@@ -2082,10 +1626,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Overlapping Modal
                                 </a>
                             </li>
@@ -2093,10 +1634,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Header & Footer Modal
                                 </a>
                             </li>
@@ -2104,10 +1642,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Delete Modal
                                 </a>
                             </li>
@@ -2115,10 +1650,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Success Modal
                                 </a>
                             </li>
@@ -2126,10 +1658,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Tiny Slider Modal
                                 </a>
                             </li>
@@ -2137,10 +1666,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Programmatically Show/Hide Modal
                                 </a>
                             </li>
@@ -2148,10 +1674,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Component API
                                 </a>
                             </li>

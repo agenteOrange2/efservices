@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\User;
+use App\Exports\UsersExport;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
-use App\Exports\UsersExport;
 use Maatwebsite\Excel\Facades\Excel;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class UserController extends Controller
 {
@@ -19,7 +20,7 @@ class UserController extends Controller
     {
 
         // Obtener usuarios paginados
-        $users = User::paginate(1); // Pagina de 10 en 10
+        $users = User::paginate(10); // Pagina de 10 en 10
         //
         return view('admin.users.index', compact('users'));
     }
@@ -55,6 +56,9 @@ class UserController extends Controller
             'status' => $validated['status'],
         ]);
 
+        $user->assignRole('superadmin');
+        Log::info('Rol asignado al usuario', ['user_id' => $user->id, 'role' => 'superadmin']);
+        
         if ($request->hasFile('profile_photo')) {
             $fileName = strtolower(str_replace(' ', '_', $user->name)) . '.webp'; // Genera el nombre basado en el usuario
 

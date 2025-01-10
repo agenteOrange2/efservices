@@ -20,8 +20,10 @@
                 <div class="box box--stacked flex flex-col">
                     <div class="box-body">
                         <form
-                            action="{{ route('admin.carrier.user_carriers.update', ['carrier' => $carrier->slug, 'userCarrier' => $userCarrier->id]) }}"
-                            method="POST" enctype="multipart/form-data">
+                        action="{{ route('admin.carrier.user_carriers.update', ['carrier' => $carrier->slug, 'userCarrierDetails' => $userCarrier->id]) }}"
+                        method="POST" enctype="multipart/form-data">
+                    
+
                             @csrf
                             @method('PUT')
                             <div class="p-7">
@@ -43,17 +45,16 @@
                                     </div>
                                     <div class="mt-3 w-full flex-1 xl:mt-0">
                                         <div class="flex items-center">
-                                            <x-image-preview name="profile_photo_carrier" id="profile_photo_carrier_input"
-                                                currentPhotoUrl="{{ $userCarrier->profile_photo_url }}"
-                                                {{-- La URL actual de la foto --}}
-                                                defaultPhotoUrl="{{ asset('build/default_profile.png') }}"
-                                                {{-- Foto predeterminada --}}
-                                                deleteUrl="{{ route('admin.user_carrier.delete-photo', ['user_carrier' => $userCarrier->id]) }}"
-                                                {{-- URL para eliminar --}} />
-
-                                        </div>
+                                            <x-image-preview 
+                                            name="profile_photo_carrier" 
+                                            id="profile_photo_carrier_input"
+                                            currentPhotoUrl="{{ $userCarrier->user->profile_photo_url }}" {{-- Ahora el modelo selecciona la colección correcta --}}
+                                            defaultPhotoUrl="{{ asset('build/default_profile.png') }}" 
+                                            deleteUrl="{{ route('admin.carrier.user_carriers.delete-photo', ['carrier' => $carrier->slug, 'userCarrierDetails' => $userCarrierDetails->id]) }}"                                            
+                                        />
+                                                                                
+                                        </div>                                                                                                                  
                                     </div>
-
                                 </div>
                                 <!-- Full Name -->
                                 <div
@@ -75,7 +76,7 @@
                                     </div>
                                     <div class="mt-3 w-full flex-1 xl:mt-0">
                                         <x-base.form-input name="name" type="text" placeholder="Enter full name"
-                                            id="name" value="{{ old('name', $userCarrier->name) }}" />
+                                        id="name" value="{{ old('name', $userCarrier->user->name ?? '') }}" />
                                         @error('name')
                                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                         @enderror
@@ -101,7 +102,7 @@
                                     </div>
                                     <div class="mt-3 w-full flex-1 xl:mt-0">
                                         <x-base.form-input name="email" type="email" placeholder="Enter email"
-                                            id="email" value="{{ old('email', $userCarrier->email) }}" />
+                                        id="email" value="{{ old('email', $userCarrier->user->email ?? '') }}" />
                                         @error('email')
                                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                         @enderror

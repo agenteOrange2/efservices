@@ -39,16 +39,11 @@ return [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
-        ],
+        ],    
         'user_carrier' => [
             'driver' => 'session',
-            'provider' => 'user_carriers', // Debe coincidir con el provider definido abajo.
-        ],
-        'user_driver' => [
-            'driver' => 'session',
-            'provider' => 'user_drivers', // Debe coincidir con el provider definido abajo.
-        ],
-    
+            'provider' => 'user_carriers',
+        ],    
     ],
 
     /*
@@ -69,10 +64,18 @@ return [
     */
 
     'providers' => [
+        /*
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
+        */
+
+        'users' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\User::class,
+        ],    
+        
         'user_carriers' => [
             'driver' => 'eloquent',
             'model' => App\Models\UserCarrier::class, // Modelo correcto para user_carrier.

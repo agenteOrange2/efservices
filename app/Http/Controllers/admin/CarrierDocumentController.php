@@ -27,12 +27,6 @@ class CarrierDocumentController extends Controller
         return view('admin.carrier.documents.index', compact('carrier', 'carrierDocuments'));
     }
 
-    public function all()
-    {
-        // Mostrar todos los documentos para el superadmin
-        $documents = CarrierDocument::with(['carrier', 'documentType'])->get();
-        return view('admin.carrier_documents.all', compact('documents'));
-    }
     /**
      * Crear un nuevo documento (Solo para Super Admin).
      */
@@ -234,6 +228,9 @@ class CarrierDocumentController extends Controller
                 ->addMediaFromRequest('document')
                 ->usingFileName(strtolower(str_replace(' ', '_', $documentType->name)) . '.pdf')
                 ->toMediaCollection('carrier_documents', 'public');
+
+            // Actualizar el estado a "In Process"
+            $carrierDocument->update(['status' => CarrierDocument::STATUS_IN_PROCCESS]);
         }
 
         return back()

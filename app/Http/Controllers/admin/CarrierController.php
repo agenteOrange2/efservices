@@ -80,7 +80,7 @@ class CarrierController extends Controller
     private function generateBaseDocuments(Carrier $carrier)
     {
         $documentTypes = DocumentType::all();
-    
+
         foreach ($documentTypes as $type) {
             // Crear el CarrierDocument si no existe
             $carrierDocument = CarrierDocument::firstOrCreate([
@@ -90,18 +90,18 @@ class CarrierController extends Controller
                 'status' => CarrierDocument::STATUS_PENDING,
                 'date' => now(),
             ]);
-    
+
             // Verificar si el DocumentType tiene un archivo predeterminado
             $defaultMedia = $type->getFirstMedia('default_documents');
-    
-        // NO copiar el archivo predeterminado; se usa la referencia desde 'default_documents'.
-        if ($defaultMedia && !$carrierDocument->getFirstMedia('carrier_documents')) {
-            // Simplemente registramos que este documento tiene un predeterminado.
-            $carrierDocument->update(['status' => CarrierDocument::STATUS_PENDING]);
-        }
+
+            // NO copiar el archivo predeterminado; se usa la referencia desde 'default_documents'.
+            if ($defaultMedia && !$carrierDocument->getFirstMedia('carrier_documents')) {
+                // Simplemente registramos que este documento tiene un predeterminado.
+                $carrierDocument->update(['status' => CarrierDocument::STATUS_PENDING]);
+            }
         }
     }
-    
+
 
     public function documents(Carrier $carrier)
     {
@@ -139,6 +139,7 @@ class CarrierController extends Controller
             'logo_img' => 'nullable|image|max:2048',
             'id_plan' => 'required|exists:memberships,id',
             'status' => 'required|integer|in:0,1,2',
+            'referrer_token' => 'nullable|string|max:16|unique:carriers,referrer_token,' . $carrier->id,
         ]);
 
         // Actualizar slug solo si cambia el nombre
@@ -165,6 +166,20 @@ class CarrierController extends Controller
             ->route('admin.carrier.user_carriers.index', $carrier)
             ->with('success', 'Carrier actualizado exitosamente.');
     }
+
+    public function approveDefaultDocument(Request $request, Carrier $carrier, CarrierDocument $document)
+    {
+        $validated = $request->validate(['approved' => 'required|boolean']);
+
+        $document->update([
+            'status' => $validated['approved'] ? CarrierDocument::STATUS_APPROVED : CarrierDocument::STATUS_PENDING,
+        ]);
+
+        return response()->json([
+            'message' => $validated['approved'] ? 'Default document approved' : 'Default document unapproved',
+        ]);
+    }
+
 
     /**
      * Eliminar un carrier.

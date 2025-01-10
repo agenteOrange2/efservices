@@ -3,16 +3,17 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Fortify\TwoFactorAuthenticatable;
-use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Illuminate\Support\Facades\Log;
+use Laravel\Jetstream\HasProfilePhoto;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Notifications\Notifiable;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Laravel\Fortify\TwoFactorAuthenticatable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
 
 
@@ -74,6 +75,23 @@ class User extends Authenticatable implements HasMedia
         ];
     }
 
+    /**
+     * Relación con los detalles específicos de UserCarrier.
+     */
+    public function carrierDetails()
+    {
+        return $this->hasOne(UserCarrierDetail::class, 'user_id', 'id');
+    }
+
+    /**
+     * Relación con los detalles específicos de UserDriver.
+     */
+    public function driverDetails()
+    {
+        return $this->hasOne(UserDriverDetail::class);
+    }
+
+
     // Relación con carriers (managers de carriers)
     public function carriers()
     {
@@ -89,6 +107,25 @@ class User extends Authenticatable implements HasMedia
     }
 
     //Registro de Media Library
+    public function getProfilePhotoUrlAttribute()
+    {
+        // Si el usuario pertenece a un UserCarrier, busca en la colección "profile_photo_carrier"
+        if ($this->carrierDetails()->exists()) {
+            $media = $this->getFirstMedia('profile_photo_carrier');
+        } else {
+            // Si no, busca en la colección "profile_photos" (para superadmin o User estándar)
+            $media = $this->getFirstMedia('profile_photos');
+        }
+
+        Log::info('Recuperando foto del User', [
+            'user_id' => $this->id,
+            'collection' => $this->carrierDetails()->exists() ? 'profile_photo_carrier' : 'profile_photos',
+            'media_exists' => $media ? true : false,
+            'media_url' => $media ? $media->getUrl() : null,
+        ]);
+
+        return $media ? $media->getUrl() : asset('build/default_profile.png');
+    }
 
     public function registerMediaCollections(): void
     {
@@ -117,11 +154,10 @@ class User extends Authenticatable implements HasMedia
         return 'id';
     }
 
+
     // Relación con carriers asignados
     public function assignedCarriers()
     {
         return $this->belongsToMany(Carrier::class, 'user_carrier_access');
     }
-
-    
 }

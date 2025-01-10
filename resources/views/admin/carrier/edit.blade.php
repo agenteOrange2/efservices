@@ -101,6 +101,39 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- REFER TOKEN -->
+                            <div class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                                <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                                    <div class="text-left">
+                                        <div class="flex items-center">
+                                            <div class="font-medium">Carrier Name</div>
+                                            <div
+                                                class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                                                Required
+                                            </div>
+                                        </div>
+                                        <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
+                                            Enter your full legal name as it appears on your official
+                                            identification.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 w-full flex-1 xl:mt-0">
+                                    <div class="flex items-center">
+                                        <x-base.form-input name="referrer_token" type="text" id="referrer_token" readonly
+                                            value="{{ old('referrer_token', $carrier->referrer_token) }}"
+                                            class="w-full bg-gray-100 cursor-not-allowed" />
+                                        <button type="button" id="regenerateToken"
+                                            class="ml-4 bg-blue-500 text-white px-3 py-1 rounded-md">
+                                            Regenerate
+                                        </button>
+                                    </div>
+                                    <small class="text-gray-500">Example:
+                                        http://efservices.la/admin/carrier/{{$carrier->slug}}/token={{ $carrier->referrer_token }}</small>
+                                </div>
+                            </div>
+
                             <!-- Full Name -->
                             <div class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
                                 <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
@@ -128,7 +161,8 @@
                             </div>
 
                             <!-- Address -->
-                            <div class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                            <div
+                                class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
                                 <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
                                     <div class="text-left">
                                         <div class="flex items-center">
@@ -153,7 +187,8 @@
                             </div>
 
                             <!-- State-->
-                            <div class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                            <div
+                                class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
                                 <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
                                     <div class="text-left">
                                         <div class="flex items-center">
@@ -519,6 +554,13 @@
 @pushOnce('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+
+            document.getElementById('regenerateToken').addEventListener('click', function() {
+                const tokenField = document.getElementById('referrer_token');
+                tokenField.value = Math.random().toString(36).substring(2,
+                18); // Generación rápida del token
+            });
+
             const deletePhotoButton = document.getElementById('deletePhotoButton');
             deletePhotoButton.addEventListener('click', function(event) {
                 event.preventDefault();
