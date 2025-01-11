@@ -104,10 +104,11 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
         Route::delete('/{userCarrier}', [UserCarrierController::class, 'destroy'])->name('destroy'); // Eliminar UserCarrier
         Route::delete('{carrier:slug}/user-carriers/{userCarrier}', [UserCarrierController::class, 'destroy'])
             ->name('carrier.user_carriers.destroy');
-
-        // Ruta para eliminar foto
+        
+        // Ruta para eliminar la foto de perfil del UserCarrier
         Route::post('/{userCarrierDetails}/delete-photo', [UserCarrierController::class, 'deletePhoto'])
             ->name('delete-photo');
+
     });
 });
 

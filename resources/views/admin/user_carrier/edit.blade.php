@@ -20,9 +20,9 @@
                 <div class="box box--stacked flex flex-col">
                     <div class="box-body">
                         <form
-                        action="{{ route('admin.carrier.user_carriers.update', ['carrier' => $carrier->slug, 'userCarrierDetails' => $userCarrier->id]) }}"
-                        method="POST" enctype="multipart/form-data">
-                    
+                            action="{{ route('admin.carrier.user_carriers.update', ['carrier' => $carrier->slug, 'userCarrierDetails' => $userCarrier->id]) }}"
+                            method="POST" enctype="multipart/form-data">
+
 
                             @csrf
                             @method('PUT')
@@ -45,15 +45,15 @@
                                     </div>
                                     <div class="mt-3 w-full flex-1 xl:mt-0">
                                         <div class="flex items-center">
-                                            <x-image-preview 
-                                            name="profile_photo_carrier" 
-                                            id="profile_photo_carrier_input"
-                                            currentPhotoUrl="{{ $userCarrier->user->profile_photo_url }}" {{-- Ahora el modelo selecciona la colección correcta --}}
-                                            defaultPhotoUrl="{{ asset('build/default_profile.png') }}" 
-                                            deleteUrl="{{ route('admin.carrier.user_carriers.delete-photo', ['carrier' => $carrier->slug, 'userCarrierDetails' => $userCarrierDetails->id]) }}"                                            
-                                        />
-                                                                                
-                                        </div>                                                                                                                  
+                                            <x-image-preview name="profile_photo_carrier" id="profile_photo_carrier_input"
+                                                currentPhotoUrl="{{ $userCarrier->user->profile_photo_url }}"
+                                                defaultPhotoUrl="{{ asset('build/default_profile.png') }}"
+                                                deleteUrl="{{ route('admin.carrier.user_carriers.delete-photo', [
+                                                    'carrier' => $carrier->slug,
+                                                    'userCarrierDetails' => $userCarrier->id,
+                                                ]) }}" />
+
+                                        </div>
                                     </div>
                                 </div>
                                 <!-- Full Name -->
@@ -76,7 +76,7 @@
                                     </div>
                                     <div class="mt-3 w-full flex-1 xl:mt-0">
                                         <x-base.form-input name="name" type="text" placeholder="Enter full name"
-                                        id="name" value="{{ old('name', $userCarrier->user->name ?? '') }}" />
+                                            id="name" value="{{ old('name', $userCarrier->user->name ?? '') }}" />
                                         @error('name')
                                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                         @enderror
@@ -102,7 +102,7 @@
                                     </div>
                                     <div class="mt-3 w-full flex-1 xl:mt-0">
                                         <x-base.form-input name="email" type="email" placeholder="Enter email"
-                                        id="email" value="{{ old('email', $userCarrier->user->email ?? '') }}" />
+                                            id="email" value="{{ old('email', $userCarrier->user->email ?? '') }}" />
                                         @error('email')
                                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                         @enderror
@@ -267,7 +267,8 @@
                                         <x-base.lucide class="-ml-2 mr-2 h-4 w-4 stroke-[1.3]" icon="Pocket" />
                                         Save User
                                     </x-base.button>
-                                    <x-base.button as="a" href="{{ route('admin.carrier.user_carriers.index', $carrier) }}"
+                                    <x-base.button as="a"
+                                        href="{{ route('admin.carrier.user_carriers.index', $carrier) }}"
                                         class="w-full border-primary/50 px-10 md:w-auto" variant="outline-primary">
                                         <x-base.lucide class="-ml-2 mr-2 h-4 w-4 stroke-[1.3]" icon="Pocket" />
                                         Cancel
@@ -284,37 +285,29 @@
 
 @pushOnce('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const deletePhotoButton = document.getElementById('deletePhotoButton');
+        const deletePhotoButton = document.getElementById('deletePhotoButton');
 
-            if (deletePhotoButton) {
-                deletePhotoButton.addEventListener('click', function(event) {
-                    event.preventDefault();
+        if (deletePhotoButton) {
+            deletePhotoButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                const deleteUrl = deletePhotoButton.dataset.deleteUrl;
 
-                    fetch('{{ route('admin.user_carrier.delete-photo', ['user_carrier' => $userCarrier]) }}', {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
-                                    .content,
-                            },
-                        })
-                        .then(response => {
-                            if (!response.ok) throw new Error('Failed to delete the photo.');
-                            return response.json();
-                        })
-                        .then(data => {
-                            // Actualizar el campo de vista previa con la foto predeterminada
-                            const photoPreview = document.querySelector('[x-data]').__x.$data;
-                            if (photoPreview) {
-                                photoPreview.originalPhoto = data.defaultPhotoUrl;
-                                photoPreview.photoPreview = null;
-                            }
-                            console.log('Photo deleted successfully.');
-                        })
-                        .catch(error => console.error('Error:', error));
-                });
-            }
-        });
+                fetch(deleteUrl, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        },
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Failed to delete the photo.');
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Photo deleted successfully:', data);
+                    })
+                    .catch(error => console.error('Error:', error));
+            });
+        }
     </script>
 @endPushOnce
 
