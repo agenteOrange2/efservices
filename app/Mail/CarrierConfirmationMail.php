@@ -42,7 +42,7 @@ class CarrierConfirmationMail extends Mailable
         return new Content(
             view: 'emails.carrier_confirmation',
             with: [
-                'url' => route('user_carrier.confirm', ['token' => $this->userCarrierDetail->confirmation_token]),
+                'url' => route('carrier.confirm', ['token' => $this->userCarrierDetail->confirmation_token]),
                 'userCarrier' => $this->userCarrierDetail->user, // Si necesitas acceso al usuario principal
             ],
         );

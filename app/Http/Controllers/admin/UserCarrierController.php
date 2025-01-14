@@ -20,12 +20,15 @@ class UserCarrierController extends Controller
      */
     public function index(Carrier $carrier)
     {
-        // Obtenemos los usuarios asociados al Carrier con sus detalles
-        $userCarriers = $carrier->users()
-            ->with('carrierDetails') // Relación con los detalles específicos
-            ->paginate(10);
-
-        return view('admin.user_carrier.index', compact('carrier', 'userCarriers'));
+        $maxCarriers = $carrier->membership->max_carrier ?? 1;
+        $currentCarriers = $carrier->users()->count();
+        $exceededLimit = $currentCarriers >= $maxCarriers;
+    
+        return view('admin.user_carrier.index', [
+            'carrier' => $carrier,
+            'userCarriers' => $carrier->users()->with('carrierDetails')->paginate(10),
+            'exceeded_limit' => $exceededLimit,
+        ]);
     }
 
     /**
@@ -264,22 +267,36 @@ class UserCarrierController extends Controller
     /**
      * Eliminar un registro.
      */
-    public function destroy(Carrier $carrier, User $user)
+    public function destroy(Carrier $carrier, User $userCarrier)
     {
         try {
-            // Eliminar los detalles específicos
-            $user->carrierDetails()->delete();
-
-            // Limpiar fotos de perfil y eliminar el usuario
-            $user->clearMediaCollection('profile_photos');
-            $user->delete();
-
+            // Obtener los detalles específicos del UserCarrier
+            $userCarrierDetail = $userCarrier->carrierDetails;
+    
+            if ($userCarrierDetail) {
+                // Eliminar todas las fotos asociadas al detalle del usuario
+                $userCarrierDetail->clearMediaCollection('profile_photo_carrier');
+                $userCarrierDetail->delete(); // Eliminar los detalles
+            }
+    
+            // Limpiar la colección de fotos del usuario y eliminar el usuario
+            $userCarrier->clearMediaCollection('profile_photo_carrier');
+            $userCarrier->delete();
+    
             return redirect()
                 ->route('admin.carrier.user_carriers.index', $carrier)
                 ->with('success', 'User Carrier eliminado correctamente.');
         } catch (\Exception $e) {
-            Log::error('Error al eliminar el UserCarrier.', ['error' => $e->getMessage()]);
-            return redirect()->back()->withErrors('Error al eliminar el usuario.');
+            Log::error('Error al eliminar el UserCarrier.', [
+                'error_message' => $e->getMessage(),
+            ]);
+    
+            return redirect()
+                ->route('admin.carrier.user_carriers.index', $carrier)
+                ->withErrors('Error al eliminar el usuario.');
         }
     }
+    
+    
+    
 }

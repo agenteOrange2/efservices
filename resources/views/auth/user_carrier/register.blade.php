@@ -31,7 +31,7 @@
                     </div>
 
                     <div class="mt-6">
-                        <form method="POST" action="{{ route('user_carrier.register') }}">
+                        <form method="POST" action="{{ route('carrier.register') }}">
                             @csrf
 
                             @if ($errors->has('email'))

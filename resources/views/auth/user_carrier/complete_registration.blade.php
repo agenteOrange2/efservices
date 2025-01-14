@@ -35,7 +35,7 @@
                         @endif
 
                         <form class="max-w-md mx-auto" method="POST"
-                            action="{{ route('user_carrier.complete_registration') }}">
+                            action="{{ route('carrier.complete_registration') }}">
                             @csrf
 
                             <div class="relative z-0 w-full mb-5 group">
