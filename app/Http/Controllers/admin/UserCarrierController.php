@@ -20,12 +20,15 @@ class UserCarrierController extends Controller
      */
     public function index(Carrier $carrier)
     {
-        // Obtenemos los usuarios asociados al Carrier con sus detalles
-        $userCarriers = $carrier->users()
-            ->with('carrierDetails') // Relación con los detalles específicos
-            ->paginate(10);
-
-        return view('admin.user_carrier.index', compact('carrier', 'userCarriers'));
+        $maxCarriers = $carrier->membership->max_carrier ?? 1;
+        $currentCarriers = $carrier->users()->count();
+        $exceededLimit = $currentCarriers >= $maxCarriers;
+    
+        return view('admin.user_carrier.index', [
+            'carrier' => $carrier,
+            'userCarriers' => $carrier->users()->with('carrierDetails')->paginate(10),
+            'exceeded_limit' => $exceededLimit,
+        ]);
     }
 
     /**
@@ -196,12 +199,12 @@ class UserCarrierController extends Controller
             // Manejar la actualización de la foto de perfil
             if ($request->hasFile('profile_photo_carrier')) {
                 $fileName = strtolower(str_replace(' ', '_', $user->name)) . '.webp';
-
-                // Limpiar la colección anterior
-                $userCarrierDetails->clearMediaCollection('profile_photo_carrier');
-
-                // Guardar la nueva foto
-                $userCarrierDetails->addMediaFromRequest('profile_photo_carrier')
+            
+                // Limpia la colección del modelo `User`
+                $user->clearMediaCollection('profile_photo_carrier');
+            
+                // Añade la nueva imagen en la misma colección del modelo `User`
+                $user->addMediaFromRequest('profile_photo_carrier')
                     ->usingFileName($fileName)
                     ->toMediaCollection('profile_photo_carrier');
             }
@@ -221,47 +224,78 @@ class UserCarrierController extends Controller
 
     public function deletePhoto(UserCarrierDetail $userCarrierDetails)
     {
-        // Cargar el usuario relacionado
-        $user = $userCarrierDetails->user;
-
-        if (!$user) {
-            return response()->json(['message' => 'User not found.'], 404);
-        }
-
-        // Obtener la foto de perfil del UserCarrier
-        $media = $userCarrierDetails->getFirstMedia('profile_photo_carrier');
-
-        if ($media) {
-            $media->delete(); // Elimina la foto
-            return response()->json([
-                'message' => 'Photo deleted successfully.',
-                'defaultPhotoUrl' => asset('build/default_profile.png'),
+        try {
+            // Verifica si existe el usuario relacionado
+            $user = $userCarrierDetails->user;
+    
+            if (!$user) {
+                Log::error('Usuario no encontrado para el UserCarrierDetail.', [
+                    'userCarrierDetail_id' => $userCarrierDetails->id,
+                ]);
+                return response()->json(['message' => 'User not found.'], 404);
+            }
+    
+            // Verifica si hay una foto en la colección 'profile_photo_carrier'
+            $media = $userCarrierDetails->getFirstMedia('profile_photo_carrier');
+    
+            if ($media) {
+                $media->delete(); // Elimina la foto
+                Log::info('Foto eliminada correctamente.', [
+                    'userCarrierDetail_id' => $userCarrierDetails->id,
+                ]);
+    
+                return response()->json([
+                    'message' => 'Photo deleted successfully.',
+                    'defaultPhotoUrl' => asset('build/default_profile.png'), // URL de la foto predeterminada
+                ]);
+            }
+    
+            return response()->json(['message' => 'No photo to delete.'], 404);
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar la foto.', [
+                'error_message' => $e->getMessage(),
+                'userCarrierDetail_id' => $userCarrierDetails->id,
             ]);
+    
+            return response()->json(['message' => 'Error deleting photo.'], 500);
         }
-
-        return response()->json(['message' => 'No photo to delete.'], 404);
     }
+    
 
 
     /**
      * Eliminar un registro.
      */
-    public function destroy(Carrier $carrier, User $user)
+    public function destroy(Carrier $carrier, User $userCarrier)
     {
         try {
-            // Eliminar los detalles específicos
-            $user->carrierDetails()->delete();
-
-            // Limpiar fotos de perfil y eliminar el usuario
-            $user->clearMediaCollection('profile_photos');
-            $user->delete();
-
+            // Obtener los detalles específicos del UserCarrier
+            $userCarrierDetail = $userCarrier->carrierDetails;
+    
+            if ($userCarrierDetail) {
+                // Eliminar todas las fotos asociadas al detalle del usuario
+                $userCarrierDetail->clearMediaCollection('profile_photo_carrier');
+                $userCarrierDetail->delete(); // Eliminar los detalles
+            }
+    
+            // Limpiar la colección de fotos del usuario y eliminar el usuario
+            $userCarrier->clearMediaCollection('profile_photo_carrier');
+            $userCarrier->delete();
+    
             return redirect()
                 ->route('admin.carrier.user_carriers.index', $carrier)
                 ->with('success', 'User Carrier eliminado correctamente.');
         } catch (\Exception $e) {
-            Log::error('Error al eliminar el UserCarrier.', ['error' => $e->getMessage()]);
-            return redirect()->back()->withErrors('Error al eliminar el usuario.');
+            Log::error('Error al eliminar el UserCarrier.', [
+                'error_message' => $e->getMessage(),
+            ]);
+    
+            return redirect()
+                ->route('admin.carrier.user_carriers.index', $carrier)
+                ->withErrors('Error al eliminar el usuario.');
         }
     }
+    
+    
+    
 }

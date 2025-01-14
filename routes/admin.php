@@ -100,14 +100,15 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
         Route::get('/create', [UserCarrierController::class, 'create'])->name('create'); // Formulario de creación
         Route::post('/', [UserCarrierController::class, 'store'])->name('store'); // Guardar nuevo UserCarrier           
         Route::get('/{userCarrierDetails}/edit', [UserCarrierController::class, 'edit'])->name('edit');
-        Route::put('/{userCarrierDetails}', [UserCarrierController::class, 'update'])->name('update');
+        Route::put('/{userCarrierDetails}', [UserCarrierController::class, 'update'])->name('update');        
         Route::delete('/{userCarrier}', [UserCarrierController::class, 'destroy'])->name('destroy'); // Eliminar UserCarrier
         Route::delete('{carrier:slug}/user-carriers/{userCarrier}', [UserCarrierController::class, 'destroy'])
             ->name('carrier.user_carriers.destroy');
-
-        // Ruta para eliminar foto
+        
+        // Ruta para eliminar la foto de perfil del UserCarrier
         Route::post('/{userCarrierDetails}/delete-photo', [UserCarrierController::class, 'deletePhoto'])
             ->name('delete-photo');
+
     });
 });
 
