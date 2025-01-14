@@ -7,9 +7,24 @@ use App\Models\DocumentType;
 use Illuminate\Http\Request;
 use App\Models\CarrierDocument;
 use App\Http\Controllers\Controller;
+use App\Services\CarrierDocumentService;
+use App\Traits\SendsCustomNotifications;
+use App\Repositories\CarrierDocumentRepository;
 
 class CarrierDocumentController extends Controller
 {
+
+    use SendsCustomNotifications;
+    protected $documentService;
+    protected $documentRepository;
+
+    public function __construct(
+        CarrierDocumentService $documentService,
+        CarrierDocumentRepository $documentRepository
+    ) {
+        $this->documentService = $documentService;
+        $this->documentRepository = $documentRepository;
+    }
     /**
      * Mostrar todos los documentos de todos los carriers (Solo para Super Admin).
      */
@@ -19,12 +34,10 @@ class CarrierDocumentController extends Controller
      */
     public function index(Carrier $carrier)
     {
-        // Mostrar documentos de un carrier específico
-        $carrierDocuments = CarrierDocument::where('carrier_id', $carrier->id)
-            ->with('documentType')
-            ->get();
+        $documents = $this->documentRepository->getDocumentsWithStatus($carrier);
+        $progress = $this->documentRepository->calculateDocumentProgress($carrier);
 
-        return view('admin.carrier.documents.index', compact('carrier', 'carrierDocuments'));
+        return view('admin.carrier.documents.index', compact('carrier', 'documents', 'progress'));
     }
 
     /**
@@ -79,7 +92,11 @@ class CarrierDocumentController extends Controller
                 ->toMediaCollection('carrier_documents', 'public');
         }
 
-        return back()->with('success', 'Documento subido exitosamente.');
+        return back()->with($this->sendNotification(
+            'success',
+            'Documento subido exitosamente.',
+            'El documento ha sido procesado y almacenado correctamente.'
+        ));
     }
 
     /**
@@ -116,35 +133,21 @@ class CarrierDocumentController extends Controller
             'date' => $validated['date'] ?? $document->date,
         ]));
 
-        return back()
-            ->with('notification', [
-                'type' => 'success',
-                'message' => 'Documento subido exitosamente.',
-                'details' => 'The document data has been saved correctly.',
-            ]);
+        return back()->with($this->sendNotification(
+            'success',
+            'Documento actualizado exitosamente.',
+            'The document data has been saved correctly.'
+        ));
     }
 
     public function listCarriersForDocuments()
     {
-        $carriers = Carrier::with(['userCarriers', 'documents'])->get();
-
-        foreach ($carriers as $carrier) {
-            $totalDocuments = DocumentType::count();
-            $approvedDocuments = $carrier->documents
-                ->where('status', CarrierDocument::STATUS_APPROVED)
-                ->count();
-
-            $carrier->completion_percentage = $totalDocuments > 0 ? ($approvedDocuments / $totalDocuments) * 100 : 0;
-
-            // Estado general del carrier
-            if ($approvedDocuments === $totalDocuments && $totalDocuments > 0) {
-                $carrier->document_status = 'active'; // Verde
-            } elseif ($approvedDocuments > 0) {
-                $carrier->document_status = 'pending'; // Amarillo
-            } else {
-                $carrier->document_status = 'inactive'; // Rojo
-            }
-        }
+        $carriers = Carrier::with(['documents'])->get()->map(function ($carrier) {
+            $progress = $this->documentRepository->calculateDocumentProgress($carrier);
+            $carrier->completion_percentage = $progress['percentage'];
+            $carrier->document_status = $progress['status'];
+            return $carrier;
+        });
 
         return view('admin.carrier.admin_documents_list', compact('carriers'));
     }
@@ -208,37 +211,17 @@ class CarrierDocumentController extends Controller
     {
         $validated = $request->validate([
             'document' => 'required|file|mimes:pdf,jpg,png|max:2048',
+            'notes' => 'nullable|string',
         ]);
 
-        // Crear o actualizar el documento
-        $carrierDocument = CarrierDocument::updateOrCreate(
-            [
-                'carrier_id' => $carrier->id,
-                'document_type_id' => $documentType->id,
-            ],
-            [
-                'status' => CarrierDocument::STATUS_PENDING,
-            ]
+        $document = $this->documentRepository->createOrUpdateDocument(
+            $carrier,
+            $documentType,
+            $request->file('document'),
+            $validated['notes'] ?? null
         );
 
-        // Subir el archivo usando Media Library
-        if ($request->hasFile('document')) {
-            $carrierDocument->clearMediaCollection('carrier_documents');
-            $carrierDocument
-                ->addMediaFromRequest('document')
-                ->usingFileName(strtolower(str_replace(' ', '_', $documentType->name)) . '.pdf')
-                ->toMediaCollection('carrier_documents', 'public');
-
-            // Actualizar el estado a "In Process"
-            $carrierDocument->update(['status' => CarrierDocument::STATUS_IN_PROCCESS]);
-        }
-
-        return back()
-            ->with('notification', [
-                'type' => 'success',
-                'message' => 'Document upload successfully!',
-                'details' => 'The document data has been saved correctly.',
-            ]);
+        return back()->with('success', 'Document uploaded successfully.');
     }
 
 

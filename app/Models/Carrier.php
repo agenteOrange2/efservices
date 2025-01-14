@@ -27,19 +27,31 @@ class Carrier extends Model implements HasMedia
         'dot_number',
         'mc_number',
         'state_dot',
-        'ifta_account',        
+        'ifta_account',
         'id_plan',
         'status',
         'referrer_token_expires_at',
     ];
 
-        /**
+    // Agregar constantes para limitar valores de status
+    protected $casts = [
+        'status' => 'integer',
+        'referrer_token_expires_at' => 'datetime'
+    ];
+
+    // Agregar scopes útiles
+    public function scopeActive($query)
+    {
+        return $query->where('status', self::STATUS_ACTIVE);
+    }
+
+    /**
      * Relación con los usuarios (UserCarrier).
      */
     public function users()
     {
         return $this->hasManyThrough(
-            User::class, 
+            User::class,
             UserCarrierDetail::class, // Tabla intermedia
             'carrier_id', // Foreign key en UserCarrierDetail
             'id',         // Foreign key en User
@@ -56,7 +68,7 @@ class Carrier extends Model implements HasMedia
             $carrier->slug = $carrier->slug ?? Str::slug($carrier->name);
         });
     }
-    
+
     // Constantes para los valores de status
     public const STATUS_INACTIVE = 0;
     public const STATUS_ACTIVE = 1;
@@ -76,10 +88,12 @@ class Carrier extends Model implements HasMedia
         return $this->hasMany(CarrierDocument::class);
     }
 
+    // Modelo Carrier
     public function userCarriers()
     {
-        return $this->hasMany(UserCarrier::class, 'carrier_id');
+        return $this->hasMany(UserCarrierDetail::class, 'carrier_id', 'id');
     }
+
 
     public function membership()
     {

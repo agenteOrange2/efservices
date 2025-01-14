@@ -22,6 +22,10 @@ class UserCarrierDetail extends Model implements HasMedia
         'confirmation_token',
     ];
 
+    protected $casts = [
+        'status' => 'integer'
+    ];
+
     // Constantes para los valores de status
     public const STATUS_INACTIVE = 0;
     public const STATUS_ACTIVE = 1;

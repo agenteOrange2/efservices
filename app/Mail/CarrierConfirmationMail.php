@@ -2,7 +2,7 @@
 
 namespace App\Mail;
 
-use App\Models\UserCarrier;
+use App\Models\UserCarrierDetail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -14,14 +14,14 @@ class CarrierConfirmationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $userCarrier;
+    public $userCarrierDetail;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(UserCarrier $userCarrier)
+    public function __construct(UserCarrierDetail $userCarrierDetail)
     {
-        $this->userCarrier = $userCarrier;
+        $this->userCarrierDetail = $userCarrierDetail;
     }
 
     /**
@@ -41,12 +41,11 @@ class CarrierConfirmationMail extends Mailable
     {
         return new Content(
             view: 'emails.carrier_confirmation',
-            with: [                
-                'url' => route('user_carrier.confirm', ['token' => $this->userCarrier->confirmation_token]), // Cambiar el alias
-                'userCarrier' => $this->userCarrier,
-            ],            
+            with: [
+                'url' => route('user_carrier.confirm', ['token' => $this->userCarrierDetail->confirmation_token]),
+                'userCarrier' => $this->userCarrierDetail->user, // Si necesitas acceso al usuario principal
+            ],
         );
-        
     }
 
     /**

@@ -42,6 +42,7 @@ class UserCarrierController extends Controller
         if ($currentCarriersCount >= $maxCarriers) {
             return redirect()
                 ->route('admin.carrier.user_carriers.index', $carrier)
+                ->with('exceeded_limit', true)
                 ->with('error', 'No puedes agregar más usuarios. Actualiza tu plan o contacta al administrador.');
         }
 

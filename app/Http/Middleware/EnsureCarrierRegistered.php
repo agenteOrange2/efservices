@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use App\Models\Carrier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -15,17 +16,16 @@ class EnsureCarrierRegistered
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next)
     {
-        $user = Auth::guard('user_carrier')->user();
-        // Log::info("Middleware ejecutado para el usuario {$user->id}. Carrier ID: {$user->carrier_id}");
-    
-        if (!$user->carrier_id) {
-            // Log::info("Redirigiendo al usuario {$user->id} a la página de completar registro.");
-            return redirect()->route('user_carrier.complete_registration')
-                ->with('status', 'Please complete your carrier registration.');
+        $user = Auth::user();
+
+        // Verificar si el usuario tiene un Carrier y su estado es pendiente
+        if ($user->carrierDetails && $user->carrierDetails->carrier->status === Carrier::STATUS_PENDING) {
+            return redirect()->route('user_carrier.confirmation')
+                ->with('status', 'Your account is under review. Access to the admin area is restricted until approval.');
         }
-    
+
         return $next($request);
     }
       

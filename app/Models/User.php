@@ -41,6 +41,14 @@ class User extends Authenticatable implements HasMedia
 
     protected $dates = ['created_at', 'updated_at'];
 
+    // Podrías simplificar las relaciones polimórficas
+    protected $with = ['carrierDetails', 'driverDetails']; // Eager loading por defecto
+
+    // Agregar método helper
+    public function isCarrierUser(): bool {
+        return $this->hasRole('user_carrier') && $this->carrierDetails()->exists();
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *
