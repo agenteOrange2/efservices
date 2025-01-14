@@ -74,4 +74,47 @@ class CarrierDocumentService
             'notes' => $notes
         ]);
     }
+
+        /**
+     * Distribuye un documento por default a todos los carriers
+     */
+    public function distributeDefaultDocument(DocumentType $documentType)
+    {
+        // Procesar carriers en chunks para evitar problemas de memoria
+        Carrier::chunk(100, function ($carriers) use ($documentType) {
+            foreach ($carriers as $carrier) {
+                $carrierDocument = CarrierDocument::firstOrCreate(
+                    [
+                        'carrier_id' => $carrier->id,
+                        'document_type_id' => $documentType->id,
+                    ],
+                    [
+                        'status' => CarrierDocument::STATUS_PENDING,
+                        'date' => now(),
+                    ]
+                );
+
+                $defaultMedia = $documentType->getFirstMedia('default_documents');
+                if ($defaultMedia && !$carrierDocument->getFirstMedia('carrier_documents')) {
+                    $carrierDocument->update(['status' => CarrierDocument::STATUS_PENDING]);
+                }
+            }
+        });
+    }
+
+        /**
+     * Sincroniza nuevos tipos de documentos con carriers existentes
+     */
+    public function syncNewDocumentTypes()
+    {
+        $documentTypes = DocumentType::all();
+        
+        Carrier::chunk(100, function ($carriers) use ($documentTypes) {
+            foreach ($carriers as $carrier) {
+                foreach ($documentTypes as $type) {
+                    $this->generateBaseDocuments($carrier);
+                }
+            }
+        });
+    }
 }
