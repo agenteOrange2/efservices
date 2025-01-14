@@ -21,13 +21,11 @@
                 </div> --}}
 
 
-
-
                 {{-- JETSTREAM --}}
 
 
                 <div class="mt-10">
-                    <img src="{{asset('build/img/logo_efservices_logo.png')}}" class="w-[80px]" alt="">
+                    <img src="{{ asset('build/img/logo_efservices_logo.png') }}" class="w-[80px]" alt="">
                     <div class="text-2xl font-medium">Sign In</div>
                     <div class="mt-2.5 text-slate-600">
                         Don't have an account?
@@ -61,6 +59,13 @@
                                 {{ $value }}
                             </div>
                         @endsession
+
+
+                        @if ($errors->any())
+                            <div class="alert alert-danger">
+                                {{ $errors->first() }}
+                            </div>
+                        @endif
                         <div>
                             <x-label for="email" value="{{ __('Email') }}" />
                             <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-3.5"
@@ -120,7 +125,9 @@
                     Welcome to EF Services
                 </div>
                 <div class="mt-5 text-base leading-relaxed text-white/70 xl:text-lg">
-                    Our dedicated team is committed to guiding you at every turn. We go above and beyond to ensure complete customer satisfaction, delivering tailored transport solutions designed to keep you moving forward.
+                    Our dedicated team is committed to guiding you at every turn. We go above and beyond to ensure
+                    complete customer satisfaction, delivering tailored transport solutions designed to keep you moving
+                    forward.
                 </div>
                 <div class="flex flex-col gap-3 mt-10 xl:flex-row xl:items-center">
                     {{-- <div class="flex items-center">
@@ -150,7 +157,8 @@
                             </div>
                         </div> --}}
                     <div class="text-base text-white/70 xl:ml-2 2xl:ml-3">
-                        Log in now and experience the difference that passion, reliability, and innovation can bring to your operations.
+                        Log in now and experience the difference that passion, reliability, and innovation can bring to
+                        your operations.
                     </div>
                 </div>
             </div>

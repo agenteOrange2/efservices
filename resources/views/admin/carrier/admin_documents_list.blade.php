@@ -10,7 +10,7 @@
 @endphp
 
 @section('subcontent')
-    <h1 class="text-2xl font-bold mb-6">Carriers Document Review</h1>
+    <h1 class="text-2xl font-bold mb-6">Carriers Document Review asas</h1>
 
      <livewire:document.document-table/>
 @endsection

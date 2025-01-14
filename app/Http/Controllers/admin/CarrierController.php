@@ -2,17 +2,29 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Helpers\Constants;
 use App\Models\Carrier;
+use App\Helpers\Constants;
 use App\Models\Membership;
-use App\Models\DocumentType;
-use App\Models\CarrierDocument;
-use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Str;
+use App\Models\DocumentType;
+use Illuminate\Http\Request;
+use App\Models\CarrierDocument;
+use App\Http\Controllers\Controller;
+use App\Services\CarrierDocumentService;
+use App\Traits\SendsCustomNotifications;
+
 
 class CarrierController extends Controller
 {
+
+    use SendsCustomNotifications;
+    protected $documentService;
+
+    public function __construct(CarrierDocumentService $documentService)
+    {
+        $this->documentService = $documentService;
+    }
+
     /**
      * Mostrar todos los carriers.
      */
@@ -60,7 +72,7 @@ class CarrierController extends Controller
         ]));
 
         // Generar documentos base automáticamente
-        $this->generateBaseDocuments($carrier);
+        $this->documentService->generateBaseDocuments($carrier);
 
         // Subir logo (si se envió)
         if ($request->hasFile('logo_carrier')) {
@@ -70,8 +82,11 @@ class CarrierController extends Controller
         }
 
         // Redirigir al tab de usuarios del carrier
-        return redirect()->route('admin.carrier.user_carriers.index', $carrier)
-            ->with('success', 'Carrier creado exitosamente. Ahora puedes administrar los usuarios asociados.');
+        return redirect()
+            ->route('admin.carrier.user_carriers.index', $carrier)
+            ->with($this->sendNotification(
+                'success', 'Carrier creado exitosamente. Ahora puedes administrar los usuarios asociados.'
+            ));
     }
 
     /**
@@ -164,7 +179,11 @@ class CarrierController extends Controller
 
         return redirect()
             ->route('admin.carrier.user_carriers.index', $carrier)
-            ->with('success', 'Carrier actualizado exitosamente.');
+            ->with($this->sendNotification(
+                'success',
+                'Carrier actualizado exitosamente.',
+                'Los cambios han sido guardados correctamente.'
+            ));
     }
 
     public function approveDefaultDocument(Request $request, Carrier $carrier, CarrierDocument $document)
@@ -188,6 +207,12 @@ class CarrierController extends Controller
     {
         $carrier->delete();
 
-        return redirect()->route('admin.carriers.index')->with('success', 'Carrier eliminado exitosamente.');
+        return redirect()
+        ->route('admin.carriers.index')
+        ->with($this->sendNotification(
+            'error',
+            'Carrier eliminado exitosamente.',
+            'El carrier y todos sus datos asociados han sido eliminados.'
+        ));
     }
 }

@@ -16,6 +16,17 @@
 
     <x-base.notificationtoast.notification-toast :notification="session('notification')" />
 
+    @if(isset($notification))
+    <div class="alert alert-{{ $notification['type'] }} alert-dismissible fade show" role="alert">
+        <strong>{{ $notification['message'] }}</strong>
+        @if(isset($notification['details']))
+            <p class="mb-0">{{ $notification['details'] }}</p>
+        @endif
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+@endif
     <div class="grid grid-cols-12 gap-x-6 gap-y-10">
         <div class="col-span-12 sm:col-span-10 sm:col-start-2">
             <div class="mt-7">

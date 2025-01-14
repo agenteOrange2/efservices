@@ -21,7 +21,7 @@
                             <h2 class="text-2xl">User Carriers for Carrier: <span>{{ $carrier->name }}</span></h2>
                         </div>
                         <div class="flex flex-col gap-x-3 gap-y-2 sm:flex-row md:ml-auto">
-                            @if ($carrier->userCarriers->count() < $carrier->membership->max_drivers)
+                            @if ($carrier->userCarriers->count() < $carrier->membership->max_drivers)                            
                                 <x-base.button as="a"
                                     href="{{ route('admin.carrier.user_carriers.create', $carrier) }}"
                                     class="group-[.mode--light]:!border-transparent group-[.mode--light]:!bg-white/[0.12] group-[.mode--light]:!text-slate-200"
@@ -60,19 +60,18 @@
                 <div id="limitModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-800 bg-opacity-50">
                     <div class="bg-white rounded-lg shadow-lg max-w-lg w-full">
                         <div class="p-6">
-                            <h2 class="text-lg font-bold text-red-600">Límite Alcanzado</h2>
+                            <h2 class="text-lg font-bold text-red-600">User Limit Reached</h2>
                             <p class="mt-4 text-gray-600">
-                                Has alcanzado el límite máximo de usuarios permitidos. Por favor, actualiza tu plan o
-                                contacta al administrador.
+                                You have reached the maximum number of users allowed. Please upgrade your plan or contact the administrator
                             </p>
                             <div class="mt-6 flex justify-end">
                                 <button id="closeModal" class="px-4 py-2 bg-gray-300 rounded-lg text-gray-800">
-                                    Cerrar
+                                    Close
                                 </button>
-                                <a href="{{ route('admin.membership.index') }}"
+                                {{-- <a href="{{ route('admin.membership.index') }}"
                                     class="ml-3 px-4 py-2 bg-primary-500 text-white rounded-lg">
                                     Ver Planes
-                                </a>
+                                </a> --}}
                             </div>
                         </div>
                     </div>

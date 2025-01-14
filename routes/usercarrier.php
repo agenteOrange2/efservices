@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\CustomLoginController;
 
+
+
 // Rutas públicas (sin autenticación)
 Route::middleware('guest')->group(function () {
     Route::get('/register', [CustomLoginController::class, 'showRegisterForm'])->name('register');
@@ -14,14 +16,14 @@ Route::get('/confirm/{token}', [CustomLoginController::class, 'confirmEmail'])->
 
 // Rutas que requieren autenticación
 Route::middleware(['auth'])->group(function () {
+    // Dashboard y otras rutas protegidas
+    Route::get('/dashboard', function () {
+        return view('user_carrier.dashboard');
+    })->name('dashboard');
     Route::get('/complete-registration', [CustomLoginController::class, 'showCompleteRegistrationForm'])
         ->name('complete_registration');
     Route::post('/complete-registration', [CustomLoginController::class, 'completeRegistration']);
     Route::get('/confirmation', function () {
         return view('auth.user_carrier.confirmation');
     })->name('confirmation');
-});
-
-Route::get('/', function () {
-    return view('welcome');
 });
