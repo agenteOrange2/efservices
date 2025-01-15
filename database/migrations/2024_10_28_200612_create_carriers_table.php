@@ -26,6 +26,9 @@ return new class extends Migration
             $table->string('ifta_account')->nullable();            
             $table->foreignId('id_plan')->nullable()->constrained('memberships')->onDelete('set null');
             $table->unsignedTinyInteger('status')->default(2)->index();
+            $table->enum('document_status', ['pending', 'in_progress', 'skipped'])
+            ->default('pending')
+            ->nullable();
             $table->timestamp('referrer_token_expires_at')->nullable();
             $table->timestamps();
         });

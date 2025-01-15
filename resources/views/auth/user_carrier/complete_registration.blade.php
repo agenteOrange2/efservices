@@ -1,208 +1,246 @@
 <x-guest-layout>
+    @push('head-scripts')
+    <script>
+        function openUploadModal(documentTypeId) {
+            const modal = document.getElementById('uploadModal');
+            const uploadForm = document.getElementById('uploadForm');
+            uploadForm.action = "{{ route('carrier.documents.upload', [$carrier->slug, '']) }}" + documentTypeId;
+            modal.classList.remove('hidden');
+        }
 
+        function closeUploadModal() {
+            const modal = document.getElementById('uploadModal');
+            const uploadForm = document.getElementById('uploadForm');
+            modal.classList.add('hidden');
+            uploadForm.reset();
+        }
+    </script>
+    @endpush
 
+    <div class="min-h-screen bg-gray-100">
+        <!-- Header -->
+        <header class="bg-blue-800 shadow-md">
+            <div class="container mx-auto px-4 py-4 flex items-center">
+                <div class="text-white font-bold text-xl">EF Services</div>
+            </div>
+        </header>
 
-    <div
-        class="container grid grid-cols-12 px-5 py-10 sm:px-10 sm:py-14 md:px-36 lg:h-screen lg:max-w-[1550px] lg:py-0 lg:pl-14 lg:pr-12 xl:px-24 2xl:max-w-[1750px]">
-        <div @class([
-            'relative z-50 h-full col-span-12 p-7 sm:p-14 bg-white rounded-2xl lg:bg-transparent lg:pr-10 lg:col-span-5 xl:pr-24 2xl:col-span-4 lg:p-0',
-            "before:content-[''] before:absolute before:inset-0 before:-mb-3.5 before:bg-white/40 before:rounded-2xl before:mx-5",
-        ])>
-            <div class="relative z-10 flex flex-col justify-center w-full h-full py-2 lg:py-32">
-                <div
-                    class="flex h-[55px] w-[55px] items-center justify-center rounded-[0.8rem] border border-primary/30">
-                    <div
-                        class="relative flex h-[50px] w-[50px] items-center justify-center rounded-[0.6rem] bg-white bg-gradient-to-b from-theme-1/90 to-theme-2/90">
-                        <div class="relative h-[26px] w-[26px] -rotate-45 [&_div]:bg-white">
-                            <div class="absolute inset-y-0 left-0 my-auto h-[75%] w-[20%] rounded-full opacity-50"></div>
-                            <div class="absolute inset-0 m-auto h-[120%] w-[20%] rounded-full"></div>
-                            <div class="absolute inset-y-0 right-0 my-auto h-[75%] w-[20%] rounded-full opacity-50">
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-8">
+            <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Upload Your Documents</h2>
+                
+                <!-- Info Banner -->
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 flex items-start">
+                    <svg class="w-6 h-6 text-blue-500 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="text-sm text-blue-700">
+                        Don't have all documents ready? No problem! You can continue without uploading all documents and complete them later.
+                        Required documents are marked with an asterisk (*).
+                    </p>
+                </div>
+
+                <!-- Documents List -->
+                <div class="space-y-4">
+                    @foreach($documents as $document)
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <!-- Document Info -->
+                                <div class="flex-grow">
+                                    <h3 class="text-lg font-medium text-gray-800">
+                                        {{ $document['type']->name }}
+                                        @if($document['type']->requirement)
+                                            <span class="text-red-500">*</span>
+                                        @endif
+                                    </h3>
+                                    <p class="text-sm {{ $document['status_name'] === 'Not Uploaded' ? 'text-yellow-600' : 'text-green-600' }}">
+                                        Status: {{ $document['status_name'] }}
+                                    </p>
+                                </div>
+                                
+                                <!-- Actions -->
+                                <div class="flex items-center space-x-2">
+                                    @if($document['file_url'])
+                                        <!-- Uploaded Document -->
+                                        <a href="{{ $document['file_url'] }}" target="_blank" 
+                                            class="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors flex items-center">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            View Uploaded
+                                        </a>
+                                    @elseif($document['type']->getFirstMediaUrl('default_documents'))
+                                        <!-- Default Document -->
+                                        <div class="flex items-center space-x-4">
+                                            <div class="flex items-center">
+                                                <input type="checkbox" 
+                                                       id="default-doc-{{ $document['type']->id }}"
+                                                       class="form-checkbox h-4 w-4 text-blue-600"
+                                                       onchange="toggleDefaultDocument('{{ $carrier->slug }}', '{{ $document['type']->id }}', this.checked)"
+                                                       @if(isset($document['document']) && $document['document']->status === \App\Models\CarrierDocument::STATUS_APPROVED) checked @endif>
+                                                <label for="default-doc-{{ $document['type']->id }}" class="ml-2 text-sm text-gray-700">
+                                                    Use Default
+                                                </label>
+                                            </div>
+                                            <a href="{{ $document['type']->getFirstMediaUrl('default_documents') }}" target="_blank" 
+                                                class="px-3 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors flex items-center">
+                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                </svg>
+                                                View Default
+                                            </a>
+                                        </div>
+                                    @endif
+
+                                    <button onclick="openUploadModal('{{ $document['type']->id }}')"
+                                            class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                        </svg>
+                                        {{ $document['file_url'] ? 'Replace' : 'Upload' }}
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-                {{-- JETSTREAM --}}
-
-                <div class="mt-10">
-                    <div class="text-2xl font-medium">Complete Your Carrier Registration</div>
-                    <div class="mt-7">
-
-
-                        @if (session('status'))
-                            <div class="alert alert-success">
-                                {{ session('status') }}
-                            </div>
-                        @endif
-
-                        <form class="max-w-md mx-auto" method="POST"
-                            action="{{ route('carrier.complete_registration') }}">
-                            @csrf
-
-                            <div class="relative z-0 w-full mb-5 group">
-                                <x-label for="email" value="{{ __('Carrier Name') }}" />
-                                <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-2.5 mt-1 w-full"
-                                    type="text" name="name" id="name" value="{{ old('name') }}"
-                                    placeholder="Company Name" required />
-                            </div>
-
-                            <div class="relative z-0 w-full mb-5 group">
-                                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                                    for="carrier_address">Address</label>
-                                <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-2.5 mt-1 w-full"
-                                    type="text" name="address" id="address" value="{{ old('address') }}"
-                                    required />
-                            </div>
-
-                            <!-- State -->
-                            <div class="relative z-0 w-full mb-5 group">
-                                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                                    for="state">State</label>
-                                <select name="state" id="state"
-                                    class="block rounded-[0.6rem] border-slate-300/80 px-4 py-2.5 mt-1 w-full" required>
-                                    <option value="">{{ __('Select State') }}</option>
-                                    @foreach ($usStates as $abbr => $name)
-                                        <option value="{{ $abbr }}"
-                                            {{ old('state') === $abbr ? 'selected' : '' }}>
-                                            {{ $name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="relative z-0 w-full mb-5 group">
-                                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                                    for="zipcode">Zip Code</label>
-                                <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-2.5 mt-1 w-full"
-                                    type="number" name="zipcode" id="zipcode" value="{{ old('zipcode') }}"
-                                    required />
-                            </div>
-
-                            <div class="relative z-0 w-full mb-5 group">
-                                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                                    for="ein_number">EIN Number</label>
-                                <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-2.5 mt-1 w-full"
-                                    type="number" name="ein_number" id="ein_number" value="{{ old('ein_number') }}"
-                                    required />
-                            </div>
-
-                            <div class="relative z-0 w-full mb-5 group">
-                                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                                    for="dot_number">Dot Number</label>
-                                <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-2.5 mt-1 w-full"
-                                    type="number" name="dot_number" id="dot_number" value="{{ old('dot_number') }}"
-                                    required />
-                            </div>
-
-                            <div class="relative z-0 w-full mb-5 group">
-                                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                                    for="mc_number">MC Number</label>
-                                <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-2.5 mt-1 w-full"
-                                    type="number" name="mc_number" id="mc_number" value="{{ old('mc_number') }}"
-                                    required />
-                            </div>
-
-                            <div class="relative z-0 w-full mb-5 group">
-                                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                                    for="state_dot">State Dot</label>
-                                <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-2.5 mt-1 w-full"
-                                    type="text" name="state_dot" id="state_dot" value="{{ old('state_dot') }}"
-                                    required />
-                            </div>
-
-                            <div class="relative z-0 w-full mb-5 group">
-                                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                                    for="ifta_account">IFTA Account</label>
-                                <x-input type="text" name="ifta_account" id="ifta_account"
-                                    class="block rounded-[0.6rem] border-slate-300/80 px-4 py-2.5 mt-1 w-full"
-                                    value="{{ old('ifta_account') }}" required />
-                            </div>
-
-                            <!-- Membership Selection (opcional) -->
-                            
-                                <div class="relative z-0 w-full mb-5 group">
-                                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                                        for="membership">Membership</label>
-                                        <select data-tw-merge aria-label="Default select example"
-                                        class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&amp;[readonly]]:bg-slate-100 [&amp;[readonly]]:cursor-not-allowed [&amp;[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1 mt-2 sm:mr-2 mt-2 sm:mr-2"
-                                        id="id_plan" name="id_plan">
-                                        <option value="">Select a Membership Plan</option>
-                                        @foreach ($memberships as $membership)
-                                            <option value="{{ $membership->id }}"
-                                                {{ old('id_plan') == $membership->id ? 'selected' : '' }}>
-                                                {{ $membership->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            
-
-                            <div class="mt-5 text-center xl:mt-8 xl:text-left">
-                                <x-base.button type="submit"
-                                    class="w-full bg-gradient-to-r from-theme-1/70 to-theme-2/70 py-3.5 xl:mr-3 text-white">
-                                    {{ __('Complete Registration') }}
-                                </x-base.button>
-                            </div>
-                        </form>
-                    </div>
+                    @endforeach
                 </div>
 
+                <!-- Action Buttons -->
+                <div class="mt-8 flex justify-end space-x-4">
+                    <form action="{{ route('carrier.documents.skip', $carrier->slug) }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" 
+                                class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            Complete Later
+                        </button>
+                    </form>
+                    
+                    <form action="{{ route('carrier.documents.complete', $carrier->slug) }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                            Submit Documents
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <!-- Upload Modal -->
+        <div id="uploadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden">
+            <div class="bg-white rounded-lg p-6 w-full max-w-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">Upload Document</h3>
+                    <button onclick="closeUploadModal()" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <form id="uploadForm" method="POST" enctype="multipart/form-data" class="space-y-4">
+                    @csrf
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        <p class="mt-2 text-sm text-gray-600">Drag and drop your file here, or click to select a file</p>
+                        <input type="file" name="document" class="hidden" accept=".pdf,.jpg,.png">
+                    </div>
+                    <div class="text-sm text-gray-500">
+                        Accepted file types: PDF, JPG, PNG (max 10MB)
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeUploadModal()"
+                                class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                            Upload
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-    <div
-        class="container fixed inset-0 grid h-screen w-screen grid-cols-12 pl-14 pr-12 lg:max-w-[1550px] xl:px-24 2xl:max-w-[1750px]">
-        <div @class([
-            'relative h-screen col-span-12 lg:col-span-5 2xl:col-span-4 z-20',
-            "after:bg-white after:hidden after:lg:block after:content-[''] after:absolute after:right-0 after:inset-y-0 after:bg-gradient-to-b after:from-white after:to-slate-100/80 after:w-[800%] after:rounded-[0_1.2rem_1.2rem_0/0_1.7rem_1.7rem_0]",
-            "before:content-[''] before:hidden before:lg:block before:absolute before:right-0 before:inset-y-0 before:my-6 before:bg-gradient-to-b before:from-white/10 before:to-slate-50/10 before:bg-white/50 before:w-[800%] before:-mr-4 before:rounded-[0_1.2rem_1.2rem_0/0_1.7rem_1.7rem_0]",
-        ])></div>
-        <div @class([
-            'h-full col-span-7 2xl:col-span-8 lg:relative',
-            "before:content-[''] before:absolute before:lg:-ml-10 before:left-0 before:inset-y-0 before:bg-gradient-to-b before:from-theme-1 before:to-theme-2 before:w-screen before:lg:w-[800%]",
-            "after:content-[''] after:absolute after:inset-y-0 after:left-0 after:w-screen after:lg:w-[800%] after:bg-texture-white after:bg-fixed after:bg-center after:lg:bg-[25rem_-25rem] after:bg-no-repeat",
-        ])>
-            <div class="sticky top-0 z-10 flex-col justify-center hidden h-screen ml-16 lg:flex xl:ml-28 2xl:ml-36">
-                <div class="text-[2.6rem] font-medium leading-[1.4] text-white xl:text-5xl xl:leading-[1.2]">
-                    Embrace Excellence <br> in Dashboard Development
-                </div>
-                <div class="mt-5 text-base leading-relaxed text-white/70 xl:text-lg">
-                    Unlock the potential of Tailwise, where developers craft
-                    meticulously structured, visually stunning dashboards with
-                    feature-rich modules. Join us today to shape the future of your
-                    application development.
-                </div>
-                <div class="flex flex-col gap-3 mt-10 xl:flex-row xl:items-center">
-                    {{-- <div class="flex items-center">
-                    <div class="image-fit zoom-in h-9 w-9 2xl:h-11 2xl:w-11">
-                        <x-base.tippy class="rounded-full border-[3px] border-white/50"
-                            src="{{ Vite::asset($users[0]['photo']) }}"
-                            alt="Tailwise - Admin Dashboard Template" as="img"
-                            content="{{ $users[0]['name'] }}" />
-                    </div>
-                    <div class="-ml-3 image-fit zoom-in h-9 w-9 2xl:h-11 2xl:w-11">
-                        <x-base.tippy class="rounded-full border-[3px] border-white/50"
-                            src="{{ Vite::asset($users[1]['photo']) }}"
-                            alt="Tailwise - Admin Dashboard Template" as="img"
-                            content="{{ $users[1]['name'] }}" />
-                    </div>
-                    <div class="-ml-3 image-fit zoom-in h-9 w-9 2xl:h-11 2xl:w-11">
-                        <x-base.tippy class="rounded-full border-[3px] border-white/50"
-                            src="{{ Vite::asset($users[2]['photo']) }}"
-                            alt="Tailwise - Admin Dashboard Template" as="img"
-                            content="{{ $users[2]['name'] }}" />
-                    </div>
-                    <div class="-ml-3 image-fit zoom-in h-9 w-9 2xl:h-11 2xl:w-11">
-                        <x-base.tippy class="rounded-full border-[3px] border-white/50"
-                            src="{{ Vite::asset($users[3]['photo']) }}"
-                            alt="Tailwise - Admin Dashboard Template" as="img"
-                            content="{{ $users[3]['name'] }}" />
-                    </div>
-                </div> --}}
-                    <div class="text-base text-white/70 xl:ml-2 2xl:ml-3">
-                        Over 7k+ strong and growing! Your journey begins here.
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+
+    @push('scripts')
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const modal = document.getElementById('uploadModal');
+        const uploadForm = document.getElementById('uploadForm');
+        const fileInput = uploadForm.querySelector('input[type="file"]');
+        const dropZone = uploadForm.querySelector('.border-dashed');
+        let currentDocumentTypeId = null;
+
+        // Drag and drop functionality
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropZone.classList.add('border-blue-500');
+        }
+
+        function unhighlight() {
+            dropZone.classList.remove('border-blue-500');
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+        }
+
+        // Cerrar modal con Esc
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeUploadModal();
+        });
+
+        // Toggle Default Document Function
+        window.toggleDefaultDocument = async function(carrierSlug, documentTypeId, isChecked) {
+            try {
+                const response = await fetch(`/carrier/${carrierSlug}/documents/${documentTypeId}/toggle-default`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ approved: isChecked })
+                });
+
+                if (!response.ok) throw new Error('Network response was not ok');
+
+                const result = await response.json();
+                if (result.success) {
+                    // Actualizar la UI o recargar la página si es necesario
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                // Revertir el checkbox si hay error
+                event.target.checked = !event.target.checked;
+            }
+        };
+    });
+    </script>
+    @endpush
 </x-guest-layout>
