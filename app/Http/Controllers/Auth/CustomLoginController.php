@@ -32,24 +32,31 @@ class CustomLoginController
 
     public function authenticated(Request $request, $user)
     {
-        // Verifica el rol del usuario y redirige según corresponda
         if ($user->hasRole('user_carrier')) {
             if (!$user->carrierDetails || !$user->carrierDetails->carrier_id) {
-                // Si es un user_carrier y no tiene un carrier_id
-                return redirect()->route('user_carrier.complete_registration')
+                return redirect()->route('carrier.complete_registration')
                     ->with('status', 'Please complete your carrier registration.');
             }
 
-            // Redirigir al dashboard de carrier
+            // Verificar si el usuario necesita subir documentos
+            $carrier = $user->carrierDetails->carrier;
+            if ($carrier->document_status === 'in_progress') {
+                return redirect()->route('carrier.documents.index', $carrier->slug)
+                    ->with('status', 'Please complete your document submission.');
+            }
+
+            if ($carrier->status !== Carrier::STATUS_ACTIVE) {
+                return redirect()->route('carrier.confirmation')
+                    ->with('warning', 'Your carrier account is pending approval.');
+            }
+
             return redirect()->route('carrier.dashboard');
         }
 
         if ($user->hasRole('user_driver')) {
-            // Redirigir al dashboard de driver
             return redirect()->route('driver.dashboard');
         }
 
-        // Redirigir al dashboard general para usuarios normales
         return redirect()->route('admin');
     }
 
@@ -196,11 +203,12 @@ class CustomLoginController
             'state_dot' => 'nullable|string|max:255',
             'ifta_account' => 'nullable|string|max:255',
             'id_plan' => 'required|exists:memberships,id',
+            'has_documents' => 'required|in:yes,no'
         ]);
 
         $user = Auth::user();
 
-        // Crear el Carrier con estado pendiente
+        // Crear el Carrier
         $carrier = Carrier::create([
             'name' => $validated['name'],
             'address' => $validated['address'],
@@ -213,19 +221,25 @@ class CustomLoginController
             'ifta_account' => $validated['ifta_account'],
             'slug' => Str::slug($validated['name']),
             'referrer_token' => Str::random(16),
-            'status' => Carrier::STATUS_PENDING, // Estado pendiente
+            'status' => Carrier::STATUS_PENDING,
+            'document_status' => $validated['has_documents'] === 'yes' ? 'in_progress' : 'skipped'
+        ]);
+
+        // Actualizar el detalle del usuario
+        $user->carrierDetails()->update([
+            'carrier_id' => $carrier->id,
         ]);
 
         // Generar documentos base usando el servicio
         $this->documentService->generateBaseDocuments($carrier);
 
-        // Actualizar el detalle del usuario para asociarlo al Carrier
-        $user->carrierDetails()->update([
-            'carrier_id' => $carrier->id,
-        ]);
+        // Redireccionar basado en la elección de documentos
+        if ($validated['has_documents'] === 'yes') {
+            return redirect()->route('carrier.documents.index', $carrier->slug)
+                ->with('status', 'Please upload your documents to complete registration.');
+        }
 
-        // Redirigir a la página de confirmación
         return redirect()->route('carrier.confirmation')
-            ->with('status', 'Your registration has been submitted and is under review.');
+            ->with('status', 'Your registration has been submitted for review. You can upload your documents later.');
     }
 }

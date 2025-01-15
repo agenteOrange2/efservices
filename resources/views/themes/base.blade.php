@@ -20,6 +20,7 @@
     <title>@yield('title') | EF Services</title>
     {{-- @yield('head') --}}
 
+    @stack('head')
 
     <!-- BEGIN: CSS Assets-->
     @stack('styles')
