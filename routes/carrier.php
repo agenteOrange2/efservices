@@ -18,7 +18,9 @@ Route::get('/confirm/{token}', [CustomLoginController::class, 'confirmEmail'])->
 Route::middleware(['auth'])->group(function () {
     // Dashboard y otras rutas protegidas
     Route::get('/dashboard', function () {
-        return view('carrier.dashboard');
+        // Obtener el carrier del usuario autenticado
+        $carrier = auth()->user()->carrierDetails->carrier;
+        return view('carrier.dashboard', compact('carrier'));
     })->name('dashboard');
 
     Route::get('/complete-registration', [CustomLoginController::class, 'showCompleteRegistrationForm'])
@@ -31,7 +33,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Rutas para documentos
     Route::prefix('{carrier:slug}/documents')->name('documents.')->group(function () {
-        Route::get('/', [DocumentController::class, 'index'])->name('index');
+        Route::get('/', [DocumentController::class, 'index'])->name('index');        
         Route::post('/upload/{documentType}', [DocumentController::class, 'upload'])->name('upload');
         Route::post('/skip', [DocumentController::class, 'skipDocuments'])->name('skip');
         Route::post('/complete', [DocumentController::class, 'complete'])->name('complete');
