@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\CarrierConfirmationMail;
+use App\Services\NotificationService;
 use App\Traits\GeneratesBaseDocuments;
 use App\Services\CarrierDocumentService;
 
@@ -24,11 +25,17 @@ class CustomLoginController
     use GeneratesBaseDocuments;
 
     protected $documentService;
+    protected $notificationService;
 
-    public function __construct(CarrierDocumentService $documentService)
-    {
+    public function __construct(
+        CarrierDocumentService $documentService,
+        NotificationService $notificationService
+    ) {
         $this->documentService = $documentService;
+        $this->notificationService = $notificationService;
     }
+
+
 
     public function authenticated(Request $request, $user)
     {
@@ -59,7 +66,6 @@ class CustomLoginController
 
         return redirect()->route('admin');
     }
-
 
     public function login(Request $request)
     {
@@ -94,7 +100,6 @@ class CustomLoginController
             'email' => 'The provided credentials do not match our records.',
         ]);
     }
-
 
     public function showRegisterForm(Request $request)
     {
@@ -139,6 +144,12 @@ class CustomLoginController
                 'status' => UserCarrierDetail::STATUS_PENDING, // Utilizando la constante de UserCarrierDetail
                 'confirmation_token' => Str::random(32), // Generar un token de confirmación
             ]);
+
+            // Agregar notificación para admins
+            $this->notificationService->notifyAdminsOfNewCarrier(
+                $user,
+                "New carrier user registered: {$user->name} ({$user->email})"
+            );
 
             Log::info('UserCarrierDetail creado.', ['user_carrier_detail_id' => $userCarrierDetail->id]);
 
@@ -233,6 +244,13 @@ class CustomLoginController
         // Generar documentos base usando el servicio
         $this->documentService->generateBaseDocuments($carrier);
 
+
+        // Agregar notificación para admins sobre el carrier creado
+        $this->notificationService->createNotification(
+            User::role('superadmin')->get(),
+            'new_carrier_registration',
+            "New carrier company registered: {$carrier->name}"
+        );
         // Redireccionar basado en la elección de documentos
         if ($validated['has_documents'] === 'yes') {
             return redirect()->route('carrier.documents.index', $carrier->slug)

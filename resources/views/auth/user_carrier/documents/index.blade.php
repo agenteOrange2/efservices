@@ -144,8 +144,7 @@
 
     @push('scripts')
     <script>
-
-        console.log('Desde consola');
+        
         // Las funciones del modal que ya teníamos
         function openUploadModal(documentTypeId) {
             var modal = document.getElementById('uploadModal');
@@ -182,6 +181,48 @@
                 checkbox.checked = !checkbox.checked;
             });
         }
+
+        // Agregar este JavaScript al final de tu vista
+document.addEventListener('DOMContentLoaded', function() {
+    const dropZone = document.querySelector('.border-dashed');
+    const fileInput = document.querySelector('input[type="file"]');
+
+    // Hacer clic en la zona de drop abre el selector de archivos
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // Manejar el drag & drop
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-blue-500');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-blue-500');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-blue-500');
+        
+        const files = e.dataTransfer.files;
+        if (files.length) {
+            fileInput.files = files;
+            updateFileName(files[0].name);
+        }
+    });
+
+    // Actualizar el nombre del archivo cuando se selecciona uno
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) {
+            updateFileName(e.target.files[0].name);
+        }
+    });
+
+    function updateFileName(name) {
+        const fileNameDisplay = document.querySelector('.text-sm.text-gray-600');
+        fileNameDisplay.textContent = `Selected file: ${name}`;
+    }
+});
     </script>
 
 
