@@ -45,7 +45,8 @@ class User extends Authenticatable implements HasMedia
     protected $with = ['carrierDetails', 'driverDetails']; // Eager loading por defecto
 
     // Agregar método helper
-    public function isCarrierUser(): bool {
+    public function isCarrierUser(): bool
+    {
         return $this->hasRole('user_carrier') && $this->carrierDetails()->exists();
     }
 
@@ -167,5 +168,16 @@ class User extends Authenticatable implements HasMedia
     public function assignedCarriers()
     {
         return $this->belongsToMany(Carrier::class, 'user_carrier_access');
+    }
+
+    //NOtificaciones
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function notificationPreferences()
+    {
+        return $this->hasMany(NotificationPreference::class);
     }
 }
