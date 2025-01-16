@@ -151,4 +151,15 @@ class Carrier extends Model implements HasMedia
     {
         return $this->belongsToMany(User::class, 'user_carrier_access');
     }
+
+    // Agregar métodos para verificación de límites Drivers
+    public function canAddDriver(): bool
+    {
+        return $this->drivers()->count() < $this->membership->max_drivers;
+    }
+
+    public function canAddVehicle(): bool
+    {
+        return $this->vehicles()->count() < $this->membership->max_vehicles;
+    }
 }

@@ -49,7 +49,6 @@ class CarrierController extends Controller
      */
     public function store(Request $request)
     {
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string|max:255',
@@ -70,6 +69,12 @@ class CarrierController extends Controller
             'slug' => Str::slug($validated['name']),
             'referrer_token' => Str::random(16),
         ]));
+        
+        // Validar límites antes de crear
+        $membership = Membership::findOrFail($request->id_plan);
+        if (!$membership->canAddCarriers()) {
+            return back()->with('error', 'Membership limit reached');
+        }
 
         // Generar documentos base automáticamente
         $this->documentService->generateBaseDocuments($carrier);
