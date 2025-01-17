@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\User;
 use App\Exports\UsersExport;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\NotificationType;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Notifications\Admin\User\NewUserNotification;
+use App\Notifications\Admin\User\AdminNewUserCreatedNotification;
 
 class UserController extends Controller
 {
@@ -58,13 +62,40 @@ class UserController extends Controller
 
         $user->assignRole('superadmin');
         Log::info('Rol asignado al usuario', ['user_id' => $user->id, 'role' => 'superadmin']);
-        
+
         if ($request->hasFile('profile_photo')) {
             $fileName = strtolower(str_replace(' ', '_', $user->name)) . '.webp'; // Genera el nombre basado en el usuario
 
             $user->addMediaFromRequest('profile_photo')
                 ->usingFileName($fileName) // Usa el nombre basado en el usuario
                 ->toMediaCollection('profile_photos');
+        }
+
+
+        // Enviar notificación al usuario
+        $user->notify(new NewUserNotification($user, $request->password));
+
+        // Crear notificación en el sistema para administradores
+        $notificationType = NotificationType::where('name', 'new_user_registration')->first();
+
+        if ($notificationType) {
+            // Notificar a todos los superadmins
+            $superadmins = User::role('superadmin')
+                ->where('id', '!=', $user->id)
+                ->get();
+
+            foreach ($superadmins as $admin) {
+                Notification::create([
+                    'user_id' => $admin->id,
+                    'notification_type_id' => $notificationType->id,
+                    'message' => "Nuevo usuario registrado: {$user->name}",
+                    'is_read' => false,
+                    'sent_at' => now(),
+                ]);
+
+                // Agregar el envío del email al admin
+                $admin->notify(new AdminNewUserCreatedNotification($user));
+            }
         }
 
         // Mensaje dinámico para la notificación
@@ -126,7 +157,7 @@ class UserController extends Controller
     public function deletePhoto(User $user)
     {
         $media = $user->getFirstMedia('profile_photos');
-    
+
         if ($media) {
             $media->delete(); // Elimina la foto
             return response()->json([
@@ -134,10 +165,10 @@ class UserController extends Controller
                 'defaultPhotoUrl' => asset('build/default_profile.png'), // Retorna la foto predeterminada
             ]);
         }
-    
+
         return response()->json(['message' => 'No photo to delete.'], 404);
     }
-        
+
     /**
      * Remove the specified resource from storage.
      */

@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Carrier;
 use App\Models\DocumentType;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\CarrierDocument;
 use App\Http\Controllers\Controller;
 use App\Services\CarrierDocumentService;
 use App\Traits\SendsCustomNotifications;
 use App\Repositories\CarrierDocumentRepository;
+use App\Notifications\Admin\Carrier\NewDocumentUploadedNotification;
 
 class CarrierDocumentController extends Controller
 {
@@ -85,12 +87,18 @@ class CarrierDocumentController extends Controller
             'status' => CarrierDocument::STATUS_PENDING,
         ]));
 
+        // Enviar notificación al administrador
+        $adminEmail = env('ADMIN_NOTIFICATION_EMAIL');
+        Notification::route('mail', $adminEmail)->notify(new NewDocumentUploadedNotification($carrierDocument));
+
         if ($request->hasFile('document')) {
             $carrierDocument
                 ->addMediaFromRequest('document')
                 ->usingFileName(strtolower(str_replace(' ', '_', $documentType->name)) . '.pdf')
                 ->toMediaCollection('carrier_documents', 'public');
         }
+
+
 
         return back()->with($this->sendNotification(
             'success',

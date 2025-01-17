@@ -74,6 +74,10 @@ class Carrier extends Model implements HasMedia
     public const STATUS_ACTIVE = 1;
     public const STATUS_PENDING = 2;
 
+    public const DOCUMENT_STATUS_PENDING = 'pending';
+    public const DOCUMENT_STATUS_IN_PROGRESS = 'in_progress';
+    public const DOCUMENT_STATUS_SKIPPED = 'skipped';
+
     // Relación con usuarios (manager)
     public function managers()
     {
@@ -150,5 +154,16 @@ class Carrier extends Model implements HasMedia
     public function assignedUsers()
     {
         return $this->belongsToMany(User::class, 'user_carrier_access');
+    }
+
+    // Agregar métodos para verificación de límites Drivers
+    public function canAddDriver(): bool
+    {
+        return $this->drivers()->count() < $this->membership->max_drivers;
+    }
+
+    public function canAddVehicle(): bool
+    {
+        return $this->vehicles()->count() < $this->membership->max_vehicles;
     }
 }
