@@ -51,6 +51,14 @@ Route::resource('roles', RoleController::class);
 // Route::resource('roles', RolePermissionController::class)->except(['show']);
 
 /*
+|--------------------------------------------------------------------------
+| RUTAS ADMIN MEMBERSHIP
+|--------------------------------------------------------------------------    
+*/
+Route::resource('membership', MembershipController::class);
+Route::post('membership/{membership}/delete-photo', [MembershipController::class, 'deletePhoto'])->name('membership.delete-photo');
+
+/*
     |--------------------------------------------------------------------------
     | RUTAS ADMIN CARRIER
     |--------------------------------------------------------------------------    
@@ -162,14 +170,6 @@ Route::get('/carrier/documents/refresh', [CarrierDocumentController::class, 'ref
 
 Route::resource('document-types', DocumentTypeController::class)
     ->except('show');
-
-/*
-|--------------------------------------------------------------------------
-| RUTAS ADMIN MEMBERSHIP
-|--------------------------------------------------------------------------    
-*/
-Route::resource('membership', MembershipController::class);
-Route::post('membership/{membership}/delete-photo', [MembershipController::class, 'deletePhoto'])->name('membership.delete-photo');
 
 
 // Route::resource('user_carrier', UserCarrierController::class);

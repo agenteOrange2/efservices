@@ -19,8 +19,7 @@
         @livewireStyles
     </head>
     <body class="font-sans antialiased">
-        <x-banner />
-
+        <x-banner />        
         <div class="min-h-screen bg-gray-100">
             @livewire('navigation-menu')
 
@@ -36,8 +35,7 @@
             <!-- Page Content -->
             <main>
                 {{ $slot }}
-
-                <h1>hola</h1>
+                
             </main>
         </div>
 

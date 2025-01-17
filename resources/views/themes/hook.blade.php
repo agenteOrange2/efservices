@@ -79,7 +79,7 @@
                     ])>
                         <ul class="scrollable">
                             <!-- BEGIN: First Child -->
-                            @foreach ($sideMenu as $menuKey => $menu)
+                            {{-- @foreach ($sideMenu as $menuKey => $menu)
                                 @if (is_string($menu))
                                     <li class="side-menu__divider">
                                         {{ $menu }}
@@ -195,7 +195,7 @@
                                         <!-- END: Second Child -->
                                     </li>
                                 @endif
-                            @endforeach
+                            @endforeach --}}
                             <!-- END: First Child -->
                         </ul>
                     </div>

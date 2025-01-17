@@ -35,7 +35,7 @@
 <!-- END: Head -->
 
 <body>
-
+    
     {{-- <x-theme-switcher /> --}}
 
     @yield('content')

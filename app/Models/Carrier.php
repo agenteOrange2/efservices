@@ -74,6 +74,10 @@ class Carrier extends Model implements HasMedia
     public const STATUS_ACTIVE = 1;
     public const STATUS_PENDING = 2;
 
+    public const DOCUMENT_STATUS_PENDING = 'pending';
+    public const DOCUMENT_STATUS_IN_PROGRESS = 'in_progress';
+    public const DOCUMENT_STATUS_SKIPPED = 'skipped';
+
     // Relación con usuarios (manager)
     public function managers()
     {

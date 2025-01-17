@@ -12,10 +12,12 @@
         "barryvdh/laravel-dompdf": "^3.0",
         "laravel/framework": "^11.0",
         "laravel/jetstream": "^5.3",
+        "laravel/prompts": "^0.3.3",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^3.0",
         "maatwebsite/excel": "^3.1",
+        "rappasoft/laravel-livewire-tables": "^3.5",
         "spatie/laravel-medialibrary": "^11.10",
         "spatie/laravel-permission": "^6.10"
     },

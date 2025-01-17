@@ -15,21 +15,25 @@ class NotificationTypeSeeder extends Seeder
     {
         $types = [
             [
+                'name' => 'new_user_registration',
+                'description' => 'Notificación cuando se registra un nuevo usuario'
+            ],
+            [
                 'name' => 'new_carrier_registration',
                 'description' => 'Notificación cuando se registra un nuevo carrier'
             ],
             [
                 'name' => 'document_uploaded',
                 'description' => 'Notificación cuando se sube un nuevo documento'
-            ],
-            [
-                'name' => 'document_approved',
-                'description' => 'Notificación cuando se aprueba un documento'
             ]
+            // ... otros tipos que necesites
         ];
 
         foreach ($types as $type) {
-            NotificationType::create($type);
+            NotificationType::updateOrCreate(
+                ['name' => $type['name']],
+                $type
+            );
         }
     }
 }

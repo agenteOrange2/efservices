@@ -9,10 +9,12 @@ use Illuminate\Support\Str;
 use App\Models\DocumentType;
 use Illuminate\Http\Request;
 use App\Models\CarrierDocument;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Services\CarrierDocumentService;
 use App\Traits\SendsCustomNotifications;
-
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\Admin\Carrier\NewCarrierNotification;
 
 class CarrierController extends Controller
 {
@@ -69,12 +71,14 @@ class CarrierController extends Controller
             'slug' => Str::slug($validated['name']),
             'referrer_token' => Str::random(16),
         ]));
-        
+
         // Validar límites antes de crear
+        /*
         $membership = Membership::findOrFail($request->id_plan);
         if (!$membership->canAddCarriers()) {
             return back()->with('error', 'Membership limit reached');
         }
+        */
 
         // Generar documentos base automáticamente
         $this->documentService->generateBaseDocuments($carrier);
@@ -86,11 +90,30 @@ class CarrierController extends Controller
                 ->toMediaCollection('logo_carrier');
         }
 
+        // Notificar al admin sobre el nuevo carrier
+        try {
+            $adminEmail = config('app.admin_email');
+            Notification::route('mail', $adminEmail)
+                ->notify(new NewCarrierNotification($carrier));
+
+            Log::info('Notificación de nuevo carrier enviada al admin', [
+                'carrier_id' => $carrier->id,
+                'admin_email' => $adminEmail
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error al enviar notificación de nuevo carrier', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'carrier_id' => $carrier->id
+            ]);
+        }
+
         // Redirigir al tab de usuarios del carrier
         return redirect()
             ->route('admin.carrier.user_carriers.index', $carrier)
             ->with($this->sendNotification(
-                'success', 'Carrier creado exitosamente. Ahora puedes administrar los usuarios asociados.'
+                'success',
+                'Carrier creado exitosamente. Ahora puedes administrar los usuarios asociados.'
             ));
     }
 
@@ -204,7 +227,6 @@ class CarrierController extends Controller
         ]);
     }
 
-
     /**
      * Eliminar un carrier.
      */
@@ -213,11 +235,11 @@ class CarrierController extends Controller
         $carrier->delete();
 
         return redirect()
-        ->route('admin.carriers.index')
-        ->with($this->sendNotification(
-            'error',
-            'Carrier eliminado exitosamente.',
-            'El carrier y todos sus datos asociados han sido eliminados.'
-        ));
+            ->route('admin.carriers.index')
+            ->with($this->sendNotification(
+                'error',
+                'Carrier eliminado exitosamente.',
+                'El carrier y todos sus datos asociados han sido eliminados.'
+            ));
     }
 }

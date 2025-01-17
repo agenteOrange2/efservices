@@ -15,6 +15,9 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    'admin_email' => env('ADMIN_NOTIFICATION_EMAIL', 'frontend@kuiraweb.com'),
+
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

@@ -25,46 +25,40 @@ class CustomLoginController
     use GeneratesBaseDocuments;
 
     protected $documentService;
-    protected $notificationService;
 
-    public function __construct(
-        CarrierDocumentService $documentService,
-        NotificationService $notificationService
-    ) {
+    public function __construct(CarrierDocumentService $documentService)
+    {
         $this->documentService = $documentService;
-        $this->notificationService = $notificationService;
     }
-
-
 
     public function authenticated(Request $request, $user)
     {
         if ($user->hasRole('user_carrier')) {
+            // Verificar si el usuario necesita completar el registro
             if (!$user->carrierDetails || !$user->carrierDetails->carrier_id) {
                 return redirect()->route('carrier.complete_registration')
-                    ->with('status', 'Please complete your carrier registration.');
+                    ->with('warning', 'Please complete your registration.');
             }
 
-            // Verificar si el usuario necesita subir documentos
             $carrier = $user->carrierDetails->carrier;
-            if ($carrier->document_status === 'in_progress') {
-                return redirect()->route('carrier.documents.index', $carrier->slug)
-                    ->with('status', 'Please complete your document submission.');
-            }
-
+            
+            // Si está pendiente o inactivo
             if ($carrier->status !== Carrier::STATUS_ACTIVE) {
                 return redirect()->route('carrier.confirmation')
-                    ->with('warning', 'Your carrier account is pending approval.');
+                    ->with('warning', 'Your account is pending approval.');
             }
 
+            // Si todo está bien, redirigir al dashboard del carrier
             return redirect()->route('carrier.dashboard');
         }
 
-        if ($user->hasRole('user_driver')) {
-            return redirect()->route('driver.dashboard');
+        // Si no es carrier, redirigir según el rol
+        if ($user->hasRole('superadmin')) {
+            return redirect()->route('admin.dashboard');
         }
 
-        return redirect()->route('admin');
+        // Por defecto
+        return redirect()->route('home');
     }
 
     public function login(Request $request)
@@ -73,29 +67,47 @@ class CustomLoginController
             'email' => 'required|email',
             'password' => 'required',
         ]);
-
+    
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
-
+    
             if ($user->hasRole('user_carrier')) {
+                // Verificar si el usuario tiene carrier details
                 if (!$user->carrierDetails || !$user->carrierDetails->carrier_id) {
                     return redirect()->route('carrier.complete_registration')
                         ->with('warning', 'Please complete your registration.');
                 }
-
-                if ($user->carrierDetails->carrier->status !== Carrier::STATUS_ACTIVE) {
+                
+    
+                $carrier = $user->carrierDetails->carrier;
+    
+                // Verificar estado del carrier
+                if ($carrier->status === Carrier::STATUS_PENDING) {
                     return redirect()->route('carrier.confirmation')
-                        ->with('warning', 'Your carrier account is pending approval.');
+                        ->with('warning', 'Your account is pending approval.');
                 }
-
+    
+                if ($carrier->status === Carrier::STATUS_INACTIVE) {
+                    Auth::logout();
+                    return redirect()->route('login')
+                        ->withErrors(['email' => 'Your account has been deactivated. Please contact support.']);
+                }
+    
+                // Verificar estado de documentos
+                if ($carrier->document_status === Carrier::DOCUMENT_STATUS_IN_PROGRESS) {
+                    return redirect()->route('carrier.documents.index', $carrier->slug)
+                        ->with('warning', 'Please complete your document submission.');
+                }
+    
                 return redirect()->route('carrier.dashboard');
             }
-
+    
+            // Si es superadmin
             if ($user->hasRole('superadmin')) {
                 return redirect()->route('admin.dashboard');
             }
         }
-
+    
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
         ]);
@@ -145,11 +157,6 @@ class CustomLoginController
                 'confirmation_token' => Str::random(32), // Generar un token de confirmación
             ]);
 
-            // Agregar notificación para admins
-            $this->notificationService->notifyAdminsOfNewCarrier(
-                $user,
-                "New carrier user registered: {$user->name} ({$user->email})"
-            );
 
             Log::info('UserCarrierDetail creado.', ['user_carrier_detail_id' => $userCarrierDetail->id]);
 
@@ -245,12 +252,6 @@ class CustomLoginController
         $this->documentService->generateBaseDocuments($carrier);
 
 
-        // Agregar notificación para admins sobre el carrier creado
-        $this->notificationService->createNotification(
-            User::role('superadmin')->get(),
-            'new_carrier_registration',
-            "New carrier company registered: {$carrier->name}"
-        );
         // Redireccionar basado en la elección de documentos
         if ($validated['has_documents'] === 'yes') {
             return redirect()->route('carrier.documents.index', $carrier->slug)

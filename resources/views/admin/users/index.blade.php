@@ -8,6 +8,7 @@
     ];
 @endphp
 @section('subcontent')
+    <livewire:notifications-panel />
     <x-base.notificationtoast.notification-toast :notification="session('notification')" />
     <div class="grid grid-cols-12 gap-x-6 gap-y-10">
         <div class="col-span-12">

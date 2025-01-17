@@ -11,6 +11,7 @@ Route::middleware('guest')->group(function () {
 });
 */
 
+
 Route::redirect('/user-carrier/register', '/carrier/register');
 // Ruta de confirmación
 Route::get('/confirm/{token}', [CustomLoginController::class, 'confirmEmail'])->name('confirm');
