@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\CustomLoginController;
 use App\Http\Controllers\Carrier\DocumentController;
+use App\Http\Controllers\Carrier\CarrierProfileController;
 use App\Http\Controllers\Admin\UserCarrierDocumentController;
 
 // Rutas públicas
@@ -18,7 +19,6 @@ Route::get('/confirm/{token}', [CustomLoginController::class, 'confirmEmail'])->
 Route::middleware(['auth'])->group(function () {
     // Dashboard y otras rutas protegidas
     Route::get('/dashboard', function () {
-        // Obtener el carrier del usuario autenticado
         $carrier = auth()->user()->carrierDetails->carrier;
         return view('carrier.dashboard', compact('carrier'));
     })->name('dashboard');
@@ -32,12 +32,26 @@ Route::middleware(['auth'])->group(function () {
     })->name('confirmation');
 
     // Rutas para documentos
-    Route::prefix('{carrier:slug}/documents')->name('documents.')->group(function () {
-        Route::get('/', [DocumentController::class, 'index'])->name('index');        
-        Route::post('/upload/{documentType}', [DocumentController::class, 'upload'])->name('upload');
-        Route::post('/skip', [DocumentController::class, 'skipDocuments'])->name('skip');
-        Route::post('/complete', [DocumentController::class, 'complete'])->name('complete');
-        Route::post('/{documentType}/toggle-default', [DocumentController::class, 'toggleDefaultDocument'])
-        ->name('toggle-default');  //
+    Route::group([
+        'prefix' => '{carrier}',  // Quitar :slug de aquí
+        'middleware' => ['auth']
+    ], function () {
+        Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
+        Route::post('/documents/upload/{documentType}', [DocumentController::class, 'upload'])->name('documents.upload');
+        Route::post('/documents/skip', [DocumentController::class, 'skipDocuments'])->name('documents.skip');
+        Route::post('/documents/complete', [DocumentController::class, 'complete'])->name('documents.complete');
+        Route::post('/documents/{documentType}/toggle-default', [DocumentController::class, 'toggleDefaultDocument'])
+            ->name('documents.toggle-default');
     });
+
+
+    
+        // La vista principal del perfil
+        Route::get('/profile', [CarrierProfileController::class, 'index'])->name('profile');
+        // Vista de edición del perfil
+        Route::get('/profile/edit', [CarrierProfileController::class, 'edit'])->name('profile.edit');
+        // Actualizar perfil
+        Route::put('/profile/update', [CarrierProfileController::class, 'update'])->name('profile.update');
+    
+
 });

@@ -254,7 +254,8 @@ class CustomLoginController
 
         // Redireccionar basado en la elección de documentos
         if ($validated['has_documents'] === 'yes') {
-            return redirect()->route('carrier.documents.index', $carrier->slug)
+            // Modificar esta línea para usar el slug del carrier
+            return redirect()->route('carrier.documents.index', ['carrier' => $carrier->slug])
                 ->with('status', 'Please upload your documents to complete registration.');
         }
 

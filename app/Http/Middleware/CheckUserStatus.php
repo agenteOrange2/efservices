@@ -11,9 +11,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckUserStatus
 {
-    /**
-     * Handle an incoming request.
-     */
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
@@ -41,8 +38,8 @@ class CheckUserStatus
 
                 $carrier = $user->carrierDetails->carrier;
                 
-                // Si el carrier está pendiente o inactivo
-                if ($carrier->status !== Carrier::STATUS_ACTIVE) {
+                // Si el carrier está pendiente o inactivo y NO está en la ruta de documentos
+                if ($carrier->status !== Carrier::STATUS_ACTIVE && !$request->is('carrier/*/documents*')) {
                     return redirect()->route('carrier.confirmation')
                         ->with('warning', 'Your account is pending approval.');
                 }
@@ -70,9 +67,6 @@ class CheckUserStatus
         return $next($request);
     }
 
-    /**
-     * Check if the current route is a public route
-     */
     private function isPublicRoute(Request $request, array $publicRoutes): bool
     {
         foreach ($publicRoutes as $route) {
@@ -83,16 +77,14 @@ class CheckUserStatus
         return false;
     }
 
-    /**
-     * Check if the current route is part of the carrier setup process
-     */
     private function isCarrierSetupRoute(Request $request): bool
     {
         $setupRoutes = [
             'carrier/complete-registration',
             'carrier/confirmation',
             'carrier/register',
-            'carrier/confirm/*'
+            'carrier/confirm/*',
+            'carrier/*/documents*'  // Añadimos la ruta de documentos como parte del setup
         ];
 
         foreach ($setupRoutes as $route) {
