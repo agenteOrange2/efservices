@@ -21,10 +21,12 @@ class DatabaseSeeder extends Seeder
         $this->call(DocumentTypeSeeder::class);
         $this->call(NotificationTypeSeeder::class);
         
-        \App\Models\User::factory()->create([
+        $frontendUser = \App\Models\User::factory()->create([
             'name' => 'Elliot Alderson',
             'email' => 'frontend@kuiraweb.com',
             'password' => bcrypt('Password'),
         ]);  
+                // Asignar el rol de superadmin al usuario
+        $frontendUser->assignRole('superadmin');
     }
 }

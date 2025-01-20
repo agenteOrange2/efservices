@@ -13,9 +13,15 @@ return new class extends Migration
     {
         Schema::create('user_driver_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Relación con usuarios
-            $table->string('license_number'); // Número de licencia del conductor
-            $table->foreignId('assigned_vehicle_id')->nullable()->constrained('vehicles')->onDelete('set null'); // Vehículo asignado
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('carrier_id')->constrained('carriers')->onDelete('cascade'); // Agregamos relación con carrier
+            $table->string('license_number');
+            $table->foreignId('assigned_vehicle_id')->nullable()->constrained('vehicles')->onDelete('set null');
+            $table->date('birth_date');  // Agregamos fecha de nacimiento
+            $table->integer('years_experience');  // Agregamos años de experiencia
+            $table->string('phone');  // Agregamos teléfono
+            $table->string('address');  // Agregamos dirección
+            $table->unsignedTinyInteger('status')->default(0)->index(); // Agregamos status
             $table->timestamps();
         });
     }

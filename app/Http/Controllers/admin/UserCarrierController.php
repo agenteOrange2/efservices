@@ -5,8 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Models\User;
 use App\Models\Carrier;
 use App\Models\Membership;
-
-use App\Models\Notification;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\UserCarrierDetail;
@@ -64,7 +63,7 @@ class UserCarrierController extends Controller
             'phone' => 'required|string|max:15',
             'job_position' => 'required|string|max:255',
             'profile_photo' => 'nullable|image|max:2048',
-            'status' => 'required|integer|in:0,1,2',
+            'status' => 'nullable|integer|in:0,1,2',
         ]);
 
         // Validar límite de usuarios según la membresía
@@ -86,11 +85,6 @@ class UserCarrierController extends Controller
                 'status' => $validated['status'],
             ]);
 
-            // Enviar notificación al administrador y al usuario del carrier
-            $adminEmail = env('ADMIN_NOTIFICATION_EMAIL');
-            Notification::route('mail', $adminEmail)->notify(new NewUserCarrierNotification($user, $carrier));
-            $user->notify(new NewUserCarrierNotification($user, $carrier));
-
             // Asignar el rol de carrier
             $user->assignRole('user_carrier');
 
@@ -110,6 +104,13 @@ class UserCarrierController extends Controller
                     ->toMediaCollection('profile_photo_carrier');
             }
 
+            // Obtener todos los destinatarios únicos
+            $recipients = collect([$user])
+                ->merge(User::role('superadmin')->where('id', '!=', $user->id)->get())
+                ->unique('id');
+
+            // Enviar una sola vez a cada destinatario
+            Notification::send($recipients, new NewUserCarrierNotification($user, $carrier));
 
 
             Log::info('UserCarrier creado exitosamente.', ['user_id' => $user->id, 'carrier_id' => $carrier->id]);

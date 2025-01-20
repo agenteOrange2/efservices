@@ -76,6 +76,26 @@
                                 Users
                             </a>
                         </li>
+                        <!-- Tab Drivers -->
+                        <li class="flex-grow">
+
+                            <a href="{{ route('admin.carrier.user_drivers.index', $carrier->slug) }}"
+                                class="inline-flex items-center justify-center w-full p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group {{ request()->routeIs('admin.carrier.user_drivers.*') ? 'text-primary border-primary ' : '' }}">
+                                <svg class="w-6 h-6 me-2 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300 {{ request()->routeIs('admin.carrier.user_drivers.*') ? 'text-primary dark:text-primary' : '' }}"
+                                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <rect width="16" height="16" x="4" y="4" rx="2" />
+                                    <path d="M12 3v18" />
+                                    <path d="M3 12h18" />
+                                    <path d="m13 8-2-2-2 2" />
+                                    <path d="m13 16-2 2-2-2" />
+                                    <path d="m8 13-2-2 2-2" />
+                                    <path d="m16 13 2-2-2-2" />
+                                </svg>
+                                Drivers
+                            </a>
+                        </li>
                         <!-- Tab Documents -->
                         {{-- Uncomment if needed --}}
                         <li class="flex-grow">
@@ -209,19 +229,27 @@
                                     Status
                                 </div>
                                 <div
-                                class="flex items-center 
-                                    {{ $document->status_name == 'Pending' ? 'text-orange-500' : 
-                                       ($document->status_name == 'Approved' ? 'text-green-500' : 
-                                       ($document->status_name == 'In Process' ? 'text-blue-500' : 'text-red-500')) }}">
-                                <x-base.lucide class="h-3.5 w-3.5 stroke-[1.7]"
-                                    icon="{{ $document->status_name == 'Pending' ? 'AlertCircle' : 
-                                           ($document->status_name == 'Approved' ? 'CheckCircle' : 
-                                           ($document->status_name == 'In Process' ? 'RefreshCw' : 'XCircle')) }}" />
-                                <div class="ml-1.5 whitespace-nowrap">
-                                    {{ $document->status_name }}
+                                    class="flex items-center 
+                                    {{ $document->status_name == 'Pending'
+                                        ? 'text-orange-500'
+                                        : ($document->status_name == 'Approved'
+                                            ? 'text-green-500'
+                                            : ($document->status_name == 'In Process'
+                                                ? 'text-blue-500'
+                                                : 'text-red-500')) }}">
+                                    <x-base.lucide class="h-3.5 w-3.5 stroke-[1.7]"
+                                        icon="{{ $document->status_name == 'Pending'
+                                            ? 'AlertCircle'
+                                            : ($document->status_name == 'Approved'
+                                                ? 'CheckCircle'
+                                                : ($document->status_name == 'In Process'
+                                                    ? 'RefreshCw'
+                                                    : 'XCircle')) }}" />
+                                    <div class="ml-1.5 whitespace-nowrap">
+                                        {{ $document->status_name }}
+                                    </div>
                                 </div>
-                            </div>
-                            
+
                             </x-base.table.td>
                             <x-base.table.td
                                 class="box w-44 rounded-l-none rounded-r-none border-x-0 shadow-[5px_3px_5px_#00000005] first:rounded-l-[0.6rem] first:border-l last:rounded-r-[0.6rem] last:border-r">

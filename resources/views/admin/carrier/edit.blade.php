@@ -16,17 +16,17 @@
 
     <x-base.notificationtoast.notification-toast :notification="session('notification')" />
 
-    @if(isset($notification))
-    <div class="alert alert-{{ $notification['type'] }} alert-dismissible fade show" role="alert">
-        <strong>{{ $notification['message'] }}</strong>
-        @if(isset($notification['details']))
-            <p class="mb-0">{{ $notification['details'] }}</p>
-        @endif
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-@endif
+    @if (isset($notification))
+        <div class="alert alert-{{ $notification['type'] }} alert-dismissible fade show" role="alert">
+            <strong>{{ $notification['message'] }}</strong>
+            @if (isset($notification['details']))
+                <p class="mb-0">{{ $notification['details'] }}</p>
+            @endif
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
     <div class="grid grid-cols-12 gap-x-6 gap-y-10">
         <div class="col-span-12 sm:col-span-10 sm:col-start-2">
             <div class="mt-7">
@@ -66,6 +66,27 @@
                                         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                                     </svg>
                                     Users
+                                </a>
+                            </li>
+
+                            <!-- Tab Drivers -->
+                            <li class="flex-grow">
+
+                                <a href="{{ route('admin.carrier.user_drivers.index', $carrier->slug) }}"
+                                    class="inline-flex items-center justify-center w-full p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 group {{ request()->routeIs('admin.carrier.user_drivers.*') ? 'text-primary border-primary ' : '' }}">
+                                    <svg class="w-6 h-6 me-2 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300 {{ request()->routeIs('admin.carrier.user_drivers.*') ? 'text-primary dark:text-primary' : '' }}"
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <rect width="16" height="16" x="4" y="4" rx="2" />
+                                        <path d="M12 3v18" />
+                                        <path d="M3 12h18" />
+                                        <path d="m13 8-2-2-2 2" />
+                                        <path d="m13 16-2 2-2-2" />
+                                        <path d="m8 13-2-2 2-2" />
+                                        <path d="m16 13 2-2-2-2" />
+                                    </svg>
+                                    Drivers
                                 </a>
                             </li>
                             <!-- Tab Documents -->
@@ -132,8 +153,8 @@
                                 </div>
                                 <div class="mt-3 w-full flex-1 xl:mt-0">
                                     <div class="flex items-center">
-                                        <x-base.form-input name="referrer_token" type="text" id="referrer_token" readonly
-                                            value="{{ old('referrer_token', $carrier->referrer_token) }}"
+                                        <x-base.form-input name="referrer_token" type="text" id="referrer_token"
+                                            readonly value="{{ old('referrer_token', $carrier->referrer_token) }}"
                                             class="w-full bg-gray-100 cursor-not-allowed" />
                                         <button type="button" id="regenerateToken"
                                             class="ml-4 bg-blue-500 text-white px-3 py-1 rounded-md">
@@ -141,12 +162,13 @@
                                         </button>
                                     </div>
                                     <small class="text-gray-500">Example:
-                                        http://efservices.la/admin/carrier/{{$carrier->slug}}/token={{ $carrier->referrer_token }}</small>
+                                        http://efservices.la/admin/carrier/{{ $carrier->slug }}/token={{ $carrier->referrer_token }}</small>
                                 </div>
                             </div>
 
                             <!-- Full Name -->
-                            <div class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                            <div
+                                class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
                                 <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
                                     <div class="text-left">
                                         <div class="flex items-center">
@@ -569,7 +591,7 @@
             document.getElementById('regenerateToken').addEventListener('click', function() {
                 const tokenField = document.getElementById('referrer_token');
                 tokenField.value = Math.random().toString(36).substring(2,
-                18); // Generación rápida del token
+                    18); // Generación rápida del token
             });
 
             const deletePhotoButton = document.getElementById('deletePhotoButton');
