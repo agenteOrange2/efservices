@@ -1,46 +1,57 @@
 <x-guest-layout>
-<form method="POST" action="{{ route('user_driver.register') }}">
-    @csrf
-    <div>
-        <label for="first_name">First Name</label>
-        <input type="text" name="first_name" id="first_name" value="{{ old('first_name') }}" required>
-    </div>
+{{-- resources/views/auth/driver/register.blade.php --}}
+<x-guest-layout>
+    <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
+        <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
+            <div class="mb-6 text-center">
+                <h2 class="text-2xl font-bold text-gray-900">
+                    Join {{ $carrier->name }} as a Driver
+                </h2>
+                <p class="mt-2 text-sm text-gray-600">
+                    Complete your registration to get started
+                </p>
+            </div>
 
-    <div>
-        <label for="last_name">Last Name</label>
-        <input type="text" name="last_name" id="last_name" value="{{ old('last_name') }}" required>
-    </div>
+            <form method="POST" action="{{ route('driver.register.submit', ['carrier' => $carrier->slug, 'token' => request()->query('token')]) }}">
+                @csrf
 
-    <div>
-        <label for="email">Email</label>
-        <input type="email" name="email" id="email" value="{{ old('email') }}" required>
-    </div>
+                <div>
+                    <x-label for="name" value="Full Name" />
+                    <x-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
+                </div>
 
-    <div>
-        <label for="license_number">License Number</label>
-        <input type="text" name="license_number" id="license_number" value="{{ old('license_number') }}" required>
-    </div>
+                <div class="mt-4">
+                    <x-label for="email" value="Email" />
+                    <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required />
+                </div>
 
-    <div>
-        <label for="birth_date">Birth Date</label>
-        <input type="date" name="birth_date" id="birth_date" value="{{ old('birth_date') }}" required>
-    </div>
+                <div class="mt-4">
+                    <x-label for="phone" value="Phone Number" />
+                    <x-input id="phone" class="block mt-1 w-full" type="tel" name="phone" :value="old('phone')" required />
+                </div>
 
-    <div>
-        <label for="phone">Phone</label>
-        <input type="text" name="phone" id="phone" value="{{ old('phone') }}" required>
-    </div>
+                <div class="mt-4">
+                    <x-label for="license_number" value="Driver's License Number" />
+                    <x-input id="license_number" class="block mt-1 w-full" type="text" name="license_number" :value="old('license_number')" required />
+                </div>
 
-    <div>
-        <label for="password">Password</label>
-        <input type="password" name="password" id="password" required>
-    </div>
+                <div class="mt-4">
+                    <x-label for="password" value="Password" />
+                    <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
+                </div>
 
-    <div>
-        <label for="password_confirmation">Confirm Password</label>
-        <input type="password" name="password_confirmation" id="password_confirmation" required>
-    </div>
+                <div class="mt-4">
+                    <x-label for="password_confirmation" value="Confirm Password" />
+                    <x-input id="password_confirmation" class="block mt-1 w-full" type="password" name="password_confirmation" required autocomplete="new-password" />
+                </div>
 
-    <button type="submit">Register</button>
-</form>
+                <div class="flex items-center justify-end mt-4">
+                    <x-button class="w-full justify-center">
+                        Register
+                    </x-button>
+                </div>
+            </form>
+        </div>
+    </div>
+</x-guest-layout>
 </x-guest-layout>

@@ -22,6 +22,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->prefix('carrier')
                 ->name('carrier.')
                 ->group(base_path('routes/carrier.php'));
+
+            Route::middleware(['web'])
+                ->prefix('driver')
+                ->name('driver.')
+                ->group(base_path('routes/driver.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {

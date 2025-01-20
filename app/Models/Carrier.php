@@ -98,7 +98,15 @@ class Carrier extends Model implements HasMedia
         return $this->hasMany(UserCarrierDetail::class, 'carrier_id', 'id');
     }
 
+    
+    //Asociamos modelo Drivers
+    public function userDrivers()
+    {
+        return $this->hasMany(UserDriverDetail::class, 'carrier_id', 'id');
+    }
 
+
+    //Asociamos modelo Membershio
     public function membership()
     {
         return $this->belongsTo(Membership::class, 'id_plan');
@@ -159,7 +167,7 @@ class Carrier extends Model implements HasMedia
     // Agregar métodos para verificación de límites Drivers
     public function canAddDriver(): bool
     {
-        return $this->drivers()->count() < $this->membership->max_drivers;
+        return $this->userDrivers()->count() < $this->membership->max_drivers;
     }
 
     public function canAddVehicle(): bool

@@ -59,7 +59,7 @@ class SideMenu
                 'sub_menu' => [
                     [
                         'icon' => "user-plus",
-                        'route_name' => "admin.product-list",
+                        'route_name' => "admin.drivers.index",
                         'params' => [],
                         'title' => "Drivers",
                     ],

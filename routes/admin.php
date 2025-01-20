@@ -10,9 +10,11 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CarrierController;
 use App\Http\Controllers\Admin\MembershipController;
 use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\UserDriverController;
 use App\Http\Controllers\Admin\UserCarrierController;
 use App\Http\Controllers\Admin\DocumentTypeController;
 use App\Http\Controllers\Admin\CarrierDocumentController;
+use App\Http\Controllers\Admin\DriversController;
 use App\Http\Controllers\Admin\UserCarrierDocumentController;
 
 
@@ -109,21 +111,53 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
         Route::get('/create', [UserCarrierController::class, 'create'])->name('create'); // Formulario de creación
         Route::post('/', [UserCarrierController::class, 'store'])->name('store'); // Guardar nuevo UserCarrier           
         Route::get('/{userCarrierDetails}/edit', [UserCarrierController::class, 'edit'])->name('edit');
-        Route::put('/{userCarrierDetails}', [UserCarrierController::class, 'update'])->name('update');        
+        Route::put('/{userCarrierDetails}', [UserCarrierController::class, 'update'])->name('update');
         Route::delete('/{userCarrier}', [UserCarrierController::class, 'destroy'])->name('destroy'); // Eliminar UserCarrier
-        
+
         // Ruta para eliminar la foto de perfil del UserCarrier
         Route::post('/{userCarrierDetails}/delete-photo', [UserCarrierController::class, 'deletePhoto'])
             ->name('delete-photo');
-
     });
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS PARA SUPERADMIN: ADMIN DRIVERS
+|--------------------------------------------------------------------------
+*/
+
+
+
+    // User Drivers Routes
+    Route::get('carrier/{carrier}/drivers', [UserDriverController::class, 'index'])
+        ->name('carrier.user_drivers.index');
+
+    Route::get('carrier/{carrier}/drivers/create', [UserDriverController::class, 'create'])
+        ->name('carrier.user_drivers.create');
+
+    Route::post('carrier/{carrier}/drivers', [UserDriverController::class, 'store'])
+        ->name('carrier.user_drivers.store');
+
+    Route::get('carrier/{carrier}/drivers/{userDriverDetail}/edit', [UserDriverController::class, 'edit'])
+        ->name('carrier.user_drivers.edit');
+
+    Route::put('carrier/{carrier}/drivers/{userDriverDetail}', [UserDriverController::class, 'update'])
+        ->name('carrier.user_drivers.update');
+
+    Route::delete('carrier/{carrier}/drivers/{userDriverDetail}', [UserDriverController::class, 'destroy'])
+        ->name('carrier.user_drivers.destroy');
+
+// Agregar esta nueva ruta para eliminar la foto
+Route::delete('carrier/{carrier}/drivers/{userDriverDetail}/photo', [UserDriverController::class, 'deletePhoto'])
+    ->name('carrier.user_drivers.delete-photo');  
 
 /*
 |--------------------------------------------------------------------------
 | RUTAS PARA SUPERADMIN: ADMIN DOCUMENTS
 |--------------------------------------------------------------------------
 */
+
 
 // Listado de todos los carriers con estado de archivos
 Route::get('carriers-documents', [CarrierDocumentController::class, 'listCarriersForDocuments'])
@@ -175,6 +209,17 @@ Route::resource('document-types', DocumentTypeController::class)
 // Route::resource('user_carrier', UserCarrierController::class);
 Route::post('user_carrier/{user_carrier}/delete-photo', [UserCarrierController::class, 'deletePhoto'])->name('user_carrier.delete-photo');
 
+
+
+/*
+    |--------------------------------------------------------------------------
+    | RUTAS ADMIN DRIVERS
+    |--------------------------------------------------------------------------    
+*/
+
+// Rutas para la vista general de drivers
+Route::get('drivers', [DriversController::class, 'index'])->name('drivers.index');
+Route::put('drivers/{driver}/toggle-status', [DriversController::class, 'toggleStatus'])->name('drivers.toggle-status');
 
 /*
 |--------------------------------------------------------------------------

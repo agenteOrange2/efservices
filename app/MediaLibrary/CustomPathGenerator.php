@@ -15,6 +15,11 @@ class CustomPathGenerator implements PathGenerator
             // Almacena específicamente en `user_carrier/{id}`
             return "user_carrier/{$model->id}/";
         }
+
+        if ($model instanceof \App\Models\UserDriverDetail) {
+            // Almacena específicamente en `user_carrier/{id}`
+            return "driver/{$model->id}/";
+        }
     
         if ($model instanceof \App\Models\User) {
             // Verificar si el usuario tiene un UserCarrierDetail relacionado
