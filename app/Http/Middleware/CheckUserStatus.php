@@ -22,6 +22,16 @@ class CheckUserStatus
             'is_driver' => $user ? $user->hasRole('driver') : false
         ]);
 
+
+        // Verificar si es una ruta de registro por referencia
+        if ($this->isReferralRoute($request)) {
+            Log::info('Referral registration route detected', [
+                'path' => $request->path(),
+                'token' => $request->query('token')
+            ]);
+            return $next($request);
+        }
+
         // Rutas públicas que siempre son accesibles
         $publicRoutes = ['/', 'login', 'carrier/register', 'carrier/confirm/*', 'driver/register', 'driver/confirm/*'];
         if (!$user && !$this->isPublicRoute($request, $publicRoutes)) {
@@ -96,13 +106,61 @@ class CheckUserStatus
 
     private function isPublicRoute(Request $request, array $publicRoutes): bool
     {
+        // Extender las rutas públicas
+        $publicRoutes = array_merge([
+            '/',
+            'login',
+            'carrier/register',
+            'carrier/confirm/*',
+            'driver/register',
+            'driver/register/*', // Agregar esta ruta para registro por referencia
+            'driver/confirm/*',
+            'driver/error',           // Agregar ruta de error
+            'driver/quota-exceeded',  // Agregar ruta de cuota excedida
+            'driver/carrier-status',  // Agregar la nueva ruta
+        ], $publicRoutes);
+    
         foreach ($publicRoutes as $route) {
             if ($request->is($route)) {
+                Log::info('Public route matched', [
+                    'route' => $route,
+                    'path' => $request->path()
+                ]);
                 return true;
             }
         }
+    
+        Log::info('Route not matched as public', [
+            'path' => $request->path(),
+            'available_routes' => $publicRoutes
+        ]);
+    
         return false;
     }
+    
+    private function isReferralRoute(Request $request): bool
+{
+    // Verificar si es una ruta de registro por referencia (con token)
+    $referralRoutes = [
+        'driver/register/*', // Para rutas como driver/register/{token}
+        'carrier/*/driver/register', // Para rutas como carrier/{carrier}/driver/register
+    ];
+
+    // Verificar si la ruta actual coincide con alguna de las rutas de referencia
+    $isReferralPath = $this->routeMatches($request, $referralRoutes);
+
+    // Verificar si hay un token de referencia en la query string
+    $hasReferrerToken = $request->has('token') || $request->has('ref');
+
+    Log::info('Checking referral route', [
+        'path' => $request->path(),
+        'is_referral_path' => $isReferralPath,
+        'has_token' => $hasReferrerToken,
+        'query_params' => $request->query()
+    ]);
+
+    return $isReferralPath || $hasReferrerToken;
+}
 
     private function isCarrierSetupRoute(Request $request): bool
     {
@@ -139,5 +197,4 @@ class CheckUserStatus
         }
         return false;
     }
-        
 }

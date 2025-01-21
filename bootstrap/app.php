@@ -33,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Registrar alias
         $middleware->alias([
             'check.user.status' => \App\Http\Middleware\CheckUserStatus::class
+            
         ]);
 
         // Middleware web group

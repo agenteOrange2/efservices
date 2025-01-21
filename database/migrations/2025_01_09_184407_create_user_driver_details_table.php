@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('phone');  // Agregamos teléfono
             $table->string('address');  // Agregamos dirección
             $table->unsignedTinyInteger('status')->default(0)->index(); // Agregamos status
+            $table->string('confirmation_token', 64)->nullable(); // Token de confirmación
             $table->timestamps();
         });
     }

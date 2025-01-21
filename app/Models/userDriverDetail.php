@@ -21,11 +21,13 @@ class UserDriverDetail extends Model implements HasMedia
         'years_experience',
         'phone',
         'address',
-        'status'
+        'status',
+        'confirmation_token',
     ];
 
     protected $casts = [
         'birth_date' => 'date',
+        'years_experience' => 'integer',
         'status' => 'integer'
     ];
 

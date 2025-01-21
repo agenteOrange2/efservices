@@ -161,8 +161,7 @@
                                             Regenerate
                                         </button>
                                     </div>
-                                    <small class="text-gray-500">Example:
-                                        http://efservices.la/admin/carrier/{{ $carrier->slug }}/token={{ $carrier->referrer_token }}</small>
+                                    <small class="text-gray-500">Example:  {{ url("/driver/register/{$carrier->slug}?token={$carrier->referrer_token}") }}</small>
                                 </div>
                             </div>
 

@@ -16,23 +16,70 @@ use App\Mail\DriverConfirmationMail;
 
 class DriverRegistrationController extends Controller
 {
-    public function showRegistrationForm(Request $request, $carrierSlug)
+    public function showRegistrationForm(Request $request, Carrier $carrier)
     {
-        // Validar el token y el carrier
-        $carrier = Carrier::where('slug', $carrierSlug)
-            ->where('referrer_token', $request->query('token'))
-            ->where('status', Carrier::STATUS_ACTIVE)
-            ->firstOrFail();
-
-        // Verificar si el carrier ha alcanzado su límite de drivers
+        $token = $request->query('token');
+        
+        Log::info('Starting driver registration validation', [
+            'carrier_slug' => $carrier->slug,
+            'carrier_status' => $carrier->status,
+            'provided_token' => $token,
+            'carrier_token' => $carrier->referrer_token,
+            'current_drivers' => $carrier->userDrivers()->count(),
+            'max_drivers' => $carrier->membership->max_drivers ?? 1
+        ]);
+    
+        // 1. Validar el token de referencia primero
+        if ($carrier->referrer_token !== $token) {
+            Log::warning('Invalid referral token', [
+                'provided_token' => $token,
+                'carrier_token' => $carrier->referrer_token
+            ]);
+            return redirect()->route('driver.register.error')
+                ->with('error', 'Invalid registration link.');
+        }
+    
+        // 2. Validar el estado del carrier
+        if ($carrier->status === Carrier::STATUS_PENDING) {
+            return redirect()->route('driver.carrier.status')
+                ->with('error', 'This carrier is pending approval. Please try again later.');
+        }
+    
+        if ($carrier->status === Carrier::STATUS_INACTIVE) {
+            return redirect()->route('driver.carrier.status')
+                ->with('error', 'This carrier is currently inactive. Please contact the administrator.');
+        }
+    
+        if ($carrier->status !== Carrier::STATUS_ACTIVE) {
+            return redirect()->route('driver.carrier.status')
+                ->with('error', 'This carrier is not currently accepting new registrations.');
+        }
+    
+        // 3. Verificar límite de drivers
         $currentDriversCount = $carrier->userDrivers()->count();
         $maxDrivers = $carrier->membership->max_drivers ?? 1;
-
+    
+        Log::info('Checking driver quota', [
+            'current_count' => $currentDriversCount,
+            'max_allowed' => $maxDrivers
+        ]);
+    
         if ($currentDriversCount >= $maxDrivers) {
-            return redirect()->route('driver.quota-exceeded');
+            return redirect()->route('driver.quota-exceeded')
+                ->with('error', 'This carrier has reached their maximum driver quota.');
         }
-
-        return view('auth.driver.register', compact('carrier'));
+    
+        // 4. Si todo está bien, mostrar el formulario
+        $registerUrl = route('driver.register.submit', [
+            'carrier' => $carrier->slug,
+            'token' => $token
+        ]);
+    
+        Log::info('Registration form ready to display', [
+            'register_url' => $registerUrl
+        ]);
+    
+        return view('auth.user_driver.register', compact('carrier', 'registerUrl'));
     }
 
     public function register(Request $request, $carrierSlug)
@@ -58,6 +105,9 @@ class DriverRegistrationController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'phone' => 'required|string|max:15',
             'license_number' => 'required|string|max:255',
+            'birth_date' => 'required|date|before:today', // Fecha de nacimiento
+            'years_experience' => 'required|integer|min:0|max:50', // Años de experiencia
+            'address' => 'required|string|max:255', // Dirección
         ]);
 
         // Crear el usuario con rol de driver
@@ -67,7 +117,7 @@ class DriverRegistrationController extends Controller
             'password' => Hash::make($validated['password']),
             'status' => UserDriverDetail::STATUS_PENDING,
         ]);
-
+        
         $user->assignRole('driver');
 
         // Crear los detalles del driver
@@ -75,6 +125,9 @@ class DriverRegistrationController extends Controller
             'carrier_id' => $carrier->id,
             'license_number' => $validated['license_number'],
             'phone' => $validated['phone'],
+            'birth_date' => $validated['birth_date'],
+            'years_experience' => $validated['years_experience'],
+            'address' => $validated['address'],
             'status' => UserDriverDetail::STATUS_PENDING,
             'confirmation_token' => Str::random(32),
         ]);
@@ -90,7 +143,7 @@ class DriverRegistrationController extends Controller
     public function confirmEmail($token)
     {
         $driverDetails = UserDriverDetail::where('confirmation_token', $token)->firstOrFail();
-        
+
         $driverDetails->update([
             'confirmation_token' => null,
             'email_verified_at' => now(),

@@ -161,7 +161,12 @@ class CarrierController extends Controller
     {
         $memberships = Membership::where('status', 1)->select('id', 'name')->get();
         $usStates = Constants::usStates();
-        return view('admin.carrier.edit', compact('carrier', 'memberships', 'usStates'));
+
+        
+        // Generar URL de referencia con el prefijo correcto
+        $referralUrl = url("/driver/register/{$carrier->slug}?token={$carrier->referrer_token}");
+        
+        return view('admin.carrier.edit', compact('carrier', 'memberships', 'usStates','referralUrl'));
     }
 
     /**
