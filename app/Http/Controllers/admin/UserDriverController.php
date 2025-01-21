@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\Admin\Driver\NewUserDriverNotification;
 
@@ -170,21 +171,20 @@ class UserDriverController extends Controller
     public function update(Request $request, Carrier $carrier, UserDriverDetail $userDriverDetail)
     {
         $user = $userDriverDetail->user;
-
         if (!$user) {
             Log::error('No se encontró el usuario relacionado al UserDriverDetail.', [
                 'user_driver_detail_id' => $userDriverDetail->id,
             ]);
             return redirect()->back()->withErrors('No se encontró el usuario relacionado.');
         }
-
+    
         Log::info('Iniciando actualización de driver.', [
             'user_id' => $user->id,
             'carrier_id' => $carrier->id,
             'request_data' => $request->except(['password', 'password_confirmation'])
         ]);
-
-        // Validación
+    
+        // Validación con todos los campos requeridos
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => [
@@ -196,64 +196,74 @@ class UserDriverController extends Controller
             ],
             'password' => 'nullable|min:8|confirmed',
             'phone' => 'required|string|max:15',
-            'address' => 'required|string|max:255',
             'license_number' => 'required|string|max:255',
             'birth_date' => 'required|date',
             'years_experience' => 'required|integer|min:0',
-            'profile_photo_driver' => 'nullable|image|max:2048',
             'status' => 'required|integer|in:0,1,2',
+            'profile_photo_driver' => 'nullable|image|max:2048',
         ]);
-
+    
         try {
+            DB::beginTransaction();
+    
             // Actualizar datos del usuario
-            $user->update([
+            $userUpdate = [
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'password' => $validated['password'] ? Hash::make($validated['password']) : $user->password,
-                'status' => $validated['status'],
-            ]);
-
+                'status' => $validated['status']
+            ];
+    
+            // Solo actualizar la contraseña si se proporcionó una nueva
+            if (!empty($validated['password'])) {
+                $userUpdate['password'] = Hash::make($validated['password']);
+            }
+    
+            $user->update($userUpdate);
+    
             // Actualizar detalles del driver
-            $userDriverDetail->update([
+            $driverUpdate = [
                 'license_number' => $validated['license_number'],
                 'birth_date' => $validated['birth_date'],
                 'years_experience' => $validated['years_experience'],
                 'phone' => $validated['phone'],
-                'address' => $validated['address'],
-                'status' => $validated['status'],
-            ]);
-
-            // Manejar la actualización de la foto
+                'status' => $validated['status']
+            ];
+    
+            $userDriverDetail->update($driverUpdate);
+    
+            // Manejar la foto de perfil si se proporcionó una nueva
             if ($request->hasFile('profile_photo_driver')) {
-                $fileName = strtolower(str_replace(' ', '_', $user->name)) . '.webp';
-
-                // Limpiar colección anterior
                 $user->clearMediaCollection('profile_photo_driver');
-
-                // Subir nueva foto
                 $user->addMediaFromRequest('profile_photo_driver')
-                    ->usingFileName($fileName)
+                    ->usingFileName(Str::slug($user->name) . '.webp')
                     ->toMediaCollection('profile_photo_driver');
             }
-
+    
+            DB::commit();
+    
             Log::info('Driver actualizado exitosamente', [
                 'user_id' => $user->id,
-                'carrier_id' => $carrier->id
+                'carrier_id' => $carrier->id,
+                'updated_fields' => array_keys($driverUpdate)
             ]);
-
+    
             return redirect()
                 ->route('admin.carrier.user_drivers.index', $carrier)
                 ->with('success', 'Driver actualizado exitosamente.');
+    
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             Log::error('Error actualizando driver', [
                 'error' => $e->getMessage(),
+                'stack' => $e->getTraceAsString(),
                 'user_id' => $user->id,
                 'carrier_id' => $carrier->id
             ]);
-
+    
             return redirect()
                 ->back()
-                ->withErrors('Error al actualizar el driver: ' . $e->getMessage())
+                ->withErrors(['error' => 'Error al actualizar el driver: ' . $e->getMessage()])
                 ->withInput();
         }
     }
