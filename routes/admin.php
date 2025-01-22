@@ -140,7 +140,7 @@ Route::prefix('carrier/{carrier}/drivers')->name('carrier.user_drivers.')->group
 
     // Agregar las rutas de aplicación
     Route::get('/application/step1', [UserDriverController::class, 'createStep1'])->name('application.step1');
-    Route::post('/application/step1', [UserDriverController::class, 'storeStep1'])->name('application.step1.store');
+    Route::post('/application/step1', [UserDriverController::class, 'storeStep1'])->name('application.step1.store');    
     Route::get('/application/step2/{application}', [UserDriverController::class, 'createStep2'])->name('application.step2');
     Route::post('/application/step2/{application}', [UserDriverController::class, 'storeStep2'])->name('application.step2.store');
     Route::get('/application/step3/{application}', [UserDriverController::class, 'createStep3'])->name('application.step3');

@@ -17,25 +17,31 @@
                     <div class="grid grid-cols-2 gap-6">
                         <div>
                             <label class="form-label">First Name</label>
-                            <x-base.form-input name="first_name" value="{{ old('first_name') }}" required />
-                            @error('first_name')
-                                <div class="text-red-500 mt-1">{{ $message }}</div>
-                            @enderror
+                            <x-base.form-input 
+                            name="name" 
+                            value="{{ $driver->user->name }}"
+                            disabled
+                            class="bg-gray-100" />
                         </div>
 
                         <div>
                             <label class="form-label">Middle Name</label>
-                            <x-base.form-input name="middle_name" value="{{ old('middle_name') }}" />
+                            <x-base.form-input 
+                            name="middle_name" 
+                            value="{{ $driver->middle_name }}"
+                            disabled
+                            class="bg-gray-100" />
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-6 mt-4">
                         <div>
                             <label class="form-label">Last Name</label>
-                            <x-base.form-input name="last_name" value="{{ old('last_name') }}" required />
-                            @error('last_name')
-                                <div class="text-red-500 mt-1">{{ $message }}</div>
-                            @enderror
+                            <x-base.form-input 
+                            name="last_name" 
+                            value="{{ $driver->last_name }}"
+                            disabled
+                            class="bg-gray-100" />
                         </div>
 
                         <div>
@@ -74,18 +80,21 @@
                     <div class="grid grid-cols-2 gap-6 mt-4">
                         <div>
                             <label class="form-label">Email Address</label>
-                            <x-base.form-input type="email" name="email" value="{{ old('email') }}" required />
-                            @error('email')
-                                <div class="text-red-500 mt-1">{{ $message }}</div>
-                            @enderror
+                            <x-base.form-input 
+                            type="email"
+                            name="email" 
+                            value="{{ $driver->user->email }}"
+                            disabled
+                            class="bg-gray-100" />
                         </div>
 
                         <div>
                             <label class="form-label">Phone Number</label>
-                            <x-base.form-input name="phone" value="{{ old('phone') }}" class="phone-mask" required />
-                            @error('phone')
-                                <div class="text-red-500 mt-1">{{ $message }}</div>
-                            @enderror
+                            <x-base.form-input 
+                            name="phone" 
+                            value="{{ $driver->phone }}"
+                            disabled
+                            class="bg-gray-100" />
                         </div>
                     </div>
 
