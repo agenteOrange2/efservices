@@ -127,30 +127,26 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
 |--------------------------------------------------------------------------
 */
 
+// En el grupo existente de user_drivers
+Route::prefix('carrier/{carrier}/drivers')->name('carrier.user_drivers.')->group(function () {
+    // Rutas existentes...
+    Route::get('/', [UserDriverController::class, 'index'])->name('index');
+    Route::get('/create', [UserDriverController::class, 'create'])->name('create');
+    Route::post('/', [UserDriverController::class, 'store'])->name('store');
+    Route::get('/{userDriverDetail}/edit', [UserDriverController::class, 'edit'])->name('edit');
+    Route::put('/{userDriverDetail}', [UserDriverController::class, 'update'])->name('update');
+    Route::delete('/{userDriverDetail}', [UserDriverController::class, 'destroy'])->name('destroy');
+    Route::delete('/{userDriverDetail}/photo', [UserDriverController::class, 'deletePhoto'])->name('delete-photo');
 
-
-    // User Drivers Routes
-    Route::get('carrier/{carrier}/drivers', [UserDriverController::class, 'index'])
-        ->name('carrier.user_drivers.index');
-
-    Route::get('carrier/{carrier}/drivers/create', [UserDriverController::class, 'create'])
-        ->name('carrier.user_drivers.create');
-
-    Route::post('carrier/{carrier}/drivers', [UserDriverController::class, 'store'])
-        ->name('carrier.user_drivers.store');
-
-    Route::get('carrier/{carrier}/drivers/{userDriverDetail}/edit', [UserDriverController::class, 'edit'])
-        ->name('carrier.user_drivers.edit');
-
-    Route::put('carrier/{carrier}/drivers/{userDriverDetail}', [UserDriverController::class, 'update'])
-        ->name('carrier.user_drivers.update');
-
-    Route::delete('carrier/{carrier}/drivers/{userDriverDetail}', [UserDriverController::class, 'destroy'])
-        ->name('carrier.user_drivers.destroy');
-
-// Agregar esta nueva ruta para eliminar la foto
-Route::delete('carrier/{carrier}/drivers/{userDriverDetail}/photo', [UserDriverController::class, 'deletePhoto'])
-    ->name('carrier.user_drivers.delete-photo');  
+    // Agregar las rutas de aplicación
+    Route::get('/application/step1', [UserDriverController::class, 'createStep1'])->name('application.step1');
+    Route::post('/application/step1', [UserDriverController::class, 'storeStep1'])->name('application.step1.store');
+    Route::get('/application/step2/{application}', [UserDriverController::class, 'createStep2'])->name('application.step2');
+    Route::post('/application/step2/{application}', [UserDriverController::class, 'storeStep2'])->name('application.step2.store');
+    Route::get('/application/step3/{application}', [UserDriverController::class, 'createStep3'])->name('application.step3');
+    Route::post('/application/step3/{application}', [UserDriverController::class, 'storeStep3'])->name('application.step3.store');
+    Route::get('/application/{application}/review', [UserDriverController::class, 'reviewApplication'])->name('application.review');
+});
 
 /*
 |--------------------------------------------------------------------------

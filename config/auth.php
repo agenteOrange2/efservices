@@ -44,6 +44,11 @@ return [
             'driver' => 'session',
             'provider' => 'user_carriers',
         ],    
+
+        'driver' => [
+            'driver' => 'session',
+            'provider' => 'driver',
+        ],
     ],
 
     /*
@@ -64,13 +69,13 @@ return [
     */
 
     'providers' => [
-        /*
+        
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
-        */
-
+        
+/*
         'users' => [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
@@ -84,7 +89,7 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\UserDriver::class, // Modelo correcto para user_driver.
         ],
-
+*/
         // 'users' => [
         //     'driver' => 'database',
         //     'table' => 'users',
