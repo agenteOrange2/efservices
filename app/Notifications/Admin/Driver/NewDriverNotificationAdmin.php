@@ -2,21 +2,27 @@
 
 namespace App\Notifications\Admin\Driver;
 
+use App\Models\User;  
+use App\Models\Carrier;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class NewUserDriverNotification extends Notification
+class NewDriverNotificationAdmin extends Notification
 {
     use Queueable;
+
+    protected $user;
+    protected $carrier;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct()
+    public function __construct(User $user, Carrier $carrier) // Usar App\Models\User
     {
-        //
+        $this->user = $user;
+        $this->carrier = $carrier;
     }
 
     /**
@@ -32,12 +38,15 @@ class NewUserDriverNotification extends Notification
     /**
      * Get the mail representation of the notification.
      */
-    public function toMail(object $notifiable): MailMessage
+    public function toMail($notifiable)
     {
         return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
+            ->subject('New Driver Registration')
+            ->line('A new driver has been registered.')
+            ->line('Driver: ' . $this->user->name)
+            ->line('Carrier: ' . $this->carrier->name)
+            ->action('View Driver', route('admin.carrier.user_drivers.edit', [$this->carrier, $this->user->driverDetails]))
+            ->line('The driver will now complete their application process.');
     }
 
     /**

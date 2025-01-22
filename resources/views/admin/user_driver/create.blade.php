@@ -60,9 +60,23 @@
                                     <div class="mt-3 w-full flex-1 xl:mt-0">
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
-                                                <x-base.form-input name="name" type="text"
-                                                    placeholder="Enter full name" value="{{ old('name') }}" />
+                                                <x-base.form-input name="name" type="text" placeholder="Enter Name"
+                                                    value="{{ old('name') }}" />
                                                 @error('name')
+                                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+                                            <div>
+                                                <x-base.form-input name="middle_name" type="text"
+                                                    placeholder="Enter Middle name" value="{{ old('middle_name') }}" />
+                                                @error('middle_name')
+                                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+                                            <div class="w-full block">
+                                                <x-base.form-input name="last_name" type="text"
+                                                    placeholder="Enter Last name" value="{{ old('last_name') }}" />
+                                                @error('last_name')
                                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                                 @enderror
                                             </div>
@@ -95,6 +109,86 @@
                                         @enderror
                                     </div>
                                 </div>
+
+                                <!-- Phone Number -->
+                                <div
+                                    class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                                    <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                                        <div class="text-left">
+                                            <div class="flex items-center">
+                                                <div class="font-medium">Phone Number</div>
+                                                <div
+                                                    class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                                                    Required
+                                                </div>
+                                            </div>
+                                            <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
+                                                Please provide a valid phone number where we can reach you if needed.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 w-full flex-1 xl:mt-0">
+                                        <div class="flex flex-col items-center md:flex-row">
+                                            <x-base.form-input
+                                                class="first:rounded-b-none last:-mt-px last:rounded-t-none focus:z-10 first:md:rounded-r-none first:md:rounded-bl-md last:md:-ml-px last:md:mt-0 last:md:rounded-l-none last:md:rounded-tr-md [&:not(:first-child):not(:last-child)]:-mt-px [&:not(:first-child):not(:last-child)]:rounded-none [&:not(:first-child):not(:last-child)]:md:-ml-px [&:not(:first-child):not(:last-child)]:md:mt-0"
+                                                type="text" name="phone" id="phone" value="{{ old('phone') }}"
+                                                placeholder="+1 (123) 456-7890" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- License Number -->
+                                <div
+                                    class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                                    <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                                        <div class="text-left">
+                                            <div class="flex items-center">
+                                                <div class="font-medium">License Number</div>
+                                                <div
+                                                    class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                                                    Required
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 w-full flex-1 xl:mt-0">
+                                        <x-base.form-input name="license_number" type="text"
+                                            placeholder="Enter license number" value="{{ old('license_number') }}"
+                                            class="license-mask" />
+                                        @error('license_number')
+                                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <!-- State of ISSUE -->
+                                <div
+                                    class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                                    <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                                        <div class="text-left">
+                                            <div class="flex items-center">
+                                                <div class="font-medium">State of Issue</div>
+                                                <div
+                                                    class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                                                    Required
+                                                </div>
+                                            </div>
+                                            <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
+                                                Enter your complete State of Issue
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 w-full flex-1 xl:mt-0">
+                                        <x-base.form-input name="state_of_issue" type="text"
+                                            placeholder="Enter your complete State Issue"
+                                            value="{{ old('state_of_issue') }}" />
+                                        @error('state_of_issue')
+                                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                </div>
+
+
                                 <!-- Password -->
                                 <div
                                     class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
@@ -113,7 +207,8 @@
                                         </div>
                                     </div>
                                     <div class="mt-3 w-full flex-1 xl:mt-0">
-                                        <x-base.form-input name="password" type="password" placeholder="Enter password" />
+                                        <x-base.form-input name="password" type="password"
+                                            placeholder="Enter password" />
                                         @error('password')
                                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                         @enderror
@@ -159,144 +254,58 @@
                                     </div>
                                 </div>
 
-                                <!-- Phone Number -->
-                                <div
-                                    class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
-                                    <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
-                                        <div class="text-left">
-                                            <div class="flex items-center">
-                                                <div class="font-medium">Phone Number</div>
-                                                <div
-                                                    class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                                    Required
-                                                </div>
-                                            </div>
-                                            <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
-                                                Please provide a valid phone number where we can reach you if needed.
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3 w-full flex-1 xl:mt-0">
-                                        <div class="flex flex-col items-center md:flex-row">
-                                            <x-base.form-input
-                                                class="first:rounded-b-none last:-mt-px last:rounded-t-none focus:z-10 first:md:rounded-r-none first:md:rounded-bl-md last:md:-ml-px last:md:mt-0 last:md:rounded-l-none last:md:rounded-tr-md [&:not(:first-child):not(:last-child)]:-mt-px [&:not(:first-child):not(:last-child)]:rounded-none [&:not(:first-child):not(:last-child)]:md:-ml-px [&:not(:first-child):not(:last-child)]:md:mt-0"
-                                                type="text" name="phone" id="phone" value="{{ old('phone') }}"
-                                                placeholder="+1 (123) 456-7890" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Address -->
-                                <div
-                                    class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
-                                    <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
-                                        <div class="text-left">
-                                            <div class="flex items-center">
-                                                <div class="font-medium">Address</div>
-                                                <div
-                                                    class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                                    Required
-                                                </div>
-                                            </div>
-                                            <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
-                                                Enter your complete address information.
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3 w-full flex-1 xl:mt-0">
-                                        <x-base.form-input name="address" type="text"
-                                            placeholder="Enter your complete address" value="{{ old('address') }}" />
-                                        @error('address')
-                                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                        @enderror
-                                    </div>
-                                </div>
-                                <!-- License Number -->
-                                <div
-                                    class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
-                                    <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
-                                        <div class="text-left">
-                                            <div class="flex items-center">
-                                                <div class="font-medium">License Number</div>
-                                                <div
-                                                    class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                                    Required
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3 w-full flex-1 xl:mt-0">
-                                        <x-base.form-input name="license_number" type="text"
-                                            placeholder="Enter license number" value="{{ old('license_number') }}"
-                                            class="license-mask" />
-                                        @error('license_number')
-                                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <!-- Birth Date -->
-                                <div
-                                    class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
-                                    <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
-                                        <div class="text-left">
-                                            <div class="flex items-center">
-                                                <div class="font-medium">Birth Date</div>
-                                                <div
-                                                    class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                                    Required
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3 w-full flex-1 xl:mt-0">
-                                        <x-base.form-input name="birth_date" type="date"
-                                            value="{{ old('birth_date') }}"
-                                            max="{{ now()->subYears(18)->format('Y-m-d') }}" />
-                                        @error('birth_date')
-                                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <!-- Years of Experience -->
-                                <div
-                                    class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
-                                    <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
-                                        <div class="text-left">
-                                            <div class="flex items-center">
-                                                <div class="font-medium">Years of Experience</div>
-                                                <div
-                                                    class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                                    Required
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3 w-full flex-1 xl:mt-0">
-                                        <x-base.form-input name="years_experience" type="number" min="0"
-                                            max="50" value="{{ old('years_experience') }}" />
-                                        @error('years_experience')
-                                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <!-- Phone with mask -->
-                                <div
-                                    class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
-                                    <!-- Similar al anterior pero con clase phone-mask -->
-                                </div>
-
-                                <!-- Address -->
-                                <div
-                                    class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
-                                    <!-- Campo para dirección -->
-                                </div>
-
                                 <!-- Status -->
-                                <div class="my-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
-                                    <!-- Similar al anterior -->
+                                <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
+                                    <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                                        <div class="text-left">
+                                            <div class="font-medium">Status</div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 w-full flex-1 xl:mt-0">
+                                        <div class="mt-3 w-full flex-1 xl:mt-0">
+                                            <select data-tw-merge aria-label="Default select example"
+                                                class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1 mt-2 sm:mr-2"
+                                                id="status" name="status">
+                                                <option value="{{ App\Models\UserDriverDetail::STATUS_PENDING }}"
+                                                    {{ old('status') == App\Models\UserDriverDetail::STATUS_PENDING ? 'selected' : '' }}>
+                                                    Pending
+                                                </option>
+                                                <option value="{{ App\Models\UserDriverDetail::STATUS_ACTIVE }}"
+                                                    {{ old('status') == App\Models\UserDriverDetail::STATUS_ACTIVE ? 'selected' : '' }}>
+                                                    Active
+                                                </option>
+                                                <option value="{{ App\Models\UserDriverDetail::STATUS_INACTIVE }}"
+                                                    {{ old('status') == App\Models\UserDriverDetail::STATUS_INACTIVE ? 'selected' : '' }}>
+                                                    Inactive
+                                                </option>
+                                            </select>
+                                            @error('status')
+                                                <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                {{-- Terms & Conditions --}}
+                                <div
+                                    class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                                    <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                                        <div class="text-left">
+                                            <div class="flex items-center">
+                                                <div class="font-medium">Status</div>
+                                                <div
+                                                    class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                                                    Required
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center mr-auto">
+                                        <x-base.form-check.input class="mr-2.5 border" id="remember-me" type="checkbox"
+                                            name="terms_accepted" value="1" />
+                                        <label class="cursor-pointer select-none" for="remember-me">
+                                            I accept the terms and conditions
+                                        </label>
+                                    </div>
                                 </div>
 
                                 <!-- Submit Buttons -->

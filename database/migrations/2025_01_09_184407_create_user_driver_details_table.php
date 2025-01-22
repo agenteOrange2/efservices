@@ -14,15 +14,16 @@ return new class extends Migration
         Schema::create('user_driver_details', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('carrier_id')->constrained('carriers')->onDelete('cascade'); // Agregamos relación con carrier
+            $table->foreignId('carrier_id')->constrained('carriers')->onDelete('cascade');
+            $table->string('middle_name')->nullable();
+            $table->string('last_name');
+            $table->string('suffix')->nullable();
             $table->string('license_number');
-            $table->foreignId('assigned_vehicle_id')->nullable()->constrained('vehicles')->onDelete('set null');
-            $table->date('birth_date');  // Agregamos fecha de nacimiento
-            $table->integer('years_experience');  // Agregamos años de experiencia
-            $table->string('phone');  // Agregamos teléfono
-            $table->string('address');  // Agregamos dirección
-            $table->unsignedTinyInteger('status')->default(0)->index(); // Agregamos status
-            $table->string('confirmation_token', 64)->nullable(); // Token de confirmación
+            $table->string('state_of_issue');
+            $table->string('phone');
+            $table->unsignedTinyInteger('status')->default(0)->index();
+            $table->boolean('terms_accepted')->default(false);
+            $table->string('confirmation_token', 64)->nullable();
             $table->timestamps();
         });
     }

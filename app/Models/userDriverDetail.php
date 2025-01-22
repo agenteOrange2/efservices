@@ -5,8 +5,9 @@ use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use App\Models\Admin\Driver\DriverApplication;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class UserDriverDetail extends Model implements HasMedia
 {
@@ -15,20 +16,20 @@ class UserDriverDetail extends Model implements HasMedia
     protected $fillable = [
         'user_id',
         'carrier_id',
-        'license_number',
-        'assigned_vehicle_id',
-        'birth_date',
-        'years_experience',
+        'middle_name',
+        'last_name',
+        'suffix',
         'phone',
-        'address',
+        'license_number',
+        'state_of_issue',
         'status',
+        'terms_accepted',
         'confirmation_token',
     ];
 
-    protected $casts = [
-        'birth_date' => 'date',
-        'years_experience' => 'integer',
-        'status' => 'integer'
+    protected $casts = [        
+        'status' => 'integer',
+        'terms_accepted' => 'boolean'
     ];
 
     // Constantes para los valores de status
@@ -46,6 +47,10 @@ class UserDriverDetail extends Model implements HasMedia
         return $this->belongsTo(Carrier::class);
     }
 
+    public function application()
+    {
+        return $this->hasOne(DriverApplication::class, 'user_id', 'user_id');
+    }
     public function assignedVehicle()
     {
         return $this->belongsTo(Vehicle::class, 'assigned_vehicle_id');
@@ -60,6 +65,8 @@ class UserDriverDetail extends Model implements HasMedia
             default => 'Unknown',
         };
     }
+
+    
 
     public function getProfilePhotoUrlAttribute()
     {
