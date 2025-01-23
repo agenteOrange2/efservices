@@ -137,15 +137,6 @@ Route::prefix('carrier/{carrier}/drivers')->name('carrier.user_drivers.')->group
     Route::put('/{userDriverDetail}', [UserDriverController::class, 'update'])->name('update');
     Route::delete('/{userDriverDetail}', [UserDriverController::class, 'destroy'])->name('destroy');
     Route::delete('/{userDriverDetail}/photo', [UserDriverController::class, 'deletePhoto'])->name('delete-photo');
-
-    // Agregar las rutas de aplicación
-    Route::get('/application/step1', [UserDriverController::class, 'createStep1'])->name('application.step1');
-    Route::post('/application/step1', [UserDriverController::class, 'storeStep1'])->name('application.step1.store');    
-    Route::get('/application/step2/{application}', [UserDriverController::class, 'createStep2'])->name('application.step2');
-    Route::post('/application/step2/{application}', [UserDriverController::class, 'storeStep2'])->name('application.step2.store');
-    Route::get('/application/step3/{application}', [UserDriverController::class, 'createStep3'])->name('application.step3');
-    Route::post('/application/step3/{application}', [UserDriverController::class, 'storeStep3'])->name('application.step3.store');
-    Route::get('/application/{application}/review', [UserDriverController::class, 'reviewApplication'])->name('application.review');
 });
 
 /*

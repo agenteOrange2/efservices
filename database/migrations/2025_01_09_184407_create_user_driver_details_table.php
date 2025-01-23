@@ -17,10 +17,10 @@ return new class extends Migration
             $table->foreignId('carrier_id')->constrained('carriers')->onDelete('cascade');
             $table->string('middle_name')->nullable();
             $table->string('last_name');
-            $table->string('suffix')->nullable();
             $table->string('license_number');
             $table->string('state_of_issue');
             $table->string('phone');
+            $table->date('date_of_birth');
             $table->unsignedTinyInteger('status')->default(0)->index();
             $table->boolean('terms_accepted')->default(false);
             $table->string('confirmation_token', 64)->nullable();

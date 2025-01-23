@@ -245,14 +245,14 @@
                                         <select data-tw-merge aria-label="Default select example"
                                             class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&amp;[readonly]]:bg-slate-100 [&amp;[readonly]]:cursor-not-allowed [&amp;[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1 mt-2 sm:mr-2 mt-2 sm:mr-2"
                                             id="status" name="status">
-                                            <option value="{{ App\Models\UserCarrier::STATUS_PENDING }}"
-                                                {{ old('status', $userCarrier->status) == App\Models\UserCarrier::STATUS_PENDING ? 'selected' : '' }}>
+                                            <option value="{{ App\Models\UserCarrierDetail::STATUS_PENDING }}"
+                                                {{ old('status', $userCarrier->status) == App\Models\UserCarrierDetail::STATUS_PENDING ? 'selected' : '' }}>
                                                 Pending</option>
-                                            <option value="{{ App\Models\UserCarrier::STATUS_ACTIVE }}"
-                                                {{ old('status', $userCarrier->status) == App\Models\UserCarrier::STATUS_ACTIVE ? 'selected' : '' }}>
+                                            <option value="{{ App\Models\UserCarrierDetail::STATUS_ACTIVE }}"
+                                                {{ old('status', $userCarrier->status) == App\Models\UserCarrierDetail::STATUS_ACTIVE ? 'selected' : '' }}>
                                                 Active</option>
-                                            <option value="{{ App\Models\UserCarrier::STATUS_INACTIVE }}"
-                                                {{ old('status', $userCarrier->status) == App\Models\UserCarrier::STATUS_INACTIVE ? 'selected' : '' }}>
+                                            <option value="{{ App\Models\UserCarrierDetail::STATUS_INACTIVE }}"
+                                                {{ old('status', $userCarrier->status) == App\Models\UserCarrierDetail::STATUS_INACTIVE ? 'selected' : '' }}>
                                                 Inactive</option>
                                         </select>
                                         @error('status')

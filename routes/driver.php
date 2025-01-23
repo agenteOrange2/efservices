@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Driver\StepController;
 use App\Http\Controllers\Driver\DashboardController;
 use App\Http\Controllers\Auth\DriverRegistrationController;
 
@@ -62,3 +63,30 @@ Route::middleware(['auth', 'role:driver'])->group(function () {
 });
 
 
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS PARA SUPERADMIN: ADMIN DRIVERS
+|--------------------------------------------------------------------------
+*/
+
+// En el grupo existente de user_drivers
+Route::prefix('carrier/{carrier}/drivers')->name('carrier.user_drivers.')->group(function () {
+    // Rutas existentes...
+    Route::get('/', [StepController::class, 'index'])->name('index');
+    Route::get('/create', [StepController::class, 'create'])->name('create');
+    Route::post('/', [StepController::class, 'store'])->name('store');
+    Route::get('/{userDriverDetail}/edit', [StepController::class, 'edit'])->name('edit');
+    Route::put('/{userDriverDetail}', [StepController::class, 'update'])->name('update');
+    Route::delete('/{userDriverDetail}', [StepController::class, 'destroy'])->name('destroy');
+    Route::delete('/{userDriverDetail}/photo', [StepController::class, 'deletePhoto'])->name('delete-photo');
+
+    // Agregar las rutas de aplicación
+    Route::get('/application/step1', [StepController::class, 'createStep1'])->name('application.step1');
+    Route::post('/application/step1', [StepController::class, 'storeStep1'])->name('application.step1.store');    
+    Route::get('/application/step2/{application}', [StepController::class, 'createStep2'])->name('application.step2');
+    Route::post('/application/step2/{application}', [StepController::class, 'storeStep2'])->name('application.step2.store');
+    Route::get('/application/step3/{application}', [StepController::class, 'createStep3'])->name('application.step3');
+    Route::post('/application/step3/{application}', [StepController::class, 'storeStep3'])->name('application.step3.store');
+    Route::get('/application/{application}/review', [StepController::class, 'reviewApplication'])->name('application.review');
+});

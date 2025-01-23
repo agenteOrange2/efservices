@@ -19,39 +19,41 @@
                         <div class="text-base font-medium group-[.mode--light]:text-white">
                             <h2 class="text-2xl">Driver for Carrier: <span>{{ $carrier->name }}</span></h2>
                         </div>
-<!-- Reemplazar el botón actual por este -->
-<div class="flex flex-col gap-x-3 gap-y-2 sm:flex-row md:ml-auto">
-    <div class="dropdown">
-        <x-base.button variant="primary" class="w-full md:w-auto" data-tw-toggle="dropdown" aria-expanded="false">
-            <span class="flex items-center justify-center">
-                Add New Driver
-                <x-base.lucide class="w-4 h-4 ml-2" icon="ChevronDown" />
-            </span>
-        </x-base.button>
-        <div class="dropdown-menu w-48">
-            <ul class="dropdown-content bg-white border rounded-sm shadow-md dark:bg-darkmode-600 dark:border-darkmode-500">
-                <li>
-                    <a href="{{ route('admin.carrier.user_drivers.create', $carrier->slug) }}" 
-                       class="dropdown-item hover:bg-slate-100 py-2 px-4 block">
-                        <div class="flex items-center">
-                            <x-base.lucide class="w-4 h-4 mr-2" icon="UserPlus" />
-                            Quick Register
+                        <!-- Reemplazar el botón actual por este -->
+                        <div class="flex flex-col gap-x-3 gap-y-2 sm:flex-row md:ml-auto">
+                            <div class="dropdown">
+                                <x-base.button variant="primary" class="w-full md:w-auto" data-tw-toggle="dropdown"
+                                    aria-expanded="false">
+                                    <span class="flex items-center justify-center">
+                                        Add New Driver
+                                        <x-base.lucide class="w-4 h-4 ml-2" icon="ChevronDown" />
+                                    </span>
+                                </x-base.button>
+                                <div class="dropdown-menu w-48">
+                                    <ul
+                                        class="dropdown-content bg-white border rounded-sm shadow-md dark:bg-darkmode-600 dark:border-darkmode-500">
+                                        <li>
+                                            <a href="{{ route('admin.carrier.user_drivers.create', $carrier->slug) }}"
+                                                class="dropdown-item hover:bg-slate-100 py-2 px-4 block">
+                                                <div class="flex items-center">
+                                                    <x-base.lucide class="w-4 h-4 mr-2" icon="UserPlus" />
+                                                    Quick Register
+                                                </div>
+                                            </a>
+                                        </li>
+                                        {{-- <li>
+                                            <a href="{{ route('admin.carrier.user_drivers.application.step1', $carrier->slug) }}"
+                                                class="dropdown-item hover:bg-slate-100 py-2 px-4 block">
+                                                <div class="flex items-center">
+                                                    <x-base.lucide class="w-4 h-4 mr-2" icon="ClipboardList" />
+                                                    Full Application
+                                                </div>
+                                            </a>
+                                        </li> --}}
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('admin.carrier.user_drivers.application.step1', $carrier->slug) }}" 
-                       class="dropdown-item hover:bg-slate-100 py-2 px-4 block">
-                        <div class="flex items-center">
-                            <x-base.lucide class="w-4 h-4 mr-2" icon="ClipboardList" />
-                            Full Application
-                        </div>
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</div>
                     </div>
                 @else
                     <div class="w-full mb-10">
@@ -198,7 +200,8 @@
                 document.querySelector('form')?.addEventListener('submit', function(event) {
                     event.preventDefault();
                     alert(
-                        'You cannot add more drivers. Please upgrade your plan or contact the administrator.');
+                        'You cannot add more drivers. Please upgrade your plan or contact the administrator.'
+                        );
                 });
             }
         });
