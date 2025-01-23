@@ -13,10 +13,8 @@ return new class extends Migration
     {
         Schema::create('driver_applications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('suffix')->nullable();
-            $table->string('social_security_number');
-            $table->date('date_of_birth');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');            
+            $table->string('social_security_number');            
             $table->enum('status', ['draft', 'pending', 'approved', 'rejected'])->default('draft');
             $table->timestamps();
         });

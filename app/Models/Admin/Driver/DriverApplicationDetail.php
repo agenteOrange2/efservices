@@ -17,8 +17,6 @@ class DriverApplicationDetail extends Model
         'can_speak_english',
         'has_twic_card',
         'twic_expiration_date',
-        'known_by_other_name',
-        'other_names',
         'how_did_hear',
         'referral_employee_name',
         'expected_pay'
@@ -27,8 +25,7 @@ class DriverApplicationDetail extends Model
     protected $casts = [
         'eligible_to_work' => 'boolean',
         'can_speak_english' => 'boolean',
-        'has_twic_card' => 'boolean',
-        'known_by_other_name' => 'boolean',
+        'has_twic_card' => 'boolean',        
         'twic_expiration_date' => 'date',
         'expected_pay' => 'decimal:2'
     ];

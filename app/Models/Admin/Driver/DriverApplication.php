@@ -16,8 +16,7 @@ class DriverApplication extends Model
         'middle_name',
         'last_name',
         'suffix',
-        'social_security_number',
-        'date_of_birth',
+        'social_security_number',        
         'email',
         'phone',
         'status'

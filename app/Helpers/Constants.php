@@ -60,4 +60,24 @@ class Constants
             'WY' => 'Wyoming',
         ];    
     }
+
+    public static function driverPositions()
+    {
+        return [
+            'company_driver' => 'Company Driver',
+            'owner_operator' => 'Owner Operator',
+            'other' => 'Other'
+        ];
+    }
+
+    public static function referralSources()
+    {
+        return [
+            'employee_referral' => 'Employee Referral',
+            'recruiter' => 'Recruiter',
+            'job_board' => 'Job Board',
+            'other' => 'Other'
+        ];
+    }
+
 }
