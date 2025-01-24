@@ -35,7 +35,7 @@
             <!-- Page Content -->
             <main>
                 {{ $slot }}
-                <h1>HOLA APP</h1>
+
             </main>
         </div>
 

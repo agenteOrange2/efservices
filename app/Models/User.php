@@ -112,7 +112,7 @@ class User extends Authenticatable implements HasMedia
     // Relación con Driver
     public function driver()
     {
-        return $this->hasOne(Driver::class);
+        return $this->hasOne(UserDriverDetail::class);
     }
 
     //Registro de Media Library

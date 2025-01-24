@@ -25,10 +25,12 @@ class CheckUserStatus
 
         // Verificar si es una ruta de registro por referencia
         if ($this->isReferralRoute($request)) {
+
+            /*
             Log::info('Referral registration route detected', [
                 'path' => $request->path(),
                 'token' => $request->query('token')
-            ]);
+            ]);*/
             return $next($request);
         }
 
@@ -70,21 +72,40 @@ class CheckUserStatus
             }
         }
 
-        // Verificación para Drivers
         if ($user && $user->hasRole('driver')) {
-            // Si el driver no ha completado su registro
+            // 1. Validar registro inicial y aplicación
             if (!$user->driverDetails || !$user->driverDetails->carrier_id) {
                 return redirect()->route('driver.complete_registration')
-                    ->with('warning', 'Please complete your driver registration.');
+                    ->with('warning', 'Please complete your initial registration.');
             }
 
-            // Si el driver está pendiente o inactivo
-            if ($user->driverDetails->status !== 1) { // Asumiendo 1 como STATUS_ACTIVE
+            // 2. Validar progreso de la aplicación
+            if (!$user->driverDetails->application_completed) {
+                if (!$request->is('driver/application*')) {
+                    $step = $user->driverDetails->current_step ?? 1;
+                    return redirect()->route('driver.application.step', ['step' => $step]);
+                }
+            }
+
+            // 3. Validar estado del driver
+            if ($user->driverDetails->status === UserDriverDetail::STATUS_PENDING) {
+                if ($request->is('driver/dashboard') || $request->is('driver/pending')) {
+                    return $next($request);
+                }
                 return redirect()->route('driver.pending')
-                    ->with('warning', 'Your driver account is pending approval.');
+                    ->with('warning', 'Your application is under review.');
             }
 
-            // Prevenir acceso a áreas no autorizadas
+            // 4. Validar documentos requeridos
+            if (!$user->driverDetails->hasRequiredDocuments()) {
+                if ($request->is('driver/documents*')) {
+                    return $next($request);
+                }
+                return redirect()->route('driver.documents.pending')
+                    ->with('warning', 'Please upload required documents.');
+            }
+
+            // 5. Accesos restringidos
             if ($request->is('admin*') || $request->is('carrier*')) {
                 return redirect()->route('driver.dashboard')
                     ->with('warning', 'Access denied to this area.');
@@ -115,11 +136,14 @@ class CheckUserStatus
             'driver/register',
             'driver/register/*', // Agregar esta ruta para registro por referencia
             'driver/confirm/*',
+            'driver/*',
             'driver/error',           // Agregar ruta de error
             'driver/quota-exceeded',  // Agregar ruta de cuota excedida
             'driver/carrier-status',  // Agregar la nueva ruta
+            'driver/pending',
+            'driver/registration/success',
         ], $publicRoutes);
-    
+
         foreach ($publicRoutes as $route) {
             if ($request->is($route)) {
                 Log::info('Public route matched', [
@@ -129,38 +153,23 @@ class CheckUserStatus
                 return true;
             }
         }
-    
+
         Log::info('Route not matched as public', [
             'path' => $request->path(),
             'available_routes' => $publicRoutes
         ]);
-    
+
         return false;
     }
-    
+
     private function isReferralRoute(Request $request): bool
-{
-    // Verificar si es una ruta de registro por referencia (con token)
-    $referralRoutes = [
-        'driver/register/*', // Para rutas como driver/register/{token}
-        'carrier/*/driver/register', // Para rutas como carrier/{carrier}/driver/register
-    ];
-
-    // Verificar si la ruta actual coincide con alguna de las rutas de referencia
-    $isReferralPath = $this->routeMatches($request, $referralRoutes);
-
-    // Verificar si hay un token de referencia en la query string
-    $hasReferrerToken = $request->has('token') || $request->has('ref');
-
-    Log::info('Checking referral route', [
-        'path' => $request->path(),
-        'is_referral_path' => $isReferralPath,
-        'has_token' => $hasReferrerToken,
-        'query_params' => $request->query()
-    ]);
-
-    return $isReferralPath || $hasReferrerToken;
-}
+    {
+        // Solo verifica que sea la ruta de registro con token
+        if ($request->is('driver/register/*') && $request->has('token')) {
+            return true;
+        }
+        return false;
+    }
 
     private function isCarrierSetupRoute(Request $request): bool
     {

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
+use App\Helpers\Constants;
 use Illuminate\Support\Facades\Notification;
 use App\Models\Admin\Driver\DriverApplication;
 use App\Notifications\Admin\Driver\NewUserDriverNotification;
@@ -39,6 +40,8 @@ class UserDriverController extends Controller
         ]);
     }
 
+
+
     public function create(Carrier $carrier)
     {
         // Verificar el límite de drivers para este carrier específico
@@ -48,9 +51,9 @@ class UserDriverController extends Controller
         $currentDriversCount = UserDriverDetail::where('carrier_id', $carrier->id)->count();
 
         // Cargar las constantes que necesitas en la vista:
-        $usStates = \App\Helpers\Constants::usStates();
-        $driverPositions = \App\Helpers\Constants::driverPositions();
-        $referralSources = \App\Helpers\Constants::referralSources();
+        $usStates = Constants::usStates();
+        $driverPositions = Constants::driverPositions();
+        $referralSources = Constants::referralSources();
 
         Log::info('Verificando límite de drivers para carrier', [
             'carrier_id' => $carrier->id,
@@ -80,142 +83,124 @@ class UserDriverController extends Controller
         ));
     }
 
+
     public function store(Request $request, Carrier $carrier)
     {
-        Log::info('Iniciando store de driver (lógica Livewire)', [
+        Log::info('Iniciando store de driver', [
             'carrier_id' => $carrier->id,
             'request_data' => $request->except(['password', 'password_confirmation']),
         ]);
 
-        // Aquí definimos las reglas de validación, replicando las del componente Livewire
-        $rules = [
-            // Datos de User
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users'],
-            'password' => ['required', 'min:8', 'confirmed'],            
-
-            // Foto (photo en Livewire)
-            'photo' => ['nullable', 'image', 'max:2048'],
-
-            // Driver details
-            'middle_name'     => ['nullable', 'string', 'max:255'],
-            'last_name'       => ['required', 'string', 'max:255'],
-            'license_number'  => ['required', 'string', 'max:255'],
-            'state_of_issue'  => ['required', 'string', 'max:255'],
-            'phone'           => ['required', 'string', 'max:15'],
-            'date_of_birth'   => ['required', 'date'],
-
-            // Datos de aplicación
-            'social_security_number' => ['nullable', 'string', 'max:255'], // ajusta según tu DB
-
-            // Direcciones
-            'address_line1'   => ['required', 'string', 'max:255'],
-            'address_line2'   => ['nullable', 'string', 'max:255'],
-            'city'            => ['required', 'string', 'max:255'],
-            'state'           => ['required', 'string', 'max:255'],
-            'zip_code'        => ['required', 'string', 'max:255'],
-            'from_date'       => ['required', 'date'],
-            'to_date'         => ['nullable', 'date'],
-            'lived_three_years' => ['boolean'],
-
-            // previous_addresses.*.address_line1 => etc. (para las direcciones anteriores)
-            'previous_addresses'                                 => ['array'],
-            'previous_addresses.*.address_line1'                => ['required', 'string', 'max:255'],
-            'previous_addresses.*.address_line2'                => ['nullable', 'string', 'max:255'],
-            'previous_addresses.*.city'                         => ['required', 'string', 'max:255'],
-            'previous_addresses.*.state'                        => ['required', 'string', 'max:255'],
-            'previous_addresses.*.zip_code'                     => ['required', 'string', 'max:255'],
-            'previous_addresses.*.from_date'                    => ['required', 'date'],
-            'previous_addresses.*.to_date'                      => ['required', 'date'],
-
-            // Otros campos de la aplicación
-            'applying_position'      => ['required', 'string'],
-            'applying_position_other' => ['required_if:applying_position,other'],
-            'applying_location'      => ['required', 'string', 'max:255'],
-            'eligible_to_work'       => ['required', 'boolean'],
-            'can_speak_english'      => ['sometimes', 'boolean'],
-            'has_twic_card'          => ['sometimes', 'boolean'],
-            'twic_expiration_date'   => ['required_if:has_twic_card,true', 'nullable', 'date'],
-            'how_did_hear'           => ['required', 'string'],
-            'how_did_hear_other'     => ['required_if:how_did_hear,other'],
-            'referral_employee_name' => ['required_if:how_did_hear,employee_referral'],
-            'expected_pay'           => ['nullable', 'string', 'max:255'],
-        ];
-
-        dd($request->all());
-        // Mensajes personalizados (ej. para la edad mínima)
-        $messages = [
-            'date_of_birth.required'       => 'La fecha de nacimiento es requerida.',
-            'twic_expiration_date.required_if' => 'Si tiene TWIC card, debe colocar la fecha de expiración.',
-            'applying_position_other.required_if' =>
-            'Si la posición aplicada es "other", debes especificar la posición.',
-            'how_did_hear_other.required_if' =>
-            'Si la fuente de referencia es "other", debes especificarla.',
-            'referral_employee_name.required_if' =>
-            'Si la fuente es "employee_referral", debes poner el nombre del empleado.',
-        ];
-
-        // Primero validamos
-        $validated = $request->validate($rules, $messages);
-
-        // Validar manualmente que sea mayor de 18 años
-        $dob = Carbon::parse($validated['date_of_birth']);
-        if ($dob->age < 18) {
-            return back()->withErrors(['date_of_birth' => 'Debes tener al menos 18 años.'])->withInput();
-        }
-
-        // Validar dirección: si NO ha vivido 3 años en la misma dirección y no hay previous_addresses, error
-        // (Replicando la lógica isAddressValid / lived_three_years)
-        $livedThreeYears = $request->boolean('lived_three_years');
-        $previousAddresses = $validated['previous_addresses'] ?? [];
-
-        // "isAddressValid" en Livewire equivalía a "tengo address de 3 años" 
-        // Aquí podrías checar total de años en las direcciones, etc.
-        // Simplificando: si no ha vivido 3 años y no trae previous_addresses, error:
-        if (!$livedThreeYears && empty($previousAddresses)) {
-            return back()->withErrors(['address_history' => 'Debes proveer 3 años de historial de direcciones.'])
-                ->withInput();
-        }
-
-        // Validar si es elegible para trabajar
-        if (!$validated['eligible_to_work']) {
-            // Podrías redirigir o tirar un error
-            return back()->withErrors(['eligible_to_work' => 'Debes ser elegible para trabajar en U.S.'])->withInput();
-        }
 
         try {
+            // Realizamos la validación directa usando el formato de validate sin reglas explícitas
+            $validated = $request->validate([
+                // Datos de User
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users',
+                'password' => 'required|min:8|confirmed',
+                'last_name' => 'required|string|max:255',
+                'license_number' => 'required|string|max:255',
+                'state_of_issue' => 'required|string|max:255',
+                'phone' => 'required|string|max:15',
+                'date_of_birth' => 'required|date',
+
+                // Datos de la aplicación
+                'social_security_number' => 'nullable|string|max:255', // ajusta según tu DB
+
+                // Direcciones
+                'address_line1' => 'required|string|max:255',
+                'address_line2' => 'nullable|string|max:255',
+                'city' => 'required|string|max:255',
+                'state' => 'required|string|max:255',
+                'zip_code' => 'required|string|max:255',
+                'from_date' => 'required|date',
+                'to_date' => 'nullable|date',
+                'lived_three_years' => 'nullable|boolean',
+
+
+                // Direcciones anteriores
+                'previous_addresses' => 'array',
+                'previous_addresses.*.address_line1' => 'required|string|max:255',
+                'previous_addresses.*.address_line2' => 'nullable|string|max:255',
+                'previous_addresses.*.city' => 'required|string|max:255',
+                'previous_addresses.*.state' => 'required|string|max:255',
+                'previous_addresses.*.zip_code' => 'required|string|max:255',
+                'previous_addresses.*.from_date' => 'required|date',
+                'previous_addresses.*.to_date' => 'required|date',
+
+                // Otros campos de la aplicación
+                'applying_position' => 'required|string',
+                'applying_position_other' => 'required_if:applying_position,other',
+                'applying_location' => 'required|string|max:255',
+                'eligible_to_work' => 'required|boolean',
+                'can_speak_english' => 'sometimes|boolean',
+                'has_twic_card' => 'sometimes|boolean',
+                'twic_expiration_date' => 'required_if:has_twic_card,true|nullable|date',
+                'how_did_hear' => 'required|string',
+                'how_did_hear_other' => 'required_if:how_did_hear,other',
+                'referral_employee_name' => 'required_if:how_did_hear,employee_referral',
+                'expected_pay' => 'nullable|string|max:255',
+            ]);
+
+            Log::info('Validación completada', $validated);
+
+            // Validación manual de edad mayor de 18
+            $dob = Carbon::parse($validated['date_of_birth']);
+            if ($dob->age < 18) {
+                return back()->withErrors(['date_of_birth' => 'Debes tener al menos 18 años.'])->withInput();
+            }
+
+            // Validación de dirección: si no ha vivido 3 años y no hay previous_addresses, error            
+            $livedThreeYears = filter_var($validated['lived_three_years'], FILTER_VALIDATE_BOOLEAN);
+
+            $previousAddresses = $validated['previous_addresses'] ?? [];
+
+            if (!$livedThreeYears && empty($previousAddresses)) {
+                return back()->withErrors(['address_history' => 'Debes proveer 3 años de historial de direcciones.'])
+                    ->withInput();
+            }
+
+            // Validación si es elegible para trabajar
+            if (!$validated['eligible_to_work']) {
+                return back()->withErrors(['eligible_to_work' => 'Debes ser elegible para trabajar en U.S.'])->withInput();
+            }
+
+            // Inicia la transacción para crear los registros
             DB::beginTransaction();
             Log::info('CreateDriver: Iniciando transacción DB');
 
-            // 1. Crear usuario
+            // Crear usuario
             $user = User::create([
-                'name'     => $validated['name'],
-                'email'    => $validated['email'],
+                'name' => $validated['name'],
+                'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
-                'status'   => 1, // asumiendo 1 => activo
+                'status' => 1, // 1 = activo
             ]);
-            Log::info('CreateDriver: Usuario creado', ['user_id' => $user->id]);
 
-            // Asignar rol driver
+            Log::info('Usuario creado', ['user_id' => $user->id]);
+
+            // Asignar rol de 'driver' al usuario
             $user->assignRole('driver');
             Log::info('CreateDriver: Rol asignado driver');
 
-            // 2. Crear detalles del conductor
-            $driverDetail = $user->driverDetails()->create([
-                'carrier_id'     => $carrier->id,
-                'middle_name'    => $validated['middle_name'] ?? null,
-                'last_name'      => $validated['last_name'],
+            // Crear el detalle del conductor
+            $userDriverDetail = UserDriverDetail::create([
+                'user_id' => $user->id,
+                'carrier_id' => $carrier->id,
+                'last_name' => $validated['last_name'],
                 'license_number' => $validated['license_number'],
                 'state_of_issue' => $validated['state_of_issue'],
-                'phone'          => $validated['phone'],
-                'date_of_birth'  => $validated['date_of_birth'],
-                'status'         => 1, // asumiendo 1 => activo
-            ]);
-            Log::info('CreateDriver: Detalles del conductor creados', [
-                'driver_detail_id' => $driverDetail->id,
+                'phone' => $validated['phone'],
+                'date_of_birth' => $validated['date_of_birth'],
+                'status' => 1, // 1 = activo
+                'terms_accepted' => $request->has('terms_accepted') ? true : false,
+                'confirmation_token' => Str::random(60), // token de confirmación
             ]);
 
-            // 3. Manejar la foto si existe
+            Log::info('Detalles del driver creados', ['user_driver_id' => $userDriverDetail->id]);
+
+            // Manejar la foto si se ha enviado
             if ($request->hasFile('photo')) {
                 $file = $request->file('photo');
                 Log::info('CreateDriver: Procesando foto de perfil');
@@ -224,76 +209,70 @@ class UserDriverController extends Controller
                     ->toMediaCollection('profile_photo_driver');
             }
 
-            // 4. Crear aplicación
+            // Crear la aplicación del driver
             $application = DriverApplication::create([
                 'user_id' => $user->id,
                 'social_security_number' => $validated['social_security_number'] ?? null,
-                'status' => 'draft',
+                'status' => 'draft', // estado 'draft' para la aplicación
             ]);
             Log::info('CreateDriver: Aplicación creada', ['application_id' => $application->id]);
 
-            // 5. Crear dirección principal
+            // Crear dirección principal
             $address = $application->addresses()->create([
-                'address_line1'    => $validated['address_line1'],
-                'address_line2'    => $validated['address_line2'] ?? null,
-                'city'             => $validated['city'],
-                'state'            => $validated['state'],
-                'zip_code'         => $validated['zip_code'],
+                'address_line1' => $validated['address_line1'],
+                'address_line2' => $validated['address_line2'] ?? null,
+                'city' => $validated['city'],
+                'state' => $validated['state'],
+                'zip_code' => $validated['zip_code'],
                 'lived_three_years' => $livedThreeYears,
-                'from_date'        => $validated['from_date'],
-                'to_date'          => $validated['to_date'] ?? null,
+                'from_date' => $validated['from_date'],
+                'to_date' => $validated['to_date'] ?? null,
             ]);
             Log::info('CreateDriver: Dirección principal creada', ['address_id' => $address->id]);
 
-            // 6. Crear direcciones anteriores si aplica
+            // Si hay direcciones anteriores, las creamos
             if (!$livedThreeYears && count($previousAddresses)) {
                 foreach ($previousAddresses as $prevAddress) {
                     $application->addresses()->create([
-                        'address_line1'    => $prevAddress['address_line1'],
-                        'address_line2'    => $prevAddress['address_line2'] ?? null,
-                        'city'             => $prevAddress['city'],
-                        'state'            => $prevAddress['state'],
-                        'zip_code'         => $prevAddress['zip_code'],
+                        'address_line1' => $prevAddress['address_line1'],
+                        'address_line2' => $prevAddress['address_line2'] ?? null,
+                        'city' => $prevAddress['city'],
+                        'state' => $prevAddress['state'],
+                        'zip_code' => $prevAddress['zip_code'],
                         'lived_three_years' => false,
-                        'from_date'        => $prevAddress['from_date'],
-                        'to_date'          => $prevAddress['to_date'],
+                        'from_date' => $prevAddress['from_date'],
+                        'to_date' => $prevAddress['to_date'],
                     ]);
                 }
             }
 
-            // 7. Crear detalles de la aplicación
-            //    Si applying_position = other, usamos applying_position_other.
-            //    Si how_did_hear = other, usamos how_did_hear_other.
-            //    Si how_did_hear = employee_referral => referral_employee_name.
+            // Crear detalles de la aplicación
             $applicationDetails = $application->details()->create([
                 'applying_position' => $validated['applying_position'] === 'other'
                     ? $validated['applying_position_other']
                     : $validated['applying_position'],
                 'applying_location' => $validated['applying_location'],
-                'eligible_to_work'  => $validated['eligible_to_work'],
+                'eligible_to_work' => $validated['eligible_to_work'],
                 'can_speak_english' => $request->boolean('can_speak_english', false),
-                'has_twic_card'     => $request->boolean('has_twic_card', false),
+                'has_twic_card' => $request->boolean('has_twic_card', false),
                 'twic_expiration_date' => $validated['twic_expiration_date'] ?? null,
-                'expected_pay'         => $validated['expected_pay'] ?? null,
-                'how_did_hear'         => $validated['how_did_hear'] === 'other'
+                'expected_pay' => $validated['expected_pay'] ?? null,
+                'how_did_hear' => $validated['how_did_hear'] === 'other'
                     ? $validated['how_did_hear_other']
                     : $validated['how_did_hear'],
                 'referral_employee_name' => $validated['how_did_hear'] === 'employee_referral'
                     ? $validated['referral_employee_name']
                     : null,
             ]);
-            Log::info('CreateDriver: Detalles de aplicación creados', [
-                'details_id' => $applicationDetails->id,
-            ]);
+            Log::info('CreateDriver: Detalles de aplicación creados', ['details_id' => $applicationDetails->id]);
 
-            // Todo OK, commit
+            // Todo ok, confirmamos la transacción
             DB::commit();
             Log::info('CreateDriver: Transacción completada exitosamente.');
 
-            // Redirigir a donde desees (por ejemplo, al edit del nuevo driver)
             return redirect()->route('admin.carrier.user_drivers.edit', [
-                'carrier' => $carrier->slug,
-                'userDriverDetail' => $driverDetail->driver_number,
+                'carrier' => $carrier,
+                'userDriverDetail' => $userDriverDetail->id
             ])->with('success', 'Driver creado correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -306,303 +285,221 @@ class UserDriverController extends Controller
         }
     }
 
+
     public function edit(Carrier $carrier, UserDriverDetail $userDriverDetail)
     {
-        $user = $userDriverDetail->user;
-        if (!$user) {
-            return back()->withErrors('No se encontró el usuario relacionado al Driver.');
-        }
-
-        // Cargamos la aplicación (si existe) y sus direcciones
-        $application = DriverApplication::where('user_id', $user->id)->first();
-
-        // Para popular el formulario en la vista
-        // (Ajusta si tienes relaciones o métodos directos, por ejemplo $user->driverApplication)
-        $applicationDetails = $application ? $application->details()->first() : null;
-        $addresses = $application ? $application->addresses()->get() : collect([]);
-        // Cargar constantes:
-        $usStates = \App\Helpers\Constants::usStates();
-        $driverPositions = \App\Helpers\Constants::driverPositions();
-        $referralSources = \App\Helpers\Constants::referralSources();
-
-        return view('admin.user_driver.edit', [
-            'carrier' => $carrier,
-            'userDriverDetail' => $userDriverDetail,
-            'user' => $user,
-            'application' => $application,
-            'addresses' => $addresses,
-            'applicationDetails' => $applicationDetails,
-
-            // Opcional: para selects
-            'usStates' => \App\Helpers\Constants::usStates(),
-            'driverPositions' => \App\Helpers\Constants::driverPositions(),
-            'referralSources' => \App\Helpers\Constants::referralSources(),
+        Log::info('Iniciando edición de driver para carrier', [
+            'carrier_id' => $carrier->id,
+            'user_driver_id' => $userDriverDetail->id,
         ]);
+
+        // Recupera los datos para los selects
+        $usStates = Constants::usStates();
+        $driverPositions = Constants::driverPositions();
+        $referralSources = Constants::referralSources();
+
+        // Cargar los datos del driver y sus direcciones
+        $driver = $userDriverDetail->user;
+        $userDriverDetail->load([
+            'application.details',
+            'addresses',
+            'user'
+        ]); // Cargar direcciones
+
+        // Get the main/primary address
+        $mainAddress = $userDriverDetail->addresses()
+            ->orderBy('created_at')
+            ->first();
+
+        // Pasar los datos a la vista
+        return view('admin.user_driver.edit', compact(
+            'carrier',
+            'userDriverDetail',
+            'driver',
+            'usStates',
+            'driverPositions',
+            'referralSources',
+            'mainAddress'
+        ));
     }
 
     /**
      * Actualizar un driver existente (replicando la lógica Livewire de store).
      */
-    public function update(Request $request, Carrier $carrier, UserDriverDetail $userDriverDetail)
+    protected function getValidatedData(Request $request)
     {
-        $user = $userDriverDetail->user;
-        if (!$user) {
-            Log::error('No se encontró el usuario relacionado al UserDriverDetail.', [
-                'user_driver_detail_id' => $userDriverDetail->id,
-            ]);
-            return back()->withErrors('No se encontró el usuario relacionado.')->withInput();
-        }
-
-        Log::info('Iniciando actualización de driver (lógica Livewire).', [
-            'carrier_id' => $carrier->id,
-            'user_id' => $user->id,
+        $validated = $request->validate([
+            // ... other validations ...
+            'referral_employee_name' => 'nullable|string|max:255',
         ]);
 
-        // 1. Definir reglas (muy parecidas a las de store).
-        //    Ajustamos la regla de email para que no choque con el del propio user.
-        $rules = [
-            // Datos de User
-            'name' => ['required', 'string', 'max:255'],
-            'email' => [
-                'required',
-                'email',
-                Rule::unique('users')->ignore($user->id),
-            ],
+        // Set default null for referral_employee_name if not present
+        $validated['referral_employee_name'] = $validated['referral_employee_name'] ?? null;
 
-            // La contraseña es opcional en un update, solo si el admin desea cambiarla
-            'password' => ['nullable', 'min:8', 'confirmed'],
-            'password_confirmation' => ['nullable', 'min:8'],
+        return $validated;
+    }
 
-            // Foto (photo)
-            'photo' => ['nullable', 'image', 'max:2048'],
-
-            // Driver details
-            'middle_name'     => ['nullable', 'string', 'max:255'],
-            'last_name'       => ['required', 'string', 'max:255'],
-            'license_number'  => ['required', 'string', 'max:255'],
-            'state_of_issue'  => ['required', 'string', 'max:255'],
-            'phone'           => ['required', 'string', 'max:15'],
-            'date_of_birth'   => ['required', 'date'],
-
-            // Datos de aplicación
-            'social_security_number' => ['nullable', 'string', 'max:255'],
-
-            // Direcciones
-            'address_line1'   => ['required', 'string', 'max:255'],
-            'address_line2'   => ['nullable', 'string', 'max:255'],
-            'city'            => ['required', 'string', 'max:255'],
-            'state'           => ['required', 'string', 'max:255'],
-            'zip_code'        => ['required', 'string', 'max:255'],
-            'from_date'       => ['required', 'date'],
-            'to_date'         => ['nullable', 'date'],
-            'lived_three_years' => ['boolean'],
-
-            // previous_addresses (direcciones anteriores)
-            'previous_addresses'                                 => ['array'],
-            'previous_addresses.*.address_line1'                => ['required', 'string', 'max:255'],
-            'previous_addresses.*.address_line2'                => ['nullable', 'string', 'max:255'],
-            'previous_addresses.*.city'                         => ['required', 'string', 'max:255'],
-            'previous_addresses.*.state'                        => ['required', 'string', 'max:255'],
-            'previous_addresses.*.zip_code'                     => ['required', 'string', 'max:255'],
-            'previous_addresses.*.from_date'                    => ['required', 'date'],
-            'previous_addresses.*.to_date'                      => ['required', 'date'],
-
-            // Otros campos de la aplicación
-            'applying_position'      => ['required', 'string'],
-            'applying_position_other' => ['required_if:applying_position,other'],
-            'applying_location'      => ['required', 'string', 'max:255'],
-            'eligible_to_work'       => ['required', 'boolean'],
-            'can_speak_english'      => ['sometimes', 'boolean'],
-            'has_twic_card'          => ['sometimes', 'boolean'],
-            'twic_expiration_date'   => ['required_if:has_twic_card,true', 'nullable', 'date'],
-            'how_did_hear'           => ['required', 'string'],
-            'how_did_hear_other'     => ['required_if:how_did_hear,other'],
-            'referral_employee_name' => ['required_if:how_did_hear,employee_referral'],
-            'expected_pay'           => ['nullable', 'string', 'max:255'],
-        ];
-
-        // 2. Mensajes de validación opcionales
-        $messages = [
-            'twic_expiration_date.required_if' => 'Si tiene TWIC card, debe colocar la fecha de expiración.',
-            'applying_position_other.required_if' =>
-            'Si la posición aplicada es "other", debes especificar la posición.',
-            'how_did_hear_other.required_if' =>
-            'Si la fuente de referencia es "other", debes especificarla.',
-            'referral_employee_name.required_if' =>
-            'Si la fuente es "employee_referral", debes poner el nombre del empleado.',
-        ];
-
-        // 3. Validar
-        $validated = $request->validate($rules, $messages);
-
-        // 4. Checar edad mínima
-        $dob = Carbon::parse($validated['date_of_birth']);
-        if ($dob->age < 18) {
-            return back()->withErrors(['date_of_birth' => 'Debes tener al menos 18 años.'])->withInput();
-        }
-
-        // 5. Validar dirección => livedThreeYears o previous_addresses
-        $livedThreeYears = $request->boolean('lived_three_years');
-        $previousAddresses = $validated['previous_addresses'] ?? [];
-        if (!$livedThreeYears && empty($previousAddresses)) {
-            return back()->withErrors(['address_history' => 'Debes proveer 3 años de historial de direcciones.'])
-                ->withInput();
-        }
-
-        // 6. Verificar elegibilidad
-        if (!$validated['eligible_to_work']) {
-            return back()->withErrors(['eligible_to_work' => 'Debes ser elegible para trabajar en U.S.'])->withInput();
-        }
+    public function update(Request $request, Carrier $carrier, UserDriverDetail $userDriverDetail)
+    {
+        Log::info('Iniciando actualización de driver', [
+            'carrier_id' => $carrier->id,
+            'user_driver_id' => $userDriverDetail->id,
+            'request_data' => $request->except(['password', 'password_confirmation']),
+        ]);
 
         try {
-            DB::beginTransaction();
-
-            // === A) Actualizar Usuario
-            $user->update([
-                'name'  => $validated['name'],
-                'email' => $validated['email'],
-                // si password no es null, lo actualizamos
-                'password' => $validated['password']
-                    ? Hash::make($validated['password'])
-                    : $user->password,
+            // Validación
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email,' . $userDriverDetail->user->id,
+                'password' => 'nullable|min:8|confirmed',
+                'middle_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'license_number' => 'required|string|max:255',
+                'state_of_issue' => 'required|string|max:255',
+                'phone' => 'required|string|max:15',
+                'date_of_birth' => 'required|date',
+                'status' => 'required|integer|in:0,1,2',
+                'social_security_number' => 'nullable|string|max:255',
+                'address_line1' => 'required|string|max:255',
+                'address_line2' => 'nullable|string|max:255',
+                'city' => 'required|string|max:255',
+                'state' => 'required|string|max:255',
+                'zip_code' => 'required|string|max:255',
+                'from_date' => 'required|date',
+                'to_date' => 'nullable|date',
+                'lived_three_years' => 'boolean',
+                'previous_addresses' => 'array',
+                'previous_addresses.*.address_line1' => 'required|string|max:255',
+                'previous_addresses.*.city' => 'required|string|max:255',
+                'previous_addresses.*.state' => 'required|string|max:255',
+                'previous_addresses.*.zip_code' => 'required|string|max:255',
+                'previous_addresses.*.from_date' => 'required|date',
+                'previous_addresses.*.to_date' => 'required|date',
+                'applying_position' => 'required|string',
+                'applying_position_other' => 'required_if:applying_position,other',
+                'applying_location' => 'required|string|max:255',
+                'eligible_to_work' => 'required|boolean',
+                'can_speak_english' => 'sometimes|boolean',
+                'has_twic_card' => 'sometimes|boolean',
+                'twic_expiration_date' => 'nullable|date|required_if:has_twic_card,true',
+                'how_did_hear' => 'required|string',
+                'how_did_hear_other' => 'required_if:how_did_hear,other',
+                'referral_employee_name' => 'required_if:how_did_hear,employee_referral',
+                'expected_pay' => 'nullable|string|max:255',
             ]);
 
-            // === B) Actualizar detalles del driver
+            // Actualizamos el usuario
+            $user = $userDriverDetail->user;
+            $user->update([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => $validated['password'] ? Hash::make($validated['password']) : $user->password,
+            ]);
+
+            // Actualizamos el detalle del conductor
             $userDriverDetail->update([
-                'middle_name'    => $validated['middle_name'] ?? null,
-                'last_name'      => $validated['last_name'],
+                'middle_name' => $validated['middle_name'],
+                'last_name' => $validated['last_name'],
                 'license_number' => $validated['license_number'],
                 'state_of_issue' => $validated['state_of_issue'],
-                'phone'          => $validated['phone'],
-                'date_of_birth'  => $validated['date_of_birth'],
-                // 'status' => 1 si lo manejas, o según tu lógica
+                'phone' => $validated['phone'],
+                'date_of_birth' => $validated['date_of_birth'],
+                'status' => $validated['status'],
             ]);
 
-            // === C) Manejo de foto
-            if ($request->hasFile('photo')) {
-                // Eliminamos la foto anterior
-                $user->clearMediaCollection('profile_photo_driver');
-                // Subimos la nueva
-                $user->addMedia($request->file('photo'))
-                    ->usingFileName(Str::slug($user->name) . '.webp')
-                    ->toMediaCollection('profile_photo_driver');
-            }
+            // Actualizar dirección
+            // $userDriverDetail->addresses()->update([
+            //     'address_line1' => $validated['address_line1'],
+            //     'address_line2' => $validated['address_line2'],
+            //     'city' => $validated['city'],
+            //     'state' => $validated['state'],
+            //     'zip_code' => $validated['zip_code'],
+            //     'from_date' => $validated['from_date'],
+            //     'to_date' => $validated['to_date'],
+            //     'lived_three_years' => $validated['lived_three_years'],
+            // ]);
 
-            // === D) Obtener o crear la DriverApplication
-            $application = DriverApplication::where('user_id', $user->id)->first();
-            if (!$application) {
-                // Si no existe, la creamos. (o puedes forzar error, depende de tu lógica)
-                $application = DriverApplication::create([
-                    'user_id' => $user->id,
-                    'social_security_number' => $validated['social_security_number'] ?? null,
-                    'status' => 'draft',
-                ]);
-            } else {
-                // Solo actualizamos SSN si procede
-                $application->update([
-                    'social_security_number' => $validated['social_security_number'] ?? null,
-                    // status => 'draft', o lo que prefieras
-                ]);
-            }
+            $userDriverDetail->addresses()->updateOrCreate(
+                ['primary' => true],
+                [
+                    'address_line1' => $validated['address_line1'],
+                    'address_line2' => $validated['address_line2'],
+                    'city' => $validated['city'],
+                    'state' => $validated['state'],
+                    'zip_code' => $validated['zip_code'],
+                    'from_date' => $validated['from_date'],
+                    'to_date' => $validated['to_date'],
+                    'lived_three_years' => $validated['lived_three_years'],
+                ]
+            );
 
-            // === E) Actualizar direcciones
-            //       Para simplificar, borramos todas y las re-creamos (similar a store).
-            $application->addresses()->delete();
-
-            // Dirección principal
-            $application->addresses()->create([
-                'address_line1'     => $validated['address_line1'],
-                'address_line2'     => $validated['address_line2'] ?? null,
-                'city'              => $validated['city'],
-                'state'             => $validated['state'],
-                'zip_code'          => $validated['zip_code'],
-                'lived_three_years' => $livedThreeYears,
-                'from_date'         => $validated['from_date'],
-                'to_date'           => $validated['to_date'] ?? null,
-            ]);
-
-            // Direcciones anteriores
-            if (!$livedThreeYears && count($previousAddresses)) {
-                foreach ($previousAddresses as $prev) {
-                    $application->addresses()->create([
-                        'address_line1'     => $prev['address_line1'],
-                        'address_line2'     => $prev['address_line2'] ?? null,
-                        'city'              => $prev['city'],
-                        'state'             => $prev['state'],
-                        'zip_code'          => $prev['zip_code'],
-                        'lived_three_years' => false,
-                        'from_date'         => $prev['from_date'],
-                        'to_date'           => $prev['to_date'],
+            if (!$validated['lived_three_years']) {
+                // Eliminar direcciones anteriores existentes
+                $userDriverDetail->addresses()->where('primary', false)->delete();
+                
+                // Obtener el total de años
+                $mainAddressYears = Carbon::parse($validated['from_date'])
+                    ->diffInYears(Carbon::parse($validated['to_date'] ?? now()));
+                $totalYears = $mainAddressYears;
+                
+                // Crear las direcciones previas en orden, sumando años hasta alcanzar 3
+                foreach ($validated['previous_addresses'] as $prevAddress) {
+                    $addressYears = Carbon::parse($prevAddress['from_date'])
+                        ->diffInYears(Carbon::parse($prevAddress['to_date']));
+                    $totalYears += $addressYears;
+                    
+                    // Crear la dirección previa
+                    $userDriverDetail->addresses()->create([
+                        'primary' => false,
+                        'address_line1' => $prevAddress['address_line1'],
+                        'address_line2' => $prevAddress['address_line2'] ?? null,
+                        'city' => $prevAddress['city'],
+                        'state' => $prevAddress['state'],
+                        'zip_code' => $prevAddress['zip_code'],
+                        'from_date' => $prevAddress['from_date'],
+                        'to_date' => $prevAddress['to_date']
                     ]);
+            
+                    // Si ya alcanzamos 3 años, no procesar más direcciones
+                    if ($totalYears >= 3) break;
                 }
             }
-
-            // === F) Actualizar detalles de la aplicación
-            //       Si no existen, creamos. De lo contrario, actualizamos.
-            $applicationDetails = $application->details()->first();
-            if (!$applicationDetails) {
-                $applicationDetails = $application->details()->create([
-                    'applying_position' => $validated['applying_position'] === 'other'
-                        ? $validated['applying_position_other']
-                        : $validated['applying_position'],
-                    'applying_location' => $validated['applying_location'],
-                    'eligible_to_work'  => $validated['eligible_to_work'],
-                    'can_speak_english' => $request->boolean('can_speak_english', false),
-                    'has_twic_card'     => $request->boolean('has_twic_card', false),
-                    'twic_expiration_date' => $validated['twic_expiration_date'] ?? null,
-                    'expected_pay'         => $validated['expected_pay'] ?? null,
-                    'how_did_hear'         => $validated['how_did_hear'] === 'other'
-                        ? $validated['how_did_hear_other']
-                        : $validated['how_did_hear'],
-                    'referral_employee_name' => $validated['how_did_hear'] === 'employee_referral'
-                        ? $validated['referral_employee_name']
-                        : null,
-                ]);
-            } else {
-                $applicationDetails->update([
-                    'applying_position' => $validated['applying_position'] === 'other'
-                        ? $validated['applying_position_other']
-                        : $validated['applying_position'],
-                    'applying_location' => $validated['applying_location'],
-                    'eligible_to_work'  => $validated['eligible_to_work'],
-                    'can_speak_english' => $request->boolean('can_speak_english', false),
-                    'has_twic_card'     => $request->boolean('has_twic_card', false),
-                    'twic_expiration_date' => $validated['twic_expiration_date'] ?? null,
-                    'expected_pay'         => $validated['expected_pay'] ?? null,
-                    'how_did_hear'         => $validated['how_did_hear'] === 'other'
-                        ? $validated['how_did_hear_other']
-                        : $validated['how_did_hear'],
-                    'referral_employee_name' => $validated['how_did_hear'] === 'employee_referral'
-                        ? $validated['referral_employee_name']
-                        : null,
-                ]);
-            }
+            // Actualizamos los detalles de la aplicación
+            $applicationDetails = $userDriverDetail->application->details()->update([
+                'applying_position' => $validated['applying_position'] === 'other'
+                    ? $validated['applying_position_other']
+                    : $validated['applying_position'],
+                'applying_location' => $validated['applying_location'],
+                'eligible_to_work' => $validated['eligible_to_work'],
+                'can_speak_english' => $validated['can_speak_english'],
+                'has_twic_card' => $validated['has_twic_card'],
+                'twic_expiration_date' => $validated['twic_expiration_date'],
+                'expected_pay' => $validated['expected_pay'],
+                'how_did_hear' => $validated['how_did_hear'] === 'other'
+                    ? $validated['how_did_hear_other']
+                    : $validated['how_did_hear'],
+                'referral_employee_name' => $validated['referral_employee_name'],
+            ]);
 
             DB::commit();
-            Log::info('Driver actualizado exitosamente.', [
-                'user_id' => $user->id,
-                'carrier_id' => $carrier->id,
-            ]);
 
-            return redirect()
-                ->route('admin.carrier.user_drivers.edit', [
-                    'carrier' => $carrier->slug,
-                    'userDriverDetail' => $userDriverDetail->driver_number,
-                ])
-                ->with('success', 'Driver actualizado correctamente.');
+            return redirect()->route('admin.carrier.user_drivers.index', [
+                'carrier' => $carrier->slug,
+                'userDriverDetail' => $userDriverDetail->driver_number,
+            ])->with('success', 'Driver actualizado correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error al actualizar driver', [
+            Log::error('Error en la actualización de driver', [
                 'error' => $e->getMessage(),
-                'stack' => $e->getTraceAsString(),
-                'user_id' => $user->id,
-                'carrier_id' => $carrier->id,
+                'trace' => $e->getTraceAsString(),
             ]);
-            return back()
-                ->withErrors(['error' => 'Error al actualizar el driver: ' . $e->getMessage()])
+
+            return back()->withErrors(['error' => 'Error al actualizar el driver: ' . $e->getMessage()])
                 ->withInput();
         }
     }
+
 
     /**
      * Eliminar un driver.

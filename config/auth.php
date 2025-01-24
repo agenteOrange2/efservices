@@ -85,11 +85,12 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\UserCarrier::class, // Modelo correcto para user_carrier.
         ],
-        'user_drivers' => [
+*/        
+        'drivers' => [
             'driver' => 'eloquent',
-            'model' => App\Models\UserDriver::class, // Modelo correcto para user_driver.
+            'model' => App\Models\UserDriverDetail::class, // Modelo correcto para user_driver.
         ],
-*/
+
         // 'users' => [
         //     'driver' => 'database',
         //     'table' => 'users',
