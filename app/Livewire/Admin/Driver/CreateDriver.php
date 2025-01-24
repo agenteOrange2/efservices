@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Driver;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Carrier;
+use App\Models\UserDriverDetail;
 use Livewire\Component;
 use App\Helpers\Constants;
 use Illuminate\Support\Facades\DB;
@@ -53,13 +54,10 @@ class CreateDriver extends Component
     public $previous_addresses = [];
     public $lived_three_years = false;
 
+
     // Calculados
-    public $totalAddressYears = 0;
-    public $remainingYearsNeeded = 3;
-    public $currentAddressDuration = '';
-    public $totalYears = 0;
-    public $remainingYears = 3;
     public $isAddressValid = false;
+
 
 
     // Application details fields
@@ -115,6 +113,7 @@ class CreateDriver extends Component
     ];
 
     // Marcamos como nullable, con un valor inicial de null
+
     protected ?AddressHistoryService $addressHistoryService = null;
 
 
@@ -129,25 +128,17 @@ class CreateDriver extends Component
         $this->referralSources = Constants::referralSources();
     }
 
+    private function loadDriverData($userDriverDetail)
+    {
+        $user = $userDriverDetail->user;
+        $this->name = $user->name;
+        $this->email = $user->email;
+        // Cargar el resto de campos...
+    }
+
     private function validateAddressHistory()
     {
-        // Nos aseguramos de que no sea null antes de llamar al método
-        if (! $this->addressHistoryService) {
-            return false;
-        }
-
-        $summary = $this->addressHistoryService->validateAddressHistory(
-            $this->from_date,
-            $this->to_date,
-            $this->previous_addresses
-        );
-
-        $this->totalAddressYears = $summary['totalYears'];
-        $this->remainingYearsNeeded = $summary['remainingYears'];
-        $this->currentAddressDuration = $summary['currentDuration'];
-        $this->previous_addresses = $summary['previousAddresses'];
-
-        return $summary['isValid'];
+        return $this->lived_three_years || $this->isAddressValid;
     }
 
 
@@ -156,177 +147,36 @@ class CreateDriver extends Component
         $this->activeTab = $tab;
     }
 
-
-    public function validateAddressYears()
-    {
-        $totalYears = $this->calculateAddressYears();
-
-        if ($totalYears < 3 && !$this->lived_three_years) {
-            $this->addError('address_years', sprintf('You need %.1f more years of address history', 3 - $totalYears));
-            return false;
-        }
-        return true;
-    }
-
-    public function getAddressTimeAttribute($from_date, $to_date = null)
-    {
-        if (!$from_date) return '';
-
-        $from = Carbon::parse($from_date);
-        $to = $to_date ? Carbon::parse($to_date) : Carbon::now();
-
-        return $to_date ?
-            'Lived here for ' . $this->formatDuration($from->diff($to)) :
-            'Current residence since ' . $from->format('M Y');
-    }
-
-    private function formatDuration($interval)
-    {
-        $parts = [];
-        if ($interval->y > 0) $parts[] = $interval->y . ' year(s)';
-        if ($interval->m > 0) $parts[] = $interval->m . ' month(s)';
-        return implode(' and ', $parts);
-    }
-
     public function addAddress()
     {
 
-        if ($this->isAddressValid || $this->lived_three_years) {
-            return;
-        }
+        if ($this->isAddressValid || $this->lived_three_years) return;
 
-        // Lógica para añadir una address
         $this->previous_addresses[] = [
             'address_line1' => '',
-            'city'          => '',
-            'state'         => '',
-            'zip_code'      => '',
-            'from_date'     => '',
-            'to_date'       => '',
-            'duration'      => '',
+            'city' => '',
+            'state' => '',
+            'zip_code' => '',
+            'from_date' => '',
+            'to_date' => ''
         ];
     }
 
-    // Validate when dates are updated
-    public function updatedFromDate()
-    {
-        if (!$this->addressHistoryService) return;
-        $this->calculateTotalYears();
-    }
-    public function updatedToDate()
-    {
-        if (!$this->addressHistoryService) return;
-        $this->calculateTotalYears();
-    }
-
-    public function updatedPreviousAddresses($value, $key)
-    {
-        if (!$this->addressHistoryService) return;
-
-        if (str_contains($key, 'from_date') || str_contains($key, 'to_date')) {
-            $this->calculateTotalYears();
-        }
-    }
-
-    private function calculateTotalYears()
-    {
-        if (!$this->from_date) return;
-
-        $summary = $this->addressHistoryService->validateAddressHistory(
-            $this->from_date,
-            $this->to_date,
-            $this->previous_addresses
-        );
-
-        // Actualizar todas las propiedades del componente
-        $this->totalYears = $summary['totalYears'];
-        $this->remainingYears = $summary['remainingYears'];
-        $this->currentAddressDuration = $summary['currentDuration'];
-        $this->isAddressValid = $summary['isValid'];
-
-        // Debug
-        logger()->info('Address Summary', [
-            'totalYears' => $this->totalYears,
-            'remainingYears' => $this->remainingYears,
-            'currentDuration' => $this->currentAddressDuration,
-            'isValid' => $this->isAddressValid
-        ]);
-    }
 
     public function updatedLivedThreeYears($value)
     {
-        if (!$this->addressHistoryService) {
-            return;
-        }
-
         if ($value) {
-            $summary = $this->validateAddressHistory();
-
-            // Verificar que tengamos un array y la propiedad currentYears
-            if (is_array($summary) && isset($summary['currentYears']) && $summary['currentYears'] >= 3) {
-                $this->isAddressValid = true;
-                $this->totalYears = 3;
-                $this->remainingYears = 0;
-                $this->previous_addresses = [];
-            } else {
-                // Si no cumple con los 3 años, revertir
-                $this->lived_three_years = false;
-                $this->addError('lived_three_years', 'You must have lived at this address for at least 3 years to check this box');
-            }
-        } else {
-            $this->updateAddressHistory();
-        }
-    }
-
-    private function updateAddressHistory()
-    {
-        if (!$this->addressHistoryService) {
-            return;
-        }
-
-        $summary = $this->addressHistoryService->validateAddressHistory(
-            $this->from_date,
-            $this->to_date,
-            $this->previous_addresses
-        );
-
-        $this->totalYears = $summary['totalYears'];
-        $this->remainingYears = $summary['remainingYears'];
-        $this->currentAddressDuration = $summary['currentDuration'];
-        $this->isAddressValid = $summary['isValid'];
-
-        // Actualizar automáticamente lived_three_years si la dirección actual califica
-        if ($summary['currentYears'] >= 3) {
-            $this->lived_three_years = true;
-            $this->isAddressValid = true;
+            $this->to_date = null;
             $this->previous_addresses = [];
-        }
-
-        if (isset($summary['previousAddresses'])) {
-            $this->previous_addresses = $summary['previousAddresses'];
+            $this->isAddressValid = true;
         }
     }
 
-    private function formatAddressDuration($from, $to, $isCurrent = false)
-    {
-        $years = $from->diffInYears($to);
-        $months = $from->copy()->addYears($years)->diffInMonths($to);
-
-        $duration = [];
-        if ($years > 0) $duration[] = "{$years} year(s)";
-        if ($months > 0) $duration[] = "{$months} month(s)";
-
-        $timeString = implode(' and ', $duration);
-        return $isCurrent ? "Current residence ($timeString)" : "Lived here for $timeString";
-    }
 
     public function removeAddress($index)
     {
         unset($this->previous_addresses[$index]);
         $this->previous_addresses = array_values($this->previous_addresses);
-
-        // Revalidar
-        $this->validateAddressHistory();
     }
 
     // Método para manejar el cambio en eligible_to_work
@@ -416,8 +266,6 @@ class CreateDriver extends Component
             Log::info('CreateDriver: Validación de historial de direcciones', [
                 'is_valid' => $isValid,
                 'lived_three_years' => $this->lived_three_years,
-                'total_years' => $this->totalAddressYears,
-                'remaining_years' => $this->remainingYearsNeeded
             ]);
 
             if (!$isValid && !$this->lived_three_years) {
@@ -492,6 +340,21 @@ class CreateDriver extends Component
                     'to_date' => $this->to_date,
                 ]);
 
+                if (!empty($this->previous_addresses)) {
+                    foreach ($this->previous_addresses as $prevAddress) {
+                        $application->addresses()->create([
+                            'address_line1' => $prevAddress['address_line1'],
+                            'address_line2' => $prevAddress['address_line2'] ?? null,
+                            'city' => $prevAddress['city'],
+                            'state' => $prevAddress['state'],
+                            'zip_code' => $prevAddress['zip_code'],
+                            'lived_three_years' => false,
+                            'from_date' => $prevAddress['from_date'],
+                            'to_date' => $prevAddress['to_date'],
+                        ]);
+                    }
+                }
+
                 Log::info('CreateDriver: Dirección creada', ['address_id' => $address->id]);
 
                 // Crear detalles de la aplicación
@@ -518,8 +381,14 @@ class CreateDriver extends Component
                 DB::commit();
                 Log::info('CreateDriver: Transacción completada exitosamente');
 
+                /*
                 session()->flash('success', 'Driver created successfully');
                 return redirect()->route('admin.carrier.user_drivers.index', $this->carrier);
+                */
+                $this->redirectRoute('admin.carrier.user_drivers.edit', [
+                    'carrier' => $this->carrier->slug,
+                    'userDriverDetail' => $driverDetail->driver_number
+                ]);
             } catch (\Exception $e) {
                 DB::rollBack();
                 Log::error('CreateDriver: Error en la transacción DB', [
@@ -545,6 +414,8 @@ class CreateDriver extends Component
 
     public function render()
     {
-        return view('livewire.admin.driver.create-driver');
+        return view('livewire.admin.driver.create-driver', [
+            'carrier' => $this->carrier
+        ]);
     }
 }

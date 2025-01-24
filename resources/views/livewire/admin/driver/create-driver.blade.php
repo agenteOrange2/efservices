@@ -1,5 +1,6 @@
 {{-- resources/views/livewire/admin/driver/create-driver.blade.php --}}
 <div>
+
     <div class="mb-4 border-b border-gray-200">
         <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
             <li class="mr-2">
@@ -141,7 +142,8 @@
                                         </div>
                                     </div>
                                     <div class="mt-3 w-full flex-1 xl:mt-0" x-data="{ mask: null }"
-                                        x-init="mask = IMask($refs.phone, { mask: '(000) 000-0000' })">
+                                    x-init="if ($refs.phone) { mask = IMask($refs.phone, { mask: '(000) 000-0000' }); }
+                                    if ($refs.ssn) { mask = IMask($refs.ssn, { mask: '000-00-0000' }); }">
                                         <x-base.form-input x-ref="phone" wire:model="phone" type="text"
                                             placeholder="(555) 555-5555" />
                                         @error('phone')
@@ -152,24 +154,24 @@
 
                                 {{-- Birth Day --}}
                                 <div
-                                class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
-                                <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
-                                    <div class="text-left">
-                                        <div class="flex items-center">
-                                            <div class="font-medium">Birth Date</div>
-                                            <div
-                                                class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                                Required</div>
+                                    class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                                    <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                                        <div class="text-left">
+                                            <div class="flex items-center">
+                                                <div class="font-medium">Birth Date</div>
+                                                <div
+                                                    class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                                                    Required</div>
+                                            </div>
                                         </div>
                                     </div>
+                                    <div class="mt-3 w-full flex-1 xl:mt-0">
+                                        <x-base.form-input wire:model="date_of_birth" type="date" />
+                                        @error('date_of_birth')
+                                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
                                 </div>
-                                <div class="mt-3 w-full flex-1 xl:mt-0">
-                                    <x-base.form-input wire:model="date_of_birth" type="date" />
-                                    @error('date_of_birth')
-                                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
 
                                 <!-- State of ISSUE -->
                                 <div
@@ -189,7 +191,8 @@
                                         </div>
                                     </div>
                                     <div class="mt-3 w-full flex-1 xl:mt-0">
-                                        <select wire:model="state_of_issue" class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1 mt-2 sm:mr-2">
+                                        <select wire:model="state_of_issue"
+                                            class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1 mt-2 sm:mr-2">
                                             <option value="">Select State</option>
                                             @foreach ($usStates as $code => $name)
                                                 <option value="{{ $code }}">{{ $name }}</option>
@@ -271,13 +274,13 @@
                                 <!-- Status -->
                                 <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
                                     <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
-                                        
+
                                         <div class="flex items-center">
                                             <div class="font-medium">Status</div>
                                             <div
-                                            class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                            Required
-                                        </div>
+                                                class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                                                Required
+                                            </div>
 
                                         </div>
                                     </div>
@@ -331,171 +334,196 @@
                 </div>
 
                 <!-- Address -->
-                <div class="bg-white p-4 rounded-lg shadow">
+                <div class="bg-white p-4 rounded-lg shadow" x-data="addressHistory({
+                    fromDate: @entangle('from_date'),
+                    toDate: @entangle('to_date'),
+                    livedThreeYears: @entangle('lived_three_years'),
+                    previousAddresses: @entangle('previous_addresses'),
+                    isAddressValid: @entangle('isAddressValid'),
+                })">
                     <h3 class="text-lg font-semibold mb-4">Address Details</h3>
+
+                    <!-- Current Address Form -->
                     <div class="mt-3 w-full flex-1 xl:mt-0">
-                        <div class="space-y-4">
-                            <!-- Current Address Duration Display -->
-                            @if ($currentAddressDuration)
-                                <div class="text-sm text-gray-600">Current residence: {{ $currentAddressDuration }}
-                                </div>
-                            @endif
-
-                            <!-- Address Total Summary -->
-                            <div class="text-sm {{ $isAddressValid || $lived_three_years ? 'text-green-600' : 'text-amber-600' }}">
-                                Total years: {{ number_format($totalYears, 1) }}
-                                @if ($remainingYears > 0)
-                                    ({{ number_format($remainingYears, 1) }} more needed)
-                                @endif
-                            </div>
-
-                            <!-- Previous Addresses Duration -->
-                            @foreach ($previous_addresses as $index => $address)
-                                @if (isset($address['duration']))
-                                    <div class="text-sm text-gray-600 mt-2">
-                                        {{ $address['duration'] }}
-                                    </div>
-                                @endif
-                            @endforeach
+                        <x-base.form-input wire:model="address_line1" type="text" placeholder="Address Line 1" />
+                        <x-base.form-input wire:model="address_line2" type="text" placeholder="Address Line 2" />
+                        <div class="grid grid-cols-3 gap-4">
+                            <x-base.form-input wire:model="city" type="text" placeholder="City" />
+                            <x-base.form-input wire:model="state" type="text" placeholder="State" />
+                            <x-base.form-input wire:model="zip_code" type="text" placeholder="ZIP Code" />
                         </div>
                     </div>
-                    <div class="mt-7">
-                        <div class="box--stacked flex flex-col">
-                            <!-- Address Information -->
-                            <div
-                                class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
-                                <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
-                                    <div class="text-left">
-                                        <div class="flex items-center">
-                                            <div class="font-medium">Current Address</div>
-                                            <div
-                                                class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                                Required</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="mt-3 w-full flex-1 xl:mt-0">
-                                    <div class="space-y-4">
-                                        <x-base.form-input wire:model="address_line1" type="text"
-                                            placeholder="Address Line 1" />
-                                        <x-base.form-input wire:model="address_line2" type="text"
-                                            placeholder="Address Line 2" />
-                                        <div class="grid grid-cols-3 gap-4">
-                                            <x-base.form-input wire:model="city" type="text" placeholder="City" />
-                                            <x-base.form-input wire:model="state" type="text"
-                                                placeholder="State" />
-                                            <x-base.form-input wire:model="zip_code" type="text"
-                                                placeholder="ZIP Code" />
-                                        </div>
-                                    </div>
-                                    @error('address_line1')
-                                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
+
+                    <!-- Duration Inputs -->
+                    <div class="mt-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm mb-1">From Date</label>
+                                <x-base.form-input x-model="fromDate" type="date" @change="calculateTotal()" />
                             </div>
-
-                            <div
-                                class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
-                                <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
-                                    <div class="text-left">
-                                        <div class="flex items-center">
-                                            <div class="font-medium">Address Duration</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="mt-3 w-full flex-1 xl:mt-0">
-                                    <div class="space-y-4">
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label class="text-sm mb-1">From Date</label>
-                                                <x-base.form-input wire:model.live="from_date" type="date" />
-                                            </div>
-                                            <div>
-                                                <label class="text-sm mb-1">To Date</label>
-                                                <x-base.form-input wire:model.live="to_date" type="date" />
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center">
-                                            <x-base.form-check.input wire:model.live="lived_three_years"
-                                                type="checkbox" class="mr-2" />
-                                            <span>I have lived at this address for 3+ years</span>
-                                        </div>
-                                        @error('lived_three_years')
-                                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                </div>
+                            <div>
+                                <label class="text-sm mb-1">To Date</label>
+                                <x-base.form-input x-model="toDate" type="date" @change="calculateTotal()" />
                             </div>
+                        </div>
 
-                            @if (!$lived_three_years)
-                                <div
-                                    class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
-                                    <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
-                                        <div class="text-left">
-                                            <div class="flex items-center">
-                                                <div class="font-medium">Previous Addresses</div>
-                                                <div
-                                                    class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                                    Required</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3 w-full flex-1 xl:mt-0">
-                                        @foreach ($previous_addresses as $index => $address)
-                                            <div class="border p-4 rounded-lg mb-4">
-                                                <div class="space-y-4">
-                                                    <x-base.form-input
-                                                        wire:model="previous_addresses.{{ $index }}.address_line1"
-                                                        type="text" placeholder="Address Line 1" />
-                                                    <x-base.form-input
-                                                        wire:model="previous_addresses.{{ $index }}.city"
-                                                        type="text" placeholder="City" />
-                                                    <div class="grid grid-cols-2 gap-4">
-                                                        <x-base.form-input
-                                                            wire:model="previous_addresses.{{ $index }}.state"
-                                                            type="text" placeholder="State" />
-                                                        <x-base.form-input
-                                                            wire:model="previous_addresses.{{ $index }}.zip_code"
-                                                            type="text" placeholder="ZIP" />
-                                                    </div>
-                                                    <div class="grid grid-cols-2 gap-4">
-                                                        <div>
-                                                            <label class="text-sm mb-1">From Date</label>
-                                                            <x-base.form-input
-                                                                wire:model.live="previous_addresses.{{ $index }}.from_date"
-                                                                type="date" />
-                                                        </div>
-                                                        <div>
-                                                            <label class="text-sm mb-1">To Date</label>
-                                                            <x-base.form-input
-                                                                wire:model.live="previous_addresses.{{ $index }}.to_date"
-                                                                type="date" />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <button wire:click="removeAddress({{ $index }})"
-                                                    type="button" class="text-red-500 mt-2">
-                                                    Remove Address
-                                                </button>
-                                            </div>
-                                        @endforeach
-
-                                        
-
-                                        <button wire:click="addAddress" type="button"
-                                            class="btn btn-outline-primary {{ $isAddressValid || $lived_three_years ? 'opacity-50 cursor-not-allowed' : '' }}"
-                                            {{ $isAddressValid || $lived_three_years ? 'disabled' : '' }}>
-                                            <x-base.lucide class="w-4 h-4 mr-2" icon="Plus" />
-                                            Add Previous Address
-                                        </button>
-                                    </div>
-                                </div>
-                            @endif
-
-
+                        <div class="flex items-center mt-4">
+                            <x-base.form-check.input x-model="livedThreeYears" type="checkbox" class="mr-2" />
+                            <span>I have lived at this address for 3+ years</span>
                         </div>
                     </div>
+
+                    <!-- Status Display -->
+                    <div class="mt-4">
+                        <template x-if="fromDate">
+                            <div class="text-sm">
+                                <span
+                                    x-text="'Current residence: ' + calculateDuration(fromDate, toDate).toFixed(1) + ' years'"></span>
+                            </div>
+                        </template>
+
+                        <div class="text-sm font-semibold"
+                            :class="{
+                                'text-green-600': this.isAddressValid || livedThreeYears,
+                                'text-amber-600': !this
+                                    .isAddressValid && !livedThreeYears
+                            }">
+                            <template x-if="livedThreeYears">
+                                <span>Total Years: 3.0 (Complete)</span>
+                            </template>
+                            <template x-if="!livedThreeYears">
+                                <div>
+                                    <span x-text="`Total years: ${totalYears.toFixed(1)}`"></span>
+                                    <template x-if="!this.isAddressValid">
+                                        <span x-text="` (${(3 - totalYears).toFixed(1)} more years needed)`"></span>
+                                    </template>
+                                    <template x-if="this.isAddressValid">
+                                        <span> (Successful)</span>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Previous Addresses -->
+                    <template x-if="!livedThreeYears && !this.isAddressValid"">
+                        <div class="mt-4">
+                            <template x-for="(addr, index) in previousAddresses" :key="index">
+                                <div class="border p-4 rounded-lg mb-4">
+                                    <div class="grid grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label class="text-sm mb-1">From Date</label>
+                                            <x-base.form-input x-model="addr.from_date" type="date"
+                                                @change="calculateTotal()" />
+                                        </div>
+                                        <div>
+                                            <label class="text-sm mb-1">To Date</label>
+                                            <x-base.form-input x-model="addr.to_date" type="date"
+                                                @change="calculateTotal()" />
+                                        </div>
+                                    </div>
+
+                                    <x-base.form-input x-model="addr.address_line1" type="text"
+                                        placeholder="Address Line 1" />
+                                    <div class="grid grid-cols-3 gap-4 mt-2">
+                                        <x-base.form-input x-model="addr.city" type="text" placeholder="City" />
+                                        <x-base.form-input x-model="addr.state" type="text" placeholder="State" />
+                                        <x-base.form-input x-model="addr.zip_code" type="text"
+                                            placeholder="ZIP Code" />
+                                    </div>
+
+                                    <button @click="removeAddress(index)" type="button"
+                                        class="btn btn-outline-danger mt-3">
+                                        <x-base.lucide class="w-4 h-4 mr-2" icon="Trash2" />
+                                        Remove Address
+                                    </button>
+                                </div>
+                            </template>
+
+                            <button @click="addAddress" type="button" class="btn btn-outline-primary"
+                                :class="{ 'opacity-50': this.isAddressValid || livedThreeYears }"
+                                :disabled="this.isAddressValid || livedThreeYears">
+                                <x-base.lucide class="w-4 h-4 mr-2" icon="Plus" />
+                                Add Previous Address
+                            </button>
+                        </div>
+                    </template>
                 </div>
+
+                @push('scripts')
+                    <script>
+                        function addressHistory(config) {
+                            return {
+                                fromDate: config.fromDate,
+                                toDate: config.toDate,
+                                livedThreeYears: config.livedThreeYears,
+                                previousAddresses: config.previousAddresses,
+                                isAddressValid: config.isAddressValid,
+                                totalYears: 0,
+
+                                init() {
+                                    this.calculateTotal();
+                                    this.$watch('fromDate', () => this.calculateTotal());
+                                    this.$watch('toDate', () => this.calculateTotal());
+                                    this.$watch('previousAddresses', () => this.calculateTotal(), {
+                                        deep: true
+                                    });
+                                    this.$watch('livedThreeYears', (value) => {
+                                        if (value) {
+                                            this.totalYears = 3;
+                                            this.isAddressValid = true;
+                                        } else {
+                                            this.calculateTotal();
+                                        }
+                                    });
+                                },
+
+                                calculateDuration(from, to) {
+                                    if (!from) return 0;
+                                    const fromDate = new Date(from);
+                                    const toDate = to ? new Date(to) : new Date();
+                                    const diffMonths = (toDate.getFullYear() - fromDate.getFullYear()) * 12 +
+                                        (toDate.getMonth() - fromDate.getMonth());
+                                    return diffMonths / 12;
+                                },
+
+                                calculateTotal() {
+                                    if (this.livedThreeYears) {
+                                        this.totalYears = 3;
+                                        this.isAddressValid = true;
+                                        return;
+                                    }
+
+                                    this.totalYears = this.calculateDuration(this.fromDate, this.toDate);
+                                    this.previousAddresses.forEach(addr => {
+                                        if (addr.from_date && addr.to_date) {
+                                            this.totalYears += this.calculateDuration(addr.from_date, addr.to_date);
+                                        }
+                                    });
+
+                                    this.isAddressValid = this.totalYears >= 3;
+                                },
+
+                                addAddress() {
+                                    if (this.isAddressValid || this.livedThreeYears) return;
+
+                                    this.previousAddresses.push({
+                                        address_line1: '',
+                                        city: '',
+                                        state: '',
+                                        zip_code: '',
+                                        from_date: '',
+                                        to_date: ''
+                                    });
+                                },
+                                removeAddress(index) {
+                                    this.previousAddresses.splice(index, 1);
+                                    this.calculateTotal();
+                                },
+                            }
+                        }
+                    </script>
+                @endpush
 
 
                 <!-- Driver Details -->
@@ -561,7 +589,8 @@
                                 </div>
                                 <div class="mt-3 w-full flex-1 xl:mt-0">
                                     <div class="flex items-center">
-                                        <x-base.form-check.input wire:model.live="has_twic_card" type="checkbox" class="mr-2" />
+                                        <x-base.form-check.input wire:model.live="has_twic_card" type="checkbox"
+                                            class="mr-2" />
                                         <span>I have a TWIC card</span>
                                     </div>
                                     @if ($has_twic_card)
@@ -595,21 +624,21 @@
                                     </div>
                                 </div>
                                 <div class="mt-3 w-full flex-1 xl:mt-0">
-                                    <select wire:model.live="applying_position" class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1">
+                                    <select wire:model.live="applying_position"
+                                        class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1">
                                         <option value="">Select Position</option>
-                                        @foreach($driverPositions as $value => $label)
+                                        @foreach ($driverPositions as $value => $label)
                                             <option value="{{ $value }}">{{ $label }}</option>
                                         @endforeach
                                     </select>
                                     @error('applying_position')
                                         <span class="text-red-500 text-sm">{{ $message }}</span>
                                     @enderror
-                                
-                                    @if($applying_position === 'other')
+
+                                    @if ($applying_position === 'other')
                                         <div class="mt-2">
-                                            <x-base.form-input wire:model.live="applying_position_other" 
-                                                type="text" 
-                                                placeholder="Specify position" />
+                                            <x-base.form-input wire:model.live="applying_position_other"
+                                                type="text" placeholder="Specify position" />
                                             @error('applying_position_other')
                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                                             @enderror
@@ -631,9 +660,10 @@
                                     </div>
                                 </div>
                                 <div class="mt-3 w-full flex-1 xl:mt-0">
-                                    <select wire:model="applying_location" class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1">
+                                    <select wire:model="applying_location"
+                                        class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1">
                                         <option value="">Select Location</option>
-                                        @foreach($usStates as $code => $name)
+                                        @foreach ($usStates as $code => $name)
                                             <option value="{{ $code }}">{{ $name }}</option>
                                         @endforeach
                                     </select>
@@ -654,19 +684,23 @@
                                     <div class="space-y-3">
                                         <div class="flex flex-col">
                                             <label class="mb-2">Eligible to work in the United States</label>
-                                            <select wire:model.live="eligible_to_work" class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1">
+                                            <select wire:model.live="eligible_to_work"
+                                                class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1">
                                                 <option value="">Select</option>
                                                 <option value="1">Yes</option>
                                                 <option value="0">No</option>
                                             </select>
-                                            @if($eligible_to_work === false)
-                                                <p class="text-red-600 text-sm mt-1">According to U.S. law, you must be eligible to work in the United States to continue with this application.</p>
+                                            @if ($eligible_to_work === false)
+                                                <p class="text-red-600 text-sm mt-1">According to U.S. law, you must be
+                                                    eligible to work in the United States to continue with this
+                                                    application.</p>
                                             @endif
                                         </div>
-                                
+
                                         <div class="flex flex-col">
                                             <label class="mb-2">Can speak and understand English</label>
-                                            <select wire:model="can_speak_english" class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1">
+                                            <select wire:model="can_speak_english"
+                                                class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1">
                                                 <option value="">Select</option>
                                                 <option value="1">Yes</option>
                                                 <option value="0">No</option>
@@ -711,21 +745,21 @@
                                     </div>
                                 </div>
                                 <div class="mt-3 w-full flex-1 xl:mt-0">
-                                    <select wire:model.live="how_did_hear" class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1">
+                                    <select wire:model.live="how_did_hear"
+                                        class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1">
                                         <option value="">Select Source</option>
-                                        @foreach($referralSources as $value => $label)
+                                        @foreach ($referralSources as $value => $label)
                                             <option value="{{ $value }}">{{ $label }}</option>
                                         @endforeach
-                                    </select>                                
-                                
-                                    @if($how_did_hear === 'other')
+                                    </select>
+
+                                    @if ($how_did_hear === 'other')
                                         <div class="mt-2">
-                                            <x-base.form-input wire:model.live="how_did_hear_other" 
-                                                type="text" 
+                                            <x-base.form-input wire:model.live="how_did_hear_other" type="text"
                                                 placeholder="Specify source" />
                                         </div>
                                     @endif
-                                
+
                                     @error('how_did_hear')
                                         <span class="text-red-500 text-sm">{{ $message }}</span>
                                     @enderror

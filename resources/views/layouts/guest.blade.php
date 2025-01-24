@@ -20,6 +20,7 @@
     <body>
         <div class="font-sans text-gray-900 antialiased">
             {{ $slot }}
+            <h1>HOLA GUEST</h1>
         </div>
 
         @livewireScripts
