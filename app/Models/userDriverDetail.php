@@ -1,9 +1,11 @@
 <?php
+
 namespace App\Models;
 
 use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Admin\Driver\DriverLicense;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use App\Models\Admin\Driver\DriverApplication;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,11 +15,23 @@ class UserDriverDetail extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
 
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($driver) {
+            $lastNumber = static::where('carrier_id', $driver->carrier_id)
+                ->max('driver_number') ?? 0;
+            $driver->driver_number = sprintf('%03d', $lastNumber + 1); // Formato 001, 002, etc.
+        });
+    }
+
     protected $fillable = [
+        'driver_number',
         'user_id',
         'carrier_id',
         'middle_name',
-        'last_name',        
+        'last_name',
         'phone',
         'date_of_birth',
         'license_number',
@@ -27,7 +41,7 @@ class UserDriverDetail extends Model implements HasMedia
         'confirmation_token',
     ];
 
-    protected $casts = [        
+    protected $casts = [
         'status' => 'integer',
         'terms_accepted' => 'boolean'
     ];
@@ -66,7 +80,7 @@ class UserDriverDetail extends Model implements HasMedia
         };
     }
 
-    
+
 
     public function getProfilePhotoUrlAttribute()
     {
@@ -84,7 +98,7 @@ class UserDriverDetail extends Model implements HasMedia
     {
         $this->addMediaCollection('profile_photo_driver')
             ->useDisk('public')
-            ->singleFile();    
+            ->singleFile();
     }
 
     public function registerMediaConversions(Media $media = null): void
@@ -93,5 +107,15 @@ class UserDriverDetail extends Model implements HasMedia
             ->format('webp')
             ->keepOriginalImageFormat();
     }
-    
+
+    //Licencias
+    public function licenses()
+    {
+        return $this->hasMany(DriverLicense::class);
+    }
+
+    public function primaryLicense()
+    {
+        return $this->hasOne(DriverLicense::class)->where('is_primary', true);
+    }
 }

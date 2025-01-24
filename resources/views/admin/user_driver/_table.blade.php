@@ -26,11 +26,12 @@
                     {{ $userDriver->status_name }}
                 </td>
                 <td class="px-5 border-b border-dashed py-4">
-                    <a href="{{ route('admin.carrier.user_drivers.edit', ['carrier' => $carrier->slug, 'userDriverDetail' => $userDriver->id]) }}"
-                        class="text-primary hover:text-primary-dark">
+                    <a href="{{ route('admin.carrier.user_drivers.edit', ['carrier' => $carrier->slug, 'userDriverDetail' => $userDriver->id]) }}" 
+                        class="flex items-center text-primary">
+                        <x-base.lucide icon="Edit" class="w-4 h-4 mr-1"/>
                         Edit
                     </a>
-                    <form action="{{ route('admin.carrier.user_drivers.destroy', ['carrier' => $carrier->slug, 'userDriverDetail' => $userDriver->id]) }}"
+                    {{-- <form action="{{ route('admin.carrier.user_drivers.destroy', ['carrier' => $carrier->slug, 'userDriverDetail' => $userDriver->id]) }}"
                         method="POST" class="inline">
                         @csrf
                         @method('DELETE')
@@ -38,7 +39,7 @@
                             onclick="return confirm('Are you sure?')">
                             Delete
                         </button>
-                    </form>
+                    </form> --}}
                 </td>
             </tr>
         @empty

@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
         $this->call(MembershipSeeder::class);
         $this->call(DocumentTypeSeeder::class);
         $this->call(NotificationTypeSeeder::class);
+        $this->call(LicenseEndorsementSeeder::class);
         
         $frontendUser = \App\Models\User::factory()->create([
             'name' => 'Elliot Alderson',

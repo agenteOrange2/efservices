@@ -13,8 +13,8 @@
     <meta name="author" content="KUIRAWEB">    
 
     <link rel="mask-icon" href="{{asset('build/img/favicon_efservices.png')}}" color="#000000">
-    <link rel="alternate icon" class="js-site-favicon" type="image/png" href="{{asset('build/img/favicon_efservices.png')}}">
-    <link rel="icon" class="js-site-favicon" type="image/svg+xml" href="{{asset('build/img/favicon_efservices.png')}}" data-base-href="{{asset('build/img/favicon_efservices.png')}}">
+    <link rel="alternate icon" class="js-site-favicon" type="image/png" href="{{asset('build/img/favicon_efservices.png')}}">a
+    <link rel="icon" class="js-site-favicon" type="image/svg+xml" href="{{asset('build/img/favicon_efservices.png')}}" data-bse-href="{{asset('build/img/favicon_efservices.png')}}">
     {{-- <link href="https://unpkg.com/filepond/dist/filepond.min.css" rel="stylesheet"> --}}
 
     <title>@yield('title') | EF Services</title>

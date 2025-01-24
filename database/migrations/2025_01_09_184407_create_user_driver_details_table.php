@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('carrier_id')->constrained('carriers')->onDelete('cascade');
+            $table->integer('driver_number')->nullable();
+            $table->unique(['carrier_id', 'driver_number']);
             $table->string('middle_name')->nullable();
             $table->string('last_name');
             $table->string('license_number');
