@@ -12,18 +12,11 @@ class DriverApplication extends Model
 
     protected $fillable = [
         'user_id',
-        'first_name',
-        'middle_name',
-        'last_name',
-        'suffix',
         'social_security_number',        
-        'email',
-        'phone',
         'status'
     ];
 
-    protected $casts = [
-        'date_of_birth' => 'date',
+    protected $casts = [        
         'status' => 'string'
     ];
 
