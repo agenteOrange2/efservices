@@ -5,6 +5,7 @@ namespace App\Models;
 use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Admin\Driver\DriverAddress;
 use App\Models\Admin\Driver\DriverLicense;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use App\Models\Admin\Driver\DriverApplication;
@@ -15,27 +16,17 @@ class UserDriverDetail extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
 
-    protected static function boot()
-    {
-        parent::boot();
-        
-        static::creating(function ($driver) {
-            $lastNumber = static::where('carrier_id', $driver->carrier_id)
-                ->max('driver_number') ?? 0;
-            $driver->driver_number = sprintf('%03d', $lastNumber + 1); // Formato 001, 002, etc.
-        });
-    }
+
 
     protected $fillable = [
-        'driver_number',
         'user_id',
         'carrier_id',
         'middle_name',
         'last_name',
-        'phone',
-        'date_of_birth',
         'license_number',
         'state_of_issue',
+        'phone',
+        'date_of_birth',
         'status',
         'terms_accepted',
         'confirmation_token',
@@ -43,8 +34,16 @@ class UserDriverDetail extends Model implements HasMedia
 
     protected $casts = [
         'status' => 'integer',
-        'terms_accepted' => 'boolean'
+        'terms_accepted' => 'boolean',
+        'application_completed' => 'boolean',
+        'current_step' => 'integer',
     ];
+
+    public function hasRequiredDocuments(): bool
+    {
+        // Implementar lógica de verificación de documentos
+        return true; // Temporalmente para testing
+    }
 
     // Constantes para los valores de status
     public const STATUS_INACTIVE = 0;
@@ -106,6 +105,12 @@ class UserDriverDetail extends Model implements HasMedia
         $this->addMediaConversion('webp')
             ->format('webp')
             ->keepOriginalImageFormat();
+    }
+
+    // Relación con direcciones
+    public function addresses()
+    {
+        return $this->hasMany(DriverAddress::class, 'driver_application_id', 'id');
     }
 
     //Licencias

@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::create('driver_addresses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('driver_application_id')->constrained()->onDelete('cascade');
+            // $table->foreignId('driver_application_id')->constrained()->onDelete('cascade');
+            $table->foreignId('driver_application_id')->constrained('user_driver_details')->onDelete('cascade');
+            $table->boolean('primary')->default(false); 
             $table->string('address_line1');
             $table->string('address_line2')->nullable();
             $table->string('city');

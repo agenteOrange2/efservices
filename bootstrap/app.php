@@ -32,7 +32,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Registrar alias
         $middleware->alias([
-            'check.user.status' => \App\Http\Middleware\CheckUserStatus::class
+            'check.user.status' => \App\Http\Middleware\CheckUserStatus::class,
+            
             
         ]);
 
@@ -45,6 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\CheckUserStatus::class,
+            
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

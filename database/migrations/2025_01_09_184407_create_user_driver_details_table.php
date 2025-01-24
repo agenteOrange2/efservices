@@ -14,9 +14,7 @@ return new class extends Migration
         Schema::create('user_driver_details', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('carrier_id')->constrained('carriers')->onDelete('cascade');
-            $table->integer('driver_number')->nullable();
-            $table->unique(['carrier_id', 'driver_number']);
+            $table->foreignId('carrier_id')->constrained('carriers')->onDelete('cascade');        
             $table->string('middle_name')->nullable();
             $table->string('last_name');
             $table->string('license_number');
@@ -26,6 +24,8 @@ return new class extends Migration
             $table->unsignedTinyInteger('status')->default(0)->index();
             $table->boolean('terms_accepted')->default(false);
             $table->string('confirmation_token', 64)->nullable();
+            $table->boolean('application_completed')->default(false);
+            $table->integer('current_step')->default(1);
             $table->timestamps();
         });
     }
