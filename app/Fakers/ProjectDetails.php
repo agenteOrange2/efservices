@@ -18,9 +18,9 @@ class ProjectDetails
         return $url;
     }
 
-    public static function fakeProjectDetails(): Collection
+    public static function fakeProjectDetails()
     {
-        return collect([
+        return [
             [
                 "title" => "Marketing Campaign Poster",
                 "link" => self::generateRandomLink(),
@@ -81,6 +81,6 @@ class ProjectDetails
                 "contributors" => Users::fakeUsers(),
                 "image" => "resources/images/projects/project10-400x400.jpg"
             ],
-        ])->shuffle();
+        ];
     }
 }

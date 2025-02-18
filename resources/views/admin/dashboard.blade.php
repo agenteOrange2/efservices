@@ -15,4 +15,7 @@
 
         <livewire:admin.dashboard-stats />
     </div>
+
+    
 @endsection
+
