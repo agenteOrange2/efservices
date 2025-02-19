@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->call(RolesAndPermissionsSeeder::class);
         $this->call(MembershipSeeder::class);
         $this->call(DocumentTypeSeeder::class);
+        $this->call(CarrierSeeder::class);
         $this->call(NotificationTypeSeeder::class);
         $this->call(LicenseEndorsementSeeder::class);
         

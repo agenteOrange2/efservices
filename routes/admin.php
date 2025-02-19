@@ -140,7 +140,7 @@ Route::prefix('carrier/{carrier}/drivers')->name('carrier.user_drivers.')->group
     Route::put('/{userDriverDetail}', [UserDriverController::class, 'update'])->name('update');
     Route::delete('/{userDriverDetail}', [UserDriverController::class, 'destroy'])->name('destroy');
     Route::delete('/{userDriverDetail}/photo', [UserDriverController::class, 'deletePhoto'])->name('delete-photo');
- });
+});
 
 /*
 |--------------------------------------------------------------------------

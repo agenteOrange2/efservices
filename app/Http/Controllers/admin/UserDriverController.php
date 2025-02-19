@@ -151,14 +151,33 @@ class UserDriverController extends Controller
                 return back()->withErrors(['date_of_birth' => 'Debes tener al menos 18 años.'])->withInput();
             }
 
-            // Validación de dirección: si no ha vivido 3 años y no hay previous_addresses, error            
-            $livedThreeYears = filter_var($validated['lived_three_years'], FILTER_VALIDATE_BOOLEAN);
+            // Reemplazar esta sección en el controlador
+            $fromDate = Carbon::parse($validated['from_date']);
+            $toDate = $validated['to_date'] ? Carbon::parse($validated['to_date']) : now();
+            $currentAddressYears = $fromDate->diffInYears($toDate);
+            $totalYears = $currentAddressYears;
 
-            $previousAddresses = $validated['previous_addresses'] ?? [];
+            // Si la dirección actual no cubre 3 años, permitir y validar direcciones adicionales
+            if ($totalYears < 3) {
+                $previousAddresses = $validated['previous_addresses'] ?? [];
 
-            if (!$livedThreeYears && empty($previousAddresses)) {
-                return back()->withErrors(['address_history' => 'Debes proveer 3 años de historial de direcciones.'])
-                    ->withInput();
+                // Sumar años de direcciones adicionales si existen
+                foreach ($previousAddresses as $address) {
+                    $fromD = Carbon::parse($address['from_date']);
+                    $toD = Carbon::parse($address['to_date']);
+                    $totalYears += $fromD->diffInYears($toD);
+                }
+            }
+
+            // Actualizar livedThreeYears basado en el total
+            $livedThreeYears = $totalYears >= 3;
+
+            // Solo validar que se cubran los 3 años si hay direcciones adicionales
+            if (!empty($previousAddresses) && $totalYears < 3) {
+                return back()->withErrors([
+                    'previous_addresses' => 'El historial de direcciones debe cubrir al menos 3 años. Total actual: ' .
+                        number_format($totalYears, 1) . ' años.'
+                ])->withInput();
             }
 
             // Validación si es elegible para trabajar
@@ -200,14 +219,20 @@ class UserDriverController extends Controller
 
             Log::info('Detalles del driver creados', ['user_driver_id' => $userDriverDetail->id]);
 
-            // Manejar la foto si se ha enviado
-            if ($request->hasFile('photo')) {
-                $file = $request->file('photo');
-                Log::info('CreateDriver: Procesando foto de perfil');
-                $user->addMedia($file)
-                    ->usingFileName(Str::slug($user->name) . '.webp')
+
+            if ($request->hasFile('photo')) { // Cambiar a 'photo' que es el nombre en el formulario
+                $fileName = strtolower(str_replace(' ', '_', $user->name)) . '.webp';
+                Log::info('CreateDriver: Procesando foto de perfil', [
+                    'file_exists' => true,
+                    'original_name' => $request->file('photo')->getClientOriginalName()
+                ]);
+
+                // Guardar la imagen en el UserDriverDetail en lugar del User
+                $userDriverDetail->addMediaFromRequest('photo')
+                    ->usingFileName($fileName)
                     ->toMediaCollection('profile_photo_driver');
             }
+
 
             // Crear la aplicación del driver
             $application = DriverApplication::create([
@@ -219,6 +244,7 @@ class UserDriverController extends Controller
 
             // Crear dirección principal
             $address = $application->addresses()->create([
+                'primary' => 1,
                 'address_line1' => $validated['address_line1'],
                 'address_line2' => $validated['address_line2'] ?? null,
                 'city' => $validated['city'],
@@ -231,9 +257,11 @@ class UserDriverController extends Controller
             Log::info('CreateDriver: Dirección principal creada', ['address_id' => $address->id]);
 
             // Si hay direcciones anteriores, las creamos
-            if (!$livedThreeYears && count($previousAddresses)) {
+            // Si hay direcciones anteriores, las creamos
+            if (!$livedThreeYears && !empty($previousAddresses)) {
                 foreach ($previousAddresses as $prevAddress) {
                     $application->addresses()->create([
+                        'primary' => 0, // Siempre 0 para direcciones adicionales
                         'address_line1' => $prevAddress['address_line1'],
                         'address_line2' => $prevAddress['address_line2'] ?? null,
                         'city' => $prevAddress['city'],
@@ -241,7 +269,7 @@ class UserDriverController extends Controller
                         'zip_code' => $prevAddress['zip_code'],
                         'lived_three_years' => false,
                         'from_date' => $prevAddress['from_date'],
-                        'to_date' => $prevAddress['to_date'],
+                        'to_date' => $prevAddress['to_date']
                     ]);
                 }
             }
@@ -307,9 +335,12 @@ class UserDriverController extends Controller
         ]); // Cargar direcciones
 
         // Get the main/primary address
-        $mainAddress = $userDriverDetail->addresses()
-            ->orderBy('created_at')
-            ->first();
+        $mainAddress = $userDriverDetail->addresses()->where('primary', true)->first();
+        $previousAddresses = $mainAddress ? json_decode($mainAddress->previous_addresses, true) : [];
+
+        // Obtener la URL de la foto del conductor
+        $profilePhotoUrl = $userDriverDetail->getFirstMedia('profile_photo_driver')?->getUrl()
+            ?? asset('build/default_profile.png');
 
         // Pasar los datos a la vista
         return view('admin.user_driver.edit', compact(
@@ -319,7 +350,9 @@ class UserDriverController extends Controller
             'usStates',
             'driverPositions',
             'referralSources',
-            'mainAddress'
+            'mainAddress',
+            'previousAddresses',
+            'profilePhotoUrl'
         ));
     }
 
@@ -350,6 +383,7 @@ class UserDriverController extends Controller
         try {
             // Validación
             $validated = $request->validate([
+                'photo' => 'nullable|image|max:2048|mimes:jpeg,png,jpg,gif',
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email,' . $userDriverDetail->user->id,
                 'password' => 'nullable|min:8|confirmed',
@@ -408,6 +442,18 @@ class UserDriverController extends Controller
                 'status' => $validated['status'],
             ]);
 
+            // Manejar la foto si se sube una nueva
+            if ($request->hasFile('photo')) {
+                // Eliminar foto anterior si existe
+                $userDriverDetail->clearMediaCollection('profile_photo_driver');
+
+                // Subir nueva foto
+                $fileName = strtolower(str_replace(' ', '_', $userDriverDetail->user->name)) . '.webp';
+                $userDriverDetail->addMediaFromRequest('photo')
+                    ->usingFileName($fileName)
+                    ->toMediaCollection('profile_photo_driver');
+            }
+
             // Actualizar dirección
             // $userDriverDetail->addresses()->update([
             //     'address_line1' => $validated['address_line1'],
@@ -437,18 +483,18 @@ class UserDriverController extends Controller
             if (!$validated['lived_three_years']) {
                 // Eliminar direcciones anteriores existentes
                 $userDriverDetail->addresses()->where('primary', false)->delete();
-                
+
                 // Obtener el total de años
                 $mainAddressYears = Carbon::parse($validated['from_date'])
                     ->diffInYears(Carbon::parse($validated['to_date'] ?? now()));
                 $totalYears = $mainAddressYears;
-                
+
                 // Crear las direcciones previas en orden, sumando años hasta alcanzar 3
                 foreach ($validated['previous_addresses'] as $prevAddress) {
                     $addressYears = Carbon::parse($prevAddress['from_date'])
                         ->diffInYears(Carbon::parse($prevAddress['to_date']));
                     $totalYears += $addressYears;
-                    
+
                     // Crear la dirección previa
                     $userDriverDetail->addresses()->create([
                         'primary' => false,
@@ -460,7 +506,7 @@ class UserDriverController extends Controller
                         'from_date' => $prevAddress['from_date'],
                         'to_date' => $prevAddress['to_date']
                     ]);
-            
+
                     // Si ya alcanzamos 3 años, no procesar más direcciones
                     if ($totalYears >= 3) break;
                 }
