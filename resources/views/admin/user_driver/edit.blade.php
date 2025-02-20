@@ -59,24 +59,23 @@
                             
                                 dateError: '',
                                 // Address/History - Initialize with existing values
-                                fromDate: '{{ old('from_date', $userDriverDetail->addresses->first()?->from_date?->format('Y-m-d') ?? '') }}',
-                                toDate: '{{ old('to_date', $userDriverDetail->addresses->first()?->to_date?->format('Y-m-d') ?? '') }}',
-                                livedThreeYears: {{ old('lived_three_years', $userDriverDetail->addresses->first()?->lived_three_years ?? false) ? 'true' : 'false' }},
-                                previousAddresses: {{ json_encode(
-                                    old(
-                                        'previous_addresses',
-                                        $userDriverDetail->addresses->skip(1)->map(function ($addr) {
-                                                return [
-                                                    'address_line1' => $addr->address_line1,
-                                                    'address_line2' => $addr->address_line2,
-                                                    'city' => $addr->city,
-                                                    'state' => $addr->state,
-                                                    'zip_code' => $addr->zip_code,
-                                                    'from_date' => $addr->from_date?->format('Y-m-d'),
-                                                    'to_date' => $addr->to_date?->format('Y-m-d'),
-                                                ];
-                                            })->toArray(),
-                                    ),
+                                // Inicializar fechas de dirección principal formateando correctamente
+                                fromDate: '{{ $mainAddress?->from_date?->format('Y-m-d') ?? '' }}',
+                                toDate: '{{ $mainAddress?->to_date?->format('Y-m-d') ?? '' }}',
+                                livedThreeYears: {{ $mainAddress?->lived_three_years ? 'true' : 'false' }},
+                            
+                                previousAddresses: {{ Js::from(
+                                    $previousAddresses->map(function ($address) {
+                                            return [
+                                                'address_line1' => $address->address_line1,
+                                                'address_line2' => $address->address_line2,
+                                                'city' => $address->city,
+                                                'state' => $address->state,
+                                                'zip_code' => $address->zip_code,
+                                                'from_date' => $address->from_date?->format('Y-m-d'),
+                                                'to_date' => $address->to_date?->format('Y-m-d'),
+                                            ];
+                                        })->toArray(),
                                 ) }},
                                 isAddressValid: false,
                                 totalYears: 0,
@@ -534,20 +533,24 @@
                                                 <div class="mt-3 w-full flex-1 xl:mt-0">
                                                     <x-base.form-input name="address_line1" type="text"
                                                         placeholder="Address Line 1"
-                                                        value="{{ old('address_line1', $userDriverDetail->addresses->first()->address_line1 ?? '') }}" />
+                                                        value="{{ $mainAddress->address_line1 ?? old('address_line1') }}" />
+
                                                     <x-base.form-input name="address_line2" type="text"
                                                         placeholder="Address Line 2"
-                                                        value="{{ old('address_line2', $userDriverDetail->addresses->first()->address_line2 ?? '') }}" />
+                                                        value="{{ $mainAddress->address_line2 ?? old('address_line2') }}" />
+
                                                     <div class="grid grid-cols-3 gap-4">
                                                         <x-base.form-input name="city" type="text"
                                                             placeholder="City"
-                                                            value="{{ old('city', $userDriverDetail->addresses->first()->city ?? '') }}" />
+                                                            value="{{ $mainAddress->city ?? old('city') }}" />
+
                                                         <x-base.form-input name="state" type="text"
                                                             placeholder="State"
-                                                            value="{{ old('state', $userDriverDetail->addresses->first()->state ?? '') }}" />
+                                                            value="{{ $mainAddress->state ?? old('state') }}" />
+
                                                         <x-base.form-input name="zip_code" type="text"
                                                             placeholder="ZIP Code"
-                                                            value="{{ old('zip_code', $userDriverDetail->addresses->first()->zip_code ?? '') }}" />
+                                                            value="{{ $mainAddress->zip_code ?? old('zip_code') }}" />
                                                     </div>
                                                     @error('address_line1')
                                                         <p class="text-red-500 text-sm">{{ $message }}</p>
@@ -568,32 +571,37 @@
                                                     <div>
                                                         <label class="text-sm mb-1">From Date</label>
                                                         <x-base.form-input 
-                                                        type="date" 
-                                                        x-model="fromDate"
-                                                        :value="$userDriverDetail->addresses
-                                                                ->first()
-                                                                ?->from_date?->format('Y-m-d')" @change="validateAndCalculateDates()" />
+                                                            type="date" 
+                                                            x-model="fromDate"
+                                                            @change="validateAndCalculateDates()" 
+                                                            :value="$mainAddress?->from_date?->format('Y-m-d')"
+                                                        />
                                                     </div>
                                                     <div>
                                                         <label class="text-sm mb-1">To Date</label>
-                                                        <x-base.form-input type="date" x-model="toDate"
-                                                            x-bind:min="fromDate" :value="$userDriverDetail->addresses
-                                                                ->first()
-                                                                ?->to_date?->format('Y-m-d')"
+                                                        <x-base.form-input 
+                                                            type="date" 
+                                                            x-model="toDate"
+                                                            :value="$mainAddress?->to_date?->format('Y-m-d')"
+                                                            x-bind:min="fromDate"
                                                             @change="validateAndCalculateDates()"
-                                                            x-bind:class="{ 'border-red-500': dateError }" />
-                                                        <p x-show="dateError" class="text-red-500 text-sm mt-1"
-                                                            x-text="dateError">
-                                                        </p>
+                                                            x-bind:class="{ 'border-red-500': dateError }" 
+                                                        />
+                                                        <p x-show="dateError" class="text-red-500 text-sm mt-1" x-text="dateError"></p>
                                                     </div>
                                                 </div>
 
                                                 <div class="flex items-center mt-4">
-                                                    <input type="checkbox" name="lived_three_years"
-                                                        :value="livedThreeYears" x-model="livedThreeYears"
+                                                    <input
+                                                        class="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded-sm focus:ring-primary"
+                                                        type="checkbox" name="lived_three_years" :value="livedThreeYears"
+                                                        x-model="livedThreeYears"
                                                         {{ old('lived_three_years', $mainAddress->lived_three_years ?? false) ? 'checked' : '' }}>
 
-                                                    <span>I have lived at this address for 3+ years</span>
+                                                    <label class="ms-2 text-sm font-medium text-gray-900">
+                                                        <span
+                                                            x-text="livedThreeYears ? 'Has lived at this address for 3+ years' : 'Has not lived at this address for 3+ years'"></span>
+                                                    </label>
                                                 </div>
 
                                                 {{-- Hidden inputs para enviar estos valores al servidor --}}
@@ -646,27 +654,34 @@
                                                             <div class="grid grid-cols-2 gap-4 mb-4">
                                                                 <div>
                                                                     <label class="text-sm mb-1">From Date</label>
-                                                                    <input type="date" class="form-input w-full"
+                                                                    <input type="date"
+                                                                        class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
                                                                         x-model="addr.from_date"
-                                                                        @change="calculateTotal()">
+                                                                        :value="addr.from_date"
+                                                                        @change="calculateTotal()"
+                                                                    >
                                                                 </div>
                                                                 <div>
                                                                     <label class="text-sm mb-1">To Date</label>
-                                                                    <input type="date" class="form-input w-full"
-                                                                        x-model="addr.to_date" @change="calculateTotal()">
+                                                                    <input type="date"
+                                                                        class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
+                                                                        x-model="addr.to_date"
+                                                                        :value="addr.to_date"
+                                                                        @change="calculateTotal()"
+                                                                    >
                                                                 </div>
                                                             </div>
 
-                                                            <input type="text" class="form-input w-full mt-2"
+                                                            <input type="text" class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
                                                                 placeholder="Address Line 1" x-model="addr.address_line1">
-                                                            <input type="text" class="form-input w-full mt-2"
+                                                            <input type="text" class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
                                                                 placeholder="Address Line 2" x-model="addr.address_line2">
                                                             <div class="grid grid-cols-3 gap-4 mt-2">
-                                                                <input type="text" class="form-input w-full"
+                                                                <input type="text" class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
                                                                     placeholder="City" x-model="addr.city">
-                                                                <input type="text" class="form-input w-full"
+                                                                <input type="text" class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
                                                                     placeholder="State" x-model="addr.state">
-                                                                <input type="text" class="form-input w-full"
+                                                                <input type="text" class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
                                                                     placeholder="ZIP Code" x-model="addr.zip_code">
                                                             </div>
 
@@ -674,31 +689,34 @@
                                                                 class="btn btn-outline-danger mt-3">
                                                                 Remove Address
                                                             </button>
-
-                                                            {{-- Hidden inputs para cada address --}}
-                                                            <input type="hidden"
-                                                                :name="'previous_addresses[' + index + '][address_line1]'"
-                                                                :value="addr.address_line1">
-                                                            <input type="hidden"
-                                                                :name="'previous_addresses[' + index + '][address_line2]'"
-                                                                :value="addr.address_line2">
-                                                            <input type="hidden"
-                                                                :name="'previous_addresses[' + index + '][city]'"
-                                                                :value="addr.city">
-                                                            <input type="hidden"
-                                                                :name="'previous_addresses[' + index + '][state]'"
-                                                                :value="addr.state">
-                                                            <input type="hidden"
-                                                                :name="'previous_addresses[' + index + '][zip_code]'"
-                                                                :value="addr.zip_code">
-                                                            <input type="hidden"
-                                                                :name="'previous_addresses[' + index + '][from_date]'"
-                                                                :value="addr.from_date">
-                                                            <input type="hidden"
-                                                                :name="'previous_addresses[' + index + '][to_date]'"
-                                                                :value="addr.to_date">
-                                                        </div>
                                                     </template>
+                                                    <template x-for="(addr, index) in previousAddresses"
+                                                    :key="index">
+                                                    <!-- Inputs hidden dentro del mismo div padre -->
+                                                    <div class="hidden">
+                                                        <input type="hidden"
+                                                            :name="`previous_addresses[${index}][address_line1]`"
+                                                            :value="addr.address_line1">
+                                                        <input type="hidden"
+                                                            :name="`previous_addresses[${index}][address_line2]`"
+                                                            :value="addr.address_line2">
+                                                        <input type="hidden"
+                                                            :name="`previous_addresses[${index}][city]`"
+                                                            :value="addr.city">
+                                                        <input type="hidden"
+                                                            :name="`previous_addresses[${index}][state]`"
+                                                            :value="addr.state">
+                                                        <input type="hidden"
+                                                            :name="`previous_addresses[${index}][zip_code]`"
+                                                            :value="addr.zip_code">
+                                                        <input type="hidden"
+                                                            :name="`previous_addresses[${index}][from_date]`"
+                                                            :value="addr.from_date">
+                                                        <input type="hidden"
+                                                            :name="`previous_addresses[${index}][to_date]`"
+                                                            :value="addr.to_date">
+                                                    </div>
+                                                </template>
 
                                                     <button type="button" class="btn btn-outline-primary"
                                                         :class="{ 'opacity-50': isAddressValid || livedThreeYears }"

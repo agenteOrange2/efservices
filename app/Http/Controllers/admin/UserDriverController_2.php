@@ -84,30 +84,15 @@ class UserDriverController extends Controller
     }
 
 
-    protected function calculateYears($fromDate, $toDate = null)
-    {
-        $from = Carbon::parse($fromDate);
-        $to = $toDate ? Carbon::parse($toDate) : Carbon::now();
-        return $from->diffInYears($to);
-    }
-
-
     public function store(Request $request, Carrier $carrier)
     {
-
-        // Agregar un dd() al inicio para ver todo lo que llega
 
 
         Log::info('Iniciando store de driver', [
             'carrier_id' => $carrier->id,
             'request_data' => $request->except(['password', 'password_confirmation']),
         ]);
-        /*
-        Log::info('Datos recibidos de direcciones', [
-            'dirección_principal' => $request->only(['address_line1', 'from_date', 'to_date']),
-            'direcciones_previas' => $request->input('previous_addresses')
-        ]);
-        */
+
 
         try {
             // Realizamos la validación directa usando el formato de validate sin reglas explícitas
@@ -116,7 +101,6 @@ class UserDriverController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users',
                 'password' => 'required|min:8|confirmed',
-                'middle_name' => 'nullable|string|max:255',
                 'last_name' => 'required|string|max:255',
                 'license_number' => 'required|string|max:255',
                 'state_of_issue' => 'required|string|max:255',
@@ -136,16 +120,18 @@ class UserDriverController extends Controller
                 'to_date' => 'nullable|date',
                 'lived_three_years' => 'nullable|boolean',
 
-                // Direcciones anteriores
-                'previous_addresses' => 'array|required_if:lived_three_years,0',
-                'previous_addresses.*.address_line1' => 'required_with:previous_addresses',
-                'previous_addresses.*.city' => 'required_with:previous_addresses',
-                'previous_addresses.*.state' => 'required_with:previous_addresses',
-                'previous_addresses.*.zip_code' => 'required_with:previous_addresses',
-                'previous_addresses.*.from_date' => 'required_with:previous_addresses|date',
-                'previous_addresses.*.to_date' => 'required_with:previous_addresses|date|after:previous_addresses.*.from_date',
 
-                // Resto de validaciones
+                // Direcciones anteriores
+                'previous_addresses' => 'array',
+                'previous_addresses.*.address_line1' => 'required|string|max:255',
+                'previous_addresses.*.address_line2' => 'nullable|string|max:255',
+                'previous_addresses.*.city' => 'required|string|max:255',
+                'previous_addresses.*.state' => 'required|string|max:255',
+                'previous_addresses.*.zip_code' => 'required|string|max:255',
+                'previous_addresses.*.from_date' => 'required|date',
+                'previous_addresses.*.to_date' => 'required|date',
+
+                // Otros campos de la aplicación
                 'applying_position' => 'required|string',
                 'applying_position_other' => 'required_if:applying_position,other',
                 'applying_location' => 'required|string|max:255',
@@ -167,45 +153,29 @@ class UserDriverController extends Controller
                 return back()->withErrors(['date_of_birth' => 'Debes tener al menos 18 años.'])->withInput();
             }
 
-            // Calcular años en dirección actual
+            // Reemplazar esta sección en el controlador
             $fromDate = Carbon::parse($validated['from_date']);
-            $toDate = $validated['to_date'] ? Carbon::parse($validated['to_date']) : Carbon::now();
+            $toDate = $validated['to_date'] ? Carbon::parse($validated['to_date']) : now();
             $currentAddressYears = $fromDate->diffInYears($toDate);
-
             $totalYears = $currentAddressYears;
-            $previousAddressesYears = 0;
 
-            // Sumar años de direcciones previas si existen
-            if ($request->has('previous_addresses')) {
-                foreach ($request->input('previous_addresses') as $address) {
-                    if (!empty($address['from_date']) && !empty($address['to_date'])) {
-                        $prevFromDate = Carbon::parse($address['from_date']);
-                        $prevToDate = Carbon::parse($address['to_date']);
-                        $previousAddressesYears += $prevFromDate->diffInYears($prevToDate);
-                    }
-                }
-                $totalYears += $previousAddressesYears;
-            }
-
-            Log::info('Cálculo de años de residencia', [
-                'años_direccion_actual' => $currentAddressYears,
-                'años_direcciones_previas' => $previousAddressesYears,
-                'años_totales' => $totalYears,
-                'direcciones_previas' => $request->input('previous_addresses')
-            ]);
-
-            // Validación del total de años
+            // Si la dirección actual no cubre 3 años, permitir y validar direcciones adicionales
             if ($totalYears < 3) {
-                return back()->withErrors([
-                    'address_years' => 'El historial de direcciones debe sumar al menos 3 años. Total actual: ' .
-                        number_format($totalYears, 1) . ' años.'
-                ])->withInput();
+                $previousAddresses = $validated['previous_addresses'] ?? [];
+
+                // Sumar años de direcciones adicionales si existen
+                foreach ($previousAddresses as $address) {
+                    $fromD = Carbon::parse($address['from_date']);
+                    $toD = Carbon::parse($address['to_date']);
+                    $totalYears += $fromD->diffInYears($toD);
+                }
             }
 
+            // Actualizar livedThreeYears basado en el total
             $livedThreeYears = $totalYears >= 3;
 
             // Solo validar que se cubran los 3 años si hay direcciones adicionales
-            if (!empty($validated['previous_addresses']) && $totalYears < 3) {
+            if (!empty($previousAddresses) && $totalYears < 3) {
                 return back()->withErrors([
                     'previous_addresses' => 'El historial de direcciones debe cubrir al menos 3 años. Total actual: ' .
                         number_format($totalYears, 1) . ' años.'
@@ -239,7 +209,6 @@ class UserDriverController extends Controller
             $userDriverDetail = UserDriverDetail::create([
                 'user_id' => $user->id,
                 'carrier_id' => $carrier->id,
-                'middle_name' => $validated['middle_name'],
                 'last_name' => $validated['last_name'],
                 'license_number' => $validated['license_number'],
                 'state_of_issue' => $validated['state_of_issue'],
@@ -289,39 +258,23 @@ class UserDriverController extends Controller
             ]);
             Log::info('CreateDriver: Dirección principal creada', ['address_id' => $address->id]);
 
-            if (!empty($request->input('previous_addresses'))) {
-                foreach ($request->input('previous_addresses') as $prevAddress) {
-                    // Validar que la dirección tenga los campos requeridos
-                    if (
-                        !empty($prevAddress['address_line1']) &&
-                        !empty($prevAddress['city']) &&
-                        !empty($prevAddress['state']) &&
-                        !empty($prevAddress['zip_code']) &&
-                        !empty($prevAddress['from_date']) &&
-                        !empty($prevAddress['to_date'])
-                    ) {
-                        // Crear cada dirección previa
-                        $application->addresses()->create([
-                            'primary' => 0, // No es la dirección principal
-                            'address_line1' => $prevAddress['address_line1'],
-                            'address_line2' => $prevAddress['address_line2'] ?? null,
-                            'city' => $prevAddress['city'],
-                            'state' => $prevAddress['state'],
-                            'zip_code' => $prevAddress['zip_code'],
-                            'from_date' => $prevAddress['from_date'],
-                            'to_date' => $prevAddress['to_date'],
-                            'lived_three_years' => false // Por defecto falso para direcciones previas
-                        ]);
-
-                        Log::info('Dirección previa creada', [
-                            'address' => $prevAddress,
-                            'application_id' => $application->id
-                        ]);
-                    }
+            // Si hay direcciones anteriores, las creamos
+            // Si hay direcciones anteriores, las creamos
+            if (!$livedThreeYears && !empty($previousAddresses)) {
+                foreach ($previousAddresses as $prevAddress) {
+                    $application->addresses()->create([
+                        'primary' => 0, // Siempre 0 para direcciones adicionales
+                        'address_line1' => $prevAddress['address_line1'],
+                        'address_line2' => $prevAddress['address_line2'] ?? null,
+                        'city' => $prevAddress['city'],
+                        'state' => $prevAddress['state'],
+                        'zip_code' => $prevAddress['zip_code'],
+                        'lived_three_years' => false,
+                        'from_date' => $prevAddress['from_date'],
+                        'to_date' => $prevAddress['to_date']
+                    ]);
                 }
             }
-
-            Log::info('Total años acumulados', ['total' => $totalYears]);
 
             // Crear detalles de la aplicación
             $applicationDetails = $application->details()->create([
@@ -377,36 +330,15 @@ class UserDriverController extends Controller
 
         // Cargar los datos del driver y sus direcciones
         $driver = $userDriverDetail->user;
-
         $userDriverDetail->load([
             'application.details',
             'addresses',
             'user'
         ]); // Cargar direcciones
 
-        // Obtener la dirección principal
-        $mainAddress = $userDriverDetail->addresses()
-            ->where('primary', true)
-            ->first();
-
-        // Obtener las direcciones previas
-        $previousAddresses = $userDriverDetail->addresses()
-            ->where('primary', false)
-            ->orderBy('from_date', 'desc')
-            ->get();
-
-        // Log para debugging
-        Log::info('Recuperando direcciones del driver', [
-            'dirección_principal' => $mainAddress,
-            'direcciones_previas' => $previousAddresses
-        ]);
-
-        // Verificar si tiene foto de perfil
-        Log::info('Recuperando foto del Driver', [
-            'user_driver_id' => $userDriverDetail->id,
-            'media_exists' => $userDriverDetail->hasMedia('profile_photo_driver'),
-            'media_url' => $userDriverDetail->getFirstMediaUrl('profile_photo_driver')
-        ]);
+        // Get the main/primary address
+        $mainAddress = $userDriverDetail->addresses()->where('primary', true)->first();
+        $previousAddresses = $mainAddress ? json_decode($mainAddress->previous_addresses, true) : [];
 
         // Obtener la URL de la foto del conductor
         $profilePhotoUrl = $userDriverDetail->getFirstMedia('profile_photo_driver')?->getUrl()
