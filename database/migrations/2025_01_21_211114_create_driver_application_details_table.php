@@ -15,12 +15,14 @@ return new class extends Migration
             $table->id();
             $table->foreignId('driver_application_id')->constrained()->onDelete('cascade');
             $table->string('applying_position');
+            $table->string('applying_position_other')->nullable();
             $table->string('applying_location');
             $table->boolean('eligible_to_work')->default(false);
             $table->boolean('can_speak_english')->default(false);
             $table->boolean('has_twic_card')->default(false);
             $table->date('twic_expiration_date')->nullable();                    
             $table->string('how_did_hear');
+            $table->string('how_did_hear_other')->nullable();
             $table->string('referral_employee_name')->nullable();
             $table->decimal('expected_pay', 10, 2);
             $table->timestamps();

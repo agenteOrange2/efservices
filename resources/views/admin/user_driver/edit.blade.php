@@ -30,10 +30,10 @@
                                 <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
                                     <li class="mr-2">
                                         <button type="button"
-                                            class="inline-block p-4 text-blue-600 border-b-2 border-blue-600"
+                                            class="inline-block p-4 text-primary border-b-2 border-primary"
                                             x-on:click="activeTab = 'general'"
                                             :class="{
-                                                'text-blue-600 border-blue-600': activeTab === 'general',
+                                                'text-primary border-primary': activeTab === 'general',
                                                 'hover:text-gray-600 hover:border-gray-300': activeTab !== 'general'
                                             }">
                                             General Information
@@ -44,7 +44,7 @@
                                             class="inline-block p-4 hover:text-gray-600 hover:border-gray-300"
                                             x-on:click="activeTab = 'licenses'"
                                             :class="{
-                                                'text-blue-600 border-blue-600': activeTab === 'licenses',
+                                                'text-primary border-primary': activeTab === 'licenses',
                                                 'hover:text-gray-600 hover:border-gray-300': activeTab !== 'licenses'
                                             }">
                                             Licenses
@@ -80,12 +80,20 @@
                                 isAddressValid: false,
                                 totalYears: 0,
                             
-                                // Application details - Initialize with existing values
-                                applyingPosition: '{{ old('applying_position', $userDriverDetail->application?->details?->applying_position ?? '') }}',
-                                showOtherPosition: {{ old('applying_position', $userDriverDetail->application?->details?->applying_position ?? '') === 'other' ? 'true' : 'false' }},
                             
                                 // TWIC Card
                                 hasTwicCard: {{ old('has_twic_card', $userDriverDetail->application?->details?->has_twic_card ?? false) ? 'true' : 'false' }},
+                            
+                                // Application details - Initialize with existing values
+                                applyingPosition: '{{ old('applying_position', $userDriverDetail->application?->details?->applying_position ?? '') }}',
+                                applyingPositionOther: '{{ old('applying_position_other', $userDriverDetail->application?->details?->applying_position_other ?? '') }}',
+                                showOtherPosition: false,
+                            
+                                howDidHear: '{{ old('how_did_hear', $userDriverDetail->application?->details?->how_did_hear ?? '') }}',
+                                howDidHearOther: '{{ old('how_did_hear_other', $userDriverDetail->application?->details?->how_did_hear_other ?? '') }}',
+                                referralEmployeeName: '{{ old('referral_employee_name', $userDriverDetail->application?->details?->referral_employee_name ?? '') }}',
+                                showEmployeeReferral: false,
+                                showOtherReferral: false,
                             
                                 // Eligibility
                                 eligibleToWork: '{{ old('eligible_to_work', $userDriverDetail->application?->details?->eligible_to_work ?? '') }}',
@@ -159,6 +167,20 @@
                                 init() {
                                     // Calcular total inicial
                                     this.calculateTotal();
+                            
+                                    // Para Position
+                                    this.showOtherPosition = this.applyingPosition === 'other';
+                                    this.$watch('applyingPosition', value => {
+                                        this.showOtherPosition = value === 'other';
+                                    });
+                            
+                                    // Para Referral Source
+                                    this.showEmployeeReferral = this.howDidHear === 'employee_referral';
+                                    this.showOtherReferral = this.howDidHear === 'other';
+                                    this.$watch('howDidHear', value => {
+                                        this.showEmployeeReferral = value === 'employee_referral';
+                                        this.showOtherReferral = value === 'other';
+                                    });
                             
                                     // Establecer watchers
                                     this.$watch('fromDate', () => this.calculateTotal());
@@ -531,15 +553,15 @@
                                                 class="p-4 border-t border-gray-100">
                                                 {{-- Address principal --}}
                                                 <div class="mt-3 w-full flex-1 xl:mt-0">
-                                                    <x-base.form-input name="address_line1" type="text"
+                                                    <x-base.form-input class="my-3" name="address_line1" type="text"
                                                         placeholder="Address Line 1"
                                                         value="{{ $mainAddress->address_line1 ?? old('address_line1') }}" />
 
-                                                    <x-base.form-input name="address_line2" type="text"
+                                                    <x-base.form-input class="my-3" name="address_line2" type="text"
                                                         placeholder="Address Line 2"
                                                         value="{{ $mainAddress->address_line2 ?? old('address_line2') }}" />
 
-                                                    <div class="grid grid-cols-3 gap-4">
+                                                    <div class="grid grid-cols-3 gap-4 my-3">
                                                         <x-base.form-input name="city" type="text"
                                                             placeholder="City"
                                                             value="{{ $mainAddress->city ?? old('city') }}" />
@@ -570,24 +592,17 @@
                                                 <div class="mt-4 grid grid-cols-2 gap-4">
                                                     <div>
                                                         <label class="text-sm mb-1">From Date</label>
-                                                        <x-base.form-input 
-                                                            type="date" 
-                                                            x-model="fromDate"
-                                                            @change="validateAndCalculateDates()" 
-                                                            :value="$mainAddress?->from_date?->format('Y-m-d')"
-                                                        />
+                                                        <x-base.form-input type="date" x-model="fromDate"
+                                                            @change="validateAndCalculateDates()" :value="$mainAddress?->from_date?->format('Y-m-d')" />
                                                     </div>
                                                     <div>
                                                         <label class="text-sm mb-1">To Date</label>
-                                                        <x-base.form-input 
-                                                            type="date" 
-                                                            x-model="toDate"
-                                                            :value="$mainAddress?->to_date?->format('Y-m-d')"
-                                                            x-bind:min="fromDate"
+                                                        <x-base.form-input type="date" x-model="toDate"
+                                                            :value="$mainAddress?->to_date?->format('Y-m-d')" x-bind:min="fromDate"
                                                             @change="validateAndCalculateDates()"
-                                                            x-bind:class="{ 'border-red-500': dateError }" 
-                                                        />
-                                                        <p x-show="dateError" class="text-red-500 text-sm mt-1" x-text="dateError"></p>
+                                                            x-bind:class="{ 'border-red-500': dateError }" />
+                                                        <p x-show="dateError" class="text-red-500 text-sm mt-1"
+                                                            x-text="dateError"></p>
                                                     </div>
                                                 </div>
 
@@ -656,32 +671,33 @@
                                                                     <label class="text-sm mb-1">From Date</label>
                                                                     <input type="date"
                                                                         class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
-                                                                        x-model="addr.from_date"
-                                                                        :value="addr.from_date"
-                                                                        @change="calculateTotal()"
-                                                                    >
+                                                                        x-model="addr.from_date" :value="addr.from_date"
+                                                                        @change="calculateTotal()">
                                                                 </div>
                                                                 <div>
                                                                     <label class="text-sm mb-1">To Date</label>
                                                                     <input type="date"
                                                                         class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
-                                                                        x-model="addr.to_date"
-                                                                        :value="addr.to_date"
-                                                                        @change="calculateTotal()"
-                                                                    >
+                                                                        x-model="addr.to_date" :value="addr.to_date"
+                                                                        @change="calculateTotal()">
                                                                 </div>
                                                             </div>
 
-                                                            <input type="text" class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
+                                                            <input type="text"
+                                                                class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
                                                                 placeholder="Address Line 1" x-model="addr.address_line1">
-                                                            <input type="text" class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
+                                                            <input type="text"
+                                                                class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
                                                                 placeholder="Address Line 2" x-model="addr.address_line2">
                                                             <div class="grid grid-cols-3 gap-4 mt-2">
-                                                                <input type="text" class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
+                                                                <input type="text"
+                                                                    class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
                                                                     placeholder="City" x-model="addr.city">
-                                                                <input type="text" class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
+                                                                <input type="text"
+                                                                    class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
                                                                     placeholder="State" x-model="addr.state">
-                                                                <input type="text" class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
+                                                                <input type="text"
+                                                                    class="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary disabled:opacity-50 disabled:pointer-events-none mt-2"
                                                                     placeholder="ZIP Code" x-model="addr.zip_code">
                                                             </div>
 
@@ -691,32 +707,32 @@
                                                             </button>
                                                     </template>
                                                     <template x-for="(addr, index) in previousAddresses"
-                                                    :key="index">
-                                                    <!-- Inputs hidden dentro del mismo div padre -->
-                                                    <div class="hidden">
-                                                        <input type="hidden"
-                                                            :name="`previous_addresses[${index}][address_line1]`"
-                                                            :value="addr.address_line1">
-                                                        <input type="hidden"
-                                                            :name="`previous_addresses[${index}][address_line2]`"
-                                                            :value="addr.address_line2">
-                                                        <input type="hidden"
-                                                            :name="`previous_addresses[${index}][city]`"
-                                                            :value="addr.city">
-                                                        <input type="hidden"
-                                                            :name="`previous_addresses[${index}][state]`"
-                                                            :value="addr.state">
-                                                        <input type="hidden"
-                                                            :name="`previous_addresses[${index}][zip_code]`"
-                                                            :value="addr.zip_code">
-                                                        <input type="hidden"
-                                                            :name="`previous_addresses[${index}][from_date]`"
-                                                            :value="addr.from_date">
-                                                        <input type="hidden"
-                                                            :name="`previous_addresses[${index}][to_date]`"
-                                                            :value="addr.to_date">
-                                                    </div>
-                                                </template>
+                                                        :key="index">
+                                                        <!-- Inputs hidden dentro del mismo div padre -->
+                                                        <div class="hidden">
+                                                            <input type="hidden"
+                                                                :name="`previous_addresses[${index}][address_line1]`"
+                                                                :value="addr.address_line1">
+                                                            <input type="hidden"
+                                                                :name="`previous_addresses[${index}][address_line2]`"
+                                                                :value="addr.address_line2">
+                                                            <input type="hidden"
+                                                                :name="`previous_addresses[${index}][city]`"
+                                                                :value="addr.city">
+                                                            <input type="hidden"
+                                                                :name="`previous_addresses[${index}][state]`"
+                                                                :value="addr.state">
+                                                            <input type="hidden"
+                                                                :name="`previous_addresses[${index}][zip_code]`"
+                                                                :value="addr.zip_code">
+                                                            <input type="hidden"
+                                                                :name="`previous_addresses[${index}][from_date]`"
+                                                                :value="addr.from_date">
+                                                            <input type="hidden"
+                                                                :name="`previous_addresses[${index}][to_date]`"
+                                                                :value="addr.to_date">
+                                                        </div>
+                                                    </template>
 
                                                     <button type="button" class="btn btn-outline-primary"
                                                         :class="{ 'opacity-50': isAddressValid || livedThreeYears }"
@@ -754,38 +770,7 @@
                                                 x-transition:leave-start="opacity-100 transform translate-y-0"
                                                 x-transition:leave-end="opacity-0 transform -translate-y-2"
                                                 class="p-4 border-t border-gray-100">
-                                                {{-- State of Issue --}}
-                                                <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
-                                                    <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
-                                                        <div class="text-left">
-                                                            <div class="flex items-center">
-                                                                <div class="font-medium">State of Issue</div>
-                                                                <div
-                                                                    class="ml-2.5 rounded-md border bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                                                    Required
-                                                                </div>
-                                                            </div>
-                                                            <div class="mt-1.5 text-xs text-slate-500/80 xl:mt-3">
-                                                                Enter your complete State of Issue
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="mt-3 w-full flex-1 xl:mt-0">
-                                                        <select name="state_of_issue"
-                                                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-primary focus:ring-opacity-20">
-                                                            <option value="">Select State</option>
-                                                            @foreach ($usStates as $code => $name)
-                                                                <option value="{{ $code }}"
-                                                                    {{ old('state_of_issue', $userDriverDetail->state_of_issue) == $code ? 'selected' : '' }}>
-                                                                    {{ $name }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                        @error('state_of_issue')
-                                                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                                        @enderror
-                                                    </div>
-                                                </div>
+
                                                 {{-- SSN --}}
                                                 <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center"
                                                     x-data="{ mask: null }" x-init="mask = IMask($refs.ssn, { mask: '000-00-0000' })">
@@ -837,6 +822,39 @@
                                                     </div>
                                                 </div>
 
+                                                {{-- State of Issue --}}
+                                                <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
+                                                    <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
+                                                        <div class="text-left">
+                                                            <div class="flex items-center">
+                                                                <div class="font-medium">State of Issue</div>
+                                                                <div
+                                                                    class="ml-2.5 rounded-md border bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                                                                    Required
+                                                                </div>
+                                                            </div>
+                                                            <div class="mt-1.5 text-xs text-slate-500/80 xl:mt-3">
+                                                                Enter your complete State of Issue
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mt-3 w-full flex-1 xl:mt-0">
+                                                        <select name="state_of_issue"
+                                                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-primary focus:ring-opacity-20">
+                                                            <option value="">Select State</option>
+                                                            @foreach ($usStates as $code => $name)
+                                                                <option value="{{ $code }}"
+                                                                    {{ old('state_of_issue', $userDriverDetail->state_of_issue) == $code ? 'selected' : '' }}>
+                                                                    {{ $name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                        @error('state_of_issue')
+                                                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                                        @enderror
+                                                    </div>
+                                                </div>
+
                                                 {{-- TWIC Card (con Alpine) --}}
                                                 <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
                                                     <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
@@ -847,11 +865,14 @@
                                                         </div>
                                                     </div>
                                                     <div class="mt-3 w-full flex-1 xl:mt-0">
-                                                        <label class="flex items-center">
-                                                            <input type="checkbox" class="mr-2" name="has_twic_card"
-                                                                value="1" x-model="hasTwicCard">
-                                                            <span>I have a TWIC card</span>
-                                                        </label>
+                                                        <div class="flex items-center mt-4">
+                                                            <x-base.form-check.input class="mr-2.5 border" type="checkbox"
+                                                                name="has_twic_card" value="1"
+                                                                x-model="hasTwicCard" />
+                                                            <span class="cursor-pointer select-none">
+                                                                I have a TWIC card
+                                                            </span>
+                                                        </div>
 
                                                         <template x-if="hasTwicCard">
                                                             <div class="mt-2">
@@ -913,7 +934,7 @@
                                                             <option value="">Select Position</option>
                                                             @foreach ($driverPositions as $val => $label)
                                                                 <option value="{{ $val }}"
-                                                                    {{ old('applying_position') == $val ? 'selected' : '' }}>
+                                                                    {{ old('applying_position', $userDriverDetail->application?->details?->applying_position) == $val ? 'selected' : '' }}>
                                                                     {{ $label }}
                                                                 </option>
                                                             @endforeach
@@ -927,11 +948,11 @@
                                                             <div class="mt-2">
                                                                 <x-base.form-input name="applying_position_other"
                                                                     type="text" placeholder="Specify position"
-                                                                    value="{{ old('applying_position_other') }}" />
-                                                                @error('applying_position_other')
-                                                                    <span
-                                                                        class="text-red-500 text-sm">{{ $message }}</span>
-                                                                @enderror
+                                                                    :value="old(
+                                                                        'applying_position_other',
+                                                                        $userDriverDetail->application?->details
+                                                                            ?->applying_position_other,
+                                                                    )" />
                                                             </div>
                                                         </template>
                                                     </div>
@@ -1063,7 +1084,8 @@
                                                     </div>
                                                     <div class="mt-3 w-full flex-1 xl:mt-0">
                                                         <select name="how_did_hear"
-                                                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
+                                                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8"
+                                                            x-model="howDidHear">
                                                             <option value="">Select Source</option>
                                                             @foreach ($referralSources as $val => $label)
                                                                 <option value="{{ $val }}"
@@ -1073,21 +1095,29 @@
                                                             @endforeach
                                                         </select>
 
-                                                        @if (old('how_did_hear') === 'other')
+                                                        <template x-if="showEmployeeReferral">
+                                                            <div class="mt-2">
+                                                                <x-base.form-input name="referral_employee_name"
+                                                                    type="text" placeholder="Enter employee name"
+                                                                    :value="old(
+                                                                        'referral_employee_name',
+                                                                        $userDriverDetail->application?->details
+                                                                            ?->referral_employee_name,
+                                                                    )" />
+                                                            </div>
+                                                        </template>
+
+                                                        <template x-if="showOtherReferral">
                                                             <div class="mt-2">
                                                                 <x-base.form-input name="how_did_hear_other"
                                                                     type="text" placeholder="Specify source"
-                                                                    value="{{ old('how_did_hear_other') }}" />
+                                                                    :value="old(
+                                                                        'how_did_hear_other',
+                                                                        $userDriverDetail->application?->details
+                                                                            ?->how_did_hear_other,
+                                                                    )" />
                                                             </div>
-                                                        @endif
-
-                                                        @if (old('how_did_hear', $userDriverDetail->application?->details?->how_did_hear) === 'employee_referral')
-                                                            <div class="mt-2">
-                                                                <x-base.form-input name="referral_employee_name"
-                                                                    type="text" placeholder="Employee name"
-                                                                    value="{{ old('referral_employee_name', $userDriverDetail->application?->details?->referral_employee_name) }}" />
-                                                            </div>
-                                                        @endif
+                                                        </template>
 
                                                         @error('how_did_hear')
                                                             <span class="text-red-500 text-sm">{{ $message }}</span>
@@ -1137,33 +1167,48 @@
             return {
                 previewUrl: null,
                 hasImage: {{ $userDriverDetail->getFirstMedia('profile_photo_driver') ? 'true' : 'false' }},
+                originalSrc: '{{ $userDriverDetail->profile_photo_url }}',
 
                 handleFileChange(e) {
-                    // ... código existente ...
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    // Validar tipo de archivo
+                    if (!file.type.startsWith('image/')) {
+                        alert('Please select an image file');
+                        e.target.value = '';
+                        return;
+                    }
+
+                    // Crear URL de previsualización
+                    this.previewUrl = URL.createObjectURL(file);
+                    this.hasImage = true;
                 },
 
-                // Asegúrate que el nombre coincida con el que usas en el @click
-                removeImage() { // o cambia esto a deletePhoto() para coincidir con el botón
+                removeImage() {
                     if (!confirm('Are you sure you want to delete this photo?')) return;
 
-                    fetch('{{ route('admin.carrier.user_drivers.delete-photo', [$carrier->slug, $userDriverDetail->id]) }}', {
+                    fetch(`{{ route('admin.carrier.user_drivers.delete-photo', ['carrier' => $carrier->slug, 'userDriverDetail' => $userDriverDetail->id]) }}`, {
                             method: 'DELETE',
                             headers: {
                                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
                                 'Accept': 'application/json'
                             }
                         })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.defaultPhotoUrl) {
-                                this.previewUrl = data.defaultPhotoUrl;
-                                this.hasImage = false;
-                                document.getElementById('photo').value = '';
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
                             }
+                            return response.json();
+                        })
+                        .then(data => {
+                            this.previewUrl = data.defaultPhotoUrl;
+                            this.hasImage = false;
+                            document.getElementById('photo').value = '';
                         })
                         .catch(error => {
                             console.error('Error:', error);
-                            alert('Error deleting photo');
+                            alert('Error deleting photo: ' + error.message);
                         });
                 }
             }

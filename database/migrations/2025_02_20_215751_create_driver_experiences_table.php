@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('driver_applications', function (Blueprint $table) {
+        Schema::create('driver_experiences', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');            
-            $table->enum('status', ['draft', 'pending', 'approved', 'rejected'])->default('draft');
+            $table->foreignId('user_driver_detail_id')->constrained()->onDelete('cascade');
+            $table->string('equipment_type');
+            $table->integer('years_experience');
+            $table->integer('miles_driven');
+            $table->boolean('requires_cdl')->default(false);
             $table->timestamps();
         });
     }
@@ -24,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('driver_applications');
+        Schema::dropIfExists('driver_experiences');
     }
 };
