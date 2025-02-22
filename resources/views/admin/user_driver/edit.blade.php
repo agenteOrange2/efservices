@@ -24,35 +24,6 @@
                             method="POST" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
-
-                            {{-- Tabs en Blade --}}
-                            <div class="mb-4 border-b border-gray-200">
-                                <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
-                                    <li class="mr-2">
-                                        <button type="button"
-                                            class="inline-block p-4 text-primary border-b-2 border-primary"
-                                            x-on:click="activeTab = 'general'"
-                                            :class="{
-                                                'text-primary border-primary': activeTab === 'general',
-                                                'hover:text-gray-600 hover:border-gray-300': activeTab !== 'general'
-                                            }">
-                                            General Information
-                                        </button>
-                                    </li>
-                                    <li class="mr-2">
-                                        <button type="button"
-                                            class="inline-block p-4 hover:text-gray-600 hover:border-gray-300"
-                                            x-on:click="activeTab = 'licenses'"
-                                            :class="{
-                                                'text-primary border-primary': activeTab === 'licenses',
-                                                'hover:text-gray-600 hover:border-gray-300': activeTab !== 'licenses'
-                                            }">
-                                            Licenses
-                                        </button>
-                                    </li>
-                                </ul>
-                            </div>
-
                             {{-- Contenedor Alpine con toda la lógica --}}
                             <div x-data="{
                                 activeTab: 'general',
@@ -227,9 +198,57 @@
                                 }
                             }">
 
+                                {{-- Tabs en Blade --}}
+                                <div class="tabs">
+                                    <div class="mb-4 border-b border-gray-200">
+                                        <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
+                                            <li class="mr-2">
+                                                <button type="button" @click="activeTab = 'general'"
+                                                    class="inline-block p-4"
+                                                    :class="{
+                                                        'text-primary border-b-2 border-primary': activeTab === 'general',
+                                                        'text-gray-500 hover:border-gray-300': activeTab !== 'general'
+                                                    }">
+                                                    General Information
+                                                </button>
+                                            </li>
+                                            <li class="mr-2">
+                                                <button type="button" @click="activeTab = 'licenses'"
+                                                    class="inline-block p-4"
+                                                    :class="{
+                                                        'text-primary border-b-2 border-primary': activeTab === 'licenses',
+                                                        'text-gray-500 hover:border-gray-300': activeTab !== 'licenses'
+                                                    }">
+                                                    Licenses
+                                                </button>
+                                            </li>
+                                            <li class="mr-2">
+                                                <button type="button" @click="activeTab = 'medical'"
+                                                    class="inline-block p-4"
+                                                    :class="{
+                                                        'text-primary border-b-2 border-primary': activeTab === 'medical',
+                                                        'text-gray-500 hover:border-gray-300': activeTab !== 'medical'
+                                                    }">
+                                                    Medical Driver
+                                                </button>
+                                            </li>
+                                            <li class="mr-2">
+                                                <button type="button" @click="activeTab = 'documents'"
+                                                    class="inline-block p-4"
+                                                    :class="{
+                                                        'text-primary border-b-2 border-primary': activeTab === 'documents',
+                                                        'text-gray-500 hover:border-gray-300': activeTab !== 'documents'
+                                                    }">
+                                                    Documents
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
 
                                 {{-- TAB: GENERAL --}}
-                                <template x-if="activeTab === 'general'">
+                                <div x-show="activeTab === 'general'">
                                     <div>
                                         <!-- User Information -->
                                         <div class="bg-white p-4 rounded-lg shadow">
@@ -745,150 +764,7 @@
                                             {{-- </template> --}}
                                         </div>
 
-                                        {{-- Driver Details --}}
-                                        <div class="bg-white p-4 rounded-lg shadow mt-6">
-                                            <button type="button" @click="toggleSection('driversDetails')"
-                                                class="w-full p-4 flex justify-between items-center hover:bg-gray-50 transition-colors">
-                                                <h3 class="text-lg font-semibold">Driver Details</h3>
-                                                <svg :class="{ 'transform rotate-180': openSections.driversDetails }"
-                                                    class="w-5 h-5 transition-transform duration-200"
-                                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                    fill="currentColor">
-                                                    <path fill-rule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clip-rule="evenodd" />
-                                                </svg>
-                                            </button>
-                                            {{-- <h3 class="text-lg font-semibold mb-4">Driver Details</h3> --}}
 
-                                            {{-- Contenido colapsable --}}
-                                            <div x-show="openSections.driversDetails"
-                                                x-transition:enter="transition ease-out duration-200"
-                                                x-transition:enter-start="opacity-0 transform -translate-y-2"
-                                                x-transition:enter-end="opacity-100 transform translate-y-0"
-                                                x-transition:leave="transition ease-in duration-200"
-                                                x-transition:leave-start="opacity-100 transform translate-y-0"
-                                                x-transition:leave-end="opacity-0 transform -translate-y-2"
-                                                class="p-4 border-t border-gray-100">
-
-                                                {{-- SSN --}}
-                                                <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center"
-                                                    x-data="{ mask: null }" x-init="mask = IMask($refs.ssn, { mask: '000-00-0000' })">
-                                                    <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
-                                                        <div class="text-left">
-                                                            <div class="flex items-center">
-                                                                <div class="font-medium">Social Security Number</div>
-                                                                <div
-                                                                    class="ml-2.5 rounded-md border bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                                                    Required
-                                                                </div>
-                                                            </div>
-                                                            <div class="mt-1.5 text-xs text-slate-500/80 xl:mt-3">
-                                                                Enter your SSN for identification
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="mt-3 w-full flex-1 xl:mt-0">
-                                                        <x-base.form-input x-ref="ssn" name="social_security_number"
-                                                            type="text" placeholder="XXX-XX-XXXX"
-                                                            class="form-input w-full"
-                                                            value="{{ old('social_security_number', $userDriverDetail->application?->social_security_number) }}" />
-                                                        @error('social_security_number')
-                                                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                                                        @enderror
-                                                    </div>
-                                                </div>
-
-                                                {{-- License Number --}}
-                                                <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
-                                                    <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
-                                                        <div class="text-left">
-                                                            <div class="flex items-center">
-                                                                <div class="font-medium">License Number</div>
-                                                                <div
-                                                                    class="ml-2.5 rounded-md border bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                                                    Required
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="mt-3 w-full flex-1 xl:mt-0">
-                                                        <x-base.form-input name="license_number" type="text"
-                                                            placeholder="Enter license number"
-                                                            value="{{ old('license_number', $userDriverDetail->license_number) }}" />
-                                                        @error('license_number')
-                                                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                                                        @enderror
-                                                    </div>
-                                                </div>
-
-                                                {{-- State of Issue --}}
-                                                <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
-                                                    <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
-                                                        <div class="text-left">
-                                                            <div class="flex items-center">
-                                                                <div class="font-medium">State of Issue</div>
-                                                                <div
-                                                                    class="ml-2.5 rounded-md border bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                                                    Required
-                                                                </div>
-                                                            </div>
-                                                            <div class="mt-1.5 text-xs text-slate-500/80 xl:mt-3">
-                                                                Enter your complete State of Issue
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="mt-3 w-full flex-1 xl:mt-0">
-                                                        <select name="state_of_issue"
-                                                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-primary focus:ring-opacity-20">
-                                                            <option value="">Select State</option>
-                                                            @foreach ($usStates as $code => $name)
-                                                                <option value="{{ $code }}"
-                                                                    {{ old('state_of_issue', $userDriverDetail->state_of_issue) == $code ? 'selected' : '' }}>
-                                                                    {{ $name }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                        @error('state_of_issue')
-                                                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                                        @enderror
-                                                    </div>
-                                                </div>
-
-                                                {{-- TWIC Card (con Alpine) --}}
-                                                <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
-                                                    <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
-                                                        <div class="text-left">
-                                                            <div class="flex items-center">
-                                                                <div class="font-medium">TWIC Card</div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="mt-3 w-full flex-1 xl:mt-0">
-                                                        <div class="flex items-center mt-4">
-                                                            <x-base.form-check.input class="mr-2.5 border" type="checkbox"
-                                                                name="has_twic_card" value="1"
-                                                                x-model="hasTwicCard" />
-                                                            <span class="cursor-pointer select-none">
-                                                                I have a TWIC card
-                                                            </span>
-                                                        </div>
-
-                                                        <template x-if="hasTwicCard">
-                                                            <div class="mt-2">
-                                                                <x-base.form-input name="twic_expiration_date"
-                                                                    type="date" placeholder="Expiration Date"
-                                                                    value="{{ old('twic_expiration_date', $userDriverDetail->application?->details?->twic_expiration_date?->format('Y-m-d')) }}" />
-                                                                @error('twic_expiration_date')
-                                                                    <span
-                                                                        class="text-red-500 text-sm">{{ $message }}</span>
-                                                                @enderror
-                                                            </div>
-                                                        </template>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
 
                                         {{-- Application Details --}}
                                         <div class="bg-white p-4 rounded-lg shadow mt-6">
@@ -1046,6 +922,39 @@
                                                     </div>
                                                 </div>
 
+                                                {{-- TWIC Card (con Alpine) --}}
+                                                <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
+                                                    <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
+                                                        <div class="text-left">
+                                                            <div class="flex items-center">
+                                                                <div class="font-medium">TWIC Card</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mt-3 w-full flex-1 xl:mt-0">
+                                                        <div class="flex items-center mt-4">
+                                                            <x-base.form-check.input class="mr-2.5 border" type="checkbox"
+                                                                name="has_twic_card" value="1"
+                                                                x-model="hasTwicCard" />
+                                                            <span class="cursor-pointer select-none">
+                                                                I have a TWIC card
+                                                            </span>
+                                                        </div>
+
+                                                        <template x-if="hasTwicCard">
+                                                            <div class="mt-2">
+                                                                <x-base.form-input name="twic_expiration_date"
+                                                                    type="date" placeholder="Expiration Date"
+                                                                    value="{{ old('twic_expiration_date', $userDriverDetail->application?->details?->twic_expiration_date?->format('Y-m-d')) }}" />
+                                                                @error('twic_expiration_date')
+                                                                    <span
+                                                                        class="text-red-500 text-sm">{{ $message }}</span>
+                                                                @enderror
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </div>
+
                                                 {{-- Expected Pay --}}
                                                 <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
                                                     <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
@@ -1127,15 +1036,22 @@
                                             </div>
                                         </div>
                                     </div>
-                                </template>
+                                </div>
 
                                 {{-- TAB: LICENSES --}}
-                                <template x-if="activeTab === 'licenses'">
-                                    <div class="bg-white p-4 rounded-lg shadow">
-                                        <h3 class="text-lg font-semibold mb-4">Licenses Information</h3>
-                                        <p>License management functionality coming soon.</p>
-                                    </div>
-                                </template>
+                                <div x-show="activeTab === 'licenses'">
+                                    @include('admin.user_driver.tabs.licenses_create')
+                                </div>
+
+                                {{-- TAB: Driver Medical --}}
+                                <div x-show="activeTab === 'medical'">
+                                    @include('admin.user_driver.tabs.medical_create')
+                                </div>
+
+                                {{-- TAB: LICENSES --}}
+                                <div x-show="activeTab === 'documents'">
+                                    <h1>Hola</h1>
+                                </div>
 
                                 {{-- Botones Submit/Cancel --}}
                                 <div class="flex border-t border-slate-200/80 px-7 py-5 md:justify-end mt-6">

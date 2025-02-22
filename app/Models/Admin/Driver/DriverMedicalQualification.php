@@ -8,12 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class DriverMedicalQualification extends Model
+class DriverMedicalQualification extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
 
     protected $fillable = [
         'user_driver_detail_id',
+        'social_security_number', // Asegúrate de que este campo esté aquí
+        'hire_date',              // Asegúrate de que este campo esté aquí
+        'location',               // Asegúrate de que este campo esté aquí
         'is_suspended',
         'suspension_date',
         'is_terminated',

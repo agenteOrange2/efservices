@@ -7,14 +7,15 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\TempUploadController;
 use App\Http\Controllers\Admin\CarrierController;
+use App\Http\Controllers\Admin\DriversController;
 use App\Http\Controllers\Admin\MembershipController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\UserDriverController;
 use App\Http\Controllers\Admin\UserCarrierController;
 use App\Http\Controllers\Admin\DocumentTypeController;
 use App\Http\Controllers\Admin\CarrierDocumentController;
-use App\Http\Controllers\Admin\DriversController;
 use App\Http\Controllers\Admin\UserCarrierDocumentController;
 
 
@@ -141,6 +142,10 @@ Route::prefix('carrier/{carrier}/drivers')->name('carrier.user_drivers.')->group
     Route::delete('/{userDriverDetail}', [UserDriverController::class, 'destroy'])->name('destroy');
     Route::delete('/{userDriverDetail}/photo', [UserDriverController::class, 'deletePhoto'])->name('delete-photo');
 });
+
+
+Route::post('/temp-upload', [TempUploadController::class, 'store'])->name('temp.upload');
+
 
 /*
 |--------------------------------------------------------------------------

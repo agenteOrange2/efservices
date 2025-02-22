@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_driver_detail_id')->constrained()->onDelete('cascade');
             $table->string('equipment_type');
             $table->integer('years_experience');
-            $table->integer('miles_driven');
+            $table->decimal('miles_driven');            
             $table->boolean('requires_cdl')->default(false);
             $table->timestamps();
         });

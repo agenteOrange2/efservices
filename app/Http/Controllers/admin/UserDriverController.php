@@ -97,18 +97,10 @@ class UserDriverController extends Controller
     {
 
         // Agregar un dd() al inicio para ver todo lo que llega
-
-
         Log::info('Iniciando store de driver', [
             'carrier_id' => $carrier->id,
             'request_data' => $request->except(['password', 'password_confirmation']),
         ]);
-        /*
-        Log::info('Datos recibidos de direcciones', [
-            'dirección_principal' => $request->only(['address_line1', 'from_date', 'to_date']),
-            'direcciones_previas' => $request->input('previous_addresses')
-        ]);
-        */
 
         //dd($request->all());
         try {
@@ -120,15 +112,9 @@ class UserDriverController extends Controller
                 'password' => 'required|min:8|confirmed',
                 'middle_name' => 'nullable|string|max:255',
                 'last_name' => 'required|string|max:255',
-                /*
-                'license_number' => 'required|string|max:255',
-                'state_of_issue' => 'required|string|max:255',
-                */
+
                 'phone' => 'required|string|max:15',
                 'date_of_birth' => 'required|date',
-
-                // Datos de la aplicación
-                //'social_security_number' => 'nullable|string|max:255', // ajusta según tu DB
 
                 // Direcciones
                 'address_line1' => 'required|string|max:255',
@@ -168,11 +154,11 @@ class UserDriverController extends Controller
             $validatedLicenses = null;
             if ($request->has('licenses')) {
                 $validatedLicenses = $request->validate([
-                    'licenses' => 'array',                    
-                    'current_license_number' => 'required|string|max:255', 
+                    'licenses' => 'array',
+                    'current_license_number' => 'required|string|max:255',
                     'licenses.*.license_number' => 'required_with:licenses|string|max:255',
                     'licenses.*.state_of_issue' => 'required_with:licenses|string|max:255',
-                    'licenses.*.license_class' => 'required_with:licenses|string|max:255',
+                    'licenses.*.license_class' => 'nullable|string|max:255',
                     'licenses.*.expiration_date' => 'required_with:licenses|date',
                     'licenses.*.is_cdl' => 'sometimes|boolean',
                     'licenses.*.endorsements' => 'nullable|array',
@@ -321,7 +307,7 @@ class UserDriverController extends Controller
                     ->toMediaCollection('profile_photo_driver');
             }
 
-            
+
             // Crear la aplicación del driver
             $application = DriverApplication::create([
                 'user_id' => $user->id,
@@ -388,13 +374,13 @@ class UserDriverController extends Controller
                 'eligible_to_work' => $validatedBase['eligible_to_work'],
                 'can_speak_english' => $request->boolean('can_speak_english', false),
                 'has_twic_card' => $request->boolean('has_twic_card', false),
-                'twic_expiration_date' => $validated['twic_expiration_date'] ?? null,
+                'twic_expiration_date' => $validatedBase['twic_expiration_date'] ?? null,
                 'expected_pay' => $validatedBase['expected_pay'] ?? null,
                 'how_did_hear' => $validatedBase['how_did_hear'],
                 'how_did_hear_other' => $validatedBase['how_did_hear'] === 'other' ?
                     $validatedBase['how_did_hear_other'] : null,
                 'referral_employee_name' => $validatedBase['how_did_hear'] === 'employee_referral' ?
-                    ($validated['referral_employee_name'] ?? null) : null,
+                    $request->input('referral_employee_name') : null,
             ]);
             Log::info('CreateDriver: Detalles de aplicación creados', ['details_id' => $applicationDetails->id]);
 
@@ -404,7 +390,6 @@ class UserDriverController extends Controller
                 foreach ($validatedLicenses['licenses'] as $index => $licenseData) {
                     // Saltar entradas de licencia vacías o incompletas
                     if (
-                        empty($licenseData['current_license_number']) ||
                         empty($licenseData['license_number']) ||
                         empty($licenseData['state_of_issue']) ||
                         empty($licenseData['license_class']) ||
@@ -419,7 +404,7 @@ class UserDriverController extends Controller
                     ]);
 
                     $license = $userDriverDetail->licenses()->create([
-                        'current_license_number' => $licenseData['current_license_number'],
+                        'current_license_number' => $request->input('current_license_number'),
                         'license_number' => $licenseData['license_number'],
                         'state_of_issue' => $licenseData['state_of_issue'],
                         'license_class' => $licenseData['license_class'],
@@ -453,7 +438,10 @@ class UserDriverController extends Controller
                             );
 
                             // Asociar el endoso a la licencia
-                            $license->endorsements()->attach($endorsement->id);
+                            $license->endorsements()->attach($endorsement->id, [
+                                'issued_date' => now(), // O usa un valor específico si lo tienes
+                                'expiration_date' => $licenseData['expiration_date'] // Usa la misma fecha de expiración de la licencia
+                            ]);
                         }
                     }
                 }
@@ -489,15 +477,16 @@ class UserDriverController extends Controller
             // Procesar información médica si existe
             if ($validatedMedical) {
                 $medical = $userDriverDetail->medicalQualification()->create([
-                    'hire_date' => $validatedMedical['hire_date'] ?? null,
-                    'location' => $validatedMedical['location'] ?? null,
+                    'social_security_number' => $request->input('social_security_number'),
+                    'hire_date' => $request->input('hire_date'),
+                    'location' => $request->input('location'),
                     'is_suspended' => $request->boolean('is_suspended', false),
-                    'suspension_date' => $validatedMedical['suspension_date'] ?? null,
+                    'suspension_date' => $request->input('suspension_date'),
                     'is_terminated' => $request->boolean('is_terminated', false),
-                    'termination_date' => $validatedMedical['termination_date'] ?? null,
-                    'medical_examiner_name' => $validatedMedical['medical_examiner_name'] ?? null,
-                    'medical_examiner_registry_number' => $validatedMedical['medical_examiner_registry_number'] ?? null,
-                    'medical_card_expiration_date' => $validatedMedical['medical_card_expiration_date'] ?? null,
+                    'termination_date' => $request->input('termination_date'),
+                    'medical_examiner_name' => $request->input('medical_examiner_name'),
+                    'medical_examiner_registry_number' => $request->input('medical_examiner_registry_number'),
+                    'medical_card_expiration_date' => $request->input('medical_card_expiration_date')
                 ]);
 
                 // Procesar tarjeta médica si se proporcionó
@@ -530,9 +519,9 @@ class UserDriverController extends Controller
             return back()->withErrors(['error' => 'Error creando el driver: ' . $e->getMessage()])
                 ->withInput();
         }
-    }
+    }    
 
-
+    
     private function getEndorsementName($code)
     {
         $endorsements = [

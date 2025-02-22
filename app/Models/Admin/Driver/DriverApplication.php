@@ -12,9 +12,6 @@ class DriverApplication extends Model
 
     protected $fillable = [
         'user_id',
-        'social_security_number',        
-        'hire_date',
-        'location',
         'status'
     ];
 

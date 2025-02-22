@@ -63,10 +63,10 @@
                                     this.$watch('toDate', () => this.calculateTotal());
                                     this.$watch('toDate', () => this.calculateTotal());
                                     this.$watch('previousAddresses', () => this.calculateTotal(), { deep: true });
-                                    console.log('Initial previousAddresses:', this.previousAddresses);
+                            
                             
                                     this.$watch('previousAddresses', (value) => {
-                                        console.log('Direcciones previas actualizadas:', value);
+                            
                                         this.calculateTotal();
                                     }, { deep: true });
                             
@@ -137,7 +137,7 @@
                                     let currentYears = this.calculateDuration(this.fromDate, this.toDate);
                                     let total = currentYears;
                             
-                                    console.log('Años dirección actual:', currentYears);
+                            
                             
                                     // Si la dirección actual tiene 3+ años
                                     if (currentYears >= 3) {
@@ -255,16 +255,6 @@
                                                         'text-gray-500 hover:border-gray-300': activeTab !== 'medical'
                                                     }">
                                                     Medical Driver
-                                                </button>
-                                            </li>
-                                            <li class="mr-2">
-                                                <button type="button" @click="activeTab = 'documents'"
-                                                    class="inline-block p-4"
-                                                    :class="{
-                                                        'text-primary border-b-2 border-primary': activeTab === 'documents',
-                                                        'text-gray-500 hover:border-gray-300': activeTab !== 'documents'
-                                                    }">
-                                                    Documents
                                                 </button>
                                             </li>
                                         </ul>
@@ -1029,18 +1019,115 @@
 
 
                                 {{-- TAB: LICENSES --}}
-                                <div x-show="activeTab === 'licenses'">
+                                <div x-show="activeTab === 'licenses'" x-data="{
+                                    licenses: {{ json_encode(
+                                        old('licenses', [
+                                            [
+                                                'license_number' => '',
+                                                'state_of_issue' => '',
+                                                'license_class' => '',
+                                                'expiration_date' => '',
+                                                'is_cdl' => false,
+                                                'endorsements' => [],
+                                                'temp_front_token' => '',
+                                                'front_preview' => '',
+                                                'front_filename' => '',
+                                                'temp_back_token' => '',
+                                                'back_preview' => '',
+                                                'back_filename' => '',
+                                            ],
+                                        ]),
+                                    ) }},
+                                    experiences: {{ json_encode(
+                                        old('experiences', [
+                                            [
+                                                'equipment_type' => '',
+                                                'years_experience' => '',
+                                                'miles_driven' => '',
+                                                'requires_cdl' => false,
+                                            ],
+                                        ]),
+                                    ) }},
+                                
+                                    addLicense() {
+                                        this.licenses.push({
+                                            license_number: '',
+                                            state_of_issue: '',
+                                            license_class: '',
+                                            expiration_date: '',
+                                            is_cdl: false,
+                                            endorsements: []
+                                        });
+                                    },
+                                
+                                    removeLicense(index) {
+                                        if (this.licenses.length > 1) {
+                                            this.licenses.splice(index, 1);
+                                        }
+                                    },
+                                
+                                    toggleEndorsements(index) {
+                                        // La propiedad is_cdl ya se actualiza automáticamente con x-model
+                                    },
+                                
+                                    addExperience() {
+                                        this.experiences.push({
+                                            equipment_type: '',
+                                            years_experience: '',
+                                            miles_driven: '',
+                                            requires_cdl: false
+                                        });
+                                    },
+                                
+                                    removeExperience(index) {
+                                        if (this.experiences.length > 1) {
+                                            this.experiences.splice(index, 1);
+                                        }
+                                    },
+                                
+                                    checkEndorsement(licenseIndex, endorsement) {
+                                        if (!this.licenses[licenseIndex].endorsements) {
+                                            this.licenses[licenseIndex].endorsements = [];
+                                        }
+                                
+                                        return this.licenses[licenseIndex].endorsements.includes(endorsement);
+                                    },
+                                
+                                    toggleEndorsement(licenseIndex, endorsement) {
+                                        if (!this.licenses[licenseIndex].endorsements) {
+                                            this.licenses[licenseIndex].endorsements = [];
+                                        }
+                                
+                                        const index = this.licenses[licenseIndex].endorsements.indexOf(endorsement);
+                                        if (index === -1) {
+                                            this.licenses[licenseIndex].endorsements.push(endorsement);
+                                        } else {
+                                            this.licenses[licenseIndex].endorsements.splice(index, 1);
+                                        }
+                                    }
+                                }">
                                     @include('admin.user_driver.tabs.licenses_create')
                                 </div>
 
                                 {{-- TAB: Driver Medical --}}
-                                <div x-show="activeTab === 'medical'">
+                                <div x-show="activeTab === 'medical'" x-data="{
+                                    isSuspended: {{ old('is_suspended') ? 'true' : 'false' }},
+                                    isTerminated: {{ old('is_terminated') ? 'true' : 'false' }},
+                                    selectedFile: null,
+                                
+                                    setFilePreview(event) {
+                                        const file = event.target.files[0];
+                                        if (file) {
+                                            this.selectedFile = file.name;
+                                        }
+                                    },
+                                
+                                    clearFile() {
+                                        this.selectedFile = null;
+                                        document.getElementById('medical_card_file').value = '';
+                                    }
+                                }">
                                     @include('admin.user_driver.tabs.medical_create')
-                                </div>
-
-                                {{-- TAB: LICENSES --}}
-                                <div x-show="activeTab === 'documents'">
-                                    <h1>Hola</h1>
                                 </div>
 
                                 {{-- Botones Submit/Cancel --}}
