@@ -7,9 +7,10 @@ use App\Fakers\Users;
 
 class Projects
 {
-    public static function fakeProjects(): Collection
+    // public static function fakeProjects(): Collection
+    public static function fakeProjects()
     {
-        return collect([
+        return [
             [
                 "projectName" => "Web Odyssey: Redesigning the Future - 2043",
                 "projectManager" => Users::fakeUsers()[0],
@@ -70,6 +71,6 @@ class Projects
                 "creativeDirector" => Users::fakeUsers()[0],
                 "dueDate" => date("D M Y", intval(mt_rand(1586584776897, 1672333200000) / 1000))
             ],
-        ])->shuffle();
+        ];
     }
 }

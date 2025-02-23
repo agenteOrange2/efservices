@@ -29,17 +29,10 @@
                                     Basic Buttons
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-1"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-1">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-1"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-1" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -51,54 +44,32 @@
                                     project. These buttons come in various color variants to
                                     suit your design needs.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
                                     <div class="mt-4 flex flex-col gap-3.5 px-5 py-2">
                                         <x-base.preview>
                                             <div class="flex flex-wrap gap-2">
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button class="w-24" variant="primary">
                                                     Primary
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="secondary"
-                                                >
+                                                <x-base.button class="w-24" variant="secondary">
                                                     Secondary
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="success"
-                                                >
+                                                <x-base.button class="w-24" variant="success">
                                                     Success
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="warning"
-                                                >
+                                                <x-base.button class="w-24" variant="warning">
                                                     Warning
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="pending"
-                                                >
+                                                <x-base.button class="w-24" variant="pending">
                                                     Pending
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="danger"
-                                                >
+                                                <x-base.button class="w-24" variant="danger">
                                                     Danger
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="dark"
-                                                >
+                                                <x-base.button class="w-24" variant="dark">
                                                     Dark
                                                 </x-base.button>
                                             </div>
@@ -106,46 +77,25 @@
                                         <x-base.source>
                                             <x-base.highlight>
                                                 <div class="flex flex-wrap gap-2">
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button class="w-24" variant="primary">
                                                         Primary
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="secondary"
-                                                    >
+                                                    <x-base.button class="w-24" variant="secondary">
                                                         Secondary
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="success"
-                                                    >
+                                                    <x-base.button class="w-24" variant="success">
                                                         Success
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="warning"
-                                                    >
+                                                    <x-base.button class="w-24" variant="warning">
                                                         Warning
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="pending"
-                                                    >
+                                                    <x-base.button class="w-24" variant="pending">
                                                         Pending
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="danger"
-                                                    >
+                                                    <x-base.button class="w-24" variant="danger">
                                                         Danger
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="dark"
-                                                    >
+                                                    <x-base.button class="w-24" variant="dark">
                                                         Dark
                                                     </x-base.button>
                                                 </div>
@@ -171,17 +121,10 @@
                                     Button Sizes
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-2"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-2">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-2"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-2" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -192,54 +135,31 @@
                                     ensures that your buttons fit seamlessly within your
                                     user interface.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
                                     <div class="mt-4 flex flex-col gap-3.5 px-5 py-2">
                                         <x-base.preview>
                                             <div class="flex flex-wrap items-center gap-2">
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="primary"
-                                                    size="sm"
-                                                >
+                                                <x-base.button class="w-24" variant="primary" size="sm">
                                                     Small
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button class="w-24" variant="primary">
                                                     Medium
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="primary"
-                                                    size="lg"
-                                                >
+                                                <x-base.button class="w-24" variant="primary" size="lg">
                                                     Large
                                                 </x-base.button>
                                             </div>
                                             <div class="mt-5 flex flex-wrap items-center gap-2">
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="secondary"
-                                                    size="sm"
-                                                >
+                                                <x-base.button class="w-24" variant="secondary" size="sm">
                                                     Small
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="secondary"
-                                                >
+                                                <x-base.button class="w-24" variant="secondary">
                                                     Medium
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="secondary"
-                                                    size="lg"
-                                                >
+                                                <x-base.button class="w-24" variant="secondary" size="lg">
                                                     Large
                                                 </x-base.button>
                                             </div>
@@ -247,46 +167,24 @@
                                         <x-base.source>
                                             <x-base.highlight>
                                                 <div class="flex flex-wrap items-center gap-2">
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="primary"
-                                                        size="sm"
-                                                    >
+                                                    <x-base.button class="w-24" variant="primary" size="sm">
                                                         Small
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button class="w-24" variant="primary">
                                                         Medium
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="primary"
-                                                        size="lg"
-                                                    >
+                                                    <x-base.button class="w-24" variant="primary" size="lg">
                                                         Large
                                                     </x-base.button>
                                                 </div>
                                                 <div class="mt-5 flex flex-wrap items-center gap-2">
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="secondary"
-                                                        size="sm"
-                                                    >
+                                                    <x-base.button class="w-24" variant="secondary" size="sm">
                                                         Small
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="secondary"
-                                                    >
+                                                    <x-base.button class="w-24" variant="secondary">
                                                         Medium
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="secondary"
-                                                        size="lg"
-                                                    >
+                                                    <x-base.button class="w-24" variant="secondary" size="lg">
                                                         Large
                                                     </x-base.button>
                                                 </div>
@@ -312,17 +210,10 @@
                                     Working with Links
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-3"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-3">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-3"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-3" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -332,68 +223,39 @@
                                     can be used to navigate to different sections of your
                                     website or external URLs.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
                                     <div class="mt-4 flex flex-col gap-3.5 px-5 py-2">
                                         <x-base.preview>
                                             <div class="flex flex-wrap items-center gap-2">
-                                                <x-base.button
-                                                    class="inline-block w-24"
-                                                    href=""
-                                                    as="a"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button class="inline-block w-24" href="" as="a"
+                                                    variant="primary">
                                                     Link
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="inline-block w-24"
-                                                    href=""
-                                                    as="a"
-                                                    variant="secondary"
-                                                >
+                                                <x-base.button class="inline-block w-24" href="" as="a"
+                                                    variant="secondary">
                                                     Button
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="inline-block w-24"
-                                                    href=""
-                                                    as="a"
-                                                    variant="success"
-                                                >
+                                                <x-base.button class="inline-block w-24" href="" as="a"
+                                                    variant="success">
                                                     Input
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="inline-block w-24"
-                                                    href=""
-                                                    as="a"
-                                                    variant="warning"
-                                                >
+                                                <x-base.button class="inline-block w-24" href="" as="a"
+                                                    variant="warning">
                                                     Submit
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="inline-block w-24"
-                                                    href=""
-                                                    as="a"
-                                                    variant="pending"
-                                                >
+                                                <x-base.button class="inline-block w-24" href="" as="a"
+                                                    variant="pending">
                                                     Pending
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="inline-block w-24"
-                                                    href=""
-                                                    as="a"
-                                                    variant="danger"
-                                                >
+                                                <x-base.button class="inline-block w-24" href="" as="a"
+                                                    variant="danger">
                                                     Reset
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="inline-block w-24"
-                                                    href=""
-                                                    as="a"
-                                                    variant="dark"
-                                                >
+                                                <x-base.button class="inline-block w-24" href="" as="a"
+                                                    variant="dark">
                                                     Metal
                                                 </x-base.button>
                                             </div>
@@ -401,60 +263,32 @@
                                         <x-base.source>
                                             <x-base.highlight>
                                                 <div class="flex flex-wrap items-center gap-2">
-                                                    <x-base.button
-                                                        class="inline-block w-24"
-                                                        href=""
-                                                        as="a"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button class="inline-block w-24" href=""
+                                                        as="a" variant="primary">
                                                         Link
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="inline-block w-24"
-                                                        href=""
-                                                        as="a"
-                                                        variant="secondary"
-                                                    >
+                                                    <x-base.button class="inline-block w-24" href=""
+                                                        as="a" variant="secondary">
                                                         Button
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="inline-block w-24"
-                                                        href=""
-                                                        as="a"
-                                                        variant="success"
-                                                    >
+                                                    <x-base.button class="inline-block w-24" href=""
+                                                        as="a" variant="success">
                                                         Input
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="inline-block w-24"
-                                                        href=""
-                                                        as="a"
-                                                        variant="warning"
-                                                    >
+                                                    <x-base.button class="inline-block w-24" href=""
+                                                        as="a" variant="warning">
                                                         Submit
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="inline-block w-24"
-                                                        href=""
-                                                        as="a"
-                                                        variant="pending"
-                                                    >
+                                                    <x-base.button class="inline-block w-24" href=""
+                                                        as="a" variant="pending">
                                                         Pending
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="inline-block w-24"
-                                                        href=""
-                                                        as="a"
-                                                        variant="danger"
-                                                    >
+                                                    <x-base.button class="inline-block w-24" href=""
+                                                        as="a" variant="danger">
                                                         Reset
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="inline-block w-24"
-                                                        href=""
-                                                        as="a"
-                                                        variant="dark"
-                                                    >
+                                                    <x-base.button class="inline-block w-24" href=""
+                                                        as="a" variant="dark">
                                                         Metal
                                                     </x-base.button>
                                                 </div>
@@ -480,17 +314,10 @@
                                     Elevated Buttons
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-4"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-4">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-4"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-4" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -501,119 +328,55 @@
                                     elements. This section covers elevated buttons in
                                     various styles.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
                                     <div class="mt-4 flex flex-col gap-3.5 px-5 py-2">
                                         <x-base.preview>
                                             <div class="flex flex-wrap items-center gap-2">
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="primary"
-                                                    elevated
-                                                >
+                                                <x-base.button class="w-24" variant="primary" elevated>
                                                     Primary
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="secondary"
-                                                    elevated
-                                                >
+                                                <x-base.button class="w-24" variant="secondary" elevated>
                                                     Secondary
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="success"
-                                                    elevated
-                                                >
+                                                <x-base.button class="w-24" variant="success" elevated>
                                                     Success
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="warning"
-                                                    elevated
-                                                >
+                                                <x-base.button class="w-24" variant="warning" elevated>
                                                     Warning
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="pending"
-                                                    elevated
-                                                >
+                                                <x-base.button class="w-24" variant="pending" elevated>
                                                     Pending
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="danger"
-                                                    elevated
-                                                >
+                                                <x-base.button class="w-24" variant="danger" elevated>
                                                     Danger
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="dark"
-                                                    elevated
-                                                >
+                                                <x-base.button class="w-24" variant="dark" elevated>
                                                     Dark
                                                 </x-base.button>
                                             </div>
                                             <div class="mt-5 flex flex-wrap items-center gap-2">
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="primary"
-                                                    elevated
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="primary" elevated rounded>
                                                     Primary
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="secondary"
-                                                    elevated
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="secondary" elevated rounded>
                                                     Secondary
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="success"
-                                                    elevated
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="success" elevated rounded>
                                                     Success
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="warning"
-                                                    elevated
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="warning" elevated rounded>
                                                     Warning
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="pending"
-                                                    elevated
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="pending" elevated rounded>
                                                     Pending
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="danger"
-                                                    elevated
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="danger" elevated rounded>
                                                     Danger
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="dark"
-                                                    elevated
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="dark" elevated rounded>
                                                     Dark
                                                 </x-base.button>
                                             </div>
@@ -621,111 +384,48 @@
                                         <x-base.source>
                                             <x-base.highlight>
                                                 <div class="flex flex-wrap items-center gap-2">
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="primary"
-                                                        elevated
-                                                    >
+                                                    <x-base.button class="w-24" variant="primary" elevated>
                                                         Primary
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="secondary"
-                                                        elevated
-                                                    >
+                                                    <x-base.button class="w-24" variant="secondary" elevated>
                                                         Secondary
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="success"
-                                                        elevated
-                                                    >
+                                                    <x-base.button class="w-24" variant="success" elevated>
                                                         Success
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="warning"
-                                                        elevated
-                                                    >
+                                                    <x-base.button class="w-24" variant="warning" elevated>
                                                         Warning
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="pending"
-                                                        elevated
-                                                    >
+                                                    <x-base.button class="w-24" variant="pending" elevated>
                                                         Pending
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="danger"
-                                                        elevated
-                                                    >
+                                                    <x-base.button class="w-24" variant="danger" elevated>
                                                         Danger
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="dark"
-                                                        elevated
-                                                    >
+                                                    <x-base.button class="w-24" variant="dark" elevated>
                                                         Dark
                                                     </x-base.button>
                                                 </div>
                                                 <div class="mt-5 flex flex-wrap items-center gap-2">
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="primary"
-                                                        elevated
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="primary" elevated rounded>
                                                         Primary
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="secondary"
-                                                        elevated
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="secondary" elevated rounded>
                                                         Secondary
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="success"
-                                                        elevated
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="success" elevated rounded>
                                                         Success
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="warning"
-                                                        elevated
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="warning" elevated rounded>
                                                         Warning
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="pending"
-                                                        elevated
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="pending" elevated rounded>
                                                         Pending
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="danger"
-                                                        elevated
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="danger" elevated rounded>
                                                         Danger
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="dark"
-                                                        elevated
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="dark" elevated rounded>
                                                         Dark
                                                     </x-base.button>
                                                 </div>
@@ -750,17 +450,10 @@
                                     Social Media Buttons
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-5"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-5">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-5"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-5" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -770,52 +463,27 @@
                                     platforms. This section covers social media buttons with
                                     different icons and styles.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
                                     <div class="mt-4 flex flex-col gap-3.5 px-5 py-2">
                                         <x-base.preview>
                                             <div class="mt-5 flex flex-wrap items-center gap-2">
-                                                <x-base.button
-                                                    class="w-32"
-                                                    variant="facebook"
-                                                >
-                                                    <x-base.lucide
-                                                        class="mr-2 h-4 w-4"
-                                                        icon="Facebook"
-                                                    />
+                                                <x-base.button class="w-32" variant="facebook">
+                                                    <x-base.lucide class="mr-2 h-4 w-4" icon="Facebook" />
                                                     Facebook
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-32"
-                                                    variant="twitter"
-                                                >
-                                                    <x-base.lucide
-                                                        class="mr-2 h-4 w-4"
-                                                        icon="Twitter"
-                                                    />
+                                                <x-base.button class="w-32" variant="twitter">
+                                                    <x-base.lucide class="mr-2 h-4 w-4" icon="Twitter" />
                                                     Twitter
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-32"
-                                                    variant="instagram"
-                                                >
-                                                    <x-base.lucide
-                                                        class="mr-2 h-4 w-4"
-                                                        icon="Instagram"
-                                                    />
+                                                <x-base.button class="w-32" variant="instagram">
+                                                    <x-base.lucide class="mr-2 h-4 w-4" icon="Instagram" />
                                                     Instagram
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-32"
-                                                    variant="linkedin"
-                                                >
-                                                    <x-base.lucide
-                                                        class="mr-2 h-4 w-4"
-                                                        icon="Linkedin"
-                                                    />
+                                                <x-base.button class="w-32" variant="linkedin">
+                                                    <x-base.lucide class="mr-2 h-4 w-4" icon="Linkedin" />
                                                     Linkedin
                                                 </x-base.button>
                                             </div>
@@ -823,44 +491,20 @@
                                         <x-base.source>
                                             <x-base.highlight>
                                                 <div class="mt-5 flex flex-wrap items-center gap-2">
-                                                    <x-base.button
-                                                        class="w-32"
-                                                        variant="facebook"
-                                                    >
-                                                        <x-base.lucide
-                                                            class="mr-2 h-4 w-4"
-                                                            icon="Facebook"
-                                                        />
+                                                    <x-base.button class="w-32" variant="facebook">
+                                                        <x-base.lucide class="mr-2 h-4 w-4" icon="Facebook" />
                                                         Facebook
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-32"
-                                                        variant="twitter"
-                                                    >
-                                                        <x-base.lucide
-                                                            class="mr-2 h-4 w-4"
-                                                            icon="Twitter"
-                                                        />
+                                                    <x-base.button class="w-32" variant="twitter">
+                                                        <x-base.lucide class="mr-2 h-4 w-4" icon="Twitter" />
                                                         Twitter
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-32"
-                                                        variant="instagram"
-                                                    >
-                                                        <x-base.lucide
-                                                            class="mr-2 h-4 w-4"
-                                                            icon="Instagram"
-                                                        />
+                                                    <x-base.button class="w-32" variant="instagram">
+                                                        <x-base.lucide class="mr-2 h-4 w-4" icon="Instagram" />
                                                         Instagram
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-32"
-                                                        variant="linkedin"
-                                                    >
-                                                        <x-base.lucide
-                                                            class="mr-2 h-4 w-4"
-                                                            icon="Linkedin"
-                                                        />
+                                                    <x-base.button class="w-32" variant="linkedin">
+                                                        <x-base.lucide class="mr-2 h-4 w-4" icon="Linkedin" />
                                                         Linkedin
                                                     </x-base.button>
                                                 </div>
@@ -885,17 +529,10 @@
                                     Outline Buttons
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-6"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-6">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-6"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-6" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -905,54 +542,32 @@
                                     a clean and minimalist appearance while offering clear
                                     interaction points.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
                                     <div class="mt-4 flex flex-col gap-3.5 px-5 py-2">
                                         <x-base.preview>
                                             <div class="flex flex-wrap items-center gap-2">
-                                                <x-base.button
-                                                    class="inline-block w-24"
-                                                    variant="outline-primary"
-                                                >
+                                                <x-base.button class="inline-block w-24" variant="outline-primary">
                                                     Primary
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="inline-block w-24"
-                                                    variant="outline-secondary"
-                                                >
+                                                <x-base.button class="inline-block w-24" variant="outline-secondary">
                                                     Secondary
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="inline-block w-24"
-                                                    variant="outline-success"
-                                                >
+                                                <x-base.button class="inline-block w-24" variant="outline-success">
                                                     Success
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="inline-block w-24"
-                                                    variant="outline-warning"
-                                                >
+                                                <x-base.button class="inline-block w-24" variant="outline-warning">
                                                     Warning
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="inline-block w-24"
-                                                    variant="outline-pending"
-                                                >
+                                                <x-base.button class="inline-block w-24" variant="outline-pending">
                                                     Pending
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="inline-block w-24"
-                                                    variant="outline-danger"
-                                                >
+                                                <x-base.button class="inline-block w-24" variant="outline-danger">
                                                     Danger
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="inline-block w-24"
-                                                    variant="outline-dark"
-                                                >
+                                                <x-base.button class="inline-block w-24" variant="outline-dark">
                                                     Dark
                                                 </x-base.button>
                                             </div>
@@ -960,46 +575,25 @@
                                         <x-base.source>
                                             <x-base.highlight>
                                                 <div class="flex flex-wrap items-center gap-2">
-                                                    <x-base.button
-                                                        class="inline-block w-24"
-                                                        variant="outline-primary"
-                                                    >
+                                                    <x-base.button class="inline-block w-24" variant="outline-primary">
                                                         Primary
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="inline-block w-24"
-                                                        variant="outline-secondary"
-                                                    >
+                                                    <x-base.button class="inline-block w-24" variant="outline-secondary">
                                                         Secondary
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="inline-block w-24"
-                                                        variant="outline-success"
-                                                    >
+                                                    <x-base.button class="inline-block w-24" variant="outline-success">
                                                         Success
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="inline-block w-24"
-                                                        variant="outline-warning"
-                                                    >
+                                                    <x-base.button class="inline-block w-24" variant="outline-warning">
                                                         Warning
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="inline-block w-24"
-                                                        variant="outline-pending"
-                                                    >
+                                                    <x-base.button class="inline-block w-24" variant="outline-pending">
                                                         Pending
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="inline-block w-24"
-                                                        variant="outline-danger"
-                                                    >
+                                                    <x-base.button class="inline-block w-24" variant="outline-danger">
                                                         Danger
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="inline-block w-24"
-                                                        variant="outline-dark"
-                                                    >
+                                                    <x-base.button class="inline-block w-24" variant="outline-dark">
                                                         Dark
                                                     </x-base.button>
                                                 </div>
@@ -1024,17 +618,10 @@
                                     Loading State Buttons
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-7"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-7">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-7"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-7" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -1045,8 +632,7 @@
                                     provide feedback to users while they wait for a process
                                     to complete.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -1055,35 +641,23 @@
                                             <div class="flex flex-wrap items-center gap-2">
                                                 <x-base.button variant="primary">
                                                     Saving
-                                                    <x-base.loading-icon
-                                                        class="ml-2 h-4 w-4"
-                                                        icon="oval"
-                                                        color="white"
-                                                    />
+                                                    <x-base.loading-icon class="ml-2 h-4 w-4" icon="oval"
+                                                        color="white" />
                                                 </x-base.button>
                                                 <x-base.button variant="success">
                                                     Adding
-                                                    <x-base.loading-icon
-                                                        class="ml-2 h-4 w-4"
-                                                        icon="spinning-circles"
-                                                        color="white"
-                                                    />
+                                                    <x-base.loading-icon class="ml-2 h-4 w-4" icon="spinning-circles"
+                                                        color="white" />
                                                 </x-base.button>
                                                 <x-base.button variant="warning">
                                                     Loading
-                                                    <x-base.loading-icon
-                                                        class="ml-2 h-4 w-4"
-                                                        icon="three-dots"
-                                                        color="1a202c"
-                                                    />
+                                                    <x-base.loading-icon class="ml-2 h-4 w-4" icon="three-dots"
+                                                        color="1a202c" />
                                                 </x-base.button>
                                                 <x-base.button variant="danger">
                                                     Deleting
-                                                    <x-base.loading-icon
-                                                        class="ml-2 h-4 w-4"
-                                                        icon="puff"
-                                                        color="white"
-                                                    />
+                                                    <x-base.loading-icon class="ml-2 h-4 w-4" icon="puff"
+                                                        color="white" />
                                                 </x-base.button>
                                             </div>
                                         </x-base.preview>
@@ -1092,35 +666,23 @@
                                                 <div class="flex flex-wrap items-center gap-2">
                                                     <x-base.button variant="primary">
                                                         Saving
-                                                        <x-base.loading-icon
-                                                            class="ml-2 h-4 w-4"
-                                                            icon="oval"
-                                                            color="white"
-                                                        />
+                                                        <x-base.loading-icon class="ml-2 h-4 w-4" icon="oval"
+                                                            color="white" />
                                                     </x-base.button>
                                                     <x-base.button variant="success">
                                                         Adding
-                                                        <x-base.loading-icon
-                                                            class="ml-2 h-4 w-4"
-                                                            icon="spinning-circles"
-                                                            color="white"
-                                                        />
+                                                        <x-base.loading-icon class="ml-2 h-4 w-4" icon="spinning-circles"
+                                                            color="white" />
                                                     </x-base.button>
                                                     <x-base.button variant="warning">
                                                         Loading
-                                                        <x-base.loading-icon
-                                                            class="ml-2 h-4 w-4"
-                                                            icon="three-dots"
-                                                            color="1a202c"
-                                                        />
+                                                        <x-base.loading-icon class="ml-2 h-4 w-4" icon="three-dots"
+                                                            color="1a202c" />
                                                     </x-base.button>
                                                     <x-base.button variant="danger">
                                                         Deleting
-                                                        <x-base.loading-icon
-                                                            class="ml-2 h-4 w-4"
-                                                            icon="puff"
-                                                            color="white"
-                                                        />
+                                                        <x-base.loading-icon class="ml-2 h-4 w-4" icon="puff"
+                                                            color="white" />
                                                     </x-base.button>
                                                 </div>
                                             </x-base.highlight>
@@ -1144,17 +706,10 @@
                                     Rounded Buttons
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-8"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-8">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-8"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-8" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -1165,61 +720,32 @@
                                     and user-friendly. This section explores how to use
                                     rounded buttons effectively in your project.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
                                     <div class="mt-4 flex flex-col gap-3.5 px-5 py-2">
                                         <x-base.preview>
                                             <div class="flex flex-wrap items-center gap-2">
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="primary"
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="primary" rounded>
                                                     Primary
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="secondary"
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="secondary" rounded>
                                                     Secondary
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="success"
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="success" rounded>
                                                     Success
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="warning"
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="warning" rounded>
                                                     Warning
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="pending"
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="pending" rounded>
                                                     Pending
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="danger"
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="danger" rounded>
                                                     Danger
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="dark"
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="dark" rounded>
                                                     Dark
                                                 </x-base.button>
                                             </div>
@@ -1227,53 +753,25 @@
                                         <x-base.source>
                                             <x-base.highlight>
                                                 <div class="flex flex-wrap items-center gap-2">
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="primary"
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="primary" rounded>
                                                         Primary
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="secondary"
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="secondary" rounded>
                                                         Secondary
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="success"
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="success" rounded>
                                                         Success
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="warning"
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="warning" rounded>
                                                         Warning
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="pending"
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="pending" rounded>
                                                         Pending
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="danger"
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="danger" rounded>
                                                         Danger
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="dark"
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="dark" rounded>
                                                         Dark
                                                     </x-base.button>
                                                 </div>
@@ -1298,17 +796,10 @@
                                     Soft Color Buttons
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-9"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-9">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-9"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-9" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -1319,61 +810,32 @@
                                     overpowering. In this section, you'll learn how to use
                                     soft color buttons effectively in your project.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
                                     <div class="mt-4 flex flex-col gap-3.5 px-5 py-2">
                                         <x-base.preview>
                                             <div class="flex flex-wrap items-center gap-2">
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="soft-primary"
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="soft-primary" rounded>
                                                     Primary
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="soft-secondary"
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="soft-secondary" rounded>
                                                     Secondary
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="soft-success"
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="soft-success" rounded>
                                                     Success
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="soft-warning"
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="soft-warning" rounded>
                                                     Warning
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="soft-pending"
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="soft-pending" rounded>
                                                     Pending
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="soft-danger"
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="soft-danger" rounded>
                                                     Danger
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-24"
-                                                    variant="soft-dark"
-                                                    rounded
-                                                >
+                                                <x-base.button class="w-24" variant="soft-dark" rounded>
                                                     Dark
                                                 </x-base.button>
                                             </div>
@@ -1381,53 +843,25 @@
                                         <x-base.source>
                                             <x-base.highlight>
                                                 <div class="flex flex-wrap items-center gap-2">
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="soft-primary"
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="soft-primary" rounded>
                                                         Primary
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="soft-secondary"
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="soft-secondary" rounded>
                                                         Secondary
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="soft-success"
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="soft-success" rounded>
                                                         Success
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="soft-warning"
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="soft-warning" rounded>
                                                         Warning
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="soft-pending"
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="soft-pending" rounded>
                                                         Pending
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="soft-danger"
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="soft-danger" rounded>
                                                         Danger
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-24"
-                                                        variant="soft-dark"
-                                                        rounded
-                                                    >
+                                                    <x-base.button class="w-24" variant="soft-dark" rounded>
                                                         Dark
                                                     </x-base.button>
                                                 </div>
@@ -1452,17 +886,10 @@
                                     Icon Buttons
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-10"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-10">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-10"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-10" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -1473,82 +900,39 @@
                                     icon buttons effectively and enhance your user
                                     experience.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
                                     <div class="mt-4 flex flex-col gap-3.5 px-5 py-2">
                                         <x-base.preview>
                                             <div class="flex flex-wrap items-center gap-2">
-                                                <x-base.button
-                                                    class="w-32"
-                                                    variant="primary"
-                                                >
-                                                    <x-base.lucide
-                                                        class="mr-2 h-4 w-4"
-                                                        icon="Activity"
-                                                    />
+                                                <x-base.button class="w-32" variant="primary">
+                                                    <x-base.lucide class="mr-2 h-4 w-4" icon="Activity" />
                                                     Activity
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-32"
-                                                    variant="secondary"
-                                                >
-                                                    <x-base.lucide
-                                                        class="mr-2 h-4 w-4"
-                                                        icon="HardDrive"
-                                                    />
+                                                <x-base.button class="w-32" variant="secondary">
+                                                    <x-base.lucide class="mr-2 h-4 w-4" icon="HardDrive" />
                                                     Hard Drive
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-32"
-                                                    variant="success"
-                                                >
-                                                    <x-base.lucide
-                                                        class="mr-2 h-4 w-4"
-                                                        icon="Calendar"
-                                                    />
+                                                <x-base.button class="w-32" variant="success">
+                                                    <x-base.lucide class="mr-2 h-4 w-4" icon="Calendar" />
                                                     Calendar
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-32"
-                                                    variant="warning"
-                                                >
-                                                    <x-base.lucide
-                                                        class="mr-2 h-4 w-4"
-                                                        icon="Share2"
-                                                    />
+                                                <x-base.button class="w-32" variant="warning">
+                                                    <x-base.lucide class="mr-2 h-4 w-4" icon="Share2" />
                                                     Share
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-32"
-                                                    variant="pending"
-                                                >
-                                                    <x-base.lucide
-                                                        class="mr-2 h-4 w-4"
-                                                        icon="Download"
-                                                    />
+                                                <x-base.button class="w-32" variant="pending">
+                                                    <x-base.lucide class="mr-2 h-4 w-4" icon="Download" />
                                                     Pending
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-32"
-                                                    variant="danger"
-                                                >
-                                                    <x-base.lucide
-                                                        class="mr-2 h-4 w-4"
-                                                        icon="Trash"
-                                                    />
+                                                <x-base.button class="w-32" variant="danger">
+                                                    <x-base.lucide class="mr-2 h-4 w-4" icon="Trash" />
                                                     Trash
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="w-32"
-                                                    variant="dark"
-                                                >
-                                                    <x-base.lucide
-                                                        class="mr-2 h-4 w-4"
-                                                        icon="Image"
-                                                    />
+                                                <x-base.button class="w-32" variant="dark">
+                                                    <x-base.lucide class="mr-2 h-4 w-4" icon="Image" />
                                                     Image
                                                 </x-base.button>
                                             </div>
@@ -1556,74 +940,32 @@
                                         <x-base.source>
                                             <x-base.highlight>
                                                 <div class="flex flex-wrap items-center gap-2">
-                                                    <x-base.button
-                                                        class="w-32"
-                                                        variant="primary"
-                                                    >
-                                                        <x-base.lucide
-                                                            class="mr-2 h-4 w-4"
-                                                            icon="Activity"
-                                                        />
+                                                    <x-base.button class="w-32" variant="primary">
+                                                        <x-base.lucide class="mr-2 h-4 w-4" icon="Activity" />
                                                         Activity
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-32"
-                                                        variant="secondary"
-                                                    >
-                                                        <x-base.lucide
-                                                            class="mr-2 h-4 w-4"
-                                                            icon="HardDrive"
-                                                        />
+                                                    <x-base.button class="w-32" variant="secondary">
+                                                        <x-base.lucide class="mr-2 h-4 w-4" icon="HardDrive" />
                                                         Hard Drive
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-32"
-                                                        variant="success"
-                                                    >
-                                                        <x-base.lucide
-                                                            class="mr-2 h-4 w-4"
-                                                            icon="Calendar"
-                                                        />
+                                                    <x-base.button class="w-32" variant="success">
+                                                        <x-base.lucide class="mr-2 h-4 w-4" icon="Calendar" />
                                                         Calendar
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-32"
-                                                        variant="warning"
-                                                    >
-                                                        <x-base.lucide
-                                                            class="mr-2 h-4 w-4"
-                                                            icon="Share2"
-                                                        />
+                                                    <x-base.button class="w-32" variant="warning">
+                                                        <x-base.lucide class="mr-2 h-4 w-4" icon="Share2" />
                                                         Share
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-32"
-                                                        variant="pending"
-                                                    >
-                                                        <x-base.lucide
-                                                            class="mr-2 h-4 w-4"
-                                                            icon="Download"
-                                                        />
+                                                    <x-base.button class="w-32" variant="pending">
+                                                        <x-base.lucide class="mr-2 h-4 w-4" icon="Download" />
                                                         Pending
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-32"
-                                                        variant="danger"
-                                                    >
-                                                        <x-base.lucide
-                                                            class="mr-2 h-4 w-4"
-                                                            icon="Trash"
-                                                        />
+                                                    <x-base.button class="w-32" variant="danger">
+                                                        <x-base.lucide class="mr-2 h-4 w-4" icon="Trash" />
                                                         Trash
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="w-32"
-                                                        variant="dark"
-                                                    >
-                                                        <x-base.lucide
-                                                            class="mr-2 h-4 w-4"
-                                                            icon="Image"
-                                                        />
+                                                    <x-base.button class="w-32" variant="dark">
+                                                        <x-base.lucide class="mr-2 h-4 w-4" icon="Image" />
                                                         Image
                                                     </x-base.button>
                                                 </div>
@@ -1647,17 +989,10 @@
                                     Icon Only Buttons
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-11"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-11">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-11"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-11" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -1668,8 +1003,7 @@
                                     effectively to enhance the usability and aesthetics of
                                     your web or app project.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -1677,46 +1011,25 @@
                                         <x-base.preview>
                                             <div class="flex flex-wrap items-center gap-2">
                                                 <x-base.button variant="primary">
-                                                    <x-base.lucide
-                                                        class="h-5 w-5"
-                                                        icon="Activity"
-                                                    />
+                                                    <x-base.lucide class="h-5 w-5" icon="Activity" />
                                                 </x-base.button>
                                                 <x-base.button variant="secondary">
-                                                    <x-base.lucide
-                                                        class="h-5 w-5"
-                                                        icon="HardDrive"
-                                                    />
+                                                    <x-base.lucide class="h-5 w-5" icon="HardDrive" />
                                                 </x-base.button>
                                                 <x-base.button variant="success">
-                                                    <x-base.lucide
-                                                        class="h-5 w-5"
-                                                        icon="Calendar"
-                                                    />
+                                                    <x-base.lucide class="h-5 w-5" icon="Calendar" />
                                                 </x-base.button>
                                                 <x-base.button variant="warning">
-                                                    <x-base.lucide
-                                                        class="h-5 w-5"
-                                                        icon="Share2"
-                                                    />
+                                                    <x-base.lucide class="h-5 w-5" icon="Share2" />
                                                 </x-base.button>
                                                 <x-base.button variant="pending">
-                                                    <x-base.lucide
-                                                        class="h-5 w-5"
-                                                        icon="Download"
-                                                    />
+                                                    <x-base.lucide class="h-5 w-5" icon="Download" />
                                                 </x-base.button>
                                                 <x-base.button variant="danger">
-                                                    <x-base.lucide
-                                                        class="h-5 w-5"
-                                                        icon="Trash"
-                                                    />
+                                                    <x-base.lucide class="h-5 w-5" icon="Trash" />
                                                 </x-base.button>
                                                 <x-base.button variant="dark">
-                                                    <x-base.lucide
-                                                        class="h-5 w-5"
-                                                        icon="Image"
-                                                    />
+                                                    <x-base.lucide class="h-5 w-5" icon="Image" />
                                                 </x-base.button>
                                             </div>
                                         </x-base.preview>
@@ -1724,46 +1037,25 @@
                                             <x-base.highlight>
                                                 <div class="flex flex-wrap items-center gap-2">
                                                     <x-base.button variant="primary">
-                                                        <x-base.lucide
-                                                            class="h-5 w-5"
-                                                            icon="Activity"
-                                                        />
+                                                        <x-base.lucide class="h-5 w-5" icon="Activity" />
                                                     </x-base.button>
                                                     <x-base.button variant="secondary">
-                                                        <x-base.lucide
-                                                            class="h-5 w-5"
-                                                            icon="HardDrive"
-                                                        />
+                                                        <x-base.lucide class="h-5 w-5" icon="HardDrive" />
                                                     </x-base.button>
                                                     <x-base.button variant="success">
-                                                        <x-base.lucide
-                                                            class="h-5 w-5"
-                                                            icon="Calendar"
-                                                        />
+                                                        <x-base.lucide class="h-5 w-5" icon="Calendar" />
                                                     </x-base.button>
                                                     <x-base.button variant="warning">
-                                                        <x-base.lucide
-                                                            class="h-5 w-5"
-                                                            icon="Share2"
-                                                        />
+                                                        <x-base.lucide class="h-5 w-5" icon="Share2" />
                                                     </x-base.button>
                                                     <x-base.button variant="pending">
-                                                        <x-base.lucide
-                                                            class="h-5 w-5"
-                                                            icon="Download"
-                                                        />
+                                                        <x-base.lucide class="h-5 w-5" icon="Download" />
                                                     </x-base.button>
                                                     <x-base.button variant="danger">
-                                                        <x-base.lucide
-                                                            class="h-5 w-5"
-                                                            icon="Trash"
-                                                        />
+                                                        <x-base.lucide class="h-5 w-5" icon="Trash" />
                                                     </x-base.button>
                                                     <x-base.button variant="dark">
-                                                        <x-base.lucide
-                                                            class="h-5 w-5"
-                                                            icon="Image"
-                                                        />
+                                                        <x-base.lucide class="h-5 w-5" icon="Image" />
                                                     </x-base.button>
                                                 </div>
                                             </x-base.highlight>
@@ -1797,8 +1089,7 @@
                             <p class="mt-2 leading-relaxed">
                                 Below is a list of props that can be passed to the component:
                             </p>
-                            <div
-                                class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                            <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                 <div class="absolute left-0 -mt-2.5 ml-4 bg-white px-3 font-medium text-slate-500">
                                     <div class="-mt-px">Button</div>
                                 </div>
@@ -1865,10 +1156,7 @@
                                 'relative pl-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white active',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Basic Buttons
                                 </a>
                             </li>
@@ -1876,10 +1164,7 @@
                                 'relative px-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Button Sizes
                                 </a>
                             </li>
@@ -1887,10 +1172,7 @@
                                 'relative px-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Workign with Links
                                 </a>
                             </li>
@@ -1898,10 +1180,7 @@
                                 'relative px-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Elevated Buttons
                                 </a>
                             </li>
@@ -1909,10 +1188,7 @@
                                 'relative px-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Social Media Buttons
                                 </a>
                             </li>
@@ -1920,10 +1196,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Outline Buttons
                                 </a>
                             </li>
@@ -1931,10 +1204,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Loading State Buttons
                                 </a>
                             </li>
@@ -1942,10 +1212,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Rounded Buttons
                                 </a>
                             </li>
@@ -1953,10 +1220,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Soft Color Buttons
                                 </a>
                             </li>
@@ -1964,10 +1228,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Icon Buttons
                                 </a>
                             </li>
@@ -1975,10 +1236,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Icon Only Buttons
                                 </a>
                             </li>
@@ -1986,10 +1244,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Component API
                                 </a>
                             </li>

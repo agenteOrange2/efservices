@@ -13,6 +13,9 @@ class DriverLicense extends Model implements HasMedia
 
     protected $fillable = [
         'user_driver_detail_id',
+        'current_license_number',
+        'license_number',
+        'state_of_issue',
         'license_class',
         'expiration_date',
         'is_cdl',

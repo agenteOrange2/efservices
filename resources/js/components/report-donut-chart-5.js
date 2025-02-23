@@ -1,3 +1,4 @@
+/*
 (function () {
     "use strict";
 
@@ -82,3 +83,46 @@
         });
     }
 })();
+*/
+// En resources/js/components/report-donut-chart-5.js
+import Chart from "chart.js/auto";
+
+const initDonutChart = () => {
+    // Obtener los datos del backend (puedes pasarlos como data attributes)
+    const chartData = JSON.parse(document.querySelector('.report-donut-chart-5').dataset.values);
+    
+    const el = document.querySelector('.report-donut-chart-5');
+    if (el) {
+        const ctx = el.getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Active', 'Pending', 'Inactive'],
+                datasets: [{
+                    data: chartData,
+                    backgroundColor: [
+                        'rgb(110, 191, 184)',
+                        'rgb(234, 179, 8)',
+                        'rgb(213, 119, 119)'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                cutout: '80%'
+            }
+        });
+    }
+};
+
+// Inicializar la gráfica
+document.addEventListener("DOMContentLoaded", () => {
+    initDonutChart();
+});

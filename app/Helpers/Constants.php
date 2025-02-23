@@ -64,7 +64,7 @@ class Constants
     public static function driverPositions()
     {
         return [
-            'company_driver' => 'Company Driver',
+            'driver' => 'Driver',
             'owner_operator' => 'Owner Operator',
             'other' => 'Other'
         ];

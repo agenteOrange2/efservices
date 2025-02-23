@@ -14,6 +14,9 @@ return new class extends Migration
         Schema::create('driver_licenses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_driver_detail_id')->constrained()->onDelete('cascade');
+            $table->string('current_license_number');
+            $table->string('license_number');
+            $table->string('state_of_issue');
             $table->string('license_class');
             $table->date('expiration_date');
             $table->boolean('is_cdl')->default(false);

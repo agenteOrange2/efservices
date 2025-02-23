@@ -39,6 +39,9 @@ class DriverRegistrationController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
+            'midde_name' => 'nullable|string',
+            'last_name' => 'required|string|max:255',
+            'date_of_birth' => 'required|date',
             'password' => 'required|min:8|confirmed',
             'license_number' => 'required|string',
             'phone' => 'required|string',
@@ -56,6 +59,9 @@ class DriverRegistrationController extends Controller
         // Crear driver details básicos
         $user->driverDetails()->create([
             'carrier_id' => $carrier->id,
+            'middle_name' => $validated['middle_name'],
+            'last_name' => $validated['last_name'],
+            'date_of_birth' => $validated['date_of_birth'],
             'license_number' => $validated['license_number'],
             'phone' => $validated['phone'],
             'status' => UserDriverDetail::STATUS_PENDING,

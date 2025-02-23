@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Admin\Driver\DriverAddress;
 use App\Models\Admin\Driver\DriverLicense;
+use App\Models\Admin\Driver\DriverMedicalQualification;
+use App\Models\Admin\Driver\DriverExperience;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use App\Models\Admin\Driver\DriverApplication;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,15 +18,11 @@ class UserDriverDetail extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
 
-
-
     protected $fillable = [
         'user_id',
         'carrier_id',
         'middle_name',
         'last_name',
-        'license_number',
-        'state_of_issue',
         'phone',
         'date_of_birth',
         'status',
@@ -122,5 +120,17 @@ class UserDriverDetail extends Model implements HasMedia
     public function primaryLicense()
     {
         return $this->hasOne(DriverLicense::class)->where('is_primary', true);
+    }
+
+    // Experiencia de conducción
+    public function experiences()
+    {
+        return $this->hasMany(DriverExperience::class);
+    }
+
+    // Calificación médica
+    public function medicalQualification()
+    {
+        return $this->hasOne(DriverMedicalQualification::class);
     }
 }

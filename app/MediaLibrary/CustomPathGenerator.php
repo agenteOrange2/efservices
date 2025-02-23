@@ -20,13 +20,13 @@ class CustomPathGenerator implements PathGenerator
             // Almacena específicamente en `user_carrier/{id}`
             return "driver/{$model->id}/";
         }
-    
+
         if ($model instanceof \App\Models\User) {
             // Verificar si el usuario tiene un UserCarrierDetail relacionado
             if ($model->carrierDetails()->exists()) {
                 return "user_carrier/{$model->id}/";
             }
-        
+
             // Default para usuarios "superadmin" u otros
             return "users/{$model->id}/";
         }
@@ -42,13 +42,24 @@ class CustomPathGenerator implements PathGenerator
         if ($model instanceof \App\Models\CarrierDocument) {
             $carrierName = strtolower(str_replace(' ', '_', $model->carrier->name));
             $documentTypeName = strtolower(str_replace(' ', '_', $model->documentType->name));
-    
+
             return "carrier_document/{$carrierName}/{$documentTypeName}/";
         }
-    
+
         if ($model instanceof \App\Models\DocumentType) {
             $documentTypeName = strtolower(str_replace(' ', '_', $model->name));
             return "carrier_document/default/{$documentTypeName}/";
+        }
+
+        // Añadir rutas para los nuevos modelos
+        if ($model instanceof \App\Models\Admin\Driver\DriverLicense) {
+            $driverId = $model->driverDetail->id ?? 'unknown';
+            return "driver/{$driverId}/licenses/";
+        }
+
+        if ($model instanceof \App\Models\Admin\Driver\DriverMedicalQualification) {
+            $driverId = $model->driverDetail->id ?? 'unknown';
+            return "driver/{$driverId}/medical/";
         }
 
         return "others/{$model->id}/";

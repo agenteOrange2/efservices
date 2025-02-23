@@ -12,9 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('driver_addresses', function (Blueprint $table) {
-            $table->id();
-            // $table->foreignId('driver_application_id')->constrained()->onDelete('cascade');
-            $table->foreignId('driver_application_id')->constrained('user_driver_details')->onDelete('cascade');
+            $table->id();            
+            $table->foreignId('driver_application_id')->constrained('driver_applications')->onDelete('cascade');            
             $table->boolean('primary')->default(false); 
             $table->string('address_line1');
             $table->string('address_line2')->nullable();
@@ -23,7 +22,7 @@ return new class extends Migration
             $table->string('zip_code');
             $table->boolean('lived_three_years')->default(false);
             $table->date('from_date');
-            $table->date('to_date')->nullable();
+            $table->date('to_date')->nullable();            
             $table->timestamps();
         });
     }
