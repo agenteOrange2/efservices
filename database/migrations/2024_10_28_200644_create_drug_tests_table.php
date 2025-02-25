@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('health_tests', function (Blueprint $table) {
+        Schema::create('drug_tests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('driver_id')->constrained('drivers')->onDelete('cascade');
+            $table->foreignId('user_driver_detail_id')->constrained('user_driver_details')->onDelete('cascade');
             $table->date('test_date');
             $table->string('result');
             $table->string('lab');
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('health_tests');
+        Schema::dropIfExists('drug_tests');
     }
 };

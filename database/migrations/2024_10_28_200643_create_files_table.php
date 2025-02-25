@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('files', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('driver_id')->nullable()->constrained('drivers')->onDelete('set null');
+            $table->foreignId('user_driver_detail_id')->constrained('user_driver_details')->onDelete('cascade');
             $table->foreignId('carrier_id')->nullable()->constrained('carriers')->onDelete('set null');
             $table->foreignId('incident_id')->nullable()->constrained('incidents')->onDelete('cascade');
             $table->string('file_name');

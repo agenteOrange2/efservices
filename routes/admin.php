@@ -7,16 +7,20 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\TempUploadController;
 use App\Http\Controllers\Admin\CarrierController;
 use App\Http\Controllers\Admin\DriversController;
 use App\Http\Controllers\Admin\MembershipController;
 use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\TempUploadController;
 use App\Http\Controllers\Admin\UserDriverController;
 use App\Http\Controllers\Admin\UserCarrierController;
 use App\Http\Controllers\Admin\DocumentTypeController;
 use App\Http\Controllers\Admin\CarrierDocumentController;
+use App\Http\Controllers\Admin\Vehicles\VehicleController;
 use App\Http\Controllers\Admin\UserCarrierDocumentController;
+use App\Http\Controllers\Admin\Vehicles\VehicleMakeController;
+use App\Http\Controllers\Admin\Vehicles\VehicleServiceItemController;
+use App\Http\Controllers\Admin\Vehicles\VehicleTypeController;
 
 
 Route::get('theme-switcher/{activeTheme}', [ThemeController::class, 'switch'])->name('theme-switcher');
@@ -144,7 +148,7 @@ Route::prefix('carrier/{carrier}/drivers')->name('carrier.user_drivers.')->group
 });
 
 
-Route::post('/temp-upload', [TempUploadController::class, 'store'])->name('temp.upload');
+Route::post('/temp-upload', [TempUploadController::class, 'upload'])->name('temp.upload');
 
 
 /*
@@ -218,10 +222,35 @@ Route::put('drivers/{driver}/toggle-status', [DriversController::class, 'toggleS
 
 /*
 |--------------------------------------------------------------------------
-| RUTAS USER CARRIER
+| RUTAS VEHICLES
 |--------------------------------------------------------------------------    
 */
 
+// Rutas principales agrupadas bajo el prefijo 'vehicles'
+Route::prefix('vehicles')->name('vehicles.')->group(function () {
+    // Ruta principal de vehículos (sin prefijo adicional)
+    Route::get('/', [VehicleController::class, 'index'])->name('index');
+    Route::get('/create', [VehicleController::class, 'create'])->name('create');
+    Route::post('/', [VehicleController::class, 'store'])->name('store');
+    Route::get('/{vehicle}', [VehicleController::class, 'show'])->name('show');
+    Route::get('/{vehicle}/edit', [VehicleController::class, 'edit'])->name('edit');
+    Route::put('/{vehicle}', [VehicleController::class, 'update'])->name('update');
+    Route::delete('/{vehicle}', [VehicleController::class, 'destroy'])->name('destroy');
+    
+    // Rutas para ítems de servicio de vehículos
+    Route::resource('service-items', VehicleServiceItemController::class);
+});
+
+// Rutas para administrar marcas de vehículos (como entidad separada)
+Route::resource('vehicle-makes', VehicleMakeController::class);
+Route::get('vehicle-makes/search', [VehicleMakeController::class, 'search'])->name('vehicle-makes.search');
+
+// Rutas para administrar tipos de vehículos (como entidad separada)
+Route::resource('vehicle-types', VehicleTypeController::class);
+Route::get('vehicle-types/search', [VehicleTypeController::class, 'search'])->name('vehicle-types.search');
+
+Route::post('ve{vehicle}/service-items', [VehicleServiceItemController::class, 'store'])
+->name('vehicles.service-items.store');
 /*
 Route::prefix('user-carrier')->name('user_carrier.')->group(function () {
     Route::get('/dashboard', function () {

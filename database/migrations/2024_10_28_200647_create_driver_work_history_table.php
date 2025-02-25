@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('driver_work_history', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('driver_id')->constrained('drivers')->onDelete('cascade');
+            $table->foreignId('user_driver_detail_id')->constrained('user_driver_details')->onDelete('cascade');
             $table->string('previous_company');
             $table->date('start_date');
             $table->date('end_date');

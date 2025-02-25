@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
+use App\Services\Admin\TempUploadService;
 use Illuminate\Support\Facades\Notification;
 use App\Models\Admin\Driver\DriverApplication;
 use App\Models\Admin\Driver\LicenseEndorsement;
@@ -387,7 +388,10 @@ class UserDriverController extends Controller
 
             // Procesar licencias si existen
             if ($validatedLicenses && !empty($validatedLicenses['licenses'])) {
-                foreach ($validatedLicenses['licenses'] as $index => $licenseData) {
+                foreach ($request->input('licenses') as $index => $licenseDataRaw) {
+                    // Obtener datos validados
+                    $licenseData = $validatedLicenses['licenses'][$index];
+
                     // Saltar entradas de licencia vacías o incompletas
                     if (
                         empty($licenseData['license_number']) ||
@@ -400,7 +404,8 @@ class UserDriverController extends Controller
 
                     Log::info('Procesando licencia', [
                         'index' => $index,
-                        'data' => $licenseData
+                        'data' => $licenseData,
+                        'raw_data' => $licenseDataRaw
                     ]);
 
                     $license = $userDriverDetail->licenses()->create([
@@ -414,14 +419,68 @@ class UserDriverController extends Controller
                         'status' => 'active',
                     ]);
 
-                    // Guardar imágenes de la licencia si se proporcionaron
-                    if (isset($licenseData['license_front']) && $licenseData['license_front']) {
-                        $license->addMedia($licenseData['license_front'])
-                            ->toMediaCollection('license_front');
+                    // IMPORTANTE: Verifica los tokens en los datos originales, NO en los validados
+                    if (!empty($licenseDataRaw['temp_front_token'])) {
+                        Log::info('Encontrado token frontal para licencia', [
+                            'license_id' => $license->id,
+                            'token' => $licenseDataRaw['temp_front_token']
+                        ]);
+
+                        try {
+                            // Instancia del servicio
+                            $tempUploadService = app(\App\Services\Admin\TempUploadService::class);
+
+                            // Obtener ruta física
+                            $tempPath = $tempUploadService->moveToPermanent($licenseDataRaw['temp_front_token']);
+
+                            if ($tempPath && file_exists($tempPath)) {
+                                // Usar la ruta física directamente
+                                $license->addMedia($tempPath)
+                                    ->toMediaCollection('license_front');
+
+                                Log::info('Imagen frontal agregada a licencia', [
+                                    'license_id' => $license->id,
+                                    'path' => $tempPath
+                                ]);
+                            }
+                        } catch (\Exception $e) {
+                            Log::error('Error procesando imagen frontal', [
+                                'error' => $e->getMessage(),
+                                'license_id' => $license->id
+                            ]);
+                        }
                     }
-                    if (isset($licenseData['license_back']) && $licenseData['license_back']) {
-                        $license->addMedia($licenseData['license_back'])
-                            ->toMediaCollection('license_back');
+
+                    // Repetir para imagen trasera
+                    if (!empty($licenseDataRaw['temp_back_token'])) {
+                        Log::info('Encontrado token trasero para licencia', [
+                            'license_id' => $license->id,
+                            'token' => $licenseDataRaw['temp_back_token']
+                        ]);
+
+                        try {
+                            // Instancia del servicio
+                            $tempUploadService = app(\App\Services\Admin\TempUploadService::class);
+
+                            // Obtener ruta física
+                            $tempPath = $tempUploadService->moveToPermanent($licenseDataRaw['temp_back_token']);
+
+                            if ($tempPath && file_exists($tempPath)) {
+                                // Usar la ruta física directamente
+                                $license->addMedia($tempPath)
+                                    ->toMediaCollection('license_back');
+
+                                Log::info('Imagen trasera agregada a licencia', [
+                                    'license_id' => $license->id,
+                                    'path' => $tempPath
+                                ]);
+                            }
+                        } catch (\Exception $e) {
+                            Log::error('Error procesando imagen trasera', [
+                                'error' => $e->getMessage(),
+                                'license_id' => $license->id
+                            ]);
+                        }
                     }
 
                     // Guardar endosos si es una licencia CDL y hay endosos seleccionados
@@ -439,8 +498,8 @@ class UserDriverController extends Controller
 
                             // Asociar el endoso a la licencia
                             $license->endorsements()->attach($endorsement->id, [
-                                'issued_date' => now(), // O usa un valor específico si lo tienes
-                                'expiration_date' => $licenseData['expiration_date'] // Usa la misma fecha de expiración de la licencia
+                                'issued_date' => now(),
+                                'expiration_date' => $licenseData['expiration_date']
                             ]);
                         }
                     }
@@ -519,9 +578,9 @@ class UserDriverController extends Controller
             return back()->withErrors(['error' => 'Error creando el driver: ' . $e->getMessage()])
                 ->withInput();
         }
-    }    
+    }
 
-    
+
     private function getEndorsementName($code)
     {
         $endorsements = [
@@ -639,18 +698,17 @@ class UserDriverController extends Controller
         try {
             // Validación
             $validated = $request->validate([
-                'photo' => 'nullable|image|max:2048|mimes:jpeg,png,jpg,gif',
+                // Datos de User
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email,' . $userDriverDetail->user->id,
                 'password' => 'nullable|min:8|confirmed',
-                'middle_name' => 'required|string|max:255',
+                'middle_name' => 'nullable|string|max:255',
                 'last_name' => 'required|string|max:255',
-                'license_number' => 'required|string|max:255',
-                'state_of_issue' => 'required|string|max:255',
                 'phone' => 'required|string|max:15',
                 'date_of_birth' => 'required|date',
                 'status' => 'required|integer|in:0,1,2',
-                'social_security_number' => 'nullable|string|max:255',
+
+                // Direcciones
                 'address_line1' => 'required|string|max:255',
                 'address_line2' => 'nullable|string|max:255',
                 'city' => 'required|string|max:255',
@@ -659,150 +717,425 @@ class UserDriverController extends Controller
                 'from_date' => 'required|date',
                 'to_date' => 'nullable|date',
                 'lived_three_years' => 'boolean',
-                'previous_addresses' => 'array',
-                'previous_addresses.*.address_line1' => 'required|string|max:255',
+
+                // Direcciones anteriores
+                'previous_addresses' => 'array|required_if:lived_three_years,0',
+                'previous_addresses.*.address_line1' => 'required_with:previous_addresses',
                 'previous_addresses.*.address_line2' => 'nullable|string|max:255',
-                'previous_addresses.*.city' => 'required|string|max:255',
-                'previous_addresses.*.state' => 'required|string|max:255',
-                'previous_addresses.*.zip_code' => 'required|string|max:255',
-                'previous_addresses.*.from_date' => 'required|date',
-                'previous_addresses.*.to_date' => 'required|date',
+                'previous_addresses.*.city' => 'required_with:previous_addresses',
+                'previous_addresses.*.state' => 'required_with:previous_addresses',
+                'previous_addresses.*.zip_code' => 'required_with:previous_addresses',
+                'previous_addresses.*.from_date' => 'required_with:previous_addresses|date',
+                'previous_addresses.*.to_date' => 'required_with:previous_addresses|date|after:previous_addresses.*.from_date',
+
+                // Resto de validaciones
                 'applying_position' => 'required|string',
                 'applying_position_other' => 'required_if:applying_position,other',
                 'applying_location' => 'required|string|max:255',
                 'eligible_to_work' => 'required|boolean',
                 'can_speak_english' => 'sometimes|boolean',
                 'has_twic_card' => 'sometimes|boolean',
-                'twic_expiration_date' => 'nullable|date|required_if:has_twic_card,true',
+                'twic_expiration_date' => 'nullable|date|required_if:has_twic_card,1',
                 'how_did_hear' => 'required|string',
                 'how_did_hear_other' => 'required_if:how_did_hear,other',
                 'referral_employee_name' => 'required_if:how_did_hear,employee_referral',
                 'expected_pay' => 'nullable|string|max:255',
             ]);
 
-            // Actualizamos el usuario
+            // Validar edad mayor de 18
+            $dob = Carbon::parse($validated['date_of_birth']);
+            if ($dob->age < 18) {
+                return back()->withErrors(['date_of_birth' => 'Debes tener al menos 18 años.'])->withInput();
+            }
+
+            // Calcular años en dirección actual
+            $fromDate = Carbon::parse($validated['from_date']);
+            $toDate = $validated['to_date'] ? Carbon::parse($validated['to_date']) : Carbon::now();
+            $currentAddressYears = $fromDate->diffInYears($toDate);
+            $totalYears = $currentAddressYears;
+            $previousAddressesYears = 0;
+
+            // Sumar años de direcciones previas si existen
+            if ($request->has('previous_addresses')) {
+                foreach ($request->input('previous_addresses') as $address) {
+                    if (!empty($address['from_date']) && !empty($address['to_date'])) {
+                        $prevFromDate = Carbon::parse($address['from_date']);
+                        $prevToDate = Carbon::parse($address['to_date']);
+                        $previousAddressesYears += $prevFromDate->diffInYears($prevToDate);
+                    }
+                }
+                $totalYears += $previousAddressesYears;
+            }
+
+            // Validar cobertura de 3 años si lived_three_years es falso
+            if (!$validated['lived_three_years'] && $totalYears < 3) {
+                return back()->withErrors([
+                    'address_years' => 'El historial de direcciones debe sumar al menos 3 años. Total actual: ' .
+                        number_format($totalYears, 1) . ' años.'
+                ])->withInput();
+            }
+
+            // Iniciar transacción
+            DB::beginTransaction();
+
+            // Actualizar datos de usuario
             $user = $userDriverDetail->user;
-            $user->update([
+            $updateData = [
                 'name' => $validated['name'],
                 'email' => $validated['email'],
-                'password' => $validated['password'] ? Hash::make($validated['password']) : $user->password,
-            ]);
+                'status' => $validated['status']
+            ];
 
-            // Actualizamos el detalle del conductor
+            // Solo actualizar password si se proporcionó uno nuevo
+            if (!empty($validated['password'])) {
+                $updateData['password'] = Hash::make($validated['password']);
+            }
+
+            $user->update($updateData);
+
+            // Actualizar detalles del conductor
             $userDriverDetail->update([
                 'middle_name' => $validated['middle_name'],
                 'last_name' => $validated['last_name'],
-                'license_number' => $validated['license_number'],
-                'state_of_issue' => $validated['state_of_issue'],
                 'phone' => $validated['phone'],
                 'date_of_birth' => $validated['date_of_birth'],
                 'status' => $validated['status'],
             ]);
 
-            // Manejar la foto si se sube una nueva
+            // Manejar foto del conductor
             if ($request->hasFile('photo')) {
-                // Eliminar foto anterior si existe
                 $userDriverDetail->clearMediaCollection('profile_photo_driver');
-
-                // Subir nueva foto
-                $fileName = strtolower(str_replace(' ', '_', $userDriverDetail->user->name)) . '.webp';
+                $fileName = strtolower(str_replace(' ', '_', $user->name)) . '.webp';
                 $userDriverDetail->addMediaFromRequest('photo')
                     ->usingFileName($fileName)
                     ->toMediaCollection('profile_photo_driver');
             }
 
-            // Actualizar dirección
-            // $userDriverDetail->addresses()->update([
-            //     'address_line1' => $validated['address_line1'],
-            //     'address_line2' => $validated['address_line2'],
-            //     'city' => $validated['city'],
-            //     'state' => $validated['state'],
-            //     'zip_code' => $validated['zip_code'],
-            //     'from_date' => $validated['from_date'],
-            //     'to_date' => $validated['to_date'],
-            //     'lived_three_years' => $validated['lived_three_years'],
-            // ]);
+            // Manejar foto temporal si se usó el servicio de carga temporal
+            if ($request->has('temp_photo_token') && $request->input('temp_photo_token')) {
+                $tempUploadService = app(\App\Services\Admin\TempUploadService::class);
+                $tempPath = $tempUploadService->moveToPermanent($request->input('temp_photo_token'));
 
-            $userDriverDetail->addresses()->updateOrCreate(
+                if ($tempPath && file_exists($tempPath)) {
+                    $userDriverDetail->clearMediaCollection('profile_photo_driver');
+                    $fileName = strtolower(str_replace(' ', '_', $user->name)) . '.webp';
+                    $userDriverDetail->addMedia($tempPath)
+                        ->usingFileName($fileName)
+                        ->toMediaCollection('profile_photo_driver');
+                }
+            }
+
+            // Obtener o crear la aplicación si no existe
+            $application = $userDriverDetail->application;
+            if (!$application) {
+                $application = DriverApplication::create([
+                    'user_id' => $user->id,
+                    'status' => 'draft'
+                ]);
+            }
+
+            // Actualizar dirección principal
+            $address = $application->addresses()->updateOrCreate(
                 ['primary' => true],
                 [
                     'address_line1' => $validated['address_line1'],
+                    'address_line2' => $validated['address_line2'] ?? null,
                     'city' => $validated['city'],
                     'state' => $validated['state'],
                     'zip_code' => $validated['zip_code'],
-                    'from_date' => $validated['from_date'],
-                    'to_date' => $validated['to_date'],
                     'lived_three_years' => $validated['lived_three_years'],
+                    'from_date' => $validated['from_date'],
+                    'to_date' => $validated['to_date'] ?? null,
                 ]
             );
 
+            // Si no ha vivido 3 años en la dirección actual, actualizar direcciones previas
             if (!$validated['lived_three_years']) {
-                // Eliminar direcciones anteriores existentes
-                $userDriverDetail->addresses()->where('primary', false)->delete();
+                // Eliminar direcciones previas existentes
+                $application->addresses()->where('primary', false)->delete();
 
-                // Obtener el total de años
-                $mainAddressYears = Carbon::parse($validated['from_date'])
-                    ->diffInYears(Carbon::parse($validated['to_date'] ?? now()));
-                $totalYears = $mainAddressYears;
-
-                // Crear las direcciones previas en orden, sumando años hasta alcanzar 3
-                foreach ($validated['previous_addresses'] as $prevAddress) {
-                    $addressYears = Carbon::parse($prevAddress['from_date'])
-                        ->diffInYears(Carbon::parse($prevAddress['to_date']));
-                    $totalYears += $addressYears;
-
-                    // Crear la dirección previa
-                    $userDriverDetail->addresses()->create([
-                        'primary' => false,
-                        'address_line1' => $prevAddress['address_line1'],
-                        'address_line2' => $prevAddress['address_line2'] ?? null,
-                        'city' => $prevAddress['city'],
-                        'state' => $prevAddress['state'],
-                        'zip_code' => $prevAddress['zip_code'],
-                        'from_date' => $prevAddress['from_date'],
-                        'to_date' => $prevAddress['to_date']
-                    ]);
-
-                    // Si ya alcanzamos 3 años, no procesar más direcciones
-                    if ($totalYears >= 3) break;
+                // Crear nuevas direcciones previas
+                if (!empty($request->input('previous_addresses'))) {
+                    foreach ($request->input('previous_addresses') as $prevAddress) {
+                        if (
+                            !empty($prevAddress['address_line1']) &&
+                            !empty($prevAddress['city']) &&
+                            !empty($prevAddress['state']) &&
+                            !empty($prevAddress['zip_code']) &&
+                            !empty($prevAddress['from_date']) &&
+                            !empty($prevAddress['to_date'])
+                        ) {
+                            $application->addresses()->create([
+                                'primary' => false,
+                                'address_line1' => $prevAddress['address_line1'],
+                                'address_line2' => $prevAddress['address_line2'] ?? null,
+                                'city' => $prevAddress['city'],
+                                'state' => $prevAddress['state'],
+                                'zip_code' => $prevAddress['zip_code'],
+                                'from_date' => $prevAddress['from_date'],
+                                'to_date' => $prevAddress['to_date'],
+                                'lived_three_years' => false
+                            ]);
+                        }
+                    }
                 }
             }
-            // Actualizamos los detalles de la aplicación
-            $applicationDetails = $userDriverDetail->application->details()->update([
-                'applying_position' => $validated['applying_position'],
-                'applying_position_other' => $validated['applying_position'] === 'other' ?
-                    $validated['applying_position_other'] : null,
-                'applying_location' => $validated['applying_location'],
-                'eligible_to_work' => $validated['eligible_to_work'],
-                'can_speak_english' => $validated['can_speak_english'],
-                'has_twic_card' => $validated['has_twic_card'],
-                'twic_expiration_date' => $validated['twic_expiration_date'],
-                'expected_pay' => $validated['expected_pay'],
-                'how_did_hear' => $validated['how_did_hear'],
-                'how_did_hear_other' => $validated['how_did_hear'] === 'other' ?
-                    $validated['how_did_hear_other'] : null,
-                'referral_employee_name' => $validated['how_did_hear'] === 'employee_referral' ?
-                    ($validated['referral_employee_name'] ?? null) : null,
+
+            // Actualizar o crear detalles de la aplicación
+            $applicationDetails = $application->details()->updateOrCreate(
+                [], // Encuentra el primero (o crea si no existe)
+                [
+                    'applying_position' => $validated['applying_position'],
+                    'applying_position_other' => $validated['applying_position'] === 'other' ?
+                        $validated['applying_position_other'] : null,
+                    'applying_location' => $validated['applying_location'],
+                    'eligible_to_work' => $validated['eligible_to_work'],
+                    'can_speak_english' => $request->boolean('can_speak_english', false),
+                    'has_twic_card' => $request->boolean('has_twic_card', false),
+                    'twic_expiration_date' => $validated['twic_expiration_date'] ?? null,
+                    'expected_pay' => $validated['expected_pay'] ?? null,
+                    'how_did_hear' => $validated['how_did_hear'],
+                    'how_did_hear_other' => $validated['how_did_hear'] === 'other' ?
+                        $validated['how_did_hear_other'] : null,
+                    'referral_employee_name' => $validated['how_did_hear'] === 'employee_referral' ?
+                        $request->input('referral_employee_name') : null,
+                ]
+            );
+
+            // ACTUALIZAR LICENCIAS
+            if ($request->has('licenses')) {
+                // Obtener IDs existentes para detectar eliminaciones
+                $existingLicenseIds = $userDriverDetail->licenses()->pluck('id')->toArray();
+                $updatedLicenseIds = [];
+
+                foreach ($request->input('licenses') as $index => $licenseDataRaw) {
+                    // Verificar si tiene los datos mínimos necesarios
+                    if (
+                        empty($licenseDataRaw['license_number']) ||
+                        empty($licenseDataRaw['state_of_issue']) ||
+                        empty($licenseDataRaw['license_class']) ||
+                        empty($licenseDataRaw['expiration_date'])
+                    ) {
+                        continue;
+                    }
+
+                    // Si tiene ID, es una licencia existente
+                    $licenseId = $licenseDataRaw['id'] ?? null;
+                    $license = null;
+
+                    if ($licenseId) {
+                        $license = $userDriverDetail->licenses()->find($licenseId);
+                    }
+
+                    if (!$license) {
+                        // Crear nueva licencia
+                        $license = $userDriverDetail->licenses()->create([
+                            'current_license_number' => $request->input('current_license_number', ''),
+                            'license_number' => $licenseDataRaw['license_number'],
+                            'state_of_issue' => $licenseDataRaw['state_of_issue'],
+                            'license_class' => $licenseDataRaw['license_class'],
+                            'expiration_date' => $licenseDataRaw['expiration_date'],
+                            'is_cdl' => isset($licenseDataRaw['is_cdl']) ? true : false,
+                            'is_primary' => $index === 0, // La primera es la principal
+                            'status' => 'active',
+                        ]);
+                    } else {
+                        // Actualizar licencia existente
+                        $license->update([
+                            'license_number' => $licenseDataRaw['license_number'],
+                            'state_of_issue' => $licenseDataRaw['state_of_issue'],
+                            'license_class' => $licenseDataRaw['license_class'],
+                            'expiration_date' => $licenseDataRaw['expiration_date'],
+                            'is_cdl' => isset($licenseDataRaw['is_cdl']) ? true : false,
+                            'is_primary' => $index === 0,
+                        ]);
+                    }
+
+                    $updatedLicenseIds[] = $license->id;
+
+                    // Gestionar endosos
+                    if (isset($licenseDataRaw['is_cdl']) && isset($licenseDataRaw['endorsements'])) {
+                        // Eliminar endosos existentes
+                        $license->endorsements()->detach();
+
+                        // Crear nuevos endosos
+                        foreach ($licenseDataRaw['endorsements'] as $endorsementCode) {
+                            $endorsement = LicenseEndorsement::firstOrCreate(
+                                ['code' => $endorsementCode],
+                                [
+                                    'name' => $this->getEndorsementName($endorsementCode),
+                                    'description' => null,
+                                    'is_active' => true
+                                ]
+                            );
+
+                            $license->endorsements()->attach($endorsement->id, [
+                                'issued_date' => now(),
+                                'expiration_date' => $licenseDataRaw['expiration_date']
+                            ]);
+                        }
+                    }
+
+                    // Procesar imágenes usando el servicio de carga temporal
+                    if (!empty($licenseDataRaw['temp_front_token'])) {
+                        $tempUploadService = app(\App\Services\Admin\TempUploadService::class);
+                        $tempPath = $tempUploadService->moveToPermanent($licenseDataRaw['temp_front_token']);
+
+                        if ($tempPath && file_exists($tempPath)) {
+                            $license->clearMediaCollection('license_front');
+                            $license->addMedia($tempPath)
+                                ->toMediaCollection('license_front');
+
+                            Log::info('Imagen frontal actualizada en licencia', [
+                                'license_id' => $license->id,
+                                'path' => $tempPath
+                            ]);
+                        }
+                    }
+
+                    if (!empty($licenseDataRaw['temp_back_token'])) {
+                        $tempUploadService = app(\App\Services\Admin\TempUploadService::class);
+                        $tempPath = $tempUploadService->moveToPermanent($licenseDataRaw['temp_back_token']);
+
+                        if ($tempPath && file_exists($tempPath)) {
+                            $license->clearMediaCollection('license_back');
+                            $license->addMedia($tempPath)
+                                ->toMediaCollection('license_back');
+
+                            Log::info('Imagen trasera actualizada en licencia', [
+                                'license_id' => $license->id,
+                                'path' => $tempPath
+                            ]);
+                        }
+                    }
+                }
+
+                // Eliminar licencias que ya no existen en la actualización
+                $licensesToDelete = array_diff($existingLicenseIds, $updatedLicenseIds);
+                if (!empty($licensesToDelete)) {
+                    $userDriverDetail->licenses()->whereIn('id', $licensesToDelete)->delete();
+                }
+            }
+
+            // ACTUALIZAR EXPERIENCIAS
+            if ($request->has('experiences')) {
+                // Obtener IDs existentes para detectar eliminaciones
+                $existingExpIds = $userDriverDetail->experiences()->pluck('id')->toArray();
+                $updatedExpIds = [];
+
+                foreach ($request->input('experiences') as $expData) {
+                    // Verificar datos mínimos necesarios
+                    if (
+                        empty($expData['equipment_type']) ||
+                        !isset($expData['years_experience']) ||
+                        !isset($expData['miles_driven'])
+                    ) {
+                        continue;
+                    }
+
+                    // Si tiene ID, es una experiencia existente
+                    $expId = $expData['id'] ?? null;
+                    $experience = null;
+
+                    if ($expId) {
+                        $experience = $userDriverDetail->experiences()->find($expId);
+                    }
+
+                    if (!$experience) {
+                        // Crear nueva experiencia
+                        $experience = $userDriverDetail->experiences()->create([
+                            'equipment_type' => $expData['equipment_type'],
+                            'years_experience' => $expData['years_experience'],
+                            'miles_driven' => $expData['miles_driven'],
+                            'requires_cdl' => isset($expData['requires_cdl']) ? true : false,
+                        ]);
+                    } else {
+                        // Actualizar experiencia existente
+                        $experience->update([
+                            'equipment_type' => $expData['equipment_type'],
+                            'years_experience' => $expData['years_experience'],
+                            'miles_driven' => $expData['miles_driven'],
+                            'requires_cdl' => isset($expData['requires_cdl']) ? true : false,
+                        ]);
+                    }
+
+                    $updatedExpIds[] = $experience->id;
+                }
+
+                // Eliminar experiencias que ya no existen en la actualización
+                $expsToDelete = array_diff($existingExpIds, $updatedExpIds);
+                if (!empty($expsToDelete)) {
+                    $userDriverDetail->experiences()->whereIn('id', $expsToDelete)->delete();
+                }
+            }
+
+            // ACTUALIZAR INFORMACIÓN MÉDICA
+            if ($request->has('social_security_number')) {
+                // Crear o actualizar la información médica
+                $medical = $userDriverDetail->medicalQualification()->updateOrCreate(
+                    [], // Solo una entrada por conductor
+                    [
+                        'social_security_number' => $request->input('social_security_number'),
+                        'hire_date' => $request->input('hire_date'),
+                        'location' => $request->input('location'),
+                        'is_suspended' => $request->boolean('is_suspended', false),
+                        'suspension_date' => $request->input('suspension_date'),
+                        'is_terminated' => $request->boolean('is_terminated', false),
+                        'termination_date' => $request->input('termination_date'),
+                        'medical_examiner_name' => $request->input('medical_examiner_name'),
+                        'medical_examiner_registry_number' => $request->input('medical_examiner_registry_number'),
+                        'medical_card_expiration_date' => $request->input('medical_card_expiration_date')
+                    ]
+                );
+
+                // Procesar archivo médico utilizando el servicio de carga temporal
+                if ($request->has('temp_medical_card_token') && $request->input('temp_medical_card_token')) {
+                    $tempUploadService = app(\App\Services\Admin\TempUploadService::class);
+                    $tempPath = $tempUploadService->moveToPermanent($request->input('temp_medical_card_token'));
+
+                    if ($tempPath && file_exists($tempPath)) {
+                        $medical->clearMediaCollection('medical_card');
+                        $medical->addMedia($tempPath)
+                            ->toMediaCollection('medical_card');
+
+                        Log::info('Tarjeta médica actualizada', [
+                            'medical_id' => $medical->id,
+                            'path' => $tempPath
+                        ]);
+                    }
+                } else if ($request->hasFile('medical_card_file')) {
+                    $medical->clearMediaCollection('medical_card');
+                    $medical->addMediaFromRequest('medical_card_file')
+                        ->toMediaCollection('medical_card');
+                }
+            }
+
+            // Verificar si la aplicación está completa
+            $isCompleted = $this->checkApplicationCompleted($userDriverDetail, $application);
+            $userDriverDetail->update([
+                'application_completed' => $isCompleted
             ]);
 
+            // Confirmar transacción
             DB::commit();
+            Log::info('UpdateDriver: Transacción completada exitosamente', [
+                'user_driver_id' => $userDriverDetail->id
+            ]);
 
             return redirect()->route('admin.carrier.user_drivers.index', [
                 'carrier' => $carrier->slug,
-                'userDriverDetail' => $userDriverDetail->driver_number,
             ])->with('success', 'Driver actualizado correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error en la actualización de driver', [
+            Log::error('UpdateDriver: Error en la transacción DB', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'trace' => $e->getTraceAsString()
             ]);
 
-            return back()->withErrors(['error' => 'Error al actualizar el driver: ' . $e->getMessage()])
+            return back()->withErrors(['error' => 'Error actualizando el driver: ' . $e->getMessage()])
                 ->withInput();
         }
     }
-
 
     /**
      * Eliminar un driver.

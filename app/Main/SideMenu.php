@@ -116,13 +116,26 @@ class SideMenu
                 'sub_menu' => [
                     [
                         'icon' => "car-front",
-                        'route_name' => "admin.product-list",
+                        'route_name' => "admin.vehicles.index",
                         'params' => [],
                         'title' => "Vehicle Profile",
                     ],
                     [
+                        'icon' => "car-front",
+                        'route_name' => "admin.vehicle-makes.index",
+                        'params' => [],
+                        'title' => "Vehicle Make",
+                    ],
+                    [
+                        'icon' => "car-front",
+                        'route_name' => "admin.vehicle-types.index",
+                        'params' => [],
+                        'title' => "Vehicle Type",
+                    ],
+                    
+                    [
                         'icon' => "wrench",
-                        'route_name' => "admin.product-grid",
+                        'route_name' => "admin.vehicles.service-items.index",
                         'params' => [],
                         'title' => "Services Items",
                     ],

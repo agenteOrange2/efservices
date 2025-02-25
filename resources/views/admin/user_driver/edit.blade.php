@@ -24,6 +24,9 @@
                             method="POST" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
+
+                            <x-validation-errors class="my-4" />
+                            
                             {{-- Contenedor Alpine con toda la lógica --}}
                             <div x-data="{
                                 activeTab: 'general',
@@ -1039,19 +1042,159 @@
                                 </div>
 
                                 {{-- TAB: LICENSES --}}
-                                <div x-show="activeTab === 'licenses'">
-                                    @include('admin.user_driver.tabs.licenses_create')
+                                {{-- TAB: LICENSES --}}
+                                <div x-show="activeTab === 'licenses'" x-data="{
+                                    licenses: {{ json_encode(
+                                        $userDriverDetail->licenses->map(function ($license) {
+                                                $frontUrl = $license->getFirstMediaUrl('license_front');
+                                                $backUrl = $license->getFirstMediaUrl('license_back');
+                                    
+                                                return [
+                                                    'id' => $license->id,
+                                                    'license_number' => $license->license_number,
+                                                    'state_of_issue' => $license->state_of_issue,
+                                                    'license_class' => $license->license_class,
+                                                    'expiration_date' => $license->expiration_date ? $license->expiration_date->format('Y-m-d') : '',
+                                                    'is_cdl' => (bool) $license->is_cdl,
+                                                    'is_primary' => (bool) $license->is_primary,
+                                                    'endorsements' => $license->endorsements->pluck('code')->toArray(),
+                                                    'front_preview' => $frontUrl,
+                                                    'front_filename' => $frontUrl ? basename($frontUrl) : '',
+                                                    'back_preview' => $backUrl,
+                                                    'back_filename' => $backUrl ? basename($backUrl) : '',
+                                                    'temp_front_token' => '',
+                                                    'temp_back_token' => '',
+                                                ];
+                                            })->toArray() ?: [
+                                            [
+                                                'id' => null,
+                                                'license_number' => '',
+                                                'state_of_issue' => '',
+                                                'license_class' => '',
+                                                'expiration_date' => '',
+                                                'is_cdl' => false,
+                                                'is_primary' => true,
+                                                'endorsements' => [],
+                                                'front_preview' => '',
+                                                'front_filename' => '',
+                                                'back_preview' => '',
+                                                'back_filename' => '',
+                                                'temp_front_token' => '',
+                                                'temp_back_token' => '',
+                                            ],
+                                        ],
+                                    ) }},
+                                    experiences: {{ json_encode(
+                                        $userDriverDetail->experiences->map(function ($exp) {
+                                                return [
+                                                    'id' => $exp->id,
+                                                    'equipment_type' => $exp->equipment_type,
+                                                    'years_experience' => $exp->years_experience,
+                                                    'miles_driven' => $exp->miles_driven,
+                                                    'requires_cdl' => (bool) $exp->requires_cdl,
+                                                ];
+                                            })->toArray() ?: [
+                                            [
+                                                'id' => null,
+                                                'equipment_type' => '',
+                                                'years_experience' => '',
+                                                'miles_driven' => '',
+                                                'requires_cdl' => false,
+                                            ],
+                                        ],
+                                    ) }},
+                                
+                                    addLicense() {
+                                        this.licenses.push({
+                                            id: null,
+                                            license_number: '',
+                                            state_of_issue: '',
+                                            license_class: '',
+                                            expiration_date: '',
+                                            is_cdl: false,
+                                            is_primary: false,
+                                            endorsements: [],
+                                            front_preview: '',
+                                            front_filename: '',
+                                            back_preview: '',
+                                            back_filename: '',
+                                            temp_front_token: '',
+                                            temp_back_token: '',
+                                        });
+                                    },
+                                
+                                    removeLicense(index) {
+                                        if (this.licenses.length > 1) {
+                                            this.licenses.splice(index, 1);
+                                        }
+                                    },
+                                
+                                    addExperience() {
+                                        this.experiences.push({
+                                            id: null,
+                                            equipment_type: '',
+                                            years_experience: '',
+                                            miles_driven: '',
+                                            requires_cdl: false
+                                        });
+                                    },
+                                
+                                    removeExperience(index) {
+                                        if (this.experiences.length > 1) {
+                                            this.experiences.splice(index, 1);
+                                        }
+                                    },
+                                
+                                    checkEndorsement(licenseIndex, endorsement) {
+                                        if (!this.licenses[licenseIndex].endorsements) {
+                                            this.licenses[licenseIndex].endorsements = [];
+                                        }
+                                
+                                        return this.licenses[licenseIndex].endorsements.includes(endorsement);
+                                    },
+                                
+                                    toggleEndorsement(licenseIndex, endorsement) {
+                                        if (!this.licenses[licenseIndex].endorsements) {
+                                            this.licenses[licenseIndex].endorsements = [];
+                                        }
+                                
+                                        const index = this.licenses[licenseIndex].endorsements.indexOf(endorsement);
+                                        if (index === -1) {
+                                            this.licenses[licenseIndex].endorsements.push(endorsement);
+                                        } else {
+                                            this.licenses[licenseIndex].endorsements.splice(index, 1);
+                                        }
+                                    }
+                                }">
+                                    @include('admin.user_driver.tabs.licenses_edit')
                                 </div>
 
                                 {{-- TAB: Driver Medical --}}
-                                <div x-show="activeTab === 'medical'">
-                                    @include('admin.user_driver.tabs.medical_create')
+                                {{-- TAB: Medical Driver --}}
+                                <div x-show="activeTab === 'medical'" x-data="{
+                                    isSuspended: {{ old('is_suspended', $userDriverDetail->medicalQualification?->is_suspended ?? false) ? 'true' : 'false' }},
+                                    isTerminated: {{ old('is_terminated', $userDriverDetail->medicalQualification?->is_terminated ?? false) ? 'true' : 'false' }},
+                                    selectedFile: null,
+                                
+                                    setFilePreview(event) {
+                                        const file = event.target.files[0];
+                                        if (file) {
+                                            this.selectedFile = file.name;
+                                        }
+                                    },
+                                
+                                    clearFile() {
+                                        this.selectedFile = null;
+                                        document.getElementById('medical_card_file').value = '';
+                                    }
+                                }">
+                                    @include('admin.user_driver.tabs.medical_edit')
                                 </div>
 
-                                {{-- TAB: LICENSES --}}
-                                <div x-show="activeTab === 'documents'">
+                                {{-- TAB: Documents --}}
+                                {{-- <div x-show="activeTab === 'documents'">
                                     <h1>Hola</h1>
-                                </div>
+                                </div> --}}
 
                                 {{-- Botones Submit/Cancel --}}
                                 <div class="flex border-t border-slate-200/80 px-7 py-5 md:justify-end mt-6">
