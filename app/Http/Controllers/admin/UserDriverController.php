@@ -149,7 +149,28 @@ class UserDriverController extends Controller
                 'how_did_hear_other' => 'required_if:how_did_hear,other',
                 'referral_employee_name' => 'required_if:how_did_hear,employee_referral',
                 'expected_pay' => 'nullable|string|max:255',
+
+                // Validación para historial laboral
+                'has_work_history' => 'sometimes|boolean',
+
+                'has_attended_training_school' => 'sometimes|boolean',
+                'has_traffic_convictions' => 'sometimes|boolean',
+                'has_accidents' => 'sometimes|boolean',
             ]);
+
+            // Validación para el historial laboral si está habilitado
+            if ($request->has('has_work_history') && $request->boolean('has_work_history')) {
+                $request->validate([
+                    'work_histories' => 'required|array',
+                    'work_histories.*.previous_company' => 'required|string|max:255',
+                    'work_histories.*.start_date' => 'required|date',
+                    'work_histories.*.end_date' => 'required|date|after_or_equal:work_histories.*.start_date',
+                    'work_histories.*.location' => 'required|string|max:255',
+                    'work_histories.*.position' => 'required|string|max:255',
+                    'work_histories.*.reason_for_leaving' => 'required|string',
+                    'work_histories.*.reference_contact' => 'nullable|string|max:255',
+                ]);
+            }
 
             // Validación de los datos de licencia (opcionales en esta etapa)
             $validatedLicenses = null;
@@ -195,6 +216,49 @@ class UserDriverController extends Controller
                     'medical_examiner_registry_number' => 'nullable|string|max:255',
                     'medical_card_expiration_date' => 'nullable|date',
                     'medical_card_file' => 'nullable|file|max:2048',
+                ]);
+            }
+
+            $validatedTraining = null;
+            if ($request->boolean('has_attended_training_school')) {
+                $validatedTraining = $request->validate([
+                    'training_schools' => 'required|array',
+                    'training_schools.*.school_name' => 'required|string|max:255',
+                    'training_schools.*.city' => 'required|string|max:255',
+                    'training_schools.*.state' => 'required|string|max:255',
+                    'training_schools.*.phone_number' => 'nullable|string|max:20',
+                    'training_schools.*.date_start' => 'required|date',
+                    'training_schools.*.date_end' => 'required|date|after_or_equal:training_schools.*.date_start',
+                    'training_schools.*.graduated' => 'sometimes|boolean',
+                    'training_schools.*.subject_to_safety_regulations' => 'sometimes|boolean',
+                    'training_schools.*.performed_safety_functions' => 'sometimes|boolean',
+                    'training_schools.*.training_skills' => 'nullable|array',
+                ]);
+            }
+
+            $validatedTraffic = null;
+            // Validaciones condicionales para infracciones de tráfico
+            if ($request->boolean('has_traffic_convictions')) {
+                $validatedTraffic = $request->validate([
+                    'traffic_convictions' => 'required|array',
+                    'traffic_convictions.*.conviction_date' => 'required|date',
+                    'traffic_convictions.*.location' => 'required|string|max:255',
+                    'traffic_convictions.*.charge' => 'required|string|max:255',
+                    'traffic_convictions.*.penalty' => 'required|string|max:255',
+                ]);
+            }
+
+            $validatedAccidents = null;
+            if ($request->boolean('has_accidents')) {
+                $validatedAccidents = $request->validate([
+                    'accidents' => 'required|array',
+                    'accidents.*.accident_date' => 'required|date',
+                    'accidents.*.nature_of_accident' => 'required|string|max:255',
+                    'accidents.*.had_injuries' => 'sometimes|boolean',
+                    'accidents.*.number_of_injuries' => 'required_if:accidents.*.had_injuries,1|nullable|integer|min:0',
+                    'accidents.*.had_fatalities' => 'sometimes|boolean',
+                    'accidents.*.number_of_fatalities' => 'required_if:accidents.*.had_fatalities,1|nullable|integer|min:0',
+                    'accidents.*.comments' => 'nullable|string',
                 ]);
             }
 
@@ -382,6 +446,7 @@ class UserDriverController extends Controller
                     $validatedBase['how_did_hear_other'] : null,
                 'referral_employee_name' => $validatedBase['how_did_hear'] === 'employee_referral' ?
                     $request->input('referral_employee_name') : null,
+                'has_work_history' => $request->boolean('has_work_history', false),
             ]);
             Log::info('CreateDriver: Detalles de aplicación creados', ['details_id' => $applicationDetails->id]);
 
@@ -533,6 +598,44 @@ class UserDriverController extends Controller
                 }
             }
 
+            // NUEVO BLOQUE: Procesar historial laboral si existe
+            if ($request->has('has_work_history') && $request->boolean('has_work_history')) {
+                Log::info('Procesando historiales laborales', [
+                    'has_work_history' => true,
+                    'work_histories_count' => is_array($request->work_histories) ? count($request->work_histories) : 0
+                ]);
+
+                // Si hay datos de historial laboral
+                if ($request->has('work_histories') && is_array($request->work_histories)) {
+                    foreach ($request->work_histories as $workHistoryData) {
+                        // Verificar que tenga los datos mínimos necesarios
+                        if (
+                            !empty($workHistoryData['previous_company']) &&
+                            !empty($workHistoryData['start_date']) &&
+                            !empty($workHistoryData['end_date']) &&
+                            !empty($workHistoryData['location']) &&
+                            !empty($workHistoryData['position'])
+                        ) {
+                            // Crear el registro de historial laboral
+                            $userDriverDetail->workHistories()->create([
+                                'previous_company' => $workHistoryData['previous_company'],
+                                'start_date' => $workHistoryData['start_date'],
+                                'end_date' => $workHistoryData['end_date'],
+                                'location' => $workHistoryData['location'],
+                                'position' => $workHistoryData['position'],
+                                'reason_for_leaving' => $workHistoryData['reason_for_leaving'] ?? null,
+                                'reference_contact' => $workHistoryData['reference_contact'] ?? null,
+                            ]);
+
+                            Log::info('Historial laboral creado', [
+                                'company' => $workHistoryData['previous_company'],
+                                'user_driver_id' => $userDriverDetail->id
+                            ]);
+                        }
+                    }
+                }
+            }
+
             // Procesar información médica si existe
             if ($validatedMedical) {
                 $medical = $userDriverDetail->medicalQualification()->create([
@@ -552,6 +655,111 @@ class UserDriverController extends Controller
                 if ($request->hasFile('medical_card_file')) {
                     $medical->addMediaFromRequest('medical_card_file')
                         ->toMediaCollection('medical_card');
+                }
+            }
+
+            // PROCESAR FORMACIÓN DE CONDUCTORES
+            if ($request->boolean('has_attended_training_school') && $request->has('training_schools')) {
+                Log::info('Procesando escuelas de formación', [
+                    'has_attended_training_school' => true,
+                    'training_schools_count' => count($request->training_schools)
+                ]);
+
+                foreach ($request->training_schools as $schoolData) {
+                    // Verificar datos mínimos necesarios
+                    if (
+                        empty($schoolData['school_name']) ||
+                        empty($schoolData['date_start']) ||
+                        empty($schoolData['date_end'])
+                    ) {
+                        continue;
+                    }
+
+                    // Crear registro de formación
+                    $trainingSchool = $userDriverDetail->trainingSchools()->create([
+                        'school_name' => $schoolData['school_name'],
+                        'city' => $schoolData['city'],
+                        'state' => $schoolData['state'],
+                        'phone_number' => $schoolData['phone_number'] ?? null,
+                        'date_start' => $schoolData['date_start'],
+                        'date_end' => $schoolData['date_end'],
+                        'graduated' => isset($schoolData['graduated']),
+                        'subject_to_safety_regulations' => isset($schoolData['subject_to_safety_regulations']),
+                        'performed_safety_functions' => isset($schoolData['performed_safety_functions']),
+                        'training_skills' => isset($schoolData['training_skills']) ? $schoolData['training_skills'] : [],
+                    ]);
+
+                    Log::info('Escuela de formación creada', [
+                        'school_id' => $trainingSchool->id,
+                        'school_name' => $schoolData['school_name']
+                    ]);
+                }
+            }
+
+            // PROCESAR INFRACCIONES DE TRÁFICO
+            if ($request->boolean('has_traffic_convictions') && $request->has('traffic_convictions')) {
+                Log::info('Procesando infracciones de tráfico', [
+                    'has_traffic_convictions' => true,
+                    'traffic_convictions_count' => count($request->traffic_convictions)
+                ]);
+
+                foreach ($request->traffic_convictions as $convictionData) {
+                    // Verificar datos mínimos necesarios
+                    if (
+                        empty($convictionData['conviction_date']) ||
+                        empty($convictionData['location']) ||
+                        empty($convictionData['charge']) ||
+                        empty($convictionData['penalty'])
+                    ) {
+                        continue;
+                    }
+
+                    // Crear registro de infracción
+                    $trafficConviction = $userDriverDetail->trafficConvictions()->create([
+                        'conviction_date' => $convictionData['conviction_date'],
+                        'location' => $convictionData['location'],
+                        'charge' => $convictionData['charge'],
+                        'penalty' => $convictionData['penalty'],
+                    ]);
+
+                    Log::info('Infracción de tráfico creada', [
+                        'conviction_id' => $trafficConviction->id,
+                        'charge' => $convictionData['charge']
+                    ]);
+                }
+            }
+
+            // PROCESAR REGISTRO DE ACCIDENTES
+            if ($request->boolean('has_accidents') && $request->has('accidents')) {
+                Log::info('Procesando registros de accidentes', [
+                    'has_accidents' => true,
+                    'accidents_count' => count($request->accidents)
+                ]);
+
+                foreach ($request->accidents as $accidentData) {
+                    // Verificar datos mínimos necesarios
+                    if (
+                        empty($accidentData['accident_date']) ||
+                        empty($accidentData['nature_of_accident'])
+                    ) {
+                        continue;
+                    }
+
+                    // Crear registro de accidente
+                    $accident = $userDriverDetail->accidents()->create([
+                        'accident_date' => $accidentData['accident_date'],
+                        'nature_of_accident' => $accidentData['nature_of_accident'],
+                        'had_injuries' => isset($accidentData['had_injuries']),
+                        'number_of_injuries' => isset($accidentData['had_injuries']) ? ($accidentData['number_of_injuries'] ?? 0) : 0,
+                        'had_fatalities' => isset($accidentData['had_fatalities']),
+                        'number_of_fatalities' => isset($accidentData['had_fatalities']) ? ($accidentData['number_of_fatalities'] ?? 0) : 0,
+                        'comments' => $accidentData['comments'] ?? null,
+                    ]);
+
+                    Log::info('Registro de accidente creado', [
+                        'accident_id' => $accident->id,
+                        'accident_date' => $accidentData['accident_date']
+                    ]);
                 }
             }
 
@@ -626,8 +834,9 @@ class UserDriverController extends Controller
         $userDriverDetail->load([
             'application.details',
             'addresses',
-            'user'
-        ]); // Cargar direcciones
+            'user',
+            'workHistories' // Añadir esta relación para cargar el historial laboral
+        ]);
 
         // Obtener la dirección principal
         $mainAddress = $userDriverDetail->addresses()
@@ -640,10 +849,14 @@ class UserDriverController extends Controller
             ->orderBy('from_date', 'desc')
             ->get();
 
+        // Obtener el historial laboral
+        $workHistories = $userDriverDetail->workHistories;
+
         // Log para debugging
-        Log::info('Recuperando direcciones del driver', [
+        Log::info('Recuperando datos del driver', [
             'dirección_principal' => $mainAddress,
-            'direcciones_previas' => $previousAddresses
+            'direcciones_previas' => $previousAddresses,
+            'historial_laboral' => $workHistories
         ]);
 
         // Verificar si tiene foto de perfil
@@ -667,6 +880,7 @@ class UserDriverController extends Controller
             'referralSources',
             'mainAddress',
             'previousAddresses',
+            'workHistories',
             'profilePhotoUrl'
         ));
     }
@@ -740,6 +954,18 @@ class UserDriverController extends Controller
                 'how_did_hear_other' => 'required_if:how_did_hear,other',
                 'referral_employee_name' => 'required_if:how_did_hear,employee_referral',
                 'expected_pay' => 'nullable|string|max:255',
+
+                // Validación para historial laboral
+                'has_work_history' => 'sometimes|boolean',
+                'work_histories' => 'array|required_if:has_work_history,1',
+                'work_histories.*.id' => 'nullable|integer|exists:driver_work_history,id',
+                'work_histories.*.previous_company' => 'required_with:work_histories|string|max:255',
+                'work_histories.*.start_date' => 'required_with:work_histories|date',
+                'work_histories.*.end_date' => 'required_with:work_histories|date|after_or_equal:work_histories.*.start_date',
+                'work_histories.*.location' => 'required_with:work_histories|string|max:255',
+                'work_histories.*.position' => 'required_with:work_histories|string|max:255',
+                'work_histories.*.reason_for_leaving' => 'required_with:work_histories|string',
+                'work_histories.*.reference_contact' => 'nullable|string|max:255',
             ]);
 
             // Validar edad mayor de 18
@@ -877,6 +1103,73 @@ class UserDriverController extends Controller
                                 'lived_three_years' => false
                             ]);
                         }
+                    }
+                }
+            }
+
+            // ACTUALIZAR HISTORIAL LABORAL
+            if ($request->has('has_work_history')) {
+                $hasWorkHistory = $request->boolean('has_work_history');
+
+                // Si no tiene historial laboral, eliminar registros existentes
+                if (!$hasWorkHistory) {
+                    $userDriverDetail->workHistories()->delete();
+                } else if ($request->has('work_histories')) {
+                    // Obtener IDs existentes para detectar eliminaciones
+                    $existingWorkHistoryIds = $userDriverDetail->workHistories()->pluck('id')->toArray();
+                    $updatedWorkHistoryIds = [];
+
+                    foreach ($request->input('work_histories') as $workHistoryData) {
+                        // Verificar datos mínimos necesarios
+                        if (
+                            empty($workHistoryData['previous_company']) ||
+                            empty($workHistoryData['start_date']) ||
+                            empty($workHistoryData['end_date']) ||
+                            empty($workHistoryData['location']) ||
+                            empty($workHistoryData['position'])
+                        ) {
+                            continue;
+                        }
+
+                        // Si tiene ID, es un historial existente
+                        $workHistoryId = $workHistoryData['id'] ?? null;
+                        $workHistory = null;
+
+                        if ($workHistoryId) {
+                            $workHistory = $userDriverDetail->workHistories()->find($workHistoryId);
+                        }
+
+                        if (!$workHistory) {
+                            // Crear nuevo historial laboral
+                            $workHistory = $userDriverDetail->workHistories()->create([
+                                'previous_company' => $workHistoryData['previous_company'],
+                                'start_date' => $workHistoryData['start_date'],
+                                'end_date' => $workHistoryData['end_date'],
+                                'location' => $workHistoryData['location'],
+                                'position' => $workHistoryData['position'],
+                                'reason_for_leaving' => $workHistoryData['reason_for_leaving'] ?? null,
+                                'reference_contact' => $workHistoryData['reference_contact'] ?? null,
+                            ]);
+                        } else {
+                            // Actualizar historial existente
+                            $workHistory->update([
+                                'previous_company' => $workHistoryData['previous_company'],
+                                'start_date' => $workHistoryData['start_date'],
+                                'end_date' => $workHistoryData['end_date'],
+                                'location' => $workHistoryData['location'],
+                                'position' => $workHistoryData['position'],
+                                'reason_for_leaving' => $workHistoryData['reason_for_leaving'] ?? null,
+                                'reference_contact' => $workHistoryData['reference_contact'] ?? null,
+                            ]);
+                        }
+
+                        $updatedWorkHistoryIds[] = $workHistory->id;
+                    }
+
+                    // Eliminar historiales laborales que ya no existen en la actualización
+                    $workHistoriesToDelete = array_diff($existingWorkHistoryIds, $updatedWorkHistoryIds);
+                    if (!empty($workHistoriesToDelete)) {
+                        $userDriverDetail->workHistories()->whereIn('id', $workHistoriesToDelete)->delete();
                     }
                 }
             }

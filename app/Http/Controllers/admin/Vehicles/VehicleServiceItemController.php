@@ -72,7 +72,12 @@ class VehicleServiceItemController extends Controller
      */
     public function show(Vehicle $vehicle, VehicleServiceItem $serviceItem)
     {
-        return view('admin.vehicle-service-items.show', compact('vehicle', 'serviceItem'));
+        // Verificar que el service item pertenece a este vehículo
+        if ($serviceItem->vehicle_id !== $vehicle->id) {
+            abort(404);
+        }
+        
+        return view('admin.vehicles.service-items.show', compact('vehicle', 'serviceItem'));
     }
 
     /**
@@ -80,7 +85,12 @@ class VehicleServiceItemController extends Controller
      */
     public function edit(Vehicle $vehicle, VehicleServiceItem $serviceItem)
     {
-        return view('admin.vehicle-service-items.edit', compact('vehicle', 'serviceItem'));
+        // Verificar que el service item pertenece a este vehículo
+        if ($serviceItem->vehicle_id !== $vehicle->id) {
+            abort(404);
+        }
+        
+        return view('admin.vehicles.service-items.edit', compact('vehicle', 'serviceItem'));
     }
 
     /**

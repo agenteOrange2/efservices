@@ -236,9 +236,17 @@ Route::prefix('vehicles')->name('vehicles.')->group(function () {
     Route::get('/{vehicle}/edit', [VehicleController::class, 'edit'])->name('edit');
     Route::put('/{vehicle}', [VehicleController::class, 'update'])->name('update');
     Route::delete('/{vehicle}', [VehicleController::class, 'destroy'])->name('destroy');
-    
-    // Rutas para ítems de servicio de vehículos
-    Route::resource('service-items', VehicleServiceItemController::class);
+
+    // Rutas para ítems de servicio anidadas bajo un vehículo específico
+    Route::prefix('{vehicle}/service-items')->name('service-items.')->group(function () {
+        Route::get('/', [VehicleServiceItemController::class, 'index'])->name('index');
+        Route::get('/create', [VehicleServiceItemController::class, 'create'])->name('create');
+        Route::post('/', [VehicleServiceItemController::class, 'store'])->name('store');
+        Route::get('/{serviceItem}', [VehicleServiceItemController::class, 'show'])->name('show');
+        Route::get('/{serviceItem}/edit', [VehicleServiceItemController::class, 'edit'])->name('edit');
+        Route::put('/{serviceItem}', [VehicleServiceItemController::class, 'update'])->name('update');
+        Route::delete('/{serviceItem}', [VehicleServiceItemController::class, 'destroy'])->name('destroy');
+    });
 });
 
 // Rutas para administrar marcas de vehículos (como entidad separada)
@@ -249,8 +257,6 @@ Route::get('vehicle-makes/search', [VehicleMakeController::class, 'search'])->na
 Route::resource('vehicle-types', VehicleTypeController::class);
 Route::get('vehicle-types/search', [VehicleTypeController::class, 'search'])->name('vehicle-types.search');
 
-Route::post('ve{vehicle}/service-items', [VehicleServiceItemController::class, 'store'])
-->name('vehicles.service-items.store');
 /*
 Route::prefix('user-carrier')->name('user_carrier.')->group(function () {
     Route::get('/dashboard', function () {

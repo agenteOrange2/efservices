@@ -17,7 +17,8 @@ return new class extends Migration
             $table->string('previous_company');
             $table->date('start_date');
             $table->date('end_date');
-            $table->text('job_description');
+            $table->string('location');
+            $table->string('position');
             $table->text('reason_for_leaving')->nullable();
             $table->string('reference_contact')->nullable();
             $table->timestamps();

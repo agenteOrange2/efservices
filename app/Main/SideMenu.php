@@ -132,13 +132,7 @@ class SideMenu
                         'params' => [],
                         'title' => "Vehicle Type",
                     ],
-                    
-                    [
-                        'icon' => "wrench",
-                        'route_name' => "admin.vehicles.service-items.index",
-                        'params' => [],
-                        'title' => "Services Items",
-                    ],
+
                     [
                         'icon' => "file-text",
                         'route_name' => "admin.product-grid",

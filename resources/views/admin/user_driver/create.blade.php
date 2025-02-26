@@ -28,6 +28,8 @@
                                 activeTab: 'general',
                                 // Address/History
                                 dateError: '',
+                                hasWorkHistory: false,
+                                workHistories: [],
                                 fromDate: '{{ old('from_date') }}',
                                 toDate: '{{ old('to_date') }}',
                                 livedThreeYears: false,
@@ -212,6 +214,23 @@
                                     this.previousAddresses.splice(index, 1);
                                     this.calculateTotal();
                                 },
+                            
+                                addWorkHistory() {
+                                    this.workHistories.push({
+                                        previous_company: '',
+                                        start_date: '',
+                                        end_date: '',
+                                        location: '',
+                                        position: '',
+                                        reason_for_leaving: '',
+                                        reference_contact: ''
+                                    });
+                                },
+                            
+                                removeWorkHistory(index) {
+                                    this.workHistories.splice(index, 1);
+                                },
+                            
                                 openSections: {
                                     address: true,
                                     driver: false,
@@ -255,6 +274,36 @@
                                                         'text-gray-500 hover:border-gray-300': activeTab !== 'medical'
                                                     }">
                                                     Medical Driver
+                                                </button>
+                                            </li>
+                                            <li class="mr-2">
+                                                <button type="button" @click="activeTab = 'training'"
+                                                    class="inline-block p-4"
+                                                    :class="{
+                                                        'text-primary border-b-2 border-primary': activeTab === 'training',
+                                                        'text-gray-500 hover:border-gray-300': activeTab !== 'training'
+                                                    }">
+                                                    Training & Record
+                                                </button>
+                                            </li>
+                                            <li class="mr-2">
+                                                <button type="button" @click="activeTab = 'traffic'"
+                                                    class="inline-block p-4"
+                                                    :class="{
+                                                        'text-primary border-b-2 border-primary': activeTab === 'traffic',
+                                                        'text-gray-500 hover:border-gray-300': activeTab !== 'traffic'
+                                                    }">
+                                                    Traffic Convictions
+                                                </button>
+                                            </li>
+                                            <li class="mr-2">
+                                                <button type="button" @click="activeTab = 'accident'"
+                                                    class="inline-block p-4"
+                                                    :class="{
+                                                        'text-primary border-b-2 border-primary': activeTab === 'accident',
+                                                        'text-gray-500 hover:border-gray-300': activeTab !== 'accident'
+                                                    }">
+                                                    Accident Record
                                                 </button>
                                             </li>
                                         </ul>
@@ -1012,6 +1061,140 @@
                                                         @enderror
                                                     </div>
                                                 </div>
+
+                                                {{-- Work History Section --}}
+                                                <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
+                                                    <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
+                                                        <div class="text-left">
+                                                            <div class="flex items-center">
+                                                                <div class="font-medium">Work History</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mt-3 w-full flex-1 xl:mt-0">
+                                                        <div class="flex items-center">
+                                                            <x-base.form-check.input class="mr-2.5 border" type="checkbox"
+                                                                name="has_work_history" value="1"
+                                                                x-model="hasWorkHistory" />
+                                                            <span class="cursor-pointer select-none">
+                                                                I have previous work experience
+                                                            </span>
+                                                        </div>
+
+                                                        <template x-if="hasWorkHistory">
+                                                            <div class="mt-4 border p-4 rounded-md">
+                                                                <div class="flex justify-between items-center mb-4">
+                                                                    <h4 class="text-lg font-medium">Previous Employment
+                                                                    </h4>
+                                                                    <button type="button" @click="addWorkHistory()"
+                                                                        class="px-3 py-1 bg-primary text-white rounded-md text-sm">
+                                                                        Add Employment
+                                                                    </button>
+                                                                </div>
+
+                                                                <div x-show="workHistories.length === 0"
+                                                                    class="text-gray-500 text-sm italic mb-4">
+                                                                    No work history added. Click "Add Employment" to include
+                                                                    previous work experience.
+                                                                </div>
+
+                                                                <template x-for="(history, index) in workHistories"
+                                                                    :key="index">
+                                                                    <div class="mb-6 border-b pb-6">
+                                                                        <div
+                                                                            class="flex justify-between items-center mb-4">
+                                                                            <h5 class="font-medium"
+                                                                                x-text="`Employment #${index + 1}`"></h5>
+                                                                            <button type="button"
+                                                                                @click="removeWorkHistory(index)"
+                                                                                class="text-red-500 text-sm">
+                                                                                <i class="fas fa-trash mr-1"></i> Remove
+                                                                            </button>
+                                                                        </div>
+
+                                                                        <div
+                                                                            class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                                                            <div>
+                                                                                <label
+                                                                                    class="block text-sm font-medium mb-1">Company
+                                                                                    Name</label>
+                                                                                <input type="text"
+                                                                                    x-model="history.previous_company"
+                                                                                    :name="`work_histories[${index}][previous_company]`"
+                                                                                    class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
+                                                                                    placeholder="Previous employer name"
+                                                                                    required>
+                                                                            </div>
+                                                                            <div>
+                                                                                <label
+                                                                                    class="block text-sm font-medium mb-1">Position</label>
+                                                                                <input type="text"
+                                                                                    x-model="history.position"
+                                                                                    :name="`work_histories[${index}][position]`"
+                                                                                    class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
+                                                                                    placeholder="Your job title" required>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div
+                                                                            class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                                                            <div>
+                                                                                <label
+                                                                                    class="block text-sm font-medium mb-1">Start
+                                                                                    Date</label>
+                                                                                <input type="date"
+                                                                                    x-model="history.start_date"
+                                                                                    :name="`work_histories[${index}][start_date]`"
+                                                                                    class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
+                                                                                    required>
+                                                                            </div>
+                                                                            <div>
+                                                                                <label
+                                                                                    class="block text-sm font-medium mb-1">End
+                                                                                    Date</label>
+                                                                                <input type="date"
+                                                                                    x-model="history.end_date"
+                                                                                    :name="`work_histories[${index}][end_date]`"
+                                                                                    class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
+                                                                                    required>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div class="mb-4">
+                                                                            <label
+                                                                                class="block text-sm font-medium mb-1">Location</label>
+                                                                            <input type="text"
+                                                                                x-model="history.location"
+                                                                                :name="`work_histories[${index}][location]`"
+                                                                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
+                                                                                placeholder="City, State" required>
+                                                                        </div>
+
+                                                                        <div class="mb-4">
+                                                                            <label
+                                                                                class="block text-sm font-medium mb-1">Reason
+                                                                                for Leaving</label>
+                                                                            <textarea x-model="history.reason_for_leaving" :name="`work_histories[${index}][reason_for_leaving]`"
+                                                                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" rows="2"
+                                                                                placeholder="Why did you leave this position?" required></textarea>
+                                                                        </div>
+
+                                                                        <div>
+                                                                            <label
+                                                                                class="block text-sm font-medium mb-1">Reference
+                                                                                Contact (Optional)</label>
+                                                                            <input type="text"
+                                                                                x-model="history.reference_contact"
+                                                                                :name="`work_histories[${index}][reference_contact]`"
+                                                                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
+                                                                                placeholder="Name and phone number">
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1129,6 +1312,28 @@
                                 }">
                                     @include('admin.user_driver.tabs.medical_create')
                                 </div>
+
+                                {{-- TAB: HISTORY --}}
+                                <div x-show="activeTab === 'training'">
+                                    @include('admin.user_driver.tabs.training_create')
+                                    {{-- <x-driver.training-tab /> --}}
+                                    Hola History
+                                </div>
+
+                                {{-- TAB: TRAFFIC --}}
+                                <div x-show="activeTab === 'traffic'">
+                                    @include('admin.user_driver.tabs.traffic_create')
+                                    {{-- <x-driver.traffic-tab /> --}}
+                                    Hola Traffic
+                                </div>
+
+                                {{-- TAB: ACCIDENT --}}
+                                <div x-show="activeTab === 'accident'">
+                                    @include('admin.user_driver.tabs.accident_create')
+                                    {{-- <x-driver.accident-tab /> --}}
+                                    Hola Accident
+                                </div>
+
 
                                 {{-- Botones Submit/Cancel --}}
                                 <div class="flex border-t border-slate-200/80 px-7 py-5 md:justify-end mt-6">
