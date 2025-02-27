@@ -4,15 +4,20 @@ namespace App\Models;
 
 use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Support\Facades\Log;
+use App\Models\Admin\Vehicle\Vehicle;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Admin\Driver\DriverAddress;
 use App\Models\Admin\Driver\DriverLicense;
-use App\Models\Admin\Driver\DriverMedicalQualification;
-use App\Models\Admin\Driver\DriverExperience;
+use App\Models\Admin\Driver\DriverAccident;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use App\Models\Admin\Driver\DriverExperience;
 use App\Models\Admin\Driver\DriverApplication;
+use App\Models\Admin\Driver\DriverWorkHistory;
+use App\Models\Admin\Driver\DriverTrainingSchool;
+use App\Models\Admin\Driver\DriverTrafficConviction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use App\Models\Admin\Driver\DriverMedicalQualification;
 
 class UserDriverDetail extends Model implements HasMedia
 {
@@ -77,8 +82,6 @@ class UserDriverDetail extends Model implements HasMedia
         };
     }
 
-
-
     public function getProfilePhotoUrlAttribute()
     {
         $media = $this->getFirstMedia('profile_photo_driver');
@@ -132,5 +135,31 @@ class UserDriverDetail extends Model implements HasMedia
     public function medicalQualification()
     {
         return $this->hasOne(DriverMedicalQualification::class);
+    }
+
+    public function workHistories()
+    {
+        return $this->hasMany(DriverWorkHistory::class, 'user_driver_detail_id');
+    }
+
+    public function trainingSchools()
+    {
+        return $this->hasMany(DriverTrainingSchool::class);
+    }
+
+    public function trafficConvictions()
+    {
+        return $this->hasMany(DriverTrafficConviction::class);
+    }
+
+    public function accidents()
+    {
+        return $this->hasMany(DriverAccident::class);
+    }
+
+
+    public function vehicles()
+    {
+        return $this->hasMany(Vehicle::class, 'user_driver_detail_id');
     }
 }

@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('how_did_hear_other')->nullable();
             $table->string('referral_employee_name')->nullable();
             $table->decimal('expected_pay', 10, 2);
+            $table->boolean('has_work_history')->default(false);
             $table->timestamps();
         });
     }

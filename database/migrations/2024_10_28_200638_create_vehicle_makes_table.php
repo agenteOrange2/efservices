@@ -11,13 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('drug_tests', function (Blueprint $table) {
+        Schema::create('vehicle_makes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('driver_id')->constrained('drivers')->onDelete('cascade');
-            $table->date('test_date');
-            $table->string('result');
-            $table->string('lab');
-            $table->text('observations')->nullable();
+            $table->string('name')->unique();
             $table->timestamps();
         });
     }
@@ -27,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('drug_tests');
+        Schema::dropIfExists('vehicle_makes');
     }
 };

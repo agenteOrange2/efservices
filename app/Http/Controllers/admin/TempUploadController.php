@@ -12,7 +12,7 @@ class TempUploadController extends Controller
         private TempUploadService $tempUploadService
     ) {}
     
-    public function store(Request $request)
+    public function upload(Request $request)
     {
         $validated = $request->validate([
             'file' => 'required|file|max:10240', // 10MB max

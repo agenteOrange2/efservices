@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('driver_courses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('driver_id')->constrained('drivers')->onDelete('cascade');
+            $table->foreignId('user_driver_detail_id')->constrained('user_driver_details')->onDelete('cascade');
             $table->foreignId('course_id')->constrained('courses')->onDelete('cascade');
             $table->timestamp('enrollment_date')->useCurrent();
             $table->timestamp('completion_date')->nullable();

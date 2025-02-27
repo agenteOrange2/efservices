@@ -6,7 +6,8 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Social Security Number <span
                     class="text-red-500">*</span></label>
-            <input type="text" name="social_security_number" value="{{ old('social_security_number') }}"
+            <input type="text" name="social_security_number" 
+                value="{{ old('social_security_number', $userDriverDetail->medicalQualification?->social_security_number) }}"
                 placeholder="XXX-XX-XXXX" class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
                 pattern="\d{3}-\d{2}-\d{4}" x-mask="999-99-9999">
             <p class="mt-1 text-xs text-gray-500">Format: XXX-XX-XXXX</p>
@@ -18,7 +19,8 @@
         <!-- Hire Date -->
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Hire Date</label>
-            <input type="date" name="hire_date" value="{{ old('hire_date') }}"
+            <input type="date" name="hire_date" 
+                value="{{ old('hire_date', $userDriverDetail->medicalQualification?->hire_date?->format('Y-m-d')) }}"
                 class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
         </div>
     </div>
@@ -27,7 +29,9 @@
         <!-- Location -->
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
-            <input type="text" name="location" value="{{ old('location') }}" placeholder="Work location"
+            <input type="text" name="location" 
+                value="{{ old('location', $userDriverDetail->medicalQualification?->location) }}" 
+                placeholder="Work location"
                 class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
         </div>
     </div>
@@ -43,7 +47,8 @@
 
             <div x-show="isSuspended" class="mt-3">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Suspension Date</label>
-                <input type="date" name="suspension_date" value="{{ old('suspension_date') }}"
+                <input type="date" name="suspension_date" 
+                    value="{{ old('suspension_date', $userDriverDetail->medicalQualification?->suspension_date?->format('Y-m-d')) }}"
                     class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
             </div>
         </div>
@@ -58,7 +63,8 @@
 
             <div x-show="isTerminated" class="mt-3">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Termination Date</label>
-                <input type="date" name="termination_date" value="{{ old('termination_date') }}"
+                <input type="date" name="termination_date" 
+                    value="{{ old('termination_date', $userDriverDetail->medicalQualification?->termination_date?->format('Y-m-d')) }}"
                     class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
             </div>
         </div>
@@ -72,7 +78,8 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Medical Examiner Name <span
                         class="text-red-500">*</span></label>
-                <input type="text" name="medical_examiner_name" value="{{ old('medical_examiner_name') }}"
+                <input type="text" name="medical_examiner_name" 
+                    value="{{ old('medical_examiner_name', $userDriverDetail->medicalQualification?->medical_examiner_name) }}"
                     class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
             </div>
 
@@ -81,7 +88,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Medical Examiner Registry Number <span
                         class="text-red-500">*</span></label>
                 <input type="text" name="medical_examiner_registry_number"
-                    value="{{ old('medical_examiner_registry_number') }}"
+                    value="{{ old('medical_examiner_registry_number', $userDriverDetail->medicalQualification?->medical_examiner_registry_number) }}"
                     class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
             </div>
         </div>
@@ -92,20 +99,21 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Medical Card Expiration Date <span
                         class="text-red-500">*</span></label>
                 <input type="date" name="medical_card_expiration_date"
-                    value="{{ old('medical_card_expiration_date') }}"
+                    value="{{ old('medical_card_expiration_date', $userDriverDetail->medicalQualification?->medical_card_expiration_date?->format('Y-m-d')) }}"
                     class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
             </div>
         </div>
 
         <!-- Medical Card Upload -->
-        <!-- En tu vista admin.user_driver.tabs.medical_create -->
-
         <div class="mb-6" x-data="{
-            preview: null,
-            filename: '',
+            preview: '{{ $userDriverDetail->medicalQualification?->getFirstMediaUrl('medical_card') }}',
+            filename: '{{ $userDriverDetail->medicalQualification && $userDriverDetail->medicalQualification->getFirstMedia('medical_card') ? $userDriverDetail->medicalQualification->getFirstMedia('medical_card')->file_name : '' }}',
             token: '',
             loading: false,
             error: '',
+            
+            // Determine if we already have a PDF file
+            isPdf: '{{ $userDriverDetail->medicalQualification && $userDriverDetail->medicalQualification->getFirstMedia('medical_card') && $userDriverDetail->medicalQualification->getFirstMedia('medical_card')->mime_type === 'application/pdf' ? 'true' : 'false' }}',
         
             uploadMedicalCard(event) {
                 const file = event.target.files[0];
@@ -116,9 +124,11 @@
         
                 // Set local preview
                 if (file.type === 'application/pdf') {
-                    this.preview = 'document.pdf';
+                    this.preview = '#';
+                    this.isPdf = true;
                 } else if (file.type.startsWith('image/')) {
                     this.preview = URL.createObjectURL(file);
+                    this.isPdf = false;
                 }
         
                 const formData = new FormData();
@@ -150,13 +160,51 @@
         
             removeFile() {
                 this.filename = '';
-                this.preview = null;
+                this.preview = '';
                 this.token = '';
+                this.isPdf = false;
                 document.getElementById('medical_card_file').value = '';
             }
         }">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Upload Medical Card <span
+            <label class="block text-sm font-medium text-gray-700 mb-2">Medical Card <span
                     class="text-red-500">*</span></label>
+
+            <!-- Display current medical card if it exists -->
+            <div x-show="preview && !loading" class="mb-4">
+                <template x-if="isPdf === 'true' || isPdf === true">
+                    <div class="flex items-center p-3 bg-gray-50 rounded border">
+                        <svg class="w-8 h-8 text-red-500" xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-gray-700" x-text="filename"></p>
+                            <p class="text-xs text-gray-500">Current medical card PDF</p>
+                        </div>
+                        <a x-bind:href="preview" target="_blank" class="ml-auto text-sm text-primary hover:underline" 
+                           x-show="preview.startsWith('http')">
+                            View
+                        </a>
+                    </div>
+                </template>
+                <template x-if="isPdf === 'false' || (isPdf === false && preview)">
+                    <div class="relative">
+                        <img :src="preview" class="max-h-32 object-contain border rounded" />
+                        <a x-bind:href="preview" target="_blank" class="absolute top-2 right-2 bg-white p-1 rounded-full shadow"
+                           x-show="preview.startsWith('http')">
+                            <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                            </svg>
+                        </a>
+                    </div>
+                </template>
+            </div>
 
             <div class="flex flex-col items-center justify-center w-full">
                 <label for="medical_card_file"
@@ -174,6 +222,10 @@
                         <p class="text-xs text-gray-500">PDF, PNG, JPG or JPEG (MAX. 2MB)</p>
                     </div>
 
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6" x-show="preview && !loading">
+                        <p class="mb-2 text-sm text-primary"><span class="font-semibold">Click to replace</span> current file</p>
+                    </div>
+
                     <div x-show="loading" class="flex items-center justify-center pt-5 pb-6">
                         <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg"
                             fill="none" viewBox="0 0 24 24">
@@ -184,26 +236,6 @@
                             </path>
                         </svg>
                         <span class="text-sm text-gray-700">Uploading...</span>
-                    </div>
-
-                    <div x-show="preview && !loading" class="w-full h-full flex items-center justify-center">
-                        <template x-if="preview === 'document.pdf'">
-                            <div class="flex items-center">
-                                <svg class="w-8 h-8 text-red-500" xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                    <polyline points="10 9 9 9 8 9"></polyline>
-                                </svg>
-                                <span class="ml-2 text-sm font-medium text-gray-700" x-text="filename"></span>
-                            </div>
-                        </template>
-                        <template x-if="preview && preview !== 'document.pdf'">
-                            <img :src="preview" class="max-h-28 max-w-full object-contain" />
-                        </template>
                     </div>
                 </label>
 

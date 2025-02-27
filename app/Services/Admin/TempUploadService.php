@@ -3,10 +3,11 @@
 
 namespace App\Services\Admin;
 
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 
 class TempUploadService
 {
@@ -55,20 +56,70 @@ class TempUploadService
      */
     public function moveToPermanent(string $token)
     {
-        $tempFile = $this->get($token);
-        
-        if (!$tempFile) {
+        try {
+            // Log detallado al inicio
+            Log::info('Iniciando moveToPermanent', ['token' => $token]);
+            
+            $tempFiles = Session::get('temp_files', []);
+            
+            Log::info('Estado actual de tempFiles', [
+                'token_exists' => isset($tempFiles[$token]),
+                'total_temp_files' => count($tempFiles),
+                'available_tokens' => array_keys($tempFiles)
+            ]);
+            
+            $tempFile = $tempFiles[$token] ?? null;
+            
+            if (!$tempFile) {
+                Log::error('Token no encontrado en archivos temporales', ['token' => $token]);
+                return false;
+            }
+            
+            Log::info('Información del archivo temporal encontrado', [
+                'token' => $token,
+                'disk' => $tempFile['disk'],
+                'path' => $tempFile['path'],
+                'original_name' => $tempFile['original_name'] ?? 'unknown'
+            ]);
+            
+            $sourcePath = Storage::disk($tempFile['disk'])->path($tempFile['path']);
+            
+            Log::info('Ruta completa del archivo', [
+                'token' => $token,
+                'source_path' => $sourcePath
+            ]);
+            
+            if (!file_exists($sourcePath)) {
+                Log::error('Archivo temporal no existe en el disco', [
+                    'token' => $token, 
+                    'path' => $sourcePath,
+                    'disk_exists' => Storage::disk($tempFile['disk'])->exists($tempFile['path']),
+                    'storage_path' => storage_path(),
+                    'public_path' => public_path()
+                ]);
+                return false;
+            }
+            
+            Log::info('Archivo encontrado, retornando ruta', [
+                'token' => $token,
+                'path' => $sourcePath,
+                'size' => filesize($sourcePath),
+                'mime' => mime_content_type($sourcePath)
+            ]);
+            
+            // Eliminar el token procesado para que no se pueda usar nuevamente
+            unset($tempFiles[$token]);
+            Session::put('temp_files', $tempFiles);
+            
+            return $sourcePath;
+        } catch (\Exception $e) {
+            Log::error('Error en moveToPermanent', [
+                'token' => $token,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return false;
         }
-        
-        $sourcePath = Storage::disk($tempFile['disk'])->path($tempFile['path']);
-        
-        if (!file_exists($sourcePath)) {
-            return false;
-        }
-        
-        // Devolvemos la ruta física al archivo
-        return $sourcePath;
     }
     
     /**

@@ -11,16 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('trips', function (Blueprint $table) {
+        Schema::create('incidents', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('driver_id')->constrained('drivers')->onDelete('cascade');
+            $table->foreignId('user_driver_detail_id')->constrained('user_driver_details')->onDelete('cascade');
             $table->foreignId('carrier_id')->constrained('carriers')->onDelete('cascade');
-            $table->timestamp('start_time');
-            $table->timestamp('end_time')->nullable();
-            $table->string('destination');
-            $table->time('estimated_duration');
-            $table->time('total_duration')->nullable();
-            $table->string('status')->default('In Progress');
+            $table->text('description');
+            $table->string('type'); // Types: Accident, Fine, Mechanical Failure, etc.
+            $table->timestamp('incident_date');
+            $table->string('status')->default('Pending'); // Status: Pending, Resolved, etc.
             $table->timestamps();
         });
     }
@@ -30,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('trips');
+        Schema::dropIfExists('incidents');
     }
 };
