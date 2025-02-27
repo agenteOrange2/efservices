@@ -1,43 +1,13 @@
 @extends('../themes/' . $activeTheme)
 @section('title', 'Add User Driver')
 
+
 @php
     $breadcrumbLinks = [
         ['label' => 'App', 'url' => route('admin.dashboard')],
         ['label' => 'Drivers', 'url' => route('admin.carrier.user_drivers.index', $carrier->slug)],
         ['label' => 'Create Driver', 'active' => true],
     ];
-
-    // Definir los pasos y sus correspondientes pestañas
-    $steps = [
-        \App\Services\Admin\DriverStepService::STEP_GENERAL => ['label' => 'general', 'title' => 'General Information'],
-        \App\Services\Admin\DriverStepService::STEP_LICENSES => [
-            'label' => 'licenses',
-            'title' => 'Licenses & Experience',
-        ],
-        \App\Services\Admin\DriverStepService::STEP_MEDICAL => ['label' => 'medical', 'title' => 'Medical Information'],
-        \App\Services\Admin\DriverStepService::STEP_TRAINING => ['label' => 'training', 'title' => 'Training History'],
-        \App\Services\Admin\DriverStepService::STEP_TRAFFIC => ['label' => 'traffic', 'title' => 'Traffic Record'],
-        \App\Services\Admin\DriverStepService::STEP_ACCIDENT => ['label' => 'accident', 'title' => 'Accident History'],
-    ];
-
-    // Si estamos editando, obtener el estado actual de los pasos
-    $stepsStatus =
-        isset($userDriverDetail) && $userDriverDetail->id
-            ? app(\App\Services\Admin\DriverStepService::class)->getStepsStatus($userDriverDetail)
-            : array_fill(1, 6, \App\Services\Admin\DriverStepService::STATUS_MISSING);
-
-    // Obtener el paso actual
-    $currentStep =
-        isset($userDriverDetail) && $userDriverDetail->id
-            ? $userDriverDetail->current_step
-            : \App\Services\Admin\DriverStepService::STEP_GENERAL;
-
-    // Calcular el porcentaje de completitud
-    $completionPercentage =
-        isset($userDriverDetail) && $userDriverDetail->id
-            ? app(\App\Services\Admin\DriverStepService::class)->calculateCompletionPercentage($userDriverDetail)
-            : 0;
 @endphp
 
 @section('subcontent')
@@ -46,15 +16,15 @@
             <div class="mt-7">
                 <div class="box box--stacked flex flex-col">
                     <div class="box-body">
+
                         <form action="{{ route('admin.carrier.user_drivers.store', $carrier) }}" method="POST"
                             enctype="multipart/form-data">
                             @csrf
+
                             <x-validation-errors class="my-4" />
 
                             {{-- Contenedor Alpine con toda la lógica --}}
                             <div x-data="{
-                                activeTab: '{{ old('active_tab', $steps[$currentStep]['label']) }}',
-                                submissionType: 'partial',
                                 activeTab: 'general',
                                 // Address/History
                                 dateError: '',
@@ -260,58 +230,6 @@
                                 removeWorkHistory(index) {
                                     this.workHistories.splice(index, 1);
                                 },
-                                // Agregar estas funciones al objeto Alpine.js principal
-                                isFirstTab() {
-                                    return this.activeTab === 'general';
-                                },
-                            
-                                isLastTab() {
-                                    return this.activeTab === 'accident'; // O 'summary' si agregas ese paso
-                                },
-                            
-                                getPreviousTab() {
-                                    const tabs = ['general', 'licenses', 'medical', 'training', 'traffic', 'accident'];
-                                    const currentIndex = tabs.indexOf(this.activeTab);
-                                    if (currentIndex > 0) {
-                                        return tabs[currentIndex - 1];
-                                    }
-                                    return 'general';
-                                },
-                            
-                                getNextTab() {
-                                    const tabs = ['general', 'licenses', 'medical', 'training', 'traffic', 'accident'];
-                                    const currentIndex = tabs.indexOf(this.activeTab);
-                                    if (currentIndex < tabs.length - 1) {
-                                        return tabs[currentIndex + 1];
-                                    }
-                                    return 'accident';
-                                },
-                            
-                                moveToNextTab() {
-                                    // Validar primero antes de avanzar
-                                    if (this.validateCurrentStep()) {
-                                        // Autoguardar antes de cambiar
-                                        this.autoSaveData();
-                                        // Cambiar a la siguiente pestaña
-                                        this.activeTab = this.getNextTab();
-                                        // Desplazarse al principio del formulario
-                                        window.scrollTo(0, 0);
-                                    } else {
-                                        // Mostrar errores y detener avance
-                                        this.showValidationErrors();
-                                    }
-                                },
-                                // Verificar si el formulario es válido
-                                isFormValid() {
-                                    // Implementar validación según la pestaña activa
-                                    // Por ejemplo, para la pestaña general:
-                                    if (this.activeTab === 'general') {
-                                        // Validar campos requeridos
-                                        return true; // O implementar lógica real
-                                    }
-                            
-                                    return true; // Por defecto
-                                },
                             
                                 openSections: {
                                     address: true,
@@ -324,56 +242,75 @@
                             
                             }">
 
-                                {{-- Progress Bar and Steps Indicator --}}
-                                <div class="mb-8 p-4">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <h2 class="text-lg font-semibold">Driver Registration Progress</h2>
-                                        <span class="text-sm text-gray-600">{{ $completionPercentage }}% Complete</span>
-                                    </div>
-
-                                    {{-- Progress Bar --}}
-                                    <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
-                                        <div class="bg-primary h-2.5 rounded-full"
-                                            style="width: {{ $completionPercentage }}%"></div>
-                                    </div>
-
-                                    {{-- Steps Indicators --}}
-                                    <div class="grid grid-cols-3 md:grid-cols-6 gap-4">
-                                        @foreach ($steps as $step => $details)
-                                            <x-driver.step-indicator :status="$stepsStatus[$step]" :step="$step" :activeStep="$currentStep"
-                                                :label="$details['label']" />
-                                        @endforeach
-                                    </div>
-                                </div>
-
-                                {{-- Hidden Inputs for Form Submission --}}
-                                <input type="hidden" name="active_tab" :value="activeTab">
-                                <input type="hidden" name="submission_type" :value="submissionType">
-                                @if (isset($userDriverDetail) && $userDriverDetail->id)
-                                    <input type="hidden" name="user_id" value="{{ $userDriverDetail->user_id }}">
-                                @endif
-
-                                {{-- Tabs Navigation --}}
+                                {{-- Tabs en Blade --}}
                                 <div class="tabs">
                                     <div class="mb-4 border-b border-gray-200">
                                         <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
-                                            @foreach ($steps as $step => $details)
-                                                <li class="mr-2">
-                                                    <button type="button" @click="activeTab = '{{ $details['label'] }}'"
-                                                        class="inline-block p-4"
-                                                        :class="{
-                                                            'text-primary border-b-2 border-primary': activeTab === '{{ $details['label'] }}',
-                                                            'text-gray-500 hover:border-gray-300': activeTab !== '{{ $details['label'] }}'
-                                                        }">
-                                                        {{ $details['title'] }}
-                                                    </button>
-                                                </li>
-                                            @endforeach
+                                            <li class="mr-2">
+                                                <button type="button" @click="activeTab = 'general'"
+                                                    class="inline-block p-4"
+                                                    :class="{
+                                                        'text-primary border-b-2 border-primary': activeTab === 'general',
+                                                        'text-gray-500 hover:border-gray-300': activeTab !== 'general'
+                                                    }">
+                                                    General Information
+                                                </button>
+                                            </li>
+                                            <li class="mr-2">
+                                                <button type="button" @click="activeTab = 'licenses'"
+                                                    class="inline-block p-4"
+                                                    :class="{
+                                                        'text-primary border-b-2 border-primary': activeTab === 'licenses',
+                                                        'text-gray-500 hover:border-gray-300': activeTab !== 'licenses'
+                                                    }">
+                                                    Licenses
+                                                </button>
+                                            </li>
+                                            <li class="mr-2">
+                                                <button type="button" @click="activeTab = 'medical'"
+                                                    class="inline-block p-4"
+                                                    :class="{
+                                                        'text-primary border-b-2 border-primary': activeTab === 'medical',
+                                                        'text-gray-500 hover:border-gray-300': activeTab !== 'medical'
+                                                    }">
+                                                    Medical Driver
+                                                </button>
+                                            </li>
+                                            <li class="mr-2">
+                                                <button type="button" @click="activeTab = 'training'"
+                                                    class="inline-block p-4"
+                                                    :class="{
+                                                        'text-primary border-b-2 border-primary': activeTab === 'training',
+                                                        'text-gray-500 hover:border-gray-300': activeTab !== 'training'
+                                                    }">
+                                                    Training & Record
+                                                </button>
+                                            </li>
+                                            <li class="mr-2">
+                                                <button type="button" @click="activeTab = 'traffic'"
+                                                    class="inline-block p-4"
+                                                    :class="{
+                                                        'text-primary border-b-2 border-primary': activeTab === 'traffic',
+                                                        'text-gray-500 hover:border-gray-300': activeTab !== 'traffic'
+                                                    }">
+                                                    Traffic Convictions
+                                                </button>
+                                            </li>
+                                            <li class="mr-2">
+                                                <button type="button" @click="activeTab = 'accident'"
+                                                    class="inline-block p-4"
+                                                    :class="{
+                                                        'text-primary border-b-2 border-primary': activeTab === 'accident',
+                                                        'text-gray-500 hover:border-gray-300': activeTab !== 'accident'
+                                                    }">
+                                                    Accident Record
+                                                </button>
+                                            </li>
                                         </ul>
                                     </div>
                                 </div>
 
-                                {{-- Tab Contents (los incluyes como ya los tenías) --}}
+                                {{-- TAB: GENERAL --}}
                                 <div x-show="activeTab === 'general'">
                                     <div>
                                         <!-- User Information -->
@@ -856,8 +793,7 @@
                                                         </div>
                                                     </template>
 
-                                                    <button type="button"
-                                                        class="border border-primary/50 px-4 py-2 rounded text-primary hover:text-white hover:bg-primary transition"
+                                                    <button type="button" class="border border-primary/50 px-4 py-2 rounded text-primary hover:text-white hover:bg-primary transition"
                                                         :class="{ 'opacity-50 cursor-not-allowed': totalYears >= 3 }"
                                                         :disabled="totalYears >= 3" @click="addAddress"
                                                         x-show="!livedThreeYears">
@@ -1264,6 +1200,8 @@
                                     </div>
                                 </div>
 
+
+                                {{-- TAB: LICENSES --}}
                                 <div x-show="activeTab === 'licenses'" x-data="{
                                     licenses: {{ json_encode(
                                         old('licenses', [
@@ -1354,6 +1292,7 @@
                                     @include('admin.user_driver.tabs.licenses_create')
                                 </div>
 
+                                {{-- TAB: Driver Medical --}}
                                 <div x-show="activeTab === 'medical'" x-data="{
                                     isSuspended: {{ old('is_suspended') ? 'true' : 'false' }},
                                     isTerminated: {{ old('is_terminated') ? 'true' : 'false' }},
@@ -1374,51 +1313,40 @@
                                     @include('admin.user_driver.tabs.medical_create')
                                 </div>
 
-                                <div x-show="activeTab === 'training'">
+                                {{-- TAB: HISTORY --}}
+                                <div x-show="activeTab === 'training'" >
                                     @include('admin.user_driver.tabs.training_create')
+                                    {{-- <x-driver.training-tab /> --}}                                    
                                 </div>
 
+                                {{-- TAB: TRAFFIC --}}
                                 <div x-show="activeTab === 'traffic'">
                                     @include('admin.user_driver.tabs.traffic_create')
+                                    {{-- <x-driver.traffic-tab /> --}}                                    
                                 </div>
 
+                                {{-- TAB: ACCIDENT --}}
                                 <div x-show="activeTab === 'accident'">
                                     @include('admin.user_driver.tabs.accident_create')
+                                    {{-- <x-driver.accident-tab /> --}}                                    
                                 </div>
 
-                                {{-- Botones Submit/Cancel con opciones de guardado --}}
-                                <div class="flex border-t border-slate-200/80 px-7 py-5 md:justify-between mt-6">
-                                    <div>
-                                        <button type="button" @click="activeTab = getPreviousTab()"
-                                            x-show="!isFirstTab()"
-                                            class="border border-gray-300 px-4 py-2 rounded text-gray-600 hover:bg-gray-100">
-                                            <i class="fas fa-arrow-left mr-1"></i> Previous
-                                        </button>
-                                    </div>
 
-                                    <div class="flex space-x-2">
-                                        <a href="{{ route('admin.carrier.user_drivers.index', $carrier) }}"
-                                            class="border border-gray-300 px-4 py-2 rounded text-gray-600 hover:bg-gray-100">
-                                            Cancel
-                                        </a>
-
-                                        <button type="submit" @click="submissionType = 'partial'"
-                                            class="border border-primary/50 px-4 py-2 rounded text-primary hover:text-white hover:bg-primary transition"
-                                            :disabled="!isFormValid()"> Save
-                                            <span x-show="isLastTab()">Save</span>
-                                            <span x-show="!isLastTab()">Save & Continue <i
-                                                    class="fas fa-arrow-right ml-1"></i></span>
-                                        </button>
-
-                                        <button type="submit" @click="submissionType = 'complete'"
-                                            class="border border-success px-4 py-2 rounded text-success hover:text-white hover:bg-success transition"
-                                            :disabled="!isFormValid()">
-                                            Save & Finish
-                                        </button>
-                                    </div>
+                                {{-- Botones Submit/Cancel --}}
+                                <div class="flex border-t border-slate-200/80 px-7 py-5 md:justify-end mt-6">
+                                    <button type="submit"
+                                        class="border border-primary/50 px-4 py-2 rounded text-primary hover:text-white hover:bg-primary transition"
+                                        :disabled="!termsAccepted">
+                                        Save Driver
+                                    </button>
+                                    <a href="{{ route('admin.carrier.user_drivers.index', $carrier) }}"
+                                        class="border border-gray-300 ml-2 px-4 py-2 rounded text-gray-600 hover:bg-gray-100">
+                                        Cancel
+                                    </a>
                                 </div>
                             </div>
                         </form>
+
                     </div>
                 </div>
             </div>
@@ -1427,7 +1355,7 @@
 @endsection
 
 @push('scripts')
-    <!-- Tus scripts actuales -->
+    <!-- Incluir IMask para las máscaras -->
     <script defer src="https://unpkg.com/@alpinejs/validate@3.x.x/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/imask"></script>
 
@@ -1485,368 +1413,6 @@
                 }
             }
         }
-
-        // Completar esto en tus datos de Alpine.js
-        function formValidator() {
-            return {
-                validateCurrentStep() {
-                    // Limpiar errores anteriores
-                    this.errors = {};
-
-                    // Determinar qué validación ejecutar basado en la pestaña activa
-                    switch (this.activeTab) {
-                        case 'general':
-                            return this.validateGeneralStep();
-                        case 'licenses':
-                            return this.validateLicensesStep();
-                        case 'medical':
-                            return this.validateMedicalStep();
-                        case 'training':
-                            return this.validateTrainingStep();
-                        case 'traffic':
-                            return this.validateTrafficStep();
-                        case 'accident':
-                            return this.validateAccidentStep();
-                        default:
-                            return true;
-                    }
-                },
-
-                // Implementar funciones de validación faltantes para los pasos restantes
-                validateTrainingStep() {
-                    if (this.hasAttendedTrainingSchool) {
-                        // Validar datos de escuelas de capacitación
-                        if (this.trainingSchools.length === 0) {
-                            this.errors.trainingSchools = 'Se requiere al menos una escuela de capacitación';
-                            return false;
-                        }
-
-                        // Validar cada escuela de capacitación
-                        let isValid = true;
-                        this.trainingSchools.forEach((school, index) => {
-                            if (!school.school_name) {
-                                this.errors[`trainingSchools.${index}.school_name`] =
-                                    'El nombre de la escuela es requerido';
-                                isValid = false;
-                            }
-                            // Agregar otras validaciones
-                        });
-                        return isValid;
-                    }
-                    return true;
-                },
-
-                validateTrafficStep() {
-                    // Validación similar para infracciones de tráfico
-                    return true;
-                },
-
-                validateAccidentStep() {
-                    // Validación para accidentes
-                    return true;
-                }
-            };
-        }
-
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('formValidator', () => ({
-                errors: {},
-                validateGeneralStep() {
-                    this.errors = {};
-                    let isValid = true;
-
-                    // Validación del nombre
-                    if (!document.querySelector('[name="name"]').value.trim()) {
-                        this.errors.name = 'Name is required';
-                        isValid = false;
-                    }
-
-                    // Validación del email
-                    const email = document.querySelector('[name="email"]').value.trim();
-                    if (!email) {
-                        this.errors.email = 'Email is required';
-                        isValid = false;
-                    } else if (!/^\S+@\S+\.\S+$/.test(email)) {
-                        this.errors.email = 'Email format is invalid';
-                        isValid = false;
-                    }
-
-                    // Validación de la contraseña (solo si es nuevo usuario)
-                    const userId = document.querySelector('[name="user_id"]')?.value;
-                    const password = document.querySelector('[name="password"]').value;
-                    if (!userId && !password) {
-                        this.errors.password = 'Password is required for new users';
-                        isValid = false;
-                    } else if (!userId && password.length < 8) {
-                        this.errors.password = 'Password must be at least 8 characters';
-                        isValid = false;
-                    }
-
-                    // Validación de la confirmación de contraseña
-                    const confirmation = document.querySelector('[name="password_confirmation"]').value;
-                    if (!userId && password && password !== confirmation) {
-                        this.errors.password_confirmation = 'Passwords do not match';
-                        isValid = false;
-                    }
-
-                    // Validación del teléfono
-                    if (!document.querySelector('[name="phone"]').value.trim()) {
-                        this.errors.phone = 'Phone number is required';
-                        isValid = false;
-                    }
-
-                    // Validación de la fecha de nacimiento
-                    const birthDate = document.querySelector('[name="date_of_birth"]').value;
-                    if (!birthDate) {
-                        this.errors.date_of_birth = 'Birth date is required';
-                        isValid = false;
-                    } else {
-                        // Validar que sea mayor de 18 años
-                        const today = new Date();
-                        const birth = new Date(birthDate);
-                        let age = today.getFullYear() - birth.getFullYear();
-                        const monthDiff = today.getMonth() - birth.getMonth();
-                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-                            age--;
-                        }
-
-                        if (age < 18) {
-                            this.errors.date_of_birth = 'Driver must be at least 18 years old';
-                            isValid = false;
-                        }
-                    }
-
-                    // Validación de términos
-                    if (!document.querySelector('[name="terms_accepted"]').checked) {
-                        this.errors.terms_accepted = 'You must accept the terms and conditions';
-                        isValid = false;
-                    }
-
-                    // Más validaciones para dirección, etc.
-
-                    return isValid;
-                },
-
-
-                validateLicensesStep() {
-                    this.errors = {};
-                    let isValid = true;
-
-                    // Verificar que al menos haya una licencia
-                    const licenses = this.licenses || [];
-                    if (licenses.length === 0) {
-                        this.errors.licenses = 'At least one license is required';
-                        isValid = false;
-                    } else {
-                        // Validar cada licencia
-                        licenses.forEach((license, index) => {
-                            if (!license.license_number) {
-                                this.errors[`licenses.${index}.license_number`] =
-                                    'License number is required';
-                                isValid = false;
-                            }
-
-                            if (!license.state_of_issue) {
-                                this.errors[`licenses.${index}.state_of_issue`] =
-                                    'State is required';
-                                isValid = false;
-                            }
-
-                            if (!license.license_class) {
-                                this.errors[`licenses.${index}.license_class`] =
-                                    'License class is required';
-                                isValid = false;
-                            }
-
-                            if (!license.expiration_date) {
-                                this.errors[`licenses.${index}.expiration_date`] =
-                                    'Expiration date is required';
-                                isValid = false;
-                            } else {
-                                // Verificar que la fecha no esté vencida
-                                const today = new Date();
-                                const expiration = new Date(license.expiration_date);
-                                if (expiration < today) {
-                                    this.errors[`licenses.${index}.expiration_date`] =
-                                        'License is expired';
-                                    isValid = false;
-                                }
-                            }
-                        });
-                    }
-
-                    // Verificar que al menos haya una experiencia
-                    const experiences = this.experiences || [];
-                    if (experiences.length === 0) {
-                        this.errors.experiences = 'At least one driving experience is required';
-                        isValid = false;
-                    } else {
-                        // Validar cada experiencia
-                        experiences.forEach((exp, index) => {
-                            if (!exp.equipment_type) {
-                                this.errors[`experiences.${index}.equipment_type`] =
-                                    'Equipment type is required';
-                                isValid = false;
-                            }
-
-                            if (!exp.years_experience && exp.years_experience !== 0) {
-                                this.errors[`experiences.${index}.years_experience`] =
-                                    'Years of experience is required';
-                                isValid = false;
-                            }
-
-                            if (!exp.miles_driven && exp.miles_driven !== 0) {
-                                this.errors[`experiences.${index}.miles_driven`] =
-                                    'Miles driven is required';
-                                isValid = false;
-                            }
-                        });
-                    }
-
-                    return isValid;
-                },
-
-                validateMedicalStep() {
-                    this.errors = {};
-                    let isValid = true;
-
-                    // Validar SSN
-                    if (!document.querySelector('[name="social_security_number"]').value.trim()) {
-                        this.errors.social_security_number = 'Social Security Number is required';
-                        isValid = false;
-                    }
-
-                    // Validar examiner
-                    if (!document.querySelector('[name="medical_examiner_name"]').value.trim()) {
-                        this.errors.medical_examiner_name = 'Medical examiner name is required';
-                        isValid = false;
-                    }
-
-                    // Validar registry number
-                    if (!document.querySelector('[name="medical_examiner_registry_number"]').value
-                        .trim()) {
-                        this.errors.medical_examiner_registry_number = 'Registry number is required';
-                        isValid = false;
-                    }
-
-                    // Validar medical card expiration
-                    const expDate = document.querySelector('[name="medical_card_expiration_date"]')
-                        .value;
-                    if (!expDate) {
-                        this.errors.medical_card_expiration_date = 'Expiration date is required';
-                        isValid = false;
-                    } else {
-                        // Verificar que la fecha no esté vencida
-                        const today = new Date();
-                        const expiration = new Date(expDate);
-                        if (expiration < today) {
-                            this.errors.medical_card_expiration_date = 'Medical card is expired';
-                            isValid = false;
-                        }
-                    }
-
-                    return isValid;
-                },
-
-                // Continúa con los métodos para los otros pasos...
-
-                validateStep(step) {
-                    switch (step) {
-                        case 'general':
-                            return this.validateGeneralStep();
-                        case 'licenses':
-                            return this.validateLicensesStep();
-                        case 'medical':
-                            return this.validateMedicalStep();
-                        case 'training':
-                            return true; // Implementar validación
-                        case 'traffic':
-                            return true; // Implementar validación
-                        case 'accident':
-                            return true; // Implementar validación
-                        default:
-                            return true;
-                    }
-                },
-
-                showErrors() {
-                    // Mostrar errores en la UI
-                    Object.keys(this.errors).forEach(field => {
-                        const element = document.querySelector(`[name="${field}"]`);
-                        if (element) {
-                            element.classList.add('border-red-500');
-
-                            // Agregar mensaje de error
-                            const errorDiv = document.createElement('div');
-                            errorDiv.className = 'text-red-500 text-sm mt-1 error-message';
-                            errorDiv.textContent = this.errors[field];
-
-                            // Eliminar mensajes de error anteriores
-                            const parent = element.parentNode;
-                            const prevErrors = parent.querySelectorAll('.error-message');
-                            prevErrors.forEach(err => err.remove());
-
-                            parent.appendChild(errorDiv);
-                        }
-                    });
-                },
-
-                clearErrors() {
-                    // Limpiar todos los errores de UI
-                    document.querySelectorAll('.error-message').forEach(el => el.remove());
-                    document.querySelectorAll('.border-red-500').forEach(el => el.classList.remove(
-                        'border-red-500'));
-                },
-
-                autoSaveData() {
-                    // No autoguardar si estamos enviando el formulario completo
-                    if (this.isSubmitting) return;
-
-                    const formData = new FormData(document.querySelector('form'));
-                    formData.append('active_tab', this.activeTab);
-
-                    // Obtener la URL correcta para autoguardado
-                    const carrierId = "{{ $carrier->slug }}";
-                    let url = `/admin/carrier/${carrierId}/drivers/autosave`;
-
-                    // Si ya tenemos un ID de driver, incluirlo en la URL
-                    if (this.userDriverId) {
-                        url += `/${this.userDriverId}`;
-                    }
-
-                    fetch(url, {
-                            method: 'POST',
-                            body: formData,
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
-                                    .getAttribute('content'),
-                                'Accept': 'application/json'
-                            }
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Guardar el ID del driver si es nuevo
-                                if (!this.userDriverId && data.user_driver_id) {
-                                    this.userDriverId = data.user_driver_id;
-                                }
-
-                                // Mostrar mensaje de éxito temporal
-                                this.showAutoSaveMessage = true;
-                                setTimeout(() => {
-                                    this.showAutoSaveMessage = false;
-                                }, 3000);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error en autoguardado:', error);
-                        });
-                },
-
-
-            }));
-        });
-
         document.addEventListener('DOMContentLoaded', function() {
             // Máscara para el teléfono
             const phoneMask = IMask(document.querySelector('input[name="phone"]'), {

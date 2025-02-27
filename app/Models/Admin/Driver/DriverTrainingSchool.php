@@ -37,4 +37,17 @@ class DriverTrainingSchool extends Model
     {
         return $this->belongsTo(UserDriverDetail::class);
     }
+
+        /**
+     * Define las colecciones de medios para este modelo.
+     */
+    public function registerMediaCollections(): void
+    {
+        // Colección para el certificado escolar - puede tener múltiples certificados
+        $this->addMediaCollection('school_certificates');
+        
+        // Alternativamente, si solo necesitas un certificado por escuela:
+        // $this->addMediaCollection('school_certificate')->singleFile();
+    }
+
 }

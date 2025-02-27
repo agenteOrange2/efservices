@@ -141,12 +141,24 @@ Route::prefix('carrier/{carrier}/drivers')->name('carrier.user_drivers.')->group
     Route::get('/', [UserDriverController::class, 'index'])->name('index');
     Route::get('/create', [UserDriverController::class, 'create'])->name('create');
     Route::post('/', [UserDriverController::class, 'store'])->name('store');
-    Route::get('/{userDriverDetail}/edit', [UserDriverController::class, 'edit'])->name('edit');
+    Route::get('/{userDriverDetail}/edit', [UserDriverController::class, 'edit'])->name('edit');    
     Route::put('/{userDriverDetail}', [UserDriverController::class, 'update'])->name('update');
     Route::delete('/{userDriverDetail}', [UserDriverController::class, 'destroy'])->name('destroy');
     Route::delete('/{userDriverDetail}/photo', [UserDriverController::class, 'deletePhoto'])->name('delete-photo');
+
+    Route::get('/{userDriverDetail}/edit-test', function(App\Models\Carrier $carrier, App\Models\UserDriverDetail $userDriverDetail) {
+        return '<h1>Test de redirección exitoso</h1>
+                <p>Carrier ID: ' . $carrier->id . ' (' . $carrier->name . ')</p>
+                <p>Driver ID: ' . $userDriverDetail->id . ' (' . $userDriverDetail->user->name . ')</p>
+                <p>Active Tab: ' . request()->query('active_tab', 'none') . '</p>
+                <a href="' . route('carrier.user_drivers.index', $carrier) . '">Volver al listado de drivers</a>';
+    })->name('edit-test');
 });
 
+Route::post('carrier/{carrier}/drivers/autosave/{userDriverDetail?}', [
+    \App\Http\Controllers\Admin\UserDriverController::class, 
+    'autosave'
+])->name('admin.carrier.user_drivers.autosave');
 
 Route::post('/temp-upload', [TempUploadController::class, 'upload'])->name('temp.upload');
 

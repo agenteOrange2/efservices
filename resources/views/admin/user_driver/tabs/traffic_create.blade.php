@@ -1,6 +1,6 @@
 <div>
     <!-- Order your soul. Reduce your wants. - Augustine -->
-</div><div class="bg-white p-4 rounded-lg shadow" x-data="{
+</div><div class="bg-white p-4 " x-data="{
     hasTrafficConvictions: false,
     trafficConvictions: [{
         id: null,
@@ -90,7 +90,7 @@
         </template>
         
         <button type="button" @click="addTrafficConviction"
-            class="btn btn-outline-primary mt-2">
+            class="border border-primary/50 px-4 py-2 rounded text-primary hover:text-white hover:bg-primary transition">
             <i class="fas fa-plus mr-1"></i> Add Another Conviction
         </button>
     </div>

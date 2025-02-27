@@ -1,6 +1,6 @@
 <div>
     <!-- Simplicity is the consequence of refined emotions. - Jean D'Alembert -->
-</div><div class="bg-white p-4 rounded-lg shadow" x-data="{
+</div><div class="bg-white p-4 " x-data="{
     hasAccidents: false,
     accidents: [{
         id: null,
@@ -126,7 +126,7 @@
         </template>
         
         <button type="button" @click="addAccident"
-            class="btn btn-outline-primary mt-2">
+            class="border border-primary/50 px-4 py-2 rounded text-primary hover:text-white hover:bg-primary transition">
             <i class="fas fa-plus mr-1"></i> Add Another Accident
         </button>
     </div>
