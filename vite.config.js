@@ -7,6 +7,8 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/js/app.js',
+                'resources/js/admin/driverRegistration.js',
+                'resources/js/admin/driverEdit.js',
                 'resources/js/components/user/image-preview.js',
                 'resources/js/components/base/dropzone-file-upload.js',
                 'resources/js/pages/users/user-delete.js',                               

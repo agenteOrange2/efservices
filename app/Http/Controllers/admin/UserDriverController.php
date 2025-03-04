@@ -54,44 +54,23 @@ class UserDriverController extends Controller
 
     public function create(Carrier $carrier)
     {
-        // Verificar el límite de drivers para este carrier específico
+        // Verificar el límite de drivers para este carrier
         $maxDrivers = $carrier->membership->max_drivers ?? 1;
-
-        // Solo contar los drivers del carrier actual
         $currentDriversCount = UserDriverDetail::where('carrier_id', $carrier->id)->count();
-
-        // Cargar las constantes que necesitas en la vista:
-        $usStates = Constants::usStates();
-        $driverPositions = Constants::driverPositions();
-        $referralSources = Constants::referralSources();
-
-        Log::info('Verificando límite de drivers para carrier', [
-            'carrier_id' => $carrier->id,
-            'carrier_name' => $carrier->name,
-            'max_drivers' => $maxDrivers,
-            'current_drivers_count' => $currentDriversCount
-        ]);
-
+        
         if ($currentDriversCount >= $maxDrivers) {
-            Log::warning('Límite de drivers excedido para carrier específico', [
-                'carrier_id' => $carrier->id,
-                'max_drivers' => $maxDrivers,
-                'current_count' => $currentDriversCount
-            ]);
-
             return redirect()
                 ->route('admin.carrier.user_drivers.index', $carrier)
                 ->with('exceeded_limit', true)
                 ->with('error', 'No puedes agregar más conductores a este carrier. Actualiza tu plan o contacta al administrador.');
         }
-
-        return view('admin.user_driver.create', compact(
-            'carrier',
-            'usStates',
-            'driverPositions',
-            'referralSources'
-        ));
+        
+        // Usar el componente de registro
+        return view('admin.user_driver.create', [
+            'carrier' => $carrier
+        ]);
     }
+    
 
 
     protected function calculateYears($fromDate, $toDate = null)
@@ -371,6 +350,19 @@ class UserDriverController extends Controller
                     'previous_addresses.*.zip_code' => 'required_with:previous_addresses',
                     'previous_addresses.*.from_date' => 'required_with:previous_addresses|date',
                     'previous_addresses.*.to_date' => 'required_with:previous_addresses|date|after:previous_addresses.*.from_date',
+
+                    'work_histories.*.start_date' => [
+                        'required_with:work_histories',
+                        'date',
+                        'date_format:Y-m-d',
+                        'before_or_equal:today'
+                    ],
+                    'work_histories.*.end_date' => [
+                        'required_with:work_histories',
+                        'date',
+                        'date_format:Y-m-d',
+                        'after_or_equal:work_histories.*.start_date'
+                    ],
                 ]);
                 break;
 
@@ -418,7 +410,6 @@ class UserDriverController extends Controller
                 // Escuelas y formación
                 $rules = [
                     'has_attended_training_school' => 'sometimes|boolean',
-                    'has_work_history' => 'sometimes|boolean',
                 ];
 
                 // Historiales de trabajo opcionales
@@ -577,6 +568,88 @@ class UserDriverController extends Controller
                     $request->input('referral_employee_name') : null,
             ]
         );
+
+
+        // Actualizar campo has_work_history en los detalles de la aplicación
+        if ($application->details) {
+            $application->details->update([
+                'has_work_history' => $request->boolean('has_work_history', false),
+            ]);
+        }
+
+        // PROCESAR HISTORIAL LABORAL
+        if ($request->boolean('has_work_history')) {
+            // Obtener IDs existentes para detectar eliminaciones
+            $existingWorkHistoryIds = $userDriverDetail->workHistories()->pluck('id')->toArray();
+            $updatedWorkHistoryIds = [];
+
+            if ($request->has('work_histories') && is_array($request->work_histories)) {
+                foreach ($request->work_histories as $workHistoryData) {
+                    // Verificar datos mínimos necesarios
+                    if (
+                        empty($workHistoryData['previous_company']) ||
+                        empty($workHistoryData['start_date']) ||
+                        empty($workHistoryData['end_date']) ||
+                        empty($workHistoryData['location']) ||
+                        empty($workHistoryData['position'])
+                    ) {
+                        continue;
+                    }
+
+                    // Corregir formato de fecha si es necesario
+                    $startDate = $workHistoryData['start_date'];
+                    if (strlen($startDate) > 0 && substr($startDate, 0, 1) === '0') {
+                        $startDate = '2' . substr($startDate, 1); // Corregir años con formato incorrecto
+                    }
+
+                    // Si tiene ID, es un historial existente
+                    $workHistoryId = $workHistoryData['id'] ?? null;
+                    $workHistory = null;
+                    if ($workHistoryId) {
+                        $workHistory = $userDriverDetail->workHistories()->find($workHistoryId);
+                    }
+
+                    if (!$workHistory) {
+                        // Crear nuevo historial laboral
+                        $workHistory = $userDriverDetail->workHistories()->create([
+                            'previous_company' => $workHistoryData['previous_company'],
+                            'start_date' => $startDate,
+                            'end_date' => $workHistoryData['end_date'],
+                            'location' => $workHistoryData['location'],
+                            'position' => $workHistoryData['position'],
+                            'reason_for_leaving' => $workHistoryData['reason_for_leaving'] ?? null,
+                            'reference_contact' => $workHistoryData['reference_contact'] ?? null,
+                        ]);
+                    } else {
+                        // Actualizar historial existente
+                        $workHistory->update([
+                            'previous_company' => $workHistoryData['previous_company'],
+                            'start_date' => $startDate,
+                            'end_date' => $workHistoryData['end_date'],
+                            'location' => $workHistoryData['location'],
+                            'position' => $workHistoryData['position'],
+                            'reason_for_leaving' => $workHistoryData['reason_for_leaving'] ?? null,
+                            'reference_contact' => $workHistoryData['reference_contact'] ?? null,
+                        ]);
+                    }
+                    $updatedWorkHistoryIds[] = $workHistory->id;
+
+                    Log::info('Historial laboral procesado', [
+                        'id' => $workHistory->id,
+                        'company' => $workHistoryData['previous_company']
+                    ]);
+                }
+            }
+
+            // Eliminar historiales que ya no existen
+            $workHistoriesToDelete = array_diff($existingWorkHistoryIds, $updatedWorkHistoryIds);
+            if (!empty($workHistoriesToDelete)) {
+                $userDriverDetail->workHistories()->whereIn('id', $workHistoriesToDelete)->delete();
+            }
+        } else {
+            // Si no tiene historial laboral, eliminar todos los registros
+            $userDriverDetail->workHistories()->delete();
+        }
 
         Log::info('Detalles de aplicación creados/actualizados', [
             'details_id' => $applicationDetails->id
@@ -808,79 +881,8 @@ class UserDriverController extends Controller
         // Actualizar campo has_work_history en los detalles de la aplicación
         if ($application->details) {
             $application->details->update([
-                'has_work_history' => $request->boolean('has_work_history', false),
                 'has_attended_training_school' => $request->boolean('has_attended_training_school', false),
             ]);
-        }
-
-        // PROCESAR HISTORIAL LABORAL
-        if ($request->boolean('has_work_history')) {
-            // Obtener IDs existentes para detectar eliminaciones
-            $existingWorkHistoryIds = $userDriverDetail->workHistories()->pluck('id')->toArray();
-            $updatedWorkHistoryIds = [];
-
-            if ($request->has('work_histories') && is_array($request->work_histories)) {
-                foreach ($request->work_histories as $workHistoryData) {
-                    // Verificar datos mínimos necesarios
-                    if (
-                        empty($workHistoryData['previous_company']) ||
-                        empty($workHistoryData['start_date']) ||
-                        empty($workHistoryData['end_date']) ||
-                        empty($workHistoryData['location']) ||
-                        empty($workHistoryData['position'])
-                    ) {
-                        continue;
-                    }
-
-                    // Si tiene ID, es un historial existente
-                    $workHistoryId = $workHistoryData['id'] ?? null;
-                    $workHistory = null;
-
-                    if ($workHistoryId) {
-                        $workHistory = $userDriverDetail->workHistories()->find($workHistoryId);
-                    }
-
-                    if (!$workHistory) {
-                        // Crear nuevo historial laboral
-                        $workHistory = $userDriverDetail->workHistories()->create([
-                            'previous_company' => $workHistoryData['previous_company'],
-                            'start_date' => $workHistoryData['start_date'],
-                            'end_date' => $workHistoryData['end_date'],
-                            'location' => $workHistoryData['location'],
-                            'position' => $workHistoryData['position'],
-                            'reason_for_leaving' => $workHistoryData['reason_for_leaving'] ?? null,
-                            'reference_contact' => $workHistoryData['reference_contact'] ?? null,
-                        ]);
-                    } else {
-                        // Actualizar historial existente
-                        $workHistory->update([
-                            'previous_company' => $workHistoryData['previous_company'],
-                            'start_date' => $workHistoryData['start_date'],
-                            'end_date' => $workHistoryData['end_date'],
-                            'location' => $workHistoryData['location'],
-                            'position' => $workHistoryData['position'],
-                            'reason_for_leaving' => $workHistoryData['reason_for_leaving'] ?? null,
-                            'reference_contact' => $workHistoryData['reference_contact'] ?? null,
-                        ]);
-                    }
-
-                    $updatedWorkHistoryIds[] = $workHistory->id;
-
-                    Log::info('Historial laboral procesado', [
-                        'id' => $workHistory->id,
-                        'company' => $workHistoryData['previous_company']
-                    ]);
-                }
-            }
-
-            // Eliminar historiales que ya no existen
-            $workHistoriesToDelete = array_diff($existingWorkHistoryIds, $updatedWorkHistoryIds);
-            if (!empty($workHistoriesToDelete)) {
-                $userDriverDetail->workHistories()->whereIn('id', $workHistoriesToDelete)->delete();
-            }
-        } else {
-            // Si no tiene historial laboral, eliminar todos los registros
-            $userDriverDetail->workHistories()->delete();
         }
 
         // PROCESAR FORMACIÓN DE CONDUCTORES
@@ -1166,48 +1168,140 @@ class UserDriverController extends Controller
 
     public function autosave(Request $request, Carrier $carrier, UserDriverDetail $userDriverDetail = null)
     {
+        Log::info('Iniciando autosave de driver', [
+            'carrier_id' => $carrier->id,
+            'user_driver_id' => $userDriverDetail ? $userDriverDetail->id : 'nuevo',
+            'active_tab' => $request->input('active_tab')
+        ]);
+
         try {
-            // Validar los datos básicos del formulario
+            // Validar datos básicos (validación mínima)
+            $activeTab = $request->input('active_tab');
             $validated = $request->validate([
-                'active_tab' => 'required|string',
-                // Otras validaciones básicas
+                'active_tab' => 'required|string|in:general,licenses,medical,training,traffic,accident',
             ]);
 
-            // Si no existe userDriverDetail, crear un registro temporal
+            DB::beginTransaction();
+
+            // Si no existe userDriverDetail, crear registros básicos
             if (!$userDriverDetail) {
+                // Validaciones básicas para crear un usuario
+                $request->validate([
+                    'name' => 'required|string|max:255',
+                    'email' => 'required|email|unique:users,email',
+                    'phone' => 'required|string'
+                ]);
+
+                // Crear usuario con datos mínimos
                 $user = User::create([
-                    'name' => $request->input('name') ?? 'Temporary User',
-                    'email' => $request->input('email') ?? 'temp_' . time() . '@example.com',
-                    'password' => Hash::make(Str::random(10)),
+                    'name' => $request->input('name'),
+                    'email' => $request->input('email'),
+                    'password' => Hash::make(Str::random(10)), // Contraseña temporal
                     'status' => 1,
                 ]);
+
+                // Asignar rol de 'driver'
                 $user->assignRole('driver');
 
+                // Crear registro UserDriverDetail básico
                 $userDriverDetail = UserDriverDetail::create([
                     'user_id' => $user->id,
                     'carrier_id' => $carrier->id,
+                    'phone' => $request->input('phone'),
                     'current_step' => $this->driverStepService::STEP_GENERAL,
+                    'status' => 1
+                ]);
+
+                // Crear aplicación básica
+                $application = DriverApplication::create([
+                    'user_id' => $user->id,
+                    'status' => 'draft'
+                ]);
+
+                Log::info('Creado driver temporal para autosave', [
+                    'user_id' => $user->id,
+                    'user_driver_id' => $userDriverDetail->id
                 ]);
             }
 
-            // Procesar datos según la pestaña activa
-            $activeTab = $request->input('active_tab');
+            // Procesar datos según la pestaña activa (versión simplificada)
             switch ($activeTab) {
                 case 'general':
-                    // Guardar datos generales
+                    $this->processGeneralTabAutosave($request, $userDriverDetail);
+                    // Actualizar paso actual
+                    $nextStep = $this->driverStepService::STEP_LICENSES;
                     break;
+
                 case 'licenses':
-                    // Guardar datos de licencias
+                    $this->processLicensesTabAutosave($request, $userDriverDetail);
+                    // Actualizar paso actual
+                    $nextStep = $this->driverStepService::STEP_MEDICAL;
                     break;
-                    // Otros casos para las demás pestañas
+
+                case 'medical':
+                    $this->processMedicalTabAutosave($request, $userDriverDetail);
+                    // Actualizar paso actual
+                    $nextStep = $this->driverStepService::STEP_TRAINING;
+                    break;
+
+                case 'training':
+                    $this->processTrainingTabAutosave($request, $userDriverDetail);
+                    // Actualizar paso actual
+                    $nextStep = $this->driverStepService::STEP_TRAFFIC;
+                    break;
+
+                case 'traffic':
+                    $this->processTrafficTabAutosave($request, $userDriverDetail);
+                    // Actualizar paso actual
+                    $nextStep = $this->driverStepService::STEP_ACCIDENT;
+                    break;
+
+                case 'accident':
+                    $this->processAccidentTabAutosave($request, $userDriverDetail);
+                    // No hay siguiente paso
+                    $nextStep = $this->driverStepService::STEP_GENERAL;
+                    break;
+
+                default:
+                    $nextStep = $this->driverStepService::STEP_GENERAL;
             }
+
+            // Actualizar el paso actual
+            $userDriverDetail->update(['current_step' => $nextStep]);
+
+            // Obtener el nombre de la siguiente pestaña
+            $nextTabMap = [
+                $this->driverStepService::STEP_GENERAL => 'general',
+                $this->driverStepService::STEP_LICENSES => 'licenses',
+                $this->driverStepService::STEP_MEDICAL => 'medical',
+                $this->driverStepService::STEP_TRAINING => 'training',
+                $this->driverStepService::STEP_TRAFFIC => 'traffic',
+                $this->driverStepService::STEP_ACCIDENT => 'accident',
+            ];
+
+            $nextTabName = $nextTabMap[$nextStep] ?? 'general';
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Datos guardados temporalmente',
-                'user_driver_id' => $userDriverDetail->id
+                'user_driver_id' => $userDriverDetail->id,
+                'next_tab' => $nextTabName,
+                'redirect_url' => route('admin.carrier.user_drivers.edit', [
+                    'carrier' => $carrier,
+                    'userDriverDetail' => $userDriverDetail->id,
+                    'active_tab' => $nextTabName
+                ])
             ]);
         } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error en autosave de driver', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error al guardar: ' . $e->getMessage()
@@ -1215,6 +1309,195 @@ class UserDriverController extends Controller
         }
     }
 
+    /**
+     * Procesa los datos de General para autosave (versión simplificada)
+     */
+    private function processGeneralTabAutosave(Request $request, UserDriverDetail $userDriverDetail)
+    {
+        // Actualizar datos básicos
+        if ($request->has('name') && $request->has('email')) {
+            $userDriverDetail->user->update([
+                'name' => $request->input('name'),
+                'email' => $request->input('email')
+            ]);
+        }
+
+        // Actualizar datos del driver
+        $updateData = [];
+        if ($request->has('middle_name')) $updateData['middle_name'] = $request->input('middle_name');
+        if ($request->has('last_name')) $updateData['last_name'] = $request->input('last_name');
+        if ($request->has('phone')) $updateData['phone'] = $request->input('phone');
+        if ($request->has('date_of_birth')) $updateData['date_of_birth'] = $request->input('date_of_birth');
+
+        if (!empty($updateData)) {
+            $userDriverDetail->update($updateData);
+        }
+
+        // Obtener o crear la aplicación si no existe
+        $application = $userDriverDetail->application;
+        if (!$application) {
+            $application = DriverApplication::create([
+                'user_id' => $userDriverDetail->user_id,
+                'status' => 'draft'
+            ]);
+        }
+
+        // Actualizar dirección principal si están todos los datos
+        if ($request->has('address_line1') && $request->has('city') && $request->has('state') && $request->has('zip_code')) {
+            $application->addresses()->updateOrCreate(
+                ['primary' => true],
+                [
+                    'address_line1' => $request->input('address_line1'),
+                    'address_line2' => $request->input('address_line2'),
+                    'city' => $request->input('city'),
+                    'state' => $request->input('state'),
+                    'zip_code' => $request->input('zip_code'),
+                    'lived_three_years' => $request->boolean('lived_three_years', false),
+                    'from_date' => $request->input('from_date'),
+                    'to_date' => $request->input('to_date')
+                ]
+            );
+        }
+
+        // Actualizar detalles básicos de la aplicación
+        if ($application && ($request->has('applying_position') || $request->has('eligible_to_work'))) {
+            $application->details()->updateOrCreate(
+                [], // Primera entrada
+                [
+                    'applying_position' => $request->input('applying_position'),
+                    'applying_position_other' => $request->input('applying_position') === 'other' ?
+                        $request->input('applying_position_other') : null,
+                    'applying_location' => $request->input('applying_location'),
+                    'eligible_to_work' => $request->boolean('eligible_to_work', false),
+                    'can_speak_english' => $request->boolean('can_speak_english', false),
+                    'has_twic_card' => $request->boolean('has_twic_card', false),
+                    'twic_expiration_date' => $request->input('twic_expiration_date'),
+                    'how_did_hear' => $request->input('how_did_hear'),
+                    'has_work_history' => $request->boolean('has_work_history', false)
+                ]
+            );
+        }
+
+        // No procesamos historial laboral en autosave para mantenerlo simple
+    }
+
+    /**
+     * Procesa los datos de Licenses para autosave (versión simplificada)
+     */
+    private function processLicensesTabAutosave(Request $request, UserDriverDetail $userDriverDetail)
+    {
+        // Solo guardar la licencia principal en autosave
+        if (
+            $request->has('current_license_number') &&
+            $request->has('licenses') &&
+            isset($request->licenses[0]['license_number']) &&
+            isset($request->licenses[0]['state_of_issue'])
+        ) {
+
+            $licenseData = $request->licenses[0];
+
+            $userDriverDetail->licenses()->updateOrCreate(
+                ['is_primary' => true],
+                [
+                    'current_license_number' => $request->input('current_license_number'),
+                    'license_number' => $licenseData['license_number'],
+                    'state_of_issue' => $licenseData['state_of_issue'],
+                    'license_class' => $licenseData['license_class'] ?? 'A',
+                    'expiration_date' => $licenseData['expiration_date'] ?? now()->addYear(),
+                    'is_cdl' => isset($licenseData['is_cdl']),
+                    'status' => 'active'
+                ]
+            );
+        }
+
+        // Solo guardar la experiencia principal en autosave
+        if (
+            $request->has('experiences') &&
+            isset($request->experiences[0]['equipment_type']) &&
+            isset($request->experiences[0]['years_experience'])
+        ) {
+
+            $experienceData = $request->experiences[0];
+
+            $userDriverDetail->experiences()->updateOrCreate(
+                ['id' => $experienceData['id'] ?? null],
+                [
+                    'equipment_type' => $experienceData['equipment_type'],
+                    'years_experience' => $experienceData['years_experience'],
+                    'miles_driven' => $experienceData['miles_driven'] ?? 0,
+                    'requires_cdl' => isset($experienceData['requires_cdl'])
+                ]
+            );
+        }
+    }
+
+    /**
+     * Procesa los datos de Medical para autosave (versión simplificada)
+     */
+    private function processMedicalTabAutosave(Request $request, UserDriverDetail $userDriverDetail)
+    {
+        // Guardar información médica básica
+        if ($request->has('social_security_number') || $request->has('medical_examiner_name')) {
+            $updateData = [];
+
+            if ($request->has('social_security_number')) $updateData['social_security_number'] = $request->input('social_security_number');
+            if ($request->has('medical_examiner_name')) $updateData['medical_examiner_name'] = $request->input('medical_examiner_name');
+            if ($request->has('medical_examiner_registry_number')) $updateData['medical_examiner_registry_number'] = $request->input('medical_examiner_registry_number');
+            if ($request->has('medical_card_expiration_date')) $updateData['medical_card_expiration_date'] = $request->input('medical_card_expiration_date');
+
+            if (!empty($updateData)) {
+                $userDriverDetail->medicalQualification()->updateOrCreate(
+                    [], // Solo una entrada por conductor
+                    $updateData
+                );
+            }
+        }
+    }
+
+    /**
+     * Procesa los datos de Training para autosave (versión simplificada)
+     */
+    private function processTrainingTabAutosave(Request $request, UserDriverDetail $userDriverDetail)
+    {
+        // Actualizar campo has_attended_training_school en los detalles de la aplicación
+        if ($userDriverDetail->application && $userDriverDetail->application->details) {
+            $userDriverDetail->application->details->update([
+                'has_attended_training_school' => $request->boolean('has_attended_training_school', false),
+            ]);
+        }
+
+        // No procesamos escuelas en autosave para mantenerlo simple
+    }
+
+    /**
+     * Procesa los datos de Traffic para autosave (versión simplificada)
+     */
+    private function processTrafficTabAutosave(Request $request, UserDriverDetail $userDriverDetail)
+    {
+        // Actualizar campo has_traffic_convictions en los detalles de la aplicación
+        if ($userDriverDetail->application && $userDriverDetail->application->details) {
+            $userDriverDetail->application->details->update([
+                'has_traffic_convictions' => $request->boolean('has_traffic_convictions', false),
+            ]);
+        }
+
+        // No procesamos infracciones en autosave para mantenerlo simple
+    }
+
+    /**
+     * Procesa los datos de Accident para autosave (versión simplificada)
+     */
+    private function processAccidentTabAutosave(Request $request, UserDriverDetail $userDriverDetail)
+    {
+        // Actualizar campo has_accidents en los detalles de la aplicación
+        if ($userDriverDetail->application && $userDriverDetail->application->details) {
+            $userDriverDetail->application->details->update([
+                'has_accidents' => $request->boolean('has_accidents', false),
+            ]);
+        }
+
+        // No procesamos accidentes en autosave para mantenerlo simple
+    }
     private function getEndorsementName($code)
     {
         $endorsements = [
@@ -1242,109 +1525,29 @@ class UserDriverController extends Controller
         return $hasLicense && $hasExperience && $hasMedical;
     }
 
+    public function debug_edit(Carrier $carrier, UserDriverDetail $userDriverDetail)
+    {
+        return view('admin.user_driver.debug_edit', [
+            'carrier' => $carrier,
+            'userDriverDetail' => $userDriverDetail
+        ]);
+    }
+
     public function edit(Carrier $carrier, UserDriverDetail $userDriverDetail)
     {
-        Log::info('Iniciando edición de driver', [
-            'carrier_id' => $carrier->id,
-            'user_driver_id' => $userDriverDetail->id,
-        ]);
-    
-        try {
-            // Recupera los datos para los selects
-            Log::info('Cargando constantes');
-            $usStates = Constants::usStates();
-            $driverPositions = Constants::driverPositions();
-            $referralSources = Constants::referralSources();
-            
-            // Cargar el usuario driver
-            $driver = $userDriverDetail->user;
-            Log::info('Driver user cargado', ['user_id' => $driver->id]);
-    
-            // Cargar otras relaciones necesarias
-            Log::info('Iniciando carga de relaciones');
-            $userDriverDetail->load([
-                'application.details',
-                'application.addresses',
-                'licenses.endorsements',
-                'experiences',
-                'medicalQualification',
-                'workHistories',
-                'trainingSchools',
-                'trafficConvictions',
-                'accidents'
-            ]);
-            Log::info('Relaciones cargadas correctamente');
-    
-            // Obtener la dirección principal
-            Log::info('Obteniendo dirección principal');
-            $mainAddress = null;
-            if ($userDriverDetail->application) {
-                $mainAddress = $userDriverDetail->application->addresses()
-                    ->where('primary', true)
-                    ->first();
-                Log::info('Dirección principal obtenida', ['main_address' => $mainAddress ? true : false]);
-            } else {
-                Log::warning('No hay aplicación asociada a este driver');
-            }
-    
-            // Obtener las direcciones previas
-            Log::info('Obteniendo direcciones previas');
-            $previousAddresses = collect(); // Inicializar como colección vacía
-            if ($userDriverDetail->application) {
-                $previousAddresses = $userDriverDetail->application->addresses()
-                    ->where('primary', false)
-                    ->orderBy('from_date', 'desc')
-                    ->get();
-                Log::info('Direcciones previas obtenidas', ['count' => $previousAddresses->count()]);
-            }
-    
-            // Verificar si tiene foto de perfil
-            Log::info('Verificando foto de perfil');
-            $profilePhotoUrl = $userDriverDetail->getFirstMediaUrl('profile_photo_driver');
-            if (empty($profilePhotoUrl)) {
-                $profilePhotoUrl = asset('build/default_profile.png');
-                Log::info('Usando foto por defecto');
-            } else {
-                Log::info('Foto de perfil encontrada');
-            }
-    
-            Log::info('Preparando variables para la vista');
-            
-            // Verificar que todas las variables estén definidas
-            Log::info('Variables preparadas', [
-                'carrier' => $carrier ? true : false,
-                'userDriverDetail' => $userDriverDetail ? true : false,
-                'driver' => $driver ? true : false,
-                'usStates' => is_array($usStates) ? count($usStates) : false,
-                'driverPositions' => is_array($driverPositions) ? count($driverPositions) : false,
-                'referralSources' => is_array($referralSources) ? count($referralSources) : false,
-                'mainAddress' => $mainAddress ? true : false,
-                'previousAddresses' => $previousAddresses ? $previousAddresses->count() : 0,
-                'profilePhotoUrl' => !empty($profilePhotoUrl)
-            ]);
-    
-            Log::info('Renderizando vista');
-            return view('admin.user_driver.edit', compact(
-                'carrier',
-                'userDriverDetail',
-                'driver',
-                'usStates',
-                'driverPositions',
-                'referralSources',
-                'mainAddress',
-                'previousAddresses',
-                'profilePhotoUrl'
-            ));
-        } catch (\Exception $e) {
-            Log::error('Error en edit de driver', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-    
+        // Verificar que el conductor pertenece al carrier
+        if ($userDriverDetail->carrier_id !== $carrier->id) {
             return redirect()->route('admin.carrier.user_drivers.index', $carrier)
-                ->with('error', 'Error al cargar el driver: ' . $e->getMessage());
+                ->with('error', 'El conductor no pertenece a este transportista');
         }
+        
+        // Usar el componente de edición
+        return view('admin.user_driver.edit', [
+            'carrier' => $carrier,
+            'userDriverDetail' => $userDriverDetail
+        ]);
     }
+
     /**
      * Actualizar un driver existente (replicando la lógica Livewire de store).
      */

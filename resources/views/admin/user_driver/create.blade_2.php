@@ -1,36 +1,55 @@
 @extends('../themes/' . $activeTheme)
 @section('title', 'Add User Driver')
 
-
 @php
     $breadcrumbLinks = [
         ['label' => 'App', 'url' => route('admin.dashboard')],
         ['label' => 'Drivers', 'url' => route('admin.carrier.user_drivers.index', $carrier->slug)],
         ['label' => 'Create Driver', 'active' => true],
     ];
+
+    // Definir los pasos y sus correspondientes pestañas
+    $steps = [
+        \App\Services\Admin\DriverStepService::STEP_GENERAL => ['label' => 'general', 'title' => 'General Information'],
+        \App\Services\Admin\DriverStepService::STEP_LICENSES => [
+            'label' => 'licenses',
+            'title' => 'Licenses & Experience',
+        ],
+        \App\Services\Admin\DriverStepService::STEP_MEDICAL => ['label' => 'medical', 'title' => 'Medical Information'],
+        \App\Services\Admin\DriverStepService::STEP_TRAINING => ['label' => 'training', 'title' => 'Training History'],
+        \App\Services\Admin\DriverStepService::STEP_TRAFFIC => ['label' => 'traffic', 'title' => 'Traffic Record'],
+        \App\Services\Admin\DriverStepService::STEP_ACCIDENT => ['label' => 'accident', 'title' => 'Accident History'],
+    ];
+
+    // Si estamos editando, obtener el estado actual de los pasos
+    $stepsStatus =
+        isset($userDriverDetail) && $userDriverDetail->id
+            ? app(\App\Services\Admin\DriverStepService::class)->getStepsStatus($userDriverDetail)
+            : array_fill(1, 6, \App\Services\Admin\DriverStepService::STATUS_MISSING);
+
+    // Obtener el paso actual
+    $currentStep =
+        isset($userDriverDetail) && $userDriverDetail->id
+            ? $userDriverDetail->current_step
+            : \App\Services\Admin\DriverStepService::STEP_GENERAL;
+
+    // Calcular el porcentaje de completitud
+    $completionPercentage =
+        isset($userDriverDetail) && $userDriverDetail->id
+            ? app(\App\Services\Admin\DriverStepService::class)->calculateCompletionPercentage($userDriverDetail)
+            : 0;
 @endphp
 
 @section('subcontent')
-<div class="container mx-auto px-4 py-6">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">Create New Driver</h1>
-        <a href="{{ route('admin.carrier.user_drivers.index', $carrier) }}" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
-            Back to List
-        </a>
-    </div>
-
-    <div class="bg-white rounded-lg shadow-md">
-        <livewire:admin.driver.driver-registration-form :carrier="$carrier" />
-    </div>
+<livewire:admin.driver.driver-registration-wizard :carrier="$carrier" />
 @endsection
 
-@push('scripts')
-    <!-- Incluir IMask para las máscaras -->
-    <script defer src="https://unpkg.com/@alpinejs/validate@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://unpkg.com/imask"></script>
 
-    <script>
-        function imagePreview() {
+@push('scripts')
+<script>
+    console.log('Driver Registration Wizard');
+
+    function imagePreview() {
             return {
                 previewUrl: null,
                 hasImage: false,
@@ -83,25 +102,14 @@
                 }
             }
         }
-        document.addEventListener('DOMContentLoaded', function() {
-            // Máscara para el teléfono
-            const phoneMask = IMask(document.querySelector('input[name="phone"]'), {
-                mask: '(000) 000-0000'
-            });
 
-            // Máscara para la licencia (si la necesitas; ajustar formato)
-            const licInput = document.querySelector('input[name="license_number"]');
-            if (licInput) {
-                IMask(licInput, {
-                    // Ajusta la máscara según tu formato real
-                    mask: 'AA-000000'
-                });
-            }
-        });
-    </script>
+</script>
+    
 @endpush
 
 @pushOnce('scripts')
+    {{-- @vite('resources/js/admin/driverRegistration.js') --}}
+
     @vite('resources/js/app.js')
     @vite('resources/js/pages/notification.js')
 @endPushOnce

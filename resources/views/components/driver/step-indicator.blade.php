@@ -1,4 +1,3 @@
-<!-- resources/views/components/step-indicator.blade.php -->
 @props(['status', 'step', 'activeStep', 'label'])
 
 @php
@@ -32,12 +31,10 @@
     $tooltip = $tooltips[$status] ?? '';
 @endphp
 
-<div class="flex flex-col items-center group relative" x-data="{ showTooltip: false }">
+<div class="flex flex-col items-center group relative">
     <button type="button" 
         class="w-10 h-10 rounded-full border-2 flex items-center justify-center font-semibold text-sm transition-all {{ $statusClass }}"
-        @click="activeTab = '{{ $label }}'"
-        @mouseenter="showTooltip = true"
-        @mouseleave="showTooltip = false">
+        data-tooltip="{{ $tooltip }}">
         
         @if($status === 'completed' || $status === 'pending' || $status === 'missing')
             {!! $statusIcon !!}
@@ -48,8 +45,8 @@
     
     <div class="mt-2 text-xs font-medium {{ $isActive ? 'text-primary' : 'text-gray-600' }}">{{ ucfirst($label) }}</div>
     
-    <!-- Tooltip -->
-    <div x-show="showTooltip" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute -top-10 z-10 w-32 p-2 bg-black bg-opacity-80 text-white text-xs rounded-md text-center">
+    <!-- Tooltip (se maneja con JavaScript) -->
+    <div class="tooltip-content absolute -top-10 z-10 w-32 p-2 bg-black bg-opacity-80 text-white text-xs rounded-md text-center hidden">
         {{ $tooltip }}
     </div>
 </div>

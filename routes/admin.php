@@ -125,6 +125,7 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
     });
 });
 
+Route::post('/temp-upload', [TempUploadController::class, 'upload'])->name('temp.upload');
 
 /*
 |--------------------------------------------------------------------------
@@ -135,9 +136,8 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
 // En el grupo existente de user_drivers
 
 
-
+// En routes/web.php o admin.php (donde tengas las rutas web)
 Route::prefix('carrier/{carrier}/drivers')->name('carrier.user_drivers.')->group(function () {
-    // Rutas existentes...
     Route::get('/', [UserDriverController::class, 'index'])->name('index');
     Route::get('/create', [UserDriverController::class, 'create'])->name('create');
     Route::post('/', [UserDriverController::class, 'store'])->name('store');
@@ -145,18 +145,11 @@ Route::prefix('carrier/{carrier}/drivers')->name('carrier.user_drivers.')->group
     Route::put('/{userDriverDetail}', [UserDriverController::class, 'update'])->name('update');
     Route::delete('/{userDriverDetail}', [UserDriverController::class, 'destroy'])->name('destroy');
     Route::delete('/{userDriverDetail}/photo', [UserDriverController::class, 'deletePhoto'])->name('delete-photo');
-
-    Route::get('/{userDriverDetail}/edit-test', function(App\Models\Carrier $carrier, App\Models\UserDriverDetail $userDriverDetail) {
-        return '<h1>Test de redirección exitoso</h1>
-                <p>Carrier ID: ' . $carrier->id . ' (' . $carrier->name . ')</p>
-                <p>Driver ID: ' . $userDriverDetail->id . ' (' . $userDriverDetail->user->name . ')</p>
-                <p>Active Tab: ' . request()->query('active_tab', 'none') . '</p>
-                <a href="' . route('carrier.user_drivers.index', $carrier) . '">Volver al listado de drivers</a>';
-    })->name('edit-test');
+    Route::get('{userDriverDetail}/debug', [UserDriverController::class, 'debug_edit'])->name('debug_edit');
 });
 
 Route::post('carrier/{carrier}/drivers/autosave/{userDriverDetail?}', [
-    \App\Http\Controllers\Admin\UserDriverController::class, 
+    UserDriverController::class, 
     'autosave'
 ])->name('admin.carrier.user_drivers.autosave');
 

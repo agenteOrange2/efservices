@@ -2,13 +2,16 @@
 
 namespace App\Models\Admin\Driver;
 
+use Spatie\MediaLibrary\HasMedia; // Añadir esta interfaz
 use App\Models\UserDriverDetail;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\InteractsWithMedia; // Añadir este trait
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\MediaLibrary\MediaCollections\Models\Media; // Añade esta línea
 
-class DriverTrainingSchool extends Model
+class DriverTrainingSchool extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
     protected $fillable = [
         'user_driver_detail_id',
@@ -45,9 +48,6 @@ class DriverTrainingSchool extends Model
     {
         // Colección para el certificado escolar - puede tener múltiples certificados
         $this->addMediaCollection('school_certificates');
-        
-        // Alternativamente, si solo necesitas un certificado por escuela:
-        // $this->addMediaCollection('school_certificate')->singleFile();
     }
 
 }

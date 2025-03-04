@@ -174,17 +174,34 @@ class DriverStepService
     /**
      * Obtener el estado del paso anterior
      */
-    private function getPreviousStepStatus(UserDriverDetail $userDriverDetail, int $currentStep): string
-    {
-        $steps = $this->getStepsStatus($userDriverDetail);
-        $previousStep = $currentStep - 1;
-        
-        if ($previousStep < self::STEP_GENERAL) {
-            return self::STATUS_COMPLETED; // El primer paso no tiene anterior
-        }
-        
-        return $steps[$previousStep] ?? self::STATUS_MISSING;
+// In DriverStepService.php
+private function getPreviousStepStatus(UserDriverDetail $userDriverDetail, int $currentStep): string
+{
+    // This is creating a recursive loop
+    // $steps = $this->getStepsStatus($userDriverDetail);
+    
+    // Instead, directly check the previous step
+    $previousStep = $currentStep - 1;
+    if ($previousStep < self::STEP_GENERAL) {
+        return self::STATUS_COMPLETED; // The first step doesn't have a previous one
     }
+    
+    // Directly call the appropriate check method based on the step number
+    switch($previousStep) {
+        case self::STEP_GENERAL:
+            return $this->checkGeneralStep($userDriverDetail);
+        case self::STEP_LICENSES:
+            return $this->checkLicensesStep($userDriverDetail);
+        case self::STEP_MEDICAL:
+            return $this->checkMedicalStep($userDriverDetail);
+        case self::STEP_TRAINING:
+            return $this->checkTrainingStep($userDriverDetail);
+        case self::STEP_TRAFFIC:
+            return $this->checkTrafficStep($userDriverDetail);
+        default:
+            return self::STATUS_MISSING;
+    }
+}
     
     /**
      * Obtener el próximo paso recomendado
