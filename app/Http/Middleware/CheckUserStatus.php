@@ -127,23 +127,25 @@ class CheckUserStatus
 
     private function isPublicRoute(Request $request, array $publicRoutes): bool
     {
-        // Extender las rutas públicas
+        // Extender las rutas públicas para incluir todas las rutas de registro y Livewire
         $publicRoutes = array_merge([
             '/',
             'login',
             'carrier/register',
             'carrier/confirm/*',
             'driver/register',
-            'driver/register/*', // Agregar esta ruta para registro por referencia
+            'driver/register/form',        
             'driver/confirm/*',
             'driver/*',
-            'driver/error',           // Agregar ruta de error
-            'driver/quota-exceeded',  // Agregar ruta de cuota excedida
-            'driver/carrier-status',  // Agregar la nueva ruta
+            'driver/error',
+            'driver/quota-exceeded',
+            'driver/carrier-status',
             'driver/pending',
             'driver/registration/success',
+            // Importante: permitir rutas de Livewire para usuarios no autenticados
+            'livewire/*'
         ], $publicRoutes);
-
+    
         foreach ($publicRoutes as $route) {
             if ($request->is($route)) {
                 Log::info('Public route matched', [
@@ -153,12 +155,7 @@ class CheckUserStatus
                 return true;
             }
         }
-
-        Log::info('Route not matched as public', [
-            'path' => $request->path(),
-            'available_routes' => $publicRoutes
-        ]);
-
+    
         return false;
     }
 

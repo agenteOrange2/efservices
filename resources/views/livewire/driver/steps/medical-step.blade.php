@@ -6,9 +6,9 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Social Security Number <span
                     class="text-red-500">*</span></label>
-            <input type="text" wire:model="social_security_number"
-                placeholder="XXX-XX-XXXX" class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
-                pattern="\d{3}-\d{2}-\d{4}" x-mask="999-99-9999">
+            <input type="text" wire:model="social_security_number" placeholder="XXX-XX-XXXX"
+                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" pattern="\d{3}-\d{2}-\d{4}"
+                x-mask="999-99-9999">
             <p class="mt-1 text-xs text-gray-500">Format: XXX-XX-XXXX</p>
             @error('social_security_number')
                 <span class="text-red-500 text-sm">{{ $message }}</span>
@@ -34,13 +34,12 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <!-- Suspension Status -->
-        <div x-data="{ isSuspended: {{ json_encode($is_suspended) }} }">
+        <div x-data="{ isSuspended: {{ json_encode($is_suspended ?? false) }} }">
             <div class="flex items-center mb-2">
                 <input type="checkbox" wire:model="is_suspended" id="is_suspended" value="1" x-model="isSuspended"
                     class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded">
                 <label for="is_suspended" class="ml-2 text-sm">Driver is Suspended</label>
             </div>
-
             <div x-show="isSuspended" class="mt-3">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Suspension Date</label>
                 <input type="date" wire:model="suspension_date"
@@ -52,13 +51,12 @@
         </div>
 
         <!-- Termination Status -->
-        <div x-data="{ isTerminated: {{ json_encode($is_terminated ) }} }">
+        <div x-data="{ isTerminated: {{ json_encode($is_terminated ?? false) }} }">
             <div class="flex items-center mb-2">
-                <input type="checkbox" wire:model="is_terminated" id="is_terminated" value="1" x-model="isTerminated"
-                    class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded">
+                <input type="checkbox" wire:model="is_terminated" id="is_terminated" value="1"
+                    x-model="isTerminated" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded">
                 <label for="is_terminated" class="ml-2 text-sm">Driver is Terminated</label>
             </div>
-
             <div x-show="isTerminated" class="mt-3">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Termination Date</label>
                 <input type="date" wire:model="termination_date"
@@ -112,36 +110,30 @@
 
         <!-- Medical Card Upload -->
         <div class="mb-6" x-data="{
-    preview: '{{ $medical_card_preview_url ?? null }}',
-    filename: '{{ $medical_card_filename ?? '' }}',
-    loading: false,
-    error: '',
-        
+            preview: '{{ $medical_card_preview_url ?? null }}',
+            filename: '{{ $medical_card_filename ?? '' }}',
+            loading: false,
+            error: '',
             uploadMedicalCard(event) {
                 const file = event.target.files[0];
                 if (!file) return;
-        
                 if (file.size > 2 * 1024 * 1024) {
                     this.error = 'File size must be less than 2MB';
                     event.target.value = '';
                     return;
                 }
-                
                 this.loading = true;
                 this.filename = file.name;
-        
                 // Set local preview
                 if (file.type === 'application/pdf') {
                     this.preview = 'document.pdf';
                 } else if (file.type.startsWith('image/')) {
                     this.preview = URL.createObjectURL(file);
                 }
-        
                 const formData = new FormData();
                 formData.append('file', file);
                 formData.append('type', 'medical_card');
-        
-                fetch('{{ route('admin.temp.upload') }}', {
+                fetch('{{ route('driver.temp.upload') }}', {
                         method: 'POST',
                         body: formData,
                         headers: {
@@ -161,7 +153,6 @@
                         this.error = 'Failed to upload file. Please try again.';
                     });
             },
-        
             removeFile() {
                 this.filename = '';
                 this.preview = null;
@@ -172,12 +163,10 @@
         }">
             <label class="block text-sm font-medium text-gray-700 mb-2">Upload Medical Card <span
                     class="text-red-500">*</span></label>
-
             <div class="flex flex-col items-center justify-center w-full">
                 <label for="medical_card_file"
                     class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
                     :class="{ 'bg-blue-50 border-blue-300': preview }">
-
                     <div class="flex flex-col items-center justify-center pt-5 pb-6" x-show="!preview && !loading">
                         <svg class="w-8 h-8 mb-3 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                             fill="none" viewBox="0 0 20 16">
@@ -188,7 +177,6 @@
                             drag and drop</p>
                         <p class="text-xs text-gray-500">PDF, PNG, JPG or JPEG (MAX. 2MB)</p>
                     </div>
-
                     <div x-show="loading" class="flex items-center justify-center pt-5 pb-6">
                         <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg"
                             fill="none" viewBox="0 0 24 24">
@@ -200,7 +188,6 @@
                         </svg>
                         <span class="text-sm text-gray-700">Uploading...</span>
                     </div>
-
                     <div x-show="preview && !loading" class="w-full h-full flex items-center justify-center">
                         <template x-if="preview === 'document.pdf'">
                             <div class="flex items-center">
@@ -221,22 +208,38 @@
                         </template>
                     </div>
                 </label>
-
-                <input id="medical_card_file" type="file" class="hidden"
-                    accept=".pdf,.png,.jpg,.jpeg" @change="uploadMedicalCard" />
+                <input id="medical_card_file" type="file" class="hidden" accept=".pdf,.png,.jpg,.jpeg"
+                    @change="uploadMedicalCard" />
             </div>
-
             <div x-show="filename && !loading" class="mt-2 flex items-center justify-between">
                 <p class="text-sm text-gray-500">Selected file: <span x-text="filename"></span></p>
                 <button type="button" @click="removeFile" class="text-sm text-red-500 hover:text-red-700">
                     Remove
                 </button>
             </div>
-
             <p x-show="error" x-text="error" class="text-red-500 text-sm mt-1"></p>
             @error('temp_medical_card_token')
                 <span class="text-red-500 text-sm">{{ $message }}</span>
             @enderror
+        </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="flex justify-between mt-8">
+        <div>
+            <button type="button" wire:click="previous" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+                Previous
+            </button>
+        </div>
+        <div class="flex space-x-2">
+            <button type="button" wire:click="saveAndExit"
+                class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
+                Save & Exit
+            </button>
+            <button type="button" wire:click="next"
+                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                Next
+            </button>
         </div>
     </div>
 </div>
