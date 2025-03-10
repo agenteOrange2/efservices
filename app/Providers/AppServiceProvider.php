@@ -23,11 +23,15 @@ class AppServiceProvider extends ServiceProvider
         session(['activeTheme' => 'raze']);
 
         PDF::setOptions([
-            'dpi' => 150,
-            'defaultFont' => 'sans-serif',
             'isHtml5ParserEnabled' => true,
             'isRemoteEnabled' => true,
-            'font_path' => public_path('fonts/'),
+            'tempDir' => storage_path('app/temp'),
+            'chroot' => [
+                public_path(),
+                storage_path('app'),
+                storage_path('app/public'),
+                storage_path('app/temp')
+            ]
         ]);
     }
 }

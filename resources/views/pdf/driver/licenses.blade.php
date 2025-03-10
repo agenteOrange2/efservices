@@ -136,7 +136,11 @@
         <div class="field">
             <span class="label">Firma:</span>
             <div>
-                <img src="{{ $signature }}" class="signature" alt="Firma">
+                @if (!empty($signaturePath) && file_exists($signaturePath))
+                    <img src="{{ $signaturePath }}" alt="Firma" style="max-width: 300px; max-height: 100px;" />
+                @else
+                    <p style="font-style: italic; color: #999;">Firma no disponible</p>
+                @endif
             </div>
         </div>
         <div class="date">

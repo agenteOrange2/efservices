@@ -33,21 +33,21 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div>
             <label class="block mb-1">First Name *</label>
-            <input type="text" wire:model="name" class="w-full px-3 py-2 border rounded">
+            <x-base.form-input type="text" wire:model="name"  />
             @error('name')
                 <span class="text-red-500 text-sm">{{ $message }}</span>
             @enderror
         </div>
         <div>
             <label class="block mb-1">Middle Name</label>
-            <input type="text" wire:model="middle_name" class="w-full px-3 py-2 border rounded">
+            <x-base.form-input  type="text" wire:model="middle_name" />
             @error('middle_name')
                 <span class="text-red-500 text-sm">{{ $message }}</span>
             @enderror
         </div>
         <div>
             <label class="block mb-1">Last Name *</label>
-            <input type="text" wire:model="last_name" class="w-full px-3 py-2 border rounded">
+            <x-base.form-input type="text" wire:model="last_name" />
             @error('last_name')
                 <span class="text-red-500 text-sm">{{ $message }}</span>
             @enderror
@@ -58,14 +58,14 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
             <label class="block mb-1">Email *</label>
-            <input type="email" wire:model="email" class="w-full px-3 py-2 border rounded">
+            <x-base.form-input type="email" wire:model="email" />
             @error('email')
                 <span class="text-red-500 text-sm">{{ $message }}</span>
             @enderror
         </div>
         <div>
             <label class="block mb-1">Phone *</label>
-            <input type="number" wire:model="phone" class="w-full px-3 py-2 border rounded">
+            <x-base.form-input type="number" wire:model="phone"  />
             @error('phone')
                 <span class="text-red-500 text-sm">{{ $message }}</span>
             @enderror
@@ -85,14 +85,14 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
             <label class="block mb-1">Password {{ $driverId ? '' : '*' }}</label>
-            <input type="password" wire:model="password" class="w-full px-3 py-2 border rounded">
+            <x-base.form-input type="password" wire:model="password" />
             @error('password')
                 <span class="text-red-500 text-sm">{{ $message }}</span>
             @enderror
         </div>
         <div>
             <label class="block mb-1">Confirm Password {{ $driverId ? '' : '*' }}</label>
-            <input type="password" wire:model="password_confirmation" class="w-full px-3 py-2 border rounded">
+            <x-base.form-input type="password" wire:model="password_confirmation" />
             @error('password_confirmation')
                 <span class="text-red-500 text-sm">{{ $message }}</span>
             @enderror
@@ -100,40 +100,50 @@
     </div>
 
     <!-- Status -->
-    <div class="mb-4">
-        <label class="block mb-1">Status</label>
-        <select wire:model="status" class="w-full px-3 py-2 border rounded">
+    <div class="mt-3 w-full flex-1 xl:mt-0">
+        <select data-tw-merge aria-label="Default select example"  wire:model="status"
+            class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&amp;[readonly]]:bg-slate-100 [&amp;[readonly]]:cursor-not-allowed [&amp;[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 group-[.form-inline]:flex-1 mt-2 sm:mr-2 mt-2 sm:mr-2">
             <option value="1">Active</option>
             <option value="0">Inactive</option>
             <option value="2">Pending</option>
         </select>
         @error('status')
-            <span class="text-red-500 text-sm">{{ $message }}</span>
+            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
         @enderror
     </div>
 
+
     <!-- Terms and Conditions -->
-    <div class="mb-4">
+    <div class="mb-4 mt-4">
         <label class="flex items-center">
-            <input type="checkbox" wire:model="terms_accepted" class="mr-2">
+            <x-base.form-check.input type="checkbox" wire:model="terms_accepted" class="mr-2" />
             <span>I accept the terms and conditions *</span>
         </label>
         @error('terms_accepted')
             <span class="text-red-500 text-sm block">{{ $message }}</span>
         @enderror
     </div>
+    
 
     <!-- Navigation Buttons -->
     <div class="flex justify-between mt-8">
         <div></div>
-        <div class="flex space-x-2">
-            <button type="button" wire:click="saveAndExit"
+        <div class="flex space-x-2">            
+            <x-base.button type="button" wire:click="saveAndExit" class="inline-block w-34" variant="outline-warning">
+                Save & Exit
+            </x-base.button>
+            <x-base.button type="button" wire:click="next"  class="inline-block w-34" variant="outline-primary">
+                Next Step
+            </x-base.button>
+
+            {{-- <button type="button" wire:click="saveAndExit"
                 class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
                 Save & Exit
-            </button>
-            <button type="button" wire:click="next" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            </button> --}}
+
+            {{-- <button type="button" wire:click="next" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                 Next
-            </button>
+            </button> --}}
         </div>
     </div>
 </div>

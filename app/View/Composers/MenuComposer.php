@@ -4,6 +4,7 @@ namespace App\View\Composers;
 
 use App\Main\SideMenu;
 use Illuminate\View\View;
+use App\Main\DriverSideMenu;
 use App\Main\CarrierSideMenu;
 
 class MenuComposer
@@ -93,6 +94,10 @@ class MenuComposer
             if (request()->is('carrier*')) {
                 return CarrierSideMenu::menu();
             }
+
+            if (request()->is('driver*')) {
+                return DriverSideMenu::menu();
+            }    
     
             // Por defecto, usar el menú normal
             return SideMenu::menu();
