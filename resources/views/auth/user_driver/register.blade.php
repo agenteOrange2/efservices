@@ -1,5 +1,5 @@
 {{-- resources/views/auth/user_driver/register.blade.php --}}
-<x-guest-layout>
+<x-driver-layout>
     <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
         <div class="w-full max-w-[1200px] mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
             <div class="mb-6 text-center">
@@ -32,4 +32,4 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-</x-guest-layout>
+</x-driver-layout>

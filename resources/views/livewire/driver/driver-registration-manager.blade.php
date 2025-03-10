@@ -19,7 +19,7 @@
                 @if($isIndependent)
                     Independent Driver Registration
                 @else
-                    Driver Registration for {{ $carrier->name }}
+                    Driver Registration for {{ $carrier?->name ?? 'Your Carrier' }}
                 @endif
             </div>
             <div class="text-sm">Step {{ $currentStep }} of {{ $totalSteps }}</div>

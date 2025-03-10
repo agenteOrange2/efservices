@@ -2,10 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Driver\StepController;
+use App\Http\Controllers\Driver\StatusController;
 use App\Livewire\Driver\CarrierSelectionComponent;
 use App\Livewire\Driver\DriverRegistrationManager;
 use App\Http\Controllers\Admin\TempUploadController;
 use App\Http\Controllers\Driver\DashboardController;
+use App\Http\Controllers\Driver\RegistrationController;
 use App\Http\Controllers\Auth\DriverRegistrationController;
 
 
@@ -81,12 +83,23 @@ Route::get('/register/{carrier:slug}/token/{token}', App\Livewire\Driver\DriverR
 
 
 // Para la selección de carrier después de confirmar email
-Route::middleware(['auth', 'role:driver'])->group(function () {
-    Route::get('/select-carrier', [DriverRegistrationController::class, 'showSelectCarrier'])
-        ->name('select_carrier');
-    Route::post('/select-carrier', [DriverRegistrationController::class, 'selectCarrier'])
-        ->name('select_carrier.submit');
+Route::middleware(['auth'])->group(function () {
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Estados de aplicación
+    Route::get('pending', [StatusController::class, 'pending'])->name('pending');
+    Route::get('rejected', [StatusController::class, 'rejected'])->name('rejected');
+    Route::get('documents-pending', [StatusController::class, 'documentsPending'])->name('documents.pending');
+    
+    // Registro continuo
+    Route::get('registration/continue/{step?}', [RegistrationController::class, 'continue'])->name('registration.continue');
+    Route::post('registration/complete', [RegistrationController::class, 'complete'])->name('registration.complete');
+    
+    // Selección de transportista
+    Route::get('/select-carrier', [DriverRegistrationController::class, 'showSelectCarrier'])->name('select_carrier');
+    Route::post('/select-carrier', [DriverRegistrationController::class, 'selectCarrier'])->name('select_carrier.submit');
 });
+
 
 
 
@@ -107,55 +120,4 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/documents-pending', function () {
         return view('driver.status.documents-pending');
     })->name('documents.pending');
-
-
-
-
-    // Pasos del registro
-    Route::prefix('registration')->name('registration.')->group(function () {
-        /*
-        Route::get('step1', [DriverRegistrationController::class, 'showStep1'])
-            ->name('step1');
-        Route::post('step1', [DriverRegistrationController::class, 'processStep1'])
-            ->name('step1.process');
-
-        Route::get('step2', [DriverRegistrationController::class, 'showStep2'])
-            ->name('step2');
-        Route::post('step2', [DriverRegistrationController::class, 'processStep2'])
-            ->name('step2.process');
-        */
-        Route::get('/step/{step}', [StepController::class, 'showStep'])->name('step');
-        Route::post('/step/1', [StepController::class, 'processStep1'])->name('step.1');
-        Route::post('/step/2', [StepController::class, 'processStep2'])->name('step.2');
-        Route::post('/step/3', [StepController::class, 'processStep3'])->name('step.3');
-    });
-});
-
-
-
-/*
-|--------------------------------------------------------------------------
-| RUTAS PARA SUPERADMIN: ADMIN DRIVERS
-|--------------------------------------------------------------------------
-*/
-
-// En el grupo existente de user_drivers
-Route::prefix('carrier/{carrier}/drivers')->name('carrier.user_drivers.')->group(function () {
-    // Rutas existentes...
-    Route::get('/', [StepController::class, 'index'])->name('index');
-    Route::get('/create', [StepController::class, 'create'])->name('create');
-    Route::post('/', [StepController::class, 'store'])->name('store');
-    Route::get('/{userDriverDetail}/edit', [StepController::class, 'edit'])->name('edit');
-    Route::put('/{userDriverDetail}', [StepController::class, 'update'])->name('update');
-    Route::delete('/{userDriverDetail}', [StepController::class, 'destroy'])->name('destroy');
-    Route::delete('/{userDriverDetail}/photo', [StepController::class, 'deletePhoto'])->name('delete-photo');
-
-    // Agregar las rutas de aplicación
-    Route::get('/application/step1', [StepController::class, 'createStep1'])->name('application.step1');
-    Route::post('/application/step1', [StepController::class, 'storeStep1'])->name('application.step1.store');
-    Route::get('/application/step2/{application}', [StepController::class, 'createStep2'])->name('application.step2');
-    Route::post('/application/step2/{application}', [StepController::class, 'storeStep2'])->name('application.step2.store');
-    Route::get('/application/step3/{application}', [StepController::class, 'createStep3'])->name('application.step3');
-    Route::post('/application/step3/{application}', [StepController::class, 'storeStep3'])->name('application.step3.store');
-    Route::get('/application/{application}/review', [StepController::class, 'reviewApplication'])->name('application.review');
 });

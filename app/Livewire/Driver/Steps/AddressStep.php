@@ -291,6 +291,9 @@ class AddressStep extends Component
         // Save to database
         if ($this->driverId) {
             $this->saveAddresses();
+
+            $nextStep = $this->currentStep + 1;
+            UserDriverDetail::where('id', $this->driverId)->update(['current_step' => $nextStep]);
         }
         
         // Move to next step

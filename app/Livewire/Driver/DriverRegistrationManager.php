@@ -35,22 +35,33 @@ class DriverRegistrationManager extends Component
     ];
     
     // Mounting the component
-    public function mount($carrier = null, $token = null)
+    public function mount($carrier = null, $token = null, $driverId = null, $currentStep = null)
     {
         $this->carrier = $carrier;
         $this->token = $token;
         
-        // Determinar el tipo de registro
-        $this->registrationType = ($carrier && $token) ? 'referred' : 'independent';
+        // Si recibimos un driverId, estamos en modo edición/continuación
+        if ($driverId) {
+            $this->driverId = $driverId;
+            $this->userDriverDetail = UserDriverDetail::find($driverId);
+            $this->registrationType = $this->userDriverDetail->carrier_id ? 'referred' : 'independent';
+        } else {
+            // Determinar el tipo de registro para nuevos registros
+            $this->registrationType = ($carrier && $token) ? 'referred' : 'independent';
+        }
         
-        // NO verificar autenticación aquí, ya que este es un flujo de registro público
+        // Si se proporciona un paso específico, usarlo
+        if ($currentStep) {
+            $this->currentStep = $currentStep;
+        }
         
         // Importante: Registrar lo que está sucediendo para depurar
         Log::info('DriverRegistrationManager mounted', [
             'carrierExists' => $carrier ? true : false,
             'carrierId' => $carrier ? $carrier->id : null,
-            'carrierName' => $carrier ? $carrier->name : null, 
-            'token' => $token,
+            'carrierId via driverId' => $this->userDriverDetail ? $this->userDriverDetail->carrier_id : null,
+            'driverId' => $this->driverId,
+            'currentStep' => $this->currentStep,
             'registrationType' => $this->registrationType
         ]);
     }

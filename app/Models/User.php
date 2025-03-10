@@ -11,6 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use App\Models\Admin\Driver\DriverApplication;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -100,6 +101,10 @@ class User extends Authenticatable implements HasMedia
         return $this->hasOne(UserDriverDetail::class);
     }
 
+    public function driverApplication()
+    {
+        return $this->hasOne(DriverApplication::class);
+    }
 
     // Relación con carriers (managers de carriers)
     public function carriers()

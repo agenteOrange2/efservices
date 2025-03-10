@@ -140,8 +140,14 @@ class CertificationStep extends Component
         
         if ($this->driverId) {
             if ($this->saveCertification()) {
+
                 // Actualizar el estado de la aplicación a pendiente
                 $userDriverDetail = UserDriverDetail::find($this->driverId);
+                $userDriverDetail->update([
+                    'application_completed' => true,
+                    'current_step' => 13 // Paso final
+                ]);
+
                 if ($userDriverDetail && $userDriverDetail->application) {
                     $userDriverDetail->application->update(['status' => 'pending']);
                     
@@ -149,7 +155,7 @@ class CertificationStep extends Component
                     if (!empty($this->signature)) {
                         $this->generateApplicationPDFs($userDriverDetail);
                     }
-                }
+                } 
                 
                 // Redireccionar según tipo de registro
                 $isReferred = $userDriverDetail->carrier_id != null;

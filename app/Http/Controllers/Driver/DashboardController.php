@@ -17,13 +17,13 @@ class DashboardController extends Controller
         $driver = Auth::user()->driverDetails;
         $carrier = $driver->carrier;
 
-        $stats = [
-            'total_trips' => $driver->trips()->count(),
-            'completed_trips' => $driver->trips()->where('status', 'completed')->count(),
-            'pending_documents' => $driver->pendingDocuments()->count(),
-            'vehicle' => $driver->assignedVehicle,
-        ];
+        // $stats = [
+        //     'total_trips' => $driver->trips()->count(),
+        //     'completed_trips' => $driver->trips()->where('status', 'completed')->count(),
+        //     'pending_documents' => $driver->pendingDocuments()->count(),
+        //     'vehicle' => $driver->assignedVehicle,
+        // ];
 
-        return view('driver.dashboard', compact('driver', 'carrier', 'stats'));
+        return view('driver.dashboard');
     }
 }
