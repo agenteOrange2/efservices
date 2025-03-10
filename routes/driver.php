@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Driver\StepController;
+use App\Livewire\Driver\CarrierSelectionComponent;
+use App\Livewire\Driver\DriverRegistrationManager;
+use App\Http\Controllers\Admin\TempUploadController;
 use App\Http\Controllers\Driver\DashboardController;
 use App\Http\Controllers\Auth\DriverRegistrationController;
 
@@ -49,6 +52,43 @@ Route::middleware('guest')->group(function () {
         return view('auth.user_driver.success', ['carrierName' => $carrierName]);
     })->name('registration.success');
 });
+
+Route::post('/temp-upload', [TempUploadController::class, 'upload'])
+    ->name('temp.upload');
+
+// Ruta para mostrar la selección de carriers para registro independiente
+Route::get('/register', [DriverRegistrationController::class, 'showIndependentCarrierSelection'])
+    ->name('register');
+
+
+// Modificar esta ruta para incluir el carrier_slug como parámetro de ruta
+
+Route::get('/register/form/{carrier_slug}', [DriverRegistrationController::class, 'showIndependentRegistrationForm'])
+    ->name('register.form');
+
+// Ruta para procesar el registro independiente
+Route::post('/register', [DriverRegistrationController::class, 'registerIndependent'])
+    ->name('register.submit');
+
+// Ruta para registro con referencia
+Route::get('/register/{carrier:slug}', [DriverRegistrationController::class, 'showRegistrationForm'])
+    ->name('register.referred');
+
+
+// Ruta para registro con token (referencia)
+Route::get('/register/{carrier:slug}/token/{token}', App\Livewire\Driver\DriverRegistrationManager::class)
+    ->name('referred.registration');
+
+
+// Para la selección de carrier después de confirmar email
+Route::middleware(['auth', 'role:driver'])->group(function () {
+    Route::get('/select-carrier', [DriverRegistrationController::class, 'showSelectCarrier'])
+        ->name('select_carrier');
+    Route::post('/select-carrier', [DriverRegistrationController::class, 'selectCarrier'])
+        ->name('select_carrier.submit');
+});
+
+
 
 
 // Rutas protegidas (requieren autenticación y rol de driver)

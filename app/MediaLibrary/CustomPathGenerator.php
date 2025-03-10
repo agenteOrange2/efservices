@@ -67,7 +67,48 @@ class CustomPathGenerator implements PathGenerator
             return "driver/{$driverId}/training_schools/";
         }
 
-        return "others/{$model->id}/";
+        if ($model instanceof \App\Models\Admin\Driver\DriverCertification) {
+            $driverId = $model->userDriverDetail->id ?? 'unknown';
+            return "driver/{$driverId}/certification/";
+        }
+
+        if ($model instanceof \App\Models\Admin\Driver\DriverApplication) {
+            // Tratar de obtener el ID del conductor de diferentes maneras
+            $driverId = null;
+            
+            // Intentar obtener por relación user->userDriverDetail
+            if ($model->user && $model->user->userDriverDetail) {
+                $driverId = $model->user->userDriverDetail->id;
+            } 
+            // Si no funciona, intentar encontrar el UserDriverDetail por user_id
+            else if ($model->user_id) {
+                $userDriverDetail = \App\Models\UserDriverDetail::where('user_id', $model->user_id)->first();
+                if ($userDriverDetail) {
+                    $driverId = $userDriverDetail->id;
+                }
+            }
+            
+            // Si aún no tenemos ID, usar un valor por defecto
+            if (!$driverId) {
+                $driverId = 'unknown';
+                // Registrar error para depuración
+                \Illuminate\Support\Facades\Log::warning('No se pudo determinar el ID del conductor para la aplicación', [
+                    'driver_application_id' => $model->id,
+                    'user_id' => $model->user_id ?? 'null'
+                ]);
+            }
+            
+            // Verificamos el nombre de la colección para determinar donde guardar
+            if ($media->collection_name === 'application_pdf') {
+                // El PDF completo se guarda en la raíz de driver/{id}/
+                return "driver/{$driverId}/";
+            }
+            
+            // PDFs individuales por paso se guardan en una subcarpeta
+            return "driver/{$driverId}/driver_applications/";
+        }
+
+        return "others/{$model->getKey()}/";
     }
 
     public function getPathForConversions(Media $media): string

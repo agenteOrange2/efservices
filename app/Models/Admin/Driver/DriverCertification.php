@@ -1,14 +1,15 @@
 <?php
-
 namespace App\Models\Admin\Driver;
 
 use App\Models\UserDriverDetail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class DriverCertification extends Model
+class DriverCertification extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
     protected $fillable = [
         'user_driver_detail_id',
@@ -24,6 +25,12 @@ class DriverCertification extends Model
 
     public function userDriverDetail()
     {
-        return $this->belongsTo(UserDriverDetail::class);
+        return $this->belongsTo(UserDriverDetail::class, 'user_driver_detail_id');
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('signature')
+            ->singleFile();
     }
 }

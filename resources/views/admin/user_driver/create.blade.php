@@ -27,6 +27,7 @@
 
 @push('scripts')
     <!-- Incluir IMask para las máscaras -->
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <script defer src="https://unpkg.com/@alpinejs/validate@3.x.x/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/imask"></script>
 

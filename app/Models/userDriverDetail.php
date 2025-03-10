@@ -196,9 +196,10 @@ class UserDriverDetail extends Model implements HasMedia
         return $this->hasOne(DriverCriminalHistory::class);
     }
 
+    // En el modelo UserDriverDetail
     public function certification()
     {
-        return $this->hasOne(DriverCertification::class);
+        return $this->hasOne(DriverCertification::class, 'user_driver_detail_id');
     }
 
 

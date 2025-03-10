@@ -25,7 +25,9 @@ $breadcrumbLinks = [
 </div>
 @endsection
 
+
 @pushOnce('scripts')
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     @vite('resources/js/app.js')
     @vite('resources/js/pages/notification.js')
 @endPushOnce
