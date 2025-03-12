@@ -20,11 +20,11 @@ Route::middleware('guest')->group(function () {
         ->whereUuid('token'); // Add token validation
 
     // Application routes
-    Route::prefix('application')->name('application.')->group(function () {
-        Route::get('/step/{step}', [StepController::class, 'showStep'])->name('step');
-        Route::post('/step/{step}', [StepController::class, 'processStep'])->name('process');
-        Route::get('/success', [StepController::class, 'success'])->name('success');
-    });
+    // Route::prefix('application')->name('application.')->group(function () {
+    //     Route::get('/step/{step}', [StepController::class, 'showStep'])->name('step');
+    //     Route::post('/step/{step}', [StepController::class, 'processStep'])->name('process');
+    //     Route::get('/success', [StepController::class, 'success'])->name('success');
+    // });
 
     Route::get('/complete-registration', [DriverRegistrationController::class, 'showCompleteRegistration'])
         ->name('complete_registration');
@@ -55,8 +55,6 @@ Route::middleware('guest')->group(function () {
     })->name('registration.success');
 });
 
-Route::post('/temp-upload', [TempUploadController::class, 'upload'])
-    ->name('temp.upload');
 
 // Ruta para mostrar la selección de carriers para registro independiente
 Route::get('/register', [DriverRegistrationController::class, 'showIndependentCarrierSelection'])
@@ -98,9 +96,18 @@ Route::middleware(['auth'])->group(function () {
     // Selección de transportista
     Route::get('/select-carrier', [DriverRegistrationController::class, 'showSelectCarrier'])->name('select_carrier');
     Route::post('/select-carrier', [DriverRegistrationController::class, 'selectCarrier'])->name('select_carrier.submit');
+
+    Route::post('/temp-upload', [TempUploadController::class, 'upload'])
+    ->name('driver.temp.upload')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
+
 });
 
 
+
+Route::post('/temp-upload', [TempUploadController::class, 'upload'])
+    ->name('temp.upload');
 
 
 

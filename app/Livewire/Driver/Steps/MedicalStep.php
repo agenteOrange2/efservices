@@ -212,8 +212,7 @@ class MedicalStep extends Component
         
         $this->dispatch('saveAndExit');
     }
-    
-    
+            
     // Render
     public function render()
     {

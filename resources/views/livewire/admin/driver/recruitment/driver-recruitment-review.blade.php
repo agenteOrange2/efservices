@@ -166,16 +166,16 @@
                     <x-base.tab
                         class="bg-slate-50 first:rounded-l-[0.6rem] last:rounded-r-[0.6rem] [&[aria-selected='true']_button]:text-current">
                         <x-base.tab.button
-                            class="flex w-full items-center justify-center whitespace-nowrap rounded-[0.6rem] py-2.5 text-[0.94rem] text-slate-500 xl:w-40 {{ $currentTab === 'medical' ? 'active' : '' }}" 
-                       wire:click="changeTab('medical')" as="button">
+                            class="flex w-full items-center justify-center whitespace-nowrap rounded-[0.6rem] py-2.5 text-[0.94rem] text-slate-500 xl:w-40 {{ $currentTab === 'medical' ? 'active' : '' }}"
+                            wire:click="changeTab('medical')" as="button">
                             Medical
                         </x-base.tab.button>
                     </x-base.tab>
                     <x-base.tab
                         class="bg-slate-50 first:rounded-l-[0.6rem] last:rounded-r-[0.6rem] [&[aria-selected='true']_button]:text-current">
                         <x-base.tab.button
-                            class="flex w-full items-center justify-center whitespace-nowrap rounded-[0.6rem] py-2.5 text-[0.94rem] text-slate-500 xl:w-40 {{ $currentTab === 'training' ? 'active' : '' }}" 
-                       wire:click="changeTab('training')" as="button">
+                            class="flex w-full items-center justify-center whitespace-nowrap rounded-[0.6rem] py-2.5 text-[0.94rem] text-slate-500 xl:w-40 {{ $currentTab === 'training' ? 'active' : '' }}"
+                            wire:click="changeTab('training')" as="button">
                             Training
                         </x-base.tab.button>
                     </x-base.tab>
@@ -183,9 +183,17 @@
                         class="bg-slate-50 first:rounded-l-[0.6rem] last:rounded-r-[0.6rem] [&[aria-selected='true']_button]:text-current">
                         <x-base.tab.button
                             class="flex w-full items-center justify-center whitespace-nowrap rounded-[0.6rem] py-2.5 text-[0.94rem] text-slate-500 xl:w-40 
-                            {{ $currentTab === 'history' ? 'active' : '' }}"  wire:click="changeTab('history')"
-                            as="button">
-                            History 
+                            {{ $currentTab === 'history' ? 'active' : '' }}"
+                            wire:click="changeTab('history')" as="button">
+                            History
+                        </x-base.tab.button>
+                    </x-base.tab>
+                    <x-base.tab
+                        class="bg-slate-50 first:rounded-l-[0.6rem] last:rounded-r-[0.6rem] [&[aria-selected='true']_button]:text-current">
+                        <x-base.tab.button
+                            class="flex w-full items-center justify-center whitespace-nowrap rounded-[0.6rem] py-2.5 text-[0.94rem] text-slate-500 xl:w-40 {{ $currentTab === 'documents' ? 'active' : '' }}"
+                            wire:click="changeTab('documents')" as="button">
+                            Documents
                         </x-base.tab.button>
                     </x-base.tab>
                 </x-base.tab.list>
@@ -927,6 +935,107 @@
                         @endif
                     </div>
                 @endif
+
+                <!-- Contenido para la pestaña de documentos -->
+                @if ($currentTab === 'documents')
+                    <div class="mb-5">
+                        <h3 class="text-lg font-medium mb-4">Documentos de la Aplicación</h3>
+
+                        @if (count($generatedPdfs) > 0)
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                @foreach ($generatedPdfs as $key => $pdf)
+                                    <div class="bg-slate-50 p-4 rounded-lg">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <div class="font-medium">{{ $pdf['name'] }}</div>
+                                            <a href="{{ $pdf['url'] }}" target="_blank"
+                                                class="text-primary hover:text-primary-focus">
+                                                <x-base.lucide class="h-5 w-5" icon="ExternalLink" />
+                                            </a>
+                                        </div>
+                                        <div class="flex mt-2">
+                                            <a href="{{ $pdf['url'] }}" target="_blank"
+                                                class="px-3 py-1 bg-primary text-white rounded text-sm hover:bg-primary-focus">
+                                                Ver documento
+                                            </a>
+                                            <a href="{{ $pdf['url'] }}" download
+                                                class="px-3 py-1 bg-slate-200 text-slate-700 rounded text-sm hover:bg-slate-300 ml-2">
+                                                Descargar
+                                            </a>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-slate-500 italic">No se han generado documentos PDF para esta aplicación.
+                            </div>
+                        @endif
+
+                        <!-- Sección para solicitar documentos adicionales -->
+                        <div class="mt-6 pt-6 border-t border-slate-200">
+                            <h4 class="font-medium mb-3">Solicitar Documentación Adicional</h4>
+
+                            <div class="mb-4">
+                                <div class="mb-2">Seleccione los documentos que el conductor debe proporcionar:</div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" wire:model="requestedDocuments" value="identification"
+                                            id="req_identification"
+                                            class="form-checkbox h-4 w-4 text-primary rounded border-slate-300">
+                                        <label for="req_identification" class="ml-2 text-sm">Identificación con
+                                            foto</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" wire:model="requestedDocuments" value="ssn"
+                                            id="req_ssn"
+                                            class="form-checkbox h-4 w-4 text-primary rounded border-slate-300">
+                                        <label for="req_ssn" class="ml-2 text-sm">Tarjeta de Seguro Social</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" wire:model="requestedDocuments" value="license"
+                                            id="req_license"
+                                            class="form-checkbox h-4 w-4 text-primary rounded border-slate-300">
+                                        <label for="req_license" class="ml-2 text-sm">Licencia de conducir
+                                            actualizada</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" wire:model="requestedDocuments" value="medical_card"
+                                            id="req_medical_card"
+                                            class="form-checkbox h-4 w-4 text-primary rounded border-slate-300">
+                                        <label for="req_medical_card" class="ml-2 text-sm">Tarjeta médica
+                                            actualizada</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" wire:model="requestedDocuments" value="proof_address"
+                                            id="req_proof_address"
+                                            class="form-checkbox h-4 w-4 text-primary rounded border-slate-300">
+                                        <label for="req_proof_address" class="ml-2 text-sm">Comprobante de
+                                            domicilio</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" wire:model="requestedDocuments" value="employment"
+                                            id="req_employment"
+                                            class="form-checkbox h-4 w-4 text-primary rounded border-slate-300">
+                                        <label for="req_employment" class="ml-2 text-sm">Verificación de empleo
+                                            anterior</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-1">Requisitos adicionales:</label>
+                                <textarea wire:model="additionalRequirements" rows="3"
+                                    class="form-textarea w-full border-slate-200 rounded-md text-sm"
+                                    placeholder="Describa cualquier información o documento adicional que necesite el conductor..."></textarea>
+                            </div>
+
+                            <button type="button" wire:click="requestAdditionalDocuments"
+                                class="px-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600">
+                                Solicitar documentos adicionales
+                            </button>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -1004,12 +1113,11 @@
                             @php
                                 $stepNames = [
                                     1 => 'General Information',
-                                    2 => 'Adresses',
-                                    3 => 'Application',
-                                    4 => 'Licenses',
-                                    5 => 'Medical Card',
-                                    6 => 'Training',
-                                    8 => 'Hola',
+                                    2 => 'Licenses',
+                                    3 => 'Medical',
+                                    4 => 'Training',
+                                    5 => 'History',
+                                    6 => 'Documents',                                    
                                 ];
 
                                 $statusColors = [
@@ -1034,7 +1142,42 @@
                     </div>
                 </div>
             </div>
+
+            <div class="mt-6 pt-6 border-t border-slate-200">
+                <h3 class="text-lg font-medium mb-4">Notas del Reclutador</h3>
+                
+                <div class="mb-4">
+                    <textarea 
+                        wire:model="verificationNotes" 
+                        rows="4" 
+                        class="form-textarea w-full border-slate-200 rounded-md"
+                        placeholder="Ingrese notas sobre la verificación de esta solicitud..."
+                    ></textarea>
+                </div>
+                
+                <button type="button" 
+                       wire:click="saveVerification"
+                       class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-focus w-full">
+                    Guardar Verificación
+                </button>
+                
+                @if($savedVerification)
+                    <div class="mt-4 p-3 bg-slate-50 rounded border border-slate-200 text-sm">
+                        <div class="font-medium mb-1">Última verificación:</div>
+                        <div class="text-slate-600">{{ $savedVerification->verified_at->format('d/m/Y H:i') }}</div>
+                        <div class="text-slate-600">Por: {{ $savedVerification->verifier->name }}</div>
+                        @if($savedVerification->notes)
+                            <div class="mt-2 p-2 bg-white rounded">
+                                <div class="font-medium text-xs text-slate-500">Notas:</div>
+                                <div>{{ $savedVerification->notes }}</div>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+            </div>
         </div>
+
+
     </div>
 
     <!-- Modal de rechazo -->

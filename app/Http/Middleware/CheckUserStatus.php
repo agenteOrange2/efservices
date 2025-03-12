@@ -172,7 +172,8 @@ class CheckUserStatus
             'driver/pending',
             'driver/rejected',
             'driver/registration/success',
-            'livewire/*'
+            'livewire/*',
+            
         ];
 
         foreach ($publicRoutes as $route) {

@@ -43,5 +43,7 @@
         <livewire:admin.driver.driver-criminal-history-step :driverId="$driverId" />
     @elseif ($currentStep == 13)
         <livewire:admin.driver.driver-certification-step :driverId="$driverId" />
+    @elseif ($currentStep == 14)
+        <livewire:admin.driver.driver-confirmation :driverId="$driverId" />
     @endif
 </div>

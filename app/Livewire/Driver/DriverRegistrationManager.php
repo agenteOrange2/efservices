@@ -20,7 +20,7 @@ class DriverRegistrationManager extends Component
     
     // Current step
     public $currentStep = 1;
-    public $totalSteps = 13;
+    public $totalSteps = 14;
     
     // Driver ID para modo edición
     public $driverId = null;

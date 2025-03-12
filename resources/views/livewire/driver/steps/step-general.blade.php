@@ -124,4 +124,43 @@
             </span>
         </button>
     </div>
+
+
+    @if($showCredentialsModal)
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" x-data>
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+            <div class="text-center mb-4">
+                <svg class="h-16 w-16 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 class="text-xl font-semibold text-gray-900 mt-4">Registration Started Successfully!</h3>
+            </div>
+            
+            <div class="mb-6">
+                <p class="text-gray-600 mb-4">
+                    We've sent your login credentials to <strong>{{ $email }}</strong> so you can continue your registration later if needed.
+                </p>
+                
+                <div class="bg-gray-50 p-4 border rounded-md">
+                    <p class="text-sm text-gray-700 mb-1">Your login information:</p>
+                    <p class="font-medium">Email: {{ $email }}</p>
+                    <p class="font-medium">Password: {{ $plainPassword }}</p>
+                </div>
+                
+                <p class="text-gray-600 mt-4">
+                    We recommend saving these credentials in case you need to continue your registration process later.
+                </p>
+            </div>
+            
+            <div class="flex justify-between space-x-4">
+                <button type="button" wire:click="saveAndExitFromModal" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                    Save & Exit
+                </button>
+                <button type="button" wire:click="continueToNextStep" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Continue Registration
+                </button>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>

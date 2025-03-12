@@ -54,7 +54,11 @@ class DriverGeneralInfoStep extends Component
             'last_name' => 'required|string|max:255',
             'email' => $emailRule,
             'phone' => 'required|string|max:15',
-            'date_of_birth' => 'required|date',
+            'date_of_birth' => [
+                'required',
+                'date',
+                'before_or_equal:' . \Carbon\Carbon::now()->subYears(18)->format('Y-m-d') => 'You must be at least 18 years old to register.'
+            ],
             'password' => $passwordRules,
             'password_confirmation' => 'nullable|same:password',
             'terms_accepted' => 'accepted',
@@ -96,7 +100,7 @@ class DriverGeneralInfoStep extends Component
         $this->middle_name = $userDriverDetail->middle_name;
         $this->last_name = $userDriverDetail->last_name;
         $this->phone = $userDriverDetail->phone;
-        $this->date_of_birth = $userDriverDetail->date_of_birth;
+        $this->date_of_birth = $userDriverDetail->date_of_birth ? $userDriverDetail->date_of_birth->format('Y-m-d') : null;
         $this->status = $userDriverDetail->status;
         $this->terms_accepted = $userDriverDetail->terms_accepted;
 

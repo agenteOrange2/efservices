@@ -126,8 +126,6 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
     });
 });
 
-Route::post('/temp-upload', [TempUploadController::class, 'upload'])->name('temp.upload');
-
 /*
 |--------------------------------------------------------------------------
 | RUTAS PARA SUPERADMIN: ADMIN DRIVERS
@@ -154,6 +152,7 @@ Route::post('carrier/{carrier}/drivers/autosave/{userDriverDetail?}', [
 ])->name('admin.carrier.user_drivers.autosave');
 
 Route::post('/temp-upload', [TempUploadController::class, 'upload'])->name('temp.upload');
+
 
 
 /*

@@ -138,7 +138,7 @@ class CertificationStep extends Component
     public function complete()
     {
         $this->validate();
-
+    
         if ($this->driverId) {
             if ($this->saveCertification()) {
                 try {
@@ -171,17 +171,8 @@ class CertificationStep extends Component
                     
                     DB::commit();
                     
-                    // Redireccionar a la página de índice
-                    $userDriverDetail = UserDriverDetail::with('carrier')->find($this->driverId);
-                    if ($userDriverDetail && $userDriverDetail->carrier) {
-                        $carrierSlug = $userDriverDetail->carrier->slug;
-                        return redirect()->route('admin.carrier.user_drivers.index', ['carrier' => $carrierSlug])
-                            ->with('success', 'La solicitud ha sido enviada para revisión.');
-                    }
-
-                    $carrierSlug = request()->route('carrier');
-                    return redirect()->route('admin.carrier.user_drivers.index', ['carrier' => $carrierSlug])
-                        ->with('success', 'La solicitud ha sido enviada para revisión.');
+                    // Avanzar al siguiente paso (en lugar de redireccionar)
+                    $this->dispatch('nextStep');
                 
                 } catch (\Exception $e) {
                     DB::rollBack();

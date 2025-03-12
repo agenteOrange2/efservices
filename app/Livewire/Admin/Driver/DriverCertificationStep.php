@@ -46,14 +46,14 @@ class DriverCertificationStep extends Component
         if (!$userDriverDetail) {
             return;
         }
-    
+
         // Cargar historial de empleo completo
         $companies = $userDriverDetail->employmentCompanies()
             ->orderBy('employed_from', 'desc')
             ->get();
-    
+
         $this->employmentHistory = [];
-    
+
         foreach ($companies as $company) {
             $this->employmentHistory[] = [
                 'company_name' => $company->company_name ?? ($company->masterCompany ? $company->masterCompany->company_name : 'N/A'),
@@ -65,14 +65,14 @@ class DriverCertificationStep extends Component
                 'employed_to' => $company->employed_to ? $company->employed_to->format('M d, Y') : 'Present'
             ];
         }
-    
+
         // Cargar certificación previa si existe
         $certification = $userDriverDetail->certification;
         if ($certification) {
             // Cargar la firma desde la base de datos
             $this->signature = $certification->signature;
             $this->certificationAccepted = (bool)$certification->is_accepted;
-            
+
             // Si la firma no está en la propiedad pero está guardada como archivo
             if (empty($this->signature) && $certification->getFirstMedia('signature')) {
                 // Intentar recuperar la ruta del archivo
@@ -139,19 +139,19 @@ class DriverCertificationStep extends Component
             if ($this->saveCertification()) {
                 try {
                     DB::beginTransaction();
-                    
+
                     // Obtener el driver detail
                     $userDriverDetail = UserDriverDetail::find($this->driverId);
                     if (!$userDriverDetail) {
                         throw new \Exception('Driver not found');
                     }
-                    
+
                     // Marcar el driver como completado
                     $userDriverDetail->update([
                         'application_completed' => true,
                         'current_step' => 13 // Este es el último paso
                     ]);
-                    
+
                     // Actualizar el estado de la aplicación a pendiente
                     if ($userDriverDetail->application) {
                         $userDriverDetail->application->update([
@@ -159,26 +159,28 @@ class DriverCertificationStep extends Component
                             'completed_at' => now() // Asegúrate de haber agregado este campo
                         ]);
                     }
-                    
+
                     // Generar PDFs solo si existe la firma
                     if (!empty($this->signature)) {
                         $this->generateApplicationPDFs($userDriverDetail);
                     }
-                    
+
                     DB::commit();
+                    // Avanzar al siguiente paso (en lugar de redireccionar)
+                    $this->dispatch('nextStep');
                     
                     // Redireccionar a la página de índice
-                    $userDriverDetail = UserDriverDetail::with('carrier')->find($this->driverId);
-                    if ($userDriverDetail && $userDriverDetail->carrier) {
-                        $carrierSlug = $userDriverDetail->carrier->slug;
-                        return redirect()->route('admin.carrier.user_drivers.index', ['carrier' => $carrierSlug])
-                            ->with('success', 'La solicitud ha sido enviada para revisión.');
-                    }
+                    // $userDriverDetail = UserDriverDetail::with('carrier')->find($this->driverId);
+                    // if ($userDriverDetail && $userDriverDetail->carrier) {
+                    //     $carrierSlug = $userDriverDetail->carrier->slug;
+                    //     return redirect()->route('admin.carrier.user_drivers.index', ['carrier' => $carrierSlug])
+                    //         ->with('success', 'La solicitud ha sido enviada para revisión.');
+                    // }
 
-                    $carrierSlug = request()->route('carrier');
-                    return redirect()->route('admin.carrier.user_drivers.index', ['carrier' => $carrierSlug])
-                        ->with('success', 'La solicitud ha sido enviada para revisión.');
-                
+                    // $carrierSlug = request()->route('carrier');
+                    // return redirect()->route('admin.carrier.user_drivers.index', ['carrier' => $carrierSlug])
+                    //     ->with('success', 'La solicitud ha sido enviada para revisión.');
+
                 } catch (\Exception $e) {
                     DB::rollBack();
                     Log::error('Error al completar la aplicación', [
@@ -216,27 +218,27 @@ class DriverCertificationStep extends Component
         if (empty($this->signature)) {
             return;
         }
-    
+
         // Preparar la firma una sola vez para todos los PDFs
         $signaturePath = $this->prepareSignatureForPDF($this->signature);
-        
+
         if (!$signaturePath) {
             Log::error('No se pudo preparar la firma para PDFs', [
                 'driver_id' => $userDriverDetail->id
             ]);
             return;
         }
-    
+
         // Asegurarse que los directorios existen
         $driverPath = 'driver/' . $userDriverDetail->id;
         $appSubPath = $driverPath . '/driver_applications';
-    
+
         // Asegúrate de que los directorios existen
         Storage::disk('public')->makeDirectory($driverPath);
         Storage::disk('public')->makeDirectory($appSubPath);
-    
+
         // Configuraciones de pasos - definir la vista y nombre de archivo para cada paso
-        $steps = [            
+        $steps = [
             ['view' => 'pdf.driver.general', 'filename' => 'informacion_general.pdf', 'title' => 'Información General'],
             ['view' => 'pdf.driver.address', 'filename' => 'informacion_direccion.pdf', 'title' => 'Información de Dirección'],
             ['view' => 'pdf.driver.application', 'filename' => 'detalles_aplicacion.pdf', 'title' => 'Detalles de Aplicación'],
@@ -250,7 +252,7 @@ class DriverCertificationStep extends Component
             ['view' => 'pdf.driver.certification', 'filename' => 'certificacion.pdf', 'title' => 'Certificación'],
             // ... resto de pasos ...
         ];
-    
+
         // Generar PDF para cada paso
         foreach ($steps as $step) {
             try {
@@ -260,11 +262,11 @@ class DriverCertificationStep extends Component
                     'title' => $step['title'],
                     'date' => now()->format('d/m/Y')
                 ]);
-    
+
                 // Guardar PDF usando Storage para evitar problemas de permisos
                 $pdfContent = $pdf->output();
                 Storage::disk('public')->put($appSubPath . '/' . $step['filename'], $pdfContent);
-                
+
                 Log::info('PDF individual generado', [
                     'driver_id' => $userDriverDetail->id,
                     'filename' => $step['filename']
@@ -277,10 +279,10 @@ class DriverCertificationStep extends Component
                 ]);
             }
         }
-    
+
         // Generar un PDF combinado con todos los pasos
         $this->generateCombinedPDF($userDriverDetail, $signaturePath);
-        
+
         // Limpiar archivo temporal de firma
         if (strpos($signaturePath, 'temp_sig_') !== false) {
             @unlink($signaturePath);
@@ -351,17 +353,17 @@ class DriverCertificationStep extends Component
         try {
             // Preparar la firma para el PDF
             $signaturePath = $signatureImage;
-            
+
             // Si es una URL, convertirla a ruta de archivo
             if (is_string($signatureImage) && strpos($signatureImage, 'http') === 0) {
                 $signaturePath = $this->prepareSignatureForPDF($signatureImage);
             }
-            
+
             // Si es un string base64, convertirlo a archivo
             if (is_string($signatureImage) && strpos($signatureImage, 'data:image') === 0) {
                 $signaturePath = $this->prepareSignatureForPDF($signatureImage);
             }
-    
+
             // Verificar que tengamos una ruta de archivo válida para la firma
             if (!empty($signaturePath)) {
                 if (!file_exists($signaturePath)) {
@@ -376,32 +378,32 @@ class DriverCertificationStep extends Component
                     ]);
                 }
             }
-    
+
             // Asegurarnos de que estamos usando el ID correcto
             $driverId = $userDriverDetail->id;
             $filePath = 'driver/' . $driverId . '/solicitud_completa.pdf';
-            
+
             // Cargar la vista PDF con la firma como ruta de archivo
             $pdf = PDF::loadView('pdf.driver.solicitud_completa', [
                 'userDriverDetail' => $userDriverDetail,
                 'signaturePath' => $signaturePath, // Importante: pasar la ruta, no el contenido base64
                 'date' => now()->format('d/m/Y')
             ]);
-            
+
             Log::info('Generando PDF combinado para conductor', [
-                'driver_id' => $driverId, 
+                'driver_id' => $driverId,
                 'file_path' => $filePath,
                 'signature_path_exists' => !empty($signaturePath) && file_exists($signaturePath)
             ]);
-            
+
             // Guardar el PDF combinado usando Storage
             $pdfContent = $pdf->output();
             Storage::disk('public')->put($filePath, $pdfContent);
-            
+
             // Guardar PDF temporalmente para adjuntarlo a MediaLibrary
             $tempPath = tempnam(sys_get_temp_dir(), 'solicitud_completa_') . '.pdf';
             file_put_contents($tempPath, $pdfContent);
-            
+
             // Adjuntar el PDF a la aplicación
             if ($userDriverDetail->application) {
                 try {
@@ -409,13 +411,13 @@ class DriverCertificationStep extends Component
                     $userDriverDetail->application->clearMediaCollection('application_pdf');
                     $userDriverDetail->application->addMedia($tempPath)
                         ->toMediaCollection('application_pdf');
-                        
+
                     // Registrar información para confirmar
                     Log::info('PDF combinado agregado a Media Library', [
                         'driver_id' => $driverId,
                         'application_id' => $userDriverDetail->application->id
                     ]);
-                    
+
                     // Si el modelo tiene columna pdf_path, también actualizar ahí
                     if (Schema::hasColumn('driver_applications', 'pdf_path')) {
                         $userDriverDetail->application->update([
@@ -429,13 +431,13 @@ class DriverCertificationStep extends Component
                         'driver_id' => $driverId
                     ]);
                 }
-                
+
                 // Limpiar archivo temporal
                 @unlink($tempPath);
             }
-            
+
             // No limpiar el archivo temporal de firma aquí, lo haremos después de generar todos los PDFs
-            
+
         } catch (\Exception $e) {
             Log::error('Error generando PDF combinado', [
                 'driver_id' => $userDriverDetail->id,
