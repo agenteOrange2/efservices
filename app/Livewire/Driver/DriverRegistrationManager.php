@@ -67,10 +67,30 @@ class DriverRegistrationManager extends Component
     }
     
     // Ir al siguiente paso
+    // Go to the next step
     public function nextStep()
     {
         if ($this->currentStep < $this->totalSteps) {
             $this->currentStep++;
+
+
+            if ($this->driverId) {
+                $this->updateCurrentStep($this->currentStep);
+            }
+        }
+    }
+
+    private function updateCurrentStep($step)
+    {
+        if ($this->driverId) {
+            $driver = UserDriverDetail::find($this->driverId);
+            if ($driver && $driver->current_step < $step) {
+                $driver->update(['current_step' => $step]);
+                Log::info('Current step updated by manager', [
+                    'driver_id' => $this->driverId,
+                    'step' => $step
+                ]);
+            }
         }
     }
     

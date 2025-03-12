@@ -37,11 +37,14 @@ class UserDriverDetail extends Model implements HasMedia
         'phone',
         'date_of_birth',
         'status',
-        'terms_accepted',
+        'terms_accepted',        
         'confirmation_token',
+        'application_completed',
+        'current_step',   
     ];
 
     protected $casts = [
+        'date_of_birth' => 'date',
         'status' => 'integer',
         'terms_accepted' => 'boolean',
         'application_completed' => 'boolean',

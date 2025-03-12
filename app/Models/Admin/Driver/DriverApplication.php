@@ -14,8 +14,9 @@ class DriverApplication extends Model implements HasMedia
     
     protected $fillable = [
         'user_id',
-        'status',
-        'pdf_path'
+        'status',        
+        'pdf_path',
+        'completed_at'
     ];
     
     protected $casts = [

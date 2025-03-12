@@ -1,5 +1,5 @@
 {{-- resources/views/livewire/driver/driver-registration-manager.blade.php --}}
-<div class="p-4 bg-white rounded-lg shadow-md">
+<div class="flex flex-col p-5 box box--stacked">
     @if (session()->has('error'))
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
             {{ session('error') }}
@@ -88,7 +88,7 @@
     @endif
     
     <!-- Navigation Buttons -->
-    <div class="flex justify-between mt-8">
+    {{-- <div class="flex justify-between mt-8">
         <div>
             @if ($currentStep > 1)
                 <button type="button" wire:click="prevStep" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
@@ -113,5 +113,5 @@
                 </button>
             @endif
         </div>
-    </div>
+    </div> --}}
 </div>

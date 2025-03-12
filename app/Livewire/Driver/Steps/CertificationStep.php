@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Admin\Driver\DriverApplication;
 use App\Models\Admin\Driver\DriverCertification;
 
 class CertificationStep extends Component
@@ -137,37 +138,58 @@ class CertificationStep extends Component
     public function complete()
     {
         $this->validate();
-        
+
         if ($this->driverId) {
             if ($this->saveCertification()) {
-
-                // Actualizar el estado de la aplicación a pendiente
-                $userDriverDetail = UserDriverDetail::find($this->driverId);
-                $userDriverDetail->update([
-                    'application_completed' => true,
-                    'current_step' => 13 // Paso final
-                ]);
-
-                if ($userDriverDetail && $userDriverDetail->application) {
-                    $userDriverDetail->application->update(['status' => 'pending']);
+                try {
+                    DB::beginTransaction();
+                    
+                    // Obtener el driver detail
+                    $userDriverDetail = UserDriverDetail::find($this->driverId);
+                    if (!$userDriverDetail) {
+                        throw new \Exception('Driver not found');
+                    }
+                    
+                    // Marcar el driver como completado
+                    $userDriverDetail->update([
+                        'application_completed' => true,
+                        'current_step' => 13 // Este es el último paso
+                    ]);
+                    
+                    // Actualizar el estado de la aplicación a pendiente
+                    if ($userDriverDetail->application) {
+                        $userDriverDetail->application->update([
+                            'status' => DriverApplication::STATUS_PENDING,
+                            'completed_at' => now() // Asegúrate de haber agregado este campo
+                        ]);
+                    }
                     
                     // Generar PDFs solo si existe la firma
                     if (!empty($this->signature)) {
                         $this->generateApplicationPDFs($userDriverDetail);
                     }
-                } 
+                    
+                    DB::commit();
+                    
+                    // Redireccionar a la página de índice
+                    $userDriverDetail = UserDriverDetail::with('carrier')->find($this->driverId);
+                    if ($userDriverDetail && $userDriverDetail->carrier) {
+                        $carrierSlug = $userDriverDetail->carrier->slug;
+                        return redirect()->route('admin.carrier.user_drivers.index', ['carrier' => $carrierSlug])
+                            ->with('success', 'La solicitud ha sido enviada para revisión.');
+                    }
+
+                    $carrierSlug = request()->route('carrier');
+                    return redirect()->route('admin.carrier.user_drivers.index', ['carrier' => $carrierSlug])
+                        ->with('success', 'La solicitud ha sido enviada para revisión.');
                 
-                // Redireccionar según tipo de registro
-                $isReferred = $userDriverDetail->carrier_id != null;
-                
-                if ($isReferred) {
-                    // Si es referido, mostrar mensaje de éxito y esperar
-                    return redirect()->route('driver.registration.success')
-                        ->with('success', 'Tu solicitud ha sido enviada para revisión.');
-                } else {
-                    // Si es independiente, redirigir a selección de carrier
-                    return redirect()->route('driver.select_carrier')
-                        ->with('success', 'Tu solicitud ha sido completada. Ahora puedes seleccionar un carrier.');
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    Log::error('Error al completar la aplicación', [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    session()->flash('error', 'Error al completar la solicitud: ' . $e->getMessage());
                 }
             }
         }

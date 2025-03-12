@@ -104,7 +104,7 @@ class CheckUserStatus
 
                 case DriverApplication::STATUS_PENDING:
                     // Si la aplicación está pendiente de revisión
-                    if (!$request->is('driver/dashboard') && !$request->is('driver/pending') && !$this->isDriverExemptRoute($request)) {
+                    if (!$request->is('driver/pending') && !$this->isDriverExemptRoute($request)) {
                         return redirect()->route('driver.pending')
                             ->with('warning', 'Your application is under review.');
                     }

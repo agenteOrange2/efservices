@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');            
             $table->enum('status', ['draft', 'pending', 'approved', 'rejected'])->default('draft');
+            $table->text('rejection_reason')->nullable();
+            $table->timestamp('completed_at')->nullable();
             $table->timestamps();
         });
     }

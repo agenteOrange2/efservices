@@ -19,8 +19,9 @@ use App\Http\Controllers\Admin\CarrierDocumentController;
 use App\Http\Controllers\Admin\Vehicles\VehicleController;
 use App\Http\Controllers\Admin\UserCarrierDocumentController;
 use App\Http\Controllers\Admin\Vehicles\VehicleMakeController;
-use App\Http\Controllers\Admin\Vehicles\VehicleServiceItemController;
 use App\Http\Controllers\Admin\Vehicles\VehicleTypeController;
+use App\Http\Controllers\Admin\Driver\DriverRecruitmentController;
+use App\Http\Controllers\Admin\Vehicles\VehicleServiceItemController;
 
 
 Route::get('theme-switcher/{activeTheme}', [ThemeController::class, 'switch'])->name('theme-switcher');
@@ -221,8 +222,15 @@ Route::post('user_carrier/{user_carrier}/delete-photo', [UserCarrierController::
 */
 
 // Rutas para la vista general de drivers
-Route::get('drivers', [DriversController::class, 'index'])->name('drivers.index');
-Route::put('drivers/{driver}/toggle-status', [DriversController::class, 'toggleStatus'])->name('drivers.toggle-status');
+// Route::get('drivers', [DriversController::class, 'index'])->name('drivers.index');
+// Route::put('drivers/{driver}/toggle-status', [DriversController::class, 'toggleStatus'])->name('drivers.toggle-status');
+
+
+// Rutas para el reclutamiento de conductores
+Route::prefix('driver-recruitment')->name('driver-recruitment.')->group(function () {
+    Route::get('/', [DriverRecruitmentController::class, 'index'])->name('index');
+    Route::get('/{driverId}', [DriverRecruitmentController::class, 'show'])->name('show');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -261,19 +269,8 @@ Route::get('vehicle-makes/search', [VehicleMakeController::class, 'search'])->na
 Route::resource('vehicle-types', VehicleTypeController::class);
 Route::get('vehicle-types/search', [VehicleTypeController::class, 'search'])->name('vehicle-types.search');
 
-/*
-Route::prefix('user-carrier')->name('user_carrier.')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('user_carrier.dashboard');
-    })->middleware('auth:user_carrier')->name('dashboard');
 
-    Route::get('/register', [CustomLoginController::class, 'showRegisterForm'])->name('register');
-    Route::post('/register', [CustomLoginController::class, 'register']);
-    Route::get('/confirm/{token}', [CustomLoginController::class, 'confirmEmail'])->name('confirm');    
-    Route::get('/complete-registration', [CustomLoginController::class, 'showCompleteRegistrationForm'])->name('complete_registration');
-    Route::post('/complete-registration', [CustomLoginController::class, 'completeRegistration']);
-});
-*/
+
 
 
 

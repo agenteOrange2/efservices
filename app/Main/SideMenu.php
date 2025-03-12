@@ -65,7 +65,7 @@ class SideMenu
                     ],
                     [
                         'icon' => "user-check",
-                        'route_name' => "admin.product-grid",
+                        'route_name' => "admin.driver-recruitment.index",
                         'params' => [],
                         'title' => "Recruitment",
                     ],

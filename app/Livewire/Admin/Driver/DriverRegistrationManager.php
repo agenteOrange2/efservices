@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Livewire\Admin\Driver;
 
 use App\Models\Carrier;
@@ -11,15 +12,15 @@ class DriverRegistrationManager extends Component
 {
     // Carrier model
     public Carrier $carrier;
-    
+
     // Current step
     public $currentStep = 1;
     public $totalSteps = 13;
-    
+
     // Driver ID for edit mode
     public $driverId = null;
     public $userDriverDetail = null;
-    
+
     // Event listeners
     protected $listeners = [
         'nextStep',
@@ -27,32 +28,51 @@ class DriverRegistrationManager extends Component
         'driverCreated' => 'handleDriverCreated',
         'saveAndExit' => 'handleSaveAndExit',
     ];
-    
+
     // Mounting the component
     public function mount(Carrier $carrier, $userDriverDetail = null)
     {
         $this->carrier = $carrier;
-        
+
         // Check if we're in edit mode
         if ($userDriverDetail) {
             $this->driverId = $userDriverDetail->id;
             $this->userDriverDetail = $userDriverDetail;
-            
+
             // If the driver has a current step, use it
             if ($userDriverDetail->current_step) {
                 $this->currentStep = $userDriverDetail->current_step;
             }
         }
     }
-    
+
     // Go to the next step
     public function nextStep()
     {
         if ($this->currentStep < $this->totalSteps) {
             $this->currentStep++;
+
+
+            if ($this->driverId) {
+                $this->updateCurrentStep($this->currentStep);
+            }
         }
     }
-    
+
+    private function updateCurrentStep($step)
+    {
+        if ($this->driverId) {
+            $driver = UserDriverDetail::find($this->driverId);
+            if ($driver && $driver->current_step < $step) {
+                $driver->update(['current_step' => $step]);
+                Log::info('Current step updated by manager', [
+                    'driver_id' => $this->driverId,
+                    'step' => $step
+                ]);
+            }
+        }
+    }
+
     // Go to the previous step
     public function prevStep()
     {
@@ -60,33 +80,47 @@ class DriverRegistrationManager extends Component
             $this->currentStep--;
         }
     }
-    
+
     // When a driver is created in first step
     public function handleDriverCreated($driverId)
     {
         $this->driverId = $driverId;
         $this->userDriverDetail = UserDriverDetail::find($driverId);
     }
-    
+
     // Handle save and exit from any step
     public function handleSaveAndExit()
     {
         return redirect()->route('admin.carrier.user_drivers.index', $this->carrier);
     }
-    
+
     // Submit form on the final step
     public function submitForm()
     {
         if ($this->driverId) {
-            UserDriverDetail::where('id', $this->driverId)->update([
-                'application_completed' => true
-            ]);
+            $driver = UserDriverDetail::find($this->driverId);
             
-            session()->flash('success', 'Driver registration completed successfully.');
-            return redirect()->route('admin.carrier.user_drivers.index', $this->carrier);
+            if ($driver) {
+                // Actualizar driver como completado
+                $driver->update([
+                    'application_completed' => true,
+                    'current_step' => $this->totalSteps // Asegurar que está en el último paso
+                ]);
+                
+                // Actualizar la aplicación si existe
+                if ($driver->application) {
+                    $driver->application->update([
+                        'status' => 'pending',
+                        'completed_at' => now()
+                    ]);
+                }
+                
+                session()->flash('success', 'Driver registration completed successfully.');
+                return redirect()->route('admin.carrier.user_drivers.index', $this->carrier);
+            }
         }
     }
-    
+
     // Render
     public function render()
     {
