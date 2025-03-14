@@ -1096,7 +1096,10 @@
                             <div class="text-danger font-medium">Application Rejected</div>
                         </div>
                         <div class="text-sm mt-1">
-                            Rejected on {{ $application->completed_at->format('d/m/Y H:i') }}
+                            Rejected on
+                            {{ is_string($application->completed_at)
+                                ? \Carbon\Carbon::parse($application->completed_at)->format('d/m/Y H:i')
+                                : $application->completed_at->format('d/m/Y H:i') }}
                         </div>
                         @if ($application->rejection_reason)
                             <div class="mt-2 p-2 bg-white rounded text-sm">
