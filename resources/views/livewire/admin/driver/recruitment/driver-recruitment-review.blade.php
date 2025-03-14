@@ -144,7 +144,12 @@
 
             <div class="flex flex-col gap-y-3 2xl:flex-row 2xl:items-center">
                 <x-base.tab.list
+<<<<<<< HEAD
                     class="box mr-auto w-full flex-col rounded-[0.6rem] border-slate-200 bg-white sm:flex-row 2xl:w-auto">
+=======
+                    class="box mr-auto w-full flex-col rounded-[0.6rem] border-slate-200 bg-white sm:flex-row 2xl:w-auto"
+                    variant="boxed-tabs">
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                     <x-base.tab
                         class="bg-slate-50 first:rounded-l-[0.6rem] last:rounded-r-[0.6rem] [&[aria-selected='true']_button]:text-current">
                         <x-base.tab.button
@@ -173,9 +178,15 @@
                     <x-base.tab
                         class="bg-slate-50 first:rounded-l-[0.6rem] last:rounded-r-[0.6rem] [&[aria-selected='true']_button]:text-current">
                         <x-base.tab.button
+<<<<<<< HEAD
                             class="flex w-full items-center justify-center whitespace-nowrap rounded-[0.6rem] py-2.5 text-[0.94rem] text-slate-500 xl:w-40 {{ $currentTab === 'records' ? 'active' : '' }}"
                             wire:click="changeTab('records')" as="button">
                             Records
+=======
+                            class="flex w-full items-center justify-center whitespace-nowrap rounded-[0.6rem] py-2.5 text-[0.94rem] text-slate-500 xl:w-40 {{ $currentTab === 'training' ? 'active' : '' }}"
+                            wire:click="changeTab('training')" as="button">
+                            Training
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                         </x-base.tab.button>
                     </x-base.tab>
                     <x-base.tab
@@ -203,14 +214,22 @@
                 <!-- Información General -->
                 @if ($currentTab === 'general')
                     <div class="mb-5">
+<<<<<<< HEAD
                         <h3 class="text-lg font-medium mb-4">DRIVER APPLICANT INFORMATION</h3>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <div class="text-sm text-slate-500">Applicant's Legal Name</div>
+=======
+                        <h3 class="text-lg font-medium mb-4">Información Personal</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <div class="text-sm text-slate-500">Nombre Completo</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                 <div class="font-medium">{{ $driver->user->name }} {{ $driver->middle_name }}
                                     {{ $driver->last_name }}</div>
                             </div>
                             <div>
+<<<<<<< HEAD
                                 <div class="text-sm text-slate-500">Email</div>
                                 <div class="font-medium">{{ $driver->user->email }}</div>
                             </div>
@@ -220,6 +239,17 @@
                             </div>
                             <div>
                                 <div class="text-sm text-slate-500">Date of Birth</div>
+=======
+                                <div class="text-sm text-slate-500">Correo Electrónico</div>
+                                <div class="font-medium">{{ $driver->user->email }}</div>
+                            </div>
+                            <div>
+                                <div class="text-sm text-slate-500">Teléfono</div>
+                                <div class="font-medium">{{ $driver->phone }}</div>
+                            </div>
+                            <div>
+                                <div class="text-sm text-slate-500">Fecha de Nacimiento</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                 <div class="font-medium">{{ $driver->date_of_birth->format('d/m/Y') }}</div>
                             </div>
                         </div>
@@ -227,38 +257,63 @@
 
                     <!-- Direcciones -->
                     <div class="mb-5 border-t pt-5">
+<<<<<<< HEAD
                         <h3 class="text-lg font-medium mb-4">Address</h3>
+=======
+                        <h3 class="text-lg font-medium mb-4">Dirección Actual</h3>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                         @if ($driver->application && $driver->application->addresses->where('primary', true)->first())
                             @php
                                 $address = $driver->application->addresses->where('primary', true)->first();
                             @endphp
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
+<<<<<<< HEAD
                                     <div class="text-sm text-slate-500">Address </div>
+=======
+                                    <div class="text-sm text-slate-500">Dirección</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                     <div class="font-medium">{{ $address->address_line1 }}</div>
                                     @if ($address->address_line2)
                                         <div class="text-sm">{{ $address->address_line2 }}</div>
                                     @endif
                                 </div>
                                 <div>
+<<<<<<< HEAD
                                     <div class="text-sm text-slate-500">City, State, ZIP</div>
+=======
+                                    <div class="text-sm text-slate-500">Ciudad, Estado, ZIP</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                     <div class="font-medium">{{ $address->city }}, {{ $address->state }}
                                         {{ $address->zip_code }}</div>
                                 </div>
                                 <div>
+<<<<<<< HEAD
                                     <div class="text-sm text-slate-500">Resident since</div>
                                     <div class="font-medium">{{ $address->from_date->format('m/Y') }}</div>
                                 </div>
                                 <div>
                                     <div class="text-sm text-slate-500">Time living at the address</div>
+=======
+                                    <div class="text-sm text-slate-500">Residente desde</div>
+                                    <div class="font-medium">{{ $address->from_date->format('m/Y') }}</div>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-slate-500">Tiempo en la dirección</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                     <div class="font-medium">
                                         @php
                                             $fromDate = $address->from_date;
                                             $toDate = $address->to_date ?? now();
                                             $years = $fromDate->diffInYears($toDate);
                                             $months = $fromDate->copy()->addYears($years)->diffInMonths($toDate);
+<<<<<<< HEAD
                                             echo $years > 0 ? $years . ' year(s) ' : '';
                                             echo $months > 0 ? $months . ' month(s)' : '';
+=======
+                                            echo $years > 0 ? $years . ' año(s) ' : '';
+                                            echo $months > 0 ? $months . ' mes(es)' : '';
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                         @endphp
                                     </div>
                                 </div>
@@ -266,24 +321,40 @@
 
                             <!-- Direcciones previas -->
                             @if (!$address->lived_three_years && $driver->application->addresses->where('primary', false)->isNotEmpty())
+<<<<<<< HEAD
                                 <h3 class="text-lg font-medium mt-4 mb-4">Previous Addresses</h3>
+=======
+                                <h3 class="text-lg font-medium mt-4 mb-4">Direcciones Previas</h3>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                 @foreach ($driver->application->addresses->where('primary', false) as $prevAddress)
                                     <div class="bg-slate-50 p-3 rounded mb-2">
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
+<<<<<<< HEAD
                                                 <div class="text-sm text-slate-500">Address</div>
+=======
+                                                <div class="text-sm text-slate-500">Dirección</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                                 <div class="font-medium">{{ $prevAddress->address_line1 }}</div>
                                                 @if ($prevAddress->address_line2)
                                                     <div class="text-sm">{{ $prevAddress->address_line2 }}</div>
                                                 @endif
                                             </div>
                                             <div>
+<<<<<<< HEAD
                                                 <div class="text-sm text-slate-500">City, State, ZIP</div>
+=======
+                                                <div class="text-sm text-slate-500">Ciudad, Estado, ZIP</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                                 <div class="font-medium">{{ $prevAddress->city }},
                                                     {{ $prevAddress->state }} {{ $prevAddress->zip_code }}</div>
                                             </div>
                                             <div>
+<<<<<<< HEAD
                                                 <div class="text-sm text-slate-500">Period of residence</div>
+=======
+                                                <div class="text-sm text-slate-500">Periodo de residencia</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                                 <div class="font-medium">
                                                     {{ $prevAddress->from_date->format('m/Y') }} -
                                                     {{ $prevAddress->to_date ? $prevAddress->to_date->format('m/Y') : 'Presente' }}
@@ -294,17 +365,28 @@
                                 @endforeach
                             @endif
                         @else
+<<<<<<< HEAD
                             <div class="text-slate-500 italic">No address information recorded.</div>
+=======
+                            <div class="text-slate-500 italic">No se ha registrado información de dirección.</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                         @endif
                     </div>
 
                     <!-- Información de solicitud -->
                     @if ($driver->application && $driver->application->details)
                         <div class="mb-5 border-t pt-5">
+<<<<<<< HEAD
                             <h3 class="text-lg font-medium mb-4">Application Information</h3>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <div class="text-sm text-slate-500">Requested position</div>
+=======
+                            <h3 class="text-lg font-medium mb-4">Información de la Solicitud</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <div class="text-sm text-slate-500">Posición solicitada</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                     <div class="font-medium">
                                         @php
                                             $details = $driver->application->details;
@@ -318,6 +400,7 @@
                                     </div>
                                 </div>
                                 <div>
+<<<<<<< HEAD
                                     <div class="text-sm text-slate-500">Preferred location</div>
                                     <div class="font-medium">{{ $details->applying_location }}</div>
                                 </div>
@@ -334,20 +417,46 @@
                                     <div class="font-medium">
                                         @if ($details->has_twic_card)
                                             Yes, expires: {{ $details->twic_expiration_date->format('d/m/Y') }}
+=======
+                                    <div class="text-sm text-slate-500">Ubicación preferida</div>
+                                    <div class="font-medium">{{ $details->applying_location }}</div>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-slate-500">Elegible para trabajar en EE.UU.</div>
+                                    <div class="font-medium">{{ $details->eligible_to_work ? 'Sí' : 'No' }}</div>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-slate-500">Habla inglés</div>
+                                    <div class="font-medium">{{ $details->can_speak_english ? 'Sí' : 'No' }}</div>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-slate-500">Tarjeta TWIC</div>
+                                    <div class="font-medium">
+                                        @if ($details->has_twic_card)
+                                            Sí, expira: {{ $details->twic_expiration_date->format('d/m/Y') }}
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                         @else
                                             No
                                         @endif
                                     </div>
                                 </div>
                                 <div>
+<<<<<<< HEAD
                                     <div class="text-sm text-slate-500">How did you find out?</div>
+=======
+                                    <div class="text-sm text-slate-500">¿Cómo se enteró?</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                     <div class="font-medium">
                                         @php
                                             $source = $details->how_did_hear;
                                             if ($source === 'other') {
                                                 echo $details->how_did_hear_other;
                                             } elseif ($source === 'employee_referral') {
+<<<<<<< HEAD
                                                 echo 'Referred by employee: ' . $details->referral_employee_name;
+=======
+                                                echo 'Referido por empleado: ' . $details->referral_employee_name;
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                             } else {
                                                 echo ucfirst(str_replace('_', ' ', $source));
                                             }
@@ -362,13 +471,18 @@
                 <!-- Licencias -->
                 @if ($currentTab === 'licenses')
                     <div class="mb-5">
+<<<<<<< HEAD
                         <h3 class="text-lg font-medium mb-4">Driver's License Information</h3>
+=======
+                        <h3 class="text-lg font-medium mb-4">Licencias de Conducir</h3>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
 
                         @if ($driver->licenses->isNotEmpty())
                             @foreach ($driver->licenses as $license)
                                 <div class="bg-slate-50 p-4 rounded-lg mb-4">
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
+<<<<<<< HEAD
                                             <div class="text-sm text-slate-500">License Number</div>
                                             <div class="font-medium">{{ $license->license_number }}</div>
                                         </div>
@@ -382,24 +496,51 @@
                                         </div>
                                         <div>
                                             <div class="text-sm text-slate-500">Expiration</div>
+=======
+                                            <div class="text-sm text-slate-500">Número de Licencia</div>
+                                            <div class="font-medium">{{ $license->license_number }}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm text-slate-500">Estado</div>
+                                            <div class="font-medium">{{ $license->state_of_issue }}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm text-slate-500">Clase</div>
+                                            <div class="font-medium">{{ $license->license_class }}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm text-slate-500">Expira</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                             <div
                                                 class="font-medium {{ $license->expiration_date < now() ? 'text-danger' : '' }}">
                                                 {{ $license->expiration_date->format('d/m/Y') }}
                                             </div>
                                         </div>
                                         <div>
+<<<<<<< HEAD
                                             <div class="text-sm text-slate-500">Type</div>
                                             <div class="font-medium">{{ $license->is_cdl ? 'CDL' : 'No CDL' }}</div>
                                         </div>
                                         <div>
                                             <div class="text-sm text-slate-500">License Status</div>
+=======
+                                            <div class="text-sm text-slate-500">Tipo</div>
+                                            <div class="font-medium">{{ $license->is_cdl ? 'CDL' : 'No CDL' }}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm text-slate-500">Estado de la Licencia</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                             <div class="font-medium">{{ ucfirst($license->status) }}</div>
                                         </div>
                                     </div>
 
                                     @if ($license->is_cdl && $license->endorsements->isNotEmpty())
                                         <div class="mt-3 pt-3 border-t border-slate-200">
+<<<<<<< HEAD
                                             <div class="text-sm text-slate-500 mb-1">Endorsements</div>
+=======
+                                            <div class="text-sm text-slate-500 mb-1">Endosos</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                             <div class="flex flex-wrap gap-2">
                                                 @foreach ($license->endorsements as $endorsement)
                                                     <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
@@ -412,11 +553,19 @@
 
                                     <!-- Imágenes de la licencia -->
                                     <div class="mt-3 pt-3 border-t border-slate-200">
+<<<<<<< HEAD
                                         <div class="text-sm text-slate-500 mb-2">License Images</div>
                                         <div class="flex gap-4">
                                             @if ($license->getFirstMediaUrl('license_front'))
                                                 <div>
                                                     <div class="text-xs text-slate-500 mb-1">Front</div>
+=======
+                                        <div class="text-sm text-slate-500 mb-2">Imágenes de la Licencia</div>
+                                        <div class="flex gap-4">
+                                            @if ($license->getFirstMediaUrl('license_front'))
+                                                <div>
+                                                    <div class="text-xs text-slate-500 mb-1">Frente</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                                     <a href="{{ $license->getFirstMediaUrl('license_front') }}"
                                                         target="_blank" class="block">
                                                         <img src="{{ $license->getFirstMediaUrl('license_front') }}"
@@ -425,12 +574,20 @@
                                                     </a>
                                                 </div>
                                             @else
+<<<<<<< HEAD
                                                 <div class="text-danger text-sm">Front image not available</div>
+=======
+                                                <div class="text-danger text-sm">Imagen frontal no disponible</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                             @endif
 
                                             @if ($license->getFirstMediaUrl('license_back'))
                                                 <div>
+<<<<<<< HEAD
                                                     <div class="text-xs text-slate-500 mb-1">Reverse</div>
+=======
+                                                    <div class="text-xs text-slate-500 mb-1">Reverso</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                                     <a href="{{ $license->getFirstMediaUrl('license_back') }}"
                                                         target="_blank" class="block">
                                                         <img src="{{ $license->getFirstMediaUrl('license_back') }}"
@@ -439,27 +596,46 @@
                                                     </a>
                                                 </div>
                                             @else
+<<<<<<< HEAD
                                                 <div class="text-danger text-sm">Reverse side image not available</div>
+=======
+                                                <div class="text-danger text-sm">Imagen del reverso no disponible</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                             @endif
                                         </div>
                                     </div>
                                 </div>
                             @endforeach
                         @else
+<<<<<<< HEAD
                             <div class="text-slate-500 italic">No license information has been recorded.</div>
+=======
+                            <div class="text-slate-500 italic">No se ha registrado información de licencias.</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                         @endif
 
                         <!-- Experiencia de Conducción -->
                         @if ($driver->experiences->isNotEmpty())
+<<<<<<< HEAD
                             <h3 class="text-lg font-medium mt-6 mb-4">Driving Experience</h3>
+=======
+                            <h3 class="text-lg font-medium mt-6 mb-4">Experiencia de Conducción</h3>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                             <div class="overflow-x-auto">
                                 <table class="min-w-full border-collapse">
                                     <thead>
                                         <tr class="bg-slate-100">
+<<<<<<< HEAD
                                             <th class="border px-4 py-2 text-left">Equipment Type</th>
                                             <th class="border px-4 py-2 text-left">Years of Experience</th>
                                             <th class="border px-4 py-2 text-left">Total Miles Driven </th>
                                             <th class="border px-4 py-2 text-left">Requires CDL</th>
+=======
+                                            <th class="border px-4 py-2 text-left">Tipo de Equipo</th>
+                                            <th class="border px-4 py-2 text-left">Años de Experiencia</th>
+                                            <th class="border px-4 py-2 text-left">Millas Conducidas</th>
+                                            <th class="border px-4 py-2 text-left">Requiere CDL</th>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -469,7 +645,11 @@
                                                 <td class="border px-4 py-2">{{ $exp->years_experience }}</td>
                                                 <td class="border px-4 py-2">{{ number_format($exp->miles_driven) }}
                                                 </td>
+<<<<<<< HEAD
                                                 <td class="border px-4 py-2">{{ $exp->requires_cdl ? 'Yes' : 'No' }}
+=======
+                                                <td class="border px-4 py-2">{{ $exp->requires_cdl ? 'Sí' : 'No' }}
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -483,12 +663,17 @@
                 <!-- Información Médica -->
                 @if ($currentTab === 'medical')
                     <div class="mb-5">
+<<<<<<< HEAD
                         <h3 class="text-lg font-medium mb-4">Driver Medical Qualification</h3>
+=======
+                        <h3 class="text-lg font-medium mb-4">Calificación Médica</h3>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
 
                         @if ($driver->medicalQualification)
                             @php $medical = $driver->medicalQualification; @endphp
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
+<<<<<<< HEAD
                                     <div class="text-sm text-slate-500">Medical Examiner Name</div>
                                     <div class="font-medium">{{ $medical->medical_examiner_name }}</div>
                                 </div>
@@ -498,18 +683,37 @@
                                 </div>
                                 <div>
                                     <div class="text-sm text-slate-500">Medical Card Expiration Date</div>
+=======
+                                    <div class="text-sm text-slate-500">Médico Examinador</div>
+                                    <div class="font-medium">{{ $medical->medical_examiner_name }}</div>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-slate-500">Número de Registro</div>
+                                    <div class="font-medium">{{ $medical->medical_examiner_registry_number }}</div>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-slate-500">Fecha de Expiración</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                     <div
                                         class="font-medium {{ $medical->medical_card_expiration_date < now() ? 'text-danger' : '' }}">
                                         {{ $medical->medical_card_expiration_date->format('d/m/Y') }}
                                     </div>
                                 </div>
                                 <div>
+<<<<<<< HEAD
                                     <div class="text-sm text-slate-500">SSN (last 4 digits)</div>
+=======
+                                    <div class="text-sm text-slate-500">SSN (últimos 4 dígitos)</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                     <div class="font-medium">
                                         @if ($medical->social_security_number)
                                             XXX-XX-{{ substr($medical->social_security_number, -4) }}
                                         @else
+<<<<<<< HEAD
                                             Not provided
+=======
+                                            No proporcionado
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                         @endif
                                     </div>
                                 </div>
@@ -519,16 +723,26 @@
                             <div class="mt-4 grid grid-cols-2 gap-4">
                                 @if ($medical->is_suspended)
                                     <div class="bg-warning/20 p-3 rounded border border-warning/20">
+<<<<<<< HEAD
                                         <div class="text-sm font-medium text-warning">Driver is Suspended</div>
                                         <div class="text-sm">From: {{ $medical->suspension_date->format('d/m/Y') }}
+=======
+                                        <div class="text-sm font-medium text-warning">Conductor Suspendido</div>
+                                        <div class="text-sm">Desde: {{ $medical->suspension_date->format('d/m/Y') }}
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                         </div>
                                     </div>
                                 @endif
 
                                 @if ($medical->is_terminated)
                                     <div class="bg-danger/20 p-3 rounded border border-danger/20">
+<<<<<<< HEAD
                                         <div class="text-sm font-medium text-danger">Driver is Terminated</div>
                                         <div class="text-sm">From: {{ $medical->termination_date->format('d/m/Y') }}
+=======
+                                        <div class="text-sm font-medium text-danger">Conductor Terminado</div>
+                                        <div class="text-sm">Desde: {{ $medical->termination_date->format('d/m/Y') }}
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                         </div>
                                     </div>
                                 @endif
@@ -536,7 +750,11 @@
 
                             <!-- Tarjeta médica -->
                             <div class="mt-4 pt-4 border-t border-slate-200">
+<<<<<<< HEAD
                                 <div class="text-sm text-slate-500 mb-2">Medical Card</div>
+=======
+                                <div class="text-sm text-slate-500 mb-2">Tarjeta Médica</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                 @if ($medical->getFirstMediaUrl('medical_card'))
                                     <a href="{{ $medical->getFirstMediaUrl('medical_card') }}" target="_blank"
                                         class="block w-64">
@@ -544,16 +762,25 @@
                                             alt="Tarjeta médica" class="border rounded object-contain bg-white">
                                     </a>
                                 @else
+<<<<<<< HEAD
                                     <div class="text-danger text-sm">Medical card not uploaded</div>
                                 @endif
                             </div>
                         @else
                             <div class="text-slate-500 italic">No medical information has been recorded.</div>
+=======
+                                    <div class="text-danger text-sm">Tarjeta médica no adjunta</div>
+                                @endif
+                            </div>
+                        @else
+                            <div class="text-slate-500 italic">No se ha registrado información médica.</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                         @endif
                     </div>
                 @endif
 
                 <!-- Capacitación -->
+<<<<<<< HEAD
                 @if ($currentTab === 'records')
                     <div class="mb-5">
                         <!-- Training Schools Section -->
@@ -774,6 +1001,97 @@
                                         @endif
                                     </div>
                                 </div>
+=======
+                @if ($currentTab === 'training')
+                    <div class="mb-5">
+                        <h3 class="text-lg font-medium mb-4">Escuelas de Capacitación</h3>
+
+                        @if ($driver->application && $driver->application->details)
+                            @if ($driver->application->details->has_attended_training_school)
+                                @if ($driver->trainingSchools->isNotEmpty())
+                                    @foreach ($driver->trainingSchools as $school)
+                                        <div class="bg-slate-50 p-4 rounded-lg mb-4">
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <div class="text-sm text-slate-500">Escuela</div>
+                                                    <div class="font-medium">{{ $school->school_name }}</div>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm text-slate-500">Ubicación</div>
+                                                    <div class="font-medium">{{ $school->city }},
+                                                        {{ $school->state }}</div>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm text-slate-500">Periodo</div>
+                                                    <div class="font-medium">
+                                                        {{ $school->date_start->format('m/Y') }} -
+                                                        {{ $school->date_end->format('m/Y') }}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div class="text-sm text-slate-500">Graduado</div>
+                                                    <div class="font-medium">{{ $school->graduated ? 'Sí' : 'No' }}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Habilidades de capacitación -->
+                                            @if ($school->training_skills && count($school->training_skills) > 0)
+                                                <div class="mt-3 pt-3 border-t border-slate-200">
+                                                    <div class="text-sm text-slate-500 mb-1">Habilidades Adquiridas
+                                                    </div>
+                                                    <div class="flex flex-wrap gap-2">
+                                                        @foreach ($school->training_skills as $skill)
+                                                            <span
+                                                                class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
+                                                                {{ ucfirst(str_replace('_', ' ', $skill)) }}
+                                                            </span>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @endif
+
+                                            <!-- Certificados -->
+                                            @if ($school->hasMedia('school_certificates'))
+                                                <div class="mt-3 pt-3 border-t border-slate-200">
+                                                    <div class="text-sm text-slate-500 mb-2">Certificados</div>
+                                                    <div class="flex flex-wrap gap-2">
+                                                        @foreach ($school->getMedia('school_certificates') as $certificate)
+                                                            <a href="{{ $certificate->getUrl() }}" target="_blank"
+                                                                class="block">
+                                                                @if (strpos($certificate->mime_type, 'image/') === 0)
+                                                                    <img src="{{ $certificate->getUrl() }}"
+                                                                        alt="Certificado"
+                                                                        class="h-24 border rounded object-contain bg-white">
+                                                                @else
+                                                                    <div
+                                                                        class="h-24 w-24 border rounded flex items-center justify-center bg-white">
+                                                                        <x-base.lucide class="h-8 w-8 text-slate-400"
+                                                                            icon="FileText" />
+                                                                    </div>
+                                                                @endif
+                                                            </a>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <div class="mt-3 pt-3 border-t border-slate-200 text-warning">
+                                                    No se han adjuntado certificados
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <div class="text-warning">El solicitante indica que asistió a escuelas de
+                                        capacitación pero no ha proporcionado los detalles.</div>
+                                @endif
+                            @else
+                                <div class="text-slate-500">El solicitante indica que no ha asistido a escuelas de
+                                    capacitación comercial.</div>
+                            @endif
+                        @else
+                            <div class="text-slate-500 italic">No se ha registrado información sobre capacitación.
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                             </div>
                         @endif
                     </div>
@@ -782,7 +1100,11 @@
                 <!-- Historial de Empleo -->
                 @if ($currentTab === 'history')
                     <div class="mb-5">
+<<<<<<< HEAD
                         <h3 class="text-lg font-medium mb-4">Employment History</h3>
+=======
+                        <h3 class="text-lg font-medium mb-4">Historial de Empleo</h3>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
 
                         @if ($driver->employmentCompanies->isNotEmpty() || $driver->unemploymentPeriods->isNotEmpty())
                             <div class="flex items-center mb-3">
@@ -805,11 +1127,19 @@
                                             $totalYears += $fromDate->diffInDays($toDate) / 365.25;
                                         }
 
+<<<<<<< HEAD
                                         echo number_format($totalYears, 1) . ' years';
                                     @endphp
 
                                     <span class="ml-2 {{ $totalYears >= 10 ? 'text-success' : 'text-danger' }}">
                                         {{ $totalYears >= 10 ? '✓ Meets requirement' : '✗ Does not meet 10-year requirement' }}
+=======
+                                        echo number_format($totalYears, 1) . ' años';
+                                    @endphp
+
+                                    <span class="ml-2 {{ $totalYears >= 10 ? 'text-success' : 'text-danger' }}">
+                                        {{ $totalYears >= 10 ? '✓ Cumple requisito' : '✗ No cumple requisito de 10 años' }}
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                     </span>
                                 </div>
                             </div>
@@ -878,13 +1208,21 @@
                                                 @endif
                                                 @if ($company->reason_for_leaving)
                                                     <div class="text-sm mt-1">
+<<<<<<< HEAD
                                                         <span class="text-slate-500">Reason for leaving:</span>
+=======
+                                                        <span class="text-slate-500">Razón de salida:</span>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                                         {{ ucfirst($company->reason_for_leaving === 'other' ? $company->other_reason_description : $company->reason_for_leaving) }}
                                                     </div>
                                                 @endif
                                             @else
                                                 @php $period = $item['entity']; @endphp
+<<<<<<< HEAD
                                                 <div class="font-medium">Period of Unemployment</div>
+=======
+                                                <div class="font-medium">Periodo de Desempleo</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                                 @if ($period->comments)
                                                     <div class="text-sm mt-1">{{ $period->comments }}</div>
                                                 @endif
@@ -900,12 +1238,184 @@
                 @endif
 
                 <!-- Infracciones y Accidentes -->
+<<<<<<< HEAD
 
+=======
+                <!-- Infracciones y Accidentes -->
+                @if ($currentTab === 'traffic')
+                    <div class="mb-5">
+                        <h3 class="text-lg font-medium mb-4">Infracciones de Tráfico</h3>
+
+                        @if ($driver->application && $driver->application->details)
+                            @if ($driver->application->details->has_traffic_convictions)
+                                @if ($driver->trafficConvictions->isNotEmpty())
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full border-collapse">
+                                            <thead>
+                                                <tr class="bg-slate-100">
+                                                    <th class="border px-4 py-2 text-left">Fecha</th>
+                                                    <th class="border px-4 py-2 text-left">Ubicación</th>
+                                                    <th class="border px-4 py-2 text-left">Cargo</th>
+                                                    <th class="border px-4 py-2 text-left">Sanción</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($driver->trafficConvictions as $conviction)
+                                                    <tr>
+                                                        <td class="border px-4 py-2">
+                                                            {{ $conviction->conviction_date->format('d/m/Y') }}</td>
+                                                        <td class="border px-4 py-2">{{ $conviction->location }}</td>
+                                                        <td class="border px-4 py-2">{{ $conviction->charge }}</td>
+                                                        <td class="border px-4 py-2">{{ $conviction->penalty }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="text-warning mb-4">El solicitante indica que tiene infracciones de
+                                        tráfico pero no ha proporcionado los detalles.</div>
+                                @endif
+                            @else
+                                <div class="text-slate-500 mb-4">El solicitante indica que no tiene infracciones de
+                                    tráfico.</div>
+                            @endif
+                        @else
+                            <div class="text-slate-500 italic mb-4">No se ha registrado información sobre infracciones.
+                            </div>
+                        @endif
+
+                        <!-- Accidentes -->
+                        <h3 class="text-lg font-medium mb-4 mt-8">Historial de Accidentes</h3>
+
+                        @if ($driver->application && $driver->application->details)
+                            @if ($driver->application->details->has_accidents)
+                                @if ($driver->accidents->isNotEmpty())
+                                    <div class="space-y-4">
+                                        @foreach ($driver->accidents as $accident)
+                                            <div class="bg-slate-50 p-4 rounded-lg">
+                                                <div class="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <div class="text-sm text-slate-500">Fecha del Accidente</div>
+                                                        <div class="font-medium">
+                                                            {{ $accident->accident_date->format('d/m/Y') }}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div class="text-sm text-slate-500">Naturaleza del Accidente
+                                                        </div>
+                                                        <div class="font-medium">{{ $accident->nature_of_accident }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="grid grid-cols-2 gap-4 mt-2">
+                                                    @if ($accident->had_injuries)
+                                                        <div>
+                                                            <div class="text-sm text-slate-500">Lesiones</div>
+                                                            <div class="font-medium text-warning">Sí,
+                                                                {{ $accident->number_of_injuries }} persona(s)</div>
+                                                        </div>
+                                                    @endif
+
+                                                    @if ($accident->had_fatalities)
+                                                        <div>
+                                                            <div class="text-sm text-slate-500">Fatalidades</div>
+                                                            <div class="font-medium text-danger">Sí,
+                                                                {{ $accident->number_of_fatalities }} persona(s)</div>
+                                                        </div>
+                                                    @endif
+                                                </div>
+
+                                                @if ($accident->comments)
+                                                    <div class="mt-2">
+                                                        <div class="text-sm text-slate-500">Comentarios</div>
+                                                        <div class="text-sm">{{ $accident->comments }}</div>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <div class="text-warning">El solicitante indica que ha tenido accidentes pero no ha
+                                        proporcionado los detalles.</div>
+                                @endif
+                            @else
+                                <div class="text-slate-500">El solicitante indica que no ha tenido accidentes.</div>
+                            @endif
+                        @else
+                            <div class="text-slate-500 italic">No se ha registrado información sobre accidentes.</div>
+                        @endif
+
+                        <!-- FMCSR Data -->
+                        @if ($driver->fmcsrData)
+                            <h3 class="text-lg font-medium mb-4 mt-8">Datos FMCSR</h3>
+                            <div class="bg-slate-50 p-4 rounded-lg">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <div class="text-sm text-slate-500">¿Está descalificado?</div>
+                                        <div
+                                            class="font-medium {{ $driver->fmcsrData->is_disqualified ? 'text-danger' : 'text-success' }}">
+                                            {{ $driver->fmcsrData->is_disqualified ? 'Sí' : 'No' }}
+                                        </div>
+                                        @if ($driver->fmcsrData->is_disqualified && $driver->fmcsrData->disqualified_details)
+                                            <div class="text-sm mt-1">{{ $driver->fmcsrData->disqualified_details }}
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <div>
+                                        <div class="text-sm text-slate-500">¿Licencia suspendida?</div>
+                                        <div
+                                            class="font-medium {{ $driver->fmcsrData->is_license_suspended ? 'text-danger' : 'text-success' }}">
+                                            {{ $driver->fmcsrData->is_license_suspended ? 'Sí' : 'No' }}
+                                        </div>
+                                        @if ($driver->fmcsrData->is_license_suspended && $driver->fmcsrData->suspension_details)
+                                            <div class="text-sm mt-1">{{ $driver->fmcsrData->suspension_details }}
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <div>
+                                        <div class="text-sm text-slate-500">¿Licencia denegada?</div>
+                                        <div
+                                            class="font-medium {{ $driver->fmcsrData->is_license_denied ? 'text-danger' : 'text-success' }}">
+                                            {{ $driver->fmcsrData->is_license_denied ? 'Sí' : 'No' }}
+                                        </div>
+                                        @if ($driver->fmcsrData->is_license_denied && $driver->fmcsrData->denial_details)
+                                            <div class="text-sm mt-1">{{ $driver->fmcsrData->denial_details }}</div>
+                                        @endif
+                                    </div>
+
+                                    <div>
+                                        <div class="text-sm text-slate-500">¿Prueba positiva de drogas?</div>
+                                        <div
+                                            class="font-medium {{ $driver->fmcsrData->has_positive_drug_test ? 'text-danger' : 'text-success' }}">
+                                            {{ $driver->fmcsrData->has_positive_drug_test ? 'Sí' : 'No' }}
+                                        </div>
+                                        @if ($driver->fmcsrData->has_positive_drug_test)
+                                            <div class="text-sm mt-1">
+                                                SAP: {{ $driver->fmcsrData->substance_abuse_professional }}
+                                                @if ($driver->fmcsrData->sap_phone)
+                                                    ({{ $driver->fmcsrData->sap_phone }})
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
 
                 <!-- Contenido para la pestaña de documentos -->
                 @if ($currentTab === 'documents')
                     <div class="mb-5">
+<<<<<<< HEAD
                         <h3 class="text-lg font-medium mb-4">Documents</h3>
+=======
+                        <h3 class="text-lg font-medium mb-4">Documentos de la Aplicación</h3>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
 
                         @if (count($generatedPdfs) > 0)
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -921,16 +1431,25 @@
                                         <div class="flex mt-2">
                                             <a href="{{ $pdf['url'] }}" target="_blank"
                                                 class="px-3 py-1 bg-primary text-white rounded text-sm hover:bg-primary-focus">
+<<<<<<< HEAD
                                                 View Document
                                             </a>
                                             <a href="{{ $pdf['url'] }}" download
                                                 class="px-3 py-1 bg-slate-200 text-slate-700 rounded text-sm hover:bg-slate-300 ml-2">
                                                 Download
+=======
+                                                Ver documento
+                                            </a>
+                                            <a href="{{ $pdf['url'] }}" download
+                                                class="px-3 py-1 bg-slate-200 text-slate-700 rounded text-sm hover:bg-slate-300 ml-2">
+                                                Descargar
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                             </a>
                                         </div>
                                     </div>
                                 @endforeach
                             </div>
+<<<<<<< HEAD
 
                             <!-- Botón para descargar todos los documentos -->
                             <div class="mt-4 flex justify-center">
@@ -945,51 +1464,89 @@
                         @else
                             <div class="text-slate-500 italic">No PDF documents have been generated for this
                                 application.
+=======
+                        @else
+                            <div class="text-slate-500 italic">No se han generado documentos PDF para esta aplicación.
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                             </div>
                         @endif
 
                         <!-- Sección para solicitar documentos adicionales -->
+<<<<<<< HEAD
                         {{-- <div class="mt-6 pt-6 border-t border-slate-200">
                             <h4 class="font-medium mb-3">Request Additional Documentation</h4>
                 
                             <div class="mb-4">
                                 <div class="mb-2">Select the documents that the driver must provide:</div>
                 
+=======
+                        <div class="mt-6 pt-6 border-t border-slate-200">
+                            <h4 class="font-medium mb-3">Solicitar Documentación Adicional</h4>
+
+                            <div class="mb-4">
+                                <div class="mb-2">Seleccione los documentos que el conductor debe proporcionar:</div>
+
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                                     <div class="flex items-center">
                                         <input type="checkbox" wire:model="requestedDocuments" value="identification"
                                             id="req_identification"
                                             class="form-checkbox h-4 w-4 text-primary rounded border-slate-300">
+<<<<<<< HEAD
                                         <label for="req_identification" class="ml-2 text-sm">Identification with Photo</label>
+=======
+                                        <label for="req_identification" class="ml-2 text-sm">Identificación con
+                                            foto</label>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                     </div>
                                     <div class="flex items-center">
                                         <input type="checkbox" wire:model="requestedDocuments" value="ssn"
                                             id="req_ssn"
                                             class="form-checkbox h-4 w-4 text-primary rounded border-slate-300">
+<<<<<<< HEAD
                                         <label for="req_ssn" class="ml-2 text-sm">Social Security Card</label>
+=======
+                                        <label for="req_ssn" class="ml-2 text-sm">Tarjeta de Seguro Social</label>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                     </div>
                                     <div class="flex items-center">
                                         <input type="checkbox" wire:model="requestedDocuments" value="license"
                                             id="req_license"
                                             class="form-checkbox h-4 w-4 text-primary rounded border-slate-300">
+<<<<<<< HEAD
                                         <label for="req_license" class="ml-2 text-sm">Updated Driver's License</label>
+=======
+                                        <label for="req_license" class="ml-2 text-sm">Licencia de conducir
+                                            actualizada</label>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                     </div>
                                     <div class="flex items-center">
                                         <input type="checkbox" wire:model="requestedDocuments" value="medical_card"
                                             id="req_medical_card"
                                             class="form-checkbox h-4 w-4 text-primary rounded border-slate-300">
+<<<<<<< HEAD
                                         <label for="req_medical_card" class="ml-2 text-sm">Updated Medical Card</label>
+=======
+                                        <label for="req_medical_card" class="ml-2 text-sm">Tarjeta médica
+                                            actualizada</label>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                     </div>
                                     <div class="flex items-center">
                                         <input type="checkbox" wire:model="requestedDocuments" value="proof_address"
                                             id="req_proof_address"
                                             class="form-checkbox h-4 w-4 text-primary rounded border-slate-300">
+<<<<<<< HEAD
                                         <label for="req_proof_address" class="ml-2 text-sm">Proof of Address</label>
+=======
+                                        <label for="req_proof_address" class="ml-2 text-sm">Comprobante de
+                                            domicilio</label>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                     </div>
                                     <div class="flex items-center">
                                         <input type="checkbox" wire:model="requestedDocuments" value="employment"
                                             id="req_employment"
                                             class="form-checkbox h-4 w-4 text-primary rounded border-slate-300">
+<<<<<<< HEAD
                                         <label for="req_employment" class="ml-2 text-sm">Previous Employment Verification</label>
                                     </div>
                                 </div>
@@ -1034,6 +1591,26 @@
                                 <div>{{ $savedVerification->notes }}</div>
                             </div>
                         @endif
+=======
+                                        <label for="req_employment" class="ml-2 text-sm">Verificación de empleo
+                                            anterior</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-1">Requisitos adicionales:</label>
+                                <textarea wire:model="additionalRequirements" rows="3"
+                                    class="form-textarea w-full border-slate-200 rounded-md text-sm"
+                                    placeholder="Describa cualquier información o documento adicional que necesite el conductor..."></textarea>
+                            </div>
+
+                            <button type="button" wire:click="requestAdditionalDocuments"
+                                class="px-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600">
+                                Solicitar documentos adicionales
+                            </button>
+                        </div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                     </div>
                 @endif
             </div>
@@ -1042,15 +1619,24 @@
         <!-- Panel derecho: Checklist y acciones -->
         <div class="w-2/5">
             <div class="box box--stacked p-5">
+<<<<<<< HEAD
                 <h3 class="text-lg font-medium mb-4">Verification Checklist</h3>
+=======
+                <h3 class="text-lg font-medium mb-4">Lista de Verificación</h3>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
 
                 <div class="space-y-3 mb-6">
                     @foreach ($checklistItems as $key => $item)
                         <div class="flex items-center">
                             <input type="checkbox" id="check_{{ $key }}"
                                 class="form-checkbox h-5 w-5 text-primary rounded border-slate-300"
+<<<<<<< HEAD
                                 wire:click="toggleChecklistItem('{{ $key }}')"
                                 {{ $item['checked'] ? 'checked' : '' }}>
+=======
+                                wire:model="checklistItems.{{ $key }}.checked"
+                                wire:click="toggleChecklistItem('{{ $key }}')">
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                             <label for="check_{{ $key }}"
                                 class="ml-2 text-sm">{{ $item['label'] }}</label>
                         </div>
@@ -1061,26 +1647,39 @@
                     <div class="text-danger text-sm mb-4">{{ $message }}</div>
                 @enderror
 
+<<<<<<< HEAD
                 <!-- Actions based on application status -->
+=======
+                <!-- Acciones según el estado de la aplicación -->
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                 @if ($application->status === 'pending')
                     <div class="flex flex-col gap-3">
                         <button type="button"
                             class="btn btn-success w-full {{ $this->isChecklistComplete() ? '' : 'opacity-50 cursor-not-allowed' }}"
                             {{ $this->isChecklistComplete() ? '' : 'disabled' }} wire:click="approveApplication">
                             <x-base.lucide class="mr-2 h-4 w-4" icon="CheckCircle" />
+<<<<<<< HEAD
                             Approve Application
+=======
+                            Aprobar Solicitud
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                         </button>
 
                         <button type="button" class="btn btn-outline-danger w-full" data-tw-toggle="modal"
                             data-tw-target="#reject-modal">
                             <x-base.lucide class="mr-2 h-4 w-4" icon="XCircle" />
+<<<<<<< HEAD
                             Reject Application
+=======
+                            Rechazar Solicitud
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                         </button>
                     </div>
                 @elseif($application->status === 'approved')
                     <div class="bg-success/20 p-4 rounded border border-success/40 mb-4">
                         <div class="flex items-center">
                             <x-base.lucide class="h-5 w-5 text-success mr-2" icon="CheckCircle" />
+<<<<<<< HEAD
                             <div class="text-success font-medium">Application Approved</div>
                         </div>
                         <div class="text-sm mt-1">
@@ -1088,12 +1687,19 @@
                             {{ is_string($application->completed_at)
                                 ? \Carbon\Carbon::parse($application->completed_at)->format('d/m/Y H:i')
                                 : $application->completed_at->format('d/m/Y H:i') }}
+=======
+                            <div class="text-success font-medium">Solicitud Aprobada</div>
+                        </div>
+                        <div class="text-sm mt-1">
+                            Aprobada el {{ $application->completed_at->format('d/m/Y H:i') }}
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                         </div>
                     </div>
                 @elseif($application->status === 'rejected')
                     <div class="bg-danger/20 p-4 rounded border border-danger/40 mb-4">
                         <div class="flex items-center">
                             <x-base.lucide class="h-5 w-5 text-danger mr-2" icon="XCircle" />
+<<<<<<< HEAD
                             <div class="text-danger font-medium">Application Rejected</div>
                         </div>
                         <div class="text-sm mt-1">
@@ -1102,6 +1708,16 @@
                         @if ($application->rejection_reason)
                             <div class="mt-2 p-2 bg-white rounded text-sm">
                                 <div class="font-medium">Reason for rejection:</div>
+=======
+                            <div class="text-danger font-medium">Solicitud Rechazada</div>
+                        </div>
+                        <div class="text-sm mt-1">
+                            Rechazada el {{ $application->completed_at->format('d/m/Y H:i') }}
+                        </div>
+                        @if ($application->rejection_reason)
+                            <div class="mt-2 p-2 bg-white rounded text-sm">
+                                <div class="font-medium">Razón del rechazo:</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                 <div>{{ $application->rejection_reason }}</div>
                             </div>
                         @endif
@@ -1109,7 +1725,11 @@
                 @endif
 
                 <div class="mt-6 pt-6 border-t border-slate-200">
+<<<<<<< HEAD
                     <h3 class="text-lg font-medium mb-4">Steps Status</h3>
+=======
+                    <h3 class="text-lg font-medium mb-4">Estado de los Pasos</h3>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
 
                     <div class="space-y-2">
                         @foreach ($stepsStatus as $step => $status)
@@ -1119,6 +1739,7 @@
                                     2 => 'Licenses',
                                     3 => 'Medical',
                                     4 => 'Training',
+<<<<<<< HEAD
                                     5 => 'Traffic',
                                     6 => 'Accident',
                                     7 => 'FMCSR',
@@ -1126,6 +1747,10 @@
                                     9 => 'Company Policies',
                                     10 => 'Criminal History',
                                     11 => 'Application Certification',
+=======
+                                    5 => 'History',
+                                    6 => 'Documents',                                    
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                 ];
 
                                 $statusColors = [
@@ -1143,13 +1768,53 @@
 
                             <div class="flex items-center p-2 rounded border {{ $statusColors[$status] }}">
                                 <x-base.lucide class="h-4 w-4 mr-2" icon="{{ $statusIcons[$status] }}" />
+<<<<<<< HEAD
                                 <div class="text-sm">{{ $stepNames[$step] ?? "Step {$step}" }}</div>
+=======
+                                <div class="text-sm">{{ $stepNames[$step] ?? "Paso {$step}" }}</div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                                 <div class="ml-auto text-xs capitalize">{{ $status }}</div>
                             </div>
                         @endforeach
                     </div>
                 </div>
             </div>
+<<<<<<< HEAD
+=======
+
+            <div class="mt-6 pt-6 border-t border-slate-200">
+                <h3 class="text-lg font-medium mb-4">Notas del Reclutador</h3>
+                
+                <div class="mb-4">
+                    <textarea 
+                        wire:model="verificationNotes" 
+                        rows="4" 
+                        class="form-textarea w-full border-slate-200 rounded-md"
+                        placeholder="Ingrese notas sobre la verificación de esta solicitud..."
+                    ></textarea>
+                </div>
+                
+                <button type="button" 
+                       wire:click="saveVerification"
+                       class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-focus w-full">
+                    Guardar Verificación
+                </button>
+                
+                @if($savedVerification)
+                    <div class="mt-4 p-3 bg-slate-50 rounded border border-slate-200 text-sm">
+                        <div class="font-medium mb-1">Última verificación:</div>
+                        <div class="text-slate-600">{{ $savedVerification->verified_at->format('d/m/Y H:i') }}</div>
+                        <div class="text-slate-600">Por: {{ $savedVerification->verifier->name }}</div>
+                        @if($savedVerification->notes)
+                            <div class="mt-2 p-2 bg-white rounded">
+                                <div class="font-medium text-xs text-slate-500">Notas:</div>
+                                <div>{{ $savedVerification->notes }}</div>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+            </div>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
         </div>
 
 
@@ -1160,33 +1825,55 @@
         <x-base.dialog.panel>
             <x-base.dialog.title>
                 <h2 class="mr-auto text-base font-medium">
+<<<<<<< HEAD
                     Reject Driver Application
+=======
+                    Rechazar Solicitud de Conductor
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                 </h2>
             </x-base.dialog.title>
             <form wire:submit.prevent="rejectApplication">
                 <x-base.dialog.description>
                     <div class="mt-2 mb-4">
+<<<<<<< HEAD
                         <x-base.form-label for="rejectionReason">Reason for Rejection</x-base.form-label>
                         <x-base.form-textarea id="rejectionReason" wire:model="rejectionReason" rows="4"
                             placeholder="Explain the reason why this application is being rejected..."></x-base.form-textarea>
+=======
+                        <x-base.form-label for="rejectionReason">Razón del Rechazo</x-base.form-label>
+                        <x-base.form-textarea id="rejectionReason" wire:model="rejectionReason" rows="4"
+                            placeholder="Explique la razón por la que esta solicitud está siendo rechazada..."></x-base.form-textarea>
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                         @error('rejectionReason')
                             <div class="text-danger text-sm mt-1">{{ $message }}</div>
                         @enderror
                     </div>
                     <div class="bg-amber-50 border border-amber-200 rounded p-3 text-sm text-amber-600">
                         <x-base.lucide class="h-4 w-4 inline-block mr-1" icon="AlertTriangle" />
+<<<<<<< HEAD
                         This action will send a notification to the driver informing them that their application has
                         been
                         rejected.
+=======
+                        Esta acción enviará una notificación al conductor informándole que su solicitud ha sido
+                        rechazada.
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                     </div>
                 </x-base.dialog.description>
                 <x-base.dialog.footer>
                     <x-base.button class="mr-1 w-20" data-tw-dismiss="modal" type="button"
                         variant="outline-secondary">
+<<<<<<< HEAD
                         Cancel
                     </x-base.button>
                     <x-base.button class="w-20" type="submit" variant="danger">
                         Reject
+=======
+                        Cancelar
+                    </x-base.button>
+                    <x-base.button class="w-20" type="submit" variant="danger">
+                        Rechazar
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                     </x-base.button>
                 </x-base.dialog.footer>
             </form>

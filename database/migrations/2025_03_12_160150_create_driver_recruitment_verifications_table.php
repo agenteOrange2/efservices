@@ -13,10 +13,17 @@ return new class extends Migration
     {
         Schema::create('driver_recruitment_verifications', function (Blueprint $table) {
             $table->id();
+<<<<<<< HEAD
             $table->foreignId('driver_application_id')->constrained('driver_applications')->onDelete('cascade');
             $table->foreignId('verified_by_user_id')->constrained('users');
             $table->json('verification_items');
             $table->text('notes')->nullable();
+=======
+            $table->foreignId('driver_application_id')->constrained()->onDelete('cascade');
+            $table->foreignId('verified_by_user_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->json('verification_items'); // Almacena los items verificados en formato JSON
+            $table->text('notes')->nullable(); // Notas adicionales del reclutador
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
             $table->timestamp('verified_at');
             $table->timestamps();
         });

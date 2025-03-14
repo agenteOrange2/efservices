@@ -17,7 +17,10 @@ use App\Http\Controllers\Admin\UserCarrierController;
 use App\Http\Controllers\Admin\DocumentTypeController;
 use App\Http\Controllers\Admin\CarrierDocumentController;
 use App\Http\Controllers\Admin\Vehicles\VehicleController;
+<<<<<<< HEAD
 use App\Http\Controllers\Admin\Driver\DriverListController;
+=======
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
 use App\Http\Controllers\Admin\UserCarrierDocumentController;
 use App\Http\Controllers\Admin\Vehicles\VehicleMakeController;
 use App\Http\Controllers\Admin\Vehicles\VehicleTypeController;
@@ -225,6 +228,7 @@ Route::post('user_carrier/{user_carrier}/delete-photo', [UserCarrierController::
 // Route::get('drivers', [DriversController::class, 'index'])->name('drivers.index');
 // Route::put('drivers/{driver}/toggle-status', [DriversController::class, 'toggleStatus'])->name('drivers.toggle-status');
 
+<<<<<<< HEAD
 Route::prefix('drivers')->name('drivers.')->group(function () {
     Route::get('/', [DriverListController::class, 'index'])->name('index');
     Route::get('/{id}', [DriverListController::class, 'show'])->name('show');
@@ -234,6 +238,8 @@ Route::prefix('drivers')->name('drivers.')->group(function () {
     Route::get('/export', [DriverListController::class, 'export'])->name('export');
 });
 
+=======
+>>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
 
 // Rutas para el reclutamiento de conductores
 Route::prefix('driver-recruitment')->name('driver-recruitment.')->group(function () {
