@@ -4,11 +4,8 @@ namespace App\Services\Admin;
 
 use App\Models\UserDriverDetail;
 use Illuminate\Support\Facades\Log;
-<<<<<<< HEAD
 use App\Models\Admin\Driver\DriverApplication;
 use App\Models\Admin\Driver\DriverRecruitmentVerification;
-=======
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
 
 class DriverStepService
 {
@@ -29,7 +26,6 @@ class DriverStepService
     const STATUS_PENDING = 'pending';      // Naranja
     const STATUS_MISSING = 'missing';      // Rojo
 
-<<<<<<< HEAD
     // Pasos que requieren verificación manual antes de marcarlos como completados
     private $stepsRequiringVerification = [
         self::STEP_TRAINING,
@@ -86,14 +82,6 @@ class DriverStepService
 
         // Obtener los estados basados solo en los datos
         $dataBasedStatuses = [
-=======
-    /**
-     * Obtener el estado actual de todos los pasos para un driver específico
-     */
-    public function getStepsStatus(UserDriverDetail $userDriverDetail): array
-    {
-        return [
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
             self::STEP_GENERAL_INFO => $this->checkGeneralInfoStep($userDriverDetail),
             self::STEP_LICENSES => $this->checkLicensesStep($userDriverDetail),
             self::STEP_MEDICAL => $this->checkMedicalStep($userDriverDetail),
@@ -106,7 +94,6 @@ class DriverStepService
             self::STEP_CRIMINAL_HISTORY => $this->checkCriminalHistoryStep($userDriverDetail),
             self::STEP_APPLICATION_CERTIFICATION => $this->checkApplicationCertificationStep($userDriverDetail),
         ];
-<<<<<<< HEAD
 
         // Aplicar la regla para todos los pasos: si tienen datos completos 
         // pero no están verificados, mostrar como pending
@@ -155,8 +142,6 @@ class DriverStepService
         }
 
         return false;
-=======
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
     }
 
     /**
@@ -166,7 +151,6 @@ class DriverStepService
     {
         // Verificar información general
         $generalComplete = $userDriverDetail->id &&
-<<<<<<< HEAD
             $userDriverDetail->user &&
             $userDriverDetail->user->email &&
             $userDriverDetail->phone;
@@ -190,33 +174,11 @@ class DriverStepService
                 !$primaryAddress->lived_three_years &&
                 $userDriverDetail->application->addresses->where('primary', false)->count() == 0
             ) {
-=======
-                          $userDriverDetail->user &&
-                          $userDriverDetail->user->email &&
-                          $userDriverDetail->phone;
-        
-        if (!$generalComplete) {
-            return self::STATUS_MISSING;
-        }
-        
-        // Verificar dirección
-        $addressComplete = false;
-        if ($userDriverDetail->application && 
-            $userDriverDetail->application->addresses && 
-            $userDriverDetail->application->addresses->where('primary', true)->count() > 0) {
-            
-            $primaryAddress = $userDriverDetail->application->addresses->where('primary', true)->first();
-            
-            // Si no ha vivido ahí por tres años, verificar que tiene direcciones anteriores
-            if (!$primaryAddress->lived_three_years && 
-                $userDriverDetail->application->addresses->where('primary', false)->count() == 0) {
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                 // Falta historial de direcciones
             } else {
                 $addressComplete = true;
             }
         }
-<<<<<<< HEAD
 
         if (!$addressComplete) {
             return self::STATUS_PENDING;
@@ -242,48 +204,16 @@ class DriverStepService
                 ($userDriverDetail->application->details->how_did_hear === 'employee_referral' &&
                     !$userDriverDetail->application->details->referral_employee_name)
             ) {
-=======
-        
-        if (!$addressComplete) {
-            return self::STATUS_PENDING;
-        }
-        
-        // Verificar detalles de aplicación
-        $applicationComplete = false;
-        if ($userDriverDetail->application && 
-            $userDriverDetail->application->details && 
-            $userDriverDetail->application->details->applying_position && 
-            $userDriverDetail->application->details->applying_location && 
-            $userDriverDetail->application->details->eligible_to_work) {
-            
-            // Verificar campos específicos según las respuestas
-            if (($userDriverDetail->application->details->applying_position === 'other' && 
-                !$userDriverDetail->application->details->applying_position_other) ||
-                ($userDriverDetail->application->details->has_twic_card && 
-                !$userDriverDetail->application->details->twic_expiration_date) ||
-                ($userDriverDetail->application->details->how_did_hear === 'other' && 
-                !$userDriverDetail->application->details->how_did_hear_other) ||
-                ($userDriverDetail->application->details->how_did_hear === 'employee_referral' && 
-                !$userDriverDetail->application->details->referral_employee_name)) {
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                 // Hay campos pendientes
             } else {
                 $applicationComplete = true;
             }
         }
-<<<<<<< HEAD
 
         if (!$applicationComplete) {
             return self::STATUS_PENDING;
         }
 
-=======
-        
-        if (!$applicationComplete) {
-            return self::STATUS_PENDING;
-        }
-        
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
         // Si llegamos aquí, todos los pasos están completos
         return self::STATUS_COMPLETED;
     }
@@ -328,30 +258,17 @@ class DriverStepService
      */
     private function checkTrainingStep(UserDriverDetail $userDriverDetail): string
     {
-<<<<<<< HEAD
         // Primero verificar si hay datos directamente
         if ($userDriverDetail->trainingSchools()->exists()) {
             return self::STATUS_COMPLETED;
         }
 
         // Si no hay datos, entonces verificar los flags
-=======
-        // Si respondió explícitamente sobre capacitación (sí o no)
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
         if (
             $userDriverDetail->application &&
             $userDriverDetail->application->details &&
             isset($userDriverDetail->application->details->has_attended_training_school)
         ) {
-<<<<<<< HEAD
-=======
-            // Si indicó que asistió a capacitación y tiene registros
-            if ($userDriverDetail->application->details->has_attended_training_school && 
-                $userDriverDetail->trainingSchools()->exists()) {
-                return self::STATUS_COMPLETED;
-            }
-
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
             // Si indicó que no asistió a capacitación
             if ($userDriverDetail->application->details->has_attended_training_school === false) {
                 return self::STATUS_COMPLETED;
@@ -370,30 +287,17 @@ class DriverStepService
      */
     private function checkTrafficStep(UserDriverDetail $userDriverDetail): string
     {
-<<<<<<< HEAD
         // Primero verificar si hay datos directamente
         if ($userDriverDetail->trafficConvictions()->exists()) {
             return self::STATUS_COMPLETED;
         }
 
         // Si no hay datos, entonces verificar los flags
-=======
-        // Si respondió explícitamente sobre infracciones (sí o no)
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
         if (
             $userDriverDetail->application &&
             $userDriverDetail->application->details &&
             isset($userDriverDetail->application->details->has_traffic_convictions)
         ) {
-<<<<<<< HEAD
-=======
-            // Si indicó que tiene infracciones y tiene registros
-            if ($userDriverDetail->application->details->has_traffic_convictions && 
-                $userDriverDetail->trafficConvictions()->exists()) {
-                return self::STATUS_COMPLETED;
-            }
-
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
             // Si indicó que no tiene infracciones
             if ($userDriverDetail->application->details->has_traffic_convictions === false) {
                 return self::STATUS_COMPLETED;
@@ -412,30 +316,17 @@ class DriverStepService
      */
     private function checkAccidentStep(UserDriverDetail $userDriverDetail): string
     {
-<<<<<<< HEAD
         // Primero verificar si hay datos directamente
         if ($userDriverDetail->accidents()->exists()) {
             return self::STATUS_COMPLETED;
         }
 
         // Si no hay datos, entonces verificar los flags
-=======
-        // Si respondió explícitamente sobre accidentes (sí o no)
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
         if (
             $userDriverDetail->application &&
             $userDriverDetail->application->details &&
             isset($userDriverDetail->application->details->has_accidents)
         ) {
-<<<<<<< HEAD
-=======
-            // Si indicó que tiene accidentes y tiene registros
-            if ($userDriverDetail->application->details->has_accidents && 
-                $userDriverDetail->accidents()->exists()) {
-                return self::STATUS_COMPLETED;
-            }
-
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
             // Si indicó que no tiene accidentes
             if ($userDriverDetail->application->details->has_accidents === false) {
                 return self::STATUS_COMPLETED;
@@ -448,10 +339,6 @@ class DriverStepService
             ? self::STATUS_MISSING
             : self::STATUS_MISSING;
     }
-<<<<<<< HEAD
-=======
-
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
     /**
      * Verificar el estado del paso FMCSR
      */
@@ -509,11 +396,6 @@ class DriverStepService
         // Verificar si existe la política de la compañía y todos los consentimientos
         if ($userDriverDetail->companyPolicy) {
             $policy = $userDriverDetail->companyPolicy;
-<<<<<<< HEAD
-
-=======
-            
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
             if (
                 $policy->consent_all_policies_attached &&
                 $policy->substance_testing_consent &&
@@ -522,11 +404,6 @@ class DriverStepService
             ) {
                 return self::STATUS_COMPLETED;
             }
-<<<<<<< HEAD
-
-=======
-            
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
             return self::STATUS_PENDING;
         }
 
@@ -543,22 +420,12 @@ class DriverStepService
         // Verificar si existe el historial criminal y los consentimientos
         if ($userDriverDetail->criminalHistory) {
             $criminal = $userDriverDetail->criminalHistory;
-<<<<<<< HEAD
-
-=======
-            
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
             if (
                 $criminal->fcra_consent &&
                 $criminal->background_info_consent
             ) {
                 return self::STATUS_COMPLETED;
             }
-<<<<<<< HEAD
-
-=======
-            
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
             return self::STATUS_PENDING;
         }
 
@@ -641,7 +508,6 @@ class DriverStepService
      */
     public function calculateCompletionPercentage(UserDriverDetail $userDriverDetail): int
     {
-<<<<<<< HEAD
         // Si la aplicación está aprobada, retornar 100%
         if ($userDriverDetail->application && $userDriverDetail->application->status === DriverApplication::STATUS_APPROVED) {
             return 100;
@@ -650,11 +516,6 @@ class DriverStepService
         $steps = $this->getStepsStatus($userDriverDetail);
         $completedSteps = 0;
     
-=======
-        $steps = $this->getStepsStatus($userDriverDetail);
-        $completedSteps = 0;
-
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
         foreach ($steps as $status) {
             if ($status === self::STATUS_COMPLETED) {
                 $completedSteps++;
@@ -662,11 +523,7 @@ class DriverStepService
                 $completedSteps += 0.5; // Pasos pendientes cuentan la mitad
             }
         }
-<<<<<<< HEAD
     
-=======
-
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
         return round(($completedSteps / count($steps)) * 100);
     }
 
@@ -681,8 +538,4 @@ class DriverStepService
             'current_step' => $step
         ]);
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7

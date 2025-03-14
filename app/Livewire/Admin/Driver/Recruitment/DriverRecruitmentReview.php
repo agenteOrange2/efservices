@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Admin\Driver\Recruitment;
 
-<<<<<<< HEAD
 use ZipArchive;
 use Carbon\Carbon;
 use App\Models\User;
@@ -16,17 +15,6 @@ use App\Services\Admin\DriverStepService;
 use App\Models\Admin\Driver\DriverApplication;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Models\Admin\Driver\DriverRecruitmentVerification;
-=======
-use App\Models\User;
-use App\Models\UserDriverDetail;
-use App\Models\Admin\Driver\DriverApplication;
-use App\Models\Admin\Driver\DriverRecruitmentVerification;
-use App\Services\Admin\DriverStepService;
-use Livewire\Component;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
 
 class DriverRecruitmentReview extends Component
 {
@@ -51,7 +39,6 @@ class DriverRecruitmentReview extends Component
     {
         $this->driverId = $driverId;
         $this->loadDriverData();
-<<<<<<< HEAD
         $this->initializeChecklist(); // Primero inicializa con valores predeterminados
         $this->loadLastVerification(); // Luego carga y aplica los valores guardados
         $this->loadGeneratedPdfs();
@@ -126,18 +113,11 @@ class DriverRecruitmentReview extends Component
         return true;
     }
 
-=======
-        $this->initializeChecklist();
-        $this->loadGeneratedPdfs();
-    }
-
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
     public function loadDriverData()
     {
         $this->driver = UserDriverDetail::with([
             'user',
             'carrier',
-<<<<<<< HEAD
             'application.details',
             'licenses',
             'medicalQualification',
@@ -145,15 +125,6 @@ class DriverRecruitmentReview extends Component
             'trainingSchools', // Verifica que este relationship esté definido correctamente
             'trafficConvictions', // Verifica que este relationship esté definido correctamente
             'accidents', 
-=======
-            'application',
-            'licenses',
-            'medicalQualification',
-            'experiences',
-            'trainingSchools',
-            'trafficConvictions',
-            'accidents',
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
             'fmcsrData',
             'workHistories',
             'unemploymentPeriods',
@@ -162,7 +133,6 @@ class DriverRecruitmentReview extends Component
             'certification'
         ])->findOrFail($this->driverId);
 
-<<<<<<< HEAD
         Log::info('Driver data loaded', [
             'driver_id' => $this->driver->id,
             'training_schools_count' => $this->driver->trainingSchools->count(),
@@ -174,8 +144,6 @@ class DriverRecruitmentReview extends Component
             'application_details' => $this->driver->application ? $this->driver->application->details : null
         ]);
 
-=======
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
         // Convertir date_of_birth a objeto Carbon si es una string
         if ($this->driver->date_of_birth && is_string($this->driver->date_of_birth)) {
             $this->driver->date_of_birth = Carbon::parse($this->driver->date_of_birth);
@@ -200,7 +168,6 @@ class DriverRecruitmentReview extends Component
 
         // Cargar la verificación más reciente si existe
         $this->loadLastVerification();
-<<<<<<< HEAD
 
         // Extraer los valores del checklistItems
         $checklistValues = [];
@@ -212,8 +179,6 @@ class DriverRecruitmentReview extends Component
         $stepService = new DriverStepService();
         $this->stepsStatus = $stepService->getStepsStatus($this->driver, $checklistValues);
         $this->completionPercentage = $stepService->calculateCompletionPercentage($this->driver);
-=======
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
     }
 
     /**
@@ -336,7 +301,6 @@ class DriverRecruitmentReview extends Component
 
             if ($verification) {
                 $this->savedVerification = $verification;
-<<<<<<< HEAD
                 
                 // If there's a saved verification, use its values to initialize the checklist
                 if (is_array($verification->verification_items)) {
@@ -347,14 +311,6 @@ class DriverRecruitmentReview extends Component
                     }
                 }
                 
-=======
-                // Si hay una verificación guardada, utilizar sus valores para inicializar la lista de verificación
-                foreach ($verification->verification_items as $key => $value) {
-                    if (isset($this->checklistItems[$key])) {
-                        $this->checklistItems[$key]['checked'] = $value;
-                    }
-                }
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
                 $this->verificationNotes = $verification->notes;
             }
         }
@@ -414,99 +370,21 @@ class DriverRecruitmentReview extends Component
         }
     }
 
-<<<<<<< HEAD
-
-=======
-    public function initializeChecklist()
-    {
-        // Define los elementos que el reclutador debe verificar
-        $this->checklistItems = [
-            'general_info' => [
-                'checked' => false,
-                'label' => 'Información general completa y válida'
-            ],
-            'contact_info' => [
-                'checked' => false,
-                'label' => 'Información de contacto verificada'
-            ],
-            'address_info' => [
-                'checked' => false,
-                'label' => 'Dirección actual y historial validados'
-            ],
-            'license_info' => [
-                'checked' => false,
-                'label' => 'Licencia de conducir válida y vigente'
-            ],
-            'license_image' => [
-                'checked' => false,
-                'label' => 'Imágenes de licencia adjuntas y legibles'
-            ],
-            'medical_info' => [
-                'checked' => false,
-                'label' => 'Información médica completa'
-            ],
-            'medical_image' => [
-                'checked' => false,
-                'label' => 'Tarjeta médica adjunta y vigente'
-            ],
-            'experience_info' => [
-                'checked' => false,
-                'label' => 'Experiencia de conducción verificada'
-            ],
-            'history_info' => [
-                'checked' => false,
-                'label' => 'Historial laboral completo (10 años)'
-            ],
-            'criminal_check' => [
-                'checked' => false,
-                'label' => 'Verificación de antecedentes penales'
-            ],
-            'documents_checked' => [
-                'checked' => false,
-                'label' => 'Todos los documentos revisados y validados'
-            ]
-        ];
-    }
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
 
     public function changeTab($tab)
     {
         $this->currentTab = $tab;
     }
 
-<<<<<<< HEAD
 
 
     public function saveVerification()
     {
         // Prepare verification data
-=======
-    public function toggleChecklistItem($item)
-    {
-        if (isset($this->checklistItems[$item])) {
-            $this->checklistItems[$item]['checked'] = !$this->checklistItems[$item]['checked'];
-        }
-    }
-
-    public function isChecklistComplete()
-    {
-        foreach ($this->checklistItems as $item) {
-            if (!$item['checked']) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public function saveVerification()
-    {
-        // Preparar los datos de verificación
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
         $verificationItems = [];
         foreach ($this->checklistItems as $key => $item) {
             $verificationItems[$key] = $item['checked'];
         }
-<<<<<<< HEAD
     
         // Update or create verification in database (instead of always creating new records)
         DriverRecruitmentVerification::updateOrCreate(
@@ -533,21 +411,6 @@ class DriverRecruitmentReview extends Component
         $this->stepsStatus = $stepService->getStepsStatus($this->driver, $checklistValues);
         $this->completionPercentage = $stepService->calculateCompletionPercentage($this->driver);
     
-=======
-
-        // Guardar la verificación en la base de datos
-        DriverRecruitmentVerification::create([
-            'driver_application_id' => $this->application->id,
-            'verified_by_user_id' => Auth::id(),
-            'verification_items' => $verificationItems,
-            'notes' => $this->verificationNotes,
-            'verified_at' => now()
-        ]);
-
-        // Refrescar los datos
-        $this->loadLastVerification();
-
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
         session()->flash('message', 'Verificación guardada correctamente.');
     }
 
@@ -638,7 +501,6 @@ class DriverRecruitmentReview extends Component
         session()->flash('message', 'La solicitud ha sido rechazada.');
     }
 
-<<<<<<< HEAD
     public function downloadAllDocuments()
 {
     if (!$this->driver || !$this->driver->id) {
@@ -702,8 +564,6 @@ class DriverRecruitmentReview extends Component
     ])->deleteFileAfterSend(true);
 }
 
-=======
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
     // Resto de los métodos igual que antes...
 
     public function render()
