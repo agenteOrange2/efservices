@@ -75,26 +75,12 @@ return [
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
         
-/*
-        'users' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\User::class,
-        ],    
-        
-        'user_carriers' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\UserCarrier::class, // Modelo correcto para user_carrier.
-        ],
-*/        
+   
         'drivers' => [
             'driver' => 'eloquent',
             'model' => App\Models\UserDriverDetail::class, // Modelo correcto para user_driver.
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
     ],
 
     /*

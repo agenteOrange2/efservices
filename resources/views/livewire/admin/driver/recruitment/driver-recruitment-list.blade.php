@@ -8,20 +8,20 @@
                         class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3] text-slate-500"
                         icon="Search" />
                     <x-base.form-input class="rounded-[0.5rem] pl-9 sm:w-64" type="text"
-                        placeholder="Buscar conductores..." wire:model.live.debounce.300ms="search" />
+                        placeholder="Search for drivers..." wire:model.live.debounce.300ms="search" />
                 </div>
             </div>
             <!-- Filtros -->
             <div class="flex flex-col gap-x-3 gap-y-2 sm:ml-auto sm:flex-row">
                 <x-base.form-select class="rounded-[0.5rem] sm:w-36" wire:model.live="statusFilter">
-                    <option value="">Todos los estados</option>
+                    <option value="">All states</option>
                     @foreach($applicationStatuses as $value => $label)
                         <option value="{{ $value }}">{{ $label }}</option>
                     @endforeach
                 </x-base.form-select>
                 
                 <x-base.form-select class="rounded-[0.5rem] sm:w-48" wire:model.live="carrierFilter">
-                    <option value="">Todos los transportistas</option>
+                    <option value="">All carriers</option>
                     @foreach($carriers as $carrier)
                         <option value="{{ $carrier->id }}">{{ $carrier->name }}</option>
                     @endforeach
@@ -36,27 +36,27 @@
                     <x-base.table.tr>
                         <x-base.table.td 
                             class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                            Conductor
+                            Driver
                         </x-base.table.td>
                         <x-base.table.td 
                             class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                            Contacto
+                            Contact
                         </x-base.table.td>
                         <x-base.table.td 
                             class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                            Transportista
+                            Carrier
                         </x-base.table.td>
                         <x-base.table.td 
                             class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500 text-center">
-                            Avance
+                            Progress
                         </x-base.table.td>
                         <x-base.table.td 
                             class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500 text-center">
-                            Estado
+                            Status
                         </x-base.table.td>
                         <x-base.table.td 
                             class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500 text-center">
-                            Acciones
+                            Actions
                         </x-base.table.td>
                     </x-base.table.tr>
                 </x-base.table.thead>
@@ -77,7 +77,7 @@
                                         <div class="font-medium">{{ $driver->user->name }} {{ $driver->last_name }}</div>
                                         <div class="text-slate-500 text-xs">
                                             {{ $driver->middle_name ? $driver->middle_name.' ' : '' }}
-                                            Aplicó: {{ $driver->created_at->format('d/m/Y') }}
+                                           Apply: {{ $driver->created_at->format('d/m/Y') }}
                                         </div>
                                     </div>
                                 </div>
@@ -149,7 +149,7 @@
                                     <a href="{{ route('admin.driver-recruitment.show', $driver->id) }}" 
                                        class="btn btn-primary btn-sm">
                                         <x-base.lucide class="h-4 w-4" icon="ClipboardCheck" />
-                                        Revisar
+                                        Review
                                     </a>
                                 </div>
                             </x-base.table.td>
@@ -159,7 +159,7 @@
                             <x-base.table.td colspan="6" class="border-dashed py-8 text-center">
                                 <div class="flex flex-col items-center justify-center text-slate-500">
                                     <x-base.lucide class="h-12 w-12 mb-2 text-slate-300" icon="UserX" />
-                                    <p>No se encontraron solicitudes de conductores</p>
+                                    <p>No driver applications were found</p>
                                 </div>
                             </x-base.table.td>
                         </x-base.table.tr>

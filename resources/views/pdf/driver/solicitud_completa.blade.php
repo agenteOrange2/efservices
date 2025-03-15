@@ -85,6 +85,7 @@
 
         .toc {
             margin-bottom: 20px;
+            width: 100%
         }
 
         .toc-item {

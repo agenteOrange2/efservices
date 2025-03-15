@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Facades\Excel;
+use Spatie\Permission\Models\Role;
 use App\Notifications\Admin\User\NewUserNotification;
 use App\Notifications\Admin\User\AdminNewUserCreatedNotification;
 
@@ -34,7 +35,8 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('admin.users.create');
+        $roles = Role::all();
+        return view('admin.users.create', compact('roles'));
     }
 
     /**
@@ -50,6 +52,8 @@ class UserController extends Controller
             'password' => 'required|min:8|confirmed', // Asegura que la contraseña coincida con el campo `password_confirmation`
             'status' => 'required|boolean',
             'profile_photo' => 'nullable|image|max:2048',
+            'roles' => 'nullable|array',
+            'roles.*' => 'exists:roles,id',
         ]);
 
         // Crear el usuario en la base de datos
@@ -60,7 +64,19 @@ class UserController extends Controller
             'status' => $validated['status'],
         ]);
 
-        $user->assignRole('superadmin');
+        if (!empty($validated['roles'])) {
+            $roles = Role::whereIn('id', $validated['roles'])->pluck('name')->toArray();
+            Log::info('Asignando roles al usuario', [
+                'user_id' => $user->id,
+                'roles_ids' => $validated['roles'],
+                'roles_names' => $roles
+            ]);
+            $user->assignRole($roles);
+        } else {
+            Log::info('No se enviaron roles, asignando superadmin por defecto', ['user_id' => $user->id]);
+            $user->assignRole('superadmin');
+        }
+
         Log::info('Rol asignado al usuario', ['user_id' => $user->id, 'role' => 'superadmin']);
 
         if ($request->hasFile('profile_photo')) {
@@ -113,7 +129,10 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $profilePhotoUrl = $user->getFirstMediaUrl('profile_photos', 'webp');
-        return view('admin.users.edit', compact('user', 'profilePhotoUrl'));
+        $roles = Role::all();
+        $userRoles = $user->roles->pluck('id')->toArray();
+
+        return view('admin.users.edit', compact('user', 'profilePhotoUrl', 'roles', 'userRoles'));
     }
     /**
      * Update the specified resource in storage.
@@ -132,6 +151,16 @@ class UserController extends Controller
             'password' => $validated['password'] ? Hash::make($validated['password']) : $user->password,
             'status' => $request->boolean('status'),
         ]);
+
+        if ($request->has('roles')) {
+            $roleIds = $request->input('roles', []);
+            Log::info('Roles a sincronizar', ['user_id' => $user->id, 'roles' => $roleIds]);
+            $roles = Role::whereIn('id', $roleIds)->pluck('name')->toArray();
+            $user->syncRoles($roles);
+        } else {
+            Log::info('No se enviaron roles, limpiando todos los roles', ['user_id' => $user->id]);
+            $user->syncRoles([]);
+        }
 
         if ($request->hasFile('profile_photo')) {
             $fileName = strtolower(str_replace(' ', '_', $user->name)) . '.webp'; // Genera el nombre basado en el usuario

@@ -39,16 +39,15 @@ class DriverStepService
         self::STEP_GENERAL_INFO => ['general_info', 'contact_info', 'address_info'],
         self::STEP_LICENSES => ['license_info', 'license_image'],
         self::STEP_MEDICAL => ['medical_info', 'medical_image'],
-        self::STEP_TRAINING => ['experience_info'],
-        self::STEP_TRAFFIC => ['experience_info'],
-        self::STEP_ACCIDENT => ['experience_info'],
+        self::STEP_TRAINING => ['experience_info', 'training_verified'],  // Añadir el nuevo elemento
+        self::STEP_TRAFFIC => ['experience_info', 'traffic_verified'],    // Añadir el nuevo elemento
+        self::STEP_ACCIDENT => ['experience_info', 'accident_verified'],  // Añadir el nuevo elemento
         self::STEP_FMCSR => ['experience_info'],
         self::STEP_EMPLOYMENT_HISTORY => ['history_info'],
         self::STEP_COMPANY_POLICIES => ['experience_info'],
         self::STEP_CRIMINAL_HISTORY => ['criminal_check'],
         self::STEP_APPLICATION_CERTIFICATION => ['documents_checked'],
     ];
-
     /**
      * Obtener el estado actual de todos los pasos para un driver específico
      */
