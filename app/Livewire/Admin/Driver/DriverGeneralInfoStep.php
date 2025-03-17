@@ -57,11 +57,7 @@ class DriverGeneralInfoStep extends Component
             'date_of_birth' => [
                 'required',
                 'date',
-<<<<<<< HEAD
                 'before_or_equal:' . \Carbon\Carbon::now()->subYears(18)->format('Y-m-d'),
-=======
-                'before_or_equal:' . \Carbon\Carbon::now()->subYears(18)->format('Y-m-d') => 'You must be at least 18 years old to register.'
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
             ],
             'password' => $passwordRules,
             'password_confirmation' => 'nullable|same:password',
@@ -79,7 +75,6 @@ class DriverGeneralInfoStep extends Component
         ];
     }
 
-<<<<<<< HEAD
     protected function messages()
     {
         return [
@@ -87,8 +82,6 @@ class DriverGeneralInfoStep extends Component
         ];
     }
 
-=======
->>>>>>> c136a69e586b5f39ef1c5cb519d2e72780a920a7
     // Initialize
     public function mount($driverId = null, $carrier = null)
     {

@@ -24,7 +24,7 @@
                         
                         <div class="absolute top-4 right-4">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $carrier->status == 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                                {{ $carrier->status == 1 ? 'Activo' : 'Pendiente' }}
+                                {{ $carrier->status == 1 ? 'Active' : 'Pending' }}
                             </span>
                         </div>
                     </div>
@@ -53,7 +53,7 @@
                         
                         <a href="{{ route('driver.register.form', $carrier->slug) }}" 
                            class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded text-center transition-colors duration-300">
-                            Seleccionar este Carrier
+                            Select Carrier
                         </a>
                     </div>
                 </div>
@@ -66,8 +66,8 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                 </svg>
-                <h3 class="mt-4 text-lg font-medium text-gray-900">No hay carriers disponibles</h3>
-                <p class="mt-1 text-gray-500">Por favor, intenta más tarde o contacta con un administrador.</p>
+                <h3 class="mt-4 text-lg font-medium text-gray-900">No carriers available</h3>
+                <p class="mt-1 text-gray-500">Please try again later or contact an administrator.</p>
             </div>
         @endif
     </div>

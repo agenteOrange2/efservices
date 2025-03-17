@@ -40,13 +40,11 @@
                                 </div>
                                 <div class="mt-3 w-full flex-1 xl:mt-0">
                                     <div class="flex items-center">
-                                        <x-image-preview
-                                        name="profile_photo"
-                                        id="profile_photo_input"
-                                        currentPhotoUrl="{{ $user->getFirstMediaUrl('profile_photos') }}"
-                                        defaultPhotoUrl="{{ asset('build/default_profile.png') }}"
-                                        deleteUrl="{{ route('admin.users.delete-photo', ['user' => $user->id]) }}" />
-                                                     
+                                        <x-image-preview name="profile_photo" id="profile_photo_input"
+                                            currentPhotoUrl="{{ $user->getFirstMediaUrl('profile_photos') }}"
+                                            defaultPhotoUrl="{{ asset('build/default_profile.png') }}"
+                                            deleteUrl="{{ route('admin.users.delete-photo', ['user' => $user->id]) }}" />
+
                                     </div>
                                 </div>
                             </div>
@@ -185,6 +183,36 @@
                                     @enderror
                                 </div>
                             </div>
+
+                            <!-- Add this section to your create user form, before the submit button -->
+                            <div class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+                                <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                                    <div class="text-left">
+                                        <div class="flex items-center">
+                                            <div class="font-medium">User Roles</div>
+                                        </div>
+                                        <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
+                                            Assign one or more roles to this user.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 w-full flex-1 xl:mt-0">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        @foreach ($roles as $role)
+                                            <div class="flex items-center">
+                                                <input type="checkbox" name="roles[]" value="{{ $role->id }}"
+                                                    id="role_{{ $role->id }}"
+                                                    class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2">
+                                                <label for="role_{{ $role->id }}"
+                                                    class="text-sm">{{ $role->name }}</label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    @error('roles')
+                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
                         <!-- Submit Button -->
                         <div class="flex border-t border-slate-200/80 px-7 py-5 md:justify-end">
@@ -245,34 +273,35 @@
 @endsection
 
 @pushOnce('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const deletePhotoButton = document.getElementById('deletePhotoButton');
-        deletePhotoButton.addEventListener('click', function (event) {
-            event.preventDefault();
-            fetch('{{ route('admin.users.delete-photo', ['user' => $user->id]) }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
-                },
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Failed to delete the photo.');
-                return response.json();
-            })
-            .then(data => {
-                // Actualiza la vista
-                document.querySelector('[x-data]').__x.$data.originalPhoto = data.defaultPhotoUrl;
-                document.querySelector('[x-data]').__x.$data.photoPreview = null;
-                console.log('Photo deleted successfully.');
-            })
-            .catch(error => console.error('Error:', error));
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const deletePhotoButton = document.getElementById('deletePhotoButton');
+            deletePhotoButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                fetch('{{ route('admin.users.delete-photo', ['user' => $user->id]) }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                        },
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Failed to delete the photo.');
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Actualiza la vista
+                        document.querySelector('[x-data]').__x.$data.originalPhoto = data
+                            .defaultPhotoUrl;
+                        document.querySelector('[x-data]').__x.$data.photoPreview = null;
+                        console.log('Photo deleted successfully.');
+                    })
+                    .catch(error => console.error('Error:', error));
+            });
         });
-    });
-</script>
+    </script>
 @endPushOnce
 
 @pushOnce('scripts')
     @vite('resources/js/app.js') {{-- Este debe ir primero --}}
-    @vite('resources/js/pages/notification.js')    
+    @vite('resources/js/pages/notification.js')
 @endPushOnce

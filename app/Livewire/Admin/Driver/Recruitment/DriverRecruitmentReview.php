@@ -38,9 +38,9 @@ class DriverRecruitmentReview extends Component
     public function mount($driverId)
     {
         $this->driverId = $driverId;
-        $this->loadDriverData();
-        $this->initializeChecklist(); // Primero inicializa con valores predeterminados
-        $this->loadLastVerification(); // Luego carga y aplica los valores guardados
+        $this->initializeChecklist(); // Primero inicializa el checklist con valores predeterminados
+        $this->loadLastVerification(); // Luego carga los valores guardados en el checklist
+        $this->loadDriverData(); // Finalmente carga los datos y actualiza los estados usando el checklist
         $this->loadGeneratedPdfs();
     }
 
@@ -52,53 +52,67 @@ class DriverRecruitmentReview extends Component
         }
     }
 
+    // En el método initializeChecklist() de tu DriverRecruitmentReview.php
     public function initializeChecklist()
     {
         // Define the elements the recruiter should verify
         $this->checklistItems = [
             'general_info' => [
                 'checked' => false,
-                'label' => 'Información general completa y válida'
+                'label' => 'Complete and valid general information'
             ],
             'contact_info' => [
                 'checked' => false,
-                'label' => 'Información de contacto verificada'
+                'label' => 'Verified contact information'
             ],
             'address_info' => [
                 'checked' => false,
-                'label' => 'Dirección actual y historial validados'
+                'label' => 'Validated current address and history'
             ],
             'license_info' => [
                 'checked' => false,
-                'label' => 'Licencia de conducir válida y vigente'
+                'label' => 'Valid and current drivers license'
             ],
             'license_image' => [
                 'checked' => false,
-                'label' => 'Imágenes de licencia adjuntas y legibles'
+                'label' => 'Attached, legible license images'
             ],
             'medical_info' => [
                 'checked' => false,
-                'label' => 'Información médica completa'
+                'label' => 'Complete medical information'
             ],
             'medical_image' => [
                 'checked' => false,
-                'label' => 'Tarjeta médica adjunta y vigente'
+                'label' => 'Medical card attached and current'
             ],
             'experience_info' => [
                 'checked' => false,
-                'label' => 'Experiencia de conducción verificada'
+                'label' => 'Verified driving experience'
+            ],
+            // Nuevos elementos para training, traffic y accident
+            'training_verified' => [
+                'checked' => false,
+                'label' => 'Training information verified (or N/A)'
+            ],
+            'traffic_verified' => [
+                'checked' => false,
+                'label' => 'Traffic violations verified (or N/A)'
+            ],
+            'accident_verified' => [
+                'checked' => false,
+                'label' => 'Accident record verified (or N/A)'
             ],
             'history_info' => [
                 'checked' => false,
-                'label' => 'Historial laboral completo (10 años)'
+                'label' => 'Complete work history (10 years)'
             ],
             'criminal_check' => [
                 'checked' => false,
-                'label' => 'Verificación de antecedentes penales'
+                'label' => 'Criminal background check'
             ],
             'documents_checked' => [
                 'checked' => false,
-                'label' => 'Todos los documentos revisados y validados'
+                'label' => 'All documents reviewed and validated'
             ]
         ];
     }
@@ -115,6 +129,7 @@ class DriverRecruitmentReview extends Component
 
     public function loadDriverData()
     {
+        // Cargar datos del conductor
         $this->driver = UserDriverDetail::with([
             'user',
             'carrier',
@@ -122,9 +137,9 @@ class DriverRecruitmentReview extends Component
             'licenses',
             'medicalQualification',
             'experiences',
-            'trainingSchools', // Verifica que este relationship esté definido correctamente
-            'trafficConvictions', // Verifica que este relationship esté definido correctamente
-            'accidents', 
+            'trainingSchools',
+            'trafficConvictions',
+            'accidents',
             'fmcsrData',
             'workHistories',
             'unemploymentPeriods',
@@ -132,50 +147,29 @@ class DriverRecruitmentReview extends Component
             'companyPolicy',
             'certification'
         ])->findOrFail($this->driverId);
-
-        Log::info('Driver data loaded', [
-            'driver_id' => $this->driver->id,
-            'training_schools_count' => $this->driver->trainingSchools->count(),
-            'training_schools' => $this->driver->trainingSchools->toArray(),
-            'traffic_convictions_count' => $this->driver->trafficConvictions->count(),
-            'traffic_convictions' => $this->driver->trafficConvictions->toArray(),
-            'accidents_count' => $this->driver->accidents->count(),
-            'accidents' => $this->driver->accidents->toArray(),
-            'application_details' => $this->driver->application ? $this->driver->application->details : null
-        ]);
-
-        // Convertir date_of_birth a objeto Carbon si es una string
+    
+        // Procesar fechas
         if ($this->driver->date_of_birth && is_string($this->driver->date_of_birth)) {
             $this->driver->date_of_birth = Carbon::parse($this->driver->date_of_birth);
         }
-
-        // Procesar otras fechas que puedan necesitar conversión a Carbon
         $this->processDateFields();
-
+    
         $this->application = $this->driver->application;
-
+    
         // Cargar datos de solicitud si existen
         if ($this->application) {
             $this->rejectionReason = $this->application->rejection_reason ?? '';
             $this->requestedDocuments = json_decode($this->application->requested_documents, true) ?: [];
             $this->additionalRequirements = $this->application->additional_requirements ?? '';
         }
-
-        // Cargar estados de los pasos
-        $stepService = new DriverStepService();
-        $this->stepsStatus = $stepService->getStepsStatus($this->driver);
-        $this->completionPercentage = $stepService->calculateCompletionPercentage($this->driver);
-
-        // Cargar la verificación más reciente si existe
-        $this->loadLastVerification();
-
-        // Extraer los valores del checklistItems
+    
+        // Extraer los valores del checklist para pasarlos al servicio
         $checklistValues = [];
         foreach ($this->checklistItems as $key => $item) {
             $checklistValues[$key] = $item['checked'];
         }
     
-        // Cargar estados de los pasos considerando el checklist
+        // Cargar estados de los pasos pasando los valores del checklist
         $stepService = new DriverStepService();
         $this->stepsStatus = $stepService->getStepsStatus($this->driver, $checklistValues);
         $this->completionPercentage = $stepService->calculateCompletionPercentage($this->driver);
@@ -294,25 +288,28 @@ class DriverRecruitmentReview extends Component
      */
     protected function loadLastVerification()
     {
-        if ($this->application) {
-            $verification = DriverRecruitmentVerification::where('driver_application_id', $this->application->id)
-                ->latest('verified_at')
-                ->first();
-
-            if ($verification) {
-                $this->savedVerification = $verification;
-                
-                // If there's a saved verification, use its values to initialize the checklist
-                if (is_array($verification->verification_items)) {
-                    foreach ($verification->verification_items as $key => $value) {
-                        if (isset($this->checklistItems[$key])) {
-                            $this->checklistItems[$key]['checked'] = (bool)$value;
-                        }
+        if (!$this->driverId) return;
+    
+        $application = UserDriverDetail::find($this->driverId)->application;
+        if (!$application) return;
+    
+        $verification = DriverRecruitmentVerification::where('driver_application_id', $application->id)
+            ->latest('verified_at')
+            ->first();
+    
+        if ($verification) {
+            $this->savedVerification = $verification;
+    
+            // If there's a saved verification, use its values to initialize the checklist
+            if (is_array($verification->verification_items)) {
+                foreach ($verification->verification_items as $key => $value) {
+                    if (isset($this->checklistItems[$key])) {
+                        $this->checklistItems[$key]['checked'] = (bool)$value;
                     }
                 }
-                
-                $this->verificationNotes = $verification->notes;
             }
+    
+            $this->verificationNotes = $verification->notes;
         }
     }
 
@@ -386,7 +383,7 @@ class DriverRecruitmentReview extends Component
             $verificationItems[$key] = $item['checked'];
         }
     
-        // Update or create verification in database (instead of always creating new records)
+        // Update or create verification in database
         DriverRecruitmentVerification::updateOrCreate(
             [
                 'driver_application_id' => $this->application->id
@@ -402,13 +399,25 @@ class DriverRecruitmentReview extends Component
         // Refresh data
         $this->loadLastVerification();
     
-        // Recargar los estados para reflejar la nueva verificación
+        // Obtener los estados base desde el servicio
         $stepService = new DriverStepService();
-        $checklistValues = [];
-        foreach ($this->checklistItems as $key => $item) {
-            $checklistValues[$key] = $item['checked'];
+        $baseSteps = $stepService->getStepsStatus($this->driver);
+        
+        // FORZAR actualización de los estados según checklist directamente
+        if ($this->checklistItems['training_verified']['checked']) {
+            $baseSteps[DriverStepService::STEP_TRAINING] = DriverStepService::STATUS_COMPLETED;
         }
-        $this->stepsStatus = $stepService->getStepsStatus($this->driver, $checklistValues);
+        
+        if ($this->checklistItems['traffic_verified']['checked']) {
+            $baseSteps[DriverStepService::STEP_TRAFFIC] = DriverStepService::STATUS_COMPLETED;
+        }
+        
+        if ($this->checklistItems['accident_verified']['checked']) {
+            $baseSteps[DriverStepService::STEP_ACCIDENT] = DriverStepService::STATUS_COMPLETED;
+        }
+        
+        // Actualizar estados y calcular porcentaje
+        $this->stepsStatus = $baseSteps;
         $this->completionPercentage = $stepService->calculateCompletionPercentage($this->driver);
     
         session()->flash('message', 'Verificación guardada correctamente.');
@@ -502,67 +511,67 @@ class DriverRecruitmentReview extends Component
     }
 
     public function downloadAllDocuments()
-{
-    if (!$this->driver || !$this->driver->id) {
-        session()->flash('error', 'Driver not found');
-        return;
-    }
-
-    $driverId = $this->driver->id;
-    $driverName = $this->driver->user->name . ' ' . $this->driver->last_name;
-    $zipFileName = Str::slug($driverName) . '-documents.zip';
-    $zipFilePath = storage_path('app/public/temp/' . $zipFileName);
-    
-    // Asegúrate de que el directorio de temp exista
-    if (!Storage::disk('public')->exists('temp')) {
-        Storage::disk('public')->makeDirectory('temp');
-    }
-    
-    // Ruta al directorio del driver
-    $driverPath = 'driver/' . $driverId;
-    $fullDriverPath = storage_path('app/public/' . $driverPath);
-    
-    // Verificar si el directorio existe
-    if (!file_exists($fullDriverPath)) {
-        session()->flash('error', 'No documents found for this driver');
-        return;
-    }
-    
-    // Crear un nuevo archivo ZIP
-    $zip = new ZipArchive();
-    if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-        session()->flash('error', 'Could not create ZIP file');
-        return;
-    }
-    
-    // Función para agregar archivos recursivamente
-    $addFilesToZip = function($dir, $zipBasePath = '') use ($zip, &$addFilesToZip) {
-        $files = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::LEAVES_ONLY
-        );
-        
-        foreach ($files as $file) {
-            if (!$file->isDir()) {
-                $filePath = $file->getRealPath();
-                $relativePath = $zipBasePath . substr($filePath, strlen($dir) + 1);
-                
-                $zip->addFile($filePath, $relativePath);
-            }
+    {
+        if (!$this->driver || !$this->driver->id) {
+            session()->flash('error', 'Driver not found');
+            return;
         }
-    };
-    
-    // Agregar todos los archivos del directorio del driver
-    $addFilesToZip($fullDriverPath, 'driver-documents/');
-    
-    // Cerrar el ZIP
-    $zip->close();
-    
-    // Devolver respuesta de descarga
-    return response()->download($zipFilePath, $zipFileName, [
-        'Content-Type' => 'application/zip',
-    ])->deleteFileAfterSend(true);
-}
+
+        $driverId = $this->driver->id;
+        $driverName = $this->driver->user->name . ' ' . $this->driver->last_name;
+        $zipFileName = Str::slug($driverName) . '-documents.zip';
+        $zipFilePath = storage_path('app/public/temp/' . $zipFileName);
+
+        // Asegúrate de que el directorio de temp exista
+        if (!Storage::disk('public')->exists('temp')) {
+            Storage::disk('public')->makeDirectory('temp');
+        }
+
+        // Ruta al directorio del driver
+        $driverPath = 'driver/' . $driverId;
+        $fullDriverPath = storage_path('app/public/' . $driverPath);
+
+        // Verificar si el directorio existe
+        if (!file_exists($fullDriverPath)) {
+            session()->flash('error', 'No documents found for this driver');
+            return;
+        }
+
+        // Crear un nuevo archivo ZIP
+        $zip = new ZipArchive();
+        if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            session()->flash('error', 'Could not create ZIP file');
+            return;
+        }
+
+        // Función para agregar archivos recursivamente
+        $addFilesToZip = function ($dir, $zipBasePath = '') use ($zip, &$addFilesToZip) {
+            $files = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::LEAVES_ONLY
+            );
+
+            foreach ($files as $file) {
+                if (!$file->isDir()) {
+                    $filePath = $file->getRealPath();
+                    $relativePath = $zipBasePath . substr($filePath, strlen($dir) + 1);
+
+                    $zip->addFile($filePath, $relativePath);
+                }
+            }
+        };
+
+        // Agregar todos los archivos del directorio del driver
+        $addFilesToZip($fullDriverPath, 'driver-documents/');
+
+        // Cerrar el ZIP
+        $zip->close();
+
+        // Devolver respuesta de descarga
+        return response()->download($zipFilePath, $zipFileName, [
+            'Content-Type' => 'application/zip',
+        ])->deleteFileAfterSend(true);
+    }
 
     // Resto de los métodos igual que antes...
 

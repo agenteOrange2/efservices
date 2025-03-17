@@ -59,6 +59,37 @@
         .date {
             margin-top: 10px;
         }
+
+        /* Add this to your existing style block */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .table-header {
+            background-color: #333;
+            color: white;
+            font-weight: bold;
+            padding: 10px;
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -68,7 +99,7 @@
         <h2>{{ $title }}</h2>
     </div>
 
-    <div class="section">
+    {{-- <div class="section">
         <div class="section-title">Información Personal</div>
         <div class="field">
             <span class="label">Nombre:</span>
@@ -88,6 +119,27 @@
             <span
                 class="value">{{ $userDriverDetail->date_of_birth ? date('d/m/Y', strtotime($userDriverDetail->date_of_birth)) : 'N/A' }}</span>
         </div>
+    </div> --}}
+
+    <div class="section">        
+        <table>
+            <tr>
+                <td style="width: 75%"><strong>Applicant's Legal Name</strong><br>{{ $userDriverDetail->user->name ?? 'N/A' }} {{ $userDriverDetail->middle_name ?? '' }} {{ $userDriverDetail->last_name ?? 'N/A' }}</td>
+                <td style="width: 25%"><strong>Date of Application</strong><br>{{ $userDriverDetail->date_of_birth ? date('d/m/Y', strtotime($userDriverDetail->date_of_birth)) : 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td style="width: 50%"><strong>Current Address</strong><br>{{ $address->address_line1 ?? 'N/A' }}</td>
+                <td style="width: 16.66%"><strong>City</strong><br>{{ $address->city ?? 'N/A' }}</td>
+                <td style="width: 16.66%"><strong>State</strong><br>{{ $address->state ?? 'N/A' }}</td>
+                <td style="width: 16.66%"><strong>Zip</strong><br>{{ $address->zip_code ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td style="width: 50%"><strong>Email Address</strong><br>{{ $userDriverDetail->user->email ?? 'N/A' }}</td>
+                <td style="width: 25%"><strong>SSN</strong><br>{{ $userDriverDetail->medicalQualification->social_security_number ?? 'N/A' }}</td>
+                <td style="width: 25%"><strong>Date of Birth</strong><br>{{ $userDriverDetail->date_of_birth ? date('m/d/Y', strtotime($userDriverDetail->date_of_birth)) : 'N/A' }}</td>
+                <td style="width: 25%"><strong>Phone</strong><br>{{ $userDriverDetail->phone ?? 'N/A' }}</td>
+            </tr>
+        </table>
     </div>
 
     <!-- Agregar más secciones según sea necesario para este paso específico -->
