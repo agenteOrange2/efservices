@@ -38,12 +38,12 @@ class NewDocumentUploadedNotification extends Notification implements ShouldQueu
     public function toMail($notifiable)
     {
         return (new MailMessage)
-            ->subject('Nuevo Documento Subido')
-            ->line('Se ha subido un nuevo documento para el carrier ' . $this->document->carrier->name)
-            ->line('Detalles del documento:')
-            ->line('Tipo: ' . $this->document->documentType->name)
-            ->line('Fecha: ' . $this->document->date)
-            ->action('Ver Documento', route('admin.carrier_documents.show', $this->document->id));
+            ->subject('New Document Uploaded')
+            ->line('A new document has been uploaded for carrier ' . $this->document->carrier->name)
+            ->line('Document details:')
+            ->line('Type: ' . $this->document->documentType->name)
+            ->line('Date: ' . $this->document->date)
+            ->action('View Document', route('admin.carrier_documents.show', $this->document->id));
     }
 
     /**

@@ -26,7 +26,8 @@ class NewCarrierNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        // Añadimos 'database' además de 'mail'
+        return ['mail', 'database'];
     }
 
     public function toMail($notifiable): MailMessage
@@ -45,34 +46,46 @@ class NewCarrierNotification extends Notification implements ShouldQueue
             ]);
 
             return (new MailMessage)
-                ->subject('Nuevo Carrier Registrado en el Sistema')
-                ->greeting('¡Hola Administrador!')
-                ->line('Se ha registrado un nuevo carrier en el sistema.')
-                ->line('Detalles del carrier:')
-                ->line('Nombre: ' . $this->carrier->name)
-                ->line('Dirección: ' . $this->carrier->address)
-                ->line('Estado: ' . $this->carrier->state)
+                ->subject('New Carrier Registered in the System')
+                ->greeting('Hello Administrator!')
+                ->line('A new carrier has been registered in the system.')
+                ->line('Carrier details:')
+                ->line('Name: ' . $this->carrier->name)
+                ->line('Address: ' . $this->carrier->address)
+                ->line('State: ' . $this->carrier->state)
                 ->line('DOT Number: ' . $this->carrier->dot_number)
-                ->line('Fecha de creación: ' . $this->carrier->created_at->format('d/m/Y H:i'))
-                ->action('Ver Carrier', $url);
+                ->line('Creation date: ' . $this->carrier->created_at->format('m/d/Y H:i'))
+                ->action('View Carrier', $url);
         } catch (\Exception $e) {
-            Log::error('Error generando el email de notificación', [
+            Log::error('Error generating notification email', [
                 'error' => $e->getMessage(),
                 'carrier_id' => $this->carrier->id
             ]);
             
-            // Retornar email sin el botón de acción si hay error con la URL
+            // Return email without action button if there's an error with the URL
             return (new MailMessage)
-                ->subject('Nuevo Carrier Registrado en el Sistema')
-                ->greeting('¡Hola Administrador!')
-                ->line('Se ha registrado un nuevo carrier en el sistema.')
-                ->line('Detalles del carrier:')
-                ->line('Nombre: ' . $this->carrier->name)
-                ->line('Dirección: ' . $this->carrier->address)
-                ->line('Estado: ' . $this->carrier->state)
+                ->subject('New Carrier Registered in the System')
+                ->greeting('Hello Administrator!')
+                ->line('A new carrier has been registered in the system.')
+                ->line('Carrier details:')
+                ->line('Name: ' . $this->carrier->name)
+                ->line('Address: ' . $this->carrier->address)
+                ->line('State: ' . $this->carrier->state)
                 ->line('DOT Number: ' . $this->carrier->dot_number)
-                ->line('Fecha de creación: ' . $this->carrier->created_at->format('d/m/Y H:i'));
+                ->line('Creation date: ' . $this->carrier->created_at->format('m/d/Y H:i'));
         }
+    }
+
+    // Añadimos el método toDatabase para las notificaciones en la campana
+    public function toDatabase($notifiable)
+    {
+        return [
+            'carrier_id' => $this->carrier->id,
+            'title' => 'New carrier created',
+            'message' => "New carrier registered: {$this->carrier->name}",            
+            'icon' => 'Building2', // Icono para usar en la UI (asegúrate de que exista en tu librería de iconos)
+            'action_url' => '/admin/carriers/' . $this->carrier->id
+        ];
     }
 
     public function toArray(object $notifiable): array

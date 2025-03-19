@@ -101,47 +101,6 @@
         <!-- Panel izquierdo: Tabs y datos de la solicitud -->
         <div class="w-4/5">
             <!-- Tabs de Navegación -->
-            {{-- <div class="box box--stacked">
-                <div class="nav-tabs">
-                    <a href="javascript:;" 
-                       class="nav-tabs__item {{ $currentTab === 'general' ? 'active' : '' }}" 
-                       wire:click="changeTab('general')">
-                        <x-base.lucide class="mr-2 h-4 w-4" icon="User" />
-                        <div>Información General</div>
-                    </a>
-                    <a href="javascript:;" 
-                       class="nav-tabs__item {{ $currentTab === 'licenses' ? 'active' : '' }}" 
-                       wire:click="changeTab('licenses')">
-                        <x-base.lucide class="mr-2 h-4 w-4" icon="CreditCard" />
-                        <div>Licencias</div>
-                    </a>
-                    <a href="javascript:;" 
-                       class="nav-tabs__item {{ $currentTab === 'medical' ? 'active' : '' }}" 
-                       wire:click="changeTab('medical')">
-                        <x-base.lucide class="mr-2 h-4 w-4" icon="ActivitySquare" />
-                        <div>Médico</div>
-                    </a>
-                    <a href="javascript:;" 
-                       class="nav-tabs__item {{ $currentTab === 'training' ? 'active' : '' }}" 
-                       wire:click="changeTab('training')">
-                        <x-base.lucide class="mr-2 h-4 w-4" icon="GraduationCap" />
-                        <div>Capacitación</div>
-                    </a>
-                    <a href="javascript:;" 
-                       class="nav-tabs__item {{ $currentTab === 'history' ? 'active' : '' }}" 
-                       wire:click="changeTab('history')">
-                        <x-base.lucide class="mr-2 h-4 w-4" icon="History" />
-                        <div>Historial</div>
-                    </a>
-                    <a href="javascript:;" 
-                       class="nav-tabs__item {{ $currentTab === 'traffic' ? 'active' : '' }}" 
-                       wire:click="changeTab('traffic')">
-                        <x-base.lucide class="mr-2 h-4 w-4" icon="AlertTriangle" />
-                        <div>Infracciones</div>
-                    </a>
-                </div>
-            </div> --}}
-
             <div class="flex flex-col gap-y-3 2xl:flex-row 2xl:items-center">
                 <x-base.tab.list
                     class="box mr-auto w-full flex-col rounded-[0.6rem] border-slate-200 bg-white sm:flex-row 2xl:w-auto">

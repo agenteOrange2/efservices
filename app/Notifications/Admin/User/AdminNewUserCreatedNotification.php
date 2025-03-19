@@ -26,7 +26,7 @@ class AdminNewUserCreatedNotification extends Notification implements ShouldQueu
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail($notifiable): MailMessage
@@ -38,15 +38,27 @@ class AdminNewUserCreatedNotification extends Notification implements ShouldQueu
                 'email' => $this->newUser->email
             ]
         ]);
+        
 
         return (new MailMessage)
-            ->subject('Nuevo Usuario Administrador Creado')
-            ->greeting('¡Hola Administrador!')
-            ->line('Se ha creado un nuevo usuario administrador en el sistema.')
-            ->line('Detalles del nuevo usuario:')
-            ->line('Nombre: ' . $this->newUser->name)
-            ->line('Email: ' . $this->newUser->email)
-            ->line('Fecha de creación: ' . $this->newUser->created_at->format('d/m/Y H:i'))
-            ->action('Ver Usuario', route('admin.users.edit', $this->newUser->id));
+        ->subject('New Administrator User Created')
+        ->greeting('Hello Administrator!')
+        ->line('A new administrator user has been created in the system.')
+        ->line('New user details:')
+        ->line('Name: ' . $this->newUser->name)
+        ->line('Email: ' . $this->newUser->email)
+        ->line('Creation date: ' . $this->newUser->created_at->format('d/m/Y H:i'))
+        ->action('View User', route('admin.users.edit', $this->newUser->id));
+    }
+
+    public function toDatabase($notifiable)
+    {
+        return [
+            'user_id' => $this->newUser->id,
+            'title' => 'New user created',
+            'message' => "New user registered: {$this->newUser->name}",
+            'icon' => 'UserPlus', // Icono para usar en la UI                        
+            'action_url' => '/admin/users/' . $this->newUser->id
+        ];
     }
 }

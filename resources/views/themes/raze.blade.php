@@ -219,9 +219,9 @@
                                     <a class="request-full-screen rounded-full p-2 hover:bg-slate-100" href="javascript:;">
                                         <x-base.lucide class="h-[18px] w-[18px]" icon="Expand" />
                                     </a>
-                                    <a class="rounded-full p-2 hover:bg-slate-100" data-tw-toggle="modal"
-                                        data-tw-target="#notifications-panel" href="javascript:;">
+                                    <a class="rounded-full p-2 hover:bg-slate-100 relative" data-tw-toggle="modal" data-tw-target="#notifications-panel" href="javascript:;">
                                         <x-base.lucide class="h-[18px] w-[18px]" icon="Bell" />
+                                        @livewire('notification.notification-counter')
                                     </a>
                                 </div>
                                 <x-base.menu class="ml-5">
@@ -273,7 +273,11 @@
                                 </x-base.menu>
                             </div>
                             <x-activities-panel />
-                            <x-notifications-panel />
+                            <x-base.dialog id="notifications-panel" size="md">
+                                <x-base.dialog.panel>
+                                    @livewire('notification.notifications-panel')
+                                </x-base.dialog.panel>
+                            </x-base.dialog>
                             <x-switch-account />
                             <!-- END: Notification & User Menu -->
                         </div>

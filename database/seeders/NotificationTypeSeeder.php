@@ -13,27 +13,27 @@ class NotificationTypeSeeder extends Seeder
      */
     public function run()
     {
-        $types = [
-            [
-                'name' => 'new_user_registration',
-                'description' => 'Notificación cuando se registra un nuevo usuario'
-            ],
-            [
-                'name' => 'new_carrier_registration',
-                'description' => 'Notificación cuando se registra un nuevo carrier'
-            ],
-            [
-                'name' => 'document_uploaded',
-                'description' => 'Notificación cuando se sube un nuevo documento'
-            ]
-            // ... otros tipos que necesites
-        ];
+        // $types = [
+        //     [
+        //         'name' => 'new_user_registration',
+        //         'description' => 'Notificación cuando se registra un nuevo usuario'
+        //     ],
+        //     [
+        //         'name' => 'new_carrier_registration',
+        //         'description' => 'Notificación cuando se registra un nuevo carrier'
+        //     ],
+        //     [
+        //         'name' => 'document_uploaded',
+        //         'description' => 'Notificación cuando se sube un nuevo documento'
+        //     ]
+        //     // ... otros tipos que necesites
+        // ];
 
-        foreach ($types as $type) {
-            NotificationType::updateOrCreate(
-                ['name' => $type['name']],
-                $type
-            );
-        }
+        // foreach ($types as $type) {
+        //     NotificationType::updateOrCreate(
+        //         ['name' => $type['name']],
+        //         $type
+        //     );
+        // }
     }
 }

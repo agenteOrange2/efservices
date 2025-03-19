@@ -37,6 +37,17 @@ class NewDriverRegisteredNotification extends Notification
             ->line('Please review their application.');
     }
 
+    public function toDatabase($notifiable): array
+    {
+        return [
+            'driver_id' => $this->driver->id,
+            'title' => 'New driver registered',
+            'message' => "New driver registered for {$this->carrier->name}: {$this->driver->name}",            
+            'icon' => 'UserPlus', // Asegúrate de que este icono exista en tu UI
+            'action_url' => '/admin/carriers/' . $this->carrier->slug . '/drivers/' . $this->driver->driverDetails->id . '/edit'
+        ];
+    }
+
     public function toArray($notifiable): array
     {
         return [
