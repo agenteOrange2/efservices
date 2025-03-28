@@ -273,7 +273,7 @@
                                 </x-base.menu>
                             </div>
                             <x-activities-panel />
-                            <x-base.dialog id="notifications-panel" size="md">
+                            <x-base.dialog id="notifications-panel" size="lg">
                                 <x-base.dialog.panel>
                                     @livewire('notification.notifications-panel')
                                 </x-base.dialog.panel>

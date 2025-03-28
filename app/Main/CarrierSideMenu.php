@@ -20,6 +20,13 @@ class CarrierSideMenu
                 'params' => [],
                 'title' => "Dashboard",
             ],            
+            "DRIVERS",
+            [
+                'icon' => "user", // o "userCircle" si prefieres
+                'route_name' => "carrier.drivers.index",
+                'params' => [],
+                'title' => "List Drivers",
+            ],
             "CARRIER PROFILE",
             [
                 'icon' => "user", // o "userCircle" si prefieres

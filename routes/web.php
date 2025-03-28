@@ -21,9 +21,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/complete-registration', [CustomLoginController::class, 'showCompleteRegistrationForm'])
         ->name('complete_registration');
     Route::post('/complete-registration', [CustomLoginController::class, 'completeRegistration']);
-    Route::get('/confirmation', function () {
-        return view('auth.user_carrier.confirmation');
-    })->name('confirmation');
+    // Route::get('/confirmation', function () {
+    //     return view('auth.user_carrier.confirmation');
+    // })->name('confirmation');
+    
 });
 
 Route::get('/', function () {

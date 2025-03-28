@@ -38,6 +38,7 @@ class CheckUserStatus
 
         // Verificación para User Carrier
         if ($user && $user->hasRole('user_carrier')) {
+
             // Verificar estado del carrier y redirigir según corresponda
             if (!$this->isCarrierSetupRoute($request)) {
                 if (!$user->carrierDetails || !$user->carrierDetails->carrier_id) {
@@ -45,13 +46,20 @@ class CheckUserStatus
                         ->with('warning', 'Please complete your registration first.');
                 }
 
+                // Verificar estado del user_carrier
+                if ($user->carrierDetails->status != 1) { // Asumiendo que 1 es STATUS_ACTIVE
+                    return redirect()->route('carrier.pending')
+                        ->with('warning', 'Your user account is pending approval.');
+                }
+                
+
                 $carrier = $user->carrierDetails->carrier;
 
                 // Si el carrier está pendiente o inactivo y NO está en la ruta de documentos
-                if ($carrier->status !== Carrier::STATUS_ACTIVE && !$request->is('carrier/*/documents*')) {
-                    return redirect()->route('carrier.confirmation')
-                        ->with('warning', 'Your account is pending approval.');
-                }
+                // if ($carrier->status !== Carrier::STATUS_ACTIVE && !$request->is('carrier/*/documents*')) {
+                //     return redirect()->route('carrier.confirmation')
+                //         ->with('warning', 'Your carrier account is pending approval.');
+                // }
 
                 // Si necesita subir documentos y no está en la ruta de documentos
                 if ($carrier->document_status === 'in_progress' && !$request->is('carrier/*/documents*')) {
@@ -92,10 +100,12 @@ class CheckUserStatus
             switch ($application->status) {
                 case DriverApplication::STATUS_DRAFT:
                     // Si la aplicación no está completa y no está en ninguna ruta relacionada con el registro
-                    if (!$driverDetail->application_completed && 
-                        !$request->is('driver/registration*') && 
-                        !$request->is('livewire/*')) {
-                        
+                    if (
+                        !$driverDetail->application_completed &&
+                        !$request->is('driver/registration*') &&
+                        !$request->is('livewire/*')
+                    ) {
+
                         $step = $driverDetail->current_step ?? 1;
                         return redirect()->route('driver.registration.continue', ['step' => $step])
                             ->with('info', 'Please complete your application to continue.');
@@ -136,14 +146,6 @@ class CheckUserStatus
 
         // Verificación para SuperAdmin
         if ($user && $user->hasRole('superadmin')) {
-            // Código existente para superadmin...
-        }
-
-        return $next($request);
-
-
-        // Verificación para SuperAdmin
-        if ($user && $user->hasRole('superadmin')) {
             // El superadmin puede acceder a todas las rutas admin
             if ($request->is('driver*') || $request->is('carrier/dashboard*')) {
                 return redirect()->route('admin.dashboard')
@@ -173,7 +175,7 @@ class CheckUserStatus
             'driver/rejected',
             'driver/registration/success',
             'livewire/*',
-            
+
         ];
 
         foreach ($publicRoutes as $route) {
@@ -199,6 +201,7 @@ class CheckUserStatus
         $setupRoutes = [
             'carrier/complete-registration',
             'carrier/confirmation',
+            'carrier/pending',
             'carrier/register',
             'carrier/confirm/*',
             'carrier/*/documents*'

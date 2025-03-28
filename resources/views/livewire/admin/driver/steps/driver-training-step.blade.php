@@ -1,11 +1,11 @@
 <div class="bg-white p-4 rounded-lg shadow">
     <h3 class="text-lg font-semibold mb-4">Commercial Driver Training Schools</h3>
 
-    <div class="flex items-center mb-4">
-        <input type="checkbox" wire:model.live="has_attended_training_school" id="has_attended_training_school"
-            class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2">
-        <label for="has_attended_training_school" class="text-sm">
-            Have you attended a commercial driver training school?
+    <div class="mb-6">
+        <label class="inline-flex items-center cursor-pointer">
+            <input type="checkbox" wire:model.live="has_attended_training_school" class="sr-only peer">
+            <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            <span class="ms-3 text-sm font-medium">Have you attended a commercial driver training school?</span>
         </label>
     </div>
 

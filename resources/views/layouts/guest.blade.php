@@ -32,11 +32,9 @@
     @livewireScripts
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>    
     <script>
-      lucide.createIcons();
-    </script>
-    <script>
+        lucide.createIcons();
         // Mobile menu functionality
         const menuToggle = document.getElementById('menu-toggle');
         const closeMenu = document.getElementById('close-menu');
@@ -97,9 +95,6 @@
             });
 
         });
-
-
-
     </script>
 </body>
 
