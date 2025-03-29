@@ -239,17 +239,17 @@ class DriverCertificationStep extends Component
 
         // Configuraciones de pasos - definir la vista y nombre de archivo para cada paso
         $steps = [
-            ['view' => 'pdf.driver.general', 'filename' => 'informacion_general.pdf', 'title' => 'Información General'],
-            ['view' => 'pdf.driver.address', 'filename' => 'informacion_direccion.pdf', 'title' => 'Información de Dirección'],
-            ['view' => 'pdf.driver.application', 'filename' => 'detalles_aplicacion.pdf', 'title' => 'Detalles de Aplicación'],
-            ['view' => 'pdf.driver.licenses', 'filename' => 'informacion_licencias.pdf', 'title' => 'Licencias de Conducir'],
-            ['view' => 'pdf.driver.medical', 'filename' => 'calificacion_medica.pdf', 'title' => 'Calificación Médica'],
-            ['view' => 'pdf.driver.training', 'filename' => 'escuelas_entrenamiento.pdf', 'title' => 'Escuelas de Entrenamiento'],
-            ['view' => 'pdf.driver.traffic', 'filename' => 'infracciones_trafico.pdf', 'title' => 'Infracciones de Tráfico'],
-            ['view' => 'pdf.driver.accident', 'filename' => 'registro_accidentes.pdf', 'title' => 'Registro de Accidentes'],
-            ['view' => 'pdf.driver.fmcsr', 'filename' => 'requisitos_fmcsr.pdf', 'title' => 'Requisitos FMCSR'],
-            ['view' => 'pdf.driver.employment', 'filename' => 'historial_empleo.pdf', 'title' => 'Historial de Empleo'],
-            ['view' => 'pdf.driver.certification', 'filename' => 'certificacion.pdf', 'title' => 'Certificación'],
+            ['view' => 'pdf.driver.general', 'filename' => 'general_information.pdf', 'title' => 'General Information'],
+            ['view' => 'pdf.driver.address', 'filename' => 'address_information.pdf', 'title' => 'Address Information'],
+            ['view' => 'pdf.driver.application', 'filename' => 'application_details.pdf', 'title' => 'Application Details'],
+            ['view' => 'pdf.driver.licenses', 'filename' => 'drivers_licenses.pdf', 'title' => 'Drivers Licenses'],
+            ['view' => 'pdf.driver.medical', 'filename' => 'calificacion_medica.pdf', 'title' => 'Medical Qualification'],
+            ['view' => 'pdf.driver.training', 'filename' => 'training_schools.pdf', 'title' => 'Training Schools'],
+            ['view' => 'pdf.driver.traffic', 'filename' => 'traffic_violations.pdf', 'title' => 'Traffic Violations'],
+            ['view' => 'pdf.driver.accident', 'filename' => 'accident_record.pdf', 'title' => 'Accident Record '],
+            ['view' => 'pdf.driver.fmcsr', 'filename' => 'fmcsr_requirements.pdf', 'title' => 'FMCSR Requirements'],
+            ['view' => 'pdf.driver.employment', 'filename' => 'employment_history.pdf', 'title' => 'Employment History'],
+            ['view' => 'pdf.driver.certification', 'filename' => 'certification.pdf', 'title' => 'Certification'],
             // ... resto de pasos ...
         ];
 
@@ -381,10 +381,10 @@ class DriverCertificationStep extends Component
 
             // Asegurarnos de que estamos usando el ID correcto
             $driverId = $userDriverDetail->id;
-            $filePath = 'driver/' . $driverId . '/solicitud_completa.pdf';
+            $filePath = 'driver/' . $driverId . '/complete_application.pdf';
 
             // Cargar la vista PDF con la firma como ruta de archivo
-            $pdf = PDF::loadView('pdf.driver.solicitud_completa', [
+            $pdf = PDF::loadView('pdf.driver.complete_application', [
                 'userDriverDetail' => $userDriverDetail,
                 'signaturePath' => $signaturePath, // Importante: pasar la ruta, no el contenido base64
                 'date' => now()->format('d/m/Y')
@@ -401,7 +401,7 @@ class DriverCertificationStep extends Component
             Storage::disk('public')->put($filePath, $pdfContent);
 
             // Guardar PDF temporalmente para adjuntarlo a MediaLibrary
-            $tempPath = tempnam(sys_get_temp_dir(), 'solicitud_completa_') . '.pdf';
+            $tempPath = tempnam(sys_get_temp_dir(), 'complete_application_') . '.pdf';
             file_put_contents($tempPath, $pdfContent);
 
             // Adjuntar el PDF a la aplicación

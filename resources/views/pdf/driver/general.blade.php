@@ -4,7 +4,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Solicitud de Conductor - Información General</title>
+    <title>Driver application - General Information</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -95,31 +95,9 @@
 
 <body>
     <div class="header">
-        <h1>Formulario de Solicitud de Conductor</h1>
+        <h1>Driver Application Form</h1>
         <h2>{{ $title }}</h2>
     </div>
-
-    {{-- <div class="section">
-        <div class="section-title">Información Personal</div>
-        <div class="field">
-            <span class="label">Nombre:</span>
-            <span class="value">{{ $userDriverDetail->user->name ?? 'N/A' }} {{ $userDriverDetail->middle_name ?? '' }}
-                {{ $userDriverDetail->last_name ?? 'N/A' }}</span>
-        </div>
-        <div class="field">
-            <span class="label">Email:</span>
-            <span class="value">{{ $userDriverDetail->user->email ?? 'N/A' }}</span>
-        </div>
-        <div class="field">
-            <span class="label">Teléfono:</span>
-            <span class="value">{{ $userDriverDetail->phone ?? 'N/A' }}</span>
-        </div>
-        <div class="field">
-            <span class="label">Fecha de Nacimiento:</span>
-            <span
-                class="value">{{ $userDriverDetail->date_of_birth ? date('d/m/Y', strtotime($userDriverDetail->date_of_birth)) : 'N/A' }}</span>
-        </div>
-    </div> --}}
 
     <div class="section">        
         <table>
@@ -147,17 +125,17 @@
     <!-- En tus vistas PDF (por ejemplo, pdf.driver.general.blade.php) -->
     <div class="signature-box">
         <div class="field">
-            <span class="label">Firma:</span>
+            <span class="label">Signature:</span>
             <div>
                 @if (!empty($signaturePath) && file_exists($signaturePath))
                     <img src="{{ $signaturePath }}" alt="Firma" style="max-width: 300px; max-height: 100px;" />
                 @else
-                    <p style="font-style: italic; color: #999;">Firma no disponible</p>
+                    <p style="font-style: italic; color: #999;">Signature not available</p>
                 @endif
             </div>
         </div>
         <div class="date">
-            <span class="label">Fecha:</span>
+            <span class="label">Date:</span>
             <span class="value">{{ $date }}</span>
         </div>
     </div>

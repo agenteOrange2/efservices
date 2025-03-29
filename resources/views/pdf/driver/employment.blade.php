@@ -1,23 +1,28 @@
+{{-- resources/views/pdf/driver/employment.blade.php --}}
 <!DOCTYPE html>
 <html>
+
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Solicitud de Conductor - Historial de Empleo</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Driver Application - Employment History</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
             font-size: 12px;
             line-height: 1.5;
         }
+
         .header {
             text-align: center;
             margin-bottom: 20px;
             border-bottom: 1px solid #ddd;
             padding-bottom: 10px;
         }
+
         .section {
             margin-bottom: 15px;
         }
+
         .section-title {
             font-weight: bold;
             font-size: 14px;
@@ -25,80 +30,105 @@
             background-color: #f0f0f0;
             padding: 5px;
         }
+
         .field {
             margin-bottom: 5px;
         }
+
         .label {
             font-weight: bold;
             display: inline-block;
             width: 200px;
         }
+
         .value {
             display: inline-block;
         }
+
         .signature-box {
             margin-top: 30px;
             border-top: 1px solid #ddd;
             padding-top: 10px;
         }
+
         .signature {
             max-height: 80px;
             max-width: 300px;
         }
+
         .date {
             margin-top: 10px;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: 15px;
         }
-        th, td {
+
+        th,
+        td {
             border: 1px solid #ddd;
-            padding: 4px;
+            padding: 8px;
             text-align: left;
-            font-size: 11px;
         }
+
         th {
-            background-color: #f0f0f0;
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .table-header {
+            background-color: #333;
+            color: white;
+            font-weight: bold;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .company-item {
+            margin-top: 20px;
+            margin-bottom: 15px;
         }
     </style>
 </head>
+
 <body>
     <div class="header">
-        <h1>Formulario de Solicitud de Conductor</h1>
+        <h1>Driver Application Form</h1>
         <h2>{{ $title }}</h2>
     </div>
-    
+
     <div class="section">
-        <div class="section-title">Información de Historial de Empleo</div>
-        @if($userDriverDetail->application && $userDriverDetail->application->details)
-            <div class="field">
-                <span class="label">¿Ha estado desempleado en los últimos 10 años?:</span>
-                <span class="value">{{ $userDriverDetail->application->details->has_unemployment_periods ? 'Sí' : 'No' }}</span>
-            </div>
-            <div class="field">
-                <span class="label">¿Ha completado la información de historial de empleo?:</span>
-                <span class="value">{{ $userDriverDetail->application->details->has_completed_employment_history ? 'Sí' : 'No' }}</span>
-            </div>
-        @endif
+        <div class="section-title">Employment History Information</div>
+        <table>
+            <tr>
+                <td style="width: 50%"><strong>Have you been unemployed in the last 10 years?</strong><br>{{ $userDriverDetail->application && $userDriverDetail->application->details && $userDriverDetail->application->details->has_unemployment_periods ? 'Yes' : 'No' }}</td>
+                <td style="width: 50%"><strong>Have you completed your employment history information?</strong><br>{{ $userDriverDetail->application && $userDriverDetail->application->details && $userDriverDetail->application->details->has_completed_employment_history ? 'Yes' : 'No' }}</td>
+            </tr>
+        </table>
     </div>
-    
+
     @if($userDriverDetail->unemploymentPeriods && $userDriverDetail->unemploymentPeriods->count() > 0)
         <div class="section">
-            <div class="section-title">Períodos de Desempleo</div>
+            <div class="section-title">Unemployment Periods</div>
             <table>
                 <thead>
                     <tr>
-                        <th>Fecha de Inicio</th>
-                        <th>Fecha de Fin</th>
-                        <th>Comentarios</th>
+                        <th style="width: 30%">Start Date</th>
+                        <th style="width: 30%">End Date</th>
+                        <th style="width: 40%">Comments</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($userDriverDetail->unemploymentPeriods as $period)
                         <tr>
-                            <td>{{ $period->start_date ? date('d/m/Y', strtotime($period->start_date)) : 'N/A' }}</td>
-                            <td>{{ $period->end_date ? date('d/m/Y', strtotime($period->end_date)) : 'N/A' }}</td>
+                            <td>{{ $period->start_date ? date('m/d/Y', strtotime($period->start_date)) : 'N/A' }}</td>
+                            <td>{{ $period->end_date ? date('m/d/Y', strtotime($period->end_date)) : 'N/A' }}</td>
                             <td>{{ $period->comments ?? 'N/A' }}</td>
                         </tr>
                     @endforeach
@@ -106,99 +136,74 @@
             </table>
         </div>
     @endif
-    
+
     @if($userDriverDetail->employmentCompanies && $userDriverDetail->employmentCompanies->count() > 0)
         <div class="section">
-            <div class="section-title">Empresas de Empleo</div>
+            <div class="section-title">Employment Companies</div>
             @foreach($userDriverDetail->employmentCompanies as $index => $company)
-                <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 10px;">
-                    <h4>Empresa #{{ $index + 1 }}</h4>
-                    <div class="field">
-                        <span class="label">Nombre de la Empresa:</span>
-                        <span class="value">{{ $company->company_name ?? 'N/A' }}</span>
-                    </div>
-                    <div class="field">
-                        <span class="label">Dirección:</span>
-                        <span class="value">{{ $company->address ?? 'N/A' }}</span>
-                    </div>
-                    <div class="field">
-                        <span class="label">Ciudad:</span>
-                        <span class="value">{{ $company->city ?? 'N/A' }}</span>
-                    </div>
-                    <div class="field">
-                        <span class="label">Estado:</span>
-                        <span class="value">{{ $company->state ?? 'N/A' }}</span>
-                    </div>
-                    <div class="field">
-                        <span class="label">Código Postal:</span>
-                        <span class="value">{{ $company->zip ?? 'N/A' }}</span>
-                    </div>
-                    <div class="field">
-                        <span class="label">Contacto:</span>
-                        <span class="value">{{ $company->contact ?? 'N/A' }}</span>
-                    </div>
-                    <div class="field">
-                        <span class="label">Teléfono:</span>
-                        <span class="value">{{ $company->phone ?? 'N/A' }}</span>
-                    </div>
-                    <div class="field">
-                        <span class="label">Fax:</span>
-                        <span class="value">{{ $company->fax ?? 'N/A' }}</span>
-                    </div>
-                    <div class="field">
-                        <span class="label">Empleado Desde:</span>
-                        <span class="value">{{ $company->employed_from ? date('d/m/Y', strtotime($company->employed_from)) : 'N/A' }}</span>
-                    </div>
-                    <div class="field">
-                        <span class="label">Empleado Hasta:</span>
-                        <span class="value">{{ $company->employed_to ? date('d/m/Y', strtotime($company->employed_to)) : 'N/A' }}</span>
-                    </div>
-                    <div class="field">
-                        <span class="label">Posiciones Ocupadas:</span>
-                        <span class="value">{{ $company->positions_held ?? 'N/A' }}</span>
-                    </div>
-                    <div class="field">
-                        <span class="label">¿Sujeto a FMCSR?:</span>
-                        <span class="value">{{ $company->subject_to_fmcsr ? 'Sí' : 'No' }}</span>
-                    </div>
-                    <div class="field">
-                        <span class="label">¿Función sensible de seguridad?:</span>
-                        <span class="value">{{ $company->safety_sensitive_function ? 'Sí' : 'No' }}</span>
-                    </div>
-                    <div class="field">
-                        <span class="label">Razón de Salida:</span>
-                        <span class="value">
-                            @if($company->reason_for_leaving === 'other')
-                                {{ $company->other_reason_description ?? 'Otra' }}
-                            @else
-                                {{ $company->reason_for_leaving ?? 'N/A' }}
-                            @endif
-                        </span>
-                    </div>
-                    <div class="field">
-                        <span class="label">Explicación:</span>
-                        <span class="value">{{ $company->explanation ?? 'N/A' }}</span>
-                    </div>
+                <div class="company-item">
+                    <h4>Company #{{ $index + 1 }}</h4>
+                    <table>
+                        <tr>
+                            <td colspan="2"><strong>Company Name</strong><br>{{ $company->company_name ?? 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50%"><strong>Address</strong><br>{{ $company->address ?? 'N/A' }}</td>
+                            <td style="width: 50%"><strong>City, State, ZIP</strong><br>{{ $company->city ?? 'N/A' }}, {{ $company->state ?? '' }} {{ $company->zip ?? '' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50%"><strong>Contact</strong><br>{{ $company->contact ?? 'N/A' }}</td>
+                            <td style="width: 50%">
+                                <strong>Phone / Fax</strong><br>
+                                Phone: {{ $company->phone ?? 'N/A' }}<br>
+                                Fax: {{ $company->fax ?? 'N/A' }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50%"><strong>Employed From</strong><br>{{ $company->employed_from ? date('m/d/Y', strtotime($company->employed_from)) : 'N/A' }}</td>
+                            <td style="width: 50%"><strong>Employed To</strong><br>{{ $company->employed_to ? date('m/d/Y', strtotime($company->employed_to)) : 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50%"><strong>Positions Held</strong><br>{{ $company->positions_held ?? 'N/A' }}</td>
+                            <td style="width: 50%">
+                                <strong>FMCSR & Safety</strong><br>
+                                Subject to FMCSR: {{ $company->subject_to_fmcsr ? 'Yes' : 'No' }}<br>
+                                Safety Sensitive Function: {{ $company->safety_sensitive_function ? 'Yes' : 'No' }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50%">
+                                <strong>Reason for Leaving</strong><br>
+                                @if($company->reason_for_leaving === 'other')
+                                    {{ $company->other_reason_description ?? 'Other' }}
+                                @else
+                                    {{ $company->reason_for_leaving ?? 'N/A' }}
+                                @endif
+                            </td>
+                            <td style="width: 50%"><strong>Explanation</strong><br>{{ $company->explanation ?? 'N/A' }}</td>
+                        </tr>
+                    </table>
                 </div>
             @endforeach
         </div>
     @endif
-    
+
     <div class="signature-box">
         <div class="field">
-            <span class="label">Firma:</span>
+            <span class="label">Signature:</span>
             <div>
                 @if (!empty($signaturePath) && file_exists($signaturePath))
-                    <img src="{{ $signaturePath }}" alt="Firma" style="max-width: 300px; max-height: 100px;" />
+                    <img src="{{ $signaturePath }}" alt="Signature" style="max-width: 300px; max-height: 100px;" />
                 @else
-                    <p style="font-style: italic; color: #999;">Firma no disponible</p>
+                    <p style="font-style: italic; color: #999;">Signature not available</p>
                 @endif
             </div>
         </div>
         <div class="date">
-            <span class="label">Fecha:</span>
+            <span class="label">Date:</span>
             <span class="value">{{ $date }}</span>
         </div>
     </div>
 </body>
+
 </html>
