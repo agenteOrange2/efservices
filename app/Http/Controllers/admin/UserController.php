@@ -56,6 +56,8 @@ class UserController extends Controller
             'roles.*' => 'exists:roles,id',
         ]);
 
+        $plainPassword = $validated['password'];
+
         // Crear el usuario en la base de datos
         $user = User::create([
             'name' => $validated['name'],
@@ -87,31 +89,15 @@ class UserController extends Controller
                 ->toMediaCollection('profile_photos');
         }
 
+        $user->notify(new NewUserNotification($user, $plainPassword));
 
-        // Enviar notificación al usuario
-        $user->notify(new NewUserNotification($user, $request->password));
+        //Notificar a los admins
+        $superadmins = User::role('superadmin')
+            ->where('id', '!=', $user->id)
+            ->get();
 
-        // Crear notificación en el sistema para administradores
-        $notificationType = NotificationType::where('name', 'new_user_registration')->first();
-
-        if ($notificationType) {
-            // Notificar a todos los superadmins
-            $superadmins = User::role('superadmin')
-                ->where('id', '!=', $user->id)
-                ->get();
-
-            foreach ($superadmins as $admin) {
-                Notification::create([
-                    'user_id' => $admin->id,
-                    'notification_type_id' => $notificationType->id,
-                    'message' => "Nuevo usuario registrado: {$user->name}",
-                    'is_read' => false,
-                    'sent_at' => now(),
-                ]);
-
-                // Agregar el envío del email al admin
-                $admin->notify(new AdminNewUserCreatedNotification($user));
-            }
+        foreach ($superadmins as $admin) {
+            $admin->notify(new AdminNewUserCreatedNotification($user));
         }
 
         // Mensaje dinámico para la notificación

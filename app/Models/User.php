@@ -25,7 +25,7 @@ class User extends Authenticatable implements HasMedia
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory;
     use HasProfilePhoto;
-    use Notifiable;
+    use Notifiable;    
     use TwoFactorAuthenticatable;
     use InteractsWithMedia;
     /**
@@ -175,14 +175,6 @@ class User extends Authenticatable implements HasMedia
         return $this->belongsToMany(Carrier::class, 'user_carrier_access');
     }
 
-    //NOtificaciones
-    public function notifications()
-    {
-        return $this->hasMany(Notification::class);
-    }
+    
 
-    public function notificationPreferences()
-    {
-        return $this->hasMany(NotificationPreference::class);
-    }
 }

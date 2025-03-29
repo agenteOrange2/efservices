@@ -144,7 +144,7 @@ class DriverTrainingStep extends Component
             // Update application details with training school flag
             if ($userDriverDetail->application && $userDriverDetail->application->details) {
                 $userDriverDetail->application->details->update([
-                    'has_attended_training_school' => $this->has_attended_training_school
+                    'has_attended_training_school' => $this->has_attended_training_school // Esto guardará true o false explícitamente
                 ]);
             }
 

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Driver;
 
+use App\Models\User;
 use Livewire\Component;
 use Barryvdh\DomPDF\Facade\PDF;
 use App\Models\UserDriverDetail;
@@ -165,21 +166,40 @@ class DriverCertificationStep extends Component
                         $this->generateApplicationPDFs($userDriverDetail);
                     }
 
+                    try {
+                        // Get user and carrier
+                        $user = $userDriverDetail->user;
+                        $carrier = $userDriverDetail->carrier;
+                        
+                        if ($user && $carrier) {
+                            // Get superadmins to notify
+                            $superadmins = User::role('superadmin')->get();
+                            
+                            // Send notification
+                            foreach ($superadmins as $admin) {
+                                $admin->notify(new \App\Notifications\Admin\Driver\DriverApplicationCompletedNotification(
+                                    $user,
+                                    $carrier,
+                                    $userDriverDetail
+                                ));
+                            }
+                            
+                            Log::info('Driver application completed notification sent', [
+                                'driver_id' => $user->id,
+                                'carrier_id' => $carrier->id
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Error sending driver application completed notification', [
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
+                        ]);
+                    }
+
                     DB::commit();
                     // Avanzar al siguiente paso (en lugar de redireccionar)
                     $this->dispatch('nextStep');
                     
-                    // Redireccionar a la página de índice
-                    // $userDriverDetail = UserDriverDetail::with('carrier')->find($this->driverId);
-                    // if ($userDriverDetail && $userDriverDetail->carrier) {
-                    //     $carrierSlug = $userDriverDetail->carrier->slug;
-                    //     return redirect()->route('admin.carrier.user_drivers.index', ['carrier' => $carrierSlug])
-                    //         ->with('success', 'La solicitud ha sido enviada para revisión.');
-                    // }
-
-                    // $carrierSlug = request()->route('carrier');
-                    // return redirect()->route('admin.carrier.user_drivers.index', ['carrier' => $carrierSlug])
-                    //     ->with('success', 'La solicitud ha sido enviada para revisión.');
 
                 } catch (\Exception $e) {
                     DB::rollBack();

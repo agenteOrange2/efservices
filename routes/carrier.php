@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\CustomLoginController;
 use App\Http\Controllers\Carrier\DocumentController;
+use App\Http\Controllers\Carrier\CarrierDriverController;
 use App\Http\Controllers\Carrier\CarrierProfileController;
 use App\Http\Controllers\Admin\UserCarrierDocumentController;
 
@@ -31,6 +32,10 @@ Route::middleware(['auth'])->group(function () {
         return view('auth.user_carrier.confirmation');
     })->name('confirmation');
 
+    Route::get('/pending', function () {
+        return view('auth.user_carrier.pending_usercarrier');
+    })->name('pending'); // Cambio de nombre de ruta
+
     // Rutas para documentos
     Route::group([
         'prefix' => '{carrier}',  // Quitar :slug de aquí
@@ -45,13 +50,16 @@ Route::middleware(['auth'])->group(function () {
     });
 
 
-    
-        // La vista principal del perfil
-        Route::get('/profile', [CarrierProfileController::class, 'index'])->name('profile');
-        // Vista de edición del perfil
-        Route::get('/profile/edit', [CarrierProfileController::class, 'edit'])->name('profile.edit');
-        // Actualizar perfil
-        Route::put('/profile/update', [CarrierProfileController::class, 'update'])->name('profile.update');
-    
 
+    // La vista principal del perfil
+    Route::get('/profile', [CarrierProfileController::class, 'index'])->name('profile');
+    // Vista de edición del perfil
+    Route::get('/profile/edit', [CarrierProfileController::class, 'edit'])->name('profile.edit');
+    // Actualizar perfil
+    Route::put('/profile/update', [CarrierProfileController::class, 'update'])->name('profile.update');
+
+
+    // Rutas para gestión de conductores
+    // Gestión de conductores
+    Route::resource('drivers', CarrierDriverController::class);
 });

@@ -40,14 +40,14 @@ class NewUserNotification extends Notification implements ShouldQueue
         ]);
 
         return (new MailMessage)
-            ->subject('Bienvenido a EF Services')
-            ->greeting('¡Hola ' . $this->user->name . '!')
-            ->line('Tu cuenta ha sido creada exitosamente.')
-            ->line('Tus credenciales de acceso son:')
+            ->subject('Welcome to EF Services')
+            ->greeting('Hello ' . $this->user->name . '!')
+            ->line('Your account has been successfully created.')
+            ->line('Your access credentials are:')
             ->line('Email: ' . $this->user->email)
-            ->line('Contraseña: ' . $this->password)
-            ->action('Iniciar Sesión', url('/login'))
-            ->line('Por favor, cambia tu contraseña después de iniciar sesión por primera vez.')
-            ->line('¡Gracias por unirte a nosotros!');
+            ->line('Password: ' . $this->password)
+            ->action('Log In', url('/login'))
+            ->line('Please change your password after logging in for the first time.')
+            ->line('Thank you for joining us!');
     }
 }

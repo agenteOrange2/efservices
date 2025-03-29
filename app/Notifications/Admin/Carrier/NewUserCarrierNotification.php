@@ -14,7 +14,6 @@ class NewUserCarrierNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-
     protected $user;
     protected $carrier;
 
@@ -38,9 +37,9 @@ class NewUserCarrierNotification extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        return ['mail'];
+        // Añadimos 'database' para las notificaciones en la campana
+        return ['mail', 'database'];
     }
-
 
     /**
      * Get the mail representation of the notification.
@@ -58,29 +57,44 @@ class NewUserCarrierNotification extends Notification implements ShouldQueue
     
             $url = route('admin.carrier.user_carriers.index', ['carrier' => $this->carrier->slug]);
             
-            Log::info('URL generada correctamente', ['url' => $url]);
+            Log::info('URL generated correctly', ['url' => $url]);
     
             $message = (new MailMessage)
-                ->subject('Nuevo Usuario Carrier Creado')
-                ->greeting('¡Hola!')
-                ->line('Se ha creado un nuevo usuario carrier en el sistema.')
-                ->line('Detalles del usuario:')
-                ->line('Nombre: ' . $this->user->name)
+                ->subject('New Carrier User Created')
+                ->greeting('Hello!')
+                ->line('A new carrier user has been created in the system.')
+                ->line('User details:')
+                ->line('Name: ' . $this->user->name)
                 ->line('Email: ' . $this->user->email)
                 ->line('Carrier: ' . $this->carrier->name)
-                ->line('Fecha de creación: ' . $this->user->created_at->format('d/m/Y H:i'))
-                ->action('Ver Usuario', $url)
-                ->line('Gracias por usar nuestra aplicación.');
+                ->line('Creation date: ' . $this->user->created_at->format('m/d/Y H:i'))
+                ->action('View User', $url)
+                ->line('Thank you for using our application.');
     
-            Log::info('Mail message creado correctamente');
+            Log::info('Mail message created correctly');
             
             return $message;
         } catch (\Exception $e) {
-            Log::error('Error en toMail', [
+            Log::error('Error in toMail', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * Get the database representation of the notification.
+     */
+    public function toDatabase($notifiable)
+    {
+        return [
+            'user_id' => $this->user->id,
+            'carrier_id' => $this->carrier->id,
+            'title' => 'New carrier user created',
+            'message' => "New user registered for carrier {$this->carrier->name}: {$this->user->name}",
+            'icon' => 'UserPlus', // Icono para usar en la UI
+            'action_url' => '/admin/carriers/' . $this->carrier->slug . '/users'
+        ];
     }
 }

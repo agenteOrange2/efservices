@@ -163,6 +163,34 @@ class DriverGeneralInfoStep extends Component
                 'user_id' => $user->id,
                 'status' => 'draft'
             ]);
+            
+                    // Send notification to admin users
+        try {
+            // Get carrier
+            $carrier = \App\Models\Carrier::find($this->carrier->id);
+            
+            // Get superadmins and carrier admins to notify
+            $superadmins = User::role('superadmin')->get();
+            
+            // Combine recipients
+            $recipients = $superadmins;
+            
+            // Send notification
+            foreach ($recipients as $recipient) {
+                $recipient->notify(new \App\Notifications\Admin\Driver\NewDriverRegisteredNotification($user, $carrier));
+            }
+            
+            \Illuminate\Support\Facades\Log::info('New driver notification sent', [
+                'driver_id' => $user->id,
+                'driver_email' => $user->email,
+                'carrier_id' => $carrier->id
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error sending driver notification', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
 
             DB::commit();
 

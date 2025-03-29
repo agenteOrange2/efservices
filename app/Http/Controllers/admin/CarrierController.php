@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Models\User;
 use App\Models\Carrier;
 use App\Helpers\Constants;
 use App\Models\Membership;
@@ -92,16 +93,19 @@ class CarrierController extends Controller
 
         // Notificar al admin sobre el nuevo carrier
         try {
-            $adminEmail = config('app.admin_email');
-            Notification::route('mail', $adminEmail)
-                ->notify(new NewCarrierNotification($carrier));
-
-            Log::info('Notificación de nuevo carrier enviada al admin', [
+            // Obtener todos los superadmins
+            $superadmins = User::role('superadmin')->get();
+            
+            foreach ($superadmins as $admin) {
+                $admin->notify(new NewCarrierNotification($carrier));
+            }
+    
+            Log::info('New carrier notification sent to all superadmins', [
                 'carrier_id' => $carrier->id,
-                'admin_email' => $adminEmail
+                'superadmin_count' => $superadmins->count()
             ]);
         } catch (\Exception $e) {
-            Log::error('Error al enviar notificación de nuevo carrier', [
+            Log::error('Error sending new carrier notification', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'carrier_id' => $carrier->id

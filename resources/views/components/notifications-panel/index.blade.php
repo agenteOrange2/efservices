@@ -1,36 +1,21 @@
 <div>
     <x-base.slideover id="notifications-panel">
         <x-base.slideover.panel class="w-72 rounded-[0.75rem_0_0_0.75rem/1.1rem_0_0_1.1rem]">
-            <a
-                class="absolute inset-y-0 left-0 right-auto my-auto -ml-[60px] flex h-8 w-8 items-center justify-center rounded-full border border-white/90 bg-white/5 text-white/90 transition-all hover:rotate-180 hover:scale-105 hover:bg-white/10 focus:outline-none sm:-ml-[105px] sm:h-14 sm:w-14"
-                data-tw-dismiss="modal"
-                href="javascript:;"
-            >
-                <x-base.lucide
-                    class="h-8 w-8 stroke-[1]"
-                    icon="X"
-                />
+            <a class="absolute inset-y-0 left-0 right-auto my-auto -ml-[60px] flex h-8 w-8 items-center justify-center rounded-full border border-white/90 bg-white/5 text-white/90 transition-all hover:rotate-180 hover:scale-105 hover:bg-white/10 focus:outline-none sm:-ml-[105px] sm:h-14 sm:w-14"
+                data-tw-dismiss="modal" href="javascript:;">
+                <x-base.lucide class="h-8 w-8 stroke-[1]" icon="X" />
             </a>
             <x-base.slideover.title class="px-6 py-5">
                 <h2 class="mr-auto text-base font-medium">Notifications</h2>
-                <x-base.button
-                    class="hidden sm:flex"
-                    variant="outline-secondary"
-                >
-                    <x-base.lucide
-                        class="mr-2 h-4 w-4"
-                        icon="ShieldCheck"
-                    /> Mark all as
+                <x-base.button class="hidden sm:flex" variant="outline-secondary">
+                    <x-base.lucide class="mr-2 h-4 w-4" icon="ShieldCheck" /> Mark all as
                     read
                 </x-base.button>
             </x-base.slideover.title>
             <x-base.slideover.description class="p-0">
                 <div class="flex flex-col gap-0.5 p-3">
                     @foreach ($activities as $fakerKey => $faker)
-                        <a
-                            class="flex items-center rounded-xl px-3 py-2.5 hover:bg-slate-100/80"
-                            href=""
-                        >
+                        <a class="flex items-center rounded-xl px-3 py-2.5 hover:bg-slate-100/80" href="">
                             <div>
                                 <div
                                     class="image-fit h-11 w-11 overflow-hidden rounded-full border-2 border-slate-200/70">
