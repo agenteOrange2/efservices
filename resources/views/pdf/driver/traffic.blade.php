@@ -1,23 +1,28 @@
+{{-- resources/views/pdf/driver/traffic.blade.php --}}
 <!DOCTYPE html>
 <html>
+
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Solicitud de Conductor - Infracciones de Tráfico</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Driver Application - Traffic Violations</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
             font-size: 12px;
             line-height: 1.5;
         }
+
         .header {
             text-align: center;
             margin-bottom: 20px;
             border-bottom: 1px solid #ddd;
             padding-bottom: 10px;
         }
+
         .section {
             margin-bottom: 15px;
         }
+
         .section-title {
             font-weight: bold;
             font-size: 14px;
@@ -25,93 +30,128 @@
             background-color: #f0f0f0;
             padding: 5px;
         }
+
         .field {
             margin-bottom: 5px;
         }
+
         .label {
             font-weight: bold;
             display: inline-block;
             width: 200px;
         }
+
         .value {
             display: inline-block;
         }
+
         .signature-box {
             margin-top: 30px;
             border-top: 1px solid #ddd;
             padding-top: 10px;
         }
+
         .signature {
             max-height: 80px;
             max-width: 300px;
         }
+
         .date {
             margin-top: 10px;
         }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .table-header {
+            background-color: #333;
+            color: white;
+            font-weight: bold;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .conviction-item {
+            margin-top: 15px;
+        }
     </style>
 </head>
+
 <body>
     <div class="header">
-        <h1>Formulario de Solicitud de Conductor</h1>
+        <h1>Driver Application Form</h1>
         <h2>{{ $title }}</h2>
     </div>
-    
+
     <div class="section">
-        <div class="section-title">Información de Infracciones de Tráfico</div>
-        @if($userDriverDetail->application && $userDriverDetail->application->details)
-            <div class="field">
-                <span class="label">¿Ha tenido infracciones de tráfico en los últimos tres años?:</span>
-                <span class="value">{{ $userDriverDetail->application->details->has_traffic_convictions ? 'Sí' : 'No' }}</span>
-            </div>
-        @endif
+        <div class="section-title">Traffic Violations Information</div>
+        <table>
+            <tr>
+                <td colspan="2"><strong>Have you had any traffic violations in the last three years?</strong><br>{{ $userDriverDetail->application && $userDriverDetail->application->details && $userDriverDetail->application->details->has_traffic_convictions ? 'Yes' : 'No' }}</td>
+            </tr>
+        </table>
     </div>
-    
+
     @if($userDriverDetail->trafficConvictions && $userDriverDetail->trafficConvictions->count() > 0)
         <div class="section">
-            <div class="section-title">Infracciones de Tráfico</div>
+            <div class="section-title">Traffic Violations</div>
             @foreach($userDriverDetail->trafficConvictions as $index => $conviction)
-                <div style="margin-bottom: 15px; border-bottom: 1px dashed #ddd; padding-bottom: 10px;">
-                    <h4>Infracción #{{ $index + 1 }}</h4>
-                    <div class="field">
-                        <span class="label">Fecha de Infracción:</span>
-                        <span class="value">{{ $conviction->conviction_date ? date('d/m/Y', strtotime($conviction->conviction_date)) : 'N/A' }}</span>
-                    </div>
-                    <div class="field">
-                        <span class="label">Ubicación:</span>
-                        <span class="value">{{ $conviction->location ?? 'N/A' }}</span>
-                    </div>
-                    <div class="field">
-                        <span class="label">Cargo:</span>
-                        <span class="value">{{ $conviction->charge ?? 'N/A' }}</span>
-                    </div>
-                    <div class="field">
-                        <span class="label">Penalidad:</span>
-                        <span class="value">{{ $conviction->penalty ?? 'N/A' }}</span>
-                    </div>
+                <div class="conviction-item">
+                    <h4>Violation #{{ $index + 1 }}</h4>
+                    <table>
+                        <tr>
+                            <td style="width: 50%"><strong>Violation Date</strong><br>{{ $conviction->conviction_date ? date('m/d/Y', strtotime($conviction->conviction_date)) : 'N/A' }}</td>
+                            <td style="width: 50%"><strong>Location</strong><br>{{ $conviction->location ?? 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50%"><strong>Charge</strong><br>{{ $conviction->charge ?? 'N/A' }}</td>
+                            <td style="width: 50%"><strong>Penalty</strong><br>{{ $conviction->penalty ?? 'N/A' }}</td>
+                        </tr>
+                    </table>
                 </div>
             @endforeach
         </div>
     @elseif($userDriverDetail->application && $userDriverDetail->application->details && $userDriverDetail->application->details->has_traffic_convictions)
         <div class="section">
-            <p>No se encontraron datos de infracciones de tráfico.</p>
+            <p>No traffic violation data found.</p>
         </div>
     @endif
-    
+
     <div class="signature-box">
         <div class="field">
-            <span class="label">Firma:</span>
+            <span class="label">Signature:</span>
             <div>
                 @if (!empty($signaturePath) && file_exists($signaturePath))
-                    <img src="{{ $signaturePath }}" alt="Firma" style="max-width: 300px; max-height: 100px;" />
+                    <img src="{{ $signaturePath }}" alt="Signature" style="max-width: 300px; max-height: 100px;" />
                 @else
-                    <p style="font-style: italic; color: #999;">Firma no disponible</p>
+                    <p style="font-style: italic; color: #999;">Signature not available</p>
                 @endif
             </div>
         </div>
         <div class="date">
-            <span class="label">Fecha:</span>
+            <span class="label">Date:</span>
             <span class="value">{{ $date }}</span>
         </div>
     </div>
 </body>
+
 </html>
