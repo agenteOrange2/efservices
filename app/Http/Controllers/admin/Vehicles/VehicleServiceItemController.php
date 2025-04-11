@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Admin\Vehicles;
 
 use App\Models\Admin\Vehicle\Vehicle;
-use App\Models\Admin\Vehicle\VehicleServiceItem;
+use App\Models\Admin\Vehicle\VehicleMaintenance; // Cambiado de VehicleServiceItem
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-
 
 class VehicleServiceItemController extends Controller
 {
@@ -16,8 +15,11 @@ class VehicleServiceItemController extends Controller
      */
     public function index(Vehicle $vehicle)
     {
-        $serviceItems = $vehicle->serviceItems()->orderBy('service_date', 'desc')->paginate(10);
-
+        // Ahora usamos el modelo VehicleMaintenance pero mantenemos la misma lógica
+        $serviceItems = VehicleMaintenance::where('vehicle_id', $vehicle->id)
+                                         ->orderBy('service_date', 'desc')
+                                         ->paginate(10);
+        
         return view('admin.vehicles.service-items.index', compact('vehicle', 'serviceItems'));
     }
 
@@ -29,9 +31,6 @@ class VehicleServiceItemController extends Controller
         return view('admin.vehicles.service-items.create', compact('vehicle'));
     }
 
-    /**
-     * Almacenar un nuevo item de servicio.
-     */
     /**
      * Almacenar un nuevo item de servicio.
      */
@@ -54,13 +53,20 @@ class VehicleServiceItemController extends Controller
                 ->withInput();
         }
 
-        // Crear un nuevo objeto con todos los datos del formulario
-        $serviceItem = new VehicleServiceItem($request->all());
-
-        // Asignar explícitamente el vehicle_id desde el parámetro de ruta
-        $serviceItem->vehicle_id = $vehicle->id;
-
-        // Guardar el servicio
+        // Crear un nuevo mantenimiento - ahora usando VehicleMaintenance
+        $serviceItem = new VehicleMaintenance([
+            'vehicle_id' => $vehicle->id,
+            'unit' => $request->unit,
+            'service_date' => $request->service_date,
+            'next_service_date' => $request->next_service_date,
+            'service_tasks' => $request->service_tasks,
+            'vendor_mechanic' => $request->vendor_mechanic,
+            'description' => $request->description,
+            'cost' => $request->cost,
+            'odometer' => $request->odometer,
+            'status' => false, // Por defecto, no completado
+        ]);
+        
         $serviceItem->save();
 
         return redirect()->route('admin.vehicles.show', $vehicle->id)
@@ -70,8 +76,11 @@ class VehicleServiceItemController extends Controller
     /**
      * Mostrar un item de servicio específico.
      */
-    public function show(Vehicle $vehicle, VehicleServiceItem $serviceItem)
+    public function show(Vehicle $vehicle, $serviceItemId)
     {
+        // Buscar usando el nuevo modelo
+        $serviceItem = VehicleMaintenance::findOrFail($serviceItemId);
+        
         // Verificar que el service item pertenece a este vehículo
         if ($serviceItem->vehicle_id !== $vehicle->id) {
             abort(404);
@@ -83,8 +92,11 @@ class VehicleServiceItemController extends Controller
     /**
      * Mostrar el formulario para editar un item de servicio.
      */
-    public function edit(Vehicle $vehicle, VehicleServiceItem $serviceItem)
+    public function edit(Vehicle $vehicle, $serviceItemId)
     {
+        // Buscar usando el nuevo modelo
+        $serviceItem = VehicleMaintenance::findOrFail($serviceItemId);
+        
         // Verificar que el service item pertenece a este vehículo
         if ($serviceItem->vehicle_id !== $vehicle->id) {
             abort(404);
@@ -96,8 +108,15 @@ class VehicleServiceItemController extends Controller
     /**
      * Actualizar un item de servicio específico.
      */
-    public function update(Request $request, Vehicle $vehicle, VehicleServiceItem $serviceItem)
+    public function update(Request $request, Vehicle $vehicle, $serviceItemId)
     {
+        // Buscar usando el nuevo modelo
+        $serviceItem = VehicleMaintenance::findOrFail($serviceItemId);
+        
+        if ($serviceItem->vehicle_id !== $vehicle->id) {
+            abort(404);
+        }
+        
         $validator = Validator::make($request->all(), [
             'unit' => 'required|string|max:255',
             'service_date' => 'required|date',
@@ -115,7 +134,18 @@ class VehicleServiceItemController extends Controller
                 ->withInput();
         }
 
-        $serviceItem->update($request->all());
+        // Actualizar los campos - incluido status
+        $serviceItem->update([
+            'unit' => $request->unit,
+            'service_date' => $request->service_date,
+            'next_service_date' => $request->next_service_date,
+            'service_tasks' => $request->service_tasks,
+            'vendor_mechanic' => $request->vendor_mechanic,
+            'description' => $request->description,
+            'cost' => $request->cost,
+            'odometer' => $request->odometer,
+            // Conservamos el valor actual de status
+        ]);
 
         return redirect()->route('admin.vehicles.service-items.index', $vehicle->id)
             ->with('success', 'Item de servicio actualizado exitosamente');
@@ -124,11 +154,35 @@ class VehicleServiceItemController extends Controller
     /**
      * Eliminar un item de servicio específico.
      */
-    public function destroy(Vehicle $vehicle, VehicleServiceItem $serviceItem)
+    public function destroy(Vehicle $vehicle, $serviceItemId)
     {
+        // Buscar usando el nuevo modelo
+        $serviceItem = VehicleMaintenance::findOrFail($serviceItemId);
+        
+        if ($serviceItem->vehicle_id !== $vehicle->id) {
+            abort(404);
+        }
+        
         $serviceItem->delete();
-
+        
         return redirect()->route('admin.vehicles.service-items.index', $vehicle->id)
             ->with('success', 'Item de servicio eliminado exitosamente');
+    }
+    
+    /**
+     * Cambiar el estado del servicio (completado/pendiente)
+     */
+    public function toggleStatus(Vehicle $vehicle, $serviceItemId)
+    {
+        $serviceItem = VehicleMaintenance::findOrFail($serviceItemId);
+        
+        if ($serviceItem->vehicle_id !== $vehicle->id) {
+            abort(404);
+        }
+        
+        $serviceItem->status = !$serviceItem->status;
+        $serviceItem->save();
+        
+        return back()->with('success', 'Estado del servicio actualizado exitosamente');
     }
 }

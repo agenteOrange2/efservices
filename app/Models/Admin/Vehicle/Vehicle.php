@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models\Admin\Vehicle;
 
 use App\Models\Carrier;
@@ -63,7 +62,7 @@ class Vehicle extends Model
 
     public function serviceItems(): HasMany
     {
-        return $this->hasMany(VehicleServiceItem::class);
+        return $this->hasMany(VehicleMaintenance::class);
     }
 
     public function vehicleMake(): BelongsTo
@@ -74,5 +73,59 @@ class Vehicle extends Model
     public function vehicleType(): BelongsTo
     {
         return $this->belongsTo(VehicleType::class, 'type', 'name');
+    }
+    
+    public function documents(): HasMany
+    {
+        return $this->hasMany(VehicleDocument::class);
+    }
+    
+    /**
+     * Obtener el estado actual del vehículo.
+     */
+    public function getStatusAttribute(): string
+    {
+        if ($this->out_of_service) {
+            return 'out_of_service';
+        }
+        
+        if ($this->suspended) {
+            return 'suspended';
+        }
+        
+        return 'active';
+    }
+    
+    /**
+     * Verificar si el vehículo está activo.
+     */
+    public function isActive(): bool
+    {
+        return !$this->out_of_service && !$this->suspended;
+    }
+    
+    /**
+     * Scope para filtrar vehículos activos.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('out_of_service', false)
+                     ->where('suspended', false);
+    }
+    
+    /**
+     * Scope para filtrar vehículos fuera de servicio.
+     */
+    public function scopeOutOfService($query)
+    {
+        return $query->where('out_of_service', true);
+    }
+    
+    /**
+     * Scope para filtrar vehículos suspendidos.
+     */
+    public function scopeSuspended($query)
+    {
+        return $query->where('suspended', true);
     }
 }

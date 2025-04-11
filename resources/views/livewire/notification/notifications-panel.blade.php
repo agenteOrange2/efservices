@@ -20,10 +20,33 @@
                         class="flex items-center p-3 rounded-lg {{ $notification->read_at ? 'bg-slate-50' : 'bg-primary/10' }} mb-2 transition hover:bg-slate-100">
                         <!-- Usar wire:ignore para conservar el icono -->
                         <div wire:ignore class="flex-shrink-0 mr-3">
-                            <x-base.lucide class="h-5 w-5 {{ $notification->read_at ? 'text-slate-400' : 'text-primary' }}" icon="{{ $notification->data['icon'] ?? 'Bell' }}" />
+                            @php
+                                $icon = 'Bell';
+                                
+                                // Determinar icono basado en el tipo de notificación
+                                $notificationType = class_basename($notification->type);
+                                
+                                switch($notificationType) {
+                                    case 'NewCarrierNotification':
+                                    case 'NewUserCarrierNotification':
+                                        $icon = 'Building2';
+                                        break;
+                                    case 'NewDocumentUploadedNotification':
+                                        $icon = 'FileText';
+                                        break;
+                                    case 'NewUserDriverNotification':
+                                    case 'NewDriverNotificationAdmin':
+                                    case 'NewDriverCreatedNotification':
+                                        $icon = 'User';
+                                        break;
+                                    default:
+                                        $icon = $notification->data['icon'] ?? 'Bell';
+                                }
+                            @endphp
+                            <x-base.lucide class="h-5 w-5 {{ $notification->read_at ? 'text-slate-400' : 'text-primary' }}" icon="{{ $icon }}" />
                         </div>
                         <div class="flex-grow">
-                            <p class="font-medium">{{ $notification->data['title'] ?? 'Notification' }}</p>
+                            <p class="font-medium">{{ $notification->data['title'] ?? class_basename($notification->type) }}</p>
                             <p class="text-xs text-slate-600">{{ $notification->data['message'] ?? '' }}</p>
                             <p class="text-xs text-slate-500 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
                         </div>
@@ -46,14 +69,14 @@
     </x-base.dialog.description>
     <x-base.dialog.footer>
         <div class="flex justify-between">
-        @if($unreadCount > 0)
-        <button wire:click="markAllAsRead" class="text-xs text-slate-500 hover:text-primary">
-            Mark all as read                
-        </button>
-        @endif
-        <a href="#" class="text-sm text-primary hover:underline">
-            View all notifications
-        </a>
-    </div>
+            @if($unreadCount > 0)
+                <button wire:click="markAllAsRead" class="text-xs text-slate-500 hover:text-primary">
+                    Mark all as read                
+                </button>
+            @endif
+            <a href="{{ route('admin.notifications.index') }}" class="text-sm text-primary hover:underline">
+                View all notifications
+            </a>
+        </div>
     </x-base.dialog.footer>
 </div>

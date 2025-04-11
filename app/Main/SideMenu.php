@@ -135,13 +135,13 @@ class SideMenu
 
                     [
                         'icon' => "file-text",
-                        'route_name' => "admin.product-grid",
+                        'route_name' => "admin.vehicles-documents.index",
                         'params' => [],
-                        'title' => "Documentation",
+                        'title' => "Documents Overview",
                     ],
                     [
-                        'icon' => "vote",
-                        'route_name' => "admin.product-grid",
+                        'icon' => "wrench",
+                        'route_name' => "admin.maintenance.index",
                         'params' => [],
                         'title' => "Maintenance",
                     ],

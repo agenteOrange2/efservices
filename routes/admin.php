@@ -1,6 +1,5 @@
 <?php
 
-
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PageController;
@@ -15,13 +14,16 @@ use App\Http\Controllers\Admin\TempUploadController;
 use App\Http\Controllers\Admin\UserDriverController;
 use App\Http\Controllers\Admin\UserCarrierController;
 use App\Http\Controllers\Admin\DocumentTypeController;
+use App\Http\Controllers\Admin\NotificationsController;
 use App\Http\Controllers\Admin\CarrierDocumentController;
 use App\Http\Controllers\Admin\Vehicles\VehicleController;
 use App\Http\Controllers\Admin\Driver\DriverListController;
 use App\Http\Controllers\Admin\UserCarrierDocumentController;
+use App\Http\Controllers\Admin\Vehicles\MaintenanceController;
 use App\Http\Controllers\Admin\Vehicles\VehicleMakeController;
 use App\Http\Controllers\Admin\Vehicles\VehicleTypeController;
 use App\Http\Controllers\Admin\Driver\DriverRecruitmentController;
+use App\Http\Controllers\Admin\Vehicles\VehicleDocumentController;
 use App\Http\Controllers\Admin\Vehicles\VehicleServiceItemController;
 
 
@@ -43,6 +45,7 @@ Route::get('/', function () {
     |--------------------------------------------------------------------------    
 */
 
+// Rutas de usuarios (sin middleware)
 Route::get('users/export-excel', [UserController::class, 'exportToExcel'])->name('users.export.excel');
 Route::get('users/export-pdf', [UserController::class, 'exportToPdf'])->name('users.export.pdf');
 Route::post('users/{user}/delete-photo', [UserController::class, 'deletePhoto'])->name('users.delete-photo');
@@ -141,14 +144,14 @@ Route::prefix('carrier/{carrier}/drivers')->name('carrier.user_drivers.')->group
     Route::get('/', [UserDriverController::class, 'index'])->name('index');
     Route::get('/create', [UserDriverController::class, 'create'])->name('create');
     // Route::post('/', [UserDriverController::class, 'store'])->name('store');
-    Route::get('/{userDriverDetail}/edit', [UserDriverController::class, 'edit'])->name('edit');    
+    Route::get('/{userDriverDetail}/edit', [UserDriverController::class, 'edit'])->name('edit');
     // Route::put('/{userDriverDetail}', [UserDriverController::class, 'update'])->name('update');
     Route::delete('/{userDriverDetail}', [UserDriverController::class, 'destroy'])->name('destroy');
-    Route::delete('/{userDriverDetail}/photo', [UserDriverController::class, 'deletePhoto'])->name('delete-photo');    
+    Route::delete('/{userDriverDetail}/photo', [UserDriverController::class, 'deletePhoto'])->name('delete-photo');
 });
 
 Route::post('carrier/{carrier}/drivers/autosave/{userDriverDetail?}', [
-    UserDriverController::class, 
+    UserDriverController::class,
     'autosave'
 ])->name('admin.carrier.user_drivers.autosave');
 
@@ -258,6 +261,9 @@ Route::prefix('vehicles')->name('vehicles.')->group(function () {
     Route::put('/{vehicle}', [VehicleController::class, 'update'])->name('update');
     Route::delete('/{vehicle}', [VehicleController::class, 'destroy'])->name('destroy');
 
+    Route::get('/drivers-by-carrier/{carrierId}', [VehicleController::class, 'getDriversByCarrier'])
+        ->name('drivers-by-carrier');
+
     // Rutas para ítems de servicio anidadas bajo un vehículo específico
     Route::prefix('{vehicle}/service-items')->name('service-items.')->group(function () {
         Route::get('/', [VehicleServiceItemController::class, 'index'])->name('index');
@@ -267,6 +273,19 @@ Route::prefix('vehicles')->name('vehicles.')->group(function () {
         Route::get('/{serviceItem}/edit', [VehicleServiceItemController::class, 'edit'])->name('edit');
         Route::put('/{serviceItem}', [VehicleServiceItemController::class, 'update'])->name('update');
         Route::delete('/{serviceItem}', [VehicleServiceItemController::class, 'destroy'])->name('destroy');
+    });
+
+    // Rutas para documentos anidadas bajo un vehículo específico
+    Route::prefix('{vehicle}/documents')->name('documents.')->group(function () {
+        Route::get('/', [VehicleDocumentController::class, 'index'])->name('index');
+        Route::get('/create', [VehicleDocumentController::class, 'create'])->name('create');
+        Route::post('/', [VehicleDocumentController::class, 'store'])->name('store');
+        Route::get('/{document}', [VehicleDocumentController::class, 'show'])->name('show');
+        Route::get('/{document}/edit', [VehicleDocumentController::class, 'edit'])->name('edit');
+        Route::put('/{document}', [VehicleDocumentController::class, 'update'])->name('update');
+        Route::delete('/{document}', [VehicleDocumentController::class, 'destroy'])->name('destroy');
+        Route::get('/{document}/download', [VehicleDocumentController::class, 'download'])->name('download');
+        Route::get('/{document}/preview', [VehicleDocumentController::class, 'preview'])->name('preview');
     });
 });
 
@@ -278,9 +297,53 @@ Route::get('vehicle-makes/search', [VehicleMakeController::class, 'search'])->na
 Route::resource('vehicle-types', VehicleTypeController::class);
 Route::get('vehicle-types/search', [VehicleTypeController::class, 'search'])->name('vehicle-types.search');
 
+// Ruta para la vista global de documentos de vehículos
+Route::get('vehicles-documents', [App\Http\Controllers\Admin\Vehicles\VehicleDocumentsOverviewController::class, 'index'])
+    ->name('vehicles-documents.index');
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS MAINTENANCE
+|--------------------------------------------------------------------------    
+*/
+Route::prefix('maintenance')->name('maintenance.')->group(function () {
+    Route::get('/', [MaintenanceController::class, 'index'])->name('index');
+    Route::get('/create', [MaintenanceController::class, 'create'])->name('create');
+    Route::get('/{id}/edit', [MaintenanceController::class, 'edit'])->name('edit');
+    Route::get('/{id}', [MaintenanceController::class, 'show'])->name('show');
+    Route::put('/{id}/toggle-status', [MaintenanceController::class, 'toggleStatus'])->name('toggle-status');
+    Route::delete('/{id}', [MaintenanceController::class, 'destroy'])->name('destroy');
+    
+    // Rutas adicionales para funcionalidades extendidas (opcionales)
+    Route::get('/export', [MaintenanceController::class, 'export'])->name('export');
+    Route::get('/reports', [MaintenanceController::class, 'reports'])->name('reports');
+    Route::get('/calendar', [MaintenanceController::class, 'calendar'])->name('calendar');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Ruta para ToggleStatus en VehicleServiceItem (para mantener compatibilidad)
+|--------------------------------------------------------------------------    
+*/
+Route::put('/vehicles/{vehicle}/service-items/{serviceItem}/toggle-status', 
+    [VehicleServiceItemController::class, 'toggleStatus'])
+    ->name('service-items.toggle-status');
 
 
 
+/*
+|--------------------------------------------------------------------------
+| RUTAS ADMIN NOTIFICATIONS
+|--------------------------------------------------------------------------
+*/
+Route::prefix('notifications')->name('notifications.')->group(function () {
+    Route::get('/', [NotificationsController::class, 'index'])->name('index');
+    Route::post('/{notification}/mark-as-read', [NotificationsController::class, 'markAsRead'])->name('mark-as-read');
+    Route::post('/{notification}/mark-as-unread', [NotificationsController::class, 'markAsUnread'])->name('mark-as-unread');
+    Route::post('/mark-all-read', [NotificationsController::class, 'markAllAsRead'])->name('mark-all-read');
+    Route::delete('/{notification}', [NotificationsController::class, 'destroy'])->name('destroy');
+    Route::delete('/', [NotificationsController::class, 'deleteAll'])->name('delete-all');
+});
 
 
 Route::controller(PageController::class)->group(function () {

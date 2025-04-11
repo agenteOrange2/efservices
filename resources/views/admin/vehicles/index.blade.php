@@ -14,6 +14,12 @@
                     Vehículos
                 </div>
                 <div class="flex flex-col gap-x-3 gap-y-2 sm:flex-row md:ml-auto">
+                    <x-base.button as="a" href="{{ route('admin.vehicles-documents.index') }}"
+                        class="group-[.mode--light]:!border-transparent group-[.mode--light]:!bg-white/[0.12] group-[.mode--light]:!text-slate-200 mr-2"
+                        variant="outline-primary">
+                        <x-base.lucide class="mr-2 h-4 w-4" icon="FileText" />
+                        Documentos
+                    </x-base.button>
                     <x-base.button as="a"
                         class="group-[.mode--light]:!border-transparent group-[.mode--light]:!bg-white/[0.12] group-[.mode--light]:!text-slate-200"
                         variant="primary" href="{{ route('admin.vehicles.create') }}">
@@ -237,6 +243,11 @@
                                                             href="{{ route('admin.vehicles.edit', $vehicle->id) }}">
                                                             <x-base.lucide class="mr-2 h-4 w-4" icon="CheckSquare" />
                                                             Editar
+                                                        </x-base.menu.item>
+                                                        <x-base.menu.item
+                                                            href="{{ route('admin.vehicles.documents.index', $vehicle->id) }}">
+                                                            <x-base.lucide class="mr-2 h-4 w-4" icon="FileText" />
+                                                            Documentos
                                                         </x-base.menu.item>
                                                         <x-base.menu.item
                                                             href="{{ route('admin.vehicles.service-items.index', $vehicle->id) }}">

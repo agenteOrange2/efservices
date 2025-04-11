@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Http\Controllers\Admin\Vehicles;
-
 use App\Models\Carrier;
 use App\Helpers\Constants;
 use Illuminate\Http\Request;
@@ -21,7 +19,7 @@ class VehicleController extends Controller
     public function index(Request $request)
     {
         $query = Vehicle::with(['carrier', 'driver']);
-
+        
         // Filtros
         if ($request->has('carrier_id')) {
             $query->where('carrier_id', $request->carrier_id);
@@ -36,15 +34,13 @@ class VehicleController extends Controller
                 $query->where('suspended', true);
             }
         }
-
-
-
+        
         $vehicles = $query->paginate(10);
-
+        
         // Obtener los tipos y marcas de vehículos para los filtros
         $vehicleTypes = VehicleType::orderBy('name')->get();
         $vehicleMakes = VehicleMake::orderBy('name')->get();
-
+        
         return view('admin.vehicles.index', compact('vehicles', 'vehicleTypes', 'vehicleMakes'));
     }
 
@@ -54,20 +50,20 @@ class VehicleController extends Controller
     public function create()
     {
         $carriers = Carrier::where('status', 1)->get();
-        $drivers = UserDriverDetail::with('user')->get();
+        // No cargamos drivers inicialmente, se cargarán por AJAX según el carrier seleccionado
+        $drivers = collect(); 
         $vehicleMakes = VehicleMake::all();
         $vehicleTypes = VehicleType::all();
         $usStates = Constants::usStates();
 
         return view('admin.vehicles.create', compact('carriers', 'drivers', 'vehicleMakes', 'vehicleTypes', 'usStates'));
     }
+
     /**
      * Almacenar un vehículo recién creado.
      */
     public function store(Request $request)
     {
-        //dd($request->all());
-
         $validator = Validator::make($request->all(), [
             'carrier_id' => 'required|exists:carriers,id',
             'make' => 'required|string|max:255',
@@ -86,11 +82,11 @@ class VehicleController extends Controller
             'irp_apportioned_plate' => 'boolean',
             'ownership_type' => 'required|in:owned,leased',
             'location' => 'nullable|string|max:255',
-            'user_driver_detail_id' => 'nullable|exists:user_driver_details,id',
+            'user_driver_detail_id' => 'nullable|exists:user_driver_details,id', // Ahora es nullable
             'annual_inspection_expiration_date' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
-
+        
         if ($validator->fails()) {
             return redirect()->back()
                 ->withErrors($validator)
@@ -101,7 +97,7 @@ class VehicleController extends Controller
         if ($request->has('make') && !VehicleMake::where('name', $request->make)->exists()) {
             VehicleMake::create(['name' => $request->make]);
         }
-
+        
         // Guardar o crear tipo de vehículo si no existe
         if ($request->has('type') && !VehicleType::where('name', $request->type)->exists()) {
             VehicleType::create(['name' => $request->type]);
@@ -109,7 +105,7 @@ class VehicleController extends Controller
 
         // Crear el vehículo
         $vehicle = Vehicle::create($request->all());
-
+        
         // Procesar y guardar los items de servicio si existen
         if ($request->has('service_items') && is_array($request->service_items)) {
             foreach ($request->service_items as $serviceItemData) {
@@ -128,7 +124,7 @@ class VehicleController extends Controller
                 }
             }
         }
-
+        
         return redirect()->route('admin.vehicles.show', $vehicle->id)
             ->with('success', 'Vehículo creado exitosamente');
     }
@@ -139,7 +135,6 @@ class VehicleController extends Controller
     public function show(Vehicle $vehicle)
     {
         $vehicle->load(['carrier', 'driver', 'serviceItems']);
-
         return view('admin.vehicles.show', compact('vehicle'));
     }
 
@@ -149,11 +144,22 @@ class VehicleController extends Controller
     public function edit(Vehicle $vehicle)
     {
         $carriers = Carrier::where('status', 1)->get();
-        $drivers = UserDriverDetail::with('user')->get();
-        $makes = VehicleMake::all();
-        $types = VehicleType::all();
+        
+        // Si ya hay un carrier seleccionado, cargar sus drivers
+        if ($vehicle->carrier_id) {
+            $drivers = UserDriverDetail::with('user')
+                ->where('carrier_id', $vehicle->carrier_id)
+                ->where('status', 1)
+                ->get();
+        } else {
+            $drivers = collect();
+        }
+        
+        $vehicleMakes = VehicleMake::all();
+        $vehicleTypes = VehicleType::all();
+        $usStates = Constants::usStates();
 
-        return view('admin.vehicles.edit', compact('vehicle', 'carriers', 'drivers', 'makes', 'types'));
+        return view('admin.vehicles.edit', compact('vehicle', 'carriers', 'drivers', 'vehicleMakes', 'vehicleTypes', 'usStates'));
     }
 
     /**
@@ -179,7 +185,7 @@ class VehicleController extends Controller
             'irp_apportioned_plate' => 'boolean',
             'ownership_type' => 'required|in:owned,leased',
             'location' => 'nullable|string|max:255',
-            'user_driver_detail_id' => 'nullable|exists:user_driver_details,id',
+            'user_driver_detail_id' => 'nullable|exists:user_driver_details,id', // Ahora es nullable
             'annual_inspection_expiration_date' => 'nullable|date',
             'out_of_service' => 'boolean',
             'out_of_service_date' => 'nullable|date|required_if:out_of_service,1',
@@ -187,7 +193,7 @@ class VehicleController extends Controller
             'suspended_date' => 'nullable|date|required_if:suspended,1',
             'notes' => 'nullable|string',
         ]);
-
+        
         if ($validator->fails()) {
             return redirect()->back()
                 ->withErrors($validator)
@@ -198,15 +204,15 @@ class VehicleController extends Controller
         if ($request->has('make') && !VehicleMake::where('name', $request->make)->exists()) {
             VehicleMake::create(['name' => $request->make]);
         }
-
+        
         // Guardar o crear tipo de vehículo si no existe
         if ($request->has('type') && !VehicleType::where('name', $request->type)->exists()) {
             VehicleType::create(['name' => $request->type]);
         }
-
+        
         // Actualizar el vehículo
         $vehicle->update($request->all());
-
+        
         return redirect()->route('admin.vehicles.show', $vehicle->id)
             ->with('success', 'Vehículo actualizado exitosamente');
     }
@@ -217,8 +223,22 @@ class VehicleController extends Controller
     public function destroy(Vehicle $vehicle)
     {
         $vehicle->delete();
-
+        
         return redirect()->route('admin.vehicles.index')
             ->with('success', 'Vehículo eliminado exitosamente');
+    }
+
+    /**
+     * Obtener drivers filtrados por carrier vía AJAX
+     */
+    public function getDriversByCarrier($carrierId)
+    {
+        // Obtener solo drivers activos para el carrier seleccionado
+        $drivers = UserDriverDetail::with('user')
+            ->where('carrier_id', $carrierId)
+            ->where('status', 1) // Solo drivers activos (status=1 que significa activo)
+            ->get();
+        
+        return response()->json($drivers);
     }
 }

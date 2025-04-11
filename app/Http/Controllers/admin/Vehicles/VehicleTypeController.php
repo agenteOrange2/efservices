@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Admin\Vehicles;
 
 use Illuminate\Http\Request;
@@ -12,19 +11,19 @@ class VehicleTypeController extends Controller
     /**
      * Mostrar una lista de todos los tipos de vehículos.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $vehicleTypes = VehicleType::withCount('vehicles')->orderBy('name')->paginate(20);
+        // Consulta base con conteo de vehículos
+        $query = VehicleType::withCount('vehicles')->orderBy('name');
+        
+        // Filtro de búsqueda
+        if ($request->has('search') && !empty($request->search)) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+        
+        $vehicleTypes = $query->paginate(15)->withQueryString();
         
         return view('admin.vehicles.vehicle-types.index', compact('vehicleTypes'));
-    }
-
-    /**
-     * Mostrar el formulario para crear un nuevo tipo.
-     */
-    public function create()
-    {
-        return view('admin.vehicles.vehicle-types.create');
     }
 
     /**
@@ -34,6 +33,9 @@ class VehicleTypeController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:vehicle_types,name',
+        ], [
+            'name.required' => 'El nombre del tipo es obligatorio',
+            'name.unique' => 'Este tipo ya existe en el sistema',
         ]);
 
         if ($validator->fails()) {
@@ -43,17 +45,9 @@ class VehicleTypeController extends Controller
         }
 
         VehicleType::create($request->all());
-
+        
         return redirect()->route('admin.vehicle-types.index')
             ->with('success', 'Tipo de vehículo creado exitosamente');
-    }
-
-    /**
-     * Mostrar el formulario para editar un tipo de vehículo.
-     */
-    public function edit(VehicleType $vehicleType)
-    {
-        return view('admin.vehicles.vehicle-types.edit', compact('vehicleType'));
     }
 
     /**
@@ -63,6 +57,9 @@ class VehicleTypeController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:vehicle_types,name,' . $vehicleType->id,
+        ], [
+            'name.required' => 'El nombre del tipo es obligatorio',
+            'name.unique' => 'Este tipo ya existe en el sistema',
         ]);
 
         if ($validator->fails()) {
@@ -72,8 +69,8 @@ class VehicleTypeController extends Controller
         }
 
         $vehicleType->update($request->all());
-
-        return redirect()->route('admin.vehicles.vehicle-types.index')
+        
+        return redirect()->route('admin.vehicle-types.index')
             ->with('success', 'Tipo de vehículo actualizado exitosamente');
     }
 
@@ -83,19 +80,23 @@ class VehicleTypeController extends Controller
     public function destroy(VehicleType $vehicleType)
     {
         // Verificar si hay vehículos que usan este tipo
-        if ($vehicleType->vehicles->count() > 0) {
-            return redirect()->route('admin.vehicles.vehicle-types.index')
-                ->with('error', 'No se puede eliminar este tipo porque hay vehículos que lo utilizan');
+        if ($vehicleType->vehicles()->count() > 0) {
+            return redirect()->route('admin.vehicle-types.index')
+                ->with('error', 'No se puede eliminar este tipo porque está siendo utilizado por vehículos');
         }
 
-        $vehicleType->delete();
-
-        return redirect()->route('admin.vehicles.vehicle-types.index')
-            ->with('success', 'Tipo de vehículo eliminado exitosamente');
+        try {
+            $vehicleType->delete();
+            return redirect()->route('admin.vehicle-types.index')
+                ->with('success', 'Tipo de vehículo eliminado exitosamente');
+        } catch (\Exception $e) {
+            return redirect()->route('admin.vehicle-types.index')
+                ->with('error', 'Error al eliminar el tipo: ' . $e->getMessage());
+        }
     }
-    
+
     /**
-     * API para buscar tipos (para usar con select2 o similar)
+     * API para búsqueda de tipos vía AJAX
      */
     public function search(Request $request)
     {

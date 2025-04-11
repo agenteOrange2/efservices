@@ -5,10 +5,8 @@ namespace App\Livewire\Notification;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 
-
 class NotificationsPanel extends Component
 {
-
     public $unreadCount = 0;
     public $notifications = [];
     
@@ -24,6 +22,7 @@ class NotificationsPanel extends Component
     public function loadNotifications()
     {
         $user = Auth::user();
+        // Utilizando el sistema de notificaciones nativo de Laravel
         $this->notifications = $user->notifications()->latest()->take(10)->get();
         $this->unreadCount = $user->unreadNotifications()->count();
     }

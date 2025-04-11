@@ -9,7 +9,17 @@
     ];
 @endphp
 
+
 @section('subcontent')
+@push('styles')
+<style>
+    .filter-btn.active {
+        background-color: #1e40af;
+        color: white;
+    }
+</style>
+@endpush
+
     <div class="grid grid-cols-12 gap-x-6 gap-y-10">
         <div class="col-span-12">
             <div class="flex flex-col gap-y-3 md:h-10 md:flex-row md:items-center">
@@ -30,6 +40,12 @@
                         class="w-full sm:w-44" variant="primary">
                         <x-base.lucide class="mr-2 h-4 w-4 stroke-[1.3]" icon="PenLine" />
                         Editar Vehículo
+                    </x-base.button>
+
+                    <x-base.button as="a" href="{{ route('admin.vehicles.documents.index', $vehicle->id) }}"
+                        class="w-full sm:w-44" variant="primary">
+                        <x-base.lucide class="mr-2 h-4 w-4" icon="FileText" />
+                        Documentos
                     </x-base.button>
 
                     <x-base.button as="a" href="{{ route('admin.vehicles.service-items.index', $vehicle->id) }}"
@@ -286,167 +302,176 @@
                 <!-- Historial de Servicio Reciente -->
                 <div class="box box--stacked mt-5">
                     <div class="box-header">
-                        <div class="box-title p-5 border-b border-slate-200/60 bg-slate-50">Historial de Servicio Reciente
+                        <div class="box-title p-5 border-b border-slate-200/60 bg-slate-50">
+                            <div class="flex justify-between items-center">
+                                <span>Historial de Mantenimiento</span>
+                                <div>
+                                    <x-base.button as="a" href="{{ route('admin.vehicles.service-items.index', $vehicle->id) }}"
+                                        class="w-full sm:w-auto" size="sm" variant="outline-primary">
+                                        <x-base.lucide class="mr-1 h-3 w-3" icon="ListFilter" />
+                                        Ver Historial Completo
+                                    </x-base.button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="box-body p-5">
-                        <!-- Botones arriba de la tabla -->
-                        <div class="flex flex-wrap gap-8 mb-4">
-                            {{-- <a href="{{ route('admin.vehicles.index') }}" class="btn btn-outline-secondary flex align-middle">
-                                <x-base.lucide class="mr-2 h-4 w-4" icon="ArrowLeft" />
-                                Volver a la lista
-                            </a> --}}
-                            {{-- <button type="button" class="btn btn-outline-primary flex align-middle" data-tw-toggle="modal"
-                                data-tw-target="#add-service-modal">
-                                <x-base.lucide class="mr-2 h-4 w-4" icon="Plus" />
-                                Agregar Servicio
-                            </button> --}}
-
-                            <x-base.button as="a" href="{{ route('admin.vehicles.index') }}"
-                                class="w-full sm:w-44" variant="primary">
-                                <x-base.lucide class="mr-2 h-4 w-4" icon="ArrowLeft" />
-                                Volver a la lista
+                        <!-- Filtros rápidos -->
+                        <div class="flex flex-wrap gap-3 mb-4">
+                            <x-base.button as="a" href="#" data-filter="all"
+                                class="w-full sm:w-auto filter-btn active" size="sm" variant="outline-secondary">
+                                Todos
                             </x-base.button>
-
-                            <x-base.button as="a" data-tw-toggle="modal" data-tw-target="#add-service-modal"
-                                class="w-full sm:w-44" variant="primary">
-                                <x-base.lucide class="mr-2 h-4 w-4" icon="Plus" />
-                                Agregar Servicio
+                            <x-base.button as="a" href="#" data-filter="pending"
+                                class="w-full sm:w-auto filter-btn" size="sm" variant="outline-warning">
+                                <x-base.lucide class="mr-1 h-3 w-3" icon="Clock" />
+                                Pendientes
                             </x-base.button>
+                            <x-base.button as="a" href="#" data-filter="completed"
+                                class="w-full sm:w-auto filter-btn" size="sm" variant="outline-success">
+                                <x-base.lucide class="mr-1 h-3 w-3" icon="CheckCircle" />
+                                Completados
+                            </x-base.button>
+                            <x-base.button as="a" href="#" data-filter="overdue"
+                                class="w-full sm:w-auto filter-btn" size="sm" variant="outline-danger">
+                                <x-base.lucide class="mr-1 h-3 w-3" icon="AlertCircle" />
+                                Vencidos
+                            </x-base.button>
+                            <div class="ml-auto">
+                                <x-base.button as="a" data-tw-toggle="modal" data-tw-target="#add-service-modal"
+                                    class="w-full sm:w-auto" size="sm" variant="primary">
+                                    <x-base.lucide class="mr-1 h-3 w-3" icon="Plus" />
+                                    Agregar Mantenimiento
+                                </x-base.button>
+                            </div>
                         </div>
-
-                        @if ($vehicle->serviceItems->count() > 0)
-                            <div class="overflow-auto xl:overflow-visible">
-                                <x-base.table class="border-b border-slate-200/60">
-                                    <x-base.table.thead>
-                                        <x-base.table.tr>
-                                            <x-base.table.td
-                                                class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                                                Servicio
-                                            </x-base.table.td>
-
-                                            <x-base.table.td
-                                                class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                                                Proveedor
-                                            </x-base.table.td>
-
-                                            <x-base.table.td
-                                                class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                                                Costo
-                                            </x-base.table.td>
-
-                                            <x-base.table.td
-                                                class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                                                Fecha de Servicio
-                                            </x-base.table.td>
-                                            <x-base.table.td
-                                                class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                                                Próximo Servicio
-                                            </x-base.table.td>
-                                            <x-base.table.td
-                                                class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                                                Action
-                                            </x-base.table.td>
-                                        </x-base.table.tr>
-                                    </x-base.table.thead>
-                                    <x-base.table.tbody>
-                                        @foreach ($vehicle->serviceItems->take(5) as $item)
-                                            <x-base.table.tr class="[&_td]:last:border-b-0">
-                                                <x-base.table.td class="border-dashed py-4">
-                                                    <div class="whitespace-nowrap">
-                                                        {{ $item->service_tasks }}
-                                                    </div>
-                                                </x-base.table.td>
-
-                                                <x-base.table.td class="border-dashed py-4">
-                                                    <div class="whitespace-nowrap">
-                                                        {{ $item->vendor_mechanic }}
-                                                    </div>
-                                                </x-base.table.td>
-
-                                                <x-base.table.td class="border-dashed py-4">
-                                                    <div class="whitespace-nowrap">
-                                                        ${{ number_format($item->cost, 2) }}
-                                                    </div>
-                                                </x-base.table.td>
-
-                                                <x-base.table.td class="border-dashed py-4">
-                                                    <div class="whitespace-nowrap">
-                                                        {{ $item->service_date->format('d/m/Y') }}
-                                                    </div>
-                                                </x-base.table.td>
-
-
-                                                <x-base.table.td class="border-dashed py-4">
-                                                    <div
-                                                        class="{{ $item->next_service_date < now() ? 'text-danger' : '' }}">
-                                                        {{ $item->next_service_date->format('d/m/Y') }}
-                                                    </div>
-                                                </x-base.table.td>
-                                                <x-base.table.td class="relative border-dashed py-4">
-                                                    <div class="flex items-center justify-center">
-                                                        <!-- Botones de acción en cada fila -->
-                                                        <div class="flex flex-wrap gap-2">
-                                                            {{-- <a href="{{ route('admin.vehicles.edit', $vehicle->id) }}"
-                                                                class="btn btn-primary btn-sm">
-                                                                <x-base.lucide class="h-4 w-4" icon="PenLine" />
-                                                            </a> --}}
-
-                                                            <button type="button"
-                                                                class="btn btn-primary btn-sm edit-service-btn"
-                                                                data-service-id="{{ $item->id }}"
-                                                                data-service-date="{{ $item->service_date->format('Y-m-d') }}"
-                                                                data-next-service-date="{{ $item->next_service_date->format('Y-m-d') }}"
-                                                                data-unit="{{ $item->unit }}"
-                                                                data-service-tasks="{{ $item->service_tasks }}"
-                                                                data-vendor-mechanic="{{ $item->vendor_mechanic }}"
-                                                                data-cost="{{ $item->cost }}"
-                                                                data-odometer="{{ $item->odometer }}"
-                                                                data-description="{{ $item->description }}"
-                                                                data-tw-toggle="modal"
-                                                                data-tw-target="#edit-service-modal">
-                                                                <x-base.lucide class="h-4 w-4" icon="PenLine" />
-                                                            </button>
-                                                            {{-- <button type="button" class="btn btn-outline-danger btn-sm"
-                                                                data-tw-toggle="modal"
-                                                                data-tw-target="#delete-confirmation-modal">
-                                                                <x-base.lucide class="h-4 w-4" icon="Trash2" />
-                                                            </button> --}}
-                                                            <button type="button" class="btn btn-outline-danger btn-sm delete-service-btn"
-                                                            data-service-id="{{ $item->id }}"
-                                                            data-tw-toggle="modal"
-                                                            data-tw-target="#delete-service-modal">
-                                                        <x-base.lucide class="h-4 w-4" icon="Trash2" />
-                                                    </button>
+                
+                        <div class="overflow-x-auto">
+                            <table class="table border w-full text-left">
+                                <thead>
+                                    <tr class="bg-slate-50/60">
+                                        <th class="font-medium text-slate-800 py-5">Fecha</th>
+                                        <th class="font-medium text-slate-800 py-5">Servicio</th>
+                                        <th class="font-medium text-slate-800 py-5">Proveedor</th>
+                                        <th class="font-medium text-slate-800 py-5">Costo</th>
+                                        <th class="font-medium text-slate-800 py-5">Próximo</th>
+                                        <th class="font-medium text-slate-800 py-5">Estado</th>
+                                        <th class="font-medium text-slate-800 text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($vehicle->serviceItems as $item)
+                                        <tr class="maintenance-row {{ !$item->status && $item->isOverdue() ? 'overdue' : '' }} {{ !$item->status && !$item->isOverdue() ? 'pending' : '' }} {{ $item->status ? 'completed' : '' }}">
+                                            <td>{{ $item->service_date->format('d/m/Y') }}</td>
+                                            <td class="py-6">
+                                                <div class="font-medium">{{ $item->service_tasks }}</div>
+                                                @if($item->odometer)
+                                                    <div class="text-xs text-slate-500">Odómetro: {{ number_format($item->odometer) }} mi</div>
+                                                @endif
+                                            </td>
+                                            <td class="py-6">{{ $item->vendor_mechanic }}</td>
+                                            <td class="py-6">${{ number_format($item->cost, 2) }}</td>
+                                            <td >
+                                                <div class="{{ !$item->status && $item->isOverdue() ? 'text-danger' : (!$item->status && $item->isUpcoming() ? 'text-warning' : '') }}">
+                                                    {{ $item->next_service_date->format('d/m/Y') }}
+                                                    @if(!$item->status && $item->isOverdue())
+                                                        <div class="flex items-center text-xs text-danger mt-1">
+                                                            <x-base.lucide class="h-3 w-3 mr-1" icon="AlertTriangle" />
+                                                            Vencido ({{ $item->next_service_date->diffInDays(now()) }} días)
                                                         </div>
+                                                    @elseif(!$item->status && $item->isUpcoming())
+                                                        <div class="flex items-center text-xs text-warning mt-1">
+                                                            <x-base.lucide class="h-3 w-3 mr-1" icon="Clock" />
+                                                            En {{ $item->next_service_date->diffInDays(now()) }} días
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if($item->status)
+                                                    <div class="flex items-center text-success">
+                                                        <x-base.lucide class="h-4 w-4 mr-1" icon="CheckCircle" />
+                                                        Completado
                                                     </div>
-                                                </x-base.table.td>
-                                            </x-base.table.tr>
-                                        @endforeach
-                                    </x-base.table.tbody>
-                                </x-base.table>
-
-                                @if ($vehicle->serviceItems->count() > 5)
-                                    <div class="mt-3 text-center">
-                                        <a href="{{ route('admin.vehicles.service-items.index', $vehicle->id) }}"
-                                            class="btn btn-outline-secondary btn-sm">
-                                            Ver Historial Completo
-                                        </a>
-                                    </div>
-                                @endif
-                            @else
-                                <div class="text-center py-6 text-slate-500">
-                                    <x-base.lucide class="mx-auto h-12 w-12 text-slate-300" icon="ClipboardList" />
-                                    <p class="mt-2">No hay registros de servicio</p>
-                                    {{-- <button type="button" class="btn btn-outline-primary btn-sm mt-3"
-                                        data-tw-toggle="modal" data-tw-target="#add-service-modal">
-                                        <x-base.lucide class="mr-1 h-4 w-4" icon="Plus" />
-                                        Agregar Servicio
-                                    </button> --}}
+                                                @else
+                                                    <div class="flex items-center {{ $item->isOverdue() ? 'text-danger' : 'text-warning' }}">
+                                                        <x-base.lucide class="h-4 w-4 mr-1" icon="{{ $item->isOverdue() ? 'AlertCircle' : 'Clock' }}" />
+                                                        {{ $item->isOverdue() ? 'Vencido' : 'Pendiente' }}
+                                                    </div>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <div class="flex items-center justify-center gap-1">
+                                                    <a href="{{ route('admin.vehicles.service-items.show', [$vehicle->id, $item->id]) }}" 
+                                                       class="btn btn-sm btn-primary p-1" title="Ver detalles">
+                                                        <x-base.lucide class="h-4 w-4" icon="Eye" />
+                                                    </a>
+                                                    
+                                                    <form action="{{ route('admin.service-items.toggle-status', [$vehicle->id, $item->id]) }}" 
+                                                          method="POST" class="inline-block">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <button type="submit" 
+                                                                class="btn btn-sm {{ $item->status ? 'btn-warning' : 'btn-success' }} p-1"
+                                                                title="{{ $item->status ? 'Marcar como pendiente' : 'Marcar como completado' }}">
+                                                            <x-base.lucide class="h-4 w-4" icon="{{ $item->status ? 'RotateCcw' : 'Check' }}" />
+                                                        </button>
+                                                    </form>
+                                                    
+                                                    <button type="button" 
+                                                            class="btn btn-sm btn-danger p-1 delete-service-btn" 
+                                                            data-service-id="{{ $item->id }}"
+                                                            data-tw-toggle="modal" 
+                                                            data-tw-target="#delete-service-modal"
+                                                            title="Eliminar">
+                                                        <x-base.lucide class="h-4 w-4" icon="Trash" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="text-center py-4">
+                                                <div class="flex flex-col items-center justify-center py-4">
+                                                    <x-base.lucide class="h-10 w-10 text-slate-300" icon="ClipboardX" />
+                                                    <p class="mt-2 text-slate-500">No hay registros de mantenimiento para este vehículo</p>
+                                                    <x-base.button as="a" data-tw-toggle="modal" data-tw-target="#add-service-modal"
+                                                        class="mt-3" size="sm" variant="outline-primary">
+                                                        <x-base.lucide class="mr-1 h-4 w-4" icon="Plus" />
+                                                        Registrar Primer Mantenimiento
+                                                    </x-base.button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                
+                        <!-- Sección de estadísticas de mantenimiento -->
+                        @if($vehicle->serviceItems->count() > 0)
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-5">
+                                <div class="box bg-slate-50 p-4 rounded">
+                                    <div class="text-xl font-medium">{{ $vehicle->serviceItems->count() }}</div>
+                                    <div class="text-slate-500 text-sm">Total de mantenimientos</div>
                                 </div>
+                                <div class="box bg-slate-50 p-4 rounded">
+                                    <div class="text-xl font-medium text-success">{{ $vehicle->serviceItems->where('status', true)->count() }}</div>
+                                    <div class="text-slate-500 text-sm">Completados</div>
+                                </div>
+                                <div class="box bg-slate-50 p-4 rounded">
+                                    <div class="text-xl font-medium text-warning">{{ $vehicle->serviceItems->where('status', false)->count() }}</div>
+                                    <div class="text-slate-500 text-sm">Pendientes</div>
+                                </div>
+                                <div class="box bg-slate-50 p-4 rounded">
+                                    <div class="text-xl font-medium">${{ number_format($vehicle->serviceItems->sum('cost'), 2) }}</div>
+                                    <div class="text-slate-500 text-sm">Gasto Total</div>
+                                </div>
+                            </div>
                         @endif
                     </div>
                 </div>
+                
             </div>
         </div>
     </div>
@@ -477,7 +502,7 @@
         </x-base.dialog.panel>
     </x-base.dialog>
 
-    <!-- Modal para agregar servicio -->
+    <!-- Modificar el Modal para agregar servicio para incluir el campo status -->
     <x-base.dialog id="add-service-modal" size="lg">
         <x-base.dialog.panel>
             <x-base.dialog.title>
@@ -538,6 +563,15 @@
                         <x-base.form-textarea id="description" name="description"
                             placeholder="Detalles adicionales sobre el servicio" rows="3"></x-base.form-textarea>
                     </div>
+
+                    <!-- Agregar campo de status -->
+                    <div class="col-span-12">
+                        <div class="form-check">
+                            <input type="checkbox" id="status" name="status" value="1"
+                                class="form-check-input">
+                            <label for="status" class="form-check-label">Marcar como Completado</label>
+                        </div>
+                    </div>
                 </x-base.dialog.description>
                 <x-base.dialog.footer>
                     <x-base.button class="mr-1 w-20" data-tw-dismiss="modal" type="button" variant="outline-secondary">
@@ -551,7 +585,7 @@
         </x-base.dialog.panel>
     </x-base.dialog>
 
-    <!-- Modal para editar servicio -->
+    <!-- Modificar el Modal para editar servicio para incluir el campo status -->
     <x-base.dialog id="edit-service-modal" size="lg">
         <x-base.dialog.panel>
             <x-base.dialog.title>
@@ -612,6 +646,15 @@
                         <x-base.form-textarea id="edit_description" name="description"
                             placeholder="Detalles adicionales sobre el servicio" rows="3"></x-base.form-textarea>
                     </div>
+
+                    <!-- Agregar campo de status -->
+                    <div class="col-span-12">
+                        <div class="form-check">
+                            <input type="checkbox" id="edit_status" name="status" value="1"
+                                class="form-check-input">
+                            <label for="edit_status" class="form-check-label">Marcar como Completado</label>
+                        </div>
+                    </div>
                 </x-base.dialog.description>
                 <x-base.dialog.footer>
                     <x-base.button class="mr-1 w-20" data-tw-dismiss="modal" type="button" variant="outline-secondary">
@@ -625,111 +668,47 @@
         </x-base.dialog.panel>
     </x-base.dialog>
 
+
     @push('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Validación de fechas para el modal de agregar
-                const serviceDateInput = document.getElementById('service_date');
-                const nextServiceDateInput = document.getElementById('next_service_date');
-                const dateError = document.getElementById('date-error');
-                const submitBtn = document.getElementById('submit-service');
-
-                function validateDates() {
-                    if (serviceDateInput.value && nextServiceDateInput.value) {
-                        const serviceDate = new Date(serviceDateInput.value);
-                        const nextServiceDate = new Date(nextServiceDateInput.value);
-
-                        if (nextServiceDate <= serviceDate) {
-                            dateError.classList.remove('hidden');
-                            submitBtn.disabled = true;
-                            return false;
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Filtrado de mantenimientos
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const maintenanceRows = document.querySelectorAll('.maintenance-row');
+            
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remover clase activa de todos los botones
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    // Agregar clase activa al botón seleccionado
+                    this.classList.add('active');
+                    
+                    const filter = this.getAttribute('data-filter');
+                    
+                    // Mostrar/ocultar filas según el filtro
+                    maintenanceRows.forEach(row => {
+                        if (filter === 'all') {
+                            row.style.display = '';
+                        } else if (filter === 'pending' && row.classList.contains('pending')) {
+                            row.style.display = '';
+                        } else if (filter === 'completed' && row.classList.contains('completed')) {
+                            row.style.display = '';
+                        } else if (filter === 'overdue' && row.classList.contains('overdue')) {
+                            row.style.display = '';
                         } else {
-                            dateError.classList.add('hidden');
-                            submitBtn.disabled = false;
-                            return true;
+                            row.style.display = 'none';
                         }
-                    }
-                    return true;
-                }
-
-                serviceDateInput.addEventListener('change', validateDates);
-                nextServiceDateInput.addEventListener('change', validateDates);
-
-                // Validar al cargar la página
-                validateDates();
-
-                // Validación de fechas para el modal de edición
-                const editServiceDateInput = document.getElementById('edit_service_date');
-                const editNextServiceDateInput = document.getElementById('edit_next_service_date');
-                const editDateError = document.getElementById('edit-date-error');
-                const updateBtn = document.getElementById('update-service');
-
-                function validateEditDates() {
-                    if (editServiceDateInput.value && editNextServiceDateInput.value) {
-                        const serviceDate = new Date(editServiceDateInput.value);
-                        const nextServiceDate = new Date(editNextServiceDateInput.value);
-
-                        if (nextServiceDate <= serviceDate) {
-                            editDateError.classList.remove('hidden');
-                            updateBtn.disabled = true;
-                            return false;
-                        } else {
-                            editDateError.classList.add('hidden');
-                            updateBtn.disabled = false;
-                            return true;
-                        }
-                    }
-                    return true;
-                }
-
-                editServiceDateInput.addEventListener('change', validateEditDates);
-                editNextServiceDateInput.addEventListener('change', validateEditDates);
-
-                // Manejar los botones de edición
-                document.querySelectorAll('.edit-service-btn').forEach(function(button) {
-                    button.addEventListener('click', function() {
-                        const serviceId = this.getAttribute('data-service-id');
-                        const formAction =
-                            "{{ route('admin.vehicles.service-items.index', $vehicle->id) }}/" +
-                            serviceId;
-
-                        // Actualizar acción del formulario
-                        document.getElementById('edit-service-form').action = formAction;
-
-                        // Rellenar el formulario con los datos del servicio
-                        document.getElementById('edit_service_date').value = this.getAttribute(
-                            'data-service-date');
-                        document.getElementById('edit_next_service_date').value = this.getAttribute(
-                            'data-next-service-date');
-                        document.getElementById('edit_unit').value = this.getAttribute('data-unit');
-                        document.getElementById('edit_service_tasks').value = this.getAttribute(
-                            'data-service-tasks');
-                        document.getElementById('edit_vendor_mechanic').value = this.getAttribute(
-                            'data-vendor-mechanic');
-                        document.getElementById('edit_cost').value = this.getAttribute('data-cost');
-                        document.getElementById('edit_odometer').value = this.getAttribute(
-                            'data-odometer') || '';
-                        document.getElementById('edit_description').value = this.getAttribute(
-                            'data-description') || '';
-
-                        // Validar fechas
-                        validateEditDates();
-                    });
-                });
-
-                // Manejar los botones de eliminación
-                document.querySelectorAll('.delete-service-btn').forEach(function(button) {
-                    button.addEventListener('click', function() {
-                        const serviceId = this.getAttribute('data-service-id');
-                        const formAction =
-                            "{{ route('admin.vehicles.service-items.index', $vehicle->id) }}/" +
-                            serviceId;
-
-                        // Actualizar acción del formulario
-                        document.getElementById('delete-service-form').action = formAction;
                     });
                 });
             });
-        </script>
+            
+            // Estilo para el botón de filtro activo
+            document.querySelector('.filter-btn.active').click();
+        });
+    </script>
     @endpush
+    
+
 @endsection

@@ -1,6 +1,5 @@
 @extends('../themes/' . $activeTheme)
 @section('title', 'Add Vehicle')
-
 @php
     $breadcrumbLinks = [
         ['label' => 'App', 'url' => route('admin.dashboard')],
@@ -8,19 +7,15 @@
         ['label' => 'Create Vehicle', 'active' => true],
     ];
 @endphp
-
 @section('subcontent')
     <div class="grid grid-cols-12 gap-x-6 gap-y-10">
         <div class="col-span-12 sm:col-span-10 sm:col-start-2">
             <div class="mt-7">
                 <div class="box box--stacked flex flex-col">
                     <div class="box-body">
-
                         <form action="{{ route('admin.vehicles.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
-
                             <x-validation-errors class="my-4" />
-
                             {{-- Contenedor Alpine con toda la lógica --}}
                             <div x-data="{
                                 activeTab: 'general',
@@ -53,7 +48,6 @@
                                     cost: '',
                                     odometer: ''
                                 }],
-                            
                                 // Métodos
                                 addServiceItem() {
                                     this.serviceItems.push({
@@ -67,19 +61,16 @@
                                         odometer: ''
                                     });
                                 },
-                            
                                 removeServiceItem(index) {
                                     if (this.serviceItems.length > 1) {
                                         this.serviceItems.splice(index, 1);
                                     }
                                 },
-                            
                                 validateServiceDate(index) {
                                     const item = this.serviceItems[index];
                                     if (item.service_date && item.next_service_date) {
                                         const serviceDate = new Date(item.service_date);
                                         const nextDate = new Date(item.next_service_date);
-                            
                                         if (nextDate <= serviceDate) {
                                             item.dateError = 'Next service date must be after service date';
                                             return false;
@@ -141,7 +132,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="mt-3 w-full flex-1 xl:mt-0">
-                                                    <select name="carrier_id"
+                                                    <select id="carrier_id" name="carrier_id"
                                                         class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
                                                         <option value="">Select Carrier</option>
                                                         @foreach ($carriers as $carrier)
@@ -171,7 +162,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="mt-3 w-full flex-1 xl:mt-0">
-                                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         {{-- Make (with datalist) --}}
                                                         <div>
                                                             <label class="block text-sm mb-1">Make</label>
@@ -188,7 +179,6 @@
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                                                             @enderror
                                                         </div>
-
                                                         {{-- Model --}}
                                                         <div>
                                                             <label class="block text-sm mb-1">Model</label>
@@ -199,7 +189,6 @@
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                                                             @enderror
                                                         </div>
-
                                                         {{-- Type (with datalist) --}}
                                                         <div>
                                                             <label class="block text-sm mb-1">Type</label>
@@ -217,8 +206,7 @@
                                                             @enderror
                                                         </div>
                                                     </div>
-
-                                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                                         {{-- Year --}}
                                                         <div>
                                                             <label class="block text-sm mb-1">Year</label>
@@ -230,7 +218,6 @@
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                                                             @enderror
                                                         </div>
-
                                                         {{-- Unit Number --}}
                                                         <div>
                                                             <label class="block text-sm mb-1">Company Unit Number</label>
@@ -242,7 +229,6 @@
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                                                             @enderror
                                                         </div>
-
                                                         {{-- VIN --}}
                                                         <div>
                                                             <label class="block text-sm mb-1">VIN</label>
@@ -279,7 +265,6 @@
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                                                             @enderror
                                                         </div>
-
                                                         {{-- Tire Size --}}
                                                         <div>
                                                             <label class="block text-sm mb-1">Tire Size</label>
@@ -339,7 +324,6 @@
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                                                             @enderror
                                                         </div>
-
                                                         {{-- IRP Checkbox --}}
                                                         <div class="flex items-center pt-5">
                                                             <input type="checkbox" name="irp_apportioned_plate"
@@ -368,7 +352,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="mt-3 w-full flex-1 xl:mt-0">
-                                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
                                                         {{-- Registration State --}}
                                                         <div>
                                                             <label class="block text-sm mb-1">Registration State</label>
@@ -386,7 +370,6 @@
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                                                             @enderror
                                                         </div>
-
                                                         {{-- Registration Number --}}
                                                         <div>
                                                             <label class="block text-sm mb-1">Registration Number</label>
@@ -398,7 +381,6 @@
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                                                             @enderror
                                                         </div>
-
                                                         {{-- Registration Expiration --}}
                                                         <div>
                                                             <label class="block text-sm mb-1">Expiration Date</label>
@@ -410,7 +392,6 @@
                                                             @enderror
                                                         </div>
                                                     </div>
-
                                                     {{-- Permanent Tag --}}
                                                     <div class="flex items-center mt-4">
                                                         <input type="checkbox" name="permanent_tag" value="1"
@@ -450,7 +431,6 @@
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                                                             @enderror
                                                         </div>
-
                                                         {{-- Location --}}
                                                         <div>
                                                             <label class="block text-sm mb-1">Location</label>
@@ -472,20 +452,20 @@
                                                     <div class="text-left">
                                                         <div class="flex items-center">
                                                             <div class="font-medium">Assigned Driver</div>
+                                                            <div class="text-xs text-gray-500 ml-2">(Select a carrier
+                                                                first)</div>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div class="mt-3 w-full flex-1 xl:mt-0">
-                                                    <select name="user_driver_detail_id"
+                                                    <select id="user_driver_detail_id" name="user_driver_detail_id"
                                                         class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
                                                         <option value="">None (Unassigned)</option>
-                                                        @foreach ($drivers as $driver)
-                                                            <option value="{{ $driver->id }}"
-                                                                {{ old('user_driver_detail_id') == $driver->id ? 'selected' : '' }}>
-                                                                {{ $driver->user->name }} {{ $driver->last_name }}
-                                                            </option>
-                                                        @endforeach
+                                                        <!-- Los drivers se cargarán dinámicamente vía JavaScript -->
                                                     </select>
+                                                    <div class="text-xs text-gray-500 mt-1">
+                                                        Only active drivers for the selected carrier will be shown
+                                                    </div>
                                                     @error('user_driver_detail_id')
                                                         <span class="text-red-500 text-sm">{{ $message }}</span>
                                                     @enderror
@@ -541,7 +521,6 @@
                                                                 class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
                                                         </div>
                                                     </div>
-
                                                     {{-- Suspended --}}
                                                     <div>
                                                         <div class="flex items-center">
@@ -725,9 +704,89 @@
 
 @push('scripts')
     <script>
-        // Este script se puede usar para inicializar cualquier componente JS adicional que necesites
+        // Script para manejar la carga dinámica de drivers filtrados por carrier
         document.addEventListener('DOMContentLoaded', function() {
-            // Aquí puedes inicializar componentes como Select2, Datepicker, etc.
+            // Obtener referencias a los elementos select
+            const carrierSelect = document.getElementById('carrier_id');
+            const driverSelect = document.getElementById('user_driver_detail_id');
+
+            // Si no existen los elementos, salir
+            if (!carrierSelect || !driverSelect) return;
+
+            // Función para cargar los drivers según el carrier seleccionado
+            function loadDriversByCarrier() {
+                const carrierId = carrierSelect.value;
+
+                // Limpiar el dropdown de drivers
+                driverSelect.innerHTML = '<option value="">None (Unassigned)</option>';
+
+                // Si no hay carrier seleccionado, no hacemos nada más
+                if (!carrierId) return;
+
+                // Mostrar indicador de carga
+                driverSelect.disabled = true;
+                driverSelect.innerHTML = '<option value="">Loading drivers...</option>';
+
+                // Hacer la petición AJAX
+                fetch(`/admin/vehicles/drivers-by-carrier/${carrierId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(drivers => {
+                        // Limpiar dropdown
+                        driverSelect.innerHTML = '<option value="">None (Unassigned)</option>';
+
+                        // Añadir las nuevas opciones
+                        drivers.forEach(driver => {
+                            const option = document.createElement('option');
+                            option.value = driver.id;
+
+                            // Construir el nombre del driver con el formato adecuado
+                            let driverName = driver.user.name;
+                            if (driver.middle_name) {
+                                driverName += ' ' + driver.middle_name;
+                            }
+                            driverName += ' ' + driver.last_name;
+
+                            option.textContent = driverName;
+                            driverSelect.appendChild(option);
+                        });
+
+                        // Si no hay drivers, mostrar mensaje
+                        if (drivers.length === 0) {
+                            const option = document.createElement('option');
+                            option.value = "";
+                            option.textContent = "No active drivers found for this carrier";
+                            driverSelect.appendChild(option);
+                        }
+
+                        // Restaurar la selección anterior si existe
+                        const oldValue = "{{ old('user_driver_detail_id') }}";
+                        if (oldValue) {
+                            driverSelect.value = oldValue;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading drivers:', error);
+                        // Opción de error
+                        driverSelect.innerHTML = '<option value="">Error loading drivers</option>';
+                    })
+                    .finally(() => {
+                        // Habilitar el select de drivers
+                        driverSelect.disabled = false;
+                    });
+            }
+
+            // Asignar el evento al cambio de carrier
+            carrierSelect.addEventListener('change', loadDriversByCarrier);
+
+            // Cargar drivers inicialmente si hay un carrier seleccionado (útil para volver con errores)
+            if (carrierSelect.value) {
+                loadDriversByCarrier();
+            }
         });
     </script>
 @endpush
