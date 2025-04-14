@@ -38,25 +38,25 @@
             @endif
 
             @if($serviceItems->count() > 0)
-                <div class="table-responsive">
-                    <table class="table table-bordered" id="serviceItemsTable" width="100%" cellspacing="0">
-                        <thead>
+                <div class="relative overflow-x-auto">
+                    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                             <tr>
-                                <th>Unidad</th>
-                                <th>Fecha Servicio</th>
-                                <th>Próximo Servicio</th>
-                                <th>Tareas</th>
-                                <th>Proveedor</th>
-                                <th>Costo</th>
-                                <th>Acciones</th>
+                                <th scope="col" class="px-6 py-3">Unidad</th>
+                                <th scope="col" class="px-6 py-3">Fecha Servicio</th>
+                                <th scope="col" class="px-6 py-3">Próximo Servicio</th>
+                                <th scope="col" class="px-6 py-3">Tareas</th>
+                                <th scope="col" class="px-6 py-3">Proveedor</th>
+                                <th scope="col" class="px-6 py-3">Costo</th>
+                                <th scope="col" class="px-6 py-3">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
                             @foreach($serviceItems as $item)
                                 <tr>
-                                    <td>{{ $item->unit }}</td>
-                                    <td>{{ $item->service_date->format('d/m/Y') }}</td>
-                                    <td>
+                                    <td class="px-6 py-4">{{ $item->unit }}</td>
+                                    <td class="px-6 py-4">{{ $item->service_date->format('d/m/Y') }}</td>
+                                    <td class="px-6 py-4">
                                         {{ $item->next_service_date->format('d/m/Y') }}
                                         @if($item->next_service_date->isPast())
                                             <span class="badge badge-danger">Vencido</span>
@@ -64,22 +64,23 @@
                                             <span class="badge badge-warning">Próximo</span>
                                         @endif
                                     </td>
-                                    <td>{{ $item->service_tasks }}</td>
-                                    <td>{{ $item->vendor_mechanic }}</td>
-                                    <td>${{ number_format($item->cost, 2) }}</td>
-                                    <td>
-                                        <div class="btn-group" role="group">
+                                    <td class="px-6 py-4">{{ $item->service_tasks }}</td>
+                                    <td class="px-6 py-4">{{ $item->vendor_mechanic }}</td>
+                                    <td class="px-6 py-4">${{ number_format($item->cost, 2) }}</td>
+                                    <td class="px-6 py-4">
+                                        
+                                        <div class="btn-group flex gap-3" role="group">
                                             <a href="{{ route('admin.vehicles.service-items.show', [$vehicle->id, $item->id]) }}" class="btn btn-info btn-sm">
-                                                <i class="fas fa-eye"></i>
+                                                <x-base.lucide class="h-4 w-4" icon="Eye" />
                                             </a>
                                             <a href="{{ route('admin.vehicles.service-items.edit', [$vehicle->id, $item->id]) }}" class="btn btn-primary btn-sm">
-                                                <i class="fas fa-edit"></i>
+                                                <x-base.lucide class="h-4 w-4" icon="Edit" />
                                             </a>
                                             <form action="{{ route('admin.vehicles.service-items.destroy', [$vehicle->id, $item->id]) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de eliminar este registro?')">
-                                                    <i class="fas fa-trash"></i>
+                                                    <x-base.lucide class="h-4 w-4" icon="Trash" />                                                    
                                                 </button>
                                             </form>
                                         </div>
@@ -102,17 +103,5 @@
         </div>
     </div>
 </div>
-@endsection
 
-@section('scripts')
-<script>
-    $(document).ready(function() {
-        $('#serviceItemsTable').DataTable({
-            paging: false,
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.10.19/i18n/Spanish.json"
-            }
-        });
-    });
-</script>
 @endsection

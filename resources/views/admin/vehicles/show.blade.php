@@ -347,31 +347,31 @@
                         </div>
                 
                         <div class="overflow-x-auto">
-                            <table class="table border w-full text-left">
-                                <thead>
+                            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                                     <tr class="bg-slate-50/60">
-                                        <th class="font-medium text-slate-800 py-5">Fecha</th>
-                                        <th class="font-medium text-slate-800 py-5">Servicio</th>
-                                        <th class="font-medium text-slate-800 py-5">Proveedor</th>
-                                        <th class="font-medium text-slate-800 py-5">Costo</th>
-                                        <th class="font-medium text-slate-800 py-5">Próximo</th>
-                                        <th class="font-medium text-slate-800 py-5">Estado</th>
-                                        <th class="font-medium text-slate-800 text-center">Acciones</th>
+                                        <th scope="col" class="px-1 py-3">Fecha</th>
+                                        <th scope="col" class="px-1 py-3">Servicio</th>
+                                        <th scope="col" class="px-1 py-3">Proveedor</th>
+                                        <th scope="col" class="px-1 py-3">Costo</th>
+                                        <th scope="col" class="px-1 py-3">Próximo</th>
+                                        <th scope="col" class="px-1 py-3">Estado</th>
+                                        <th scope="col" class="px-1 py-3 text-center">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse($vehicle->serviceItems as $item)
-                                        <tr class="maintenance-row {{ !$item->status && $item->isOverdue() ? 'overdue' : '' }} {{ !$item->status && !$item->isOverdue() ? 'pending' : '' }} {{ $item->status ? 'completed' : '' }}">
+                                        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200" {{ !$item->status && $item->isOverdue() ? 'overdue' : '' }} {{ !$item->status && !$item->isOverdue() ? 'pending' : '' }} {{ $item->status ? 'completed' : '' }}">
                                             <td>{{ $item->service_date->format('d/m/Y') }}</td>
-                                            <td class="py-6">
+                                            <td class="px-6 py-4">
                                                 <div class="font-medium">{{ $item->service_tasks }}</div>
                                                 @if($item->odometer)
                                                     <div class="text-xs text-slate-500">Odómetro: {{ number_format($item->odometer) }} mi</div>
                                                 @endif
                                             </td>
-                                            <td class="py-6">{{ $item->vendor_mechanic }}</td>
-                                            <td class="py-6">${{ number_format($item->cost, 2) }}</td>
-                                            <td >
+                                            <td class="px-6 py-4">{{ $item->vendor_mechanic }}</td>
+                                            <td class="px-6 py-4">${{ number_format($item->cost, 2) }}</td>
+                                            <td class="px-6 py-4">
                                                 <div class="{{ !$item->status && $item->isOverdue() ? 'text-danger' : (!$item->status && $item->isUpcoming() ? 'text-warning' : '') }}">
                                                     {{ $item->next_service_date->format('d/m/Y') }}
                                                     @if(!$item->status && $item->isOverdue())
@@ -387,7 +387,7 @@
                                                     @endif
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td class="px-6 py-4">
                                                 @if($item->status)
                                                     <div class="flex items-center text-success">
                                                         <x-base.lucide class="h-4 w-4 mr-1" icon="CheckCircle" />
@@ -400,7 +400,7 @@
                                                     </div>
                                                 @endif
                                             </td>
-                                            <td>
+                                            <td class="px-6 py-4">
                                                 <div class="flex items-center justify-center gap-1">
                                                     <a href="{{ route('admin.vehicles.service-items.show', [$vehicle->id, $item->id]) }}" 
                                                        class="btn btn-sm btn-primary p-1" title="Ver detalles">
@@ -553,12 +553,12 @@
                     </div>
 
                     <!-- Cuarta fila -->
-                    <div class="col-span-12 sm:col-span-6">
+                    <div class="col-span-12 sm:col-span-12">
                         <x-base.form-label for="odometer">Lectura del Odómetro</x-base.form-label>
                         <x-base.form-input id="odometer" name="odometer" type="number" min="0"
                             placeholder="Ej: 50000" />
                     </div>
-                    <div class="col-span-12 sm:col-span-6">
+                    <div class="col-span-12 sm:col-span-12">
                         <x-base.form-label for="description">Descripción</x-base.form-label>
                         <x-base.form-textarea id="description" name="description"
                             placeholder="Detalles adicionales sobre el servicio" rows="3"></x-base.form-textarea>

@@ -165,9 +165,16 @@ $breadcrumbLinks = [
                     <div class="flex flex-col gap-y-3 md:flex-row md:items-center">
                         <div class="box-title font-medium">Vehicles Documents</div>
                         <div class="flex flex-col gap-x-3 gap-y-2 sm:flex-row md:ml-auto">
-                            <div class="relative">
+                            {{-- <div class="relative">
                                 <input type="text" class="form-input pl-9 w-full sm:w-64" placeholder="Search vehicles..." id="vehicle-search">
                                 <x-base.lucide class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" icon="Search" />
+                            </div>--}}
+                            <div class="relative"> 
+                                <x-base.lucide
+                                    class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3] text-slate-500"
+                                    icon="Search" />
+                                <x-base.form-input class="rounded-[0.5rem] pl-9 sm:w-64" id="vehicle-search" type="text"
+                                    placeholder="Search vehicles..." />
                             </div>
                         </div>
                     </div>
@@ -180,34 +187,34 @@ $breadcrumbLinks = [
                     </div>
                     @else
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-b border-slate-200/60" id="vehicles-table">
-                            <thead>
+                        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400" id="vehicles-table">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                                 <tr>
-                                    <th class="whitespace-nowrap">Vehicle</th>
-                                    <th class="whitespace-nowrap">Carrier</th>
-                                    <th class="whitespace-nowrap">Status</th>
-                                    <th class="whitespace-nowrap">Documents</th>
-                                    <th class="whitespace-nowrap">Expired</th>
-                                    <th class="whitespace-nowrap">Expiring Soon</th>
+                                    <th scope="col" class="px-6 py-3">Vehicle</th>
+                                    <th scope="col" class="px-6 py-3">Carrier</th>
+                                    <th scope="col" class="px-6 py-3">Status</th>
+                                    <th scope="col" class="px-6 py-3">Documents</th>
+                                    <th scope="col" class="px-6 py-3">Expired</th>
+                                    <th scope="col" class="px-6 py-3">Expiring Soon</th>
                                     <th class="whitespace-nowrap text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($vehicles as $vehicle)
-                                <tr class="vehicle-row">
-                                    <td>
+                                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 vehicle-row">
+                                    <td class="px-6 py-4">
                                         <div class="font-medium">{{ $vehicle->make }} {{ $vehicle->model }}</div>
                                         <div class="text-slate-500 text-xs">{{ $vehicle->year }} • {{ $vehicle->vin }}</div>
                                     </td>
-                                    <td>{{ $vehicle->carrier->name }}</td>
-                                    <td>
+                                    <td class="px-6 py-4">{{ $vehicle->carrier->name }}</td>
+                                    <td class="px-6 py-4">
                                         <div class="flex items-center whitespace-nowrap">
                                             <div class="w-2 h-2 rounded-full mr-2 {{ $vehicle->out_of_service ? 'bg-danger' : ($vehicle->suspended ? 'bg-warning' : 'bg-success') }}">
                                             </div>
                                             {{ $vehicle->out_of_service ? 'Out of Service' : ($vehicle->suspended ? 'Suspended' : 'Active') }}
                                         </div>
                                     </td>
-                                    <td>
+                                    <td class="px-6 py-4">
                                         <div class="flex items-center">
                                             <div class="bg-primary/10 text-primary rounded-full p-1 mr-2">
                                                 <x-base.lucide class="h-4 w-4" icon="FileText" />
@@ -215,7 +222,7 @@ $breadcrumbLinks = [
                                             {{ $vehicle->documents->count() }}
                                         </div>
                                     </td>
-                                    <td>
+                                    <td class="px-6 py-4">
                                         @php
                                             $expiredCount = $vehicle->documents->where('status', 'expired')->count();
                                         @endphp
@@ -227,10 +234,15 @@ $breadcrumbLinks = [
                                                 {{ $expiredCount }}
                                             </div>
                                         @else
-                                            <div class="text-slate-400">0</div>
+                                        <div class="flex items-center">
+                                            <div class="bg-danger/10 text-danger rounded-full p-1 mr-2">
+                                                <x-base.lucide class="h-4 w-4" icon="AlertOctagon" />
+                                            </div>
+                                            0
+                                        </div>                                            
                                         @endif
                                     </td>
-                                    <td>
+                                    <td class="px-6 py-4">
                                         @php
                                             $expiringCount = $vehicle->documents->filter(function($doc) {
                                                 return $doc->isAboutToExpire() && !$doc->isExpired();
@@ -244,7 +256,12 @@ $breadcrumbLinks = [
                                                 {{ $expiringCount }}
                                             </div>
                                         @else
+                                        <div class="flex items-center">
+                                            <div class="bg-warning/10 text-warning rounded-full p-1 mr-2">
+                                                <x-base.lucide class="h-4 w-4" icon="Clock" />
+                                            </div>                                            
                                             <div class="text-slate-400">0</div>
+                                        </div>
                                         @endif
                                     </td>
                                     <td class="text-center">

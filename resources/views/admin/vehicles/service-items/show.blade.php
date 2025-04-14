@@ -49,7 +49,7 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4">
                                 <div>
                                     <h5 class="font-medium">Fecha del Servicio:</h5>
                                     <p>{{ $serviceItem->service_date->format('d/m/Y') }}</p>
@@ -106,13 +106,13 @@
                                     <form action="{{ route('admin.service-items.toggle-status', [$vehicle->id, $serviceItem->id]) }}" method="POST">
                                         @csrf
                                         @method('PUT')
-                                        <button type="submit" class="btn {{ $serviceItem->status ? 'btn-warning' : 'btn-success' }} mr-2">
+                                        <button type="submit" class="btn flex {{ $serviceItem->status ? 'btn-warning' : 'btn-success' }} mr-2">
                                             <x-base.lucide class="h-4 w-4 mr-1" icon="{{ $serviceItem->status ? 'RotateCcw' : 'CheckCircle' }}" />
                                             {{ $serviceItem->status ? 'Marcar como Pendiente' : 'Marcar como Completado' }}
                                         </button>
                                     </form>
                                     
-                                    <button type="button" data-tw-toggle="modal" data-tw-target="#delete-confirmation-modal" class="btn btn-danger">
+                                    <button type="button" data-tw-toggle="modal" data-tw-target="#delete-confirmation-modal" class="btn btn-danger flex">
                                         <x-base.lucide class="h-4 w-4 mr-1" icon="Trash" />
                                         Eliminar Registro
                                     </button>
@@ -151,7 +151,7 @@
                             </div>
                             
                             <div class="mt-4 text-center">
-                                <a href="{{ route('admin.vehicles.show', $vehicle->id) }}" class="btn btn-outline-secondary btn-sm w-full">
+                                <a href="{{ route('admin.vehicles.show', $vehicle->id) }}" class="btn btn-outline-secondary btn-sm w-full flex items-center">
                                     <x-base.lucide class="h-4 w-4 mr-1" icon="Info" />
                                     Ver Detalles del Vehículo
                                 </a>
@@ -199,7 +199,7 @@
                             
                             <div class="mt-4">
                                 <!-- Acceso al historial centralizado -->
-                                <a href="{{ route('admin.maintenance.show', $serviceItem->id) }}" class="btn btn-outline-primary btn-sm w-full">
+                                <a href="{{ route('admin.maintenance.show', $serviceItem->id) }}" class="btn btn-outline-primary btn-sm w-full flex items-center">
                                     <x-base.lucide class="h-4 w-4 mr-1" icon="ExternalLink" />
                                     Ver en Mantenimientos Centralizados
                                 </a>
