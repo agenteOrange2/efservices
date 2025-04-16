@@ -3,6 +3,7 @@ namespace App\Models\Admin\Vehicle;
 
 use App\Models\Carrier;
 use App\Models\UserDriverDetail;
+use App\Models\Admin\Driver\DriverInspection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -78,6 +79,14 @@ class Vehicle extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(VehicleDocument::class);
+    }
+    
+    /**
+     * Relación con las inspecciones de este vehículo.
+     */
+    public function driverInspections(): HasMany
+    {
+        return $this->hasMany(\App\Models\Admin\Driver\DriverInspection::class);
     }
     
     /**

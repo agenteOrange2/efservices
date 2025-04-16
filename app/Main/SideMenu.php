@@ -71,19 +71,19 @@ class SideMenu
                     ],
                     [
                         'icon' => "file-warning",
-                        'route_name' => "admin.product-grid",
+                        'route_name' => "admin.accidents.index",
                         'params' => [],
                         'title' => "Accidents",
                     ],
                     [
                         'icon' => "badge-info",
-                        'route_name' => "admin.product-grid",
+                        'route_name' => "admin.testings.index",
                         'params' => [],
                         'title' => "Testing",
                     ],
                     [
                         'icon' => "view",
-                        'route_name' => "admin.product-grid",
+                        'route_name' => "admin.inspections.index",
                         'params' => [],
                         'title' => "Inspections",
                     ],

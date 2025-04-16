@@ -21,6 +21,8 @@ use App\Models\Admin\Driver\DriverCriminalHistory;
 use App\Models\Admin\Driver\DriverEmploymentCompany;
 use App\Models\Admin\Driver\DriverTrafficConviction;
 use App\Models\Admin\Driver\DriverUnemploymentPeriod;
+use App\Models\Admin\Driver\DriverTesting;
+use App\Models\Admin\Driver\DriverInspection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Models\Admin\Driver\DriverMedicalQualification;
@@ -164,6 +166,16 @@ class UserDriverDetail extends Model implements HasMedia
     public function accidents()
     {
         return $this->hasMany(DriverAccident::class);
+    }
+
+    public function testings()
+    {
+        return $this->hasMany(DriverTesting::class);
+    }
+
+    public function inspections()
+    {
+        return $this->hasMany(DriverInspection::class);
     }
 
     public function fmcsrData()

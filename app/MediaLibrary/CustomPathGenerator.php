@@ -72,6 +72,39 @@ class CustomPathGenerator implements PathGenerator
             return "driver/{$driverId}/certification/";
         }
 
+                // Gestionar archivos de inspecciones
+        if ($model instanceof \App\Models\Admin\Driver\DriverInspection) {
+            $driverId = $model->userDriverDetail->id ?? 'unknown';
+            $vehicleId = $model->vehicle_id ?? 'none';
+            
+            // Organizar por tipo de colección
+            if ($media->collection_name === 'inspection_reports') {
+                return "driver/{$driverId}/inspections/{$model->id}/reports/";
+            } else if ($media->collection_name === 'defect_photos') {
+                return "driver/{$driverId}/inspections/{$model->id}/defects/";
+            } else if ($media->collection_name === 'repair_documents') {
+                return "driver/{$driverId}/inspections/{$model->id}/repairs/";
+            }
+            
+            // Default para otras colecciones de inspección
+            return "driver/{$driverId}/inspections/{$model->id}/";
+        }
+        
+        // Gestionar archivos de pruebas (testing)
+        if ($model instanceof \App\Models\Admin\Driver\DriverTesting) {
+            $driverId = $model->userDriverDetail->id ?? 'unknown';
+            
+            // Organizar por tipo de colección
+            if ($media->collection_name === 'test_documents') {
+                return "driver/{$driverId}/testing/{$model->id}/documents/";
+            } else if ($media->collection_name === 'test_certificates') {
+                return "driver/{$driverId}/testing/{$model->id}/certificates/";
+            }
+            
+            // Default para otras colecciones de testing
+            return "driver/{$driverId}/testing/{$model->id}/";
+        }
+
         if ($model instanceof \App\Models\Admin\Driver\DriverApplication) {
             // Tratar de obtener el ID del conductor de diferentes maneras
             $driverId = null;

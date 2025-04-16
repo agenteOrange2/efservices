@@ -29,17 +29,10 @@
                                     Basic Notification
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-1"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-1">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-1"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-1" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -49,8 +42,7 @@
                                     two types of basic notifications: non-sticky and sticky
                                     notifications.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -58,34 +50,24 @@
                                         <x-base.preview>
                                             <div class="text-center">
                                                 <!-- BEGIN: Notification Content -->
-                                                <x-base.notification
-                                                    class="flex flex-col sm:flex-row"
-                                                    id="basic-non-sticky-notification-content"
-                                                >
+                                                <x-base.notification class="flex flex-col sm:flex-row"
+                                                    id="basic-non-sticky-notification-content">
                                                     <div class="font-medium">
                                                         Yay! Updates Published!
                                                     </div>
-                                                    <a
-                                                        class="mt-1 font-medium text-primary sm:ml-40 sm:mt-0"
-                                                        href=""
-                                                    >
+                                                    <a class="mt-1 font-medium text-primary sm:ml-40 sm:mt-0"
+                                                        href="">
                                                         Review Changes
                                                     </a>
                                                 </x-base.notification>
                                                 <!-- END: Notification Content -->
                                                 <!-- BEGIN: Notification Toggle -->
-                                                <x-base.button
-                                                    class="mr-1"
-                                                    id="basic-non-sticky-notification-toggle"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button class="mr-1" id="basic-non-sticky-notification-toggle"
+                                                    variant="primary">
                                                     Show Non Sticky Notification
                                                 </x-base.button>
-                                                <x-base.button
-                                                    class="mt-2 sm:mt-0"
-                                                    id="basic-sticky-notification-toggle"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button class="mt-2 sm:mt-0" id="basic-sticky-notification-toggle"
+                                                    variant="primary">
                                                     Show Sticky Notification
                                                 </x-base.button>
                                                 <!-- END: Notification Toggle -->
@@ -95,43 +77,30 @@
                                             <x-base.highlight>
                                                 <div class="text-center">
                                                     <!-- BEGIN: Notification Content -->
-                                                    <x-base.notification
-                                                        class="flex flex-col sm:flex-row"
-                                                        id="basic-non-sticky-notification-content"
-                                                    >
+                                                    <x-base.notification class="flex flex-col sm:flex-row"
+                                                        id="basic-non-sticky-notification-content">
                                                         <div class="font-medium">
                                                             Yay! Updates Published!
                                                         </div>
-                                                        <a
-                                                            class="mt-1 font-medium text-primary sm:ml-40 sm:mt-0"
-                                                            href=""
-                                                        >
+                                                        <a class="mt-1 font-medium text-primary sm:ml-40 sm:mt-0"
+                                                            href="">
                                                             Review Changes
                                                         </a>
                                                     </x-base.notification>
                                                     <!-- END: Notification Content -->
                                                     <!-- BEGIN: Notification Toggle -->
-                                                    <x-base.button
-                                                        class="mr-1"
-                                                        id="basic-non-sticky-notification-toggle"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button class="mr-1" id="basic-non-sticky-notification-toggle"
+                                                        variant="primary">
                                                         Show Non Sticky Notification
                                                     </x-base.button>
-                                                    <x-base.button
-                                                        class="mt-2 sm:mt-0"
-                                                        id="basic-sticky-notification-toggle"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button class="mt-2 sm:mt-0"
+                                                        id="basic-sticky-notification-toggle" variant="primary">
                                                         Show Sticky Notification
                                                     </x-base.button>
                                                     <!-- END: Notification Toggle -->
                                                 </div>
                                             </x-base.highlight>
-                                            <x-base.highlight
-                                                class="mt-5"
-                                                type="javascript"
-                                            >
+                                            <x-base.highlight class="mt-5" type="javascript">
                                                 // Basic non sticky notification
                                                 $("#basic-non-sticky-notification-toggle").on("click", function () {
                                                 Toastify({
@@ -187,17 +156,10 @@
                                     Success Notification
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-4"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-4">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-4"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-4" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -207,8 +169,7 @@
                                     successfully. This section demonstrates how to create
                                     and use success notifications.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -216,14 +177,8 @@
                                         <x-base.preview>
                                             <div class="text-center">
                                                 <!-- BEGIN: Notification Content -->
-                                                <x-base.notification
-                                                    class="flex"
-                                                    id="success-notification-content"
-                                                >
-                                                    <x-base.lucide
-                                                        class="text-success"
-                                                        icon="CheckCircle"
-                                                    />
+                                                <x-base.notification class="flex" id="success-notification-content">
+                                                    <x-base.lucide class="text-success" icon="CheckCircle" />
                                                     <div class="ml-4 mr-4">
                                                         <div class="font-medium">Message Saved!</div>
                                                         <div class="mt-1 text-slate-500">
@@ -233,10 +188,7 @@
                                                 </x-base.notification>
                                                 <!-- END: Notification Content -->
                                                 <!-- BEGIN: Notification Toggle -->
-                                                <x-base.button
-                                                    id="success-notification-toggle"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button id="success-notification-toggle" variant="primary">
                                                     Show Notification
                                                 </x-base.button>
                                                 <!-- END: Notification Toggle -->
@@ -246,14 +198,8 @@
                                             <x-base.highlight>
                                                 <div class="text-center">
                                                     <!-- BEGIN: Notification Content -->
-                                                    <x-base.notification
-                                                        class="flex"
-                                                        id="success-notification-content"
-                                                    >
-                                                        <x-base.lucide
-                                                            class="text-success"
-                                                            icon="CheckCircle"
-                                                        />
+                                                    <x-base.notification class="flex" id="success-notification-content">
+                                                        <x-base.lucide class="text-success" icon="CheckCircle" />
                                                         <div class="ml-4 mr-4">
                                                             <div class="font-medium">Message Saved!</div>
                                                             <div class="mt-1 text-slate-500">
@@ -263,19 +209,13 @@
                                                     </x-base.notification>
                                                     <!-- END: Notification Content -->
                                                     <!-- BEGIN: Notification Toggle -->
-                                                    <x-base.button
-                                                        id="success-notification-toggle"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button id="success-notification-toggle" variant="primary">
                                                         Show Notification
                                                     </x-base.button>
                                                     <!-- END: Notification Toggle -->
                                                 </div>
                                             </x-base.highlight>
-                                            <x-base.highlight
-                                                class="mt-5"
-                                                type="javascript"
-                                            >
+                                            <x-base.highlight class="mt-5" type="javascript">
                                                 // Success notification
                                                 $("#success-notification-toggle").on("click", function () {
                                                 Toastify({
@@ -316,17 +256,10 @@
                                     Notification with Actions
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-5"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-5">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-5"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-5" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -336,8 +269,7 @@
                                     notification. This section demonstrates how to create
                                     and use notifications with actions.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -345,10 +277,8 @@
                                         <x-base.preview>
                                             <div class="text-center">
                                                 <!-- BEGIN: Notification Content -->
-                                                <x-base.notification
-                                                    class="flex"
-                                                    id="notification-with-actions-content"
-                                                >
+                                                <x-base.notification class="flex"
+                                                    id="notification-with-actions-content">
                                                     <x-base.lucide icon="HardDrive" />
                                                     <div class="ml-4 mr-4">
                                                         <div class="font-medium">Storage Removed!</div>
@@ -358,16 +288,10 @@
                                                             changes during the update process!
                                                         </div>
                                                         <div class="mt-1.5 flex font-medium">
-                                                            <a
-                                                                class="text-primary"
-                                                                href=""
-                                                            >
+                                                            <a class="text-primary" href="">
                                                                 Restart Now
                                                             </a>
-                                                            <a
-                                                                class="ml-3 text-slate-500"
-                                                                href=""
-                                                            >
+                                                            <a class="ml-3 text-slate-500" href="">
                                                                 Cancel
                                                             </a>
                                                         </div>
@@ -375,10 +299,7 @@
                                                 </x-base.notification>
                                                 <!-- END: Notification Content -->
                                                 <!-- BEGIN: Notification Toggle -->
-                                                <x-base.button
-                                                    id="notification-with-actions-toggle"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button id="notification-with-actions-toggle" variant="primary">
                                                     Show Notification
                                                 </x-base.button>
                                                 <!-- END: Notification Toggle -->
@@ -388,10 +309,8 @@
                                             <x-base.highlight>
                                                 <div class="text-center">
                                                     <!-- BEGIN: Notification Content -->
-                                                    <x-base.notification
-                                                        class="flex"
-                                                        id="notification-with-actions-content"
-                                                    >
+                                                    <x-base.notification class="flex"
+                                                        id="notification-with-actions-content">
                                                         <x-base.lucide icon="HardDrive" />
                                                         <div class="ml-4 mr-4">
                                                             <div class="font-medium">Storage Removed!</div>
@@ -401,16 +320,10 @@
                                                                 changes during the update process!
                                                             </div>
                                                             <div class="mt-1.5 flex font-medium">
-                                                                <a
-                                                                    class="text-primary"
-                                                                    href=""
-                                                                >
+                                                                <a class="text-primary" href="">
                                                                     Restart Now
                                                                 </a>
-                                                                <a
-                                                                    class="ml-3 text-slate-500"
-                                                                    href=""
-                                                                >
+                                                                <a class="ml-3 text-slate-500" href="">
                                                                     Cancel
                                                                 </a>
                                                             </div>
@@ -418,19 +331,14 @@
                                                     </x-base.notification>
                                                     <!-- END: Notification Content -->
                                                     <!-- BEGIN: Notification Toggle -->
-                                                    <x-base.button
-                                                        id="notification-with-actions-toggle"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button id="notification-with-actions-toggle"
+                                                        variant="primary">
                                                         Show Notification
                                                     </x-base.button>
                                                     <!-- END: Notification Toggle -->
                                                 </div>
                                             </x-base.highlight>
-                                            <x-base.highlight
-                                                class="mt-5"
-                                                type="javascript"
-                                            >
+                                            <x-base.highlight class="mt-5" type="javascript">
                                                 // Notification with actions
                                                 $("#notification-with-actions-toggle").on("click", function () {
                                                 Toastify({
@@ -470,17 +378,10 @@
                                     Notification with Avatar
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-6"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-6">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-6"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-6" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -490,8 +391,7 @@
                                     pictures. This section demonstrates how to create and
                                     use notifications with avatars.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -499,17 +399,11 @@
                                         <x-base.preview>
                                             <div class="text-center">
                                                 <!-- BEGIN: Notification Content -->
-                                                <x-base.notification
-                                                    class="flex"
-                                                    id="notification-with-avatar-content"
-                                                >
+                                                <x-base.notification class="flex" id="notification-with-avatar-content">
                                                     <div
                                                         class="image-fit h-10 w-10 flex-none overflow-hidden rounded-full">
-                                                        <img
-                                                            src="#"
-                                                            {{-- src="{{ Vite::asset($products[0]['images'][0]['path']) }}" --}}
-                                                            alt="Tailwise - Admin Dashboard Template"
-                                                        >
+                                                        <img src="#" {{-- src="{{ Vite::asset($products[0]['images'][0]['path']) }}" --}}
+                                                            alt="Tailwise - Admin Dashboard Template">
                                                     </div>
                                                     <div class="ml-4 sm:mr-28">
                                                         <div class="font-medium">
@@ -519,20 +413,14 @@
                                                             See you later! 😃😃😃
                                                         </div>
                                                     </div>
-                                                    <a
-                                                        class="absolute bottom-0 right-0 top-0 flex items-center border-l border-slate-200/60 px-6 font-medium text-primary"
-                                                        data-dismiss="notification"
-                                                        href="#"
-                                                    >
+                                                    <a class="absolute bottom-0 right-0 top-0 flex items-center border-l border-slate-200/60 px-6 font-medium text-primary"
+                                                        data-dismiss="notification" href="#">
                                                         Reply
                                                     </a>
                                                 </x-base.notification>
                                                 <!-- END: Notification Content -->
                                                 <!-- BEGIN: Notification Toggle -->
-                                                <x-base.button
-                                                    id="notification-with-avatar-toggle"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button id="notification-with-avatar-toggle" variant="primary">
                                                     Show Notification
                                                 </x-base.button>
                                                 <!-- END: Notification Toggle -->
@@ -542,17 +430,12 @@
                                             <x-base.highlight>
                                                 <div class="text-center">
                                                     <!-- BEGIN: Notification Content -->
-                                                    <x-base.notification
-                                                        class="flex"
-                                                        id="notification-with-avatar-content"
-                                                    >
+                                                    <x-base.notification class="flex"
+                                                        id="notification-with-avatar-content">
                                                         <div
                                                             class="image-fit h-10 w-10 flex-none overflow-hidden rounded-full">
-                                                            <img
-                                                                src="#"
-                                                                {{-- src="{{ Vite::asset($products[0]['images'][0]['path']) }}" --}}
-                                                                alt="Tailwise - Admin Dashboard Template"
-                                                            >
+                                                            <img src="#" {{-- src="{{ Vite::asset($products[0]['images'][0]['path']) }}" --}}
+                                                                alt="Tailwise - Admin Dashboard Template">
                                                         </div>
                                                         <div class="ml-4 sm:mr-28">
                                                             <div class="font-medium">
@@ -562,29 +445,20 @@
                                                                 See you later! 😃😃😃
                                                             </div>
                                                         </div>
-                                                        <a
-                                                            class="absolute bottom-0 right-0 top-0 flex items-center border-l border-slate-200/60 px-6 font-medium text-primary"
-                                                            data-dismiss="notification"
-                                                            href="#"
-                                                        >
+                                                        <a class="absolute bottom-0 right-0 top-0 flex items-center border-l border-slate-200/60 px-6 font-medium text-primary"
+                                                            data-dismiss="notification" href="#">
                                                             Reply
                                                         </a>
                                                     </x-base.notification>
                                                     <!-- END: Notification Content -->
                                                     <!-- BEGIN: Notification Toggle -->
-                                                    <x-base.button
-                                                        id="notification-with-avatar-toggle"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button id="notification-with-avatar-toggle" variant="primary">
                                                         Show Notification
                                                     </x-base.button>
                                                     <!-- END: Notification Toggle -->
                                                 </div>
                                             </x-base.highlight>
-                                            <x-base.highlight
-                                                class="mt-5"
-                                                type="javascript"
-                                            >
+                                            <x-base.highlight class="mt-5" type="javascript">
                                                 // Notification with avatar
                                                 $("#notification-with-avatar-toggle").on("click", function () {
                                                 // Init toastify
@@ -631,17 +505,10 @@
                                     Notification with Split Buttons
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-2"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-2">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-2"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-2" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -651,8 +518,7 @@
                                     This section demonstrates how to create and use
                                     notifications with split buttons.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -660,10 +526,8 @@
                                         <x-base.preview>
                                             <div class="text-center">
                                                 <!-- BEGIN: Notification Content -->
-                                                <x-base.notification
-                                                    class="flex"
-                                                    id="notification-with-split-buttons-content"
-                                                >
+                                                <x-base.notification class="flex"
+                                                    id="notification-with-split-buttons-content">
                                                     <div class="sm:mr-40">
                                                         <div class="font-medium">
                                                             Introducing new theme
@@ -674,27 +538,20 @@
                                                     </div>
                                                     <div
                                                         class="absolute bottom-0 right-0 top-0 flex flex-col border-l border-slate-200/60">
-                                                        <a
-                                                            class="flex flex-1 items-center justify-center border-b border-slate-200/60 px-6 font-medium text-primary"
-                                                            href="#"
-                                                        >
+                                                        <a class="flex flex-1 items-center justify-center border-b border-slate-200/60 px-6 font-medium text-primary"
+                                                            href="#">
                                                             View Details
                                                         </a>
-                                                        <a
-                                                            class="flex flex-1 items-center justify-center px-6 font-medium text-slate-500"
-                                                            data-dismiss="notification"
-                                                            href="#"
-                                                        >
+                                                        <a class="flex flex-1 items-center justify-center px-6 font-medium text-slate-500"
+                                                            data-dismiss="notification" href="#">
                                                             Dismiss
                                                         </a>
                                                     </div>
                                                 </x-base.notification>
                                                 <!-- END: Notification Content -->
                                                 <!-- BEGIN: Notification Toggle -->
-                                                <x-base.button
-                                                    id="notification-with-split-buttons-toggle"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button id="notification-with-split-buttons-toggle"
+                                                    variant="primary">
                                                     Show Notification
                                                 </x-base.button>
                                                 <!-- END: Notification Toggle -->
@@ -704,10 +561,8 @@
                                             <x-base.highlight>
                                                 <div class="text-center">
                                                     <!-- BEGIN: Notification Content -->
-                                                    <x-base.notification
-                                                        class="flex"
-                                                        id="notification-with-split-buttons-content"
-                                                    >
+                                                    <x-base.notification class="flex"
+                                                        id="notification-with-split-buttons-content">
                                                         <div class="sm:mr-40">
                                                             <div class="font-medium">
                                                                 Introducing new theme
@@ -718,36 +573,26 @@
                                                         </div>
                                                         <div
                                                             class="absolute bottom-0 right-0 top-0 flex flex-col border-l border-slate-200/60">
-                                                            <a
-                                                                class="flex flex-1 items-center justify-center border-b border-slate-200/60 px-6 font-medium text-primary"
-                                                                href="#"
-                                                            >
+                                                            <a class="flex flex-1 items-center justify-center border-b border-slate-200/60 px-6 font-medium text-primary"
+                                                                href="#">
                                                                 View Details
                                                             </a>
-                                                            <a
-                                                                class="flex flex-1 items-center justify-center px-6 font-medium text-slate-500"
-                                                                data-dismiss="notification"
-                                                                href="#"
-                                                            >
+                                                            <a class="flex flex-1 items-center justify-center px-6 font-medium text-slate-500"
+                                                                data-dismiss="notification" href="#">
                                                                 Dismiss
                                                             </a>
                                                         </div>
                                                     </x-base.notification>
                                                     <!-- END: Notification Content -->
                                                     <!-- BEGIN: Notification Toggle -->
-                                                    <x-base.button
-                                                        id="notification-with-split-buttons-toggle"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button id="notification-with-split-buttons-toggle"
+                                                        variant="primary">
                                                         Show Notification
                                                     </x-base.button>
                                                     <!-- END: Notification Toggle -->
                                                 </div>
                                             </x-base.highlight>
-                                            <x-base.highlight
-                                                class="mt-5"
-                                                type="javascript"
-                                            >
+                                            <x-base.highlight class="mt-5" type="javascript">
                                                 // Notification with split buttons
                                                 $("#notification-with-split-buttons-toggle").on("click", function () {
                                                 // Init toastify
@@ -794,17 +639,10 @@
                                     Notification with Buttons Below
                                 </div>
                                 <x-base.form-switch class="mt-3 w-full sm:ml-auto sm:mt-0 sm:w-auto">
-                                    <x-base.form-switch.label
-                                        class="ml-0 sm:ml-2"
-                                        for="show-example-3"
-                                    >
+                                    <x-base.form-switch.label class="ml-0 sm:ml-2" for="show-example-3">
                                         Show example code
                                     </x-base.form-switch.label>
-                                    <x-base.form-switch.input
-                                        class="ml-3 mr-0"
-                                        id="show-example-3"
-                                        type="checkbox"
-                                    />
+                                    <x-base.form-switch.input class="ml-3 mr-0" id="show-example-3" type="checkbox" />
                                 </x-base.form-switch>
                             </div>
                             <div>
@@ -814,8 +652,7 @@
                                     content. This section demonstrates how to create and use
                                     notifications with buttons below.
                                 </p>
-                                <div
-                                    class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                                <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                     <div class="absolute left-0 -mt-2 ml-4 bg-white px-3 text-xs uppercase text-slate-500">
                                         <div class="-mt-px">Example code / preview</div>
                                     </div>
@@ -823,10 +660,8 @@
                                         <x-base.preview>
                                             <div class="text-center">
                                                 <!-- BEGIN: Notification Content -->
-                                                <x-base.notification
-                                                    class="flex"
-                                                    id="notification-with-buttons-below-content"
-                                                >
+                                                <x-base.notification class="flex"
+                                                    id="notification-with-buttons-below-content">
                                                     <x-base.lucide icon="FileText" />
                                                     <div class="ml-4 mr-5 sm:mr-20">
                                                         <div class="font-medium">
@@ -836,20 +671,12 @@
                                                             Sent you new documents.
                                                         </div>
                                                         <div class="mt-2.5">
-                                                            <x-base.button
-                                                                class="mr-2 px-2 py-1"
-                                                                href=""
-                                                                variant="primary"
-                                                                as="a"
-                                                            >
+                                                            <x-base.button class="mr-2 px-2 py-1" href=""
+                                                                variant="primary" as="a">
                                                                 Preview
                                                             </x-base.button>
-                                                            <x-base.button
-                                                                class="px-2 py-1"
-                                                                href=""
-                                                                variant="outline-secondary"
-                                                                as="a"
-                                                            >
+                                                            <x-base.button class="px-2 py-1" href=""
+                                                                variant="outline-secondary" as="a">
                                                                 Download
                                                             </x-base.button>
                                                         </div>
@@ -857,10 +684,8 @@
                                                 </x-base.notification>
                                                 <!-- END: Notification Content -->
                                                 <!-- BEGIN: Notification Toggle -->
-                                                <x-base.button
-                                                    id="notification-with-buttons-below-toggle"
-                                                    variant="primary"
-                                                >
+                                                <x-base.button id="notification-with-buttons-below-toggle"
+                                                    variant="primary">
                                                     Show Notification
                                                 </x-base.button>
                                                 <!-- END: Notification Toggle -->
@@ -870,10 +695,8 @@
                                             <x-base.highlight>
                                                 <div class="text-center">
                                                     <!-- BEGIN: Notification Content -->
-                                                    <x-base.notification
-                                                        class="flex"
-                                                        id="notification-with-buttons-below-content"
-                                                    >
+                                                    <x-base.notification class="flex"
+                                                        id="notification-with-buttons-below-content">
                                                         <x-base.lucide icon="FileText" />
                                                         <div class="ml-4 mr-5 sm:mr-20">
                                                             <div class="font-medium">
@@ -883,20 +706,12 @@
                                                                 Sent you new documents.
                                                             </div>
                                                             <div class="mt-2.5">
-                                                                <x-base.button
-                                                                    class="mr-2 px-2 py-1"
-                                                                    href=""
-                                                                    variant="primary"
-                                                                    as="a"
-                                                                >
+                                                                <x-base.button class="mr-2 px-2 py-1" href=""
+                                                                    variant="primary" as="a">
                                                                     Preview
                                                                 </x-base.button>
-                                                                <x-base.button
-                                                                    class="px-2 py-1"
-                                                                    href=""
-                                                                    variant="outline-secondary"
-                                                                    as="a"
-                                                                >
+                                                                <x-base.button class="px-2 py-1" href=""
+                                                                    variant="outline-secondary" as="a">
                                                                     Download
                                                                 </x-base.button>
                                                             </div>
@@ -904,19 +719,14 @@
                                                     </x-base.notification>
                                                     <!-- END: Notification Content -->
                                                     <!-- BEGIN: Notification Toggle -->
-                                                    <x-base.button
-                                                        id="notification-with-buttons-below-toggle"
-                                                        variant="primary"
-                                                    >
+                                                    <x-base.button id="notification-with-buttons-below-toggle"
+                                                        variant="primary">
                                                         Show Notification
                                                     </x-base.button>
                                                     <!-- END: Notification Toggle -->
                                                 </div>
                                             </x-base.highlight>
-                                            <x-base.highlight
-                                                class="mt-5"
-                                                type="javascript"
-                                            >
+                                            <x-base.highlight class="mt-5" type="javascript">
                                                 // Notification with buttons below
                                                 $("#notification-with-buttons-below-toggle").on("click", function () {
                                                 // Init toastify
@@ -964,8 +774,7 @@
                             <p class="mt-2 leading-relaxed">
                                 Below is a list of props that can be passed to the component:
                             </p>
-                            <div
-                                class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
+                            <div class="relative mb-4 mt-7 rounded-[0.6rem] border border-slate-200/80">
                                 <div class="absolute left-0 -mt-2.5 ml-4 bg-white px-3 font-medium text-slate-500">
                                     <div class="-mt-px">Dialog</div>
                                 </div>
@@ -993,11 +802,8 @@
                                                     notification behavior. Explore all the available
                                                     APIs through the following helpful documentation
                                                     links
-                                                    <a
-                                                        class="ml-1 text-primary"
-                                                        href="https://apvarun.github.io/toastify-js/"
-                                                        target="blank"
-                                                    >
+                                                    <a class="ml-1 text-primary"
+                                                        href="https://apvarun.github.io/toastify-js/" target="blank">
                                                         https://apvarun.github.io/toastify-js/
                                                     </a>
                                                     .
@@ -1028,10 +834,7 @@
                                 'relative pl-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white active',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Basic Notification
                                 </a>
                             </li>
@@ -1039,10 +842,7 @@
                                 'relative px-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Success Notification
                                 </a>
                             </li>
@@ -1050,10 +850,7 @@
                                 'relative px-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Notification with Actions
                                 </a>
                             </li>
@@ -1061,10 +858,7 @@
                                 'relative px-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Notification with Avatar
                                 </a>
                             </li>
@@ -1072,10 +866,7 @@
                                 'relative px-5 py-[9.2px] group-[.mode--light]:text-white/90 [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70 [.group.mode--light_&.active]:text-white [.group.mode--light_&.active]:before:bg-white',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Notification with Split Buttons
                                 </a>
                             </li>
@@ -1083,10 +874,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Notification with Buttons Below
                                 </a>
                             </li>
@@ -1094,10 +882,7 @@
                                 'relative px-5 py-[9.2px] [&.active]:text-primary [&.active]:font-medium [&.active]:before:bg-primary/70',
                                 "before:content-[''] before:absolute before:h-[60%] before:w-0.5 before:left-0 before:inset-y-0 before:my-auto before:-ml-px",
                             ])>
-                                <a
-                                    class="-mt-px block truncate"
-                                    href=""
-                                >
+                                <a class="-mt-px block truncate" href="">
                                     Component API
                                 </a>
                             </li>

@@ -16,8 +16,11 @@ use App\Http\Controllers\Admin\UserCarrierController;
 use App\Http\Controllers\Admin\DocumentTypeController;
 use App\Http\Controllers\Admin\NotificationsController;
 use App\Http\Controllers\Admin\CarrierDocumentController;
+use App\Http\Controllers\Admin\Driver\TestingsController;
+use App\Http\Controllers\Admin\Driver\AccidentsController;
 use App\Http\Controllers\Admin\Vehicles\VehicleController;
 use App\Http\Controllers\Admin\Driver\DriverListController;
+use App\Http\Controllers\Admin\Driver\InspectionsController;
 use App\Http\Controllers\Admin\UserCarrierDocumentController;
 use App\Http\Controllers\Admin\Vehicles\MaintenanceController;
 use App\Http\Controllers\Admin\Vehicles\VehicleMakeController;
@@ -219,14 +222,10 @@ Route::post('user_carrier/{user_carrier}/delete-photo', [UserCarrierController::
 
 
 /*
-    |--------------------------------------------------------------------------
-    | RUTAS ADMIN DRIVERS
-    |--------------------------------------------------------------------------    
+|--------------------------------------------------------------------------
+| RUTAS ADMIN DRIVERS
+|--------------------------------------------------------------------------    
 */
-
-// Rutas para la vista general de drivers
-// Route::get('drivers', [DriversController::class, 'index'])->name('drivers.index');
-// Route::put('drivers/{driver}/toggle-status', [DriversController::class, 'toggleStatus'])->name('drivers.toggle-status');
 
 Route::prefix('drivers')->name('drivers.')->group(function () {
     Route::get('/', [DriverListController::class, 'index'])->name('index');
@@ -235,14 +234,75 @@ Route::prefix('drivers')->name('drivers.')->group(function () {
     Route::put('/{id}/activate', [DriverListController::class, 'activate'])->name('activate');
     Route::get('/{id}/documents/download', [DriverListController::class, 'downloadDocuments'])->name('documents.download');
     Route::get('/export', [DriverListController::class, 'export'])->name('export');
+
+    // Historia de accidentes específica para un conductor
+    Route::get('/{driver}/accident-history', [AccidentsController::class, 'driverHistory'])->name('accident-history');
 });
 
+// Rutas para todos los accidentes
+Route::prefix('accidents')->name('accidents.')->group(function () {
+    Route::get('/', [AccidentsController::class, 'index'])->name('index');
+    Route::post('/', [AccidentsController::class, 'store'])->name('store');
+    Route::put('/{accident}', [AccidentsController::class, 'update'])->name('update');
+    Route::delete('/{accident}', [AccidentsController::class, 'destroy'])->name('destroy');
+
+    // Ruta para obtener conductores por transportista
+    Route::get('/carriers/{carrier}/drivers', [AccidentsController::class, 'getDriversByCarrier'])->name('drivers.by.carrier');
+});
 
 // Rutas para el reclutamiento de conductores
 Route::prefix('driver-recruitment')->name('driver-recruitment.')->group(function () {
     Route::get('/', [DriverRecruitmentController::class, 'index'])->name('index');
     Route::get('/{driverId}', [DriverRecruitmentController::class, 'show'])->name('show');
 });
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS PARA TESTINGS (PRUEBAS DE CONDUCTORES)
+|--------------------------------------------------------------------------
+*/
+
+// Rutas para todos los testings (pruebas)
+Route::prefix('testings')->name('testings.')->group(function () {
+    Route::get('/', [TestingsController::class, 'index'])->name('index');
+    Route::post('/', [TestingsController::class, 'store'])->name('store');
+    Route::put('/{testing}', [TestingsController::class, 'update'])->name('update');
+    Route::delete('/{testing}', [TestingsController::class, 'destroy'])->name('destroy');
+
+    // Ruta para obtener conductores por transportista (si no existiera ya)
+    Route::get('/carriers/{carrier}/drivers', [TestingsController::class, 'getDriversByCarrier'])->name('drivers.by.carrier');
+});
+
+// Añadir esta ruta a las rutas existentes de conductores (drivers)
+// Historia de tests específica para un conductor
+Route::get('drivers/{driver}/testing-history', [TestingsController::class, 'driverHistory'])->name('drivers.testing-history');
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS PARA INSPECTIONS (INSPECCIONES DE CONDUCTORES)
+|--------------------------------------------------------------------------
+*/
+
+// Rutas para todas las inspecciones
+Route::prefix('inspections')->name('inspections.')->group(function () {
+    Route::get('/', [InspectionsController::class, 'index'])->name('index');
+    Route::post('/', [InspectionsController::class, 'store'])->name('store');
+    Route::put('/{inspection}', [InspectionsController::class, 'update'])->name('update');
+    Route::delete('/{inspection}', [InspectionsController::class, 'destroy'])->name('destroy');
+
+    // Rutas para eliminar archivos adjuntos
+    Route::delete('/{inspection}/files/{mediaId}', [InspectionsController::class, 'deleteFile'])->name('delete-file');
+    Route::get('/{inspection}/files', [InspectionsController::class, 'getFiles'])->name('files');
+
+    // Rutas para obtener vehículos y conductores
+    Route::get('/carriers/{carrier}/vehicles', [InspectionsController::class, 'getVehiclesByCarrier'])->name('vehicles.by.carrier');
+    Route::get('/drivers/{driver}/vehicles', [InspectionsController::class, 'getVehiclesByDriver'])->name('vehicles.by.driver');
+    Route::get('/carriers/{carrier}/drivers', [InspectionsController::class, 'getDriversByCarrier'])->name('drivers.by.carrier');
+});
+
+// Añadir esta ruta a las rutas existentes de conductores (drivers)
+// Historia de inspecciones específica para un conductor
+Route::get('drivers/{driver}/inspection-history', [InspectionsController::class, 'driverHistory'])->name('drivers.inspection-history');
 
 /*
 |--------------------------------------------------------------------------
@@ -313,7 +373,7 @@ Route::prefix('maintenance')->name('maintenance.')->group(function () {
     Route::get('/{id}', [MaintenanceController::class, 'show'])->name('show');
     Route::put('/{id}/toggle-status', [MaintenanceController::class, 'toggleStatus'])->name('toggle-status');
     Route::delete('/{id}', [MaintenanceController::class, 'destroy'])->name('destroy');
-    
+
     // Rutas adicionales para funcionalidades extendidas (opcionales)
     Route::get('/export', [MaintenanceController::class, 'export'])->name('export');
     Route::get('/reports', [MaintenanceController::class, 'reports'])->name('reports');
@@ -325,8 +385,10 @@ Route::prefix('maintenance')->name('maintenance.')->group(function () {
 | Ruta para ToggleStatus en VehicleServiceItem (para mantener compatibilidad)
 |--------------------------------------------------------------------------    
 */
-Route::put('/vehicles/{vehicle}/service-items/{serviceItem}/toggle-status', 
-    [VehicleServiceItemController::class, 'toggleStatus'])
+Route::put(
+    '/vehicles/{vehicle}/service-items/{serviceItem}/toggle-status',
+    [VehicleServiceItemController::class, 'toggleStatus']
+)
     ->name('service-items.toggle-status');
 
 
