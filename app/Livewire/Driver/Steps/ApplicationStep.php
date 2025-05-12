@@ -716,13 +716,22 @@ class ApplicationStep extends Component
             'location' => '',
             'position' => '',
             'reason_for_leaving' => '',
-            'reference_contact' => '',
+            'reference_contact' => ''
         ];
     }
 
     // Next step
     public function next()
     {
+        // Verificar si es third_party_driver y no se ha enviado el correo
+        if ($this->applying_position === 'third_party_driver' && !$this->email_sent && 
+            $this->third_party_email && $this->third_party_name && $this->third_party_phone) {
+            
+            // Añadir un error de validación personalizado
+            $this->addError('third_party_email', 'You must send the email to the third party company representative before proceeding.');
+            return;
+        }
+        
         // Full validation
         $this->validate($this->rules());
 
@@ -904,17 +913,10 @@ class ApplicationStep extends Component
             // Guardar el ID del vehículo
             $this->vehicle_id = $vehicle->id;
             
-            // Actualizar los detalles comunes de la aplicación
-            $applicationDetails = $application->details()->updateOrCreate(
-                [],
-                [
-                    'applying_position' => 'third_party_driver',
-                    'applying_location' => $this->applying_location,
-                    'vehicle_id' => $vehicle->id,
-                ]
-            );
+            // Solo actualizamos la tabla third_party_details, no driver_application_details
+            // Los datos generales se guardarán cuando el usuario use next/previous step, no aquí
             
-            // Actualizar los detalles específicos de Third Party en la nueva tabla
+            // Actualizar los detalles específicos de Third Party en la tabla correspondiente
             $thirdPartyDetails = $application->thirdPartyDetail()->updateOrCreate(
                 [],
                 [
@@ -1016,7 +1018,6 @@ class ApplicationStep extends Component
             ]);
         }
     }
-    
     // Render
     public function render()
     {

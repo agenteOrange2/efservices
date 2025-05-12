@@ -206,22 +206,21 @@
     <div class="section">
         <h2>Statement of Consent</h2>
         <div class="consent-text">
-            <p>Yo, <strong>{{ $verification->third_party_name }}</strong>, declaro que soy el propietario legítimo del
-                vehículo descrito en este documento y autorizo a <strong>{{ $driverDetails->user->name }}
-                    {{ $driverDetails->middle_name }} {{ $driverDetails->last_name }}</strong> a utilizar este
-                vehículo en la plataforma de EF Services TCP para fines de transporte.</p>
-            <p>Entiendo que esta autorización permanecerá vigente hasta que sea revocada por escrito.</p>
-            <p>Confirmo que el vehículo cumple con todos los requisitos legales y de seguridad necesarios para su
-                operación en la plataforma de EF Services TCP.</p>
+            <p>I, <strong>{{ $verification->third_party_name }}</strong>, declare that I am the lawful owner of the vehicle described at
+                    this document and authorize <strong>{{ $driverDetails->user->name }}
+                    {{ $driverDetails->middle_name }} {{ $driverDetails->last_name }}</strong>  to use this vehicle on the EF Services TCP platform
+                     for transportation purposes.</p>
+            <p>I understand that this authorization will remain in effect until revoked by in writing.</p>
+            <p>I confirm that the vehicle complies with all legal and safety requirements necessary for operation on the EF Services TCP platform.</p>
         </div>
     </div>
 
     <div class="signature-section">
-        <h2>Firma Digital</h2>
+        <h2>Digital Signature</h2>
         <div class="signature-container">
             {{-- Primero intentar usar la ruta física de la firma (como en certification.blade.php) --}}
             @if (!empty($signaturePath) && file_exists($signaturePath))
-                <img src="{{ $signaturePath }}" alt="Firma Digital" style="max-width: 100%; max-height: 100px;">
+                <img src="{{ $signaturePath }}" alt="Digital Signature" style="max-width: 100%; max-height: 100px;">
                 {{-- Si no hay ruta física, intentar usar los datos base64 --}}
             @elseif(isset($signatureData) && !empty($signatureData))
                 @php
@@ -245,28 +244,28 @@
                 @endphp
 
                 {{-- Mostrar la firma según su tipo --}}
-                <img src="{!! $cleanSignature !!}" alt="Firma Digital" style="max-width: 100%; max-height: 100px;">
+                <img src="{!! $cleanSignature !!}" alt="Digital Signature" style="max-width: 100%; max-height: 100px;">
             @else
                 <div
                     style="border: 1px dashed #ccc; height: 100px; display: flex; align-items: center; justify-content: center;">
-                    <p style="color: #999;">Firma no disponible</p>
+                    <p style="color: #999;">Signature not available</p>
                 </div>
             @endif
         </div>
         <div class="signature-info">
             <div class="signature-name">
-                <p><strong>Nombre:</strong> {{ $verification->third_party_name }}</p>
+                <p><strong>Name:</strong> {{ $verification->third_party_name }}</p>
             </div>
             <div class="signature-date">
-                <p><strong>Fecha:</strong> {{ $date }}</p>
+                <p><strong>Date:</strong> {{ $date }}</p>
             </div>
         </div>
     </div>
 
     <div class="footer">
-        <p>Este documento fue generado electrónicamente y es válido sin firma manuscrita.</p>
-        <p>ID de Verificación: {{ $verification->token }}</p>
-        <p>&copy; {{ date('Y') }} EF Services. Todos los derechos reservados.</p>
+        <p>This document was generated electronically and is valid without a handwritten signature.</p>
+        <p>Verification ID: {{ $verification->token }}</p>
+        <p>&copy; {{ date('Y') }} EF Services. All rights reserved.</p>
     </div>
 </body>
 

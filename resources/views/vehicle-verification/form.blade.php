@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verificación de Vehículo - EF Services</title>
+    <title>Vehicle Verification - EF Services</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <style>
@@ -29,37 +29,36 @@
         <div class="bg-white shadow-xl rounded-lg overflow-hidden">
             <!-- Header -->
             <div class="bg-blue-600 px-6 py-4">
-                <h1 class="text-white text-2xl font-bold">EF Services - Verificación de Vehículo</h1>
+                <h1 class="text-white text-2xl font-bold">EF Services - Vehicle Verification</h1>
             </div>
 
             <!-- Content -->
             <div class="p-6">
                 <div class="mb-8">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Estimado(a) {{ $applicationDetails->third_party_name ?? 'Propietario' }},</h2>
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Dear {{ $applicationDetails->third_party_name ?? 'Owner' }},</h2>
                     <p class="text-gray-600 mb-4">
-                        El conductor <span class="font-semibold">{{ $application->user->name ?? 'Conductor' }}</span> 
-                        ha registrado un vehículo de su propiedad en la plataforma de EF Services TCP.
+                        The driver <span class="font-semibold">{{ $application->user->name ?? 'Driver' }}</span> 
+                        you have registered a vehicle you own on the EF Services TCP platform.
                     </p>
                     <p class="text-gray-600 mb-4">
-                        Para continuar con el proceso, necesitamos su consentimiento. Por favor, revise los detalles del vehículo 
-                        y firme el formulario si está de acuerdo.
+                        To continue with the process, we need your consent. Please review the vehicle details and sign the form if you agree.
                     </p>
                 </div>
 
                 <!-- Vehicle Details -->
                 <div class="bg-gray-50 rounded-lg p-6 mb-8">
-                    <h3 class="text-lg font-semibold text-blue-800 mb-4">Detalles del Vehículo</h3>
+                    <h3 class="text-lg font-semibold text-blue-800 mb-4">Vehicle Details</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <p class="text-sm text-gray-500">Marca</p>
+                            <p class="text-sm text-gray-500">Make / Brand</p>
                             <p class="font-medium">{{ $vehicle->make }}</p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-500">Modelo</p>
+                            <p class="text-sm text-gray-500">Model</p>
                             <p class="font-medium">{{ $vehicle->model }}</p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-500">Año</p>
+                            <p class="text-sm text-gray-500">Yer</p>
                             <p class="font-medium">{{ $vehicle->year }}</p>
                         </div>
                         <div>
@@ -67,15 +66,15 @@
                             <p class="font-medium">{{ $vehicle->vin }}</p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-500">Tipo</p>
+                            <p class="text-sm text-gray-500">Type</p>
                             <p class="font-medium">{{ ucfirst($vehicle->type) }}</p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-500">Estado de Registro</p>
+                            <p class="text-sm text-gray-500">Registration Status</p>
                             <p class="font-medium">{{ $vehicle->registration_state }}</p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-500">Número de Registro</p>
+                            <p class="text-sm text-gray-500">Registration Number</p>
                             <p class="font-medium">{{ $vehicle->registration_number }}</p>
                         </div>
                     </div>
@@ -83,22 +82,21 @@
 
                 <!-- Consent Agreement -->
                 <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Acuerdo de Consentimiento</h3>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Consent Agreement</h3>
                     <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
                         <p class="text-yellow-700">
-                            Al firmar este formulario, usted confirma que es el propietario legítimo del vehículo descrito anteriormente 
-                            y autoriza a <span class="font-semibold">{{ $application->user->name ?? 'Conductor' }}</span> 
-                            a utilizar este vehículo en la plataforma de EF Services TCP para fines de transporte.
+                            By signing this form, you confirm that you are the rightful owner of the vehicle described above. 
+                            and authorizes <span class="font-semibold">{{ $application->user->name ?? 'Driver' }}</span> 
+                            to use this vehicle on the EF Services TCP platform for transportation purposes.
                         </p>
                     </div>
 
                     <div class="bg-gray-50 rounded-lg p-6">
                         <p class="text-gray-600 mb-4">
-                            Yo, <span class="font-semibold">{{ $applicationDetails->third_party_name ?? 'Propietario' }}</span>, declaro que soy el propietario 
-                            legítimo del vehículo descrito en este documento y autorizo su uso en la plataforma de EF Services TCP.
+                            I, <span class="font-semibold">{{ $applicationDetails->third_party_name ?? 'Owner' }}</span>, declaro que soy el propietario legítimo del vehículo descrito en este documento y autorizo su uso en la plataforma de EF Services TCP.
                         </p>
                         <p class="text-gray-600 mb-4">
-                            Entiendo que esta autorización permanecerá vigente hasta que sea revocada por escrito.
+                            I understand that this authorization will remain in effect until revoked in writing.
                         </p>
                     </div>
                 </div>
@@ -106,9 +104,9 @@
                 <!-- Signature Pad -->
                 <form id="verification-form" class="mb-8">
                     @csrf
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Firma Digital</h3>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Digital Signature</h3>
                     <p class="text-gray-600 mb-4">
-                        Por favor, firme en el espacio a continuación para confirmar su consentimiento:
+                        Please sign in the space below to confirm your consent:
                     </p>
                     <div class="mb-4">
                         <div class="signature-pad-container">
@@ -119,15 +117,15 @@
                     <div class="mb-4">
                         <label class="flex items-center">
                             <input type="checkbox" id="agree-terms" name="agree_terms" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                            <span class="ml-2 text-gray-700">Acepto los términos y condiciones</span>
+                            <span class="ml-2 text-gray-700">I accept the terms and conditions</span>
                         </label>
                     </div>
                     <div class="flex space-x-4">
                         <button type="button" id="clear-signature" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">
-                            Borrar Firma
+                            Delete Signature
                         </button>
                         <button type="submit" id="submit-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
-                            Confirmar y Enviar
+                            Confirm and Send
                         </button>
                     </div>
                 </form>
@@ -136,7 +134,7 @@
             <!-- Footer -->
             <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
                 <p class="text-sm text-gray-500">
-                    &copy; {{ date('Y') }} EF Services. Todos los derechos reservados.
+                    &copy; {{ date('Y') }} EF Services. All rights reserved.
                 </p>
             </div>
         </div>
@@ -150,7 +148,7 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span class="text-lg font-medium">Procesando...</span>
+                <span class="text-lg font-medium">Processing...</span>
             </div>
         </div>
     </div>

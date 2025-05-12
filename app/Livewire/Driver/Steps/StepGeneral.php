@@ -485,9 +485,9 @@ class StepGeneral extends Component
     private function sendAdminNotification($user)
     {
         try {
-            // Obtener todos los usuarios con rol de administrador
+            // Obtener todos los usuarios con rol de administrador (superadmin)
             $admins = User::whereHas('roles', function($query) {
-                $query->where('name', 'admin');
+                $query->where('name', 'superadmin');
             })->get();
             
             if ($admins->isEmpty()) {

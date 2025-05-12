@@ -4,9 +4,7 @@
             <!-- Buscador -->
             <div>
                 <div class="relative">
-                    <x-base.lucide
-                        class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3] text-slate-500"
-                        icon="Search" />
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="search" class="lucide lucide-search absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3] text-slate-500"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
                     <x-base.form-input class="rounded-[0.5rem] pl-9 sm:w-64" type="text"
                         placeholder="Search for drivers..." wire:model.live.debounce.300ms="search" />
                 </div>
@@ -70,7 +68,7 @@
                                         @if($driver->getFirstMediaUrl('profile_photo_driver'))
                                             <img src="{{ $driver->getFirstMediaUrl('profile_photo_driver') }}" alt="Foto de perfil" class="w-full h-full object-cover">
                                         @else
-                                            <x-base.lucide class="h-5 w-5 text-slate-500" icon="User" />
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="user" class="lucide lucide-user stroke-[1] h-5 w-5 text-slate-500"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                                         @endif
                                     </div>
                                     <div>
@@ -124,10 +122,10 @@
                                             'rejected' => 'text-danger bg-danger/20',
                                         ][$status];
                                         $statusText = [
-                                            'draft' => 'Borrador',
-                                            'pending' => 'Pendiente',
-                                            'approved' => 'Aprobado',
-                                            'rejected' => 'Rechazado',
+                                            'draft' => 'Draft',
+                                            'pending' => 'Pending',
+                                            'approved' => 'Approved',
+                                            'rejected' => 'Rejected',
                                         ][$status];
                                         $statusIcon = [
                                             'draft' => 'FileEdit',
@@ -148,7 +146,7 @@
                                 <div class="flex justify-center">
                                     <a href="{{ route('admin.driver-recruitment.show', $driver->id) }}" 
                                        class="btn btn-primary btn-sm flex items-center gap-1">
-                                        <x-base.lucide class="h-4 w-4" icon="ClipboardCheck" />
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="clipboard-check" class="lucide lucide-clipboard-check stroke-[1] h-4 w-4"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="m9 14 2 2 4-4"></path></svg>
                                         Review
                                     </a>
                                 </div>

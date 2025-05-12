@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Verificación de Vehículo - EF Services</title>
+    <title>Vehicle Verification - EF Services</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -40,12 +40,16 @@
         .btn {
             display: inline-block;
             background-color: #2563eb;
-            color: white;
+            color: #fff;
             text-decoration: none;
             padding: 12px 24px;
             border-radius: 5px;
             font-weight: bold;
             margin: 20px 0;
+        }
+        .btn a{
+            color: #fff;
+            text-decoration: none;
         }
         .footer {
             margin-top: 40px;
@@ -59,37 +63,37 @@
 </head>
 <body>
     <div class="header">
-        <h1>EF Services - Verificación de Vehículo</h1>
+        <h1>EF Services - Vehicle Verification</h1>
     </div>
 
     <div class="content">
-        <p>Estimado(a) <strong>{{ $thirdPartyName }}</strong>,</p>
+        <p>Dear <strong>{{ $thirdPartyName }}</strong>,</p>
 
-        <p>Por motivos de seguridad, necesitamos que verifique el registro del vehículo para su uso en la plataforma de EF Services TCP.</p>
+        <p>For security reasons, we need you to verify vehicle registration for use on the EF Services TCP platform.</p>
 
-        <p>El conductor <strong>{{ $driverName }}</strong> ha registrado un vehículo de su propiedad y necesitamos su consentimiento para continuar con el proceso.</p>
+        <p>The client <strong>{{ $driverName }}</strong> has registered a vehicle owned by you and we need your consent to continue with the process.</p>
 
         <div class="vehicle-details">
-            <h3>Detalles del Vehículo</h3>
-            <p><strong>Marca:</strong> {{ $vehicleData['make'] }}</p>
-            <p><strong>Modelo:</strong> {{ $vehicleData['model'] }}</p>
-            <p><strong>Año:</strong> {{ $vehicleData['year'] }}</p>
+            <h3>Vehicle Details</h3>
+            <p><strong>Make | Brand:</strong> {{ $vehicleData['make'] }}</p>
+            <p><strong>Model:</strong> {{ $vehicleData['model'] }}</p>
+            <p><strong>Year:</strong> {{ $vehicleData['year'] }}</p>
             <p><strong>VIN:</strong> {{ $vehicleData['vin'] }}</p>
-            <p><strong>Tipo:</strong> {{ ucfirst($vehicleData['type']) }}</p>
-            <p><strong>Estado de Registro:</strong> {{ $vehicleData['registration_state'] }}</p>
-            <p><strong>Número de Registro:</strong> {{ $vehicleData['registration_number'] }}</p>
+            <p><strong>Type:</strong> {{ ucfirst($vehicleData['type']) }}</p>
+            <p><strong>Registration Status:</strong> {{ $vehicleData['registration_state'] }}</p>
+            <p><strong>Registration Number:</strong> {{ $vehicleData['registration_number'] }}</p>
         </div>
 
-        <p>Por favor, haga clic en el botón a continuación para revisar y firmar el consentimiento:</p>
+        <p>Please click the button below to review and sign the consent form:</p>
 
-        <a href="{{ route('vehicle.verification.form', $verificationToken) }}" class="btn">Verificar Vehículo</a>
+        <a href="{{ route('vehicle.verification.form', $verificationToken) }}" class="btn">Verify Vehicle</a>
 
-        <p>Este enlace expirará en 7 días. Si no reconoce esta solicitud, por favor ignore este correo electrónico.</p>
+        <p>This link will expire in 7 days. If you do not recognize this request, please ignore this email.</p>
     </div>
 
     <div class="footer">
-        <p>Este es un correo electrónico automático, por favor no responda a este mensaje.</p>
-        <p>&copy; {{ date('Y') }} EF Services. Todos los derechos reservados.</p>
+        <p>This is an automated email, please do not reply to this message.</p>
+        <p>&copy; {{ date('Y') }} EF Services. All rights reserved.</p>
     </div>
 </body>
 </html>

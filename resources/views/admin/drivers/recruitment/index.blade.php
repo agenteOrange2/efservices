@@ -1,10 +1,10 @@
 @extends('../themes/' . $activeTheme)
-@section('title', 'Reclutamiento de Conductores')
+@section('title', 'Driver Recruitment')
 
 @php
     $breadcrumbLinks = [
         ['label' => 'App', 'url' => route('admin.dashboard')],
-        ['label' => 'Reclutamiento de Conductores', 'active' => true],
+        ['label' => 'Driver Recruitment', 'active' => true],
     ];
 @endphp
 
@@ -13,7 +13,7 @@
         <div class="col-span-12">
             <div class="flex flex-col gap-y-3 md:h-10 md:flex-row md:items-center">
                 <div class="text-base font-medium group-[.mode--light]:text-white">
-                    Reclutamiento de Conductores
+                    Driver Recruitment
                 </div>
             </div>
             

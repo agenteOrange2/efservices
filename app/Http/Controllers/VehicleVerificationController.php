@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Models\OwnerOperatorDetail;
 use App\Models\ThirdPartyDetail;
+use Illuminate\Support\Str;
 
 class VehicleVerificationController extends Controller
 {
@@ -159,9 +160,72 @@ class VehicleVerificationController extends Controller
                     ]);
                 }
                 
-                // Generar el documento PDF de consentimiento
+                // Obtener el UserDriverDetail para guardar en la misma ruta que las fotos
+                $userDriverDetail = null;
+                
+                if ($verification->vehicle && $verification->vehicle->driver) {
+                    $userDriverDetail = $verification->vehicle->driver;
+                    
+                    Log::info('Usando UserDriverDetail del vehículo', [
+                        'verification_id' => $verification->id,
+                        'vehicle_id' => $verification->vehicle->id,
+                        'driver_id' => $userDriverDetail->id
+                    ]);
+                } else if ($verification->driverApplication && $verification->driverApplication->userDriverDetail) {
+                    $userDriverDetail = $verification->driverApplication->userDriverDetail;
+                    
+                    Log::info('Usando UserDriverDetail de la aplicación', [
+                        'verification_id' => $verification->id,
+                        'driver_application_id' => $verification->driverApplication->id,
+                        'driver_id' => $userDriverDetail->id
+                    ]);
+                } else {
+                    // Si no se puede obtener el UserDriverDetail, usar el ID 4 como fallback
+                    $driverId = 4;
+                    
+                    Log::info('Usando ID 4 como fallback', [
+                        'verification_id' => $verification->id
+                    ]);
+                }
+                
+                // Crear directorio de destino usando la misma estructura que CustomPathGenerator
+                $directory = $userDriverDetail ? "driver/{$userDriverDetail->id}/vehicle_verifications" : "driver/4/vehicle_verifications";
+                Storage::disk('public')->makeDirectory($directory);
+                
+                // Eliminar archivos antiguos antes de generar nuevos
                 try {
-                    $pdf = $this->generateLeaseAgreementDocument($verification);
+                    // Obtener todos los archivos en el directorio
+                    $files = Storage::disk('public')->files($directory);
+                    
+                    // Eliminar archivos de consentimiento antiguos
+                    foreach ($files as $file) {
+                        $fileName = basename($file);
+                        if (Str::startsWith($fileName, 'third_party_consent_') || $fileName === 'consentimiento_propietario_third_party.pdf') {
+                            Log::info('Eliminando archivo antiguo de consentimiento', ['file' => $file]);
+                            Storage::disk('public')->delete($file);
+                        }
+                    }
+                    
+                    // Eliminar archivos de lease agreement antiguos
+                    foreach ($files as $file) {
+                        $fileName = basename($file);
+                        if (Str::startsWith($fileName, 'lease_agreement_')) {
+                            Log::info('Eliminando archivo antiguo de lease agreement', ['file' => $file]);
+                            Storage::disk('public')->delete($file);
+                        }
+                    }
+                    
+                    Log::info('Archivos antiguos eliminados correctamente');
+                } catch (\Exception $e) {
+                    Log::error('Error al eliminar archivos antiguos', [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
+                
+                // Generar el documento de consentimiento usando el template correcto
+                try {
+                    $pdf = $this->generateThirdPartyConsentDocument($verification);
                     Log::info('PDF de consentimiento generado correctamente');
                     
                     // Obtener el UserDriverDetail para guardar en la misma ruta que las fotos
@@ -196,17 +260,16 @@ class VehicleVerificationController extends Controller
                     $directory = $userDriverDetail ? "driver/{$userDriverDetail->id}/vehicle_verifications" : "driver/4/vehicle_verifications";
                     Storage::disk('public')->makeDirectory($directory);
                     
-                    // Guardar el documento de consentimiento (sobrescribiendo el existente si ya existe)
-                    $path = "{$directory}/consentimiento_propietario_third_party.pdf";
+                    // Generar un nombre único para el documento de consentimiento usando timestamp
+                    $timestamp = now()->format('YmdHis');
+                    $path = "{$directory}/third_party_consent_{$timestamp}.pdf";
                     
-                    // Si ya existe un documento, eliminarlo primero para asegurarnos de que se sobrescriba
-                    if (Storage::disk('public')->exists($path)) {
-                        Log::info('Sobrescribiendo PDF de consentimiento existente con nueva firma', [
-                            'verification_id' => $verification->id,
-                            'path' => $path
-                        ]);
-                        Storage::disk('public')->delete($path);
-                    }
+                    // Registrar que estamos creando una nueva versión del documento
+                    Log::info('Creando nueva versión del PDF de consentimiento', [
+                        'verification_id' => $verification->id,
+                        'path' => $path,
+                        'timestamp' => $timestamp
+                    ]);
                     
                     // Guardar el nuevo documento con la firma actualizada
                     Storage::disk('public')->put($path, $pdf->output());
@@ -230,20 +293,18 @@ class VehicleVerificationController extends Controller
                     $applicationDetails = $verification->driverApplication->details;
                     $isOwnerOperator = $applicationDetails->applying_position === 'owner_operator';
                     $leaseAgreementFilename = $isOwnerOperator ? 
-                        'lease_agreement_owner_operator.pdf' : 
-                        'lease_agreement_third_party.pdf';
+                        'lease_agreement_owner_operator' : 
+                        'lease_agreement_third_party';
                     
-                    // Ruta para el lease agreement
-                    $leaseAgreementPath = "{$directory}/{$leaseAgreementFilename}";
+                    // Usar el mismo timestamp para el lease agreement para mantener consistencia
+                    $leaseAgreementPath = "{$directory}/{$leaseAgreementFilename}_{$timestamp}.pdf";
                     
-                    // Si ya existe un documento de lease agreement, eliminarlo primero
-                    if (Storage::disk('public')->exists($leaseAgreementPath)) {
-                        Log::info('Sobrescribiendo PDF de lease agreement existente', [
-                            'verification_id' => $verification->id,
-                            'path' => $leaseAgreementPath
-                        ]);
-                        Storage::disk('public')->delete($leaseAgreementPath);
-                    }
+                    // Registrar que estamos creando una nueva versión del documento de lease agreement
+                    Log::info('Creando nueva versión del PDF de lease agreement', [
+                        'verification_id' => $verification->id,
+                        'path' => $leaseAgreementPath,
+                        'timestamp' => $timestamp
+                    ]);
                     
                     // Guardar el nuevo documento de lease agreement
                     Storage::disk('public')->put($leaseAgreementPath, $pdfLeaseAgreement->output());
@@ -336,6 +397,66 @@ class VehicleVerificationController extends Controller
         }
     }
     
+    /**
+     * Generar el documento de consentimiento en PDF.
+     */
+    private function generateThirdPartyConsentDocument(VehicleVerificationToken $verification)
+    {
+        try {
+            // Cargar relaciones necesarias
+            $verification->load(['vehicle', 'driverApplication.details', 'driverApplication.user', 'driverApplication.ownerOperatorDetail', 'driverApplication.thirdPartyDetail', 'vehicle.driver.user', 'vehicle.driver.carrier']);
+            
+            // Obtener los datos del vehículo y la aplicación
+            $vehicle = $verification->vehicle;
+            $application = $verification->driverApplication;
+            $applicationDetails = $application->details;
+            
+            // Obtener los datos del conductor
+            $driverDetails = null;
+            if ($vehicle && $vehicle->driver) {
+                $driverDetails = $vehicle->driver;
+            } else if ($application && $application->userDriverDetail) {
+                $driverDetails = $application->userDriverDetail;
+            }
+            
+            // Si no hay detalles del conductor, usar datos básicos
+            if (!$driverDetails && $application && $application->user) {
+                $driverDetails = new \stdClass();
+                $driverDetails->user = $application->user;
+                $driverDetails->middle_name = '';
+                $driverDetails->last_name = '';
+                $driverDetails->phone = '';
+            }
+            
+            // Preparar los datos para la vista
+            $data = [
+                'verification' => $verification,
+                'vehicle' => $vehicle,
+                'driverDetails' => $driverDetails,
+                'date' => now()->format('m/d/Y'),
+                'signaturePath' => null,
+                'signatureData' => $verification->signature_data
+            ];
+            
+            // Obtener la firma si existe en Media Library
+            $media = $verification->getMedia('signature')->first();
+            if ($media) {
+                $data['signaturePath'] = $media->getPath();
+            }
+            
+            // Generar el PDF usando la vista third-party-consent.blade.php
+            return PDF::loadView('pdfs.third-party-consent', $data);
+            
+        } catch (\Exception $e) {
+            Log::error('Error al generar el PDF de consentimiento', [
+                'verification_id' => $verification->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e; // Re-lanzar la excepción para que sea manejada por el método que llama
+        }
+    }
+
     /**
      * Generar el documento de lease agreement en PDF.
      */
