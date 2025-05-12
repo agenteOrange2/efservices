@@ -343,19 +343,35 @@
             <div class="relative">
                 <x-base.lucide class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3]"
                     icon="CalendarCheck2" />
-                <select
+                <select x-model="dateRange" @change="updateDashboard()"
                     class="pl-9 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary sm:w-44">
-                    <option value="custom-date">Custom Date</option>
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
                     <option value="yearly">Yearly</option>
+                    <option value="custom">Custom Date</option>
                 </select>
             </div>
-            <div class="relative">
-                <x-base.lucide class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3]"
-                    icon="Calendar" />
-                <x-base.litepicker class="py-2 px-3 pl-9 border border-slate-300 rounded-lg sm:w-64" />
+            <div class="relative" x-show="dateRange === 'custom'">
+                <div class="flex items-center gap-2">
+                    <div class="relative">
+                        <x-base.lucide class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3]"
+                            icon="Calendar" />
+                        <input type="date" x-model="customDateStart"
+                            class="py-2 px-3 pl-9 border border-slate-300 rounded-lg">
+                    </div>
+                    <span>to</span>
+                    <div class="relative">
+                        <x-base.lucide class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3]"
+                            icon="Calendar" />
+                        <input type="date" x-model="customDateEnd"
+                            class="py-2 px-3 pl-9 border border-slate-300 rounded-lg">
+                    </div>
+                    <button @click="applyCustomDateFilter()"
+                        class="bg-primary text-white rounded-lg py-2 px-4 hover:bg-primary-focus transition duration-300">
+                        Apply
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -422,19 +438,35 @@
             <div class="relative">
                 <x-base.lucide class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3]"
                     icon="CalendarCheck2" />
-                <select
+                <select x-model="dateRange" @change="updateDashboard()"
                     class="pl-9 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary sm:w-44">
-                    <option value="custom-date">Custom Date</option>
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
                     <option value="yearly">Yearly</option>
+                    <option value="custom">Custom Date</option>
                 </select>
             </div>
-            <div class="relative">
-                <x-base.lucide class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3]"
-                    icon="Calendar" />
-                <x-base.litepicker class="py-2 px-3 pl-9 border border-slate-300 rounded-lg sm:w-64" />
+            <div class="relative" x-show="dateRange === 'custom'">
+                <div class="flex items-center gap-2">
+                    <div class="relative">
+                        <x-base.lucide class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3]"
+                            icon="Calendar" />
+                        <input type="date" x-model="customDateStart"
+                            class="py-2 px-3 pl-9 border border-slate-300 rounded-lg">
+                    </div>
+                    <span>to</span>
+                    <div class="relative">
+                        <x-base.lucide class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3]"
+                            icon="Calendar" />
+                        <input type="date" x-model="customDateEnd"
+                            class="py-2 px-3 pl-9 border border-slate-300 rounded-lg">
+                    </div>
+                    <button @click="applyCustomDateFilter()"
+                        class="bg-primary text-white rounded-lg py-2 px-4 hover:bg-primary-focus transition duration-300">
+                        Apply
+                    </button>
+                </div>
             </div>
         </div>
     </div>
