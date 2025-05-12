@@ -46,8 +46,7 @@ class DriverTrafficConviction extends Model implements HasMedia
     {
         $this->addMediaCollection('traffic-tickets')
             ->useDisk('public')
-            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
-            ->usePathGenerator(new CustomPathGenerator());
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']);
     }
 
     public function registerMediaConversions(Media $media = null): void

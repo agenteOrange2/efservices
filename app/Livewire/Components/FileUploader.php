@@ -108,12 +108,167 @@ class FileUploader extends Component
      */
     public function removeFile($fileId)
     {
-        // Emitir evento al componente padre para eliminar el archivo
+        // Verificar si es un archivo temporal (comienza con 'temp_')
+        $isTemp = is_string($fileId) && str_starts_with($fileId, 'temp_');
+        
+        // Registrar información para depuración
+        \Illuminate\Support\Facades\Log::info('Iniciando eliminación de archivo', [
+            'file_id' => $fileId,
+            'is_temp' => $isTemp,
+            'model_name' => $this->modelName,
+            'model_index' => $this->modelIndex
+        ]);
+        
+        // Si es un archivo temporal, eliminar el archivo físico y actualizar la interfaz
+        if ($isTemp) {
+            // Buscar el archivo temporal en la lista de existingFiles
+            $tempFilePath = null;
+            $tempFileName = null;
+            $realMediaId = null;
+            
+            foreach ($this->existingFiles as $key => $file) {
+                if (isset($file['id']) && $file['id'] == $fileId) {
+                    // Guardar información del archivo antes de eliminarlo de la lista
+                    $tempFileName = $file['name'] ?? null;
+                    $realMediaId = $file['media_id'] ?? null; // ID real en la base de datos si ya fue guardado
+                    
+                    // Eliminar el archivo de la lista
+                    unset($this->existingFiles[$key]);
+                    // Reindexar el array
+                    $this->existingFiles = array_values($this->existingFiles);
+                    break;
+                }
+            }
+            
+            // Si el archivo ya fue guardado en la base de datos, eliminarlo de allí también
+            if ($realMediaId) {
+                // Buscar y eliminar el archivo de la base de datos
+                $media = \Spatie\MediaLibrary\MediaCollections\Models\Media::find($realMediaId);
+                if ($media) {
+                    try {
+                        // Registrar información antes de eliminar
+                        $filePath = $media->getPath();
+                        
+                        // Eliminar el archivo de la base de datos
+                        $deleted = $media->delete();
+                        
+                        \Illuminate\Support\Facades\Log::info('Archivo temporal ya guardado eliminado de la base de datos', [
+                            'file_id' => $fileId,
+                            'real_media_id' => $realMediaId,
+                            'deleted' => $deleted,
+                            'file_path' => $filePath
+                        ]);
+                        
+                        // Verificar si el archivo se eliminó correctamente del disco
+                        if (file_exists($filePath)) {
+                            @unlink($filePath);
+                        }
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('Error al eliminar archivo de la base de datos', [
+                            'error' => $e->getMessage(),
+                            'file_id' => $fileId,
+                            'real_media_id' => $realMediaId
+                        ]);
+                    }
+                }
+            }
+            
+            // Buscar y eliminar el archivo en el directorio temp
+            $tempDir = storage_path('app/temp');
+            if (is_dir($tempDir)) {
+                $files = scandir($tempDir);
+                foreach ($files as $file) {
+                    // Buscar por nombre de archivo si lo tenemos
+                    if ($tempFileName && $file == $tempFileName) {
+                        $fullPath = $tempDir . '/' . $file;
+                        if (file_exists($fullPath)) {
+                            @unlink($fullPath);
+                            \Illuminate\Support\Facades\Log::info('Archivo temporal eliminado por nombre', [
+                                'file_id' => $fileId,
+                                'file_name' => $file,
+                                'full_path' => $fullPath
+                            ]);
+                        }
+                    }
+                }
+            }
+            
+            // Buscar en todos los directorios temporales posibles
+            $tempDirs = [
+                storage_path('app/temp'),
+                storage_path('app/livewire-tmp'),
+                storage_path('app/public/temp')
+            ];
+            
+            foreach ($tempDirs as $dir) {
+                if (is_dir($dir)) {
+                    $files = scandir($dir);
+                    foreach ($files as $file) {
+                        // Eliminar archivos que coincidan con el tiempo aproximado de creación
+                        // El ID temporal contiene un timestamp
+                        $idParts = explode('_', $fileId);
+                        if (count($idParts) > 1) {
+                            $timestamp = $idParts[1];
+                            if (file_exists($dir . '/' . $file)) {
+                                $fileTime = filemtime($dir . '/' . $file);
+                                
+                                // Si el archivo fue creado cerca del timestamp del ID temporal
+                                if (abs($fileTime - $timestamp) < 60) { // 60 segundos de margen
+                                    @unlink($dir . '/' . $file);
+                                    \Illuminate\Support\Facades\Log::info('Archivo temporal eliminado por timestamp', [
+                                        'file_id' => $fileId,
+                                        'file_name' => $file,
+                                        'timestamp' => $timestamp,
+                                        'file_time' => $fileTime,
+                                        'directory' => $dir
+                                    ]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Emitir evento al componente padre para que elimine cualquier referencia en la base de datos
+            $this->dispatch('fileRemoved', [
+                'fileId' => $fileId,
+                'modelName' => $this->modelName,
+                'modelIndex' => $this->modelIndex,
+                'isTemp' => true,
+                'realMediaId' => $realMediaId
+            ]);
+            
+            // Registrar información para depuración
+            \Illuminate\Support\Facades\Log::info('Archivo temporal eliminado completamente', [
+                'file_id' => $fileId,
+                'model_name' => $this->modelName,
+                'model_index' => $this->modelIndex
+            ]);
+            
+            return;
+        }
+        
+        // Para archivos no temporales, emitir evento al componente padre
         $this->dispatch('fileRemoved', [
             'fileId' => $fileId,
             'modelName' => $this->modelName,
             'modelIndex' => $this->modelIndex,
+            'isTemp' => false
         ]);
+        
+        // Inmediatamente actualizar la interfaz para reflejar la eliminación
+        foreach ($this->existingFiles as $key => $file) {
+            if (isset($file['id']) && $file['id'] == $fileId) {
+                // Eliminar el archivo de la lista
+                unset($this->existingFiles[$key]);
+                // Reindexar el array
+                $this->existingFiles = array_values($this->existingFiles);
+                \Illuminate\Support\Facades\Log::info('Archivo permanente eliminado de la interfaz', [
+                    'file_id' => $fileId
+                ]);
+                break;
+            }
+        }
     }
     
     /**

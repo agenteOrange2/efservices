@@ -47,8 +47,22 @@ class DriverRegistrationController extends Controller
             // Log para depuración
             Log::info('showIndependentCarrierSelection called');
             
-            // Obtener carriers activos de manera simple
-            $carriers = Carrier::where('status', Carrier::STATUS_ACTIVE)->get();
+            // Obtener carriers activos con información adicional
+            $carriers = Carrier::where('status', Carrier::STATUS_ACTIVE)
+                ->with(['membership', 'media'])
+                ->get()
+                ->map(function($carrier) {
+                    // Agregar recuento de conductores y máximo permitido
+                    $driver_count = $carrier->userDrivers()->count();
+                    $max_drivers = $carrier->membership->max_drivers ?? 1;
+                    
+                    // Agregar estos datos al carrier
+                    $carrier->driver_count = $driver_count;
+                    $carrier->max_drivers = $max_drivers;
+                    $carrier->is_full = $driver_count >= $max_drivers;
+                    
+                    return $carrier;
+                });
             
             return view('auth.user_driver.select_carrier_registration', [
                 'carriers' => $carriers,
@@ -71,6 +85,24 @@ class DriverRegistrationController extends Controller
         try {
             // Buscar el carrier por slug
             $carrier = Carrier::where('slug', $carrier_slug)->firstOrFail();
+            
+            // Verificar si el carrier está activo
+            if ($carrier->status !== Carrier::STATUS_ACTIVE) {
+                return redirect()->route('driver.register.error')
+                    ->with('error', 'El carrier seleccionado no está activo actualmente.');
+            }
+            
+            // Verificar si el carrier ha alcanzado su límite de conductores
+            $driver_count = $carrier->userDrivers()->count();
+            $max_drivers = $carrier->membership->max_drivers ?? 1;
+            
+            if ($driver_count >= $max_drivers) {
+                return view('auth.user_driver.carrier_limit_error', [
+                    'carrier' => $carrier,
+                    'driver_count' => $driver_count,
+                    'max_drivers' => $max_drivers
+                ]);
+            }
             
             // Renderizar vista de registro
             return view('auth.user_driver.register', [
@@ -194,7 +226,7 @@ class DriverRegistrationController extends Controller
      */
     public function showSelectCarrier()
     {
-        if (!Auth::check() || !Auth::user()->hasRole('driver')) {
+        if (!Auth::check() || Auth::user()->role != 'driver') {
             return redirect()->route('login');
         }
 
@@ -205,7 +237,22 @@ class DriverRegistrationController extends Controller
             return redirect()->route('driver.dashboard');
         }
 
-        $carriers = Carrier::where('status', Carrier::STATUS_ACTIVE)->get();
+        // Obtener carriers activos con información adicional
+        $carriers = Carrier::where('status', Carrier::STATUS_ACTIVE)
+            ->with(['membership', 'media'])
+            ->get()
+            ->map(function($carrier) {
+                // Agregar recuento de conductores y máximo permitido
+                $driver_count = $carrier->userDrivers()->count();
+                $max_drivers = $carrier->membership->max_drivers ?? 1;
+                
+                // Agregar estos datos al carrier
+                $carrier->driver_count = $driver_count;
+                $carrier->max_drivers = $max_drivers;
+                $carrier->is_full = $driver_count >= $max_drivers;
+                
+                return $carrier;
+            });
 
         return view('auth.user_driver.select_carrier', compact('carriers'));
     }
