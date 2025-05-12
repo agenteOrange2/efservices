@@ -172,7 +172,7 @@
                 <td>{{ $vehicle['year'] }}</td>
                 <td>{{ \Illuminate\Support\Str::limit($vehicle['vin'], 10) }}</td>
                 <td>{{ $vehicle['carrier'] }}</td>
-                <td><span class="pill {{ strtolower(str_replace(' ', '-', $vehicle['status']['label'])) }}">{{ $vehicle['status']['label'] }}</span></td>
+                <td><span class="pill {{ strtolower(str_replace(' ', '-', $vehicle['status'])) }}">{{ $vehicle['status'] }}</span></td>
                 <td>{{ $vehicle['created_at'] }}</td>
             </tr>
             @endforeach
@@ -197,7 +197,7 @@
                 <td>{{ $maintenance['service_date'] }}</td>
                 <td>{{ $maintenance['next_service_date'] }}</td>
                 <td>{{ $maintenance['cost'] }}</td>
-                <td><span class="pill {{ strtolower(str_replace(' ', '-', $maintenance['status']['label'])) }}">{{ $maintenance['status']['label'] }}</span></td>
+                <td><span class="pill {{ strtolower(str_replace(' ', '-', $maintenance['status'])) }}">{{ $maintenance['status'] }}</span></td>
             </tr>
             @endforeach
         </tbody>

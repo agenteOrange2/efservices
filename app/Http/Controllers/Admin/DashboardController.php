@@ -36,6 +36,7 @@ class DashboardController extends Controller
         return view('admin.dashboard', compact('stats', 'chartData', 'dateRange', 'customDateStart', 'customDateEnd'));
     }
 
+
     /**
      * Cargar estadísticas según filtros
      */
@@ -54,22 +55,34 @@ class DashboardController extends Controller
             'suspendedVehicles' => Vehicle::where('status', 'suspended')->count(),
             'outOfServiceVehicles' => Vehicle::where('status', 'out_of_service')->count(),
             
-            // Mantenimiento
+            // Maintenance - ensure all statuses are counted correctly
             'totalMaintenance' => VehicleMaintenance::count(),
             'completedMaintenance' => VehicleMaintenance::where('status', 'completed')->count(),
-            'pendingMaintenance' => VehicleMaintenance::where('status', 'pending')->count(),
+            'pendingMaintenance' => VehicleMaintenance::whereIn('status', ['pending', 'in_progress'])->count(), // Include both 'pending' and 'in_progress'
             'overdueMaintenance' => VehicleMaintenance::where('status', 'overdue')->count(),
             'upcomingMaintenance' => VehicleMaintenance::where('status', 'upcoming')->count(),
             
+            // Users - General statistics for all users
+            'totalUsers' => User::count(),
+            'activeUsers' => User::where('status', 'active')->count(),
+            'pendingUsers' => User::where('status', 'pending')->count(),
+            'inactiveUsers' => User::whereIn('status', ['inactive', 'suspended'])->count(),
+            
+            // Map user data to the variables expected by the dashboard
+            'totalSuperAdmins' => User::count(),
+            'activeUserCarriers' => User::where('status', 'active')->count(),
+            'pendingUserCarriers' => User::where('status', 'pending')->count(),
+            'inactiveUserCarriers' => User::whereIn('status', ['inactive', 'suspended'])->count(),
+            
             // Carriers
             'totalCarriers' => Carrier::count(),
-            'activeUserCarriers' => User::whereHas('roles', function ($query) {
+            'activeCarriers' => User::whereHas('roles', function ($query) {
                 $query->where('name', 'carrier');
             })->where('status', 'active')->count(),
-            'pendingUserCarriers' => User::whereHas('roles', function ($query) {
+            'pendingCarriers' => User::whereHas('roles', function ($query) {
                 $query->where('name', 'carrier');
             })->where('status', 'pending')->count(),
-            'inactiveUserCarriers' => User::whereHas('roles', function ($query) {
+            'inactiveCarriers' => User::whereHas('roles', function ($query) {
                 $query->where('name', 'carrier');
             })->where('status', 'inactive')->count(),
             
@@ -99,84 +112,200 @@ class DashboardController extends Controller
      */
     private function prepareChartData($dateRange, $startDate = null, $endDate = null)
     {
+        // Determinar fechas según el filtro seleccionado
         $dateFilter = $this->getDateFilter($dateRange, $startDate, $endDate);
         $start = $dateFilter['start'];
         $end = $dateFilter['end'];
         
-        $vehicleData = [];
-        $maintenanceData = [];
+        // Datos para gráficos principales
+        $chartData = [
+            // User chart data - simplified to count all users
+            'users' => [
+                'active' => User::where('status', 'active')->count(),
+                'pending' => User::where('status', 'pending')->count(),
+                'inactive' => User::whereIn('status', ['inactive', 'suspended'])->count(),
+            ],
+            
+            // Datos para gráfico de vehículos
+            'vehicles' => [
+                'active' => Vehicle::where('status', 'active')->count(),
+                'suspended' => Vehicle::where('status', 'suspended')->count(),
+                'outOfService' => Vehicle::where('status', 'out_of_service')->count(),
+            ],
+            
+            // Datos para gráfico de mantenimiento - asegurando que todos los estados se cuenten correctamente
+            'maintenance' => [
+                'completed' => VehicleMaintenance::where('status', 'completed')->count(),
+                'pending' => VehicleMaintenance::whereIn('status', ['pending', 'in_progress'])->count(), // Incluir tanto 'pending' como 'in_progress'
+                'upcoming' => VehicleMaintenance::where('status', 'upcoming')->count(),
+                'overdue' => VehicleMaintenance::where('status', 'overdue')->count(),
+            ],
+            
+            // Datos para gráfico de transportistas
+            'carriers' => [
+                'active' => Carrier::where('status', 'active')->count(),
+                'pending' => Carrier::where('status', 'pending')->count(),
+                'inactive' => Carrier::where('status', 'inactive')->count(),
+            ],
+            
+            // Datos para gráfico de conductores
+            'drivers' => [
+                'active' => Driver::where('status', 'active')->count(),
+                'pending' => Driver::where('status', 'pending')->count(),
+                'inactive' => Driver::where('status', 'inactive')->count(),
+            ],
+        ];
         
-        // Dependiendo del rango de fechas, crear datos para los gráficos
-        switch ($dateRange) {
-            case 'daily':
-                // Datos para los últimos 7 días
-                for ($i = 6; $i >= 0; $i--) {
-                    $date = Carbon::now()->subDays($i)->format('Y-m-d');
-                    $vehicleData[$date] = Vehicle::whereDate('created_at', $date)->count();
-                    $maintenanceData[$date] = VehicleMaintenance::whereDate('created_at', $date)->count();
-                }
-                break;
+        // Datos para gráficos de tendencias (por día, semana, mes, año)
+        $trendData = [];
+        
+        if ($dateRange === 'daily') {
+            // Últimos 7 días
+            $period = CarbonPeriod::create($start, '1 day', $end);
+            
+            foreach ($period as $date) {
+                $dayStart = $date->copy()->startOfDay();
+                $dayEnd = $date->copy()->endOfDay();
                 
-            case 'weekly':
-                // Datos para las últimas 4 semanas
-                for ($i = 3; $i >= 0; $i--) {
-                    $startWeek = Carbon::now()->subWeeks($i)->startOfWeek();
-                    $endWeek = Carbon::now()->subWeeks($i)->endOfWeek();
-                    $key = $startWeek->format('M d') . ' - ' . $endWeek->format('M d');
-                    
-                    $vehicleData[$key] = Vehicle::whereBetween('created_at', [$startWeek, $endWeek])->count();
-                    $maintenanceData[$key] = VehicleMaintenance::whereBetween('created_at', [$startWeek, $endWeek])->count();
-                }
-                break;
+                $trendData[] = [
+                    'date' => $date->format('d/m/Y'),
+                    'users' => User::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
+                    'carriers' => Carrier::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
+                    'drivers' => Driver::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
+                    'vehicles' => Vehicle::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
+                    'maintenance' => VehicleMaintenance::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
+                ];
+            }
+        } elseif ($dateRange === 'weekly') {
+            // Últimas 8 semanas
+            $currentWeek = Carbon::now()->startOfWeek();
+            
+            for ($i = 0; $i < 8; $i++) {
+                $weekStart = $currentWeek->copy()->subWeeks($i)->startOfWeek();
+                $weekEnd = $weekStart->copy()->endOfWeek();
                 
-            case 'monthly':
-                // Datos para los últimos 6 meses
-                for ($i = 5; $i >= 0; $i--) {
-                    $month = Carbon::now()->subMonths($i);
-                    $key = $month->format('M Y');
-                    
-                    $vehicleData[$key] = Vehicle::whereMonth('created_at', $month->month)
-                        ->whereYear('created_at', $month->year)
-                        ->count();
-                        
-                    $maintenanceData[$key] = VehicleMaintenance::whereMonth('created_at', $month->month)
-                        ->whereYear('created_at', $month->year)
-                        ->count();
-                }
-                break;
+                $trendData[] = [
+                    'date' => $weekStart->format('d/m/Y') . ' - ' . $weekEnd->format('d/m/Y'),
+                    'users' => User::whereBetween('created_at', [$weekStart, $weekEnd])->count(),
+                    'carriers' => Carrier::whereBetween('created_at', [$weekStart, $weekEnd])->count(),
+                    'drivers' => Driver::whereBetween('created_at', [$weekStart, $weekEnd])->count(),
+                    'vehicles' => Vehicle::whereBetween('created_at', [$weekStart, $weekEnd])->count(),
+                    'maintenance' => VehicleMaintenance::whereBetween('created_at', [$weekStart, $weekEnd])->count(),
+                ];
+            }
+            
+            // Invertir para que sea de más antiguo a más reciente
+            $trendData = array_reverse($trendData);
+        } elseif ($dateRange === 'monthly') {
+            // Últimos 6 meses
+            $currentMonth = Carbon::now()->startOfMonth();
+            
+            for ($i = 0; $i < 6; $i++) {
+                $monthStart = $currentMonth->copy()->subMonths($i)->startOfMonth();
+                $monthEnd = $monthStart->copy()->endOfMonth();
                 
-            case 'yearly':
-                // Datos para los últimos 5 años
-                for ($i = 4; $i >= 0; $i--) {
-                    $year = Carbon::now()->subYears($i)->year;
-                    
-                    $vehicleData[$year] = Vehicle::whereYear('created_at', $year)->count();
-                    $maintenanceData[$year] = VehicleMaintenance::whereYear('created_at', $year)->count();
-                }
-                break;
+                $trendData[] = [
+                    'date' => $monthStart->format('M Y'),
+                    'users' => User::whereBetween('created_at', [$monthStart, $monthEnd])->count(),
+                    'carriers' => Carrier::whereBetween('created_at', [$monthStart, $monthEnd])->count(),
+                    'drivers' => Driver::whereBetween('created_at', [$monthStart, $monthEnd])->count(),
+                    'vehicles' => Vehicle::whereBetween('created_at', [$monthStart, $monthEnd])->count(),
+                    'maintenance' => VehicleMaintenance::whereBetween('created_at', [$monthStart, $monthEnd])->count(),
+                ];
+            }
+            
+            // Invertir para que sea de más antiguo a más reciente
+            $trendData = array_reverse($trendData);
+        } elseif ($dateRange === 'yearly') {
+            // Últimos 5 años
+            $currentYear = Carbon::now()->startOfYear();
+            
+            for ($i = 0; $i < 5; $i++) {
+                $yearStart = $currentYear->copy()->subYears($i)->startOfYear();
+                $yearEnd = $yearStart->copy()->endOfYear();
                 
-            case 'custom':
-                // Datos para un rango de fechas personalizado
-                $period = CarbonPeriod::create($start, '1 day', $end);
+                $trendData[] = [
+                    'date' => $yearStart->format('Y'),
+                    'users' => User::whereBetween('created_at', [$yearStart, $yearEnd])->count(),
+                    'carriers' => Carrier::whereBetween('created_at', [$yearStart, $yearEnd])->count(),
+                    'drivers' => Driver::whereBetween('created_at', [$yearStart, $yearEnd])->count(),
+                    'vehicles' => Vehicle::whereBetween('created_at', [$yearStart, $yearEnd])->count(),
+                    'maintenance' => VehicleMaintenance::whereBetween('created_at', [$yearStart, $yearEnd])->count(),
+                ];
+            }
+            
+            // Invertir para que sea de más antiguo a más reciente
+            $trendData = array_reverse($trendData);
+        } else {
+            // Rango personalizado
+            $period = CarbonPeriod::create($start, '1 day', $end);
+            
+            foreach ($period as $date) {
+                $dayStart = $date->copy()->startOfDay();
+                $dayEnd = $date->copy()->endOfDay();
                 
-                foreach ($period as $date) {
-                    $dateStr = $date->format('Y-m-d');
-                    $vehicleData[$dateStr] = Vehicle::whereDate('created_at', $dateStr)->count();
-                    $maintenanceData[$dateStr] = VehicleMaintenance::whereDate('created_at', $dateStr)->count();
-                }
-                break;
+                $trendData[] = [
+                    'date' => $date->format('d/m/Y'),
+                    'users' => User::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
+                    'carriers' => Carrier::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
+                    'drivers' => Driver::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
+                    'vehicles' => Vehicle::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
+                    'maintenance' => VehicleMaintenance::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
+                ];
+            }
         }
         
-        return [
-            'labels' => array_keys($vehicleData),
-            'vehicleData' => array_values($vehicleData),
-            'maintenanceData' => array_values($maintenanceData)
-        ];
+        $chartData['trends'] = $trendData;
+        
+        return $chartData;
     }
     
     /**
      * Obtener rango de fechas según el filtro seleccionado
      */
+    /**
+     * Get the CSS class for a maintenance status
+     *
+     * @param string $status
+     * @return string
+     */
+    private function getStatusClass($status)
+    {
+        switch (strtolower($status)) {
+            case 'completed':
+                return 'text-success';
+            case 'pending':
+            case 'in_progress':
+                return 'text-info';
+            case 'upcoming':
+                return 'text-warning';
+            case 'overdue':
+                return 'text-danger';
+            default:
+                return 'text-slate-500';
+        }
+    }
+    
+    /**
+     * Get the CSS class for a vehicle status
+     *
+     * @param string $status
+     * @return string
+     */
+    private function getVehicleStatusClass($status)
+    {
+        switch (strtolower($status)) {
+            case 'active':
+                return 'text-success';
+            case 'suspended':
+                return 'text-warning';
+            case 'out_of_service':
+                return 'text-danger';
+            default:
+                return 'text-slate-500';
+        }
+    }
+
     private function getDateFilter($dateRange, $startDate = null, $endDate = null)
     {
         $start = null;
@@ -350,31 +479,55 @@ class DashboardController extends Controller
             $totalMaintenance = $completedMaintenance + $pendingMaintenance + $upcomingMaintenance + $overdueMaintenance;
             
             // Datos recientes
-            $recentVehicles = Vehicle::orderBy('created_at', 'desc')->limit(5)->get()
+            $recentVehicles = Vehicle::with('carrier')
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get()
                 ->map(function($vehicle) {
+                    // Make sure status is properly formatted and translated to English
+                    $statusLabel = ucfirst($vehicle->status);
+                    if ($statusLabel == 'Out_of_service') {
+                        $statusLabel = 'Out of Service';
+                    }
+                    
                     return [
                         'make' => $vehicle->make ?? 'N/A',
                         'model' => $vehicle->model ?? 'N/A',
                         'year' => $vehicle->year ?? 'N/A',
                         'vin' => $vehicle->vin ?? 'N/A',
-                        'carrier' => $vehicle->carrier->name ?? 'N/A',
-                        'status' => [
-                            'label' => ucfirst($vehicle->status)
-                        ],
-                        'created_at' => $vehicle->created_at->format('d/m/Y')
+                        'carrier' => $vehicle->carrier ? $vehicle->carrier->name : 'N/A',
+                        'status' => $statusLabel,
+                        'status_class' => $this->getVehicleStatusClass($vehicle->status),
+                        'created_at' => $vehicle->created_at ? $vehicle->created_at->format('d/m/Y') : 'N/A'
                     ];
                 })->toArray();
             
-            $recentMaintenance = VehicleMaintenance::with('vehicle')->orderBy('created_at', 'desc')->limit(5)->get()
+            $recentMaintenance = VehicleMaintenance::with('vehicle')
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get()
                 ->map(function($maintenance) {
+                    // Make sure status is properly formatted and translated to English
+                    $statusLabel = ucfirst($maintenance->status);
+                    if ($statusLabel == 'In_progress') {
+                        $statusLabel = 'In Progress';
+                    } elseif ($statusLabel == 'Pending') {
+                        $statusLabel = 'Pending';
+                    } elseif ($statusLabel == 'Completed') {
+                        $statusLabel = 'Completed';
+                    } elseif ($statusLabel == 'Overdue') {
+                        $statusLabel = 'Overdue';
+                    } elseif ($statusLabel == 'Upcoming') {
+                        $statusLabel = 'Upcoming';
+                    }
+                    
                     return [
-                        'vehicle' => ($maintenance->vehicle ? ($maintenance->vehicle->make ?? '') . ' ' . ($maintenance->vehicle->model ?? '') : 'N/A'),
+                        'vehicle' => ($maintenance->vehicle ? ($maintenance->vehicle->make ?? '') . ' ' . ($maintenance->vehicle->model ?? '') . ' ' . ($maintenance->vehicle->year ?? '') : 'N/A'),
                         'service_date' => $maintenance->service_date ? Carbon::parse($maintenance->service_date)->format('d/m/Y') : 'N/A',
                         'next_service_date' => $maintenance->next_service_date ? Carbon::parse($maintenance->next_service_date)->format('d/m/Y') : 'N/A',
                         'cost' => '$' . number_format($maintenance->cost ?? 0, 2),
-                        'status' => [
-                            'label' => ucfirst($maintenance->status)
-                        ]
+                        'status' => $statusLabel,
+                        'status_class' => $this->getStatusClass($maintenance->status)
                     ];
                 })->toArray();
             
@@ -410,16 +563,44 @@ class DashboardController extends Controller
      */
     public function ajaxUpdate(Request $request)
     {
-        $dateRange = $request->input('date_range', 'daily');
-        $customDateStart = $request->input('custom_date_start');
-        $customDateEnd = $request->input('custom_date_end');
-        
-        $stats = $this->loadStats($dateRange, $customDateStart, $customDateEnd);
-        $chartData = $this->prepareChartData($dateRange, $customDateStart, $customDateEnd);
-        
-        return response()->json([
-            'stats' => $stats,
-            'chartData' => $chartData
-        ]);
+        try {
+            // Log request for debugging
+            Log::info('Dashboard AJAX update request received', $request->all());
+            
+            // Get filter parameters with defaults
+            $dateRange = $request->input('date_range', 'daily');
+            $customDateStart = $request->input('custom_date_start', Carbon::now()->subDays(7)->format('Y-m-d'));
+            $customDateEnd = $request->input('custom_date_end', Carbon::now()->format('Y-m-d'));
+            
+            Log::info('Using filters', [
+                'dateRange' => $dateRange,
+                'customDateStart' => $customDateStart,
+                'customDateEnd' => $customDateEnd
+            ]);
+            
+            // Load data based on filters
+            $stats = $this->loadStats($dateRange, $customDateStart, $customDateEnd);
+            $chartData = $this->prepareChartData($dateRange, $customDateStart, $customDateEnd);
+            
+            // Log success for debugging
+            Log::info('Dashboard data loaded successfully');
+            
+            // Return success response with data
+            return response()->json([
+                'success' => true,
+                'stats' => $stats,
+                'chartData' => $chartData
+            ]);
+        } catch (\Exception $e) {
+            // Log error for debugging
+            Log::error('Error updating dashboard: ' . $e->getMessage());
+            Log::error('Error trace: ' . $e->getTraceAsString());
+            
+            // Return error response
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading dashboard data: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

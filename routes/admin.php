@@ -39,6 +39,9 @@ Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 Route::post('/dashboard/export-pdf', [DashboardController::class, 'exportPdf'])->name('dashboard.export-pdf');
 Route::post('/dashboard/ajax-update', [DashboardController::class, 'ajaxUpdate'])->name('dashboard.ajax-update');
 
+// Dashboard principal
+// Aquí solo mantenemos las rutas del dashboard principal
+
 /*
     |--------------------------------------------------------------------------
     | RUTAS ADMIN NOTIFICATION

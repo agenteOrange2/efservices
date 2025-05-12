@@ -70,6 +70,14 @@ class Vehicle extends Model
     {
         return $this->hasMany(VehicleMaintenance::class);
     }
+    
+    /**
+     * Relación con los mantenimientos del vehículo.
+     */
+    public function maintenances(): HasMany
+    {
+        return $this->hasMany(VehicleMaintenance::class);
+    }
 
     public function vehicleMake(): BelongsTo
     {
