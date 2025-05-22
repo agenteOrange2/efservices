@@ -18,15 +18,9 @@ Route::redirect('/user-carrier/register', '/carrier/register');
 // Ruta de confirmación
 Route::get('/confirm/{token}', [CustomLoginController::class, 'confirmEmail'])->name('confirm');
 
-// Rutas que requieren autenticación
+// Rutas que requieren autenticación pero NO son de carrier (estas deben ir en carrier.php)
 Route::middleware(['auth'])->group(function () {
-    Route::get('/complete-registration', [CustomLoginController::class, 'showCompleteRegistrationForm'])
-        ->name('complete_registration');
-    Route::post('/complete-registration', [CustomLoginController::class, 'completeRegistration']);
-    // Route::get('/confirmation', function () {
-    //     return view('auth.user_carrier.confirmation');
-    // })->name('confirmation');
-    
+    // Aquí solo rutas generales autenticadas que no sean de carrier
 });
 
 // Rutas para verificación de vehículos de terceros (sin autenticación)

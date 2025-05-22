@@ -35,14 +35,30 @@ class AddressStep extends Component
             'city' => 'required|string|max:255',
             'state' => 'required|string|max:255',
             'zip_code' => 'required|string|max:255',
-            'from_date' => 'required|date',
-            'to_date' => 'nullable|date',
+            'from_date' => ['required', function ($attribute, $value, $fail) {
+                if (!$this->isValidDate($value)) {
+                    $fail('The from date field must be a valid date in MM-DD-YYYY format.');
+                }
+            }],
+            'to_date' => ['nullable', function ($attribute, $value, $fail) {
+                if (!empty($value) && !$this->isValidDate($value)) {
+                    $fail('The to date field must be a valid date in MM-DD-YYYY format.');
+                }
+            }],
             'previous_addresses.*.address_line1' => 'required_if:lived_three_years,0|string|max:255',
             'previous_addresses.*.city' => 'required_if:lived_three_years,0|string|max:255',
             'previous_addresses.*.state' => 'required_if:lived_three_years,0|string|max:255',
             'previous_addresses.*.zip_code' => 'required_if:lived_three_years,0|string|max:255',
-            'previous_addresses.*.from_date' => 'required_if:lived_three_years,0|date',
-            'previous_addresses.*.to_date' => 'required_if:lived_three_years,0|date',
+            'previous_addresses.*.from_date' => ['required_if:lived_three_years,0', function ($attribute, $value, $fail) {
+                if (!empty($value) && !$this->isValidDate($value)) {
+                    $fail('The previous address from date field must be a valid date in MM-DD-YYYY format.');
+                }
+            }],
+            'previous_addresses.*.to_date' => ['required_if:lived_three_years,0', function ($attribute, $value, $fail) {
+                if (!empty($value) && !$this->isValidDate($value)) {
+                    $fail('The previous address to date field must be a valid date in MM-DD-YYYY format.');
+                }
+            }],
         ];
     }
     
@@ -59,6 +75,8 @@ class AddressStep extends Component
     
     public function mount($driverId = null)
     {
+
+        
         $this->driverId = $driverId;
         if ($this->driverId) {
             $this->loadExistingData();
@@ -89,8 +107,10 @@ class AddressStep extends Component
                 $this->city = $mainAddress->city;
                 $this->state = $mainAddress->state;
                 $this->zip_code = $mainAddress->zip_code;
-                $this->from_date = $mainAddress->from_date ? $mainAddress->from_date->format('Y-m-d') : null;
-                $this->to_date = $mainAddress->to_date ? $mainAddress->to_date->format('Y-m-d') : null;
+                // Cambiando el formato de fecha a m-d-Y
+                // Convertir fechas al formato m-d-Y para mostrarlas en la vista
+                $this->from_date = $mainAddress->from_date ? $mainAddress->from_date->format('m-d-Y') : null;
+                $this->to_date = $mainAddress->to_date ? $mainAddress->to_date->format('m-d-Y') : null;
                 $this->lived_three_years = $mainAddress->lived_three_years;
             }
             
@@ -106,11 +126,94 @@ class AddressStep extends Component
                         'city' => $address->city,
                         'state' => $address->state,
                         'zip_code' => $address->zip_code,
-                        'from_date' => $address->from_date ? $address->from_date->format('Y-m-d') : null,
-                        'to_date' => $address->to_date ? $address->to_date->format('Y-m-d') : null,
+                        'from_date' => $address->from_date ? $address->from_date->format('m-d-Y') : null,
+                        'to_date' => $address->to_date ? $address->to_date->format('m-d-Y') : null,
                     ];
                 }
             }
+        }
+    }
+    
+    /**
+     * Convierte una fecha a formato Y-m-d para almacenarla en la base de datos
+     * Maneja múltiples formatos de entrada posibles
+     */
+    protected function formatDateForDatabase($date)
+    {
+        if (empty($date)) return null;
+        
+        // Intentar diferentes formatos de fecha
+        $formats = ['m-d-Y', 'Y-m-d', 'd-m-Y', 'm/d/Y', 'Y/m/d', 'd/m/Y'];
+        
+        foreach ($formats as $format) {
+            try {
+                return Carbon::createFromFormat($format, $date)->format('Y-m-d');
+            } catch (\Exception $e) {
+                // Intentar con el siguiente formato
+                continue;
+            }
+        }
+        
+        // Último intento: usar el parser genérico de Carbon
+        try {
+            return Carbon::parse($date)->format('Y-m-d');
+        } catch (\Exception $e) {
+            // Si todo falla, devolver la fecha tal cual
+            Log::warning('No se pudo convertir la fecha al formato de base de datos', [
+                'fecha' => $date,
+                'error' => $e->getMessage()
+            ]);
+            return $date;
+        }
+    }
+
+    /**
+     * Convierte una fecha al formato m-d-Y para mostrarla en la vista
+     */
+    protected function formatDateForDisplay($date)
+    {
+        if (empty($date)) return null;
+        
+        try {
+            if ($date instanceof Carbon) {
+                return $date->format('m-d-Y');
+            } else {
+                return Carbon::parse($date)->format('m-d-Y');
+            }
+        } catch (\Exception $e) {
+            Log::warning('No se pudo convertir la fecha al formato de visualización', [
+                'fecha' => $date,
+                'error' => $e->getMessage()
+            ]);
+            return $date;
+        }
+    }
+    
+    /**
+     * Verifica si una fecha es válida en cualquiera de los formatos aceptados
+     */
+    protected function isValidDate($date)
+    {
+        if (empty($date)) return false;
+        
+        // Intentar diferentes formatos de fecha
+        $formats = ['m-d-Y', 'Y-m-d', 'd-m-Y', 'm/d/Y', 'Y/m/d', 'd/m/Y'];
+        
+        foreach ($formats as $format) {
+            try {
+                $parsedDate = Carbon::createFromFormat($format, $date);
+                return $parsedDate && $parsedDate->format($format) === $date;
+            } catch (\Exception $e) {
+                // Intentar con el siguiente formato
+                continue;
+            }
+        }
+        
+        // Último intento: usar el parser genérico de Carbon
+        try {
+            return Carbon::parse($date) !== false;
+        } catch (\Exception $e) {
+            return false;
         }
     }
     
@@ -122,16 +225,16 @@ class AddressStep extends Component
         }
         
         // Calculate years in current address
-        $fromDate = Carbon::parse($this->from_date);
-        $toDate = $this->to_date ? Carbon::parse($this->to_date) : Carbon::now();
+        $fromDate = Carbon::parse($this->formatDateForDatabase($this->from_date));
+        $toDate = $this->to_date ? Carbon::parse($this->formatDateForDatabase($this->to_date)) : Carbon::now();
         $currentAddressYears = $fromDate->diffInYears($toDate);
         
         // Calculate years in previous addresses
         $previousAddressesYears = 0;
         foreach ($this->previous_addresses as $address) {
             if (!empty($address['from_date']) && !empty($address['to_date'])) {
-                $prevFromDate = Carbon::parse($address['from_date']);
-                $prevToDate = Carbon::parse($address['to_date']);
+                $prevFromDate = Carbon::parse($this->formatDateForDatabase($address['from_date']));
+                $prevToDate = Carbon::parse($this->formatDateForDatabase($address['to_date']));
                 $previousAddressesYears += $prevFromDate->diffInYears($prevToDate);
             }
         }
@@ -166,7 +269,7 @@ class AddressStep extends Component
                 ]);
             }
             
-            // Update primary address
+            // Update primary address - convertir fechas al formato de la base de datos
             $mainAddress = $application->addresses()->updateOrCreate(
                 ['primary' => true],
                 [
@@ -176,8 +279,8 @@ class AddressStep extends Component
                     'state' => $this->state,
                     'zip_code' => $this->zip_code,
                     'lived_three_years' => $this->lived_three_years,
-                    'from_date' => $this->from_date,
-                    'to_date' => $this->to_date,
+                    'from_date' => $this->formatDateForDatabase($this->from_date),
+                    'to_date' => $this->formatDateForDatabase($this->to_date),
                 ]
             );
             
@@ -200,8 +303,8 @@ class AddressStep extends Component
                                 'city' => $prevAddressData['city'],
                                 'state' => $prevAddressData['state'],
                                 'zip_code' => $prevAddressData['zip_code'],
-                                'from_date' => $prevAddressData['from_date'],
-                                'to_date' => $prevAddressData['to_date'],
+                                'from_date' => $this->formatDateForDatabase($prevAddressData['from_date']),
+                                'to_date' => $this->formatDateForDatabase($prevAddressData['to_date']),
                             ]);
                             $updatedAddressIds[] = $address->id;
                         }
@@ -214,8 +317,8 @@ class AddressStep extends Component
                             'city' => $prevAddressData['city'],
                             'state' => $prevAddressData['state'],
                             'zip_code' => $prevAddressData['zip_code'],
-                            'from_date' => $prevAddressData['from_date'],
-                            'to_date' => $prevAddressData['to_date'],
+                            'from_date' => $this->formatDateForDatabase($prevAddressData['from_date']),
+                            'to_date' => $this->formatDateForDatabase($prevAddressData['to_date']),
                             'lived_three_years' => false
                         ]);
                         $updatedAddressIds[] = $address->id;
@@ -252,6 +355,10 @@ class AddressStep extends Component
     public function addPreviousAddress()
     {
         $this->previous_addresses[] = $this->getEmptyPreviousAddress();
+        
+        // Emitir evento para que el JavaScript sepa que se agregó una nueva dirección
+        // Este evento será capturado por nuestro script de Pikaday
+        $this->dispatch('previousAddressAdded');
     }
     
     // Remove previous address

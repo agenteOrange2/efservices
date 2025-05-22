@@ -80,22 +80,38 @@ class CarrierDocumentService
      */
     public function distributeDefaultDocument(DocumentType $documentType)
     {
+        // Verificar si el tipo de documento tiene un archivo por defecto
+        $hasDefaultDocument = $documentType->getFirstMedia('default_documents') !== null;
+        
         // Procesar carriers en chunks para evitar problemas de memoria
-        Carrier::chunk(100, function ($carriers) use ($documentType) {
+        Carrier::chunk(100, function ($carriers) use ($documentType, $hasDefaultDocument) {
             foreach ($carriers as $carrier) {
-                $carrierDocument = CarrierDocument::firstOrCreate(
-                    [
+                // Buscar si ya existe un documento para este carrier y tipo
+                $carrierDocument = CarrierDocument::where([
+                    'carrier_id' => $carrier->id,
+                    'document_type_id' => $documentType->id,
+                ])->first();
+                
+                // Si no existe, crear uno nuevo
+                if (!$carrierDocument) {
+                    $carrierDocument = CarrierDocument::create([
                         'carrier_id' => $carrier->id,
                         'document_type_id' => $documentType->id,
-                    ],
-                    [
                         'status' => CarrierDocument::STATUS_PENDING,
                         'date' => now(),
-                    ]
-                );
-
-                $defaultMedia = $documentType->getFirstMedia('default_documents');
-                if ($defaultMedia && !$carrierDocument->getFirstMedia('carrier_documents')) {
+                    ]);
+                }
+                
+                // Si hay un documento por defecto disponible y el carrier no ha subido su propio documento
+                if ($hasDefaultDocument && !$carrierDocument->getFirstMedia('carrier_documents')) {
+                    // Asegurarse de que el estado sea pendiente para que el administrador pueda aprobarlo
+                    if ($carrierDocument->status !== CarrierDocument::STATUS_PENDING) {
+                        $carrierDocument->update(['status' => CarrierDocument::STATUS_PENDING]);
+                    }
+                }
+                // Si no hay documento por defecto y el carrier no ha subido su propio documento
+                elseif (!$hasDefaultDocument && !$carrierDocument->getFirstMedia('carrier_documents')) {
+                    // Asegurarse de que el estado sea pendiente
                     $carrierDocument->update(['status' => CarrierDocument::STATUS_PENDING]);
                 }
             }

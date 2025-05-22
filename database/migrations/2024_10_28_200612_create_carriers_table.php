@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('state');
             $table->string('zipcode');
             $table->string('ein_number');
-            $table->string('dot_number');
+            $table->string('dot_number')->nullable();
             $table->string('mc_number')->nullable();
             $table->string('state_dot')->nullable();
             $table->string('ifta_account')->nullable();            

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        accent: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#3b82f6',
+                            600: '#2563eb'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['DM Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: #fafafa;
+            color: #1a1a1a;
+        }
+        
+        .document-card {
+            transition: all 0.3s ease;
+        }
+        
+        .document-card:hover {
+            transform: translateY(-4px);
+        }
+        
+        .upload-zone {
+            transition: all 0.2s ease;
+            background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%23E5E7EB' stroke-width='2' stroke-dasharray='6%2c 8' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+        }
+        
+        .upload-zone:hover, .upload-zone.dragging {
+            background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%233B82F6' stroke-width='2' stroke-dasharray='6%2c 8' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        
+        .progress-bar {
+            height: 2px;
+            background-color: #e5e7eb;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-value {
+            position: absolute;
+            height: 100%;
+            background-color: #3b82f6;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-white to-gray-50">
+    <div class="max-w-6xl mx-auto px-6 py-16">
+        <header class="mb-16">
+            <div class="flex items-center space-x-2 mb-2">
+                <div class="h-8 w-1 bg-accent-500 rounded-full"></div>
+                <h1 class="text-4xl font-bold tracking-tight">Document Center</h1>
+            </div>
+            <p class="text-gray-500 text-sm ml-10 max-w-2xl">Puedes continuar sin subir todos los documentos. Los obligatorios están marcados con un <span class="text-accent-500 font-medium">asterisco (*)</span>.</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+            <!-- Columna izquierda - Documentos obligatorios -->
+            <div class="md:col-span-7 space-y-6">
+                <h2 class="text-lg font-medium text-gray-700 mb-4 flex items-center">
+                    <span class="inline-block w-3 h-3 bg-accent-500 rounded-full mr-2"></span>
+                    Documentos requeridos
+                </h2>
+                
+                <!-- Documento 1 -->
+                <div class="document-card bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-gray-900 font-medium flex items-center">
+                                    Politics <span class="text-accent-500 ml-1">*</span>
+                                </h3>
+                                <p class="text-xs text-gray-500 mt-1">PDF, JPG o PNG (max. 5MB)</p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="status-indicator bg-yellow-400"></span>
+                                <span class="text-xs font-medium text-gray-600">Pendiente</span>
+                            </div>
+                        </div>
+                        
+                        <div id="politics-upload-zone" class="upload-zone mt-4 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer relative">
+                            <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-sm text-gray-500">Arrastra tu archivo aquí o <span class="text-accent-500">selecciona</span></p>
+                            <input type="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileSelect(this, 'politics')">
+                        </div>
+                        
+                        <div id="politics-file-info" class="hidden mt-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <span id="politics-filename" class="text-sm text-gray-700 truncate max-w-xs"></span>
+                                </div>
+                                <button onclick="removeFile('politics')" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="progress-bar mt-2">
+                                <div id="politics-progress" class="progress-value" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 flex justify-between items-center">
+                            <a href="#" class="text-xs text-accent-500 hover:text-accent-600 transition flex items-center">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                Ver plantilla
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Documento 2 -->
+                <div class="document-card bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-gray-900 font-medium flex items-center">
+                                    ID Document <span class="text-accent-500 ml-1">*</span>
+                                </h3>
+                                <p class="text-xs text-gray-500 mt-1">PDF, JPG o PNG (max. 5MB)</p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="status-indicator bg-green-500"></span>
+                                <span class="text-xs font-medium text-gray-600">Aprobado</span>
+                            </div>
+                        </div>
+                        
+                        <div id="id-upload-zone" class="upload-zone mt-4 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer relative">
+                            <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-sm text-gray-500">Arrastra tu archivo aquí o <span class="text-accent-500">selecciona</span></p>
+                            <input type="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileSelect(this, 'id')">
+                        </div>
+                        
+                        <div id="id-file-info" class="hidden mt-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <span id="id-filename" class="text-sm text-gray-700 truncate max-w-xs"></span>
+                                </div>
+                                <button onclick="removeFile('id')" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="progress-bar mt-2">
+                                <div id="id-progress" class="progress-value" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Documento 3 -->
+                <div class="document-card bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-gray-900 font-medium flex items-center">
+                                    Financial Statement <span class="text-accent-500 ml-1">*</span>
+                                </h3>
+                                <p class="text-xs text-gray-500 mt-1">PDF, XLSX (max. 10MB)</p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="status-indicator bg-red-500"></span>
+                                <span class="text-xs font-medium text-gray-600">Rechazado</span>
+                            </div>
+                        </div>
+                        
+                        <div id="financial-upload-zone" class="upload-zone mt-4 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer relative">
+                            <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-sm text-gray-500">Arrastra tu archivo aquí o <span class="text-accent-500">selecciona</span></p>
+                            <input type="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileSelect(this, 'financial')">
+                        </div>
+                        
+                        <div id="financial-file-info" class="hidden mt-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <span id="financial-filename" class="text-sm text-gray-700 truncate max-w-xs"></span>
+                                </div>
+                                <button onclick="removeFile('financial')" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="progress-bar mt-2">
+                                <div id="financial-progress" class="progress-value" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 flex justify-between items-center">
+                            <a href="#" class="text-xs text-accent-500 hover:text-accent-600 transition flex items-center">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                Ver plantilla
+                            </a>
+                            <div class="text-xs text-red-500">
+                                Formato incorrecto
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Columna derecha - Documentos opcionales -->
+            <div class="md:col-span-5 space-y-6">
+                <h2 class="text-lg font-medium text-gray-700 mb-4 flex items-center">
+                    <span class="inline-block w-3 h-3 bg-gray-300 rounded-full mr-2"></span>
+                    Documentos opcionales
+                </h2>
+                
+                <!-- Documento 4 -->
+                <div class="document-card bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-gray-900 font-medium">Proof of Address</h3>
+                                <p class="text-xs text-gray-500 mt-1">PDF, JPG (max. 5MB)</p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="status-indicator bg-gray-300"></span>
+                                <span class="text-xs font-medium text-gray-600">No subido</span>
+                            </div>
+                        </div>
+                        
+                        <div id="address-upload-zone" class="upload-zone mt-4 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer relative">
+                            <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-sm text-gray-500">Arrastra tu archivo aquí o <span class="text-accent-500">selecciona</span></p>
+                            <input type="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileSelect(this, 'address')">
+                        </div>
+                        
+                        <div id="address-file-info" class="hidden mt-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <span id="address-filename" class="text-sm text-gray-700 truncate max-w-xs"></span>
+                                </div>
+                                <button onclick="removeFile('address')" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="progress-bar mt-2">
+                                <div id="address-progress" class="progress-value" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 flex justify-between items-center">
+                            <a href="#" class="text-xs text-accent-500 hover:text-accent-600 transition flex items-center">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                Ver plantilla
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Documento 5 -->
+                <div class="document-card bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-gray-900 font-medium">Tax Declaration</h3>
+                                <p class="text-xs text-gray-500 mt-1">PDF (max. 10MB)</p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="status-indicator bg-blue-500"></span>
+                                <span class="text-xs font-medium text-gray-600">En revisión</span>
+                            </div>
+                        </div>
+                        
+                        <div id="tax-upload-zone" class="upload-zone mt-4 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer relative">
+                            <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-sm text-gray-500">Arrastra tu archivo aquí o <span class="text-accent-500">selecciona</span></p>
+                            <input type="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileSelect(this, 'tax')">
+                        </div>
+                        
+                        <div id="tax-file-info" class="hidden mt-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <span id="tax-filename" class="text-sm text-gray-700 truncate max-w-xs"></span>
+                                </div>
+                                <button onclick="removeFile('tax')" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="progress-bar mt-2">
+                                <div id="tax-progress" class="progress-value" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Documento 6 -->
+                <div class="document-card bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-gray-900 font-medium">Business License</h3>
+                                <p class="text-xs text-gray-500 mt-1">PDF, JPG (max. 5MB)</p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="status-indicator bg-gray-300"></span>
+                                <span class="text-xs font-medium text-gray-600">No subido</span>
+                            </div>
+                        </div>
+                        
+                        <div id="license-upload-zone" class="upload-zone mt-4 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer relative">
+                            <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-sm text-gray-500">Arrastra tu archivo aquí o <span class="text-accent-500">selecciona</span></p>
+                            <input type="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileSelect(this, 'license')">
+                        </div>
+                        
+                        <div id="license-file-info" class="hidden mt-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <span id="license-filename" class="text-sm text-gray-700 truncate max-w-xs"></span>
+                                </div>
+                                <button onclick="removeFile('license')" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="progress-bar mt-2">
+                                <div id="license-progress" class="progress-value" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 flex justify-between items-center">
+                            <a href="#" class="text-xs text-accent-500 hover:text-accent-600 transition flex items-center">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                Ver plantilla
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Manejar la selección de archivos
+        function handleFileSelect(input, docId) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const fileNameElement = document.getElementById(`${docId}-filename`);
+                const fileInfoElement = document.getElementById(`${docId}-file-info`);
+                const uploadZoneElement = document.getElementById(`${docId}-upload-zone`);
+                const progressElement = document.getElementById(`${docId}-progress`);
+                
+                // Mostrar información del archivo
+                fileNameElement.textContent = file.name;
+                fileInfoElement.classList.remove('hidden');
+                uploadZoneElement.classList.add('hidden');
+                
+                // Simular carga
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 10;
+                    if (progress > 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                        
+                        // Cambiar estado (en una aplicación real, esto vendría del servidor)
+                        const parentCard = input.closest('.document-card');
+                        const statusIndicator = parentCard.querySelector('.status-indicator');
+                        const statusText = parentCard.querySelector('.status-indicator + span');
+                        
+                        statusIndicator.className = 'status-indicator bg-blue-500';
+                        statusText.textContent = 'En revisión';
+                    }
+                    progressElement.style.width = `${progress}%`;
+                }, 200);
+            }
+        }
+        
+        // Eliminar archivo
+        function removeFile(docId) {
+            const fileInfoElement = document.getElementById(`${docId}-file-info`);
+            const uploadZoneElement = document.getElementById(`${docId}-upload-zone`);
+            const progressElement = document.getElementById(`${docId}-progress`);
+            
+            fileInfoElement.classList.add('hidden');
+            uploadZoneElement.classList.remove('hidden');
+            progressElement.style.width = '0%';
+            
+            // Restablecer el input de archivo
+            const input = document.querySelector(`#${docId}-upload-zone input[type="file"]`);
+            input.value = '';
+            
+            // Restablecer estado (en una aplicación real, esto vendría del servidor)
+            const parentCard = document.getElementById(`${docId}-upload-zone`).closest('.document-card');
+            const statusIndicator = parentCard.querySelector('.status-indicator');
+            const statusText = parentCard.querySelector('.status-indicator + span');
+            
+            statusIndicator.className = 'status-indicator bg-gray-300';
+            statusText.textContent = 'No subido';
+        }
+        
+        // Configurar eventos de arrastrar y soltar
+        document.querySelectorAll('.upload-zone').forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('dragging');
+            });
+            
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('dragging');
+            });
+            
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragging');
+                
+                const input = zone.querySelector('input[type="file"]');
+                if (e.dataTransfer.files.length) {
+                    input.files = e.dataTransfer.files;
+                    const event = new Event('change', { bubbles: true });
+                    input.dispatchEvent(event);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

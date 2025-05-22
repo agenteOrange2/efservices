@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Carrier;
 
+use App\Http\Controllers\Controller;
 use App\Models\Carrier;
+use App\Models\CarrierDocument;
 use App\Models\DocumentType;
 use Illuminate\Http\Request;
-use App\Models\CarrierDocument;
-use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use App\Services\CarrierDocumentService;
 
 class DocumentController extends Controller
@@ -43,9 +44,14 @@ class DocumentController extends Controller
 
     // DocumentController.php
 
-    public function toggleDefaultDocument(Request $request, Carrier $carrier, DocumentType $documentType)
+    public function toggleDefaultDocument(Request $request, Carrier $carrier)
     {
-        $request->validate(['approved' => 'required|boolean']);
+        $request->validate([
+            'document_type_id' => 'required|exists:document_types,id',
+            'approved' => 'required|boolean'
+        ]);
+        
+        $documentType = DocumentType::findOrFail($request->document_type_id);
     
         $document = CarrierDocument::firstOrCreate(
             [
@@ -63,13 +69,17 @@ class DocumentController extends Controller
             CarrierDocument::STATUS_PENDING;
         $document->save();
     
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'status' => $document->status,
+            'statusName' => $document->status_name
+        ]);
     }
 
     public function upload(Request $request, Carrier $carrier, DocumentType $documentType)
     {
         // Verificar que el usuario autenticado pertenece a este carrier
-        if (auth()->user()->carrierDetails->carrier_id !== $carrier->id) {
+        if (Auth::check() && Auth::user()->carrierDetails->carrier_id !== $carrier->id) {
             abort(403);
         }
 
@@ -100,7 +110,7 @@ class DocumentController extends Controller
     public function skipDocuments(Carrier $carrier)
     {
         // Verificar que el usuario autenticado pertenece a este carrier
-        if (auth()->user()->carrierDetails->carrier_id !== $carrier->id) {
+        if (Auth::check() && Auth::user()->carrierDetails->carrier_id !== $carrier->id) {
             abort(403);
         }
 

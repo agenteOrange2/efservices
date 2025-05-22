@@ -178,7 +178,7 @@
                                                     target="_blank" class="ml-3 text-primary underline">View Default
                                                     File</a>
                                             </div>
-                                            @if ($document->documentType->getFirstMediaUrl('default_documents'))
+                                            @if ($document->documentType->getFirstMediaUrl('default_documents') && !$document->getFirstMediaUrl('carrier_documents'))
                                                 <div class="flex items-center">
                                                     <input type="checkbox" id="approve-{{ $document->id }}"
                                                         {{ $document->status === \App\Models\CarrierDocument::STATUS_APPROVED ? 'checked' : '' }}
@@ -198,6 +198,12 @@
                                                         </x-base.tippy>
                                                     </div>
                                                 </div>
+                                            @elseif ($document->documentType->getFirstMediaUrl('default_documents') && $document->getFirstMediaUrl('carrier_documents'))
+                                                <div class="flex items-center">
+                                                    <span class="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded-full ml-3">
+                                                        Usuario usa documento personalizado
+                                                    </span>
+                                                </div>
                                             @endif
                                         @else
                                             <span class="text-gray-500">No file uploaded</span>
@@ -212,14 +218,10 @@
                                 </div>
                                 <div class="relative group">
                                     <div class="flex items-center">
-                                        <span class="cursor-pointer text-primary text-decoration-none">View Notes</span>
-                                        <x-base.tippy variant="primary"
-                                            content=" {{ $document->notes ?? 'No notes available' }}">
-                                            <div class="col-span-6 sm:col-span-3 lg:col-span-2 ml-4">
-                                                <i data-tw-merge data-lucide="alert-circle"
-                                                    class="stroke-[1] w-5 h-5 mx-auto block mx-auto block"></i>
-                                            </div>
-                                        </x-base.tippy>
+                                        <button type="button" class="cursor-pointer text-primary text-decoration-none" 
+                                            onclick="showNotesModal('{{ $document->id }}', '{{ $document->documentType->name }}', '{{ $document->notes ?? 'No notes available' }}')">
+                                            View Notes
+                                        </button>
                                     </div>
                                 </div>
                             </x-base.table.td>
@@ -460,5 +462,42 @@
                 }
             };
         });
+        // Función para mostrar el modal con las notas
+        function showNotesModal(documentId, documentName, notes) {
+            // Crear el modal dinámicamente
+            const modalHtml = `
+                <div id="notesModal-${documentId}" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md mx-auto">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium">Notes for ${documentName}</h3>
+                            <button type="button" class="text-gray-400 hover:text-gray-500" onclick="closeNotesModal('${documentId}')">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500">${notes}</p>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button type="button" class="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2" onclick="closeNotesModal('${documentId}')">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Agregar el modal al body
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+        
+        // Función para cerrar el modal
+        function closeNotesModal(documentId) {
+            const modal = document.getElementById(`notesModal-${documentId}`);
+            if (modal) {
+                modal.remove();
+            }
+        }
     </script>
 @endPushOnce

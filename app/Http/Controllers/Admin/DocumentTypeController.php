@@ -49,10 +49,6 @@ class DocumentTypeController extends Controller
             'default_file' => 'nullable|file|mimes:pdf,jpg,png|max:1048',
         ]);
 
-        $documentType = new DocumentType($request->only(['name', 'requirement']));
-        $documentType->save(); // Guardar para obtener el ID.
-
-
         $documentType = DocumentType::create([
             'name' => $request->name,
             'requirement' => $request->requirement,
@@ -106,6 +102,10 @@ class DocumentTypeController extends Controller
 
         $documentType->fill($request->only(['name', 'requirement']));
 
+        // Guardar el estado anterior para saber si tenía documento por defecto
+        $hadDefaultDocument = $documentType->getFirstMedia('default_documents') !== null;
+        
+        // Caso 1: Se sube un nuevo documento por defecto
         if ($request->hasFile('default_file') && $request->allow_default_file) {
             // Eliminar el archivo anterior si existe
             $documentType->clearMediaCollection('default_documents');
@@ -116,13 +116,21 @@ class DocumentTypeController extends Controller
                 ->usingFileName($fileName)
                 ->toMediaCollection('default_documents');
 
-            // Distribuir el documento actualizado
+            // Distribuir el documento actualizado a todos los carriers
             $this->documentService->distributeDefaultDocument($documentType);
-
-            
-        } elseif (!$request->allow_default_file) {
+        } 
+        // Caso 2: Se quita la opción de documento por defecto
+        elseif (!$request->allow_default_file && $hadDefaultDocument) {
             // Limpiar la colección si se desactiva
             $documentType->clearMediaCollection('default_documents');
+            
+            // Actualizar todos los documentos de carriers que estaban usando el documento por defecto
+            $this->documentService->distributeDefaultDocument($documentType);
+        }
+        // Caso 3: Se mantiene el documento por defecto existente
+        elseif ($request->allow_default_file && $hadDefaultDocument) {
+            // No es necesario hacer nada con el archivo, pero sí distribuir los cambios en el nombre o requisito
+            $this->documentService->distributeDefaultDocument($documentType);
         }
 
         $documentType->save();

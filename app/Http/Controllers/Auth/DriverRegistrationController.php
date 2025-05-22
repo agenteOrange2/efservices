@@ -26,8 +26,23 @@ class DriverRegistrationController extends Controller
         $token = $request->route('token') ?? $request->query('token');
         $isIndependent = empty($token);
         
+        // Verificar si el carrier está activo
+        if ($carrier->status !== Carrier::STATUS_ACTIVE) {
+            return view('auth.user_driver.carrier_inactive_error', [
+                'carrier' => $carrier
+            ]);
+        }
+        
         // Solo validamos el token si no es registro independiente
         if (!$isIndependent && !$this->validateTokenAndCarrier($carrier, $token)) {
+            // Si el token es válido pero el carrier está inactivo o pendiente,
+            // mostrar la vista específica en lugar de un error genérico
+            if ($carrier->referrer_token === $token) {
+                return view('auth.user_driver.carrier_inactive_error', [
+                    'carrier' => $carrier
+                ]);
+            }
+            
             return redirect()->route('driver.register.error');
         }
     
@@ -88,8 +103,9 @@ class DriverRegistrationController extends Controller
             
             // Verificar si el carrier está activo
             if ($carrier->status !== Carrier::STATUS_ACTIVE) {
-                return redirect()->route('driver.register.error')
-                    ->with('error', 'El carrier seleccionado no está activo actualmente.');
+                return view('auth.user_driver.carrier_inactive_error', [
+                    'carrier' => $carrier
+                ]);
             }
             
             // Verificar si el carrier ha alcanzado su límite de conductores
@@ -298,13 +314,21 @@ class DriverRegistrationController extends Controller
      */
     private function validateTokenAndCarrier(Carrier $carrier, $token)
     {
-        if (
-            $carrier->referrer_token !== $token ||
-            $carrier->status !== Carrier::STATUS_ACTIVE ||
-            $carrier->userDrivers()->count() >= ($carrier->membership->max_drivers ?? 1)
-        ) {
+        // Primero verificamos si el token es válido
+        if ($carrier->referrer_token !== $token) {
             return false;
         }
+        
+        // Verificamos si el carrier está activo
+        if ($carrier->status !== Carrier::STATUS_ACTIVE) {
+            return false;
+        }
+        
+        // Verificamos si el carrier ha alcanzado su límite de conductores
+        if ($carrier->userDrivers()->count() >= ($carrier->membership->max_drivers ?? 1)) {
+            return false;
+        }
+        
         return true;
     }
 

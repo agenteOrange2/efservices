@@ -178,8 +178,13 @@
             </div>
         </div>
         <div class="mt-3 w-full flex-1 xl:mt-0">
-            <input type="date" wire:model="date_of_birth"
-                class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+            <x-date-picker
+                wire:model="date_of_birth"
+                id="date_of_birth"
+                name="date_of_birth"
+                value="{{ $date_of_birth }}"
+                required
+            />
             @error('date_of_birth')
                 <span class="text-red-500 text-sm">{{ $message }}</span>
             @enderror
