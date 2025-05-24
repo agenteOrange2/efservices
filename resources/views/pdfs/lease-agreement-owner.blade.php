@@ -302,7 +302,9 @@
                         Date: <span class="underline" style="width: 80%">{{ $signedDate ?? now()->format('m/d/Y') }}</span>
                         <br /><br />
                         <p class="signature-container">
-                            @if (!empty($signature))
+                            @if (!empty($signaturePath) && file_exists($signaturePath))
+                                <img src="{{ $signaturePath }}" alt="Firma Digital" style="max-width: 100%; max-height: 100px;">
+                            @elseif (!empty($signature))
                                 <img src="{{ $signature }}" alt="Firma Digital" style="max-width: 100%; max-height: 100px;">
                             @else
                                 <div
