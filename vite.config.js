@@ -123,6 +123,7 @@ export default defineConfig({
                 'resources/js/vendors/lucide.js',
                 'resources/js/vendors/litepicker.js',
                 'resources/js/vendors/tippy.js',
+                'resources/js/date-picker.js', // Nuestro componente de date-picker personalizado
               ],
             refresh: true,
         }),

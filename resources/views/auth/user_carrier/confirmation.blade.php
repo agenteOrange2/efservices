@@ -110,7 +110,7 @@
                 <a href="mailto:support@efservices.la" class="flex-1 py-3 px-4 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium text-center hover:bg-gray-50 transition-colors">
                     Contact Support
                 </a>
-                <form method="POST" action="{{ route('custom.logout') }}" class="flex-1 ml-3">
+                <form method="POST" action="{{ route('logout') }}" class="flex-1 ml-3">
                     @csrf
                     <button type="submit" class="w-full py-3 px-4 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors">
                         Sign Out

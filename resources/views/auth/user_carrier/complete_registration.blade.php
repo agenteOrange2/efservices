@@ -27,8 +27,25 @@
 
 
                             @if (session('status'))
-                                <div class="alert alert-success">
+                                <div class="alert alert-success mb-4 p-3 bg-green-100 text-green-800 rounded">
                                     {{ session('status') }}
+                                </div>
+                            @endif
+
+                            @if (session('error_debug'))
+                                <div class="alert alert-danger mb-4 p-3 bg-red-100 text-red-800 rounded">
+                                    <strong>Debug:</strong> {{ session('error_debug') }}
+                                </div>
+                            @endif
+
+                            @if ($errors->any())
+                                <div class="alert alert-danger mb-4 p-3 bg-red-100 text-red-800 rounded">
+                                    <strong>¡Error!</strong> Por favor corrige los siguientes errores:
+                                    <ul class="list-disc pl-5 mt-2">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
                                 </div>
                             @endif
 
@@ -71,7 +88,8 @@
                                     <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                                         for="zipcode">Zip Code</label>
                                     <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-2.5 mt-1 w-full"
-                                        type="number" name="zipcode" id="zipcode" value="{{ old('zipcode') }}"
+                                        type="text" name="zipcode" id="zipcode" value="{{ old('zipcode') }}"
+                                        data-mask="#####" placeholder="12345"
                                         required />
                                 </div>
 
@@ -79,40 +97,43 @@
                                     <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                                         for="ein_number">EIN Number</label>
                                     <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-2.5 mt-1 w-full"
-                                        type="number" name="ein_number" id="ein_number" value="{{ old('ein_number') }}"
+                                        type="text" name="ein_number" id="ein_number" value="{{ old('ein_number') }}"
+                                        data-mask="##-#######" placeholder="12-3456789"
                                         required />
                                 </div>
 
                                 <div class="relative z-0 w-full mb-5 group">
                                     <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                                        for="dot_number">Dot Number</label>
+                                        for="dot_number">Dot Number <span class="text-xs text-gray-500">(Optional)</span></label>
                                     <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-2.5 mt-1 w-full"
-                                        type="number" name="dot_number" id="dot_number" value="{{ old('dot_number') }}"
-                                        required />
+                                        type="text" name="dot_number" id="dot_number" value="{{ old('dot_number') }}"
+                                        data-mask-numeric="true" placeholder="Enter DOT number"
+                                         />
                                 </div>
 
                                 <div class="relative z-0 w-full mb-5 group">
                                     <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                                        for="mc_number">MC Number</label>
+                                        for="mc_number">MC Number <span class="text-xs text-gray-500">(Optional)</span></label>
                                     <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-2.5 mt-1 w-full"
-                                        type="number" name="mc_number" id="mc_number" value="{{ old('mc_number') }}"
-                                        required />
+                                        type="text" name="mc_number" id="mc_number" value="{{ old('mc_number') }}"
+                                        data-mask-numeric="true" placeholder="Enter MC number" />
                                 </div>
 
                                 <div class="relative z-0 w-full mb-5 group">
                                     <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                                        for="state_dot">State Dot</label>
+                                        for="state_dot">State Dot <span class="text-xs text-gray-500">(Optional)</span></label>
                                     <x-input class="block rounded-[0.6rem] border-slate-300/80 px-4 py-2.5 mt-1 w-full"
                                         type="text" name="state_dot" id="state_dot" value="{{ old('state_dot') }}"
-                                        required />
+                                        data-mask-numeric="true" placeholder="Enter State DOT number" />
                                 </div>
 
                                 <div class="relative z-0 w-full mb-5 group">
                                     <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                                        for="ifta_account">IFTA Account</label>
+                                        for="ifta_account">IFTA Account <span class="text-xs text-gray-500">(Optional)</span></label>
                                     <x-input type="text" name="ifta_account" id="ifta_account"
                                         class="block rounded-[0.6rem] border-slate-300/80 px-4 py-2.5 mt-1 w-full"
-                                        value="{{ old('ifta_account') }}" required />
+                                        data-mask-numeric="true" placeholder="Enter IFTA account number"
+                                        value="{{ old('ifta_account') }}" />
                                 </div>
 
                                 <!-- Membership Selection -->
@@ -232,7 +253,7 @@
                 </div>
                 <div class="sticky top-0 z-10 flex-col justify-center h-screen px-4 py-8 lg:py-0 lg:ml-16 flex xl:ml-28 2xl:ml-36 overflow-y-auto">
                     <div class="text-2xl md:text-[2.6rem] font-medium leading-[1.4] text-white xl:text-5xl xl:leading-[1.2] mb-6">
-                        Choose Your Membership Plan
+                        Choose Your Weekly Membership Plan
                     </div>
                     
                     <div class="grid grid-cols-1 gap-6 overflow-y-auto pr-3 lg:pr-6 max-h-[60vh] md:max-h-[60vh] pb-20 md:pb-0">
@@ -396,6 +417,9 @@
         }
     </style>
     
+    <!-- Incluir la biblioteca mask.js -->    
+    <script src="https://unpkg.com/imask@6.4.3/dist/imask.js"></script>
+    
     <script>
         // No es necesario inicializar Alpine.js manualmente
         // El framework Laravel ya lo inicializa por nosotros
@@ -405,6 +429,69 @@
             // Disparar un evento Alpine para que se actualice la condición de visualización
             if (window.Alpine) {
                 window.dispatchEvent(new CustomEvent('resize-alpine'));
+            }
+        });
+        
+        // Inicializar máscaras de entrada cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            // Máscara para Zip Code (5 dígitos)
+            const zipcodeEl = document.getElementById('zipcode');
+            if (zipcodeEl) {
+                IMask(zipcodeEl, {
+                    mask: '00000'
+                });
+            }
+            
+            // Máscara para EIN Number (2 dígitos - 7 dígitos)
+            const einNumberEl = document.getElementById('ein_number');
+            if (einNumberEl) {
+                IMask(einNumberEl, {
+                    mask: '00-0000000'
+                });
+            }
+            
+            // Máscara para DOT Number (solo números)
+            const dotNumberEl = document.getElementById('dot_number');
+            if (dotNumberEl) {
+                IMask(dotNumberEl, {
+                    mask: Number,
+                    min: 0,
+                    max: 9999999999,
+                    thousandsSeparator: ''
+                });
+            }
+            
+            // Máscara para MC Number (solo números, opcional)
+            const mcNumberEl = document.getElementById('mc_number');
+            if (mcNumberEl) {
+                IMask(mcNumberEl, {
+                    mask: Number,
+                    min: 0,
+                    max: 9999999999,
+                    thousandsSeparator: ''
+                });
+            }
+            
+            // Máscara para State DOT (solo números, opcional)
+            const stateDotEl = document.getElementById('state_dot');
+            if (stateDotEl) {
+                IMask(stateDotEl, {
+                    mask: Number,
+                    min: 0,
+                    max: 9999999999,
+                    thousandsSeparator: ''
+                });
+            }
+            
+            // Máscara para IFTA (solo números, opcional)
+            const iftaAccountEl = document.getElementById('ifta_account');
+            if (iftaAccountEl) {
+                IMask(iftaAccountEl, {
+                    mask: Number,
+                    min: 0,
+                    max: 9999999999,
+                    thousandsSeparator: ''
+                });
             }
         });
     </script>

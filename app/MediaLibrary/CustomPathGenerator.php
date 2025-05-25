@@ -67,6 +67,11 @@ class CustomPathGenerator implements PathGenerator
             return "driver/{$driverId}/training_schools/";
         }
 
+        if ($model instanceof \App\Models\Admin\Driver\DriverCourse) {
+            $driverId = $model->driverDetail->id ?? 'unknown';
+            return "driver/{$driverId}/courses/";
+        }
+
         if ($model instanceof \App\Models\Admin\Driver\DriverCertification) {
             $driverId = $model->userDriverDetail->id ?? 'unknown';
             return "driver/{$driverId}/certification/";

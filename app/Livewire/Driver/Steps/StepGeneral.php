@@ -41,7 +41,53 @@ class StepGeneral extends Component
     public $showCredentialsModal = false;
     public $plainPassword = '';
 
-    // Validación para el formulario
+    /**
+     * Convierte una fecha a formato Y-m-d para almacenarla en la base de datos
+     * Maneja múltiples formatos de entrada posibles
+     */
+    protected function formatDateForDatabase($date)
+    {
+        if (empty($date)) return null;
+        
+        // Intentar diferentes formatos de fecha
+        $formats = ['m-d-Y', 'Y-m-d', 'd-m-Y', 'm/d/Y', 'Y/m/d', 'd/m/Y'];
+        
+        foreach ($formats as $format) {
+            try {
+                return \Carbon\Carbon::createFromFormat($format, $date)->format('Y-m-d');
+            } catch (\Exception $e) {
+                // Intentar con el siguiente formato
+                continue;
+            }
+        }
+        
+        // Último intento: usar el parser genérico de Carbon
+        try {
+            return \Carbon\Carbon::parse($date)->format('Y-m-d');
+        } catch (\Exception $e) {
+            // Si todo falla, devolver la fecha tal cual
+            return $date;
+        }
+    }
+
+    /**
+     * Convierte una fecha del formato de base de datos a m-d-Y para mostrarla
+     */
+    protected function formatDateForDisplay($date)
+    {
+        if (empty($date)) return null;
+        
+        try {
+            if ($date instanceof \Carbon\Carbon) {
+                return $date->format('m-d-Y');
+            } else {
+                return \Carbon\Carbon::parse($date)->format('m-d-Y');
+            }
+        } catch (\Exception $e) {
+            return $date;
+        }
+    }
+    
     // Validación para el formulario
     protected function rules()
     {
@@ -52,10 +98,27 @@ class StepGeneral extends Component
             'phone' => 'required|string|max:20',
             'date_of_birth' => [
                 'required',
-                'date',
                 function ($attribute, $value, $fail) {
+                    // Verificar que la fecha tenga un formato válido y que la persona sea mayor de 18 años
+                    try {
+                        // Intentar parsear la fecha en formato m-d-Y
+                        $birthDate = \Carbon\Carbon::createFromFormat('m-d-Y', $value);
+                    } catch (\Exception $e) {
+                        // Si falla, intentar parsear como fecha Y-m-d (formato que podría venir del datepicker)
+                        try {
+                            $birthDate = \Carbon\Carbon::createFromFormat('Y-m-d', $value);
+                        } catch (\Exception $e2) {
+                            // Último intento: parsear como fecha genérica
+                            try {
+                                $birthDate = \Carbon\Carbon::parse($value);
+                            } catch (\Exception $e3) {
+                                $fail('Invalid date format. Please use MM-DD-YYYY format.');
+                                return;
+                            }
+                        }
+                    }
+                    
                     // Verificar que la persona sea mayor de 18 años
-                    $birthDate = \Carbon\Carbon::parse($value);
                     $minDate = \Carbon\Carbon::now()->subYears(18);
 
                     if ($birthDate->isAfter($minDate)) {
@@ -191,7 +254,8 @@ class StepGeneral extends Component
             $this->middle_name = $driver->middle_name;
             $this->last_name = $driver->last_name;
             $this->phone = $driver->phone;
-            $this->date_of_birth = $driver->date_of_birth ? $driver->date_of_birth->format('Y-m-d') : null;
+            // Usar formato m-d-Y para mostrar en la vista
+            $this->date_of_birth = $driver->date_of_birth ? $driver->date_of_birth->format('m-d-Y') : null;
             $this->status = $driver->status;
             $this->terms_accepted = $driver->terms_accepted;
 
@@ -248,13 +312,13 @@ class StepGeneral extends Component
 
                 $user->assignRole('driver');
 
-                // Crear detalles del driver
+                // Crear detalles del driver - convertir fecha al formato de base de datos
                 $driver = $user->driverDetails()->create([
                     'carrier_id' => $this->carrier ? $this->carrier->id : ($this->isIndependent ? 0 : null),
                     'middle_name' => $this->middle_name,
                     'last_name' => $this->last_name,
                     'phone' => $this->phone,
-                    'date_of_birth' => $this->date_of_birth,
+                    'date_of_birth' => $this->formatDateForDatabase($this->date_of_birth),
                     'status' => $this->status,
                     'terms_accepted' => $this->terms_accepted,
                     'current_step' => 1,
@@ -325,7 +389,7 @@ class StepGeneral extends Component
                     'middle_name' => $this->middle_name,
                     'last_name' => $this->last_name,
                     'phone' => $this->phone,
-                    'date_of_birth' => $this->date_of_birth,
+                    'date_of_birth' => $this->formatDateForDatabase($this->date_of_birth),
                     'status' => $this->status,
                     'terms_accepted' => $this->terms_accepted,
                     'current_step' => 1,
@@ -485,9 +549,9 @@ class StepGeneral extends Component
     private function sendAdminNotification($user)
     {
         try {
-            // Obtener todos los usuarios con rol de administrador
+            // Obtener todos los usuarios con rol de administrador (superadmin)
             $admins = User::whereHas('roles', function($query) {
-                $query->where('name', 'admin');
+                $query->where('name', 'superadmin');
             })->get();
             
             if ($admins->isEmpty()) {
@@ -570,12 +634,12 @@ class StepGeneral extends Component
             ]);
         }
 
-        // Actualizar driver
+        // Actualizar driver - convertir fecha al formato de base de datos
         $driver->update([
             'middle_name' => $this->middle_name,
             'last_name' => $this->last_name,
             'phone' => $this->phone,
-            'date_of_birth' => $this->date_of_birth,
+            'date_of_birth' => $this->formatDateForDatabase($this->date_of_birth),
             'status' => $this->status,
             'terms_accepted' => $this->terms_accepted,
             // No actualizamos carrier_id aquí para evitar cambios inesperados

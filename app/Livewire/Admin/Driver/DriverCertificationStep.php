@@ -407,7 +407,7 @@ class DriverCertificationStep extends Component
             $pdf = PDF::loadView('pdf.driver.complete_application', [
                 'userDriverDetail' => $userDriverDetail,
                 'signaturePath' => $signaturePath, // Importante: pasar la ruta, no el contenido base64
-                'date' => now()->format('d/m/Y')
+                'date' => now()->format('m/d/Y')
             ]);
 
             Log::info('Generando PDF combinado para conductor', [
@@ -467,6 +467,151 @@ class DriverCertificationStep extends Component
         }
     }
 
+    /**
+     * Generar contrato de arrendamiento para propietarios-operadores
+     * @param UserDriverDetail $userDriverDetail
+     * @param string $signaturePath Ruta al archivo de firma
+     */
+    private function generateLeaseAgreementPDF(UserDriverDetail $userDriverDetail, $signaturePath = null)
+    {
+        try {
+            // Cargar todas las relaciones necesarias para asegurar que tenemos los datos completos
+            $userDriverDetail->load([
+                'application.details', 
+                'application.ownerOperatorDetail',
+                'carrier',
+                'user'
+            ]);
+            
+            // Verificar si tenemos todos los datos necesarios
+            $missingData = [];
+            $application = $userDriverDetail->application;
+            
+            if (!$application) {
+                $missingData[] = 'application';
+            }
+            
+            if ($application && !$application->details) {
+                $missingData[] = 'application.details';
+            }
+            
+            // Obtener el vehículo del conductor
+            $vehicle = null;
+            if ($application && $application->vehicle) {
+                $vehicle = $application->vehicle;
+            }
+            
+            // Si no se encuentra, buscar en la tabla de vehículos directamente
+            if (!$vehicle) {
+                $vehicle = \App\Models\Admin\Vehicle\Vehicle::where('user_driver_detail_id', $userDriverDetail->id)->first();
+            }
+            
+            if (!$vehicle) {
+                $missingData[] = 'vehicle';
+            }
+            
+            if (!$userDriverDetail->carrier) {
+                $missingData[] = 'carrier';
+            }
+            
+            if (!$userDriverDetail->user) {
+                $missingData[] = 'user';
+            }
+            
+            // Si faltan datos críticos, registrar el error y salir
+            if (!empty($missingData)) {
+                Log::warning('Faltan datos necesarios para generar el PDF del contrato de arrendamiento', [
+                    'driver_id' => $userDriverDetail->id,
+                    'missing_data' => $missingData
+                ]);
+                return;
+            }
+            
+            // Preparar los datos para el PDF
+            $data = [
+                'driverDetails' => $userDriverDetail,
+                'application' => $application,
+                'applicationDetails' => $application->details,
+                'vehicle' => $vehicle,
+                'carrier' => $userDriverDetail->carrier,
+                'user' => $userDriverDetail->user,
+                'signaturePath' => $signaturePath,
+                'date' => now()->format('m/d/Y')
+            ];
+            
+            try {
+                Log::info('Intentando cargar vista de contrato de propietario-operador', [
+                    'driver_id' => $userDriverDetail->id,
+                    'view' => 'pdfs.lease-agreement-owner',
+                    'data_keys' => array_keys($data)
+                ]);
+                
+                // Cargar la vista del contrato de arrendamiento para propietarios-operadores
+                $pdf = PDF::loadView('pdfs.lease-agreement-owner', $data);
+                
+                // Asegurarnos de que estamos usando el ID correcto
+                $driverId = $userDriverDetail->id;
+                $dirPath = 'driver/' . $driverId . '/vehicle_verifications';
+                $filePath = $dirPath . '/lease_agreement_owner.pdf';
+                
+                Log::info('Guardando PDF de contrato de arrendamiento para propietario-operador', [
+                    'driver_id' => $driverId, 
+                    'file_path' => $filePath
+                ]);
+                
+                // Asegurarse de que el directorio existe
+                Storage::disk('public')->makeDirectory($dirPath);
+                
+                // Guardar el PDF usando Storage
+                $pdfContent = $pdf->output();
+                Storage::disk('public')->put($filePath, $pdfContent);
+                
+                // Guardar PDF temporalmente para adjuntarlo a MediaLibrary
+                $tempPath = tempnam(sys_get_temp_dir(), 'lease_agreement_owner_') . '.pdf';
+                file_put_contents($tempPath, $pdfContent);
+                
+                // Adjuntar el PDF a la aplicación
+                if ($userDriverDetail->application) {
+                    try {
+                        // Limpiar collection previa y agregar el nuevo archivo
+                        $userDriverDetail->application->clearMediaCollection('lease_agreement_pdf');
+                        $userDriverDetail->application->addMedia($tempPath)
+                            ->toMediaCollection('lease_agreement_pdf');
+                            
+                        Log::info('PDF de contrato de arrendamiento agregado a Media Library', [
+                            'driver_id' => $driverId,
+                            'application_id' => $userDriverDetail->application->id
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Error al agregar PDF de contrato de arrendamiento a Media Library', [
+                            'error' => $e->getMessage(),
+                            'driver_id' => $driverId
+                        ]);
+                    }
+                    
+                    // Limpiar archivo temporal
+                    @unlink($tempPath);
+                }
+                
+                return $filePath;
+            } catch (\Exception $e) {
+                Log::error('Error al cargar la vista o generar el PDF del contrato', [
+                    'driver_id' => $userDriverDetail->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error general al generar el PDF del contrato de arrendamiento', [
+                'driver_id' => $userDriverDetail->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+        
+        return null;
+    }
+    
     // Renderizar
     public function render()
     {

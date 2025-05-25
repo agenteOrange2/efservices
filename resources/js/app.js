@@ -1,6 +1,10 @@
 import Pristine from "pristinejs";
 import Toastify from 'toastify-js';
 import TomSelect from 'tom-select';
+import Alpine from 'alpinejs';
+import Pikaday from 'pikaday';
+import moment from 'moment';
+import 'pikaday/css/pikaday.css';
 
 // Evitar inicialización duplicada
 if (!window.Livewire) {
@@ -15,9 +19,11 @@ if (!window.Alpine) {
 // Importar jQuery explícitamente
 import $ from 'jquery';
 
-// Exponer jQuery y Pristine globalmente
+// Exponer jQuery, Pristine, Pikaday y moment globalmente
 window.$ = window.jQuery = $;
 window.Pristine = Pristine;
+window.Pikaday = Pikaday;
+window.moment = moment;
 
 // Validación en consola
 window.Toastify = Toastify;

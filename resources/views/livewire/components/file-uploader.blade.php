@@ -1,4 +1,14 @@
-<div>
+<div
+    x-data="{
+        existingFiles: @entangle('existingFiles').live,
+        removeDocument(id) {
+            // Esta función se llama cuando se elimina un documento
+            // y actualiza la interfaz inmediatamente
+            this.existingFiles = this.existingFiles.filter(doc => doc.id != id);
+        }
+    }"
+    @document-deleted.window="removeDocument($event.detail.mediaId)"
+>
     {{-- If you look to others for fulfillment, you will never truly be fulfilled. --}}
     <div class="mt-4 mb-4">
         <label class="block text-sm font-medium mb-2">{{ $label }}</label>
@@ -96,7 +106,7 @@
                             <a href="{{ $doc['url'] }}" target="_blank" class="text-xs text-blue-600 hover:text-blue-800 flex items-center">
                                 <i class="fas fa-eye mr-1"></i> View
                             </a>
-                            <button type="button" wire:click="removeFile({{ $doc['id'] }})" class="text-xs text-red-600 hover:text-red-800 flex items-center">
+                            <button type="button" wire:click="removeFile('{{ $doc['id'] }}')" class="text-xs text-red-600 hover:text-red-800 flex items-center">
                                 <i class="fas fa-trash mr-1"></i> Delete
                             </button>
                         </div>

@@ -11,12 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('courses', function (Blueprint $table) {
+        Schema::create('driver_courses', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->text('description');            
-            $table->integer('duration'); // Duration in minutes or hours
-            $table->boolean('is_mandatory')->default(false); // Indicates if it’s required for Active status
             $table->timestamps();
         });
     }
@@ -26,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('courses');
+        Schema::dropIfExists('driver_courses');
     }
 };

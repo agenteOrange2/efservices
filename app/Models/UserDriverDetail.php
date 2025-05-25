@@ -230,4 +230,12 @@ class UserDriverDetail extends Model implements HasMedia
     {
         return $this->hasMany(Vehicle::class, 'user_driver_detail_id');
     }
+    
+    /**
+     * Relación con los cursos de capacitación del conductor
+     */
+    public function courses()
+    {
+        return $this->hasMany(\App\Models\Admin\Driver\DriverCourse::class, 'user_driver_detail_id');
+    }
 }

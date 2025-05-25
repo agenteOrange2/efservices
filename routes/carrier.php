@@ -51,8 +51,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/documents/upload/{documentType}', [DocumentController::class, 'upload'])->name('documents.upload');
         Route::post('/documents/skip', [DocumentController::class, 'skipDocuments'])->name('documents.skip');
         Route::post('/documents/complete', [DocumentController::class, 'complete'])->name('documents.complete');
-        Route::post('/documents/{documentType}/toggle-default', [DocumentController::class, 'toggleDefaultDocument'])
-            ->name('documents.toggle-default');
+        Route::post('/documents/use-default', [DocumentController::class, 'toggleDefaultDocument'])
+            ->name('documents.use-default');
     });
 
 

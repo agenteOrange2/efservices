@@ -30,7 +30,7 @@ class CheckUserStatus
         }
 
         // Rutas públicas que siempre son accesibles
-        $publicRoutes = ['/', 'login', 'carrier/register', 'carrier/confirm/*', 'driver/register', 'driver/confirm/*', 'vehicle-verification/*'];
+        $publicRoutes = ['/', 'login', 'carrier/register', 'carrier/confirm/*', 'driver/register', 'driver/confirm/*', 'vehicle-verification/*', 'logout'];
         if (!$user && !$this->isPublicRoute($request, $publicRoutes)) {
             return redirect()->route('login')
                 ->with('warning', 'Please login to continue.');
@@ -38,28 +38,56 @@ class CheckUserStatus
 
         // Verificación para User Carrier
         if ($user && $user->hasRole('user_carrier')) {
+            
+            // Verificar primero si el usuario está activo (independientemente del carrier)
+            if ($user->status != 1) { // Si el usuario está inactivo
+                Auth::logout(); // Cerrar sesión del usuario
+                return redirect()->route('login')
+                    ->withErrors(['email' => 'Your account has been deactivated. Please contact support.']);
+            }
 
             // Verificar estado del carrier y redirigir según corresponda
             if (!$this->isCarrierSetupRoute($request)) {
+                // Agregamos logs para diagnosticar el problema
+                Log::info('Middleware check', [
+                    'user_id' => $user->id,
+                    'has_carrier_details' => $user->carrierDetails ? 'yes' : 'no',
+                    'carrier_id' => $user->carrierDetails ? $user->carrierDetails->carrier_id : null,
+                    'path' => $request->path()
+                ]);
+                
+                // PRIMERO: verificar si el usuario tiene que completar su registro
                 if (!$user->carrierDetails || !$user->carrierDetails->carrier_id) {
+                    Log::info('Redirigiendo a complete-registration', ['user_id' => $user->id]);
                     return redirect()->route('carrier.complete_registration')
                         ->with('warning', 'Please complete your registration first.');
                 }
 
-                // Verificar estado del user_carrier
+                // SEGUNDO: Verificar estado del user_carrier
                 if ($user->carrierDetails->status != 1) { // Asumiendo que 1 es STATUS_ACTIVE
+                    Log::info('Redirigiendo a pending (user_carrier inactive)', ['user_id' => $user->id]);
                     return redirect()->route('carrier.pending')
                         ->with('warning', 'Your user account is pending approval.');
                 }
                 
-
+                // TERCERO: Verificar estado del carrier
                 $carrier = $user->carrierDetails->carrier;
+                Log::info('Verificando carrier status', [
+                    'user_id' => $user->id,
+                    'carrier_id' => $carrier->id,
+                    'carrier_status' => $carrier->status,
+                    'ACTIVE_STATUS' => Carrier::STATUS_ACTIVE
+                ]);
 
-                // Si el carrier está pendiente o inactivo y NO está en la ruta de documentos
-                // if ($carrier->status !== Carrier::STATUS_ACTIVE && !$request->is('carrier/*/documents*')) {
-                //     return redirect()->route('carrier.confirmation')
-                //         ->with('warning', 'Your carrier account is pending approval.');
-                // }
+                // Si el carrier está pendiente o inactivo y NO está en la ruta de documentos o logout
+                if ($carrier->status !== Carrier::STATUS_ACTIVE && !$request->is('carrier/*/documents*') && !$request->is('carrier/confirmation') && !$request->is('logout')) {
+                    Log::info('Redirigiendo a confirmation (carrier not active)', [
+                        'user_id' => $user->id,
+                        'carrier_status' => $carrier->status
+                    ]);
+                    return redirect()->route('carrier.confirmation')
+                        ->with('warning', 'Your carrier account is pending approval.');
+                }
 
                 // Si necesita subir documentos y no está en la ruta de documentos
                 if ($carrier->document_status === 'in_progress' && !$request->is('carrier/*/documents*')) {
@@ -205,14 +233,34 @@ class CheckUserStatus
 
     private function isCarrierSetupRoute(Request $request): bool
     {
+        // Si viene de complete-registration o va hacia confirmation, permitir sin restricciones
+        if ($request->is('carrier/complete-registration') || $request->is('carrier/confirmation')) {
+            Log::info('Ruta permitida sin restricciones: ' . $request->path());
+            return true;
+        }
+        
         $setupRoutes = [
             'carrier/complete-registration',
             'carrier/confirmation',
-            'carrier/pending',
+            'carrier/pending', 
             'carrier/register',
             'carrier/confirm/*',
             'carrier/*/documents*'
         ];
+        
+        // Rutas que definitivamente NO son de configuración
+        $nonSetupRoutes = [
+            'carrier/dashboard',
+            'carrier/profile',
+            'carrier/load/*'
+        ];
+        
+        // Si la ruta está en la lista de NO configuración, return false inmediatamente
+        foreach ($nonSetupRoutes as $route) {
+            if ($request->is($route)) {
+                return false;
+            }
+        }
 
         return $this->routeMatches($request, $setupRoutes);
     }
@@ -241,11 +289,27 @@ class CheckUserStatus
 
     private function routeMatches(Request $request, array $routes): bool
     {
+        $path = $request->path();
+        
+        // Log para depuración
+        Log::info('Verificando ruta en routeMatches', [
+            'path' => $path,
+            'routes' => $routes
+        ]);
+        
+        // Verificación especial para la ruta de confirmación
+        if ($path === 'carrier/confirmation') {
+            Log::info('Ruta de confirmación detectada, permitiendo acceso');
+            return true;
+        }
+        
         foreach ($routes as $route) {
             if ($request->is($route)) {
+                Log::info('Ruta coincide con patrón: ' . $route);
                 return true;
             }
         }
+        
         return false;
     }
 }

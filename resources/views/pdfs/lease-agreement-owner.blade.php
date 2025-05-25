@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>Lease Agreement</title>
+        <title>Owner-Operator Lease Agreement</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -52,21 +52,21 @@
             }
 
             .footer {
-            margin-top: 50px;
-            text-align: center;
-            font-size: 12px;
-            color: #6b7280;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 20px;
-        }
+                margin-top: 50px;
+                text-align: center;
+                font-size: 12px;
+                color: #6b7280;
+                border-top: 1px solid #e5e7eb;
+                padding-top: 20px;
+            }
         </style>
     </head>
     <body>
-        <h1>LEASE AGREEMENT</h1>
+        <h1>OWNER-OPERATOR LEASE AGREEMENT</h1>
         <p class="note">
             <strong>Note:</strong>
             <span style="letter-spacing: 2px">
-                This lease Agreement should be maintained in the Equipment
+                This Owner-Operator Lease Agreement should be maintained by both parties
                 during the term of the Agreement.
             </span>
         </p>
@@ -75,45 +75,29 @@
             <ol style="list-style-type: upper-roman; padding: 0">
                 <li>
                     <div class="container-li">
-                        I,
-                        <span class="underline" style="width: 90%">{{ $carrierName ?? '' }}</span>
-                        (Carrier/Registrant) <br />
-                        Address:
-                        <span class="underline" style="width: 20%">{{ $carrierAddress ?? '' }}</span>,
-                        and<br />
-                        <span class="underline" style="width: 15%">{{ $ownerName ?? '' }}</span>
-                        (Equipment Owner)
+                        <p style="line-height: 1.5; text-align: justify">
+                            This AGREEMENT is made and entered into on <span class="underline" style="width: 120px">{{ $signedDate ?? now()->format('m/d/Y') }}</span>,
+                            between <span class="underline" style="width: 40%">{{ $carrierName ?? '' }}</span> ("CARRIER"),
+                            with its principal place of business at <span class="underline" style="width: 40%">{{ $carrierAddress ?? '' }}</span>,
+                            and <span class="underline" style="width: 40%">{{ $ownerName ?? '' }}</span> ("OWNER-OPERATOR"),
+                            residing at <span class="underline" style="width: 40%">{{ $ownerAddress ?? '' }}</span>.
+                        </p>
                     </div>
+                </li>
+                <li>
                     <div class="container-li">
                         <p style="line-height: 1.5; text-align: justify">
-                            are parties to a written Lease Agreement (Agreement)
-                            whereby the Equipment Owner has leased to the
-                            Carrier certain motor vehicle equipment listed
-                            below, owned and controlled by the Equipment Owner
-                            whereby the Equipment Owner is providing the Carrier
-                            as operator or operators of the Equipment for the
-                            purpose of loading, transporting and unloading
-                            freight.
+                            <strong>PURPOSE OF AGREEMENT:</strong> The OWNER-OPERATOR owns the equipment described herein
+                            and desires to lease said equipment with driver services to the CARRIER. The CARRIER is engaged
+                            in the business of transporting freight by motor vehicle and desires to lease equipment with
+                            driver services from the OWNER-OPERATOR. This Agreement sets forth the terms and conditions
+                            under which the OWNER-OPERATOR will provide equipment and services to the CARRIER.
                         </p>
                     </div>
                 </li>
                 <li>
                     <div class="container-li">
-                        <p style="line-height: 1.5.5; text-align: justify">
-                            The Carrier shall have
-                            <strong
-                                >exclusive possession, control, and use</strong
-                            >
-                            of the equipment for the duration of this Agreement
-                            as required by 49 CFR § 376.12(c)(1). The Carrier
-                            assumes complete responsibility for the operation of
-                            the equipment during the lease term.
-                        </p>
-                    </div>
-                </li>
-                <li>
-                    <div class="container-li">
-                        <p>Equipment Owner/Equipment Information</p>
+                        <p><strong>OWNER-OPERATOR AND EQUIPMENT INFORMATION:</strong></p>
                         <table>
                             <tr>
                                 <td>
@@ -133,18 +117,18 @@
                             </tr>
                             <tr>
                                 <td>
-                                    dba:
+                                    Business Name:
                                     <span
                                         class="underline"
                                         style="width: 90%"
                                     >{{ $ownerDba ?? '' }}</span>
                                 </td>
                                 <td>
-                                    Contact:
+                                    Email:
                                     <span
                                         class="underline"
                                         style="width: 90%"
-                                    >{{ $ownerContact ?? '' }}</span>
+                                    >{{ $ownerEmail ?? '' }}</span>
                                 </td>
                             </tr>
                             <tr>
@@ -156,11 +140,27 @@
                                     >{{ $ownerAddress ?? '' }}</span>
                                 </td>
                                 <td>
-                                    FEIN:
+                                    Tax ID/SSN:
                                     <span
                                         class="underline"
                                         style="width: 90%"
                                     >{{ $ownerFein ?? '' }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Driver's License #:
+                                    <span
+                                        class="underline"
+                                        style="width: 90%"
+                                    >{{ $ownerLicense ?? '' }}</span>
+                                </td>
+                                <td>
+                                    CDL Expiration:
+                                    <span
+                                        class="underline"
+                                        style="width: 90%"
+                                    >{{ $ownerCdlExpiry ?? '' }}</span>
                                 </td>
                             </tr>
                         </table>
@@ -201,65 +201,80 @@
                 </li>
                 <li>
                     <div class="container-li">
-                        <p>Duration of Lease Agreement and Termination</p>
-                        <p>
-                            The Lease Agreement shall begin on the date below
-                            and shall remain in effect until terminated by
-                            either party giving notice to that effect. Notice
-                            may be given personally by mail or by fax at the
-                            address or fax number shown in the Lease Agreement.
+                        <p><strong>EXCLUSIVE POSSESSION AND CONTROL:</strong></p>
+                        <p style="line-height: 1.5; text-align: justify">
+                            The CARRIER shall have exclusive possession, control, and use of the equipment
+                            for the duration of this Agreement as required by 49 CFR § 376.12(c)(1). The CARRIER
+                            assumes complete responsibility for the operation of the equipment during the lease term
+                            for regulatory compliance purposes. However, this provision does not affect the relationship
+                            between the CARRIER and the OWNER-OPERATOR, which is that of an independent contractor and not
+                            an employer-employee relationship.
                         </p>
                     </div>
                 </li>
                 <li>
                     <div class="container-li">
-                        <p>
-                            The Owner shall be compensated as follows:<br />
-                            Settlement statements will be provided at least
-                            every 7 days detailing:<br /> 
-                            Trip earnings, deductions
-                            (fuel advances, escrow, insurance, etc.)<br/> 
-                            Net settlement amount. <br/>
-                            Payment will be made no later than days after submission of necessary delivery
-                            documents and paperwork.
+                        <p><strong>TERM AND TERMINATION:</strong></p>
+                        <p style="line-height: 1.5; text-align: justify">
+                            This Agreement shall commence on the date first written above and shall continue until terminated
+                            by either party upon thirty (30) days written notice. Either party may terminate this Agreement
+                            immediately for breach by the other party. Upon termination, all obligations that are still
+                            executory on both sides are discharged, but any right based on prior breach or performance survives.
                         </p>
                     </div>
                 </li>
                 <li>
                     <div class="container-li">
-                        <p>
-                            All chargebacks or deductions to the Owner's
-                            compensation must be specified in writing and agreed
-                            upon in advance.<br />
-                            The Carrier will provide a written explanation of
-                            any deduction at the time of settlement.
+                        <p><strong>COMPENSATION:</strong></p>
+                        <p style="line-height: 1.5; text-align: justify">
+                            The OWNER-OPERATOR shall be compensated as follows:<br />
+                            a) Settlement statements will be provided at least every 7 days detailing:<br />
+                            &nbsp;&nbsp;&nbsp;• Trip earnings<br />
+                            &nbsp;&nbsp;&nbsp;• Deductions (fuel advances, escrow, insurance, etc.)<br />
+                            &nbsp;&nbsp;&nbsp;• Net settlement amount<br />
+                            b) Payment will be made no later than 15 days after submission of necessary delivery
+                            documents and paperwork.<br />
+                            c) All chargebacks or deductions to the OWNER-OPERATOR's compensation must be specified
+                            in writing and agreed upon in advance.<br />
+                            d) The CARRIER will provide a written explanation of any deduction at the time of settlement.
                         </p>
                     </div>
                 </li>
                 <li>
                     <div class="container-li">
-                        <p>
-                            The Carrier shall provide public liability and
-                            property damage insurance as required under 49 CFR
-                            Part 387 or if the Owner decided to run with own
-                            insurance an Additional Insured (Certificate Holder)
-                            need to be provided to Carrier with Carrier
-                            information on it. Also, the Owner is responsible
-                            for:<br />
-                            Non-trucking liability (bobtail) insurance<br />
-                            Occupational accident or workers' compensation
-                            coverage (if required).
+                        <p><strong>INSURANCE:</strong></p>
+                        <p style="line-height: 1.5; text-align: justify">
+                            a) The CARRIER shall provide and maintain public liability and property damage insurance
+                            as required under 49 CFR Part 387.<br />
+                            b) The OWNER-OPERATOR shall be responsible for:<br />
+                            &nbsp;&nbsp;&nbsp;• Non-trucking liability (bobtail) insurance<br />
+                            &nbsp;&nbsp;&nbsp;• Physical damage insurance on the equipment<br />
+                            &nbsp;&nbsp;&nbsp;• Occupational accident or workers' compensation coverage (if required)<br />
+                            c) If the OWNER-OPERATOR chooses to provide their own primary liability insurance,
+                            they must provide a Certificate of Insurance naming the CARRIER as an Additional Insured.
                         </p>
                     </div>
                 </li>
                 <li>
                     <div class="container-li">
-                        <p>
-                            The Owner is responsible for maintaining the
-                            equipment in safe operating condition and in
-                            compliance with all federal and state laws. The
-                            Carrier may require proof of inspections and
-                            maintenance.
+                        <p><strong>EQUIPMENT MAINTENANCE:</strong></p>
+                        <p style="line-height: 1.5; text-align: justify">
+                            The OWNER-OPERATOR is responsible for maintaining the equipment in safe operating condition
+                            and in compliance with all federal and state laws and regulations. The CARRIER may require
+                            proof of inspections and maintenance. The OWNER-OPERATOR agrees to comply with all safety
+                            regulations and to maintain all applicable operating permits and authorities.
+                        </p>
+                    </div>
+                </li>
+                <li>
+                    <div class="container-li">
+                        <p><strong>INDEPENDENT CONTRACTOR STATUS:</strong></p>
+                        <p style="line-height: 1.5; text-align: justify">
+                            The relationship between the CARRIER and OWNER-OPERATOR is that of an independent contractor
+                            and not an employer-employee relationship. The OWNER-OPERATOR has the right to control the
+                            manner and means of performing services under this Agreement, subject to the CARRIER's right
+                            to direct the results to be accomplished. The OWNER-OPERATOR is responsible for all applicable
+                            taxes and business expenses related to their operation.
                         </p>
                     </div>
                 </li>
@@ -270,7 +285,7 @@
             <table style="width: 100%">
                 <tr>
                     <td class="signature-col">
-                        <strong>MOTOR CARRIER/REGISTRANT</strong><br /><br />
+                        <strong>MOTOR CARRIER</strong><br /><br />
                         By: <span class="underline" style="width: 80%">{{ $carrierName ?? '' }}</span
                         ><br /><br />
                         Date: <span class="underline" style="width: 80%">{{ $signedDate ?? now()->format('m/d/Y') }}</span
@@ -281,39 +296,16 @@
                         <span class="underline" style="width: 80%">{{ $carrierUsdot ?? '' }}</span>
                     </td>
                     <td class="signature-col">
-                        <strong>EQUIPMENT OWNER</strong><br /><br />
+                        <strong>OWNER-OPERATOR</strong><br /><br />
                         By: <span class="underline" style="width: 80%">{{ $ownerName ?? '' }}</span
                         ><br /><br />
                         Date: <span class="underline" style="width: 80%">{{ $signedDate ?? now()->format('m/d/Y') }}</span>
                         <br /><br />
                         <p class="signature-container">
-                            {{-- Primero intentar usar la ruta física de la firma (como en certification.blade.php) --}}
                             @if (!empty($signaturePath) && file_exists($signaturePath))
                                 <img src="{{ $signaturePath }}" alt="Firma Digital" style="max-width: 100%; max-height: 100px;">
-                                {{-- Si no hay ruta física, intentar usar los datos base64 --}}
-                            @elseif(isset($signatureData) && !empty($signatureData))
-                                @php
-                                    // Depurar la información de la firma
-                                    $signatureType = 'desconocido';
-                                    $signatureLength = strlen($signatureData);
-                                    $signatureStart = substr($signatureData, 0, 30);
-                
-                                    if (strpos($signatureData, 'data:image') === 0) {
-                                        $signatureType = 'base64';
-                                        // Asegurarse de que la firma base64 esté limpia
-                                        $cleanSignature = $signatureData;
-                                    } elseif (filter_var($signatureData, FILTER_VALIDATE_URL)) {
-                                        $signatureType = 'url';
-                                        $cleanSignature = $signatureData;
-                                    } else {
-                                        $signatureType = 'raw';
-                                        // Convertir a base64 si no es base64 ni URL
-                                        $cleanSignature = 'data:image/png;base64,' . base64_encode($signatureData);
-                                    }
-                                @endphp
-                
-                                {{-- Mostrar la firma según su tipo --}}
-                                <img src="{!! $cleanSignature !!}" alt="Firma Digital" style="max-width: 100%; max-height: 100px;">
+                            @elseif (!empty($signature))
+                                <img src="{{ $signature }}" alt="Firma Digital" style="max-width: 100%; max-height: 100px;">
                             @else
                                 <div
                                     style="border: 1px dashed #ccc; height: 100px; display: flex; align-items: center; justify-content: center;">
@@ -328,7 +320,7 @@
         </div>
 
         <div class="footer">            
-            <p>&copy; {{ date('Y') }} Printed by EF Services LLC April 29, 2025</p>
+            <p>&copy; {{ date('Y') }} Printed by EF Services LLC - {{ now()->format('F d, Y') }}</p>
         </div>
     </body>
 </html>

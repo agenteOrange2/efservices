@@ -518,76 +518,100 @@ class DriverRecruitmentReview extends Component
                 
                 // Verificar si el directorio de verificaciones de vehículos existe
                 if (file_exists($vehicleVerificationsFullPath)) {
-                    // Buscar el PDF de consentimiento del propietario para conductores de terceros
-                    $thirdPartyConsentFile = "consentimiento_propietario_third_party.pdf";
-                    $thirdPartyConsentFullPath = "{$vehicleVerificationsFullPath}{$thirdPartyConsentFile}";
+                    // Buscar los archivos de consentimiento de terceros (con formato de nombre que incluye timestamp)
+                    $consentFiles = glob("{$vehicleVerificationsFullPath}third_party_consent_*.pdf");
                     
-                    if (file_exists($thirdPartyConsentFullPath)) {
-                        $fileSize = $this->formatFileSize(filesize($thirdPartyConsentFullPath));
-                        $fileDate = $this->formatFileDate(filemtime($thirdPartyConsentFullPath));
+                    // Si no hay archivos con el nuevo formato, buscar con el nombre antiguo
+                    if (empty($consentFiles)) {
+                        $oldConsentFile = "{$vehicleVerificationsFullPath}consentimiento_propietario_third_party.pdf";
+                        if (file_exists($oldConsentFile)) {
+                            $consentFiles[] = $oldConsentFile;
+                        }
+                    }
+                    
+                    // Tomar el archivo más reciente (si existe)
+                    if (!empty($consentFiles)) {
+                        // Ordenar por fecha de modificación (más reciente primero)
+                        usort($consentFiles, function($a, $b) {
+                            return filemtime($b) - filemtime($a);
+                        });
+                        
+                        $latestConsentFile = $consentFiles[0];
+                        $consentFileName = basename($latestConsentFile);
+                        $fileSize = $this->formatFileSize(filesize($latestConsentFile));
+                        $fileDate = $this->formatFileDate(filemtime($latestConsentFile));
                         
                         $this->generatedPdfs['third_party_consent'] = [
                             'name' => 'Consentimiento del Propietario (Third Party)',
-                            'url' => asset("storage/{$vehicleVerificationsPath}{$thirdPartyConsentFile}") . "?v=" . time(),
+                            'url' => asset("storage/{$vehicleVerificationsPath}{$consentFileName}") . "?v=" . time(),
                             'size' => $fileSize,
                             'date' => $fileDate
                         ];
                     }
                     
-                    // Buscar el PDF de lease agreement para conductores de terceros
-                    $leaseAgreementThirdPartyFile = "lease_agreement_third_party.pdf";
-                    $leaseAgreementThirdPartyFullPath = "{$vehicleVerificationsFullPath}{$leaseAgreementThirdPartyFile}";
+                    // Buscar los archivos de lease agreement para conductores de terceros (con formato de nombre que incluye timestamp)
+                    $leaseFiles = glob("{$vehicleVerificationsFullPath}lease_agreement_third_party_*.pdf");
                     
-                    if (file_exists($leaseAgreementThirdPartyFullPath)) {
-                        $fileSize = $this->formatFileSize(filesize($leaseAgreementThirdPartyFullPath));
-                        $fileDate = $this->formatFileDate(filemtime($leaseAgreementThirdPartyFullPath));
+                    // Si no hay archivos con el nuevo formato, buscar con el nombre antiguo
+                    if (empty($leaseFiles)) {
+                        $oldLeaseFile = "{$vehicleVerificationsFullPath}lease_agreement_third_party.pdf";
+                        if (file_exists($oldLeaseFile)) {
+                            $leaseFiles[] = $oldLeaseFile;
+                        }
+                    }
+                    
+                    // Tomar el archivo más reciente (si existe)
+                    if (!empty($leaseFiles)) {
+                        // Ordenar por fecha de modificación (más reciente primero)
+                        usort($leaseFiles, function($a, $b) {
+                            return filemtime($b) - filemtime($a);
+                        });
+                        
+                        $latestLeaseFile = $leaseFiles[0];
+                        $leaseFileName = basename($latestLeaseFile);
+                        $fileSize = $this->formatFileSize(filesize($latestLeaseFile));
+                        $fileDate = $this->formatFileDate(filemtime($latestLeaseFile));
                         
                         $this->generatedPdfs['lease_agreement_third_party'] = [
                             'name' => 'Lease Agreement (Third Party)',
-                            'url' => asset("storage/{$vehicleVerificationsPath}{$leaseAgreementThirdPartyFile}") . "?v=" . time(),
+                            'url' => asset("storage/{$vehicleVerificationsPath}{$leaseFileName}") . "?v=" . time(),
                             'size' => $fileSize,
                             'date' => $fileDate
                         ];
                     }
                     
-                    // Buscar el PDF de lease agreement para owner operators
-                    $leaseAgreementOwnerFile = "lease_agreement_owner_operator.pdf";
-                    $leaseAgreementOwnerFullPath = "{$vehicleVerificationsFullPath}{$leaseAgreementOwnerFile}";
+                    // Buscar los archivos de lease agreement para owner operators (con formato de nombre que incluye timestamp)
+                    $ownerLeaseFiles = glob("{$vehicleVerificationsFullPath}lease_agreement_owner_operator_*.pdf");
                     
-                    if (file_exists($leaseAgreementOwnerFullPath)) {
-                        $fileSize = $this->formatFileSize(filesize($leaseAgreementOwnerFullPath));
-                        $fileDate = $this->formatFileDate(filemtime($leaseAgreementOwnerFullPath));
+                    // Si no hay archivos con el nuevo formato, buscar con el nombre antiguo
+                    if (empty($ownerLeaseFiles)) {
+                        $oldOwnerLeaseFile = "{$vehicleVerificationsFullPath}lease_agreement_owner_operator.pdf";
+                        if (file_exists($oldOwnerLeaseFile)) {
+                            $ownerLeaseFiles[] = $oldOwnerLeaseFile;
+                        }
+                    }
+                    
+                    // Tomar el archivo más reciente (si existe)
+                    if (!empty($ownerLeaseFiles)) {
+                        // Ordenar por fecha de modificación (más reciente primero)
+                        usort($ownerLeaseFiles, function($a, $b) {
+                            return filemtime($b) - filemtime($a);
+                        });
+                        
+                        $latestOwnerLeaseFile = $ownerLeaseFiles[0];
+                        $ownerLeaseFileName = basename($latestOwnerLeaseFile);
+                        $fileSize = $this->formatFileSize(filesize($latestOwnerLeaseFile));
+                        $fileDate = $this->formatFileDate(filemtime($latestOwnerLeaseFile));
                         
                         $this->generatedPdfs['lease_agreement_owner'] = [
                             'name' => 'Lease Agreement (Owner Operator)',
-                            'url' => asset("storage/{$vehicleVerificationsPath}{$leaseAgreementOwnerFile}") . "?v=" . time(),
+                            'url' => asset("storage/{$vehicleVerificationsPath}{$ownerLeaseFileName}") . "?v=" . time(),
                             'size' => $fileSize,
                             'date' => $fileDate
                         ];
                     }
                 }
-                
-                // Verificar si es un conductor de tipo Owner Operator
-                if ($this->application && $this->application->details && 
-                    $this->application->details->applying_position === 'owner_operator') {
-                    
-                    // Buscar el PDF de lease agreement para owner operators
-                    $ownerOperatorPath = "{$basePath}vehicle_verifications/";
-                    $leaseAgreementFile = "lease_agreement_owner_operator.pdf";
-                    $leaseAgreementFullPath = storage_path("app/public/{$ownerOperatorPath}{$leaseAgreementFile}");
-                    
-                    if (file_exists($leaseAgreementFullPath)) {
-                        $fileSize = $this->formatFileSize(filesize($leaseAgreementFullPath));
-                        $fileDate = $this->formatFileDate(filemtime($leaseAgreementFullPath));
-                        
-                        $this->generatedPdfs['lease_agreement_owner_operator'] = [
-                            'name' => 'Lease Agreement (Owner Operator)',
-                            'url' => asset("storage/{$ownerOperatorPath}{$leaseAgreementFile}") . "?v=" . time(),
-                            'size' => $fileSize,
-                            'date' => $fileDate
-                        ];
-                    }
-                }
+
             }
         }
     }

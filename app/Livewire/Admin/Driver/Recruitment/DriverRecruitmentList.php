@@ -73,10 +73,10 @@ class DriverRecruitmentList extends Component
             'drivers' => $drivers,
             'carriers' => $carriers,
             'applicationStatuses' => [
-                DriverApplication::STATUS_DRAFT => 'Borrador',
-                DriverApplication::STATUS_PENDING => 'Pendiente',
-                DriverApplication::STATUS_APPROVED => 'Aprobado',
-                DriverApplication::STATUS_REJECTED => 'Rechazado'
+                DriverApplication::STATUS_DRAFT => 'Draft',
+                DriverApplication::STATUS_PENDING => 'Pending',
+                DriverApplication::STATUS_APPROVED => 'Approved',
+                DriverApplication::STATUS_REJECTED => 'Rejected',
             ]
         ]);
     }

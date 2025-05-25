@@ -77,16 +77,25 @@
                         <div>
                             <label class="block mb-2 text-sm font-medium text-gray-700">From Date <span
                                     class="text-red-500">*</span></label>
-                            <input type="date" wire:model="from_date"
-                                class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                            <x-date-picker
+                                wire:model="from_date"
+                                id="from_date"
+                                name="from_date"
+                                value="{{ $from_date }}"
+                                required
+                            />
                             @error('from_date')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
                             <label class="block mb-2 text-sm font-medium text-gray-700">To Date</label>
-                            <input type="date" wire:model="to_date"
-                                class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                            <x-date-picker
+                                wire:model="to_date"
+                                id="to_date"
+                                name="to_date"
+                                value="{{ $to_date }}"
+                            />
                             @error('to_date')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
@@ -199,9 +208,13 @@
                                 <div>
                                     <label class="block mb-2 text-sm font-medium text-gray-700">From Date <span
                                             class="text-red-500">*</span></label>
-                                    <input type="date"
+                                    <x-date-picker
                                         wire:model="previous_addresses.{{ $index }}.from_date"
-                                        class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                                        id="prev_from_date_{{ $index }}"
+                                        name="previous_addresses[{{ $index }}][from_date]"
+                                        value="{{ $address['from_date'] ?? '' }}"
+                                        required
+                                    />
                                     @error('previous_addresses.' . $index . '.from_date')
                                         <span class="text-red-500 text-sm">{{ $message }}</span>
                                     @enderror
@@ -209,8 +222,13 @@
                                 <div>
                                     <label class="block mb-2 text-sm font-medium text-gray-700">To Date <span
                                             class="text-red-500">*</span></label>
-                                    <input type="date" wire:model="previous_addresses.{{ $index }}.to_date"
-                                        class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                                    <x-date-picker
+                                        wire:model="previous_addresses.{{ $index }}.to_date"
+                                        id="prev_to_date_{{ $index }}"
+                                        name="previous_addresses[{{ $index }}][to_date]"
+                                        value="{{ $address['to_date'] ?? '' }}"
+                                        required
+                                    />
                                     @error('previous_addresses.' . $index . '.to_date')
                                         <span class="text-red-500 text-sm">{{ $message }}</span>
                                     @enderror
@@ -266,3 +284,5 @@
         </div>
     </div>
 </div>
+
+

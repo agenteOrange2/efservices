@@ -124,7 +124,7 @@ class AccidentStep extends Component
     }
     
     // Save accident data to database
-    protected function saveAccidentData()
+    protected function saveAccidentData($saveFiles = false)
     {
         try {
             DB::beginTransaction();
@@ -160,11 +160,9 @@ class AccidentStep extends Component
                                 'accident_date' => $accidentData['accident_date'],
                                 'nature_of_accident' => $accidentData['nature_of_accident'],
                                 'had_injuries' => $accidentData['had_injuries'] ?? false,
-                                'number_of_injuries' => $accidentData['had_injuries'] ? 
-                                    ($accidentData['number_of_injuries'] ?? 0) : 0,
+                                'number_of_injuries' => $accidentData['had_injuries'] ? $accidentData['number_of_injuries'] : null,
                                 'had_fatalities' => $accidentData['had_fatalities'] ?? false,
-                                'number_of_fatalities' => $accidentData['had_fatalities'] ? 
-                                    ($accidentData['number_of_fatalities'] ?? 0) : 0,
+                                'number_of_fatalities' => $accidentData['had_fatalities'] ? $accidentData['number_of_fatalities'] : null,
                                 'comments' => $accidentData['comments'] ?? null,
                             ]);
                             $updatedAccidentIds[] = $accident->id;
@@ -175,11 +173,9 @@ class AccidentStep extends Component
                             'accident_date' => $accidentData['accident_date'],
                             'nature_of_accident' => $accidentData['nature_of_accident'],
                             'had_injuries' => $accidentData['had_injuries'] ?? false,
-                            'number_of_injuries' => $accidentData['had_injuries'] ? 
-                                ($accidentData['number_of_injuries'] ?? 0) : 0,
+                            'number_of_injuries' => $accidentData['had_injuries'] ? $accidentData['number_of_injuries'] : null,
                             'had_fatalities' => $accidentData['had_fatalities'] ?? false,
-                            'number_of_fatalities' => $accidentData['had_fatalities'] ? 
-                                ($accidentData['number_of_fatalities'] ?? 0) : 0,
+                            'number_of_fatalities' => $accidentData['had_fatalities'] ? $accidentData['number_of_fatalities'] : null,
                             'comments' => $accidentData['comments'] ?? null,
                         ]);
                         $updatedAccidentIds[] = $accident->id;
@@ -191,13 +187,34 @@ class AccidentStep extends Component
                 if (!empty($accidentsToDelete)) {
                     $userDriverDetail->accidents()->whereIn('id', $accidentsToDelete)->delete();
                 }
+                
+                // Upload accident files solo si se solicita explícitamente
+                if ($saveFiles) {
+                    Log::info('Guardando archivos de accidentes permanentemente', [
+                        'driver_id' => $this->driverId,
+                        'accident_count' => count($this->accidents)
+                    ]);
+                    
+                    // Procesar archivos temporales
+                    foreach ($this->accidents as $index => $accident) {
+                        if (isset($accident['temp_files']) && is_array($accident['temp_files'])) {
+                            foreach ($accident['temp_files'] as $tempFile) {
+                                $this->processTemporaryFile($tempFile, $index);
+                            }
+                            
+                            // Limpiar los archivos temporales después de procesarlos
+                            $this->accidents[$index]['temp_files'] = [];
+                        }
+                    }
+                } else {
+                    Log::info('Omitiendo guardado de archivos de accidentes (solo se guardarán al navegar)', [
+                        'driver_id' => $this->driverId
+                    ]);
+                }
             }
             
-            // Upload accident documents
-            $this->uploadAccidentFiles($userDriverDetail);
-            
             // Update current step
-            $userDriverDetail->update(['current_step' => 8]);
+            $userDriverDetail->update(['current_step' => 6]);
             
             DB::commit();
             return true;
@@ -264,6 +281,13 @@ class AccidentStep extends Component
         $modelIndex = $data['modelIndex'];
         $previewData = $data['previewData'] ?? null;
         
+        // Registrar información para depuración
+        Log::info('Archivo temporal recibido', [
+            'temp_path' => $tempPath,
+            'original_name' => $originalName,
+            'model_index' => $modelIndex
+        ]);
+        
         // Verificar que el modelo y el índice sean correctos
         if ($modelName === 'accident_files' && isset($this->accidents[$modelIndex])) {
             // Inicializar el array de documentos si no existe
@@ -271,20 +295,115 @@ class AccidentStep extends Component
                 $this->accidents[$modelIndex]['documents'] = [];
             }
             
-            // Subir el archivo al accidente correspondiente
-            $mediaId = $this->uploadAccidentFile($tempPath, $originalName, $mimeType, $size, $modelIndex);
+            // Inicializar el array de archivos temporales si no existe
+            if (!isset($this->accidents[$modelIndex]['temp_files'])) {
+                $this->accidents[$modelIndex]['temp_files'] = [];
+            }
             
-            // Si la subida fue exitosa y tenemos un ID de media, actualizar el previewData con el ID real
-            if ($mediaId && $previewData && isset($previewData['is_temp']) && $previewData['is_temp']) {
-                // Buscar el archivo temporal en la lista de documentos y reemplazarlo con el archivo real
-                foreach ($this->accidents[$modelIndex]['documents'] as $key => $doc) {
-                    if (isset($doc['is_temp']) && $doc['is_temp'] && $doc['name'] === $originalName) {
-                        // Eliminar el archivo temporal
-                        unset($this->accidents[$modelIndex]['documents'][$key]);
+            // Generar un ID temporal único
+            $tempId = $previewData['id'] ?? ('temp_' . time() . '_' . rand(1000, 9999));
+            
+            // Guardar la información del archivo temporal para procesarlo más tarde
+            $this->accidents[$modelIndex]['temp_files'][] = [
+                'temp_path' => $tempPath,
+                'original_name' => $originalName,
+                'mime_type' => $mimeType,
+                'size' => $size,
+                'temp_id' => $tempId
+            ];
+            
+            // Agregar el archivo a la lista de documentos para mostrar en la interfaz
+            $this->accidents[$modelIndex]['documents'][] = [
+                'id' => $tempId,
+                'name' => $originalName,
+                'file_name' => $originalName,
+                'mime_type' => $mimeType,
+                'size' => $size,
+                'created_at' => now()->format('Y-m-d H:i:s'),
+                'url' => '#',
+                'is_temp' => true
+            ];
+            
+            Log::info('Archivo temporal almacenado para procesar más tarde', [
+                'model_index' => $modelIndex,
+                'temp_files_count' => count($this->accidents[$modelIndex]['temp_files']),
+                'documents_count' => count($this->accidents[$modelIndex]['documents'])
+            ]);
+        }
+    }
+    
+    /**
+     * Procesa un archivo temporal y lo guarda permanentemente
+     */
+    protected function processTemporaryFile($tempFile, $index)
+    {
+        try {
+            $tempPath = $tempFile['temp_path'];
+            $originalName = $tempFile['original_name'];
+            $mimeType = $tempFile['mime_type'];
+            $size = $tempFile['size'];
+            $tempId = $tempFile['temp_id'];
+            
+            Log::info('Procesando archivo temporal', [
+                'temp_path' => $tempPath,
+                'original_name' => $originalName,
+                'accident_index' => $index
+            ]);
+            
+            // Obtener el ID del accidente
+            $accidentId = isset($this->accidents[$index]['id']) ? $this->accidents[$index]['id'] : null;
+            
+            if (!$accidentId) {
+                // Si no existe el accidente en la base de datos, guardarlo primero
+                $accidentId = $this->saveAccident($index);
+            }
+            
+            // Buscar el modelo de accidente
+            $accident = \App\Models\Admin\Driver\DriverAccident::find($accidentId);
+            
+            if ($accident) {
+                // Obtener la ruta completa del archivo temporal
+                $fullPath = storage_path('app/' . $tempPath);
+                
+                // Verificar que el archivo existe
+                if (!file_exists($fullPath)) {
+                    throw new \Exception("El archivo temporal no existe: {$fullPath}");
+                }
+                
+                // Subir el archivo al accidente usando fromFile
+                $media = $accident->addMediaFromDisk($tempPath, 'local')
+                    ->usingName($originalName)
+                    ->usingFileName($originalName)
+                    ->toMediaCollection('accident-documents');
+                
+                Log::info('Archivo guardado permanentemente', [
+                    'media_id' => $media->id,
+                    'accident_id' => $accidentId,
+                    'original_name' => $originalName
+                ]);
+                
+                // Actualizar el documento en la lista para que ya no sea temporal
+                foreach ($this->accidents[$index]['documents'] as $key => $doc) {
+                    if (isset($doc['id']) && $doc['id'] === $tempId) {
+                        $this->accidents[$index]['documents'][$key]['id'] = $media->id;
+                        $this->accidents[$index]['documents'][$key]['is_temp'] = false;
+                        $this->accidents[$index]['documents'][$key]['url'] = $media->getUrl();
                         break;
                     }
                 }
+                
+                return $media->id;
             }
+            
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Error al procesar archivo temporal: ' . $e->getMessage(), [
+                'exception' => $e,
+                'temp_path' => $tempFile['temp_path'] ?? null,
+                'accident_index' => $index,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return null;
         }
     }
     
@@ -329,10 +448,16 @@ class AccidentStep extends Component
                 }
                 
                 // Subir el archivo al accidente usando fromFile
+                // Usamos la colección 'accident-documents' para que coincida con el CustomPathGenerator
                 $media = $accident->addMediaFromDisk($tempPath, 'local')
                     ->usingName($originalName)
                     ->usingFileName($originalName)
-                    ->toMediaCollection('accident_documents');
+                    ->withCustomProperties([
+                        'original_filename' => $originalName,
+                        'mime_type' => $mimeType,
+                        'accident_id' => $accidentId
+                    ])
+                    ->toMediaCollection('accident-documents'); // Cambiado a 'accident-documents' para coincidir con el CustomPathGenerator
                 
                 // Agregar el archivo a la lista de documentos del accidente
                 if (!isset($this->accidents[$index]['documents'])) {
@@ -349,13 +474,13 @@ class AccidentStep extends Component
                     'created_at' => $media->created_at->format('Y-m-d H:i:s'),
                 ];
                 
-                // Registrar información de depuración
                 \Illuminate\Support\Facades\Log::info('Archivo de accidente subido correctamente', [
                     'accident_id' => $accidentId,
                     'media_id' => $media->id,
                     'path' => $media->getPath(),
                     'url' => $media->getUrl(),
-                    'collection' => $media->collection_name
+                    'collection' => $media->collection_name,
+                    'driver_id' => $accident->userDriverDetail->id ?? 'unknown'
                 ]);
                 
                 // Devolver el ID del archivo subido
@@ -365,7 +490,7 @@ class AccidentStep extends Component
             \Illuminate\Support\Facades\Log::error('Error al subir archivo de accidente: ' . $e->getMessage(), [
                 'exception' => $e,
                 'tempPath' => $tempPath ?? 'null',
-                'accident_id' => $accidentId ?? 'null',
+                'originalName' => $originalName ?? 'null',
                 'index' => $index ?? 'null'
             ]);
         }
@@ -404,9 +529,12 @@ class AccidentStep extends Component
         // Full validation
         $this->validate($this->rules());
         
-        // Save to database
+        // Save to database with files
         if ($this->driverId) {
-            $this->saveAccidentData();
+            Log::info('Guardando datos de accidentes y archivos al avanzar al siguiente paso', [
+                'driver_id' => $this->driverId
+            ]);
+            $this->saveAccidentData(true); // true para guardar los archivos permanentemente
         }
         
         // Move to next step
@@ -419,7 +547,10 @@ class AccidentStep extends Component
         // Basic save before going back
         if ($this->driverId) {
             $this->validate($this->partialRules());
-            $this->saveAccidentData();
+            Log::info('Guardando datos de accidentes y archivos al volver al paso anterior', [
+                'driver_id' => $this->driverId
+            ]);
+            $this->saveAccidentData(true); // true para guardar los archivos permanentemente
         }
         
         $this->dispatch('prevStep');
@@ -445,7 +576,7 @@ class AccidentStep extends Component
                 $driverAccident = $userDriverDetail->accidents()->find($accidentId);
                 if ($driverAccident) {
                     // Obtener documentos asociados a este accidente específico
-                    $accidentMedia = $driverAccident->getMedia('accident_documents');
+                    $accidentMedia = $driverAccident->getMedia('accident-documents');
                     
                     // Almacenar información de documentos en el array de accidents
                     $this->accidents[$index]['documents'] = [];

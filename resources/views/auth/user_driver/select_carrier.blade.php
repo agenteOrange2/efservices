@@ -1,4 +1,4 @@
-{{-- resources/views/auth/user_driver/select_carrier_registration.blade.php --}}
+{{-- resources/views/auth/user_driver/select_carrier.blade.php --}}
 <x-driver-layout>
     <div x-data="{ search: '' }">
     <div class="container mx-auto px-4 py-8 max-w-7xl">
@@ -109,10 +109,14 @@
                                 </span>
                             </div>
                             
-                            <a :href="`{{ route('driver.register.form', '') }}/${carrier.slug}`" 
-                               class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded text-center transition-colors duration-300">
-                                Select Carrier
-                            </a>
+                            <form method="POST" action="{{ route('driver.select_carrier') }}">
+                                @csrf
+                                <input type="hidden" name="carrier_id" :value="carrier.id">
+                                <button type="submit" 
+                                   class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded text-center transition-colors duration-300">
+                                    Select Carrier
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </template>
@@ -124,7 +128,7 @@
             <h3 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Full Carriers (Not Available)</h3>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" x-data="{ carriers: [] }" x-init="carriers = {{ json_encode($carriers->filter(function($carrier) { 
-                return $carrier->is_full;
+                return $carrier->status == 1 && $carrier->userDrivers()->count() >= ($carrier->membership->max_drivers ?? 1);
             })->values()) }}">
                 <!-- Mensaje si no hay carriers llenos después de filtrar -->
                 <template x-if="carriers.filter(carrier => carrier.name.toLowerCase().includes(search.toLowerCase()) || 
