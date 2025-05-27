@@ -280,7 +280,7 @@
     @endif
 
     <!-- Modal para Employment Companies -->
-    @if ($showCompanyForm)
+    @if ($showCompanyForm && !$showSearchCompanyModal)
         <div class="modal group bg-gradient-to-b from-theme-1/50 via-theme-2/50 to-black/50 transition-[visibility,opacity] w-screen h-screen fixed left-0 top-0 [&:not(.show)]:duration-[0s,0.2s] [&:not(.show)]:delay-[0.2s,0s] [&:not(.show)]:invisible [&:not(.show)]:opacity-0 [&.show]:visible [&.show]:opacity-100 [&.show]:duration-[0s,0.4s] overflow-y-auto show">
             <div class="w-[90%] mx-auto bg-white relative rounded-md shadow-md transition-[margin-top,transform] duration-[0.4s,0.3s] -mt-4 group-[.show]:mt-4 group-[.modal-static]:scale-[1.05] sm:w-[750px] p-4">
                 <div class="flex justify-between items-center mb-4">
@@ -491,7 +491,7 @@
     @endif
 
     <!-- Modal para Búsqueda de Empresas -->
-    @if ($showSearchCompanyModal)
+    @if ($showSearchCompanyModal && !$showCompanyForm)
         <div class="modal group bg-gradient-to-b from-theme-1/50 via-theme-2/50 to-black/50 transition-[visibility,opacity] w-screen h-screen fixed left-0 top-0 [&:not(.show)]:duration-[0s,0.2s] [&:not(.show)]:delay-[0.2s,0s] [&:not(.show)]:invisible [&:not(.show)]:opacity-0 [&.show]:visible [&.show]:opacity-100 [&.show]:duration-[0s,0.4s] overflow-y-auto show">
             <div class="w-[90%] mx-auto bg-white relative rounded-md shadow-md transition-[margin-top,transform] duration-[0.4s,0.3s] -mt-4 group-[.show]:mt-40 group-[.modal-static]:scale-[1.05] sm:w-[750px] p-4">
                 <div class="flex justify-between items-center mb-4">

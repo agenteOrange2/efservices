@@ -6,6 +6,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\UserDriverDetail;
 
+/**
+ * Componente para el paso FMCSR del registro de conductores
+ * Nombrado exactamente como se usa en la vista
+ * @package App\Livewire\Admin\Driver
+ */
 class DriverFMCSRStep extends Component
 {
     // FMCSR Data
@@ -193,5 +198,6 @@ class DriverFMCSRStep extends Component
     public function render()
     {
         return view('livewire.admin.driver.steps.driver-f-m-c-s-r-step');
+        
     }
 }

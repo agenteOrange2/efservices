@@ -521,7 +521,7 @@
                                         <!-- Preview Image -->
                                         <div class="h-24 flex items-center justify-center mb-2 bg-gray-50 rounded">
                                             @if (isset($token['preview_url']) && Str::startsWith($token['file_type'] ?? '', 'image/'))
-                                                <img src="{{ $token['preview_url'] }}" class="max-h-full rounded"
+                                                <img src="{{ $token['preview_url'] }}" class="object-contain h-full w-full"
                                                     alt="Certificate preview">
                                             @else
                                                 <div class="flex flex-col items-center justify-center">
@@ -552,7 +552,7 @@
                                         <!-- Preview Image -->
                                         <div class="h-24 flex items-center justify-center mb-2 bg-gray-50 rounded">
                                             @if ($cert['is_image'])
-                                                <img src="{{ $cert['url'] }}" class="max-h-full rounded"
+                                                <img src="{{ $cert['url'] }}" class="object-contain h-full w-full"
                                                     alt="Certificate preview">
                                             @else
                                                 <div class="flex flex-col items-center justify-center">

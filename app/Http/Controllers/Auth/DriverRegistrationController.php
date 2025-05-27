@@ -98,6 +98,28 @@ class DriverRegistrationController extends Controller
     public function showIndependentRegistrationForm($carrier_slug)
     {
         try {
+            // Verificar si el usuario ya está autenticado y es un driver
+            if (Auth::check() && Auth::user()->role === 'driver') {
+                $user = Auth::user();
+                $driverDetails = $user->driverDetails;
+                
+                // Si el driver existe y está en proceso de registro (sin aplicación completa)
+                if ($driverDetails && !$driverDetails->application_completed) {
+                    Log::info('Usuario autenticado retomando registro', [
+                        'user_id' => $user->id,
+                        'driver_id' => $driverDetails->id,
+                        'current_step' => $driverDetails->current_step ?? 1
+                    ]);
+                    
+                    // Redirigir al componente Livewire con el paso actual
+                    return view('auth.user_driver.resume_registration', [
+                        'carrier' => Carrier::where('slug', $carrier_slug)->first(),
+                        'driverId' => $driverDetails->id,
+                        'currentStep' => $driverDetails->current_step ?? 1
+                    ]);
+                }
+            }
+            
             // Buscar el carrier por slug
             $carrier = Carrier::where('slug', $carrier_slug)->firstOrFail();
             

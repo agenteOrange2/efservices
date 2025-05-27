@@ -42,13 +42,18 @@ Route::post('/dashboard/ajax-update', [DashboardController::class, 'ajaxUpdate']
 // Dashboard principal
 // Aquí solo mantenemos las rutas del dashboard principal
 
+
+
+
 /*
     |--------------------------------------------------------------------------
-    | RUTAS ADMIN NOTIFICATION
+    | RUTAS API ADMIN PARA AJAX
     |--------------------------------------------------------------------------    
 */
 
-// Rutas para notificaciones de mantenimiento de vehículos
+// API para obtener conductores activos por carrier (para Ajax)
+Route::get('/api/drivers/by-carrier/{carrier}', [AccidentsController::class, 'getDriversByCarrier'])->name('api.drivers.by-carrier');
+
 Route::prefix('maintenance-notifications')->name('maintenance-notifications.')->group(function () {
     Route::post('/send-test', [MaintenanceNotificationController::class, 'sendTestNotification'])->name('send-test');
     Route::post('/send-to-all', [MaintenanceNotificationController::class, 'sendNotificationsToAll'])->name('send-to-all');
@@ -303,23 +308,22 @@ Route::prefix('drivers')->name('drivers.')->group(function () {
     Route::get('/{driver}/traffic-history', [TrafficConvictionsController::class, 'driverHistory'])->name('traffic-history');
     Route::put('/{driver}/activate', [DriverListController::class, 'activate'])->name('activate');
     Route::put('/{driver}/deactivate', [DriverListController::class, 'deactivate'])->name('deactivate');
-    Route::put('/{driver}/toggle-status', [DriversController::class, 'toggleStatus'])->name('toggle-status');
     Route::get('/{id}/documents/download', [DriverListController::class, 'downloadDocuments'])->name('documents.download');
     Route::get('/export', [DriverListController::class, 'export'])->name('export');
 });
 
-// Rutas para todos los accidentes
+// Rutas para accidentes
 Route::prefix('accidents')->name('accidents.')->group(function () {
     Route::get('/', [AccidentsController::class, 'index'])->name('index');
     Route::post('/', [AccidentsController::class, 'store'])->name('store');
     Route::put('/{accident}', [AccidentsController::class, 'update'])->name('update');
     Route::delete('/{accident}', [AccidentsController::class, 'destroy'])->name('destroy');
-    
-    // Documentos de accidentes
     Route::get('/{accident}/documents', [AccidentsController::class, 'showDocuments'])->name('documents');
-    Route::delete('/documents/{documentId}', [AccidentsController::class, 'deleteDocument'])->name('documents.delete');
-    
-    // Obtener conductores por transportista
+    Route::post('/{accident}/documents', [AccidentsController::class, 'storeDocuments'])->name('documents.store');
+    Route::delete('/documents/{media}', [AccidentsController::class, 'destroyDocument'])->name('documents.destroy');
+    // Nueva ruta para previsualizar documentos
+    Route::get('/document/{documentId}/preview', [AccidentsController::class, 'previewDocument'])->name('document.preview');
+    // Obtener conductores por transportista (ruta legacy para compatibilidad)
     Route::get('/carriers/{carrier}/drivers', [AccidentsController::class, 'getDriversByCarrier'])->name('drivers.by.carrier');
 });
 

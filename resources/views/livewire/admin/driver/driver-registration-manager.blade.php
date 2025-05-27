@@ -34,7 +34,7 @@
     @elseif ($currentStep == 8)
         <livewire:admin.driver.driver-accident-step :driverId="$driverId" />
     @elseif ($currentStep == 9)
-        <livewire:admin.driver.driver-fmcsr-step :driverId="$driverId" />
+        @livewire('\\App\\Livewire\\Admin\\Driver\\DriverFMCSRStep', ['driverId' => $driverId])
     @elseif ($currentStep == 10)
         <livewire:admin.driver.driver-employment-history-step :driverId="$driverId" />
     @elseif ($currentStep == 11)

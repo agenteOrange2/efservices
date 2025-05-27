@@ -340,7 +340,7 @@
                                             <div class="font-medium">DOT Number</div>
                                             <div
                                                 class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                                Required
+                                                Optional
                                             </div>
                                         </div>
                                         <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
@@ -380,7 +380,7 @@
                                             <div class="font-medium">MC Number</div>
                                             <div
                                                 class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                                Required
+                                                Optional
                                             </div>
                                         </div>
                                         <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
@@ -420,7 +420,7 @@
                                             <div class="font-medium">State DOT</div>
                                             <div
                                                 class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                                Required
+                                                Optional
                                             </div>
                                         </div>
                                         <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
@@ -465,7 +465,7 @@
                                             <div class="font-medium">IFTA</div>
                                             <div
                                                 class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                                Required
+                                                Optional
                                             </div>
                                         </div>
                                         <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">

@@ -453,84 +453,220 @@
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                // Funcionalidad para mostrar/ocultar campos de lesiones y fatalidades
+                /**
+                 * Inicialización de elementos del DOM para el formulario de creación
+                 */
                 const hadInjuriesCheckbox = document.getElementById('had_injuries');
                 const hadFatalitiesCheckbox = document.getElementById('had_fatalities');
                 const injuriesContainer = document.getElementById('injuries_container');
                 const fatalitiesContainer = document.getElementById('fatalities_container');
-
-                hadInjuriesCheckbox.addEventListener('change', function() {
-                    injuriesContainer.style.display = this.checked ? 'block' : 'none';
-                });
-
-                hadFatalitiesCheckbox.addEventListener('change', function() {
-                    fatalitiesContainer.style.display = this.checked ? 'block' : 'none';
-                });
-
-                // Misma funcionalidad para el formulario de edición
+                const carrierSelect = document.getElementById('carrier');
+                const driverSelect = document.getElementById('user_driver_detail_id');
+                
+                /**
+                 * Inicialización de elementos del DOM para el formulario de edición
+                 */
                 const editHadInjuriesCheckbox = document.getElementById('edit_had_injuries');
                 const editHadFatalitiesCheckbox = document.getElementById('edit_had_fatalities');
                 const editInjuriesContainer = document.getElementById('edit_injuries_container');
                 const editFatalitiesContainer = document.getElementById('edit_fatalities_container');
+                const editCarrierSelect = document.getElementById('edit_carrier');
+                const editDriverSelect = document.getElementById('edit_user_driver_detail_id');
+                const editAccidentForm = document.getElementById('edit_accident_form');
 
-                editHadInjuriesCheckbox.addEventListener('change', function() {
-                    editInjuriesContainer.style.display = this.checked ? 'block' : 'none';
-                });
+                /**
+                 * Configuración de campos de lesiones/fatalidades para formulario de creación
+                 */
+                if (hadInjuriesCheckbox) {
+                    hadInjuriesCheckbox.addEventListener('change', function() {
+                        if (injuriesContainer) {
+                            injuriesContainer.style.display = this.checked ? 'block' : 'none';
+                        }
+                    });
+                }
+                
+                if (hadFatalitiesCheckbox) {
+                    hadFatalitiesCheckbox.addEventListener('change', function() {
+                        if (fatalitiesContainer) {
+                            fatalitiesContainer.style.display = this.checked ? 'block' : 'none';
+                        }
+                    });
+                }
 
-                editHadFatalitiesCheckbox.addEventListener('change', function() {
-                    editFatalitiesContainer.style.display = this.checked ? 'block' : 'none';
-                });
+                /**
+                 * Configuración de campos de lesiones/fatalidades para formulario de edición
+                 */
+                if (editHadInjuriesCheckbox) {
+                    editHadInjuriesCheckbox.addEventListener('change', function() {
+                        if (editInjuriesContainer) {
+                            editInjuriesContainer.style.display = this.checked ? 'block' : 'none';
+                        }
+                    });
+                }
+                
+                if (editHadFatalitiesCheckbox) {
+                    editHadFatalitiesCheckbox.addEventListener('change', function() {
+                        if (editFatalitiesContainer) {
+                            editFatalitiesContainer.style.display = this.checked ? 'block' : 'none';
+                        }
+                    });
+                }
 
-                // Cargar conductores cuando se selecciona un transportista
-                const carrierSelect = document.getElementById('carrier');
-                const driverSelect = document.getElementById('user_driver_detail_id');
-
-                carrierSelect.addEventListener('change', function() {
-                    const carrierId = this.value;
-                    if (carrierId) {
-                        fetch(`/api/get-drivers-by-carrier-id/${carrierId}`)
-                            .then(response => response.json())
-                            .then(data => {
-                                driverSelect.innerHTML = '<option value="">Select Driver</option>';
-                                data.forEach(driver => {
-                                    const option = document.createElement('option');
-                                    option.value = driver.id;
-                                    option.textContent = `${driver.user.name} ${driver.last_name}`;
-                                    driverSelect.appendChild(option);
-                                });
+                /**
+                 * Función para cargar conductores por carrier
+                 */
+                function loadDriversByCarrier(carrierId, targetSelect) {
+                    if (!carrierId || !targetSelect) {
+                        console.error('Missing required parameters for loadDriversByCarrier');
+                        return;
+                    }
+                    
+                    // Mostrar indicador de carga
+                    targetSelect.innerHTML = '<option value="">Loading drivers...</option>';
+                    
+                    // Usar la ruta correcta para obtener conductores por transportista
+                    const url = `/admin/accidents/carriers/${carrierId}/drivers`;
+                    
+                    fetch(url)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`Network response was not ok: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (!targetSelect) {
+                                console.error('Target select element is null');
+                                return;
+                            }
+                            
+                            targetSelect.innerHTML = '<option value="">Select Driver</option>';
+                            
+                            if (!data.drivers || data.drivers.length === 0) {
+                                const option = document.createElement('option');
+                                option.disabled = true;
+                                option.textContent = 'No active drivers found';
+                                targetSelect.appendChild(option);
+                                return;
+                            }
+                            
+                            data.drivers.forEach(driver => {
+                                const option = document.createElement('option');
+                                option.value = driver.id;
+                                option.textContent = driver.name;
+                                targetSelect.appendChild(option);
                             });
-                    } else {
-                        // Si no hay carrier seleccionado, limpiar el select de conductores
-                        $('#user_driver_detail_id').empty();
-                        $('#user_driver_detail_id').append('<option value="">Select Driver</option>');
-                    }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching drivers:', error);
+                            if (targetSelect) {
+                                targetSelect.innerHTML = '<option value="">Error loading drivers</option>';
+                            }
+                        });
+                }
+                
+                /**
+                 * Configuración de eventos para cargar conductores al cambiar el carrier
+                 */
+                if (carrierSelect) {
+                    carrierSelect.addEventListener('change', function() {
+                        if (driverSelect) loadDriversByCarrier(this.value, driverSelect);
+                    });
+                }
+                
+                if (editCarrierSelect) {
+                    editCarrierSelect.addEventListener('change', function() {
+                        if (editDriverSelect) loadDriversByCarrier(this.value, editDriverSelect);
+                    });
+                }
+
+                /**
+                 * Configuración de botones de edición
+                 */
+                const editButtons = document.querySelectorAll('.edit-accident');
+                editButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        try {
+                            const accidentData = JSON.parse(this.getAttribute('data-accident'));
+                            if (!accidentData) {
+                                console.error('No accident data found');
+                                return;
+                            }
+                            
+                            // Configurar el formulario de edición
+                            if (editAccidentForm) {
+                                editAccidentForm.action = `/admin/accidents/${accidentData.id}`;
+                                
+                                // Seleccionar el carrier
+                                if (editCarrierSelect && accidentData.user_driver_detail && accidentData.user_driver_detail.carrier) {
+                                    editCarrierSelect.value = accidentData.user_driver_detail.carrier.id;
+                                    
+                                    // Cargar los conductores del carrier seleccionado
+                                    loadDriversByCarrier(accidentData.user_driver_detail.carrier.id, editDriverSelect);
+                                    
+                                    // Programar la selección del conductor después de cargar los conductores
+                                    setTimeout(() => {
+                                        if (editDriverSelect) {
+                                            editDriverSelect.value = accidentData.user_driver_detail_id;
+                                        }
+                                    }, 1000);
+                                }
+                                
+                                // Configurar otros campos
+                                const dateField = document.getElementById('edit_accident_date');
+                                if (dateField) dateField.value = accidentData.accident_date.substring(0, 10);
+                                
+                                const natureField = document.getElementById('edit_nature_of_accident');
+                                if (natureField) natureField.value = accidentData.nature_of_accident;
+                                
+                                const injuriesCheck = document.getElementById('edit_had_injuries');
+                                if (injuriesCheck) {
+                                    injuriesCheck.checked = accidentData.had_injuries;
+                                    if (editInjuriesContainer) {
+                                        editInjuriesContainer.style.display = accidentData.had_injuries ? 'block' : 'none';
+                                    }
+                                }
+                                
+                                const injuriesCount = document.getElementById('edit_number_of_injuries');
+                                if (injuriesCount) injuriesCount.value = accidentData.number_of_injuries || 0;
+                                
+                                const fatalitiesCheck = document.getElementById('edit_had_fatalities');
+                                if (fatalitiesCheck) {
+                                    fatalitiesCheck.checked = accidentData.had_fatalities;
+                                    if (editFatalitiesContainer) {
+                                        editFatalitiesContainer.style.display = accidentData.had_fatalities ? 'block' : 'none';
+                                    }
+                                }
+                                
+                                const fatalitiesCount = document.getElementById('edit_number_of_fatalities');
+                                if (fatalitiesCount) fatalitiesCount.value = accidentData.number_of_fatalities || 0;
+                                
+                                const commentsField = document.getElementById('edit_comments');
+                                if (commentsField) commentsField.value = accidentData.comments || '';
+                                
+                                // Actualizar el enlace para ver documentos
+                                const viewDocsLink = document.getElementById('view_documents_link');
+                                if (viewDocsLink) {
+                                    viewDocsLink.href = `/admin/accidents/${accidentData.id}/documents`;
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Error setting up edit modal:', error);
+                        }
+                    });
                 });
 
-                // Manejar visualización de campos de lesiones y fatalidades
-                $('#had_injuries').on('change', function() {
-                    if ($(this).is(':checked')) {
-                        $('#injuries_container').show();
-                    } else {
-                        $('#injuries_container').hide();
-                    }
-                });
-
-                $('#had_fatalities').on('change', function() {
-                    if ($(this).is(':checked')) {
-                        $('#fatalities_container').show();
-                    } else {
-                        $('#fatalities_container').hide();
-                    }
-                });
-
-                // Configuración del modal de eliminación
+                /**
+                 * Configuración de botones de eliminación
+                 */
                 const deleteButtons = document.querySelectorAll('.delete-accident');
-
                 deleteButtons.forEach(button => {
                     button.addEventListener('click', function() {
                         const accidentId = this.getAttribute('data-accident-id');
-                        document.getElementById('delete_accident_form').action =
-                            `/admin/accidents/${accidentId}`;
+                        const deleteForm = document.getElementById('delete_accident_form');
+                        if (deleteForm && accidentId) {
+                            deleteForm.action = `/admin/accidents/${accidentId}`;
+                        }
                     });
                 });
             });

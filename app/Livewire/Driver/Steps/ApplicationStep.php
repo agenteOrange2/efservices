@@ -168,8 +168,8 @@ class ApplicationStep extends Component
     public function mount($driverId = null)
     {
         $this->driverId = $driverId;
-
-        if ($this->driverId) {
+        
+        if ($driverId) {
             $this->loadExistingData();
             $this->loadExistingVehicles();
         } else {
@@ -743,10 +743,11 @@ class ApplicationStep extends Component
         // Move to next step
         $this->dispatch('nextStep');
     }
-
+    
     // Previous step
     public function previous()
     {
+        $this->saveApplicationDetails();
         // Basic save before going back
         if ($this->driverId) {
             $this->validate($this->partialRules());
@@ -756,6 +757,8 @@ class ApplicationStep extends Component
         $this->dispatch('prevStep');
     }
 
+
+    
     // Save and exit
     public function saveAndExit()
     {
