@@ -4,11 +4,11 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ThemeController;
-use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CarrierController;
 use App\Http\Controllers\Admin\DriversController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MembershipController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\TempUploadController;
@@ -19,7 +19,6 @@ use App\Http\Controllers\Admin\NotificationsController;
 use App\Http\Controllers\Admin\CarrierDocumentController;
 use App\Http\Controllers\Admin\Driver\TestingsController;
 use App\Http\Controllers\Admin\Driver\AccidentsController;
-use App\Http\Controllers\Admin\Driver\TrafficConvictionsController;
 use App\Http\Controllers\Admin\Vehicles\VehicleController;
 use App\Http\Controllers\Admin\Driver\DriverListController;
 use App\Http\Controllers\Admin\Driver\InspectionsController;
@@ -29,8 +28,10 @@ use App\Http\Controllers\Admin\Vehicles\VehicleMakeController;
 use App\Http\Controllers\Admin\Vehicles\VehicleTypeController;
 use App\Http\Controllers\Admin\Driver\DriverRecruitmentController;
 use App\Http\Controllers\Admin\Vehicles\VehicleDocumentController;
+use App\Http\Controllers\Admin\Driver\TrafficConvictionsController;
 use App\Http\Controllers\Admin\Vehicles\VehicleServiceItemController;
 use App\Http\Controllers\Admin\Vehicles\MaintenanceNotificationController;
+use App\Http\Controllers\FileUploaderController;
 
 
 Route::get('theme-switcher/{activeTheme}', [ThemeController::class, 'switch'])->name('theme-switcher');
@@ -53,6 +54,28 @@ Route::post('/dashboard/ajax-update', [DashboardController::class, 'ajaxUpdate']
 
 // API para obtener conductores activos por carrier (para Ajax)
 Route::get('/api/drivers/by-carrier/{carrier}', [AccidentsController::class, 'getDriversByCarrier'])->name('api.drivers.by-carrier');
+
+// Rutas para gestión de documentos de accidentes
+Route::prefix('accidents')->name('accidents.')->group(function () {
+    Route::post('{accident}/documents', [AccidentsController::class, 'storeDocuments'])->name('documents.store');
+    Route::delete('documents/{media}', [AccidentsController::class, 'destroyDocument'])->name('documents.destroy');
+    Route::get('documents/{media}/preview', [AccidentsController::class, 'previewDocument'])->name('document.preview');
+});
+
+// Rutas para gestión de documentos de infracciones de tráfico
+Route::prefix('traffic')->name('traffic.')->group(function () {
+    Route::post('{conviction}/documents', [TrafficConvictionsController::class, 'storeDocuments'])->name('documents.store');
+    Route::delete('documents/{media}', [TrafficConvictionsController::class, 'destroyDocument'])->name('documents.destroy');
+    Route::get('documents/{media}/preview', [TrafficConvictionsController::class, 'previewDocument'])->name('documents.preview');
+});
+
+// Rutas para gestión de documentos de pruebas de conductores
+Route::prefix('testings')->name('testings.')->group(function () {
+    Route::get('{testing}/documents', [TestingsController::class, 'documents'])->name('documents');
+    Route::post('{testing}/documents', [TestingsController::class, 'storeDocuments'])->name('documents.store');
+    Route::delete('documents/{media}', [TestingsController::class, 'destroyDocument'])->name('documents.destroy');
+    Route::get('documents/{media}/preview', [TestingsController::class, 'previewDocument'])->name('documents.preview');
+});
 
 Route::prefix('maintenance-notifications')->name('maintenance-notifications.')->group(function () {
     Route::post('/send-test', [MaintenanceNotificationController::class, 'sendTestNotification'])->name('send-test');
@@ -234,7 +257,22 @@ Route::post('carrier/{carrier}/drivers/autosave/{userDriverDetail?}', [
 
 Route::post('/temp-upload', [TempUploadController::class, 'upload'])->name('temp.upload');
 
+/*
+|--------------------------------------------------------------------------
+| RUTAS PARA COMPONENTE DE SUBIDA DE ARCHIVOS
+|--------------------------------------------------------------------------
+*/
 
+Route::prefix('file-uploader')->name('file-uploader.')->group(function () {
+    // Ruta para subir documentos
+    Route::post('/upload', [\App\Http\Controllers\Admin\FileUploaderController::class, 'upload'])->name('upload');
+    
+    // Ruta para eliminar documentos
+    Route::delete('/document/{mediaId}', [\App\Http\Controllers\Admin\FileUploaderController::class, 'destroy'])->name('destroy');
+    
+    // Ruta para previsualizar documentos
+    Route::get('/preview/{mediaId}', [\App\Http\Controllers\Admin\FileUploaderController::class, 'preview'])->name('preview');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -315,14 +353,17 @@ Route::prefix('drivers')->name('drivers.')->group(function () {
 // Rutas para accidentes
 Route::prefix('accidents')->name('accidents.')->group(function () {
     Route::get('/', [AccidentsController::class, 'index'])->name('index');
+    Route::get('/create', [AccidentsController::class, 'create'])->name('create');
     Route::post('/', [AccidentsController::class, 'store'])->name('store');
+    Route::get('/{accident}/edit', [AccidentsController::class, 'edit'])->name('edit');
     Route::put('/{accident}', [AccidentsController::class, 'update'])->name('update');
     Route::delete('/{accident}', [AccidentsController::class, 'destroy'])->name('destroy');
-    Route::get('/{accident}/documents', [AccidentsController::class, 'showDocuments'])->name('documents');
-    Route::post('/{accident}/documents', [AccidentsController::class, 'storeDocuments'])->name('documents.store');
-    Route::delete('/documents/{media}', [AccidentsController::class, 'destroyDocument'])->name('documents.destroy');
-    // Nueva ruta para previsualizar documentos
-    Route::get('/document/{documentId}/preview', [AccidentsController::class, 'previewDocument'])->name('document.preview');
+
+    // Accidentes - Documentos
+    Route::get('accidents/{accident}/documents', [AccidentsController::class, 'showDocuments'])->name('admin.accidents.documents');
+    Route::post('accidents/{accident}/documents', [AccidentsController::class, 'storeDocuments'])->name('admin.accidents.documents.store');
+    Route::delete('accidents/documents/{media}', [AccidentsController::class, 'deleteDocumentDirectly'])->name('admin.accidents.documents.destroy');
+    Route::get('accidents/document/{documentId}/preview', [AccidentsController::class, 'previewDocument'])->name('admin.accidents.document.preview');
     // Obtener conductores por transportista (ruta legacy para compatibilidad)
     Route::get('/carriers/{carrier}/drivers', [AccidentsController::class, 'getDriversByCarrier'])->name('drivers.by.carrier');
 });

@@ -124,25 +124,31 @@
                         </div>
                         <div class="col-span-1 md:col-span-2">
                             @php
-                                $existingFiles = $conviction->getMedia('traffic-tickets')->map(function($media) {
-                                    return [
-                                        'id' => $media->id,
-                                        'name' => $media->file_name,
-                                        'file_name' => $media->file_name,
-                                        'mime_type' => $media->mime_type,
-                                        'size' => $media->size,
-                                        'url' => $media->getUrl(),
-                                        'created_at' => $media->created_at->toDateTimeString()
-                                    ];
-                                })->toArray();
+                            // Prepara los archivos existentes para el componente Livewire
+                            $existingFilesArray = [];
+                            $documents = $conviction->getMedia('traffic-tickets');
+                            foreach($documents as $document) {
+                                $existingFilesArray[] = [
+                                    'id' => $document->id,
+                                    'name' => $document->file_name,
+                                    'file_name' => $document->file_name,
+                                    'mime_type' => $document->mime_type,
+                                    'size' => $document->size,
+                                    'created_at' => $document->created_at->format('Y-m-d H:i:s'),
+                                    'url' => $document->getUrl(),
+                                    'is_temp' => false
+                                ];
+                            }
                             @endphp
 
                             <livewire:components.file-uploader
                                 model-name="traffic_files"
-                                :model-index="$conviction->id"
+                                :model-index="0"
                                 :label="'Upload Documents'"
-                                :existing-files="$existingFiles"
+                                :existing-files="$existingFilesArray"
                             />
+                            <!-- Campo oculto para almacenar los archivos subidos -->
+                            <input type="hidden" name="traffic_files" id="traffic_files_input">
                         </div>
                     </div>
 
@@ -162,6 +168,61 @@
 
     @push('scripts')
         <script>
+            // Inicializar el array para almacenar los archivos
+            let uploadedFiles = [];
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                const trafficFilesInput = document.getElementById('traffic_files_input');
+                
+                // Escuchar eventos del componente Livewire
+                window.addEventListener('livewire:initialized', () => {
+                    // Escuchar el evento fileUploaded del componente Livewire
+                    Livewire.on('fileUploaded', (eventData) => {
+                        console.log('Archivo subido:', eventData);
+                        // Extraer los datos del evento
+                        const data = eventData[0]; // Los datos vienen como primer elemento del array
+                        
+                        if (data.modelName === 'traffic_files') {
+                            // Añadir el archivo al array de archivos
+                            uploadedFiles.push({
+                                path: data.tempPath,
+                                original_name: data.originalName,
+                                mime_type: data.mimeType,
+                                size: data.size
+                            });
+                            
+                            // Actualizar el campo oculto con el nuevo array
+                            trafficFilesInput.value = JSON.stringify(uploadedFiles);
+                            console.log('Archivos actualizados:', trafficFilesInput.value);
+                        }
+                    });
+                    
+                    // Escuchar el evento fileRemoved del componente Livewire
+                    Livewire.on('fileRemoved', (eventData) => {
+                        console.log('Archivo eliminado:', eventData);
+                        // Extraer los datos del evento
+                        const data = eventData[0]; // Los datos vienen como primer elemento del array
+                        
+                        if (data.modelName === 'traffic_files') {
+                            // Eliminar el archivo del array
+                            const fileId = data.fileId;
+                            uploadedFiles = uploadedFiles.filter((file, index) => {
+                                // Para archivos temporales, el ID contiene un timestamp
+                                if (fileId.startsWith('temp_') && index === uploadedFiles.length - 1) {
+                                    // Eliminar el último archivo añadido si es temporal
+                                    return false;
+                                }
+                                return true;
+                            });
+                            
+                            // Actualizar el campo oculto con el nuevo array
+                            trafficFilesInput.value = JSON.stringify(uploadedFiles);
+                            console.log('Archivos actualizados después de eliminar:', trafficFilesInput.value);
+                        }
+                    });
+                });
+            });
+            
             // Función para cargar conductores cuando cambia el carrier
             function updateDrivers(carrierId) {
                 const driverSelect = document.getElementById('user_driver_detail_id');

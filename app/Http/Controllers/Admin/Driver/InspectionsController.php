@@ -9,6 +9,8 @@ use App\Models\Admin\Vehicle\Vehicle;
 use App\Models\Carrier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class InspectionsController extends Controller
 {
@@ -136,151 +138,222 @@ class InspectionsController extends Controller
     // Método para almacenar una nueva inspección
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'user_driver_detail_id' => 'required|exists:user_driver_details,id',
-            'vehicle_id' => 'nullable|exists:vehicles,id',
-            'inspection_date' => 'required|date',
-            'inspection_type' => 'required|string|max:255',
-            'inspector_name' => 'required|string|max:255',
-            'location' => 'nullable|string|max:255',
-            'status' => 'required|string|max:255',
-            'defects_found' => 'nullable|string',
-            'corrective_actions' => 'nullable|string',
-            'is_defects_corrected' => 'boolean',
-            'defects_corrected_date' => 'nullable|date',
-            'corrected_by' => 'nullable|string|max:255',
-            'is_vehicle_safe_to_operate' => 'boolean',
-            'notes' => 'nullable|string',
-        ]);
+        // Inicio de la transacción
+        DB::beginTransaction();
+        
+        try {
+            $validated = $request->validate([
+                'user_driver_detail_id' => 'required|exists:user_driver_details,id',
+                'vehicle_id' => 'nullable|exists:vehicles,id',
+                'inspection_date' => 'required|date',
+                'inspection_type' => 'required|string|max:255',
+                'location' => 'nullable|string|max:255',
+                'status' => 'required|string|max:255',
+                'inspector_name' => 'nullable|string|max:255',
+                'violations_found' => 'boolean',
+                'defect_details' => 'nullable|string',
+                'corrective_actions' => 'nullable|string',
+                'repair_completed' => 'boolean',
+                'repair_date' => 'nullable|date',
+                'notes' => 'nullable|string',
+            ]);
 
-        // Convertir checkboxes a valores booleanos
-        $validated['is_defects_corrected'] = isset($request->is_defects_corrected);
-        $validated['is_vehicle_safe_to_operate'] = isset($request->is_vehicle_safe_to_operate);
+            // Manejar campos booleanos
+            $validated['violations_found'] = isset($request->violations_found);
+            $validated['repair_completed'] = isset($request->repair_completed);
 
-        // Si hay defectos corregidos, pero no hay fecha, usar la fecha actual
-        if ($validated['is_defects_corrected'] && empty($validated['defects_corrected_date'])) {
-            $validated['defects_corrected_date'] = now();
-        }
-
-        // Si no hay defectos corregidos, eliminar fecha y responsable
-        if (!$validated['is_defects_corrected']) {
-            $validated['defects_corrected_date'] = null;
-            $validated['corrected_by'] = null;
-        }
-
-        $inspection = DriverInspection::create($validated);
-
-        // Procesar archivos adjuntos si están presentes
-        if ($request->hasFile('inspection_reports')) {
-            foreach ($request->file('inspection_reports') as $file) {
-                $inspection->addMedia($file)
-                    ->usingName($file->getClientOriginalName())
-                    ->usingFileName($file->getClientOriginalName())
-                    ->toMediaCollection('inspection_reports');
+            $inspection = DriverInspection::create($validated);
+            
+            // Procesar archivos subidos vía Livewire
+            $filesUploaded = 0;
+            
+            // Procesar archivos de inspección
+            $inspectionFiles = $request->get('inspection_files');
+            if (!empty($inspectionFiles)) {
+                $filesUploaded += $this->processLivewireFiles($inspection, $inspectionFiles, 'inspection_reports');
             }
-        }
-
-        if ($request->hasFile('defect_photos')) {
-            foreach ($request->file('defect_photos') as $file) {
-                $inspection->addMedia($file)
-                    ->usingName($file->getClientOriginalName())
-                    ->usingFileName($file->getClientOriginalName())
-                    ->toMediaCollection('defect_photos');
+            
+            // Procesar fotos de defectos
+            $defectFiles = $request->get('defect_files');
+            if (!empty($defectFiles)) {
+                $filesUploaded += $this->processLivewireFiles($inspection, $defectFiles, 'defect_photos');
             }
-        }
-
-        if ($request->hasFile('repair_documents')) {
-            foreach ($request->file('repair_documents') as $file) {
-                $inspection->addMedia($file)
-                    ->usingName($file->getClientOriginalName())
-                    ->usingFileName($file->getClientOriginalName())
-                    ->toMediaCollection('repair_documents');
+            
+            // Procesar documentos de reparación
+            $repairFiles = $request->get('repair_files');
+            if (!empty($repairFiles)) {
+                $filesUploaded += $this->processLivewireFiles($inspection, $repairFiles, 'repair_documents');
             }
+            
+            // También procesar archivos subidos de forma tradicional si existen
+            if ($request->hasFile('inspection_reports')) {
+                foreach ($request->file('inspection_reports') as $file) {
+                    $inspection->addMedia($file)
+                        ->usingName($file->getClientOriginalName())
+                        ->usingFileName($file->getClientOriginalName())
+                        ->toMediaCollection('inspection_reports');
+                    $filesUploaded++;
+                }
+            }
+
+            if ($request->hasFile('defect_photos')) {
+                foreach ($request->file('defect_photos') as $file) {
+                    $inspection->addMedia($file)
+                        ->usingName($file->getClientOriginalName())
+                        ->usingFileName($file->getClientOriginalName())
+                        ->toMediaCollection('defect_photos');
+                    $filesUploaded++;
+                }
+            }
+
+            if ($request->hasFile('repair_documents')) {
+                foreach ($request->file('repair_documents') as $file) {
+                    $inspection->addMedia($file)
+                        ->usingName($file->getClientOriginalName())
+                        ->usingFileName($file->getClientOriginalName())
+                        ->toMediaCollection('repair_documents');
+                    $filesUploaded++;
+                }
+            }
+            
+            DB::commit();
+            
+            if ($filesUploaded > 0) {
+                Session::flash('success', "Inspection created successfully with $filesUploaded documents!");
+            } else {
+                Session::flash('success', 'Inspection created successfully!');
+            }
+
+            // Redirigir a la página apropiada
+            if ($request->has('redirect_to_driver')) {
+                return redirect()->route('admin.drivers.inspection-history', $inspection->user_driver_detail_id);
+            }
+
+            return redirect()->route('admin.inspections.index');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Error creating inspection: ' . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()
+                ->withInput()
+                ->with('error', 'Error creating inspection: ' . $e->getMessage());
         }
-
-        Session::flash('success', 'Inspection record added successfully!');
-
-        // Redirigir a la página apropiada
-        if ($request->has('redirect_to_driver')) {
-            return redirect()->route('admin.drivers.inspection-history', $validated['user_driver_detail_id']);
-        }
-
-        return redirect()->route('admin.inspections.index');
     }
 
     // Método para actualizar una inspección existente
     public function update(DriverInspection $inspection, Request $request)
     {
-        $validated = $request->validate([
-            'user_driver_detail_id' => 'required|exists:user_driver_details,id',
-            'vehicle_id' => 'nullable|exists:vehicles,id',
-            'inspection_date' => 'required|date',
-            'inspection_type' => 'required|string|max:255',
-            'inspector_name' => 'required|string|max:255',
-            'location' => 'nullable|string|max:255',
-            'status' => 'required|string|max:255',
-            'defects_found' => 'nullable|string',
-            'corrective_actions' => 'nullable|string',
-            'is_defects_corrected' => 'boolean',
-            'defects_corrected_date' => 'nullable|date',
-            'corrected_by' => 'nullable|string|max:255',
-            'is_vehicle_safe_to_operate' => 'boolean',
-            'notes' => 'nullable|string',
-        ]);
+        // Inicio de la transacción
+        DB::beginTransaction();
+        
+        try {
+            $validated = $request->validate([
+                'user_driver_detail_id' => 'required|exists:user_driver_details,id',
+                'vehicle_id' => 'nullable|exists:vehicles,id',
+                'inspection_date' => 'required|date',
+                'inspection_type' => 'required|string|max:255',
+                'location' => 'nullable|string|max:255',
+                'status' => 'required|string|max:255',
+                'inspector_name' => 'nullable|string|max:255',
+                'violations_found' => 'boolean',
+                'defect_details' => 'nullable|string',
+                'corrective_actions' => 'nullable|string',
+                'repair_completed' => 'boolean',
+                'repair_date' => 'nullable|date',
+                'notes' => 'nullable|string',
+            ]);
 
-        // Convertir checkboxes a valores booleanos
-        $validated['is_defects_corrected'] = isset($request->is_defects_corrected);
-        $validated['is_vehicle_safe_to_operate'] = isset($request->is_vehicle_safe_to_operate);
+            // Manejar campos booleanos
+            $validated['violations_found'] = isset($request->violations_found);
+            $validated['repair_completed'] = isset($request->repair_completed);
 
-        // Si hay defectos corregidos, pero no hay fecha, usar la fecha actual
-        if ($validated['is_defects_corrected'] && empty($validated['defects_corrected_date'])) {
-            $validated['defects_corrected_date'] = now();
-        }
-
-        // Si no hay defectos corregidos, eliminar fecha y responsable
-        if (!$validated['is_defects_corrected']) {
-            $validated['defects_corrected_date'] = null;
-            $validated['corrected_by'] = null;
-        }
-
-        $inspection->update($validated);
-
-        // Procesar archivos adjuntos si están presentes
-        if ($request->hasFile('inspection_reports')) {
-            foreach ($request->file('inspection_reports') as $file) {
-                $inspection->addMedia($file)
-                    ->usingName($file->getClientOriginalName())
-                    ->usingFileName($file->getClientOriginalName())
-                    ->toMediaCollection('inspection_reports');
+            $inspection->update($validated);
+            
+            // Procesar archivos subidos vía Livewire
+            $filesUploaded = 0;
+            
+            // Procesar archivos de inspección
+            $inspectionFiles = $request->get('inspection_files');
+            if (!empty($inspectionFiles)) {
+                $filesUploaded += $this->processLivewireFiles($inspection, $inspectionFiles, 'inspection_reports');
             }
-        }
-
-        if ($request->hasFile('defect_photos')) {
-            foreach ($request->file('defect_photos') as $file) {
-                $inspection->addMedia($file)
-                    ->usingName($file->getClientOriginalName())
-                    ->usingFileName($file->getClientOriginalName())
-                    ->toMediaCollection('defect_photos');
+            
+            // Procesar fotos de defectos
+            $defectFiles = $request->get('defect_files');
+            if (!empty($defectFiles)) {
+                $filesUploaded += $this->processLivewireFiles($inspection, $defectFiles, 'defect_photos');
             }
-        }
-
-        if ($request->hasFile('repair_documents')) {
-            foreach ($request->file('repair_documents') as $file) {
-                $inspection->addMedia($file)
-                    ->usingName($file->getClientOriginalName())
-                    ->usingFileName($file->getClientOriginalName())
-                    ->toMediaCollection('repair_documents');
+            
+            // Procesar documentos de reparación
+            $repairFiles = $request->get('repair_files');
+            if (!empty($repairFiles)) {
+                $filesUploaded += $this->processLivewireFiles($inspection, $repairFiles, 'repair_documents');
             }
+
+            // También procesar archivos subidos de forma tradicional si existen
+            if ($request->hasFile('inspection_reports')) {
+                foreach ($request->file('inspection_reports') as $file) {
+                    $inspection->addMedia($file)
+                        ->usingName($file->getClientOriginalName())
+                        ->usingFileName($file->getClientOriginalName())
+                        ->toMediaCollection('inspection_reports');
+                    $filesUploaded++;
+                }
+            }
+
+            if ($request->hasFile('defect_photos')) {
+                foreach ($request->file('defect_photos') as $file) {
+                    $inspection->addMedia($file)
+                        ->usingName($file->getClientOriginalName())
+                        ->usingFileName($file->getClientOriginalName())
+                        ->toMediaCollection('defect_photos');
+                    $filesUploaded++;
+                }
+            }
+
+            if ($request->hasFile('repair_documents')) {
+                foreach ($request->file('repair_documents') as $file) {
+                    $inspection->addMedia($file)
+                        ->usingName($file->getClientOriginalName())
+                        ->usingFileName($file->getClientOriginalName())
+                        ->toMediaCollection('repair_documents');
+                    $filesUploaded++;
+                }
+            }
+            
+            DB::commit();
+            
+            if ($filesUploaded > 0) {
+                Session::flash('success', "Inspection updated successfully with $filesUploaded new documents!");
+            } else {
+                Session::flash('success', 'Inspection record updated successfully!');
+            }
+
+            // Redirigir a la página apropiada
+            if ($request->has('redirect_to_driver')) {
+                return redirect()->route('admin.drivers.inspection-history', $inspection->user_driver_detail_id);
+            }
+
+            return redirect()->route('admin.inspections.index');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Error updating inspection: ' . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'inspection_id' => $inspection->id
+            ]);
+            
+            return back()
+                ->withInput()
+                ->with('error', 'Error updating inspection: ' . $e->getMessage());
         }
-
-        Session::flash('success', 'Inspection record updated successfully!');
-
-        // Redirigir a la página apropiada
-        if ($request->has('redirect_to_driver')) {
-            return redirect()->route('admin.drivers.inspection-history', $inspection->user_driver_detail_id);
-        }
-
-        return redirect()->route('admin.inspections.index');
     }
 
 
@@ -354,5 +427,76 @@ class InspectionsController extends Controller
             ->get();
 
         return response()->json($drivers);
+    }
+    
+    /**
+     * Método privado para procesar archivos subidos vía Livewire
+     * 
+     * @param DriverInspection $inspection Inspección a la que asociar los archivos
+     * @param string $filesJson Datos de los archivos en formato JSON
+     * @param string $collection Nombre de la colección donde guardar los archivos
+     * @return int Número de archivos procesados correctamente
+     */
+    private function processLivewireFiles(DriverInspection $inspection, $filesJson, $collection)
+    {
+        $uploadedCount = 0;
+        
+        try {
+            $filesArray = json_decode($filesJson, true);
+            
+            if (is_array($filesArray)) {
+                foreach ($filesArray as $file) {
+                    if (empty($file['path'])) {
+                        continue;
+                    }
+                    
+                    // Obtener la ruta completa del archivo
+                    $filePath = $file['path'];
+                    $fullPath = storage_path('app/' . $filePath);
+                    
+                    // Verificar si el archivo existe físicamente
+                    if (!file_exists($fullPath)) {
+                        Log::error('Archivo no encontrado', [
+                            'path' => $filePath,
+                            'full_path' => $fullPath,
+                            'inspection_id' => $inspection->id
+                        ]);
+                        continue;
+                    }
+                    
+                    $driverId = $inspection->userDriverDetail->id;
+                    
+                    // Usar addMedia directamente desde la ruta del archivo
+                    $media = $inspection->addMedia($fullPath)
+                        ->usingName($file['original_name'] ?? 'document')
+                        ->usingFileName($file['original_name'] ?? 'document')
+                        ->withCustomProperties([
+                            'original_filename' => $file['original_name'] ?? 'document',
+                            'mime_type' => $file['mime_type'] ?? 'application/octet-stream',
+                            'inspection_id' => $inspection->id,
+                            'driver_id' => $driverId,
+                            'size' => $file['size'] ?? 0
+                        ])
+                        ->toMediaCollection($collection);
+                    
+                    $uploadedCount++;
+                    
+                    Log::info('Documento subido correctamente a ' . $collection, [
+                        'inspection_id' => $inspection->id,
+                        'media_id' => $media->id,
+                        'file_name' => $media->file_name
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error al procesar documentos vía Livewire', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'inspection_id' => $inspection->id,
+                'collection' => $collection
+            ]);
+        }
+        
+        return $uploadedCount;
     }
 }

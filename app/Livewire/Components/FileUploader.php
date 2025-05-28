@@ -86,9 +86,18 @@ class FileUploader extends Component
             // Agregar el archivo a la lista de archivos existentes para mostrar inmediatamente
             $this->existingFiles[] = $previewData;
             
+            // Registrar información para depuración
+            Log::info('Archivo cargado en FileUploader', [
+                'file_name' => $file->getClientOriginalName(),
+                'temp_path' => $tempPath,
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize(),
+                'model_name' => $this->modelName
+            ]);
+            
             // Emitir evento al componente padre con el archivo cargado
             $this->dispatch('fileUploaded', [
-                'file' => $file,
+                'file' => null, // No enviamos el objeto completo por seguridad
                 'tempPath' => $tempPath,
                 'originalName' => $file->getClientOriginalName(),
                 'mimeType' => $file->getMimeType(),
