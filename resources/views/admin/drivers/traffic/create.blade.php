@@ -118,6 +118,8 @@
                                 :model-index="0"
                                 :label="'Upload Documents'"
                             />
+                            <!-- Campo oculto para almacenar los archivos subidos -->
+                            <input type="hidden" name="traffic_files" id="traffic_files_input">
                         </div>
                     </div>
                     <div class="flex justify-end mt-5">
@@ -137,7 +139,59 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Los selectores ya deberían estar inicializados por Tom Select a través de app.js
-
+            
+            // Inicializar el array para almacenar los archivos
+            let uploadedFiles = [];
+            const trafficFilesInput = document.getElementById('traffic_files_input');
+            
+            // Escuchar eventos del componente Livewire
+            window.addEventListener('livewire:initialized', () => {
+                // Escuchar el evento fileUploaded del componente Livewire
+                Livewire.on('fileUploaded', (eventData) => {
+                    console.log('Archivo subido:', eventData);
+                    // Extraer los datos del evento
+                    const data = eventData[0]; // Los datos vienen como primer elemento del array
+                    
+                    if (data.modelName === 'traffic_files') {
+                        // Añadir el archivo al array de archivos
+                        uploadedFiles.push({
+                            path: data.tempPath,
+                            original_name: data.originalName,
+                            mime_type: data.mimeType,
+                            size: data.size
+                        });
+                        
+                        // Actualizar el campo oculto con el nuevo array
+                        trafficFilesInput.value = JSON.stringify(uploadedFiles);
+                        console.log('Archivos actualizados:', trafficFilesInput.value);
+                    }
+                });
+                
+                // Escuchar el evento fileRemoved del componente Livewire
+                Livewire.on('fileRemoved', (eventData) => {
+                    console.log('Archivo eliminado:', eventData);
+                    // Extraer los datos del evento
+                    const data = eventData[0]; // Los datos vienen como primer elemento del array
+                    
+                    if (data.modelName === 'traffic_files') {
+                        // Eliminar el archivo del array
+                        const fileId = data.fileId;
+                        uploadedFiles = uploadedFiles.filter((file, index) => {
+                            // Para archivos temporales, el ID contiene un timestamp
+                            if (fileId.startsWith('temp_') && index === uploadedFiles.length - 1) {
+                                // Eliminar el último archivo añadido si es temporal
+                                return false;
+                            }
+                            return true;
+                        });
+                        
+                        // Actualizar el campo oculto con el nuevo array
+                        trafficFilesInput.value = JSON.stringify(uploadedFiles);
+                        console.log('Archivos actualizados después de eliminar:', trafficFilesInput.value);
+                    }
+                });
+            });
+            
             // Manejar cambio de carrier para filtrar conductores
             document.getElementById('carrier').addEventListener('change', function() {
                 const carrierId = this.value;

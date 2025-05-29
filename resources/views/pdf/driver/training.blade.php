@@ -140,12 +140,15 @@
                             <td style="width: 50%"><strong>Subject to Safety Regulations?</strong><br>{{ $school->subject_to_safety_regulations ? 'Yes' : 'No' }}</td>
                             <td style="width: 50%"><strong>Performed Safety Functions?</strong><br>{{ $school->performed_safety_functions ? 'Yes' : 'No' }}</td>
                         </tr>
-                        @if($school->training_skills && count($school->training_skills) > 0)
+                        @php
+                            $skills = is_string($school->training_skills) ? json_decode($school->training_skills) : $school->training_skills;
+                        @endphp
+                        @if($skills && is_array($skills) && count($skills) > 0)
                             <tr>
                                 <td colspan="2">
                                     <strong>Training Skills</strong><br>
                                     <ul>
-                                        @foreach($school->training_skills as $skill)
+                                        @foreach($skills as $skill)
                                             <li>{{ $skill }}</li>
                                         @endforeach
                                     </ul>

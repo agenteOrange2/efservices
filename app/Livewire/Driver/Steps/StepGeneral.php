@@ -455,16 +455,20 @@ class StepGeneral extends Component
                     }
                 }
 
+                // Restablecer el driverId y despachar evento
                 $this->driverId = $driver->id;
 
-                // Emitir evento de driver creado al componente padre
-                $this->dispatch('driverCreated', $driver->id);
+                // Autenticar al usuario inmediatamente después de crearlo
+                \Illuminate\Support\Facades\Auth::login($user);
 
-                Log::info('Nuevo driver creado', [
+                Log::info('Usuario driver autenticado automáticamente', [
                     'driver_id' => $driver->id,
                     'user_id' => $user->id,
                     'carrier_id' => $carrierId
                 ]);
+
+                // Emitir evento de driver creado al componente padre
+                $this->dispatch('driverCreated', $driver->id);
 
                 // Después de crear el driver y la aplicación, enviar email con credenciales
                 $this->sendCredentialsEmail($user);

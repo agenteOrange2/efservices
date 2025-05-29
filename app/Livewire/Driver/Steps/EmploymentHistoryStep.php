@@ -634,13 +634,24 @@ class EmploymentHistoryStep extends Component
 
         // Close the form and recalculate history
         $this->showCompanyForm = false;
-        $this->resetCompanyForm();
+        $this->companySearchTerm = '';
+        $this->searchResults = [];
+        
+        // Recalcular los años de historial
         $this->calculateYearsOfHistory();
+        
+        // Guardar los datos en la base de datos
+        if ($this->driverId) {
+            $this->saveEmploymentHistoryData();
+        }
     }
 
     // Open search company modal
     public function openSearchCompanyModal()
     {
+        // Cerrar el formulario de empresa si está abierto
+        $this->showCompanyForm = false;
+        // Abrir el modal de búsqueda
         $this->showSearchCompanyModal = true;
         $this->searchCompanies();
     }

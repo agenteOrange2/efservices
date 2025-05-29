@@ -73,9 +73,15 @@ class DriverRegistrationManager extends Component
         if ($this->currentStep < $this->totalSteps) {
             $this->currentStep++;
 
-
             if ($this->driverId) {
+                // Actualizar el paso actual en la base de datos
                 $this->updateCurrentStep($this->currentStep);
+                
+                // Si es después del paso 1 y el usuario está autenticado, redirigir a la URL de continuación
+                if ($this->currentStep > 1) {
+                    // Redirigir a la URL de continuación
+                    return redirect()->route('driver.registration.continue', $this->currentStep);
+                }
             }
         }
     }
@@ -99,6 +105,11 @@ class DriverRegistrationManager extends Component
     {
         if ($this->currentStep > 1) {
             $this->currentStep--;
+            
+            // Si el usuario está autenticado (tiene driverId), actualizar la URL
+            if ($this->driverId) {
+                return redirect()->route('driver.registration.continue', $this->currentStep);
+            }
         }
     }
     
@@ -107,6 +118,10 @@ class DriverRegistrationManager extends Component
     {
         $this->driverId = $driverId;
         $this->userDriverDetail = UserDriverDetail::find($driverId);
+        
+        // Redirigir a la URL de continuación después de crear el driver
+        // Usamos 2 porque estamos avanzando al paso 2 (después de completar el paso 1)
+        return redirect()->route('driver.registration.continue', 2);
     }
     
     // Manejar guardar y salir desde cualquier paso

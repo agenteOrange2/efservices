@@ -2,7 +2,7 @@
 namespace App\Livewire\Driver\Steps;
 
 use Livewire\Component;
-use Barryvdh\DomPDF\Facade\PDF;
+use Illuminate\Support\Facades\App;
 use App\Models\UserDriverDetail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -322,7 +322,7 @@ class CertificationStep extends Component
         // Generar PDF para cada paso
         foreach ($steps as $step) {
             try {
-                $pdf = PDF::loadView($step['view'], [
+                $pdf = App::make('dompdf.wrapper')->loadView($step['view'], [
                     'userDriverDetail' => $userDriverDetail,
                     'signaturePath' => $signaturePath, // Usamos la ruta del archivo, no base64
                     'title' => $step['title'],
@@ -493,7 +493,7 @@ class CertificationStep extends Component
                 ]);
                 
                 // Cargar la vista del contrato de arrendamiento para propietarios-operadores
-                $pdf = PDF::loadView('pdfs.lease-agreement-owner', $data);
+                $pdf = App::make('dompdf.wrapper')->loadView('pdfs.lease-agreement-owner', $data);
                 
                 // Asegurarnos de que estamos usando el ID correcto
                 $driverId = $userDriverDetail->id;
@@ -575,7 +575,7 @@ class CertificationStep extends Component
     private function generateCombinedPDF(UserDriverDetail $userDriverDetail, $signatureImage)
     {
         try {
-            $pdf = PDF::loadView('pdf.driver.complete_application', [
+            $pdf = App::make('dompdf.wrapper')->loadView('pdf.driver.complete_application', [
                 'userDriverDetail' => $userDriverDetail,
                 'signature' => $signatureImage,
                 'date' => now()->format('m/d/Y')

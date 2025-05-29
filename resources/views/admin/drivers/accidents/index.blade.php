@@ -23,7 +23,7 @@
                 Driver Accidents Management
             </h2>
             <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
-                <x-base.button data-tw-toggle="modal" data-tw-target="#add-accident-modal" variant="primary"
+                <x-base.button as="a" href="{{ route('admin.accidents.create') }}" variant="primary"
                     class="flex items-center">
                     <x-base.lucide class="w-4 h-4 mr-2" icon="plus" />
                     Add Accident
@@ -123,6 +123,7 @@
                                 <th scope="col" class="px-6 py-3">Carrier</th>
                                 <th scope="col" class="px-6 py-3">Driver</th>
                                 <th scope="col" class="px-6 py-3">Nature of Accident</th>
+                                <th scope="col" class="px-6 py-3">Registration Date</th>
                                 <th scope="col" class="px-6 py-3">Injuries</th>
                                 <th scope="col" class="px-6 py-3">Fatalities</th>
                                 <th scope="col" class="px-6 py-3 text-center">Actions</th>
@@ -138,6 +139,7 @@
                                         {{ $accident->userDriverDetail->last_name }}
                                     </td>
                                     <td class="px-6 py-4">{{ $accident->nature_of_accident }}</td>
+                                    <td class="whitespace-nowrap px-6 py-4">{{ $accident->created_at->format('m/d/Y') }}</td>
                                     <td class="px-6 py-4">
                                         @if ($accident->had_injuries)
                                             <span class="text-success">Yes ({{ $accident->number_of_injuries }})</span>
@@ -154,11 +156,10 @@
                                     </td>
                                     <td class="px-6 py-4 text-center">
                                         <div class="flex justify-center items-center">
-                                            <x-base.button data-tw-toggle="modal" data-tw-target="#edit-accident-modal"
-                                                variant="primary" class="mr-2 p-1 edit-accident"
-                                                data-accident="{{ json_encode($accident) }}">
+                                            <a href="{{ route('admin.accidents.edit', $accident->id) }}" 
+                                                class="btn btn-primary mr-2 p-1">
                                                 <x-base.lucide class="w-4 h-4" icon="edit" />
-                                            </x-base.button>
+                                            </a>
                                             <x-base.button data-tw-toggle="modal" data-tw-target="#delete-accident-modal"
                                                 variant="danger" class="mr-2 p-1 delete-accident"
                                                 data-accident-id="{{ $accident->id }}">
@@ -168,10 +169,12 @@
                                                 class="btn btn-outline-secondary p-1 mr-2">
                                                 <x-base.lucide class="w-4 h-4" icon="eye" />
                                             </a>
-                                            <a href="{{ route('admin.accidents.documents', $accident->id) }}"
+                                            {{-- 
+                                            <a href="{{ route('admin.accidents.edit', $accident->id) }}#documents"
                                                 class="btn btn-outline-primary p-1">
                                                 <x-base.lucide class="w-4 h-4" icon="file-text" />
                                             </a>
+                                             --}}
                                         </div>
                                     </td>
                                 </tr>
@@ -181,7 +184,7 @@
                                         <div class="flex flex-col items-center justify-center py-4">
                                             <x-base.lucide class="w-10 h-10 text-slate-300" icon="alert-triangle" />
                                             <p class="mt-2 text-slate-500">No accident records found</p>
-                                            <x-base.button data-tw-toggle="modal" data-tw-target="#add-accident-modal"
+                                            <x-base.button as="a" href="{{ route('admin.accidents.create') }}"
                                                 variant="outline-primary" class="mt-3">
                                                 <x-base.lucide class="w-4 h-4 mr-1" icon="plus" />
                                                 Add First Accident
@@ -201,336 +204,44 @@
         </div>
     </div>
 
-    <!-- Modal Añadir Accidente -->
-    <x-base.dialog id="add-accident-modal" size="lg">
-        <x-base.dialog.panel>
-            <x-base.dialog.title>
-                <h2 class="mr-auto text-base font-medium">Add Accident Record</h2>
-            </x-base.dialog.title>
-
-            <form action="{{ route('admin.accidents.store') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                <x-base.dialog.description class="grid grid-cols-12 gap-4 gap-y-3">
-                    <!-- Seleccionar Carrier y Driver -->
-                    <div class="col-span-12 sm:col-span-6">
-                        <x-base.form-label for="carrier">Carrier</x-base.form-label>
-                        <select id="carrier" class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8"
-                            required>
-                            <option value="">Select Carrier</option>
-                            @foreach ($carriers as $carrier)
-                                <option value="{{ $carrier->id }}">{{ $carrier->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-span-12 sm:col-span-6">
-                        <x-base.form-label for="user_driver_detail_id">Driver</x-base.form-label>
-                        <select id="user_driver_detail_id" name="user_driver_detail_id"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8" required>
-                            <option value="">Select Driver</option>
-                        </select>
-                    </div>
-
-                    <!-- Fecha del accidente -->
-                    <div class="col-span-12 sm:col-span-6">
-                        <x-base.form-label for="accident_date">Accident Date</x-base.form-label>
-                        <x-base.form-input id="accident_date" name="accident_date" type="date"
-                            value="{{ date('Y-m-d') }}" required />
-                    </div>
-
-                    <!-- Naturaleza del accidente -->
-                    <div class="col-span-12">
-                        <x-base.form-label for="nature_of_accident">Nature of Accident</x-base.form-label>
-                        <x-base.form-input id="nature_of_accident" name="nature_of_accident" type="text"
-                            placeholder="Describe the accident" required />
-                    </div>
-
-                    <!-- Lesiones -->
-                    <div class="col-span-12 ">
-                        <div class="flex items-center mr-auto">
-                            <label for="had_injuries" class="flex items-center">
-                                <x-base.form-check.input class="mr-2.5 border" id="had_injuries" name="had_injuries"
-                                    value="1" type="checkbox" />
-                                <label class="cursor-pointer select-none">{{ __('Had Injuries?') }}</label>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-span-12 " id="injuries_container" style="display: none;">
-                        <x-base.form-label for="number_of_injuries">Number of Injuries</x-base.form-label>
-                        <x-base.form-input id="number_of_injuries" name="number_of_injuries" type="number"
-                            min="0" value="0" />
-                    </div>
-
-                    <!-- Fatalidades -->
-                    <div class="col-span-12 ">
-                        <div class="flex items-center mr-auto">
-                            <label for="had_fatalities" class="flex items-center">
-                                <x-base.form-check.input class="mr-2.5 border" id="had_fatalities" name="had_fatalities"
-                                    type="checkbox" value="1" />
-                                <label class="cursor-pointer select-none">{{ __('Had Fatalities?') }}</label>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-span-12 " id="fatalities_container" style="display: none;">
-                        <x-base.form-label for="number_of_fatalities">Number of Fatalities</x-base.form-label>
-                        <x-base.form-input id="number_of_fatalities" name="number_of_fatalities" type="number"
-                            min="0" value="0" />
-                    </div>
-
-                    <!-- Comentarios -->
-                    <div class="col-span-12">
-                        <x-base.form-label for="comments">Comments</x-base.form-label>
-                        <x-base.form-textarea id="comments" name="comments"
-                            placeholder="Additional comments"></x-base.form-textarea>
-                    </div>
-                    
-                    <!-- Documentos -->
-                    <div class="col-span-12">
-                        <x-base.form-label for="documents">Documents</x-base.form-label>
-                        <div class="border-2 border-dashed rounded-md p-6 text-center">
-                            <div class="mx-auto cursor-pointer relative">
-                                <input type="file" name="documents[]" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" class="w-full h-full opacity-0 absolute inset-0 cursor-pointer z-50">
-                                <div class="text-center">
-                                    <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
-                                    <p class="text-sm text-gray-600">Drag and drop files here or click to browse</p>
-                                    <p class="text-xs text-gray-500 mt-1">JPG, PNG, PDF, DOC, DOCX (Max 10MB each)</p>
-                                </div>
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">You can add more documents later</p>
-                    </div>
-                </x-base.dialog.description>
-                <x-base.dialog.footer>
-                    <x-base.button data-tw-dismiss="modal" type="button" variant="outline-secondary" class="mr-1 w-20">
-                        Cancel
-                    </x-base.button>
-                    <x-base.button type="submit" variant="primary" class="w-20">
-                        Save
-                    </x-base.button>
-                </x-base.dialog.footer>
-            </form>
-        </x-base.dialog.panel>
-    </x-base.dialog>
-
-    <!-- Modal Editar Accidente -->
-    <x-base.dialog id="edit-accident-modal" size="lg">
-        <x-base.dialog.panel>
-            <x-base.dialog.title>
-                <h2 class="mr-auto text-base font-medium">Edit Accident Record</h2>
-            </x-base.dialog.title>
-
-            <form id="edit_accident_form" action="" method="POST" enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
-                <x-base.dialog.description class="grid grid-cols-12 gap-4 gap-y-3">
-                    <!-- Seleccionar Carrier y Driver -->
-                    <div class="col-span-12 sm:col-span-6">
-                        <x-base.form-label for="edit_carrier">Carrier</x-base.form-label>
-                        <select id="edit_carrier"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8" required>
-                            <option value="">Select Carrier</option>
-                            @foreach ($carriers as $carrier)
-                                <option value="{{ $carrier->id }}">{{ $carrier->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-span-12 sm:col-span-6">
-                        <x-base.form-label for="edit_user_driver_detail_id">Driver</x-base.form-label>
-                        <select id="edit_user_driver_detail_id" name="user_driver_detail_id"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8" required>
-                            <option value="">Select Driver</option>
-                        </select>
-                    </div>
-
-                    <!-- Fecha del accidente -->
-                    <div class="col-span-12 sm:col-span-6">
-                        <x-base.form-label for="edit_accident_date">Accident Date</x-base.form-label>
-                        <x-base.form-input id="edit_accident_date" name="accident_date" type="date" required />
-                    </div>
-
-                    <!-- Naturaleza del accidente -->
-                    <div class="col-span-12">
-                        <x-base.form-label for="edit_nature_of_accident">Nature of Accident</x-base.form-label>
-                        <x-base.form-input id="edit_nature_of_accident" name="nature_of_accident" type="text"
-                            placeholder="Describe the accident" required />
-                    </div>
-
-                    <!-- Lesiones -->
-                    <div class="col-span-12 ">
-                        <div class="flex items-center mr-auto">
-                            <label for="edit_had_injuries" class="flex items-center">
-                                <x-base.form-check.input class="mr-2.5 border" id="edit_had_injuries" name="had_injuries"
-                                    type="checkbox" value="1" />
-                                <label class="cursor-pointer select-none">{{ __('Had Injuries?') }}</label>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-span-12" id="edit_injuries_container" style="display: none;">
-                        <x-base.form-label for="edit_number_of_injuries">Number of Injuries</x-base.form-label>
-                        <x-base.form-input id="edit_number_of_injuries" name="number_of_injuries" type="number"
-                            min="0" value="0" />
-                    </div>
-
-                    <!-- Fatalidades -->
-                    <div class="col-span-12 ">
-                        <div class="flex items-center mr-auto">
-                            <label for="edit_had_fatalities" class="flex items-center">
-                                <x-base.form-check.input class="mr-2.5 border" id="edit_had_fatalities"
-                                    name="had_fatalities" type="checkbox" value="1" />
-                                <label class="cursor-pointer select-none">{{ __('Had Fatalities?') }}</label>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="col-span-12 " id="edit_fatalities_container" style="display: none;">
-                        <x-base.form-label for="edit_number_of_fatalities">Number of Fatalities</x-base.form-label>
-                        <x-base.form-input id="edit_number_of_fatalities" name="number_of_fatalities" type="number"
-                            min="0" value="0" />
-                    </div>
-
-                    <!-- Comentarios -->
-                    <div class="col-span-12">
-                        <x-base.form-label for="edit_comments">Comments</x-base.form-label>
-                        <x-base.form-textarea id="edit_comments" name="comments"
-                            placeholder="Additional comments"></x-base.form-textarea>
-                    </div>
-                    
-                    <!-- Documentos -->
-                    <div class="col-span-12">
-                        <x-base.form-label for="documents">Documents</x-base.form-label>
-                        <div class="border-2 border-dashed rounded-md p-6 text-center">
-                            <div class="mx-auto cursor-pointer relative">
-                                <input type="file" name="documents[]" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" class="w-full h-full opacity-0 absolute inset-0 cursor-pointer z-50">
-                                <div class="text-center">
-                                    <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
-                                    <p class="text-sm text-gray-600">Drag and drop files here or click to browse</p>
-                                    <p class="text-xs text-gray-500 mt-1">JPG, PNG, PDF, DOC, DOCX (Max 10MB each)</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center mt-2">
-                            <p class="text-xs text-gray-500">You can add more documents later</p>
-                            <a href="#" id="view_documents_link" class="text-xs text-blue-600 hover:text-blue-800 flex items-center">
-                                <i class="fas fa-eye mr-1"></i> View existing documents
-                            </a>
-                        </div>
-                    </div>
-                </x-base.dialog.description>
-                <x-base.dialog.footer>
-                    <x-base.button data-tw-dismiss="modal" type="button" variant="outline-secondary" class="mr-1 w-20">
-                        Cancel
-                    </x-base.button>
-                    <x-base.button type="submit" variant="primary" class="w-20">
-                        Update
-                    </x-base.button>
-                </x-base.dialog.footer>
-            </form>
-        </x-base.dialog.panel>
-    </x-base.dialog>
-
     <!-- Modal Eliminar Accidente -->
-    <x-base.dialog id="delete-accident-modal" size="md">
+    <x-base.dialog id="delete-accident-modal">
         <x-base.dialog.panel>
-            <div class="p-5 text-center">
-                <x-base.lucide class="mx-auto mt-3 h-16 w-16 text-danger" icon="x-circle" />
-                <div class="mt-5 text-2xl">Are you sure?</div>
-                <div class="mt-2 text-slate-500">
-                    Do you really want to delete this accident record? <br>
-                    This process cannot be undone.
-                </div>
-            </div>
-            <form id="delete_accident_form" action="" method="POST" class="px-5 pb-8 text-center">
-                @csrf
-                @method('DELETE')
-                <x-base.button data-tw-dismiss="modal" type="button" variant="outline-secondary" class="mr-1 w-24">
-                    Cancel
-                </x-base.button>
-                <x-base.button type="submit" variant="danger" class="w-24">
-                    Delete
-                </x-base.button>
-            </form>
+            <x-base.dialog.title>
+                <h2 class="mr-auto text-base font-medium">Confirm Deletion</h2>
+            </x-base.dialog.title>
+            <x-base.dialog.description>
+                Are you sure you want to delete this accident record? This action cannot be undone.
+            </x-base.dialog.description>
+            <x-base.dialog.footer>
+                <form id="delete_accident_form" action="" method="POST">
+                    @csrf
+                    @method('DELETE')
+                    <x-base.button data-tw-dismiss="modal" type="button" variant="outline-secondary" class="mr-1 w-20">
+                        Cancel
+                    </x-base.button>
+                    <x-base.button type="submit" variant="danger" class="w-20">
+                        Delete
+                    </x-base.button>
+                </form>
+            </x-base.dialog.footer>
         </x-base.dialog.panel>
     </x-base.dialog>
 
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                // Funcionalidad para mostrar/ocultar campos de lesiones y fatalidades
-                const hadInjuriesCheckbox = document.getElementById('had_injuries');
-                const hadFatalitiesCheckbox = document.getElementById('had_fatalities');
-                const injuriesContainer = document.getElementById('injuries_container');
-                const fatalitiesContainer = document.getElementById('fatalities_container');
-
-                hadInjuriesCheckbox.addEventListener('change', function() {
-                    injuriesContainer.style.display = this.checked ? 'block' : 'none';
-                });
-
-                hadFatalitiesCheckbox.addEventListener('change', function() {
-                    fatalitiesContainer.style.display = this.checked ? 'block' : 'none';
-                });
-
-                // Misma funcionalidad para el formulario de edición
-                const editHadInjuriesCheckbox = document.getElementById('edit_had_injuries');
-                const editHadFatalitiesCheckbox = document.getElementById('edit_had_fatalities');
-                const editInjuriesContainer = document.getElementById('edit_injuries_container');
-                const editFatalitiesContainer = document.getElementById('edit_fatalities_container');
-
-                editHadInjuriesCheckbox.addEventListener('change', function() {
-                    editInjuriesContainer.style.display = this.checked ? 'block' : 'none';
-                });
-
-                editHadFatalitiesCheckbox.addEventListener('change', function() {
-                    editFatalitiesContainer.style.display = this.checked ? 'block' : 'none';
-                });
-
-                // Cargar conductores cuando se selecciona un transportista
-                const carrierSelect = document.getElementById('carrier');
-                const driverSelect = document.getElementById('user_driver_detail_id');
-
-                carrierSelect.addEventListener('change', function() {
-                    const carrierId = this.value;
-                    if (carrierId) {
-                        fetch(`/api/get-drivers-by-carrier-id/${carrierId}`)
-                            .then(response => response.json())
-                            .then(data => {
-                                driverSelect.innerHTML = '<option value="">Select Driver</option>';
-                                data.forEach(driver => {
-                                    const option = document.createElement('option');
-                                    option.value = driver.id;
-                                    option.textContent = `${driver.user.name} ${driver.last_name}`;
-                                    driverSelect.appendChild(option);
-                                });
-                            });
-                    } else {
-                        // Si no hay carrier seleccionado, limpiar el select de conductores
-                        $('#user_driver_detail_id').empty();
-                        $('#user_driver_detail_id').append('<option value="">Select Driver</option>');
-                    }
-                });
-
-                // Manejar visualización de campos de lesiones y fatalidades
-                $('#had_injuries').on('change', function() {
-                    if ($(this).is(':checked')) {
-                        $('#injuries_container').show();
-                    } else {
-                        $('#injuries_container').hide();
-                    }
-                });
-
-                $('#had_fatalities').on('change', function() {
-                    if ($(this).is(':checked')) {
-                        $('#fatalities_container').show();
-                    } else {
-                        $('#fatalities_container').hide();
-                    }
-                });
-
-                // Configuración del modal de eliminación
+                /**
+                 * Configuración de botones de eliminación
+                 */
                 const deleteButtons = document.querySelectorAll('.delete-accident');
-
                 deleteButtons.forEach(button => {
                     button.addEventListener('click', function() {
                         const accidentId = this.getAttribute('data-accident-id');
-                        document.getElementById('delete_accident_form').action =
-                            `/admin/accidents/${accidentId}`;
+                        const deleteForm = document.getElementById('delete_accident_form');
+                        if (deleteForm && accidentId) {
+                            deleteForm.action = `/admin/accidents/${accidentId}`;
+                        }
                     });
                 });
             });

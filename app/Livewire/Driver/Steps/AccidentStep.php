@@ -5,6 +5,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use App\Models\UserDriverDetail;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
@@ -370,11 +371,11 @@ class AccidentStep extends Component
                     throw new \Exception("El archivo temporal no existe: {$fullPath}");
                 }
                 
-                // Subir el archivo al accidente usando fromFile
+                // Subir el archivo al accidente usando fromFile con la colección correcta 'accidents'
                 $media = $accident->addMediaFromDisk($tempPath, 'local')
                     ->usingName($originalName)
                     ->usingFileName($originalName)
-                    ->toMediaCollection('accident-documents');
+                    ->toMediaCollection('accidents');
                 
                 Log::info('Archivo guardado permanentemente', [
                     'media_id' => $media->id,
@@ -507,7 +508,7 @@ class AccidentStep extends Component
         
         // Crear el accidente en la base de datos
         $driverAccident = new \App\Models\Admin\Driver\DriverAccident();
-        $driverAccident->driver_id = $this->driverId;
+        $driverAccident->user_driver_detail_id = $this->driverId; // Nombre correcto del campo
         $driverAccident->accident_date = $accident['accident_date'];
         $driverAccident->nature_of_accident = $accident['nature_of_accident'];
         $driverAccident->had_injuries = $accident['had_injuries'];
@@ -515,6 +516,14 @@ class AccidentStep extends Component
         $driverAccident->had_fatalities = $accident['had_fatalities'];
         $driverAccident->number_of_fatalities = $accident['number_of_fatalities'];
         $driverAccident->comments = $accident['comments'];
+        
+        // Registrar información de depuración
+        \Illuminate\Support\Facades\Log::info('Guardando accidente', [
+            'user_driver_detail_id' => $this->driverId,
+            'accident_date' => $accident['accident_date'],
+            'nature_of_accident' => $accident['nature_of_accident']
+        ]);
+        
         $driverAccident->save();
         
         // Actualizar el ID en el array
@@ -575,8 +584,8 @@ class AccidentStep extends Component
             if ($accidentId) {
                 $driverAccident = $userDriverDetail->accidents()->find($accidentId);
                 if ($driverAccident) {
-                    // Obtener documentos asociados a este accidente específico
-                    $accidentMedia = $driverAccident->getMedia('accident-documents');
+                    // Obtener documentos asociados a este accidente específico usando la colección correcta
+                    $accidentMedia = $driverAccident->getMedia('accidents');
                     
                     // Almacenar información de documentos en el array de accidents
                     $this->accidents[$index]['documents'] = [];
@@ -602,7 +611,10 @@ class AccidentStep extends Component
                             'url' => $url,
                             'mime_type' => $media->mime_type,
                             'size' => $media->size,
-                            'created_at' => $media->created_at->format('Y-m-d H:i:s')
+                            'created_at' => $media->created_at->format('Y-m-d H:i:s'),
+                            'is_image' => Str::startsWith($media->mime_type, 'image/'),
+                            'is_temp' => false,
+                            'collection' => $media->collection_name
                         ];
                     }
                 }
@@ -623,7 +635,16 @@ class AccidentStep extends Component
                 
                 if ($driverAccident) {
                     foreach ($this->accident_files[$index] as $file) {
-                        // Add file to media library in the 'accident-documents' collection, asociado al accidente específico
+                        // Registrar información de debug
+                        \Illuminate\Support\Facades\Log::info('Subiendo archivo de accidente', [
+                            'accident_id' => $accidentId,
+                            'driver_id' => $userDriverDetail->id,
+                            'file_name' => $file->getClientOriginalName(),
+                            'mime_type' => $file->getMimeType()
+                        ]);
+                        
+                        // Add file to media library usando la colección correcta 'accidents'
+                        // para que coincida con lo esperado en CustomPathGenerator
                         $driverAccident->addMedia($file->getRealPath())
                             ->usingName(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
                             ->usingFileName($file->getClientOriginalName())
@@ -632,7 +653,7 @@ class AccidentStep extends Component
                                 'mime_type' => $file->getMimeType(),
                                 'accident_id' => $accidentId
                             ])
-                            ->toMediaCollection('accident-documents');
+                            ->toMediaCollection('accidents');
                     }
                 }
             }

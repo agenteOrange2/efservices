@@ -22,6 +22,29 @@
                         <p class="mt-4 text-sm text-gray-500">
                             If you have any questions, please contact your carrier administrator.
                         </p>
+                        
+                        <!-- Información de Clearinghouse -->
+                        <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-md font-medium text-blue-800">Important: FMCSA Clearinghouse Registration</h3>
+                                    <div class="mt-2 text-sm text-blue-700">
+                                        <p>As part of the driver onboarding process, you must register with the FMCSA Drug and Alcohol Clearinghouse.</p>
+                                        <button
+                                            type="button"
+                                            onclick="document.getElementById('clearinghouseModal').classList.remove('hidden')"
+                                            class="mt-2 inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
+                                            Learn More
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <div class="mt-6">
                             <form method="POST" action="{{ route('logout') }}">

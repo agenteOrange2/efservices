@@ -79,8 +79,7 @@
                             This AGREEMENT is made and entered into on <span class="underline" style="width: 120px">{{ $signedDate ?? now()->format('m/d/Y') }}</span>,
                             between <span class="underline" style="width: 40%">{{ $carrierName ?? '' }}</span> ("CARRIER"),
                             with its principal place of business at <span class="underline" style="width: 40%">{{ $carrierAddress ?? '' }}</span>,
-                            and <span class="underline" style="width: 40%">{{ $ownerName ?? '' }}</span> ("OWNER-OPERATOR"),
-                            residing at <span class="underline" style="width: 40%">{{ $ownerAddress ?? '' }}</span>.
+                            and <span class="underline" style="width: 40%">{{ $ownerName ?? '' }}</span> ("OWNER-OPERATOR").
                         </p>
                     </div>
                 </li>
@@ -113,54 +112,6 @@
                                         class="underline"
                                         style="width: 90%"
                                     >{{ $ownerPhone ?? '' }}</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    Business Name:
-                                    <span
-                                        class="underline"
-                                        style="width: 90%"
-                                    >{{ $ownerDba ?? '' }}</span>
-                                </td>
-                                <td>
-                                    Email:
-                                    <span
-                                        class="underline"
-                                        style="width: 90%"
-                                    >{{ $ownerEmail ?? '' }}</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    Address:
-                                    <span
-                                        class="underline"
-                                        style="width: 90%"
-                                    >{{ $ownerAddress ?? '' }}</span>
-                                </td>
-                                <td>
-                                    Tax ID/SSN:
-                                    <span
-                                        class="underline"
-                                        style="width: 90%"
-                                    >{{ $ownerFein ?? '' }}</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    Driver's License #:
-                                    <span
-                                        class="underline"
-                                        style="width: 90%"
-                                    >{{ $ownerLicense ?? '' }}</span>
-                                </td>
-                                <td>
-                                    CDL Expiration:
-                                    <span
-                                        class="underline"
-                                        style="width: 90%"
-                                    >{{ $ownerCdlExpiry ?? '' }}</span>
                                 </td>
                             </tr>
                         </table>

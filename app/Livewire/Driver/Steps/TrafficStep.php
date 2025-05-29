@@ -358,8 +358,34 @@ class TrafficStep extends Component
             $convictionId = isset($this->traffic_convictions[$index]['id']) ? $this->traffic_convictions[$index]['id'] : null;
             
             if (!$convictionId) {
-                // Si no existe la convicción en la base de datos, guardarla primero
-                $convictionId = $this->saveTrafficConviction($index);
+                // Verificar si ya existe una convicción con datos similares para evitar duplicados
+                $userDriverDetail = UserDriverDetail::find($this->driverId);
+                if ($userDriverDetail && isset($this->traffic_convictions[$index]['conviction_date'])) {
+                    $existingConviction = $userDriverDetail->trafficConvictions()
+                        ->where('conviction_date', $this->traffic_convictions[$index]['conviction_date'])
+                        ->where('location', $this->traffic_convictions[$index]['location'] ?? '')
+                        ->where('charge', $this->traffic_convictions[$index]['charge'] ?? '')
+                        ->first();
+                    
+                    if ($existingConviction) {
+                        // Si ya existe, usamos ese ID
+                        $convictionId = $existingConviction->id;
+                        // Actualizar el ID en el array local
+                        $this->traffic_convictions[$index]['id'] = $convictionId;
+                        
+                        Log::info('Se encontró una convicción existente para evitar duplicados', [
+                            'conviction_id' => $convictionId,
+                            'date' => $this->traffic_convictions[$index]['conviction_date'],
+                            'location' => $this->traffic_convictions[$index]['location'] ?? ''
+                        ]);
+                    } else {
+                        // Si no existe, crear una nueva
+                        $convictionId = $this->saveTrafficConviction($index);
+                    }
+                } else {
+                    // Si no hay suficiente información, crear una nueva convicción
+                    $convictionId = $this->saveTrafficConviction($index);
+                }
             }
             
             // Buscar el modelo de convicción

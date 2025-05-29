@@ -7,9 +7,11 @@ use Livewire\Component;
 use App\Helpers\Constants;
 use Illuminate\Support\Facades\Log;
 use App\Models\UserDriverDetail;
+use Livewire\Livewire;
 
 class DriverRegistrationManager extends Component
 {
+    // No se necesita registro manual
     // Carrier model
     public Carrier $carrier;
 
@@ -86,6 +88,16 @@ class DriverRegistrationManager extends Component
     {
         $this->driverId = $driverId;
         $this->userDriverDetail = UserDriverDetail::find($driverId);
+        
+        // Redireccionar a la página de edición del conductor
+        if ($this->userDriverDetail) {
+            // Usar el método redirectRoute de Livewire para redireccionar correctamente
+            // Aquí pasamos el carrier directamente (sin ->id) para que use el modelo completo
+            return $this->redirectRoute('admin.carrier.user_drivers.edit', [
+                'carrier' => $this->carrier,
+                'userDriverDetail' => $this->userDriverDetail
+            ]);
+        }
     }
 
     // Handle save and exit from any step
