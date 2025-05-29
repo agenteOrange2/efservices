@@ -23,11 +23,17 @@
                 Driver Accidents Management
             </h2>
             <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
-                <x-base.button as="a" href="{{ route('admin.accidents.create') }}" variant="primary"
-                    class="flex items-center">
-                    <x-base.lucide class="w-4 h-4 mr-2" icon="plus" />
-                    Add Accident
-                </x-base.button>
+                <div class="flex gap-2">
+                    <x-base.button as="a" href="{{ route('admin.accidents.documents.index') }}" variant="outline-primary">
+                        <x-base.lucide class="w-4 h-4 mr-2" icon="file-text" />
+                        View All Documents
+                    </x-base.button>
+                    <x-base.button as="a" href="{{ route('admin.accidents.create') }}" variant="primary"
+                        class="flex items-center">
+                        <x-base.lucide class="w-4 h-4 mr-2" icon="plus" />
+                        Add Accident
+                    </x-base.button>
+                </div>
             </div>
         </div>
 
@@ -157,24 +163,22 @@
                                     <td class="px-6 py-4 text-center">
                                         <div class="flex justify-center items-center">
                                             <a href="{{ route('admin.accidents.edit', $accident->id) }}" 
-                                                class="btn btn-primary mr-2 p-1">
+                                                class="btn btn-primary mr-2 p-1" title="Edit Accident">
                                                 <x-base.lucide class="w-4 h-4" icon="edit" />
                                             </a>
                                             <x-base.button data-tw-toggle="modal" data-tw-target="#delete-accident-modal"
                                                 variant="danger" class="mr-2 p-1 delete-accident"
-                                                data-accident-id="{{ $accident->id }}">
+                                                data-accident-id="{{ $accident->id }}" title="Delete Accident">
                                                 <x-base.lucide class="w-4 h-4" icon="trash" />
                                             </x-base.button>
                                             <a href="{{ route('admin.drivers.accident-history', $accident->userDriverDetail->id) }}"
-                                                class="btn btn-outline-secondary p-1 mr-2">
+                                                class="btn btn-outline-secondary p-1 mr-2" title="View History">
                                                 <x-base.lucide class="w-4 h-4" icon="eye" />
                                             </a>
-                                            {{-- 
-                                            <a href="{{ route('admin.accidents.edit', $accident->id) }}#documents"
-                                                class="btn btn-outline-primary p-1">
+                                            <a href="{{ route('admin.accidents.documents.show', $accident->id) }}"
+                                                class="btn btn-outline-primary p-1" title="View Documents">
                                                 <x-base.lucide class="w-4 h-4" icon="file-text" />
                                             </a>
-                                             --}}
                                         </div>
                                     </td>
                                 </tr>

@@ -2,15 +2,28 @@
 
 namespace App\Http\Controllers\Admin\Driver;
 
-use App\Models\Carrier;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Models\UserDriverDetail;
+use App\Models\Admin\Driver\DriverAccident;
+use App\Models\DriverAccidentReport;
+use App\Models\Carrier;
+use App\Models\Vehicle;
+use App\Models\Company;
+use App\Models\Document;
+use App\Models\DocumentAttachment;
+use App\Rules\NotOldThan;
+use App\Traits\HasDocuments;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Session;
-use App\Models\Admin\Driver\DriverAccident;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AccidentsController extends Controller
 {
@@ -76,383 +89,623 @@ class AccidentsController extends Controller
 
         return view('admin.drivers.accidents.driver_history', compact('driver', 'accidents'));
     }
-    
+
     /**
      * Muestra el formulario para crear un nuevo accidente
      */
     public function create()
     {
+        // Inicialmente no cargamos conductores, se cargarán vía AJAX cuando se seleccione un carrier
+        $drivers = collect(); // Colección vacía
         $carriers = Carrier::where('status', 1)->get();
-        return view('admin.drivers.accidents.create', compact('carriers'));
+        return view('admin.drivers.accidents.create', compact('carriers', 'drivers'));
     }
 
     // Método para almacenar un nuevo accidente
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'user_driver_detail_id' => 'required|exists:user_driver_details,id',
-            'accident_date' => 'required|date',
-            'nature_of_accident' => 'required|string|max:255',
-            'had_injuries' => 'boolean',
-            'number_of_injuries' => 'nullable|integer|min:0',
-            'had_fatalities' => 'boolean',
-            'number_of_fatalities' => 'nullable|integer|min:0',
-            'comments' => 'nullable|string',
-            'documents.*' => 'nullable|file|max:10240|mimes:jpg,jpeg,png,pdf,doc,docx',
-        ]);
+        // Solución ultra simplificada - solo registrar en BD
+        DB::beginTransaction();
+        try {
+            // Validar los datos básicos
+            $validated = $request->validate([
+                'user_driver_detail_id' => 'required|exists:user_driver_details,id',
+                'accident_date' => 'required|date',
+                'nature_of_accident' => 'required|string|max:255',
+                'had_injuries' => 'boolean',
+                'number_of_injuries' => 'nullable|integer|min:0',
+                'had_fatalities' => 'boolean',
+                'number_of_fatalities' => 'nullable|integer|min:0',
+                'comments' => 'nullable|string',
+            ]);
 
-        // Convertir checkboxes a valores booleanos
-        $validated['had_injuries'] = isset($request->had_injuries);
-        $validated['had_fatalities'] = isset($request->had_fatalities);
+            // Crear el registro de accidente
+            $accident = new DriverAccident();
+            $accident->user_driver_detail_id = $request->user_driver_detail_id;
+            $accident->accident_date = $request->accident_date;
+            $accident->nature_of_accident = $request->nature_of_accident;
+            $accident->had_injuries = $request->has('had_injuries');
+            $accident->number_of_injuries = $request->has('had_injuries') ? $request->number_of_injuries : 0;
+            $accident->had_fatalities = $request->has('had_fatalities');
+            $accident->number_of_fatalities = $request->has('had_fatalities') ? $request->number_of_fatalities : 0;
+            $accident->comments = $request->comments;
+            $accident->save();
 
-        // Solo incluir el número de lesiones/fatalidades si se marcó el checkbox
-        if (!$validated['had_injuries']) {
-            $validated['number_of_injuries'] = 0;
-        }
-
-        if (!$validated['had_fatalities']) {
-            $validated['number_of_fatalities'] = 0;
-        }
-
-        // Crear el accidente
-        $accident = DriverAccident::create($validated);
-
-        // Procesar documentos si los hay
-        if ($request->hasFile('documents')) {
-            foreach ($request->file('documents') as $file) {
-                // Obtener el ID del conductor asociado al accidente
-                $driverId = $accident->userDriverDetail->id;
+            // Solución completa: Registrar en BD Y mover archivos físicos
+            if ($request->has('accident_files')) {
+                $filesData = json_decode($request->accident_files, true);
                 
-                // Subir usando Media Library
-                $accident->addMedia($file)
-                    ->usingName($file->getClientOriginalName())
-                    ->usingFileName($file->getClientOriginalName())
-                    ->withCustomProperties([
-                        'original_filename' => $file->getClientOriginalName(),
-                        'mime_type' => $file->getMimeType(),
-                        'accident_id' => $accident->id,
-                        'driver_id' => $driverId
-                    ])
-                    ->toMediaCollection('accident_documents');
+                if (is_array($filesData)) {
+                    $driverId = $accident->userDriverDetail->id;
+                    $accidentId = $accident->id;
+                    
+                    // Crear el directorio de destino si no existe
+                    $destinationDir = "public/driver/{$driverId}/accidents/{$accidentId}";
+                    if (!Storage::exists($destinationDir)) {
+                        Storage::makeDirectory($destinationDir);
+                    }
+                    
+                    foreach ($filesData as $fileData) {
+                        if (!empty($fileData['original_name']) && isset($fileData['path'])) {
+                            try {
+                                // Ruta del archivo temporal
+                                $tempPath = isset($fileData['temp_path']) 
+                                    ? $fileData['temp_path'] 
+                                    : 'livewire-tmp/' . $fileData['path'];
+                                
+                                // Verificar que el archivo temporal existe
+                                if (!Storage::exists($tempPath)) {
+                                    // Intentar buscar en la carpeta temp directamente
+                                    $tempPath = 'temp/' . basename($fileData['path']);
+                                    
+                                    if (!Storage::exists($tempPath)) {
+                                        Log::error('Archivo temporal no encontrado (store)', [
+                                            'temp_path' => $tempPath,
+                                            'original_name' => $fileData['original_name']
+                                        ]);
+                                        continue;
+                                    }
+                                }
+                                
+                                $fileName = $fileData['original_name'];
+                                $destinationPath = "{$destinationDir}/{$fileName}";
+                                
+                                // Mover el archivo de temp a la ubicación final
+                                if (Storage::move($tempPath, $destinationPath)) {
+                                    // Crear registro en la DB
+                                    $document = new DocumentAttachment();
+                                    $document->documentable_type = DriverAccident::class;
+                                    $document->documentable_id = $accident->id;
+                                    $document->file_path = $destinationPath;
+                                    $document->file_name = $fileName;
+                                    $document->original_name = $fileData['original_name'];
+                                    $document->mime_type = $fileData['mime_type'] ?? 'application/octet-stream';
+                                    $document->size = $fileData['size'] ?? Storage::size($destinationPath);
+                                    $document->collection = 'accident_documents';
+                                    $document->custom_properties = [
+                                        'accident_id' => $accident->id,
+                                        'driver_id' => $driverId,
+                                        'uploaded_at' => now()->format('Y-m-d H:i:s')
+                                    ];
+                                    $document->save();
+                                    
+                                    Log::info('Documento guardado físicamente y registrado (store)', [
+                                        'id' => $document->id,
+                                        'from' => $tempPath,
+                                        'to' => $destinationPath
+                                    ]);
+                                } else {
+                                    Log::error('Error al mover archivo físico (store)', [
+                                        'from' => $tempPath,
+                                        'to' => $destinationPath
+                                    ]);
+                                }
+                            } catch (\Exception $e) {
+                                Log::error('Error al procesar documento (store)', [
+                                    'error' => $e->getMessage(),
+                                    'trace' => $e->getTraceAsString(),
+                                    'fileData' => $fileData
+                                ]);
+                            }
+                        }
+                    }
+                }
             }
+            
+            DB::commit();
+            return redirect()->route('admin.accidents.index')
+                ->with('success', 'Accident record created successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error al crear accidente', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error creating accident record: ' . $e->getMessage());
         }
-
-        Session::flash('success', 'Accidente creado correctamente');
-        return redirect()->route('admin.accidents.index');
     }
 
     // Muestra el formulario para editar un accidente existente
     public function edit(DriverAccident $accident)
     {
-        // Obtener los documentos del accidente usando la colección definida
-        $documents = $accident->getMedia('accident_documents');
+        // Cargar el carrier del conductor
+        $carrierId = $accident->userDriverDetail->carrier_id;
         
-        return view('admin.drivers.accidents.edit', compact('accident', 'documents'));
+        // Cargar los conductores del mismo carrier
+        $drivers = UserDriverDetail::where('carrier_id', $carrierId)
+            ->with('user')
+            ->get();
+        
+        // Cargar carriers (para el dropdown)
+        $carriers = Carrier::where('status', 1)->get();
+        
+        // Cargar documentos existentes
+        $documents = $accident->getDocuments('accident_documents');
+        
+        return view('admin.drivers.accidents.edit', compact(
+            'accident',
+            'carriers',
+            'drivers',
+            'documents'
+        ));
     }
 
-    // Método para actualizar un accidente existente
+    /**
+     * Actualiza un registro de accidente existente
+     * 
+     * @param DriverAccident $accident
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function update(DriverAccident $accident, Request $request)
     {
-        $validated = $request->validate([
-            'accident_date' => 'required|date',
-            'nature_of_accident' => 'required|string|max:255',
-            'had_injuries' => 'boolean',
-            'number_of_injuries' => 'nullable|integer|min:0',
-            'had_fatalities' => 'boolean',
-            'number_of_fatalities' => 'nullable|integer|min:0',
-            'comments' => 'nullable|string',
-            'documents.*' => 'nullable|file|max:10240|mimes:jpg,jpeg,png,pdf,doc,docx',
-        ]);
-
-        $validated['had_injuries'] = isset($request->had_injuries);
-        $validated['had_fatalities'] = isset($request->had_fatalities);
-
-        // Si no hay lesiones/fatalidades, establecer el número a 0
-        if (!$validated['had_injuries']) {
-            $validated['number_of_injuries'] = 0;
-        }
-
-        if (!$validated['had_fatalities']) {
-            $validated['number_of_fatalities'] = 0;
-        }
-
-        $accident->update($validated);
-        
-        // Procesar documentos si existen
-        if ($request->hasFile('documents')) {
-            $uploadedCount = 0;
+        // Solución ultra simplificada - solo registrar en BD
+        DB::beginTransaction();
+        try {
+            // Validar los datos básicos
+            $validated = $request->validate([
+                'user_driver_detail_id' => 'required|exists:user_driver_details,id',
+                'accident_date' => 'required|date',
+                'nature_of_accident' => 'required|string|max:255',
+                'had_injuries' => 'boolean',
+                'number_of_injuries' => 'nullable|integer|min:0',
+                'had_fatalities' => 'boolean',
+                'number_of_fatalities' => 'nullable|integer|min:0',
+                'comments' => 'nullable|string',
+            ]);
             
-            foreach ($request->file('documents') as $file) {
-                // Obtener el ID del conductor asociado al accidente
-                $driverId = $accident->userDriverDetail->id;
+            // Actualizar el accidente
+            $accident->user_driver_detail_id = $request->user_driver_detail_id;
+            $accident->accident_date = $request->accident_date;
+            $accident->nature_of_accident = $request->nature_of_accident;
+            $accident->had_injuries = $request->has('had_injuries');
+            $accident->number_of_injuries = $request->has('had_injuries') ? $request->number_of_injuries : 0;
+            $accident->had_fatalities = $request->has('had_fatalities');
+            $accident->number_of_fatalities = $request->has('had_fatalities') ? $request->number_of_fatalities : 0;
+            $accident->comments = $request->comments;
+            $accident->save();
+            
+            // Solución completa: Registrar en BD Y mover archivos físicos
+            if ($request->has('accident_files')) {
+                $filesData = json_decode($request->accident_files, true);
                 
-                // Añadir el archivo a la colección 'accident_documents'
-                $media = $accident->addMedia($file)
-                    ->usingName($file->getClientOriginalName())
-                    ->usingFileName($file->getClientOriginalName())
-                    ->withCustomProperties([
-                        'original_filename' => $file->getClientOriginalName(),
-                        'mime_type' => $file->getMimeType(),
-                        'accident_id' => $accident->id,
-                        'driver_id' => $driverId
-                    ])
-                    ->toMediaCollection('accident_documents');
-                
-                $uploadedCount++;
-                
-                // Registrar la subida exitosa
-                Log::info('Documento de accidente subido correctamente', [
-                    'accident_id' => $accident->id,
-                    'media_id' => $media->id,
-                    'file_name' => $media->file_name,
-                    'collection' => $media->collection_name
-                ]);
+                if (is_array($filesData)) {
+                    $driverId = $accident->userDriverDetail->id;
+                    $accidentId = $accident->id;
+                    
+                    // Crear el directorio de destino si no existe
+                    $destinationDir = "public/driver/{$driverId}/accidents/{$accidentId}";
+                    if (!Storage::exists($destinationDir)) {
+                        Storage::makeDirectory($destinationDir);
+                    }
+                    
+                    foreach ($filesData as $fileData) {
+                        if (!empty($fileData['original_name']) && isset($fileData['path'])) {
+                            try {
+                                // Ruta del archivo temporal
+                                $tempPath = isset($fileData['temp_path']) 
+                                    ? $fileData['temp_path'] 
+                                    : 'livewire-tmp/' . $fileData['path'];
+                                
+                                // Verificar que el archivo temporal existe
+                                if (!Storage::exists($tempPath)) {
+                                    // Intentar buscar en la carpeta temp directamente
+                                    $tempPath = 'temp/' . basename($fileData['path']);
+                                    
+                                    if (!Storage::exists($tempPath)) {
+                                        Log::error('Archivo temporal no encontrado', [
+                                            'temp_path' => $tempPath,
+                                            'original_name' => $fileData['original_name']
+                                        ]);
+                                        continue;
+                                    }
+                                }
+                                
+                                $fileName = $fileData['original_name'];
+                                $destinationPath = "{$destinationDir}/{$fileName}";
+                                
+                                // Mover el archivo de temp a la ubicación final
+                                if (Storage::move($tempPath, $destinationPath)) {
+                                    // Crear registro en la DB
+                                    $document = new DocumentAttachment();
+                                    $document->documentable_type = DriverAccident::class;
+                                    $document->documentable_id = $accident->id;
+                                    $document->file_path = $destinationPath;
+                                    $document->file_name = $fileName;
+                                    $document->original_name = $fileData['original_name'];
+                                    $document->mime_type = $fileData['mime_type'] ?? 'application/octet-stream';
+                                    $document->size = $fileData['size'] ?? Storage::size($destinationPath);
+                                    $document->collection = 'accident_documents';
+                                    $document->custom_properties = [
+                                        'accident_id' => $accident->id,
+                                        'driver_id' => $driverId,
+                                        'uploaded_at' => now()->format('Y-m-d H:i:s')
+                                    ];
+                                    $document->save();
+                                    
+                                    Log::info('Documento guardado físicamente y registrado (update)', [
+                                        'id' => $document->id,
+                                        'from' => $tempPath,
+                                        'to' => $destinationPath
+                                    ]);
+                                } else {
+                                    Log::error('Error al mover archivo físico (update)', [
+                                        'from' => $tempPath,
+                                        'to' => $destinationPath
+                                    ]);
+                                }
+                            } catch (\Exception $e) {
+                                Log::error('Error al procesar documento (update)', [
+                                    'error' => $e->getMessage(),
+                                    'trace' => $e->getTraceAsString(),
+                                    'fileData' => $fileData
+                                ]);
+                            }
+                        }
+                    }
+                }
             }
             
-            // Añadir mensaje de éxito específico para los documentos
-            return redirect()->route('admin.accidents.edit', $accident->id)
-                ->with('success', "Accidente actualizado correctamente. $uploadedCount documentos subidos.");
+            DB::commit();
+            return redirect()->route('admin.accidents.index')
+                ->with('success', 'Accident record updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error al actualizar accidente', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error updating accident record: ' . $e->getMessage());
         }
-
-        return redirect()->route('admin.accidents.index')
-            ->with('success', 'Accidente actualizado correctamente');
-        return redirect()->route('admin.accidents.edit', $accident);
     }
 
     // Método para eliminar un accidente
     public function destroy(DriverAccident $accident)
     {
         try {
-            // Eliminar los documentos relacionados
-            $accident->clearMediaCollection('accident_documents');
+            // Eliminar todos los documentos asociados
+            $documents = $accident->getDocuments('accident_documents');
+            foreach ($documents as $document) {
+                $accident->deleteDocument($document->id);
+            }
             
             // Eliminar el accidente
             $accident->delete();
             
             return redirect()->route('admin.accidents.index')
-                ->with('success', 'Accidente eliminado correctamente');
+                ->with('success', 'Accident record deleted successfully.');
         } catch (\Exception $e) {
-            Log::error('Error al eliminar accidente: ' . $e->getMessage());
+            Log::error('Error al eliminar accidente', [
+                'accident_id' => $accident->id,
+                'error' => $e->getMessage()
+            ]);
+            
             return redirect()->back()
-                ->with('error', 'No se pudo eliminar el accidente: ' . $e->getMessage());
+                ->with('error', 'Error deleting accident record: ' . $e->getMessage());
         }
     }
 
-    // Obtiene los conductores activos asociados a un carrier específico.
-    // 
-    // @param int $carrier El ID del carrier cuyos conductores se desean obtener
-    // @return \Illuminate\Http\JsonResponse Lista de conductores activos en formato JSON
     public function getDriversByCarrier($carrier)
     {
-        try {
-            // Obtener conductores activos asociados al carrier
-            $drivers = UserDriverDetail::whereHas('user', function ($query) {
-                $query->where('status', 1); // Solo usuarios activos
-            })
-            ->where('carrier_id', $carrier)
-            ->with('user') // Cargar relación de usuario para acceder a nombre, etc.
+        $drivers = UserDriverDetail::where('carrier_id', $carrier)
+            ->where('status', 1) // Solo conductores activos
+            ->with('user')
             ->get()
             ->map(function ($driver) {
                 return [
                     'id' => $driver->id,
-                    'name' => $driver->user->name . ' ' . $driver->user->lastname,
-                    'email' => $driver->user->email
+                    'name' => $driver->user->name . ' ' . ($driver->user->last_name ?? '')
                 ];
             });
+        
+        return response()->json([
+            'drivers' => $drivers
+        ]);
+    }
+
+    /**
+     * Muestra todos los documentos de accidentes en una vista resumida
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function documents(Request $request)
+    {
+        try {
+            // Obtener todos los documentos asociados con accidentes
+            $query = DocumentAttachment::where('documentable_type', DriverAccident::class)
+                ->with(['documentable' => function($q) {
+                    $q->with('userDriverDetail.user');
+                }]);
+
+            // Filtro por conductor
+            if ($request->has('driver_id') && !empty($request->driver_id)) {
+                $query->whereHas('documentable', function($q) use ($request) {
+                    $q->where('user_driver_detail_id', $request->driver_id);
+                });
+            }
+
+            // Filtro por tipo de archivo
+            if ($request->has('file_type') && !empty($request->file_type)) {
+                switch ($request->file_type) {
+                    case 'image':
+                        $query->where('mime_type', 'like', 'image/%');
+                        break;
+                    case 'pdf':
+                        $query->where('mime_type', 'application/pdf');
+                        break;
+                    case 'document':
+                        $query->where(function($q) {
+                            $q->where('mime_type', 'like', '%word%')
+                              ->orWhere('mime_type', 'like', '%excel%')
+                              ->orWhere('mime_type', 'like', '%sheet%')
+                              ->orWhere('mime_type', 'like', '%csv%')
+                              ->orWhere('mime_type', 'like', '%powerpoint%')
+                              ->orWhere('mime_type', 'like', '%presentation%');
+                        });
+                        break;
+                }
+            }
+
+            // Ordenar por fecha de creación (más recientes primero)
+            $documents = $query->orderBy('created_at', 'desc')->paginate(15);
             
-            return response()->json([
-                'success' => true,
-                'drivers' => $drivers
-            ]);
+            // Incluir información adicional para cada documento
+            $documents->getCollection()->transform(function ($document) {
+                try {
+                    // Obtener el accidente relacionado
+                    $accident = $document->documentable;
+                    if ($accident) {
+                        $document->accident_date = $accident->accident_date;
+                        $document->driver = $accident->userDriverDetail->user->name . ' ' . 
+                                          ($accident->userDriverDetail->user->lastname ?? '');
+                        $document->driver_id = $accident->userDriverDetail->id;
+                        $document->accident_id = $accident->id;
+                        $document->nature = $accident->nature_of_accident;
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error al obtener información adicional del documento', [
+                        'document_id' => $document->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+                return $document;
+            });
             
+            // Cargar todos los conductores para el filtro
+            $drivers = UserDriverDetail::whereHas('accidents')->with('user')->get();
+            
+            return view('admin.drivers.accidents.documents', compact('documents', 'drivers'));
         } catch (\Exception $e) {
-            Log::error('Error al obtener conductores por carrier', [
-                'carrier_id' => $carrier,
-                'error' => $e->getMessage()
+            Log::error('Error al cargar documentos de accidentes', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener conductores',
-                'error' => $e->getMessage()
-            ], 500);
+            return redirect()->back()->with('error', 'Error al cargar documentos: ' . $e->getMessage());
         }
     }
 
     /**
-     * Muestra la vista de documentos para un accidente específico.
-     *
-     * @param DriverAccident $accident El accidente del que se mostrarán los documentos
-     * @return \Illuminate\View\View Vista con los documentos del accidente
+     * Muestra los documentos de un accidente específico
+     * 
+     * @param DriverAccident $accident
+     * @return \Illuminate\View\View
      */
     public function showDocuments(DriverAccident $accident)
     {
-        // Obtener los documentos del accidente usando la colección definida
-        $documents = $accident->getMedia('accident_documents');
-        $totalDocuments = count($documents);
-        
-        // Agrupar documentos por tipo
-        $groupedDocuments = [
-            'images' => [],
-            'pdfs' => [],
-            'documents' => []
-        ];
-        
-        foreach ($documents as $document) {
-            $extension = strtolower(pathinfo($document->file_name, PATHINFO_EXTENSION));
+        try {
+            // Consulta para obtener documentos paginados
+            $query = DocumentAttachment::where('documentable_type', DriverAccident::class)
+                ->where('documentable_id', $accident->id)
+                ->with('documentable');
+                
+            // Ordenar por fecha de creación (más recientes primero)
+            $documents = $query->orderBy('created_at', 'desc')->paginate(15);
             
-            if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif'])) {
-                $groupedDocuments['images'][] = $document;
-            } elseif ($extension === 'pdf') {
-                $groupedDocuments['pdfs'][] = $document;
-            } else {
-                $groupedDocuments['documents'][] = $document;
-            }
+            // Incluir información adicional para cada documento
+            $documents->getCollection()->transform(function ($document) use ($accident) {
+                try {
+                    $document->accident_date = $accident->accident_date;
+                    $document->driver = $accident->userDriverDetail->user->name . ' ' . 
+                                      ($accident->userDriverDetail->user->lastname ?? '');
+                    $document->driver_id = $accident->userDriverDetail->id;
+                    $document->accident_id = $accident->id;
+                    $document->nature = $accident->nature_of_accident;
+                } catch (\Exception $e) {
+                    Log::error('Error al obtener información adicional del documento', [
+                        'document_id' => $document->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+                return $document;
+            });
+            
+            // Cargar todos los conductores para el filtro (necesario para la vista)
+            $drivers = UserDriverDetail::whereHas('accidents')->with('user')->get();
+            
+            return view('admin.drivers.accidents.documents', compact('documents', 'drivers', 'accident'));
+        } catch (\Exception $e) {
+            Log::error('Error al cargar documentos del accidente', [
+                'accident_id' => $accident->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', 'Error al cargar documentos: ' . $e->getMessage());
         }
-        
-        return view('admin.drivers.accidents.documents', compact(
-            'accident', 
-            'documents', 
-            'totalDocuments', 
-            'groupedDocuments'
-        ));
     }
 
-    // Previsualiza un documento relacionado con accidentes.
-    // 
-    // @param int $documentId ID del documento a previsualizar
-    // @return \Illuminate\Http\Response Respuesta con la previsualización o descarga
+    /**
+     * Muestra una vista previa o descarga un documento usando nuestro nuevo sistema
+     * 
+     * @param int $documentId ID del documento
+     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\StreamedResponse
+     */
     public function previewDocument($documentId)
     {
         try {
-            $media = Media::findOrFail($documentId);
+            // 1. Buscar el documento en nuestra tabla document_attachments
+            $document = \App\Models\DocumentAttachment::findOrFail($documentId);
             
-            // Verificar que el documento pertenece a un accidente
-            if ($media->model_type !== DriverAccident::class) {
-                abort(403, 'No tienes permiso para ver este documento');
+            // 2. Verificar que pertenece a un accidente (tipo de modelo correcto)
+            if ($document->documentable_type !== DriverAccident::class) {
+                return response()->json(['error' => 'El documento no pertenece a un accidente'], 403);
             }
             
-            // Verificar si el archivo existe físicamente
-            if (!file_exists($media->getPath())) {
-                throw new \Exception("El archivo '{$media->file_name}' no se encuentra en el servidor");
+            // 3. Obtener la ruta del archivo
+            $filePath = $document->getPath();
+            
+            if (!file_exists($filePath)) {
+                return response()->json(['error' => 'El archivo no existe en el disco'], 404);
             }
             
-            // Servir archivo según tipo
-            $mime = $media->mime_type;
+            // 4. Determinar el tipo de contenido
+            $mimeType = $document->mime_type;
             
-            if (strpos($mime, 'image/') === 0) {
-                // Imágenes pueden visualizarse directamente
-                return response()->file($media->getPath());
-            } elseif ($mime === 'application/pdf') {
-                // PDFs se pueden previsualizar en el navegador
-                return response()->file($media->getPath(), [
-                    'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'inline; filename="' . $media->file_name . '"'
-                ]);
-            } else {
-                // Otros tipos de archivos se descargan
-                return response()->download($media->getPath(), $media->file_name);
-            }
+            // 5. Servir el archivo
+            $headers = [
+                'Content-Type' => $mimeType,
+                'Content-Disposition' => 'inline; filename="' . $document->original_name . '"'
+            ];
+            
+            return response()->file($filePath, $headers);
+            
         } catch (\Exception $e) {
             Log::error('Error al previsualizar documento', [
-                'media_id' => $documentId,
+                'document_id' => $documentId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
-            abort(404, 'El documento solicitado no se pudo encontrar: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al previsualizar documento: ' . $e->getMessage()], 500);
         }
     }
 
     /**
-     * Elimina un documento (media) asociado a un accidente
+     * Elimina un documento mediante una solicitud AJAX
      * 
-     * @param int $media ID del documento a eliminar
-     * @return \Illuminate\Http\RedirectResponse
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function destroyDocument($media)
+    public function ajaxDestroyDocument(Request $request)
     {
         try {
-            // Iniciar una transacción de base de datos para controlar la operación
-            DB::beginTransaction();
-            
-            // 1. Buscar el media primero
-            $mediaItem = Media::findOrFail($media);
-            $fileName = $mediaItem->file_name;
-            $filePath = $mediaItem->getPath();
-            
-            // 2. Verificar que pertenezca a un accidente
-            if ($mediaItem->model_type !== DriverAccident::class) {
-                DB::rollBack();
-                return redirect()->back()->with('error', 'El documento no pertenece a un accidente');
+            $documentId = $request->input('document_id');
+            if (!$documentId) {
+                return response()->json(['error' => 'Document ID is required'], 400);
             }
             
-            // 3. Obtener datos del accidente antes de cualquier operación
-            $accidentId = $mediaItem->model_id;
-            $accident = DriverAccident::findOrFail($accidentId);
-            $accidentData = $accident->getAttributes();
+            // 1. Buscar el documento en nuestra tabla document_attachments
+            $document = \App\Models\DocumentAttachment::findOrFail($documentId);
             
-            // 4. SOLUCIÓN DEFINITIVA: Romper completamente el vínculo antes de eliminar
-            // Esto evita que cualquier evento de Spatie pueda encontrar el modelo padre
-            // IMPORTANTE: Esto es lo que previene la eliminación en cascada
-            DB::table('media')
-                ->where('id', $mediaItem->id)
-                ->update([
-                    'model_type' => 'App\\TempDeletedModel', 
-                    'model_id' => 0
-                ]);
-            
-            // 5. Ahora que hemos roto la conexión, eliminamos el archivo físico manualmente
-            if (file_exists($filePath)) {
-                @unlink($filePath);
-                Log::info('Archivo físico eliminado: ' . $filePath);
+            // 2. Verificar que pertenece a un accidente (tipo de modelo correcto)
+            if ($document->documentable_type !== DriverAccident::class) {
+                return response()->json(['error' => 'El documento no pertenece a un accidente'], 403);
             }
             
-            // 6. Eliminar el registro de media de forma segura (ya no tiene vínculo con el accidente)
-            DB::table('media')->where('id', $mediaItem->id)->delete();
-            Log::info('Registro de media eliminado: ' . $media);
+            $accidentId = $document->documentable_id;
+            $accident = DriverAccident::find($accidentId);
             
-            // 7. VERIFICACIÓN CRÍTICA: Asegurar que el accidente sigue existiendo
-            $accidentStillExists = DriverAccident::find($accidentId);
-            
-            if (!$accidentStillExists) {
-                // Este caso no debería ocurrir, pero por si acaso, recreamos el accidente
-                $newAccident = new DriverAccident();
-                foreach ($accidentData as $key => $value) {
-                    $newAccident->$key = $value;
-                }
-                $newAccident->save(['timestamps' => false]);
-                
-                Log::error('RECUPERACIÓN DE EMERGENCIA: Se recreó el accidente ' . $accidentId . ' que fue eliminado inesperadamente');
+            if (!$accident) {
+                return response()->json(['error' => 'No se encontró el accidente asociado al documento'], 404);
             }
             
-            // 8. Confirmar transacción y redireccionar
-            DB::commit();
+            // 3. Eliminar el documento usando el método del trait HasDocuments
+            $result = $accident->deleteDocument($documentId);
             
-            Log::info('Documento eliminado exitosamente sin afectar al accidente', [
-                'media_id' => $media,
-                'accident_id' => $accidentId,
-                'accident_exists' => DriverAccident::find($accidentId) ? true : false
+            if (!$result) {
+                return response()->json(['error' => 'No se pudo eliminar el documento'], 500);
+            }
+            
+            return response()->json([
+                'success' => true, 
+                'message' => 'Documento eliminado correctamente'
             ]);
-            
-            return redirect()->route('admin.accidents.edit', $accidentId)
-                ->with('success', "Documento {$fileName} eliminado correctamente");
-            
+                
         } catch (\Exception $e) {
-            DB::rollBack();
-            
-            Log::error('Error al eliminar documento', [
-                'media_id' => $media,
+            Log::error('Error al eliminar documento mediante AJAX', [
+                'document_id' => $request->input('document_id'),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
-            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al eliminar documento: ' . $e->getMessage()], 500);
         }
     }
-    
+
     /**
-     * Subir documentos para un accidente específico
+     * Elimina un documento usando nuestro nuevo sistema de documentos
+     * 
+     * @param int $documentId ID del documento a eliminar
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroyDocument($documentId)
+    {
+        try {
+            // 1. Buscar el documento en nuestra tabla document_attachments
+            $document = \App\Models\DocumentAttachment::findOrFail($documentId);
+            
+            // 2. Obtener información del documento antes de eliminarlo
+            $fileName = $document->original_name ?? $document->file_name;
+            
+            // 3. Verificar que pertenece a un accidente (tipo de modelo correcto)
+            if ($document->documentable_type !== DriverAccident::class) {
+                return redirect()->back()->with('error', 'El documento no pertenece a un accidente');
+            }
+            
+            $accidentId = $document->documentable_id;
+            $accident = DriverAccident::find($accidentId);
+            
+            if (!$accident) {
+                return redirect()->route('admin.accidents.index')
+                    ->with('error', 'No se encontró el accidente asociado al documento');
+            }
+            
+            // 4. Eliminar el documento usando el método del trait HasDocuments
+            $result = $accident->deleteDocument($documentId);
+            
+            if (!$result) {
+                return redirect()->back()->with('error', 'No se pudo eliminar el documento');
+            }
+            
+            return redirect()->route('admin.accidents.edit', $accidentId)
+                ->with('success', "Documento '{$fileName}' eliminado correctamente");
+                
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar documento', [
+                'document_id' => $documentId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', 'Error al eliminar documento: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Subir documentos para un accidente específico usando nuestro sistema personalizado de documentos
      * 
      * @param DriverAccident $accident El accidente al que se subirán los documentos
      * @param Request $request Solicitud con los documentos a subir
@@ -465,45 +718,40 @@ class AccidentsController extends Controller
                 'documents' => 'required|array',
                 'documents.*' => 'file|max:10240|mimes:jpg,jpeg,png,pdf,doc,docx'
             ]);
-            
+
             $uploadedCount = 0;
-            
+
             foreach ($request->file('documents') as $file) {
-                // Obtener el ID del conductor asociado al accidente
-                $driverId = $accident->userDriverDetail->id;
-                
-                // Configurar el disco y la ruta de almacenamiento correcta
-                $media = $accident->addMedia($file)
-                    ->usingName($file->getClientOriginalName())
-                    ->usingFileName($file->getClientOriginalName())
-                    ->withCustomProperties([
-                        'original_filename' => $file->getClientOriginalName(),
-                        'mime_type' => $file->getMimeType(),
+                // Usar nuestro nuevo método addDocument del trait HasDocuments
+                $document = $accident->addDocument(
+                    $file,                  // El archivo
+                    'accident_documents',   // La colección
+                    [                       // Propiedades personalizadas
                         'accident_id' => $accident->id,
-                        'driver_id' => $driverId
-                    ])
-                    ->toMediaCollection('accident_documents');
-                
+                        'driver_id' => $accident->userDriverDetail->id,
+                        'uploaded_at' => date('Y-m-d H:i:s')
+                    ]
+                );
+
                 $uploadedCount++;
-                
-                Log::info('Documento de accidente subido correctamente', [
+
+                Log::info('Documento de accidente subido correctamente con el nuevo sistema', [
                     'accident_id' => $accident->id,
-                    'media_id' => $media->id,
-                    'file_name' => $media->file_name,
-                    'collection' => $media->collection_name,
-                    'driver_id' => $driverId
+                    'document_id' => $document->id,
+                    'file_name' => $document->file_name,
+                    'collection' => $document->collection,
+                    'driver_id' => $accident->userDriverDetail->id
                 ]);
             }
-            
+
             return redirect()->back()->with('success', "$uploadedCount documentos subidos correctamente");
-            
         } catch (\Exception $e) {
             Log::error('Error al subir documentos de accidente', [
                 'accident_id' => $accident->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return redirect()->back()->with('error', 'Error al subir documentos: ' . $e->getMessage());
         }
     }

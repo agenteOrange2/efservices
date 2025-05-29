@@ -29,6 +29,7 @@ use App\Http\Controllers\Admin\Vehicles\VehicleTypeController;
 use App\Http\Controllers\Admin\Driver\DriverRecruitmentController;
 use App\Http\Controllers\Admin\Vehicles\VehicleDocumentController;
 use App\Http\Controllers\Admin\Driver\TrafficConvictionsController;
+use App\Http\Controllers\Admin\Driver\TrainingSchoolsController;
 use App\Http\Controllers\Admin\Vehicles\VehicleServiceItemController;
 use App\Http\Controllers\Admin\Vehicles\MaintenanceNotificationController;
 use App\Http\Controllers\FileUploaderController;
@@ -57,9 +58,20 @@ Route::get('/api/drivers/by-carrier/{carrier}', [AccidentsController::class, 'ge
 
 // Rutas para gestión de documentos de accidentes
 Route::prefix('accidents')->name('accidents.')->group(function () {
+    // Rutas para todos los documentos de accidentes
+    Route::get('documents', [AccidentsController::class, 'documents'])->name('documents.index');
+    
+    // Rutas para documentos de un accidente específico
+    Route::get('{accident}/documents', [AccidentsController::class, 'showDocuments'])->name('documents.show');
     Route::post('{accident}/documents', [AccidentsController::class, 'storeDocuments'])->name('documents.store');
-    Route::delete('documents/{media}', [AccidentsController::class, 'destroyDocument'])->name('documents.destroy');
-    Route::get('documents/{media}/preview', [AccidentsController::class, 'previewDocument'])->name('document.preview');
+    
+    // Rutas para operaciones con documentos individuales
+    Route::delete('documents/{document}', [AccidentsController::class, 'destroyDocument'])->name('documents.destroy');
+    Route::delete('document/{document}', [AccidentsController::class, 'destroyDocument'])->name('document.destroy'); // Alias para compatibilidad
+    Route::get('documents/{document}/preview', [AccidentsController::class, 'previewDocument'])->name('document.preview');
+    Route::get('document/{document}/preview', [AccidentsController::class, 'previewDocument'])->name('document.preview'); // Alias para compatibilidad
+    Route::get('document/{document}/show', [AccidentsController::class, 'previewDocument'])->name('document.show'); // Alias para compatibilidad
+    Route::post('documents/ajax-delete', [AccidentsController::class, 'ajaxDestroyDocument'])->name('documents.ajax-destroy');
 });
 
 // Rutas para gestión de documentos de infracciones de tráfico
@@ -77,11 +89,40 @@ Route::prefix('testings')->name('testings.')->group(function () {
     Route::get('documents/{media}/preview', [TestingsController::class, 'previewDocument'])->name('documents.preview');
 });
 
+// Rutas para el nuevo sistema de documentos
+Route::prefix('documents')->name('documents.')->group(function () {
+    Route::get('{document}/preview', [\App\Http\Controllers\DocumentAttachmentController::class, 'preview'])->name('preview');
+    Route::delete('{document}', [\App\Http\Controllers\DocumentAttachmentController::class, 'destroy'])->name('destroy');
+});
+
 Route::prefix('maintenance-notifications')->name('maintenance-notifications.')->group(function () {
     Route::post('/send-test', [MaintenanceNotificationController::class, 'sendTestNotification'])->name('send-test');
     Route::post('/send-to-all', [MaintenanceNotificationController::class, 'sendNotificationsToAll'])->name('send-to-all');
     Route::post('/mark-as-read/{notificationId}', [MaintenanceNotificationController::class, 'markAsRead'])->name('mark-as-read');
-    Route::post('/mark-all-as-read', [MaintenanceNotificationController::class, 'markAllAsRead'])->name('mark-all-as-read');
+    Route::post('/maintenance-documents/ajax-delete/{document}', [MaintenanceController::class, 'ajaxDeleteDocument'])->name('maintenance-documents.ajax-delete');
+});
+
+/*
+    |--------------------------------------------------------------------------
+    | RUTAS PARA ESCUELAS DE ENTRENAMIENTO DE CONDUCTORES
+    |--------------------------------------------------------------------------    
+*/
+
+// Rutas estándar de recursos para escuelas de entrenamiento
+Route::resource('training-schools', TrainingSchoolsController::class);
+
+// Rutas para gestión de documentos de escuelas de entrenamiento
+Route::prefix('training-schools')->name('training-schools.')->group(function () {
+    // Vista de todos los documentos
+    Route::get('all/documents', [TrainingSchoolsController::class, 'documents'])->name('documents');
+    
+    // Rutas para documentos de una escuela específica
+    Route::get('{school}/documents', [TrainingSchoolsController::class, 'showDocuments'])->name('show.documents');
+    
+    // Rutas para operaciones con documentos individuales
+    Route::get('document/{id}/preview', [TrainingSchoolsController::class, 'previewDocument'])->name('preview.document');
+    Route::delete('document/{id}', [TrainingSchoolsController::class, 'destroyDocument'])->name('destroy.document');
+    Route::delete('document/{id}/ajax', [TrainingSchoolsController::class, 'ajaxDestroyDocument'])->name('ajax-destroy.document');
 });
 
 /*
@@ -257,22 +298,6 @@ Route::post('carrier/{carrier}/drivers/autosave/{userDriverDetail?}', [
 
 Route::post('/temp-upload', [TempUploadController::class, 'upload'])->name('temp.upload');
 
-/*
-|--------------------------------------------------------------------------
-| RUTAS PARA COMPONENTE DE SUBIDA DE ARCHIVOS
-|--------------------------------------------------------------------------
-*/
-
-Route::prefix('file-uploader')->name('file-uploader.')->group(function () {
-    // Ruta para subir documentos
-    Route::post('/upload', [\App\Http\Controllers\Admin\FileUploaderController::class, 'upload'])->name('upload');
-    
-    // Ruta para eliminar documentos
-    Route::delete('/document/{mediaId}', [\App\Http\Controllers\Admin\FileUploaderController::class, 'destroy'])->name('destroy');
-    
-    // Ruta para previsualizar documentos
-    Route::get('/preview/{mediaId}', [\App\Http\Controllers\Admin\FileUploaderController::class, 'preview'])->name('preview');
-});
 
 /*
 |--------------------------------------------------------------------------

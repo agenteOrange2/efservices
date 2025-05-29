@@ -94,10 +94,10 @@ class SideMenu
                         'title' => "Inspections",
                     ],
                     [
-                        'icon' => "book-marked",
-                        'route_name' => "admin.product-grid",
+                        'icon' => "school",
+                        'route_name' => "admin.training-schools.index",
                         'params' => [],
-                        'title' => "Training",
+                        'title' => "Training Schools",
                     ],
                     [
                         'icon' => "shield-check",
