@@ -40,14 +40,22 @@ class DriverTrainingSchool extends Model implements HasMedia
     {
         return $this->belongsTo(UserDriverDetail::class);
     }
+    
+    /**
+     * Alias para userDriverDetail() para mayor consistencia en el código
+     */
+    public function driver()
+    {
+        return $this->userDriverDetail();
+    }
 
-        /**
+    /**
      * Define las colecciones de medios para este modelo.
      */
     public function registerMediaCollections(): void
     {
-        // Colección para el certificado escolar - puede tener múltiples certificados
-        $this->addMediaCollection('school_certificates');
+        // Colección para documentos de la escuela de entrenamiento
+        $this->addMediaCollection('training_files');
     }
 
 }

@@ -9,24 +9,56 @@
 @endphp
 
 @section('subcontent')
-    <div class="container mx-auto py-5">
-        <div class="box box--stacked">
+    <div>
+        <!-- Mensajes Flash -->
+        @if (session()->has('success'))
+            <div class="alert alert-success flex items-center mb-5">
+                <x-base.lucide class="w-6 h-6 mr-2" icon="check-circle" />
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if (session()->has('error'))
+            <div class="alert alert-danger flex items-center mb-5">
+                <x-base.lucide class="w-6 h-6 mr-2" icon="alert-circle" />
+                {{ session('error') }}
+            </div>
+        @endif
+
+        <!-- Cabecera -->
+        <div class="flex flex-col sm:flex-row items-center mt-8">
+            <h2 class="text-lg font-medium mr-auto">
+                Add New Accident Record
+            </h2>
+            <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
+                <x-base.button as="a" href="{{ route('admin.accidents.index') }}" class="w-full sm:w-auto"
+                    variant="outline-primary">
+                    <x-base.lucide class="mr-2 h-4 w-4" icon="ArrowLeft" />
+                    Back to Accidents
+                </x-base.button>
+            </div>
+        </div>
+
+        <!-- Formulario de Creación -->
+        <div class="box box--stacked mt-5">
             <div class="box-header">
-                <h2 class="box-title">Add Accident Record</h2>
+                <h3 class="box-title">Accident Details</h3>
             </div>
             
             <div class="box-body p-5">
                 <form action="{{ route('admin.accidents.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Carrier Selection -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="carrier_id" class="form-label">Carrier</label>
-                            <select id="carrier_id" name="carrier_id" class="form-control w-full" required>
+                            <x-base.form-label for="carrier_id">Carrier</x-base.form-label>
+                            <select id="carrier_id" name="carrier_id"
+                                class="tom-select w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
                                 <option value="">Select Carrier</option>
                                 @foreach ($carriers as $carrier)
-                                    <option value="{{ $carrier->id }}">{{ $carrier->name }}</option>
+                                    <option value="{{ $carrier->id }}">
+                                        {{ $carrier->name }}
+                                    </option>
                                 @endforeach
                             </select>
                             @error('carrier_id')
@@ -36,39 +68,47 @@
                         
                         <!-- Driver Selection -->
                         <div>
-                            <label for="user_driver_detail_id" class="form-label">Driver</label>
-                            <select id="user_driver_detail_id" name="user_driver_detail_id" class="form-control w-full" required disabled>
-                                <option value="">Select a carrier first</option>
+                            <x-base.form-label for="user_driver_detail_id">Driver</x-base.form-label>
+                            <select id="user_driver_detail_id" name="user_driver_detail_id"
+                                class="tom-select w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
+                                <option value="">Select Driver</option>
+                                @if(isset($drivers))
+                                    @foreach ($drivers as $driver)
+                                        <option value="{{ $driver->id }}">
+                                            {{ $driver->user->name }} {{ $driver->user->last_name }}
+                                        </option>
+                                    @endforeach
+                                @endif
                             </select>
                             @error('user_driver_detail_id')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
                         </div>
                         
-                        <!-- Accident Date -->
                         <div>
-                            <label for="accident_date" class="form-label">Accident Date</label>
-                            <input type="date" id="accident_date" name="accident_date" class="form-control w-full" required>
+                            <x-base.form-label for="accident_date">Accident Date</x-base.form-label>
+                            <x-base.form-input id="accident_date" name="accident_date" type="date" 
+                                class="w-full" required />
                             @error('accident_date')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
                         </div>
                         
-                        <!-- Nature of Accident -->
                         <div>
-                            <label for="nature_of_accident" class="form-label">Nature of Accident</label>
-                            <input type="text" id="nature_of_accident" name="nature_of_accident" class="form-control w-full" required>
+                            <x-base.form-label for="nature_of_accident">Nature of Accident</x-base.form-label>
+                            <x-base.form-input id="nature_of_accident" name="nature_of_accident" type="text" 
+                                class="w-full" required />
                             @error('nature_of_accident')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                         <!-- Had Injuries -->
                         <div>
                             <div class="flex items-center">
-                                <input type="checkbox" id="had_injuries" name="had_injuries" class="form-checkbox" value="1">
+                                <input type="checkbox" id="had_injuries" name="had_injuries" class="form-check-input" value="1">
                                 <label for="had_injuries" class="ml-2 form-label">Had Injuries?</label>
                             </div>
                             
@@ -84,7 +124,7 @@
                         <!-- Had Fatalities -->
                         <div>
                             <div class="flex items-center">
-                                <input type="checkbox" id="had_fatalities" name="had_fatalities" class="form-checkbox" value="1">
+                                <input type="checkbox" id="had_fatalities" name="had_fatalities" class="form-check-input" value="1">
                                 <label for="had_fatalities" class="ml-2 form-label">Had Fatalities?</label>
                             </div>
                             
@@ -100,23 +140,33 @@
                     
                     <!-- Comments -->
                     <div class="mt-6">
-                        <label for="comments" class="form-label">Comments</label>
-                        <textarea id="comments" name="comments" class="form-control w-full" rows="4"></textarea>
+                        <x-base.form-label for="comments">Comments</x-base.form-label>
+                        <x-base.form-textarea id="comments" name="comments" class="w-full" rows="4"></x-base.form-textarea>
                         @error('comments')
                             <div class="text-danger mt-1">{{ $message }}</div>
                         @enderror
                     </div>
                     
-                    <!-- Documentos - Usando el componente reutilizable -->
-                    <div class="mt-6" id="documents">
-                        <input type="hidden" name="upload_documents" value="1">
-                        <p class="text-sm text-gray-600 mb-4">You can upload documents after creating the accident record.</p>
+                    <!-- Document Upload with Livewire component -->
+                    <div class="col-span-1 md:col-span-2">
+                        <livewire:components.file-uploader
+                            model-name="accident_files"
+                            :model-index="0"
+                            :auto-upload="true"
+                            class="border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer"
+                        />
+                        <!-- Campo oculto para almacenar los archivos subidos -->
+                        <input type="hidden" name="accident_files" id="accident_files_input">
                     </div>
                     
                     <!-- Submit Buttons -->
-                    <div class="flex justify-end mt-6 gap-2">
-                        <a href="{{ route('admin.accidents.index') }}" class="btn btn-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Save</button>
+                    <div class="flex justify-end mt-5">
+                        <x-base.button as="a" href="{{ route('admin.accidents.index') }}" variant="outline-secondary" class="mr-2">
+                            Cancel
+                        </x-base.button>
+                        <x-base.button type="submit" variant="primary">
+                            Create Accident Record
+                        </x-base.button>
                     </div>
                 </form>
             </div>
@@ -127,40 +177,100 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Carrier and Driver Select Logic
-            const carrierSelect = document.getElementById('carrier_id');
-            const driverSelect = document.getElementById('user_driver_detail_id');
+            // Inicializar el array para almacenar los archivos
+            let uploadedFiles = [];
+            const accidentFilesInput = document.getElementById('accident_files_input');
             
-            carrierSelect.addEventListener('change', function() {
+            // Escuchar eventos del componente Livewire
+            window.addEventListener('livewire:initialized', () => {
+                // Escuchar el evento fileUploaded del componente Livewire
+                Livewire.on('fileUploaded', (eventData) => {
+                    console.log('Archivo subido:', eventData);
+                    // Extraer los datos del evento
+                    const data = eventData[0]; // Los datos vienen como primer elemento del array
+                    
+                    if (data.modelName === 'accident_files') {
+                        // Añadir el archivo al array de archivos
+                        uploadedFiles.push({
+                            path: data.tempPath,
+                            original_name: data.originalName,
+                            mime_type: data.mimeType,
+                            size: data.size
+                        });
+                        
+                        // Actualizar el campo oculto con el nuevo array
+                        accidentFilesInput.value = JSON.stringify(uploadedFiles);
+                        console.log('Archivos actualizados:', accidentFilesInput.value);
+                    }
+                });
+                
+                // Escuchar el evento fileRemoved del componente Livewire
+                Livewire.on('fileRemoved', (eventData) => {
+                    console.log('Archivo eliminado:', eventData);
+                    // Extraer los datos del evento
+                    const data = eventData[0]; // Los datos vienen como primer elemento del array
+                    
+                    if (data.modelName === 'accident_files') {
+                        // Eliminar el archivo del array
+                        const fileId = data.fileId;
+                        uploadedFiles = uploadedFiles.filter((file, index) => {
+                            // Para archivos temporales, el ID contiene un timestamp
+                            if (fileId.startsWith('temp_') && index === uploadedFiles.length - 1) {
+                                // Eliminar el último archivo añadido si es temporal
+                                return false;
+                            }
+                            return true;
+                        });
+                        
+                        // Actualizar el campo oculto con el nuevo array
+                        accidentFilesInput.value = JSON.stringify(uploadedFiles);
+                        console.log('Archivos actualizados después de eliminar:', accidentFilesInput.value);
+                    }
+                });
+            });
+            
+            // Manejar cambio de carrier para filtrar conductores
+            document.getElementById('carrier_id').addEventListener('change', function() {
                 const carrierId = this.value;
-                driverSelect.disabled = true;
-                driverSelect.innerHTML = '<option value="">Loading drivers...</option>';
+                
+                // Limpiar el select de conductores usando JavaScript nativo
+                const driverSelect = document.getElementById('user_driver_detail_id');
+                driverSelect.innerHTML = '<option value="">Select Driver</option>';
                 
                 if (carrierId) {
-                    // Fetch drivers for the selected carrier using fetch API
+                    // Hacer una petición AJAX para obtener los conductores activos de esta transportista
                     fetch(`/api/active-drivers-by-carrier/${carrierId}`)
                         .then(response => response.json())
                         .then(data => {
-                            driverSelect.innerHTML = '<option value="">Select Driver</option>';
-                            
-                            if (data.length === 0) {
-                                driverSelect.innerHTML += '<option value="" disabled>No active drivers found</option>';
-                            } else {
-                                data.forEach(driver => {
-                                    driverSelect.innerHTML += `<option value="${driver.id}">${driver.user.name} ${driver.last_name || ''}</option>`;
+                            if (data && data.length > 0) {
+                                // Hay conductores activos, agregarlos al select
+                                data.forEach(function(driver) {
+                                    const option = document.createElement('option');
+                                    option.value = driver.id;
+                                    option.textContent = `${driver.user.name} ${driver.user.last_name || ''}`;
+                                    driverSelect.appendChild(option);
                                 });
+                            } else {
+                                // No hay conductores activos para este carrier
+                                const option = document.createElement('option');
+                                option.value = '';
+                                option.disabled = true;
+                                option.textContent = 'No active drivers found for this carrier';
+                                driverSelect.appendChild(option);
                             }
                             
-                            driverSelect.disabled = false;
+                            // Disparar un evento change para que se actualice la UI
+                            driverSelect.dispatchEvent(new Event('change'));
                         })
                         .catch(error => {
-                            console.error('Error fetching drivers:', error);
-                            driverSelect.innerHTML = '<option value="">Error loading drivers</option>';
-                            driverSelect.disabled = false;
+                            console.error('Error loading drivers:', error);
+                            const option = document.createElement('option');
+                            option.value = '';
+                            option.disabled = true;
+                            option.textContent = 'Error loading drivers';
+                            driverSelect.appendChild(option);
+                            driverSelect.dispatchEvent(new Event('change'));
                         });
-                } else {
-                    driverSelect.innerHTML = '<option value="">Select a carrier first</option>';
-                    driverSelect.disabled = true;
                 }
             });
             
@@ -171,95 +281,28 @@
             const fatalitiesContainer = document.getElementById('fatalities_container');
             
             hadInjuriesCheckbox.addEventListener('change', function() {
-                injuriesContainer.classList.toggle('hidden', !this.checked);
-                if (!this.checked) {
+                if (this.checked) {
+                    injuriesContainer.classList.remove('hidden');
+                } else {
+                    injuriesContainer.classList.add('hidden');
                     document.getElementById('number_of_injuries').value = '';
                 }
             });
             
             hadFatalitiesCheckbox.addEventListener('change', function() {
-                fatalitiesContainer.classList.toggle('hidden', !this.checked);
-                if (!this.checked) {
+                if (this.checked) {
+                    fatalitiesContainer.classList.remove('hidden');
+                } else {
+                    fatalitiesContainer.classList.add('hidden');
                     document.getElementById('number_of_fatalities').value = '';
                 }
             });
-            
-            // File Upload Logic
-            const dropzone = document.getElementById('dropzone');
-            const fileInput = document.getElementById('document_input');
-            const selectedFilesContainer = document.getElementById('selected_files_container');
-            const selectedFilesList = document.getElementById('selected_files_list');
-            
-            // Handle click on dropzone
-            dropzone.addEventListener('click', function() {
-                fileInput.click();
-            });
-            
-            // Handle drag and drop
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                dropzone.addEventListener(eventName, preventDefaults, false);
-            });
-            
-            function preventDefaults(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dropzone.addEventListener(eventName, highlight, false);
-            });
-            
-            ['dragleave', 'drop'].forEach(eventName => {
-                dropzone.addEventListener(eventName, unhighlight, false);
-            });
-            
-            function highlight() {
-                dropzone.classList.add('border-primary');
-            }
-            
-            function unhighlight() {
-                dropzone.classList.remove('border-primary');
-            }
-            
-            // Handle file drop
-            dropzone.addEventListener('drop', handleDrop, false);
-            
-            function handleDrop(e) {
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                handleFiles(files);
-            }
-            
-            // Handle file selection via input
-            fileInput.addEventListener('change', function() {
-                handleFiles(this.files);
-            });
-            
-            function handleFiles(files) {
-                updateFilesList(files);
-            }
-            
-            function updateFilesList(files) {
-                if (files.length === 0) return;
-                
-                selectedFilesContainer.classList.remove('hidden');
-                selectedFilesList.innerHTML = '';
-                
-                Array.from(files).forEach(file => {
-                    const li = document.createElement('li');
-                    li.className = 'text-primary';
-                    li.textContent = `${file.name} (${formatFileSize(file.size)})`;
-                    selectedFilesList.appendChild(li);
-                });
-            }
-            
-            function formatFileSize(bytes) {
-                if (bytes === 0) return '0 Bytes';
-                const k = 1024;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-            }
         });
     </script>
 @endpush
+
+@pushOnce('scripts')
+    @vite('resources/js/app.js') {{-- Este debe ir primero --}}
+    @vite('resources/js/pages/notification.js')
+    @vite('resources/js/components/base/tom-select.js')
+@endPushOnce

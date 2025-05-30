@@ -29,6 +29,11 @@ $breadcrumbLinks = [
                 <x-base.lucide class="w-4 h-4 mr-2" icon="user" />
                 Driver Profile
             </x-base.button>
+            <x-base.button as="a" href="{{ route('admin.accidents.documents.index') }}"
+                class="w-full sm:w-auto" variant="outline-primary">
+                <x-base.lucide class="w-4 h-4 mr-2" icon="file-text" />
+                View All Documents
+            </x-base.button>
             <x-base.button as="a" href="{{ route('admin.accidents.index') }}"
                 class="w-full sm:w-auto" variant="primary">
                 <x-base.lucide class="w-4 h-4 mr-2" icon="list" />
@@ -141,16 +146,22 @@ $breadcrumbLinks = [
                             </td>
                             <td class="text-center">
                                 <div class="flex justify-center items-center">
-                                    <x-base.button data-tw-toggle="modal" data-tw-target="#edit-accident-modal" 
-                                        variant="primary" class="mr-2 p-1 edit-accident" 
-                                        data-accident="{{ json_encode($accident) }}">
+                                    <a href="{{ route('admin.accidents.edit', $accident->id) }}" 
+                                        class="btn btn-primary mr-2 p-1" title="Edit Accident">
                                         <x-base.lucide class="w-4 h-4" icon="edit" />
-                                    </x-base.button>
-                                    <x-base.button data-tw-toggle="modal" data-tw-target="#delete-accident-modal" 
-                                        variant="danger" class="p-1 delete-accident"
-                                        data-accident-id="{{ $accident->id }}">
-                                        <x-base.lucide class="w-4 h-4" icon="trash" />
-                                    </x-base.button>
+                                    </a>
+                                    <form action="{{ route('admin.accidents.destroy', $accident->id) }}" method="POST" class="inline-block">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger p-1 mr-2" title="Delete Accident"
+                                            onclick="return confirm('Are you sure you want to delete this accident record?')">
+                                            <x-base.lucide class="w-4 h-4" icon="trash" />
+                                        </button>
+                                    </form>
+                                    <a href="{{ route('admin.accidents.documents.index', ['accident_id' => $accident->id]) }}"
+                                        class="btn btn-outline-primary p-1" title="View Documents">
+                                        <x-base.lucide class="w-4 h-4" icon="file-text" />
+                                    </a>
                                 </div>
                             </td>
                         </tr>
