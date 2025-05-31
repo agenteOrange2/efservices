@@ -126,7 +126,7 @@
                             @php
                             // Prepara los archivos existentes para el componente Livewire
                             $existingFilesArray = [];
-                            $documents = $conviction->getMedia('traffic-tickets');
+                            $documents = $conviction->documents()->where('collection', 'traffic_convictions')->get();
                             foreach($documents as $document) {
                                 $existingFilesArray[] = [
                                     'id' => $document->id,
@@ -204,20 +204,45 @@
                         const data = eventData[0]; // Los datos vienen como primer elemento del array
                         
                         if (data.modelName === 'traffic_files') {
-                            // Eliminar el archivo del array
                             const fileId = data.fileId;
-                            uploadedFiles = uploadedFiles.filter((file, index) => {
-                                // Para archivos temporales, el ID contiene un timestamp
-                                if (fileId.startsWith('temp_') && index === uploadedFiles.length - 1) {
-                                    // Eliminar el último archivo añadido si es temporal
-                                    return false;
-                                }
-                                return true;
-                            });
                             
-                            // Actualizar el campo oculto con el nuevo array
-                            trafficFilesInput.value = JSON.stringify(uploadedFiles);
-                            console.log('Archivos actualizados después de eliminar:', trafficFilesInput.value);
+                            // Si no es un archivo temporal, eliminarlo mediante formulario
+                            if (!data.isTemp && !fileId.startsWith('temp_')) {
+                                // Crear y enviar un formulario para eliminar el documento
+                                const form = document.createElement('form');
+                                form.method = 'POST';
+                                form.action = '{{ route("admin.traffic.documents.delete", "") }}/' + fileId;
+                                form.style.display = 'none';
+                                
+                                const csrfField = document.createElement('input');
+                                csrfField.type = 'hidden';
+                                csrfField.name = '_token';
+                                csrfField.value = '{{ csrf_token() }}';
+                                form.appendChild(csrfField);
+                                
+                                const methodField = document.createElement('input');
+                                methodField.type = 'hidden';
+                                methodField.name = '_method';
+                                methodField.value = 'DELETE';
+                                form.appendChild(methodField);
+                                
+                                document.body.appendChild(form);
+                                form.submit();
+                            }
+                            
+                            // Para archivos temporales, solo actualizamos el array local
+                            if (data.isTemp || fileId.startsWith('temp_')) {
+                                uploadedFiles = uploadedFiles.filter((file, index) => {
+                                    if (fileId.startsWith('temp_') && index === uploadedFiles.length - 1) {
+                                        return false;
+                                    }
+                                    return true;
+                                });
+                                
+                                // Actualizar el campo oculto con el nuevo array
+                                trafficFilesInput.value = JSON.stringify(uploadedFiles);
+                                console.log('Archivos actualizados después de eliminar:', trafficFilesInput.value);
+                            }
                         }
                     });
                 });

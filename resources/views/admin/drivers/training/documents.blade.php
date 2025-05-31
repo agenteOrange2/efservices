@@ -161,20 +161,21 @@
                                             {{ $document->model->driver->user->last_name ?? '' }}
                                         </td>
                                         <td>{{ $document->created_at->format('m/d/Y H:i') }}</td>
-                                        <td>
-                                            <div class="flex justify-center items-center">
-                                                <a href="{{ route('admin.training-schools.preview.document', $document->id) }}" target="_blank" class="flex items-center text-primary mr-3" title="View">
+                                        <td class="text-center">
+                                            <div class="flex justify-center">
+                                                <a href="{{ $document->getUrl() }}" class="btn btn-sm btn-primary mr-2" target="_blank">
                                                     <x-base.lucide class="w-4 h-4" icon="eye" />
                                                 </a>
-                                                <a href="{{ route('admin.training-schools.preview.document', ['id' => $document->id, 'download' => true]) }}" class="flex items-center text-info mr-3" title="Download">
-                                                    <x-base.lucide class="w-4 h-4" icon="download" />
+                                                <a href="{{ route('admin.training-schools.edit', $document->documentable_id) }}" class="btn btn-sm btn-warning mr-2">
+                                                    <x-base.lucide class="w-4 h-4" icon="clipboard-list" />
                                                 </a>
-                                                <button type="button" 
-                                                    data-document-id="{{ $document->id }}"
-                                                    class="flex items-center text-danger delete-document-btn" 
-                                                    title="Delete">
-                                                    <x-base.lucide class="w-4 h-4" icon="trash-2" />
-                                                </button>
+                                                <form action="{{ route('admin.training-schools.documents.delete', $document->id) }}" method="POST" class="inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Está seguro de eliminar este documento?')">
+                                                        <x-base.lucide class="w-4 h-4" icon="trash" />
+                                                    </button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>

@@ -56,10 +56,28 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Columna Izquierda -->
                         <div class="space-y-4">
+                            <!-- Carrier -->
+                            <div>
+                                <x-base.form-label for="carrier_id" required>Carrier</x-base.form-label>
+                                <select id="carrier_id" name="carrier_id" 
+                                    class="tom-select w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 @error('carrier_id') border-danger @enderror" required>
+                                    <option value="">Select Carrier</option>
+                                    @foreach ($carriers as $carrier)
+                                        <option value="{{ $carrier->id }}" {{ $selectedCarrierId == $carrier->id ? 'selected' : '' }}>
+                                            {{ $carrier->name }} (DOT: {{ $carrier->dot_number }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('carrier_id')
+                                    <div class="text-danger mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+
                             <!-- Conductor -->
                             <div>
                                 <x-base.form-label for="user_driver_detail_id" required>Driver</x-base.form-label>
-                                <select name="user_driver_detail_id" id="user_driver_detail_id" class="tom-select w-full @error('user_driver_detail_id') border-danger @enderror" required>
+                                <select id="user_driver_detail_id" name="user_driver_detail_id" 
+                                    class="tom-select w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 @error('user_driver_detail_id') border-danger @enderror" required>
                                     <option value="">Select Driver</option>
                                     @foreach ($drivers as $driver)
                                         <option value="{{ $driver->id }}" {{ old('user_driver_detail_id', $school->user_driver_detail_id) == $driver->id ? 'selected' : '' }}>
@@ -186,15 +204,43 @@
 
                     <!-- Sección de Documentos -->
                     <div class="mt-8">
-                        <h4 class="font-medium mb-3">Documents</h4>
-                        
-                        <!-- Componente Livewire para carga de archivos -->
-                        <livewire:components.file-uploader model-name="training_files" model-index="0" label="Upload Training Documents" :existing-files="[]" />
+                        <h4 class="font-medium">Documents</h4>
+                        <div class="mt-3">
+                            @php
+                            // Prepara los archivos existentes para el componente Livewire
+                            $existingFilesArray = [];
+                            $documents = \App\Models\DocumentAttachment::where('documentable_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)
+                                ->where('documentable_id', $school->id)
+                                ->get();
+                                
+                            foreach($documents as $document) {
+                                $existingFilesArray[] = [
+                                    'id' => $document->id,
+                                    'name' => $document->file_name,
+                                    'file_name' => $document->file_name,
+                                    'mime_type' => $document->mime_type,
+                                    'size' => $document->size,
+                                    'created_at' => $document->created_at->format('Y-m-d H:i:s'),
+                                    'url' => $document->getUrl(),
+                                    'is_temp' => false
+                                ];
+                            }
+                            @endphp
+
+                            <livewire:components.file-uploader
+                                model-name="training_files"
+                                :model-index="0"
+                                :label="'Upload Documents'"
+                                :existing-files="$existingFilesArray"
+                            />
+                            <!-- Campo oculto para almacenar los archivos subidos -->
+                            <input type="hidden" name="training_files" id="training_files_input">
+                        </div>
                     </div>
 
                     <!-- Botones del formulario -->
-                    <div class="flex justify-end mt-8">
-                        <x-base.button type="button" class="mr-3" variant="outline-secondary" as="a" href="{{ route('admin.training-schools.index') }}">
+                    <div class="mt-8 flex justify-end">
+                        <x-base.button as="a" href="{{ route('admin.training-schools.index') }}" variant="outline-secondary" class="mr-2">
                             Cancel
                         </x-base.button>
                         <x-base.button type="submit" variant="primary">
@@ -209,7 +255,7 @@
 
 @push('scripts')
     <script>
-        // Validación del formulario
+        // Inicialización del formulario
         document.addEventListener('DOMContentLoaded', function() {
             // Verificar que la fecha de fin es posterior a la fecha de inicio
             document.getElementById('schoolForm').addEventListener('submit', function(event) {
@@ -219,6 +265,66 @@
                 if (endDate < startDate) {
                     event.preventDefault();
                     alert('End date must be after or equal to start date');
+                }
+            });
+            
+            // Manejar cambio de carrier para filtrar conductores
+            document.getElementById('carrier_id').addEventListener('change', function() {
+                const carrierId = this.value;
+                const currentDriverId = "{{ $school->user_driver_detail_id }}";
+                
+                // Limpiar el select de conductores usando JavaScript nativo
+                const driverSelect = document.getElementById('user_driver_detail_id');
+                driverSelect.innerHTML = '<option value="">Select Driver</option>';
+                
+                if (carrierId) {
+                    // Hacer una petición AJAX para obtener los conductores activos de esta transportista
+                    fetch(`/api/active-drivers-by-carrier/${carrierId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data && data.length > 0) {
+                                // Hay conductores activos, agregarlos al select
+                                let driverFound = false;
+                                
+                                data.forEach(function(driver) {
+                                    const option = document.createElement('option');
+                                    option.value = driver.id;
+                                    option.textContent = `${driver.user.name} ${driver.user.last_name || ''}`;
+                                    
+                                    if (driver.id == currentDriverId) {
+                                        option.selected = true;
+                                        driverFound = true;
+                                    }
+                                    
+                                    driverSelect.appendChild(option);
+                                });
+                                
+                                // Si el conductor actual no está en la lista (puede estar inactivo o pertenecer a otro carrier)
+                                if (!driverFound && currentDriverId) {
+                                    // Mantener el conductor actual como opción seleccionada
+                                    // El backend ya se encarga de incluirlo en la lista de drivers
+                                }
+                            } else {
+                                // No hay conductores activos para este carrier
+                                const option = document.createElement('option');
+                                option.value = '';
+                                option.disabled = true;
+                                option.textContent = 'No active drivers found for this carrier';
+                                driverSelect.appendChild(option);
+                            }
+                            
+                            // Disparar un evento change para que se actualice la UI
+                            driverSelect.dispatchEvent(new Event('change'));
+                        })
+                        .catch(error => {
+                            console.error('Error loading drivers:', error);
+                            const option = document.createElement('option');
+                            option.value = '';
+                            option.disabled = true;
+                            option.textContent = 'Error loading drivers';
+                            driverSelect.appendChild(option);
+                            driverSelect.dispatchEvent(new Event('change'));
+                        });
                 }
             });
         });

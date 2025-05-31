@@ -36,5 +36,13 @@ Route::get('/active-drivers-by-carrier/{carrierId}', function ($carrierId) {
     return response()->json($drivers);
 });
 
+// Ruta para obtener todos los carriers activos
+Route::get('/active-carriers', function () {
+    $carriers = \App\Models\Carrier::where('status', 'active')
+        ->orderBy('name')
+        ->get(['id', 'name', 'dot_number']);
+    return response()->json($carriers);
+});
+
 // Ruta API para carga de archivos (sin autenticación ni CSRF)
 Route::post('/upload', [UploadController::class, 'upload']);

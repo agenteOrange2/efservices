@@ -2,16 +2,14 @@
 
 namespace App\Models\Admin\Driver;
 
-use Spatie\MediaLibrary\HasMedia; // Añadir esta interfaz
 use App\Models\UserDriverDetail;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\MediaLibrary\InteractsWithMedia; // Añadir este trait
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\MediaLibrary\MediaCollections\Models\Media; // Añade esta línea
+use App\Traits\HasDocuments;
 
-class DriverTrainingSchool extends Model implements HasMedia
+class DriverTrainingSchool extends Model
 {
-    use HasFactory, InteractsWithMedia;
+    use HasFactory, HasDocuments;
 
     protected $fillable = [
         'user_driver_detail_id',
@@ -50,12 +48,13 @@ class DriverTrainingSchool extends Model implements HasMedia
     }
 
     /**
-     * Define las colecciones de medios para este modelo.
+     * Define el valor por defecto para la colección de documentos
+     * 
+     * @return string
      */
-    public function registerMediaCollections(): void
+    public function getDefaultDocumentCollection(): string
     {
-        // Colección para documentos de la escuela de entrenamiento
-        $this->addMediaCollection('training_files');
+        return 'training_documents';
     }
 
 }

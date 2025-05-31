@@ -5,14 +5,11 @@ namespace App\Models\Admin\Driver;
 use App\Models\UserDriverDetail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use App\MediaLibrary\CustomPathGenerator;
+use App\Traits\HasDocuments;
 
-class DriverTrafficConviction extends Model implements HasMedia
+class DriverTrafficConviction extends Model
 {
-    use HasFactory, InteractsWithMedia;
+    use HasFactory, HasDocuments;
 
     protected $fillable = [
         'user_driver_detail_id',
@@ -25,16 +22,17 @@ class DriverTrafficConviction extends Model implements HasMedia
         'description'
     ];
 
+    /**
+     * Este método garantiza la integridad de los datos de infracciones
+     * al eliminar los documentos asociados cuando se elimina una infracción
+     */
     protected static function boot()
     {
         parent::boot();
-
-        // Evitar que se elimine el registro cuando se elimina el último medio
-        static::deleting(function ($model) {
-            $model->media()->each(function ($media) {
-                $media->delete();
-            });
-            return true;
+        
+        // Cuando se elimina una infracción, eliminar también sus documentos
+        static::deleting(function (DriverTrafficConviction $conviction) {
+            $conviction->deleteAllDocuments();
         });
     }
 
@@ -42,19 +40,20 @@ class DriverTrafficConviction extends Model implements HasMedia
         'conviction_date' => 'date',
     ];
 
-    public function registerMediaCollections(): void
+    /**
+     * Define los tipos de archivo aceptados para las infracciones de tráfico
+     * 
+     * @return array
+     */
+    public static function acceptedMimeTypes(): array
     {
-        $this->addMediaCollection('traffic-tickets')
-            ->useDisk('public')
-            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']);
-    }
-
-    public function registerMediaConversions(Media $media = null): void
-    {
-        $this->addMediaConversion('thumb')
-            ->width(100)
-            ->height(100)
-            ->performOnCollections('traffic-tickets');
+        return [
+            'image/jpeg', 
+            'image/png', 
+            'application/pdf', 
+            'application/msword', 
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
     }
 
     public function userDriverDetail()

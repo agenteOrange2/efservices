@@ -49,7 +49,9 @@ class DocumentAttachment extends Model
      */
     public function getUrl(): string
     {
-        return asset('storage/' . $this->file_path);
+        // Eliminar el prefijo 'public/' si existe en la ruta
+        $cleanPath = preg_replace('/^public\//', '', $this->file_path);
+        return asset('storage/' . $cleanPath);
     }
     
     /**
