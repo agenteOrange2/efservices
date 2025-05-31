@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserDriverDetail;
 use App\Models\Admin\Driver\DriverTrainingSchool;
+use App\Models\DocumentAttachment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -60,8 +61,10 @@ class TrainingSchoolsController extends Controller
      */
     public function create()
     {
-        $drivers = UserDriverDetail::with('user')->get();
-        return view('admin.drivers.training.create', compact('drivers'));
+        // No cargar conductores inicialmente, se cargarán vía AJAX después de seleccionar un carrier
+        // Usando el mismo filtro que en accidents: status=1
+        $carriers = \App\Models\Carrier::where('status', 1)->orderBy('name')->get();
+        return view('admin.drivers.training.create', compact('carriers'));
     }
 
     /**
@@ -104,45 +107,42 @@ class TrainingSchoolsController extends Controller
             
             $trainingSchool->save();
             
-            // Procesar archivos adjuntos si existen
-            if ($request->has('training_files')) {
-                $filesData = json_decode($request->training_files, true);
+            // Procesar archivos si existen
+            if ($request->filled('training_files')) {
+                $files = json_decode($request->training_files, true);
                 
-                if (is_array($filesData) && count($filesData) > 0) {
-                    foreach ($filesData as $fileData) {
-                        // Verificar que tiene los datos necesarios
-                        if (!isset($fileData['tempPath']) || !isset($fileData['originalName'])) {
-                            continue;
-                        }
-                        
-                        $tempPath = storage_path('app/' . $fileData['tempPath']);
-                        
-                        // Verificar que el archivo existe
-                        if (!file_exists($tempPath)) {
-                            Log::warning('Archivo temporal no encontrado al guardar documento de escuela de entrenamiento', [
-                                'temp_path' => $tempPath,
-                                'original_name' => $fileData['originalName']
-                            ]);
-                            continue;
-                        }
-                        
-                        // Añadir el archivo a la colección de medios usando Spatie MediaLibrary
-                        try {
-                            $trainingSchool->addMedia($tempPath)
-                                ->usingName($fileData['originalName'])
-                                ->usingFileName($fileData['originalName'])
-                                ->toMediaCollection('training_files');
-                                
-                            Log::info('Documento de escuela de entrenamiento guardado con éxito', [
-                                'training_school_id' => $trainingSchool->id,
-                                'file_name' => $fileData['originalName']
-                            ]);
-                        } catch (\Exception $e) {
-                            Log::error('Error al guardar documento de escuela de entrenamiento', [
-                                'training_school_id' => $trainingSchool->id,
-                                'file_name' => $fileData['originalName'],
-                                'error' => $e->getMessage()
-                            ]);
+                if (is_array($files) && count($files) > 0) {
+                    foreach ($files as $file) {
+                        if (isset($file['is_temp']) && $file['is_temp'] && isset($file['tmp_path'])) {
+                            // Obtener datos del archivo
+                            $tempPath = storage_path('app/' . $file['tmp_path']);
+                            $originalName = $file['name'];
+                            $mimeType = $file['mime_type'] ?? mime_content_type($tempPath);
+                            $size = $file['size'] ?? filesize($tempPath);
+                            
+                            // Verificar que el archivo temporal existe
+                            if (!file_exists($tempPath)) {
+                                continue;
+                            }
+                            
+                            // Preparar propiedades personalizadas
+                            $customProperties = [
+                                'original_name' => $originalName,
+                                'mime_type' => $mimeType,
+                                'size' => $size
+                            ];
+                            
+                            // Mover el archivo a una ubicación permanente (la lógica para esto está en el trait HasDocuments)
+                            $destinationDir = 'training-schools/' . $trainingSchool->id;
+                            $fileName = uniqid() . '_' . $originalName;
+                            $fullPath = $destinationDir . '/' . $fileName;
+                            
+                            // Usar addDocument del trait HasDocuments
+                            $document = $trainingSchool->addDocument($fullPath, 'training_documents', $customProperties);
+                            
+                            // Mover el archivo de la carpeta temporal a la permanente
+                            Storage::makeDirectory($destinationDir);
+                            Storage::copy($file['tmp_path'], $fullPath);
                         }
                     }
                 }
@@ -152,9 +152,9 @@ class TrainingSchoolsController extends Controller
             
             return redirect()->route('admin.training-schools.index')
                 ->with('success', 'Training school created successfully');
+                
         } catch (\Exception $e) {
             DB::rollBack();
-            
             Log::error('Error al crear escuela de entrenamiento', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -171,8 +171,8 @@ class TrainingSchoolsController extends Controller
      */
     public function show(DriverTrainingSchool $trainingSchool)
     {
-        $school = $trainingSchool->load('userDriverDetail.user');
-        return view('admin.drivers.training.show', compact('school'));
+        $trainingSchool->load('userDriverDetail.user');
+        return view('admin.drivers.training.show', compact('trainingSchool'));
     }
     
     /**
@@ -180,10 +180,48 @@ class TrainingSchoolsController extends Controller
      */
     public function edit(DriverTrainingSchool $trainingSchool)
     {
-        $drivers = UserDriverDetail::with('user')->get();
-        $school = $trainingSchool->load('userDriverDetail.user');
+        // Obtener el carrier del conductor asociado a esta escuela
+        $driverDetail = UserDriverDetail::find($trainingSchool->user_driver_detail_id);
+        $carrierId = $driverDetail ? $driverDetail->carrier_id : null;
         
-        return view('admin.drivers.training.edit', compact('school', 'drivers'));
+        // Obtener todos los carriers activos para el selector
+        // Usando el mismo filtro que en accidents: status=1
+        $carriers = \App\Models\Carrier::where('status', 1)->orderBy('name')->get();
+        
+        // Obtener conductores del carrier para mostrar en el formulario
+        $drivers = [];
+        if ($carrierId) {
+            $drivers = UserDriverDetail::where('carrier_id', $carrierId)
+                ->whereHas('user', function($query) {
+                    $query->where('status', 1);
+                })
+                ->with('user')
+                ->get();
+                
+            // Asegurarse que el conductor de la escuela esté en la lista aunque ya no esté activo
+            $driverFound = false;
+            foreach ($drivers as $driver) {
+                if ($driver->id == $trainingSchool->user_driver_detail_id) {
+                    $driverFound = true;
+                    break;
+                }
+            }
+            
+            if (!$driverFound && $driverDetail) {
+                // Añadir el conductor manualmente si no está en la lista (podría estar inactivo)
+                $driverDetail->load('user');
+                $drivers->push($driverDetail);
+            }
+        }
+        
+        $trainingSkills = json_decode($trainingSchool->training_skills ?? '[]', true);
+        return view('admin.drivers.training.edit', [
+            'school' => $trainingSchool, 
+            'drivers' => $drivers,
+            'carriers' => $carriers,
+            'selectedCarrierId' => $carrierId,
+            'trainingSkills' => $trainingSkills
+        ]);
     }
     
     /**
@@ -206,7 +244,7 @@ class TrainingSchoolsController extends Controller
                 'training_files' => 'nullable|string', // JSON de archivos del componente Livewire
             ]);
             
-            // Actualizar el registro
+            // Actualizar datos básicos
             $trainingSchool->user_driver_detail_id = $request->user_driver_detail_id;
             $trainingSchool->date_start = $request->date_start;
             $trainingSchool->date_end = $request->date_end;
@@ -225,45 +263,42 @@ class TrainingSchoolsController extends Controller
             
             $trainingSchool->save();
             
-            // Procesar archivos adjuntos si existen
-            if ($request->has('training_files')) {
-                $filesData = json_decode($request->training_files, true);
+            // Procesar archivos si existen
+            if ($request->filled('training_files')) {
+                $files = json_decode($request->training_files, true);
                 
-                if (is_array($filesData) && count($filesData) > 0) {
-                    foreach ($filesData as $fileData) {
-                        // Verificar que tiene los datos necesarios
-                        if (!isset($fileData['tempPath']) || !isset($fileData['originalName'])) {
-                            continue;
-                        }
-                        
-                        $tempPath = storage_path('app/' . $fileData['tempPath']);
-                        
-                        // Verificar que el archivo existe
-                        if (!file_exists($tempPath)) {
-                            Log::warning('Archivo temporal no encontrado al actualizar documento de escuela de entrenamiento', [
-                                'temp_path' => $tempPath,
-                                'original_name' => $fileData['originalName']
-                            ]);
-                            continue;
-                        }
-                        
-                        // Añadir el archivo a la colección de medios usando Spatie MediaLibrary
-                        try {
-                            $trainingSchool->addMedia($tempPath)
-                                ->usingName($fileData['originalName'])
-                                ->usingFileName($fileData['originalName'])
-                                ->toMediaCollection('training_files');
-                                
-                            Log::info('Documento de escuela de entrenamiento actualizado con éxito', [
-                                'training_school_id' => $trainingSchool->id,
-                                'file_name' => $fileData['originalName']
-                            ]);
-                        } catch (\Exception $e) {
-                            Log::error('Error al actualizar documento de escuela de entrenamiento', [
-                                'training_school_id' => $trainingSchool->id,
-                                'file_name' => $fileData['originalName'],
-                                'error' => $e->getMessage()
-                            ]);
+                if (is_array($files) && count($files) > 0) {
+                    foreach ($files as $file) {
+                        if (isset($file['is_temp']) && $file['is_temp'] && isset($file['tmp_path'])) {
+                            // Obtener datos del archivo
+                            $tempPath = storage_path('app/' . $file['tmp_path']);
+                            $originalName = $file['name'];
+                            $mimeType = $file['mime_type'] ?? mime_content_type($tempPath);
+                            $size = $file['size'] ?? filesize($tempPath);
+                            
+                            // Verificar que el archivo temporal existe
+                            if (!file_exists($tempPath)) {
+                                continue;
+                            }
+                            
+                            // Preparar propiedades personalizadas
+                            $customProperties = [
+                                'original_name' => $originalName,
+                                'mime_type' => $mimeType,
+                                'size' => $size
+                            ];
+                            
+                            // Mover el archivo a una ubicación permanente (la lógica para esto está en el trait HasDocuments)
+                            $destinationDir = 'training-schools/' . $trainingSchool->id;
+                            $fileName = uniqid() . '_' . $originalName;
+                            $fullPath = $destinationDir . '/' . $fileName;
+                            
+                            // Usar addDocument del trait HasDocuments
+                            $document = $trainingSchool->addDocument($fullPath, 'training_documents', $customProperties);
+                            
+                            // Mover el archivo de la carpeta temporal a la permanente
+                            Storage::makeDirectory($destinationDir);
+                            Storage::copy($file['tmp_path'], $fullPath);
                         }
                     }
                 }
@@ -273,9 +308,9 @@ class TrainingSchoolsController extends Controller
             
             return redirect()->route('admin.training-schools.index')
                 ->with('success', 'Training school updated successfully');
+                
         } catch (\Exception $e) {
             DB::rollBack();
-            
             Log::error('Error al actualizar escuela de entrenamiento', [
                 'id' => $trainingSchool->id,
                 'error' => $e->getMessage(),
@@ -294,8 +329,14 @@ class TrainingSchoolsController extends Controller
     public function destroy(DriverTrainingSchool $trainingSchool)
     {
         try {
-            // Eliminar todos los documentos asociados
-            $trainingSchool->getMedia('training_files')->each->delete();
+            // Eliminar los documentos asociados a la escuela
+            $documents = DocumentAttachment::where('documentable_type', DriverTrainingSchool::class)
+                ->where('documentable_id', $trainingSchool->id)
+                ->get();
+                
+            foreach ($documents as $document) {
+                $trainingSchool->deleteDocument($document->id);
+            }
             
             // Eliminar la escuela
             $trainingSchool->delete();
@@ -314,25 +355,48 @@ class TrainingSchoolsController extends Controller
     }
     
     /**
+     * Muestra los documentos de una escuela de entrenamiento específica
+     */
+    public function showDocuments(DriverTrainingSchool $school)
+    {
+        $school->load('userDriverDetail.user');
+        
+        // Cargar documentos usando DocumentAttachment
+        $documents = DocumentAttachment::where('documentable_type', DriverTrainingSchool::class)
+            ->where('documentable_id', $school->id)
+            ->get();
+        
+        // Información de depuración
+        $debugInfo = [
+            'school_id' => $school->id,
+            'user_driver_detail_id' => $school->user_driver_detail_id,
+            'documents_count' => $documents->count(),
+            'collection' => 'training_documents'
+        ];
+        
+        return view('admin.drivers.training.documents', compact('school', 'documents', 'debugInfo'));
+    }
+    
+    /**
      * Muestra todos los documentos de escuelas de entrenamiento en una vista resumida
      */
     public function documents(Request $request)
     {
         try {
-            // Obtener todos los documentos asociados con escuelas de entrenamiento
-            $query = Media::where('model_type', DriverTrainingSchool::class)
-                ->with(['model' => function($q) {
+            // Obtener todos los documentos asociados con escuelas de entrenamiento usando DocumentAttachment
+            $query = DocumentAttachment::where('documentable_type', DriverTrainingSchool::class)
+                ->with(['documentable' => function($q) {
                     $q->with('userDriverDetail.user');
                 }]);
 
             // Filtro por escuela
             if ($request->has('school') && !empty($request->school)) {
-                $query->where('model_id', $request->school);
+                $query->where('documentable_id', $request->school);
             }
 
             // Filtro por conductor
             if ($request->has('driver') && !empty($request->driver)) {
-                $query->whereHas('model', function($q) use ($request) {
+                $query->whereHas('documentable', function($q) use ($request) {
                     $q->where('user_driver_detail_id', $request->driver);
                 });
             }
@@ -344,30 +408,41 @@ class TrainingSchoolsController extends Controller
                         $query->where('mime_type', 'like', 'image/%');
                         break;
                     case 'pdf':
-                        $query->where('mime_type', 'application/pdf');
+                        $query->where('mime_type', 'like', '%pdf%');
                         break;
                     case 'doc':
                         $query->where(function($q) {
                             $q->where('mime_type', 'like', '%word%')
-                              ->orWhere('mime_type', 'like', '%excel%')
+                              ->orWhere('mime_type', 'like', '%document%')
+                              ->orWhere('mime_type', 'like', '%docx%');
+                        });
+                        break;
+                    case 'xls':
+                        $query->where(function($q) {
+                            $q->where('mime_type', 'like', '%excel%')
                               ->orWhere('mime_type', 'like', '%sheet%')
-                              ->orWhere('mime_type', 'like', '%csv%')
-                              ->orWhere('mime_type', 'like', '%powerpoint%')
+                              ->orWhere('mime_type', 'like', '%xlsx%');
+                        });
+                        break;
+                    case 'ppt':
+                        $query->where(function($q) {
+                            $q->where('mime_type', 'like', '%powerpoint%')
                               ->orWhere('mime_type', 'like', '%presentation%');
                         });
                         break;
                 }
             }
-
-            // Filtro por fecha de subida
+            
+            // Filtro por fecha de subida (desde)
             if ($request->has('upload_from') && !empty($request->upload_from)) {
                 $query->whereDate('created_at', '>=', $request->upload_from);
             }
 
+            // Filtro por fecha de subida (hasta)
             if ($request->has('upload_to') && !empty($request->upload_to)) {
                 $query->whereDate('created_at', '<=', $request->upload_to);
             }
-
+            
             // Ordenar por fecha de creación (más recientes primero)
             $documents = $query->orderBy('created_at', 'desc')->paginate(15);
             
@@ -378,85 +453,50 @@ class TrainingSchoolsController extends Controller
             $schools = DriverTrainingSchool::orderBy('school_name')->get();
             
             return view('admin.drivers.training.documents', compact('documents', 'drivers', 'schools'));
+            
         } catch (\Exception $e) {
             Log::error('Error al cargar documentos de escuelas de entrenamiento', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+            
             return redirect()->back()->with('error', 'Error al cargar documentos: ' . $e->getMessage());
         }
     }
     
     /**
-     * Muestra los documentos de una escuela de entrenamiento específica
-     */
-    public function showDocuments(DriverTrainingSchool $school)
-    {
-        $school->load('userDriverDetail.user');
-        return view('admin.drivers.training.show', compact('school'));
-    }
-    
-    /**
-     * Muestra o descarga un documento
-     */
-    public function previewDocument($id, Request $request)
-    {
-        try {
-            $media = Media::findOrFail($id);
-            
-            // Verificar que el documento pertenece a una escuela de entrenamiento
-            if ($media->model_type !== DriverTrainingSchool::class) {
-                return redirect()->back()->with('error', 'Invalid document type');
-            }
-            
-            // Si se solicita descarga
-            if ($request->has('download')) {
-                return response()->download($media->getPath(), $media->file_name);
-            }
-            
-            // Si es una imagen, mostrar directamente
-            if (str_starts_with($media->mime_type, 'image/')) {
-                return response()->file($media->getPath());
-            }
-            
-            // Para PDF, mostrar en el navegador
-            if ($media->mime_type === 'application/pdf') {
-                return response()->file($media->getPath(), [
-                    'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'inline; filename="' . $media->file_name . '"'
-                ]);
-            }
-            
-            // Para otros tipos, descargar
-            return response()->download($media->getPath(), $media->file_name);
-            
-        } catch (\Exception $e) {
-            Log::error('Error al previsualizar documento', [
-                'document_id' => $id,
-                'error' => $e->getMessage()
-            ]);
-            return redirect()->back()->with('error', 'Error al previsualizar documento: ' . $e->getMessage());
-        }
-    }
-    
-    /**
      * Elimina un documento mediante AJAX
+     * Usa el trait HasDocuments para eliminar correctamente
+     * 
+     * @param Request $request La solicitud HTTP
+     * @param int $id ID del documento a eliminar
+     * @return \Illuminate\Http\JsonResponse
      */
     public function ajaxDestroyDocument(Request $request, $id)
     {
         try {
-            $media = Media::findOrFail($id);
+            // Buscar el documento en nuestra tabla document_attachments
+            $document = DocumentAttachment::findOrFail($id);
             
             // Verificar que el documento pertenece a una escuela de entrenamiento
-            if ($media->model_type !== DriverTrainingSchool::class) {
+            if ($document->documentable_type !== DriverTrainingSchool::class) {
                 return response()->json(['success' => false, 'message' => 'Invalid document type'], 400);
             }
             
-            $fileName = $media->file_name;
-            $schoolId = $media->model_id;
+            $fileName = $document->file_name;
+            $schoolId = $document->documentable_id;
+            $school = DriverTrainingSchool::find($schoolId);
             
-            // Eliminar el archivo
-            $media->delete();
+            if (!$school) {
+                return response()->json(['success' => false, 'message' => 'Training school not found'], 404);
+            }
+            
+            // Eliminar el documento usando el método del trait HasDocuments
+            $result = $school->deleteDocument($id);
+            
+            if (!$result) {
+                return response()->json(['success' => false, 'message' => 'Failed to delete document'], 500);
+            }
             
             return response()->json([
                 'success' => true,
@@ -464,35 +504,54 @@ class TrainingSchoolsController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            Log::error('Error al eliminar documento vía AJAX', [
+            Log::error('Error deleting document via AJAX', [
                 'document_id' => $id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['success' => false, 'message' => 'Error deleting document: ' . $e->getMessage()], 500);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting document: ' . $e->getMessage()
+            ], 500);
         }
     }
     
     /**
-     * Elimina un documento
+     * Elimina un documento usando el trait HasDocuments
+     * 
+     * @param int $id ID del documento a eliminar
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroyDocument($id)
     {
         try {
-            $media = Media::findOrFail($id);
+            // Buscar el documento en nuestra tabla document_attachments
+            $document = DocumentAttachment::findOrFail($id);
             
             // Verificar que el documento pertenece a una escuela de entrenamiento
-            if ($media->model_type !== DriverTrainingSchool::class) {
+            if ($document->documentable_type !== DriverTrainingSchool::class) {
                 return redirect()->back()->with('error', 'Invalid document type');
             }
             
-            $fileName = $media->file_name;
-            $schoolId = $media->model_id;
+            $fileName = $document->file_name;
+            $schoolId = $document->documentable_id;
+            $school = DriverTrainingSchool::find($schoolId);
             
-            // Eliminar el archivo
-            $media->delete();
+            if (!$school) {
+                return redirect()->route('admin.training-schools.index')
+                    ->with('error', 'No se encontró la escuela de entrenamiento asociada al documento');
+            }
             
-            return redirect()->route('admin.training-schools.show', $schoolId)
-                ->with('success', "Document '{$fileName}' deleted successfully");
+            // Eliminar el documento usando el método del trait HasDocuments
+            $result = $school->deleteDocument($id);
+            
+            if (!$result) {
+                return redirect()->back()->with('error', 'No se pudo eliminar el documento');
+            }
+            
+            return redirect()->route('admin.training-schools.edit', $schoolId)
+                ->with('success', "Documento '{$fileName}' eliminado correctamente");
                 
         } catch (\Exception $e) {
             Log::error('Error al eliminar documento', [
@@ -502,5 +561,17 @@ class TrainingSchoolsController extends Controller
             ]);
             return redirect()->back()->with('error', 'Error al eliminar documento: ' . $e->getMessage());
         }
+    }
+    
+    public function getDriversByCarrier($carrier)
+    {
+        $drivers = UserDriverDetail::where('carrier_id', $carrier)
+            ->whereHas('user', function($query) {
+                $query->where('status', 1);
+            })
+            ->with('user')
+            ->get();
+            
+        return response()->json($drivers);
     }
 }

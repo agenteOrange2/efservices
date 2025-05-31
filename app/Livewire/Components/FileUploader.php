@@ -155,23 +155,13 @@ class FileUploader extends Component
                 $media = \Spatie\MediaLibrary\MediaCollections\Models\Media::find($realMediaId);
                 if ($media) {
                     try {
-                        // Registrar información antes de eliminar
-                        $filePath = $media->getPath();
-                        
-                        // Eliminar el archivo de la base de datos
-                        $deleted = $media->delete();
-                        
-                        \Illuminate\Support\Facades\Log::info('Archivo temporal ya guardado eliminado de la base de datos', [
-                            'file_id' => $fileId,
-                            'real_media_id' => $realMediaId,
-                            'deleted' => $deleted,
-                            'file_path' => $filePath
+                        // Para archivos no temporales, emitir evento al componente padre con el ID real del archivo
+                        $this->dispatch('fileRemoved', [
+                            'fileId' => $realMediaId,
+                            'modelName' => $this->modelName,
+                            'modelIndex' => $this->modelIndex,
+                            'isTemp' => false
                         ]);
-                        
-                        // Verificar si el archivo se eliminó correctamente del disco
-                        if (file_exists($filePath)) {
-                            @unlink($filePath);
-                        }
                     } catch (\Exception $e) {
                         \Illuminate\Support\Facades\Log::error('Error al eliminar archivo de la base de datos', [
                             'error' => $e->getMessage(),

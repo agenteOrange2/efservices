@@ -96,53 +96,50 @@
             @if($trainingSchools->count() > 0)
                 <div class="box-body p-0">
                     <div class="overflow-x-auto">
-                        <table class="table">
+                        <table class="table w-full">
                             <thead>
                                 <tr>
                                     <th class="whitespace-nowrap">
-                                        <a href="{{ route('admin.training-schools.index', array_merge(request()->all(), ['sort_field' => 'school_name', 'sort_direction' => request('sort_field') == 'school_name' && request('sort_direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center">
-                                            School Name
-                                            @if(request('sort_field') == 'school_name')
-                                                @if(request('sort_direction') == 'asc')
-                                                    <x-base.lucide class="w-4 h-4 ml-2" icon="arrow-up" />
+                                        <a href="{{ route('admin.training-schools.index', ['sort_field' => 'created_at', 'sort_direction' => request('sort_field') == 'created_at' && request('sort_direction') == 'asc' ? 'desc' : 'asc']) }}" class="flex items-center">
+                                            Created At
+                                            @if (request('sort_field') == 'created_at')
+                                                @if (request('sort_direction') == 'asc')
+                                                    <x-base.lucide class="w-4 h-4 ml-2" icon="chevron-up" />
                                                 @else
-                                                    <x-base.lucide class="w-4 h-4 ml-2" icon="arrow-down" />
+                                                    <x-base.lucide class="w-4 h-4 ml-2" icon="chevron-down" />
                                                 @endif
                                             @endif
                                         </a>
-                                    </th>
-                                    <th class="whitespace-nowrap">
-                                        <a href="{{ route('admin.training-schools.index', array_merge(request()->all(), ['sort_field' => 'date_start', 'sort_direction' => request('sort_field') == 'date_start' && request('sort_direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center">
-                                            Start Date
-                                            @if(request('sort_field') == 'date_start')
-                                                @if(request('sort_direction') == 'asc')
-                                                    <x-base.lucide class="w-4 h-4 ml-2" icon="arrow-up" />
-                                                @else
-                                                    <x-base.lucide class="w-4 h-4 ml-2" icon="arrow-down" />
-                                                @endif
-                                            @endif
-                                        </a>
-                                    </th>
-                                    <th class="whitespace-nowrap">
-                                        <a href="{{ route('admin.training-schools.index', array_merge(request()->all(), ['sort_field' => 'date_end', 'sort_direction' => request('sort_field') == 'date_end' && request('sort_direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center">
-                                            End Date
-                                            @if(request('sort_field') == 'date_end')
-                                                @if(request('sort_direction') == 'asc')
-                                                    <x-base.lucide class="w-4 h-4 ml-2" icon="arrow-up" />
-                                                @else
-                                                    <x-base.lucide class="w-4 h-4 ml-2" icon="arrow-down" />
-                                                @endif
-                                            @endif
-                                        </a>
-                                    </th>
-                                    <th class="whitespace-nowrap">
-                                        Location
                                     </th>
                                     <th class="whitespace-nowrap">
                                         Driver
                                     </th>
                                     <th class="whitespace-nowrap">
-                                        Graduated
+                                        Carrier
+                                    </th>
+                                    <th class="whitespace-nowrap">
+                                        <a href="{{ route('admin.training-schools.index', ['sort_field' => 'school_name', 'sort_direction' => request('sort_field') == 'school_name' && request('sort_direction') == 'asc' ? 'desc' : 'asc']) }}" class="flex items-center">
+                                            School Name
+                                            @if (request('sort_field') == 'school_name')
+                                                @if (request('sort_direction') == 'asc')
+                                                    <x-base.lucide class="w-4 h-4 ml-2" icon="chevron-up" />
+                                                @else
+                                                    <x-base.lucide class="w-4 h-4 ml-2" icon="chevron-down" />
+                                                @endif
+                                            @endif
+                                        </a>
+                                    </th>
+                                    <th class="whitespace-nowrap">
+                                        <a href="{{ route('admin.training-schools.index', ['sort_field' => 'date_end', 'sort_direction' => request('sort_field') == 'date_end' && request('sort_direction') == 'asc' ? 'desc' : 'asc']) }}" class="flex items-center">
+                                            Expiration Date
+                                            @if (request('sort_field') == 'date_end')
+                                                @if (request('sort_direction') == 'asc')
+                                                    <x-base.lucide class="w-4 h-4 ml-2" icon="chevron-up" />
+                                                @else
+                                                    <x-base.lucide class="w-4 h-4 ml-2" icon="chevron-down" />
+                                                @endif
+                                            @endif
+                                        </a>
                                     </th>
                                     <th class="whitespace-nowrap">
                                         Documents
@@ -155,38 +152,16 @@
                             <tbody>
                                 @foreach($trainingSchools as $school)
                                     <tr class="intro-x">
-                                        <td class="whitespace-nowrap font-medium">
-                                            <a href="{{ route('admin.training-schools.edit', $school->id) }}" class="text-primary">
-                                                {{ $school->school_name }}
-                                            </a>
+                                        <td>{{ $school->created_at->format('m/d/Y') }}</td>
+                                        <td>
+                                            {{ $school->userDriverDetail->user->name ?? '---' }} 
+                                            {{ $school->userDriverDetail->user->last_name ?? '' }}
                                         </td>
-                                        <td class="whitespace-nowrap">
-                                            {{ $school->date_start->format('m/d/Y') }}
+                                        <td>
+                                            {{ $school->userDriverDetail->carrier->name ?? '---' }}
                                         </td>
-                                        <td class="whitespace-nowrap">
-                                            {{ $school->date_end->format('m/d/Y') }}
-                                        </td>
-                                        <td class="whitespace-nowrap">
-                                            {{ $school->city }}, {{ $school->state }}
-                                        </td>
-                                        <td class="whitespace-nowrap">
-                                            <a href="{{ route('admin.drivers.show', $school->userDriverDetail->id) }}" class="text-primary">
-                                                {{ $school->userDriverDetail->user->name }} {{ $school->userDriverDetail->user->last_name ?? '' }}
-                                            </a>
-                                        </td>
-                                        <td class="whitespace-nowrap">
-                                            @if($school->graduated)
-                                                <span class="bg-success/20 text-success rounded px-2 py-1 text-xs">
-                                                    <x-base.lucide class="w-3 h-3 inline-block" icon="check-circle" />
-                                                    Graduated
-                                                </span>
-                                            @else
-                                                <span class="bg-danger/20 text-danger rounded px-2 py-1 text-xs">
-                                                    <x-base.lucide class="w-3 h-3 inline-block" icon="x-circle" />
-                                                    Not Graduated
-                                                </span>
-                                            @endif
-                                        </td>
+                                        <td>{{ $school->school_name }}</td>
+                                        <td>{{ $school->date_end }}</td>
                                         <td class="whitespace-nowrap">
                                             @php
                                                 $docsCount = \App\Models\DocumentAttachment::where('documentable_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)
@@ -202,6 +177,13 @@
                                         </td>
                                         <td class="table-report__action">
                                             <div class="flex justify-center items-center">
+                                                <a href="{{ route('admin.training-schools.show', $school->id) }}" 
+                                                   class="btn-sm btn-danger p-1 flex mr-2" title="View Documents">
+                                                    <x-base.lucide class="w-4 h-4" icon="file-text" />
+                                                    <span class="ml-1">
+                                                        {{ \App\Models\DocumentAttachment::where('documentable_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)->where('documentable_id', $school->id)->count() }}
+                                                    </span>
+                                                </a>
                                                 <a href="{{ route('admin.training-schools.edit', $school->id) }}" class="btn btn-sm btn-primary mr-2">
                                                     <x-base.lucide class="w-4 h-4" icon="edit" />
                                                 </a>

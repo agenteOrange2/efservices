@@ -98,17 +98,57 @@ trait HasDocuments
      */
     public function deleteDocument(int $documentId): bool
     {
+        \Illuminate\Support\Facades\Log::info("Iniciando proceso de eliminación de documento", [
+            'document_id' => $documentId,
+            'model_type' => get_class($this),
+            'model_id' => $this->id
+        ]);
+        
         $document = $this->documents()->find($documentId);
         
         if (!$document) {
+            \Illuminate\Support\Facades\Log::warning("Documento no encontrado para eliminar", ['document_id' => $documentId]);
             return false;
         }
         
-        // Eliminar el archivo físico
-        Storage::disk('public')->delete($document->file_path);
+        // Obtener la ruta completa del archivo para verificación
+        $fullPath = Storage::disk('public')->path($document->file_path);
+        $exists = file_exists($fullPath);
         
-        // Eliminar el registro
-        return $document->delete();
+        // Limpiar la ruta (eliminar prefijo 'public/' si existe)
+        $cleanPath = preg_replace('/^public\//', '', $document->file_path);
+        
+        \Illuminate\Support\Facades\Log::info("Información del archivo a eliminar", [
+            'document_id' => $documentId,
+            'file_name' => $document->file_name,
+            'ruta_original' => $document->file_path,
+            'ruta_limpia' => $cleanPath,
+            'ruta_completa' => $fullPath,
+            'archivo_existe' => $exists ? 'Sí' : 'No'
+        ]);
+        
+        // Intentar eliminar con ambas rutas para asegurar que se elimine el archivo
+        $deleted1 = Storage::disk('public')->delete($cleanPath);
+        $deleted2 = Storage::disk('public')->delete($document->file_path);
+        
+        // Registrar el resultado de la eliminación del archivo físico
+        \Illuminate\Support\Facades\Log::info("Resultado eliminación archivo físico", [
+            'ruta_original_eliminada' => $deleted2 ? 'Sí' : 'No',
+            'ruta_limpia_eliminada' => $deleted1 ? 'Sí' : 'No'
+        ]);
+        
+        // Eliminar el registro directamente de la tabla para evitar problemas de eliminación en cascada
+        // como ocurría con Spatie Media Library
+        $deletedFromDb = \Illuminate\Support\Facades\DB::table('document_attachments')
+            ->where('id', $documentId)
+            ->delete();
+            
+        \Illuminate\Support\Facades\Log::info("Registro eliminado de la base de datos", [
+            'document_id' => $documentId,
+            'eliminado_db' => $deletedFromDb ? 'Sí' : 'No'
+        ]);
+        
+        return $deletedFromDb;
     }
     
     /**
@@ -122,14 +162,24 @@ trait HasDocuments
     {
         // Para DriverAccident, usar exactamente la ruta especificada
         if ($this instanceof \App\Models\Admin\Driver\DriverAccident) {
-            $driverId = $this->userDriverDetail->id ?? 'unknown';
+            $driverId = $this->userDriverDetail->user_id ?? 'unknown';
             $path = "driver/{$driverId}/accidents/{$this->id}";
             return $fileName ? "{$path}/{$fileName}" : $path;
         }
         
         // Para TrafficConviction
         if ($this instanceof \App\Models\Admin\Driver\DriverTrafficConviction) {
-            $driverId = $this->userDriverDetail->id ?? 'unknown';
+            // Usar directamente el user_driver_detail_id que sabemos que es correcto
+            $driverId = $this->user_driver_detail_id ?? 'unknown';
+            
+            // Agregar log para depuración
+            \Illuminate\Support\Facades\Log::info('Generando ruta para documento de infracción', [
+                'conviction_id' => $this->id,
+                'user_driver_detail_id' => $this->user_driver_detail_id,
+                'driver_id_usado' => $driverId,
+                'path_generada' => "driver/{$driverId}/traffic_convictions/{$this->id}"
+            ]);
+            
             $path = "driver/{$driverId}/traffic_convictions/{$this->id}";
             return $fileName ? "{$path}/{$fileName}" : $path;
         }

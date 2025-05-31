@@ -205,6 +205,7 @@
                 <input type="hidden" name="location" value="{{ $conviction->location }}">
                 <input type="hidden" name="charge" value="{{ $conviction->charge }}">
                 <input type="hidden" name="penalty" value="{{ $conviction->penalty }}">
+                <input type="hidden" name="collection" value="traffic_convictions">
 
                 <x-base.dialog.description class="grid grid-cols-12 gap-4 gap-y-3">
                     <div class="col-span-12">

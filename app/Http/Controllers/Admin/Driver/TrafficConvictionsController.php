@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\UserDriverDetail;
 use App\Models\Admin\Driver\DriverTrafficConviction;
 use App\Models\Carrier;
+use App\Models\DocumentAttachment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Str;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class TrafficConvictionsController extends Controller
 {
@@ -148,26 +149,24 @@ class TrafficConvictionsController extends Controller
                                 $driverId = $conviction->userDriverDetail->id;
                                 
                                 try {
-                                    $media = $conviction->addMediaFromDisk($filePath, $disk)
-                                        ->usingName($file['original_name'] ?? 'document')
-                                        ->usingFileName($file['original_name'] ?? 'document')
-                                        ->withCustomProperties([
-                                            'original_filename' => $file['original_name'] ?? 'document',
-                                            'mime_type' => $file['mime_type'] ?? 'application/octet-stream',
-                                            'conviction_id' => $conviction->id,
-                                            'driver_id' => $driverId,
-                                            'size' => $file['size'] ?? 0
-                                        ])
-                                        ->toMediaCollection('traffic-tickets');
+                                    $tempPath = Storage::disk($disk)->path($filePath);
+                                    $customProperties = [
+                                        'conviction_id' => $conviction->id,
+                                        'driver_id' => $driverId,
+                                        'original_name' => $file['original_name'] ?? 'document',
+                                        'mime_type' => $file['mime_type'] ?? 'application/octet-stream',
+                                        'size' => $file['size'] ?? 0
+                                    ];
                                     
+                                    $document = $conviction->addDocument($tempPath, 'traffic_convictions', $customProperties);
                                     $uploadedCount++;
                                     
                                     Log::info('Documento de infracción de tráfico subido correctamente', [
                                         'conviction_id' => $conviction->id,
-                                        'media_id' => $media->id,
-                                        'file_name' => $media->file_name,
+                                        'document_id' => $document->id,
+                                        'file_name' => $document->file_name,
                                         'original_name' => $file['original_name'],
-                                        'collection' => $media->collection_name,
+                                        'collection' => $document->collection,
                                         'driver_id' => $driverId
                                     ]);
                                 } catch (\Exception $e) {
@@ -275,10 +274,10 @@ class TrafficConvictionsController extends Controller
      */
     public function update(DriverTrafficConviction $conviction, Request $request)
     {
-        //dd($request->all());
-
         DB::beginTransaction();
+        
         try {
+            // Validar datos de la infracción
             $validated = $request->validate([
                 'user_driver_detail_id' => 'required|exists:user_driver_details,id',
                 'conviction_date' => 'required|date',
@@ -287,11 +286,12 @@ class TrafficConvictionsController extends Controller
                 'penalty' => 'required|string|max:255',
             ]);
 
+            // Actualizar la infracción con los datos validados
             $conviction->update($validated);
-            
-            // Si hay documentos nuevos subidos vía Livewire
-            $files = $request->get('traffic_files');
             $uploadedCount = 0;
+            
+            // 1. Procesar archivos subidos por Livewire
+            $files = $request->get('traffic_files');
             
             Log::info('Procesando archivos en update', [
                 'files_data' => $files,
@@ -324,26 +324,23 @@ class TrafficConvictionsController extends Controller
                             
                             $driverId = $conviction->userDriverDetail->id;
                             
-                            // Usar addMedia directamente desde la ruta del archivo
-                            $media = $conviction->addMedia($fullPath)
-                                ->usingName($file['original_name'] ?? 'document')
-                                ->usingFileName($file['original_name'] ?? 'document')
-                                ->withCustomProperties([
-                                    'original_filename' => $file['original_name'] ?? 'document',
-                                    'mime_type' => $file['mime_type'] ?? 'application/octet-stream',
-                                    'conviction_id' => $conviction->id,
-                                    'driver_id' => $driverId,
-                                    'size' => $file['size'] ?? 0
-                                ])
-                                ->toMediaCollection('traffic-tickets');
+                            // Usar addDocument del trait HasDocuments
+                            $customProperties = [
+                                'conviction_id' => $conviction->id,
+                                'driver_id' => $driverId,
+                                'original_name' => $file['original_name'] ?? 'document',
+                                'mime_type' => $file['mime_type'] ?? 'application/octet-stream',
+                                'size' => $file['size'] ?? 0
+                            ];
                             
+                            $document = $conviction->addDocument($fullPath, 'traffic_convictions', $customProperties);
                             $uploadedCount++;
                             
                             Log::info('Documento subido correctamente en update', [
                                 'conviction_id' => $conviction->id,
-                                'media_id' => $media->id,
-                                'file_name' => $media->file_name,
-                                'collection' => 'traffic-tickets'
+                                'document_id' => $document->id,
+                                'file_name' => $document->file_name,
+                                'collection' => 'traffic_convictions'
                             ]);
                         }
                     }
@@ -356,38 +353,36 @@ class TrafficConvictionsController extends Controller
                 }
             }
             
-            // También manejar archivos subidos directamente vía formulario (no Livewire)
+            // 2. Procesar archivos subidos directamente vía formulario
             if ($request->hasFile('documents')) {
                 foreach ($request->file('documents') as $file) {
-                    // Obtener el ID del conductor asociado a la infracción
+                    // Obtener el ID del conductor
                     $driverId = $conviction->userDriverDetail->id;
                     
-                    // Configurar el disco y la ruta de almacenamiento correcta
-                    $media = $conviction->addMedia($file)
-                        ->usingName($file->getClientOriginalName())
-                        ->usingFileName($file->getClientOriginalName())
-                        ->withCustomProperties([
-                            'original_filename' => $file->getClientOriginalName(),
-                            'mime_type' => $file->getMimeType(),
-                            'conviction_id' => $conviction->id,
-                            'driver_id' => $driverId
-                        ])
-                        ->toMediaCollection('traffic-tickets');
+                    // Almacenar temporalmente el archivo
+                    $tempPath = $file->store('temp');
+                    $fullPath = storage_path('app/' . $tempPath);
                     
+                    // Propiedades personalizadas para el documento
+                    $customProperties = [
+                        'conviction_id' => $conviction->id,
+                        'driver_id' => $driverId,
+                        'original_name' => $file->getClientOriginalName(),
+                        'mime_type' => $file->getMimeType(),
+                        'size' => $file->getSize()
+                    ];
+                    
+                    // Usar addDocument del trait HasDocuments
+                    $document = $conviction->addDocument($fullPath, 'traffic_convictions', $customProperties);
                     $uploadedCount++;
                     
-                    Log::info('Documento de infracción de tráfico subido directamente durante actualización', [
+                    Log::info('Documento subido directamente en update', [
                         'conviction_id' => $conviction->id,
-                        'media_id' => $media->id,
-                        'file_name' => $media->file_name,
-                        'collection' => $media->collection_name,
-                        'driver_id' => $driverId
+                        'document_id' => $document->id,
+                        'file_name' => $document->file_name,
+                        'collection' => 'traffic_convictions'
                     ]);
                 }
-            }
-            
-            if ($uploadedCount > 0) {
-                session()->flash('success', "Infracción actualizada y $uploadedCount documentos subidos correctamente");
             }
 
             // Registrar el éxito en el log
@@ -448,9 +443,9 @@ class TrafficConvictionsController extends Controller
      */
     public function showDocuments(DriverTrafficConviction $conviction)
     {
-        // Recuperar todos los archivos de media asociados con esta infracción de tráfico
-        $documents = \Spatie\MediaLibrary\MediaCollections\Models\Media::where('model_type', DriverTrafficConviction::class)
-            ->where('model_id', $conviction->id)
+        // Recuperar todos los documentos asociados con esta infracción de tráfico usando DocumentAttachment
+        $documents = \App\Models\DocumentAttachment::where('documentable_type', DriverTrafficConviction::class)
+            ->where('documentable_id', $conviction->id)
             ->get();
 
         // Información de depuración
@@ -459,17 +454,17 @@ class TrafficConvictionsController extends Controller
             'user_driver_detail_id' => $conviction->user_driver_detail_id,
             'documents_count' => $documents->count(),
             'collections' => [
-                'traffic-tickets' => $conviction->getMedia('traffic-tickets')->count(),
-                'traffic_documents' => $conviction->getMedia('traffic_documents')->count(),
-                'all_media' => $documents->count(),
+                'traffic-tickets' => $documents->where('collection_name', 'traffic-tickets')->count(),
+                'traffic_documents' => $documents->where('collection_name', 'traffic_documents')->count(),
+                'all_documents' => $documents->count(),
             ],
-            'media_info' => $documents->map(function ($media) {
+            'document_info' => $documents->map(function ($document) {
                 return [
-                    'id' => $media->id,
-                    'file_name' => $media->file_name,
-                    'collection_name' => $media->collection_name,
-                    'mime_type' => $media->mime_type,
-                    'size' => $media->size,
+                    'id' => $document->id,
+                    'file_name' => $document->file_name,
+                    'collection_name' => $document->collection_name,
+                    'mime_type' => $document->mime_type,
+                    'size' => $document->size,
                 ];
             }),
         ];
@@ -481,107 +476,67 @@ class TrafficConvictionsController extends Controller
      * Previsualiza un documento relacionado con infracciones de tráfico.
      * 
      * @param int $documentId ID del documento a previsualizar
-     * @return \Illuminate\Http\Response Respuesta con la previsualización o descarga
+        }
+        
+        // Si es un PDF, abrirlo en el navegador
+        if ($mime === 'application/pdf') {
      */
     public function previewDocument($documentId)
     {
         try {
-            $media = Media::findOrFail($documentId);
+            // Iniciar una transacción de base de datos para controlar la operación
+            DB::beginTransaction();
             
-            // Verificar que el documento pertenece a una infracción de tráfico
-            if ($media->model_type !== DriverTrafficConviction::class) {
-                abort(403, 'No tienes permiso para ver este documento');
+            // 1. Buscar el documento
+            $document = DocumentAttachment::findOrFail($documentId);
+            $fileName = $document->file_name;
+            $filePath = $document->getPath();
+            $mime = $document->mime_type;
+            
+            // 2. Verificar que el archivo exista físicamente
+            if (!file_exists($filePath)) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'El archivo no existe');
             }
             
-            // Verificar si el archivo existe físicamente
-            if (!file_exists($media->getPath())) {
-                throw new \Exception("El archivo '{$media->file_name}' no se encuentra en el servidor");
-            }
-            
-            // Servir archivo según tipo
-            $mime = $media->mime_type;
-            
-            if (Str::contains($mime, 'image')) {
-                // Para imágenes, mostrar en el navegador
-                return response()->file($media->getPath(), ['Content-Type' => $mime]);
+            // 3. Previsualizar el documento
+            if ($mime === 'application/pdf') {
+                return response()->file($filePath, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline; filename="' . $fileName . '"'
+                ]);
+            } elseif (in_array($mime, ['image/jpeg', 'image/png', 'image/jpg'])) {
+                return response()->file($filePath, [
+                    'Content-Type' => $mime,
+                    'Content-Disposition' => 'inline; filename="' . $fileName . '"'
+                ]);
             } else {
-                // Para otros tipos, forzar descarga
-                return response()->download($media->getPath(), $media->file_name, ['Content-Type' => $mime]);
+                return response()->download($filePath, $fileName, [
+                    'Content-Type' => $mime,
+                ]);
             }
+            
+            // 4. Confirmar transacción
+            DB::commit();
             
         } catch (\Exception $e) {
-            Log::error('Error al previsualizar documento: ' . $e->getMessage(), [
+            DB::rollBack();
+            
+            Log::error('Error al previsualizar documento', [
                 'document_id' => $documentId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
             
-            abort(404, 'Documento no encontrado: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error al previsualizar documento: ' . $e->getMessage());
         }
     }
 
     /**
-     * Almacena documentos para una infracción de tráfico
-     * 
-     * @param DriverTrafficConviction $conviction La infracción a la que se subirán los documentos
-     * @param Request $request Solicitud con los documentos a subir
-     * @return \Illuminate\Http\RedirectResponse Redirección con mensaje de éxito o error
-     */
-    public function storeDocuments(DriverTrafficConviction $conviction, Request $request)
-    {
-        try {
-            $request->validate([
-                'documents' => 'required|array',
-                'documents.*' => 'file|max:10240|mimes:jpg,jpeg,png,pdf,doc,docx'
-            ]);
-            
-            $uploadedCount = 0;
-            
-            foreach ($request->file('documents') as $file) {
-                // Obtener el ID del conductor asociado a la infracción
-                $driverId = $conviction->userDriverDetail->id;
-                
-                // Configurar el disco y la ruta de almacenamiento correcta
-                $media = $conviction->addMedia($file)
-                    ->usingName($file->getClientOriginalName())
-                    ->usingFileName($file->getClientOriginalName())
-                    ->withCustomProperties([
-                        'original_filename' => $file->getClientOriginalName(),
-                        'mime_type' => $file->getMimeType(),
-                        'conviction_id' => $conviction->id,
-                        'driver_id' => $driverId
-                    ])
-                    ->toMediaCollection('traffic-tickets');
-                
-                $uploadedCount++;
-                
-                Log::info('Documento de infracción de tráfico subido correctamente', [
-                    'conviction_id' => $conviction->id,
-                    'media_id' => $media->id,
-                    'file_name' => $media->file_name,
-                    'collection' => $media->collection_name,
-                    'driver_id' => $driverId
-                ]);
-            }
-            
-            return redirect()->back()->with('success', "$uploadedCount documentos subidos correctamente");
-            
-        } catch (\Exception $e) {
-            Log::error('Error al subir documentos de infracción de tráfico', [
-                'conviction_id' => $conviction->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return redirect()->back()->with('error', 'Error al subir documentos: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Elimina un documento (media) asociado a una infracción de tráfico
+     * Elimina un documento asociado a una infracción de tráfico
      * 
      * @param int $documentId ID del documento a eliminar
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
     public function destroyDocument($documentId)
     {
@@ -589,63 +544,49 @@ class TrafficConvictionsController extends Controller
             // Iniciar una transacción de base de datos para controlar la operación
             DB::beginTransaction();
             
-            // 1. Buscar el media primero
-            $media = Media::findOrFail($documentId);
-            $fileName = $media->file_name;
-            $filePath = $media->getPath();
+            // 1. Buscar el documento
+            $document = DocumentAttachment::findOrFail($documentId);
+            $fileName = $document->file_name;
             
             // 2. Verificar que pertenezca a una infracción de tráfico
-            if ($media->model_type !== DriverTrafficConviction::class) {
+            if ($document->documentable_type !== DriverTrafficConviction::class) {
                 DB::rollBack();
+                
+                if (request()->ajax() || request()->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'El documento no pertenece a una infracción de tráfico'
+                    ], 400);
+                }
+                
                 return redirect()->back()->with('error', 'El documento no pertenece a una infracción de tráfico');
             }
             
-            // 3. Obtener datos de la infracción antes de cualquier operación
-            $convictionId = $media->model_id;
+            // 3. Obtener la infracción asociada
+            $convictionId = $document->documentable_id;
             $conviction = DriverTrafficConviction::findOrFail($convictionId);
-            $convictionData = $conviction->getAttributes();
             
-            // 4. SOLUCIÓN DEFINITIVA: Romper completamente el vínculo antes de eliminar
-            // Esto evita que cualquier evento de Spatie pueda encontrar el modelo padre
-            DB::table('media')
-                ->where('id', $media->id)
-                ->update([
-                    'model_type' => 'App\\TempDeletedModel', 
-                    'model_id' => 0
-                ]);
+            // 4. Eliminar el documento usando el método del trait HasDocuments
+            $conviction->deleteDocument($documentId);
             
-            // 5. Ahora que hemos roto la conexión, eliminamos el archivo físico manualmente
-            if (file_exists($filePath)) {
-                @unlink($filePath);
-                Log::info('Archivo físico eliminado: ' . $filePath);
-            }
+            // 5. Registrar la operación
+            Log::info('Documento eliminado exitosamente', [
+                'document_id' => $documentId,
+                'conviction_id' => $convictionId,
+                'file_name' => $fileName
+            ]);
             
-            // 6. Eliminar el registro de media de forma segura (ya no tiene vínculo con la infracción)
-            DB::table('media')->where('id', $media->id)->delete();
-            Log::info('Registro de media eliminado: ' . $documentId);
-            
-            // 7. VERIFICACIÓN CRÍTICA: Asegurar que la infracción sigue existiendo
-            $convictionStillExists = DriverTrafficConviction::find($convictionId);
-            
-            if (!$convictionStillExists) {
-                // Este caso no debería ocurrir, pero por si acaso, recreamos la infracción
-                $newConviction = new DriverTrafficConviction();
-                foreach ($convictionData as $key => $value) {
-                    $newConviction->$key = $value;
-                }
-                $newConviction->save(['timestamps' => false]);
-                
-                Log::error('RECUPERACIÓN DE EMERGENCIA: Se recreó la infracción ' . $convictionId . ' que fue eliminada inesperadamente');
-            }
-            
-            // 8. Confirmar transacción y redireccionar
+            // 6. Confirmar transacción
             DB::commit();
             
-            Log::info('Documento eliminado exitosamente sin afectar a la infracción', [
-                'media_id' => $documentId,
-                'conviction_id' => $convictionId,
-                'conviction_exists' => DriverTrafficConviction::find($convictionId) ? true : false
-            ]);
+            // 7. Devolver respuesta según el tipo de solicitud
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Documento {$fileName} eliminado correctamente",
+                    'conviction_id' => $convictionId
+                ]);
+            }
             
             return redirect()->route('admin.traffic.edit', $convictionId)
                 ->with('success', "Documento {$fileName} eliminado correctamente");
@@ -654,13 +595,83 @@ class TrafficConvictionsController extends Controller
             DB::rollBack();
             
             Log::error('Error al eliminar documento', [
-                'media_id' => $documentId,
+                'document_id' => $documentId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+            
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error: ' . $e->getMessage()
+                ], 500);
+            }
             
             return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
         }
     }
 
+    /**
+     * Elimina un documento mediante una solicitud AJAX
+     * 
+     * @param int $documentId ID del documento a eliminar
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function ajaxDestroyDocument($documentId)
+    {
+        try {
+            // Iniciar una transacción de base de datos
+            DB::beginTransaction();
+            
+            // 1. Buscar el documento
+            $document = DocumentAttachment::findOrFail($documentId);
+            $fileName = $document->file_name;
+            
+            // 2. Verificar que pertenezca a una infracción de tráfico
+            if ($document->documentable_type !== DriverTrafficConviction::class) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El documento no pertenece a una infracción de tráfico'
+                ], 400);
+            }
+            
+            // 3. Obtener la infracción asociada
+            $convictionId = $document->documentable_id;
+            $conviction = DriverTrafficConviction::findOrFail($convictionId);
+            
+            // 4. Eliminar el documento usando el método del trait HasDocuments
+            $result = $conviction->deleteDocument($documentId);
+            
+            // 5. Registrar la operación
+            Log::info('Documento eliminado exitosamente vía AJAX', [
+                'document_id' => $documentId,
+                'conviction_id' => $convictionId,
+                'file_name' => $fileName,
+                'result' => $result
+            ]);
+            
+            // 6. Confirmar transacción
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Documento {$fileName} eliminado correctamente"
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Error al eliminar documento vía AJAX', [
+                'document_id' => $documentId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

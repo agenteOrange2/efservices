@@ -2,7 +2,7 @@
 @section('title', 'Driver Traffic Convictions History')
 @php
     $breadcrumbLinks = [
-        ['label' => 'App', 'url' => route('admin.dashboard')],        
+        ['label' => 'App', 'url' => route('admin.dashboard')],
         ['label' => 'Driver', 'url' => route('admin.drivers.show', $driver->id)],
         ['label' => 'Traffic Convictions History', 'active' => true],
     ];
@@ -35,7 +35,8 @@
                     <x-base.lucide class="w-4 h-4 mr-2" icon="arrow-left" />
                     Back to Driver
                 </a>
-                <x-base.button as="a" href="{{ route('admin.traffic.create') }}" class="w-full sm:w-auto" variant="primary">
+                <x-base.button as="a" href="{{ route('admin.traffic.create') }}" class="w-full sm:w-auto"
+                    variant="primary">
                     <x-base.lucide class="mr-2 h-4 w-4" icon="PlusCircle" />
                     Add Conviction
                 </x-base.button>
@@ -70,7 +71,8 @@
                                 <x-base.lucide class="w-4 h-4 mr-2" icon="filter" />
                                 Filter
                             </button>
-                            <a href="{{ route('admin.drivers.traffic-history', $driver->id) }}" class="btn btn-outline-secondary">
+                            <a href="{{ route('admin.drivers.traffic-history', $driver->id) }}"
+                                class="btn btn-outline-secondary">
                                 <x-base.lucide class="w-4 h-4 mr-2" icon="refresh-cw" />
                                 Reset
                             </a>
@@ -84,7 +86,7 @@
         <div class="box box--stacked mt-5">
             <div class="box-body p-5">
                 <div class="overflow-x-auto">
-                    <table class="table">
+                    <table class="table w-full">
                         <thead>
                             <tr>
                                 <th class="border-b-2 dark:border-darkmode-300 whitespace-nowrap">Date</th>
@@ -102,23 +104,23 @@
                                     <td>{{ $conviction->charge }}</td>
                                     <td>{{ $conviction->penalty }}</td>
                                     <td>
-                                        <div class="flex">
-                                            <a href="{{ route('admin.traffic.edit', $conviction->id) }}" 
+                                        <div class="flex items-center gap-2">
+                                            <a href="{{ route('admin.traffic.edit', $conviction->id) }}"
                                                 class="btn btn-sm btn-rounded-primary mr-1">
                                                 <x-base.lucide class="w-4 h-4" icon="edit" />
                                             </a>
                                             <x-base.button data-tw-toggle="modal" data-tw-target="#delete-conviction-modal"
-                                                class="btn-sm btn-rounded-danger mr-1 delete-conviction"
-                                                data-conviction-id="{{ $conviction->id }}">
+                                                variant="danger" class="mr-2 p-1 delete-conviction"
+                                                data-conviction-id="{{ $conviction->id }}" title="Delete Conviction">
                                                 <x-base.lucide class="w-4 h-4" icon="trash" />
                                             </x-base.button>
                                             <a href="{{ route('admin.traffic.documents', $conviction->id) }}"
-                                                class="btn btn-sm btn-rounded-success mr-1" title="View Documents">
+                                                class="btn-sm btn-danger p-1 flex mr-2" title="View Documents">
                                                 <x-base.lucide class="w-4 h-4" icon="file-text" />
+                                                <span class="ml-1">
+                                                    {{ \App\Models\DocumentAttachment::where('documentable_type', \App\Models\Admin\Driver\DriverTrafficConviction::class)->where('documentable_id', $conviction->id)->count() }}
+                                                </span>
                                             </a>
-                                            <span class="badge bg-primary text-white" title="Document Count">
-                                                {{ \Spatie\MediaLibrary\MediaCollections\Models\Media::where('model_type', \App\Models\Admin\Driver\DriverTrafficConviction::class)->where('model_id', $conviction->id)->count() }}
-                                            </span>
                                         </div>
                                     </td>
                                 </tr>
@@ -160,8 +162,8 @@
                     <!-- Ubicación -->
                     <div class="col-span-12 sm:col-span-6">
                         <x-base.form-label for="location">Location</x-base.form-label>
-                        <x-base.form-input id="location" name="location" type="text"
-                            placeholder="City, State" required />
+                        <x-base.form-input id="location" name="location" type="text" placeholder="City, State"
+                            required />
                     </div>
 
                     <!-- Cargo -->
@@ -177,13 +179,15 @@
                         <x-base.form-input id="penalty" name="penalty" type="text"
                             placeholder="Fine, License Suspension, etc." required />
                     </div>
-                    
+
                     <!-- Documentos -->
                     <div class="col-span-12">
                         <x-base.form-label for="documents">Documents</x-base.form-label>
                         <div class="border-2 border-dashed rounded-md p-6 text-center">
                             <div class="mx-auto cursor-pointer relative">
-                                <input type="file" name="documents[]" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" class="w-full h-full opacity-0 absolute inset-0 cursor-pointer z-50">
+                                <input type="file" name="documents[]" multiple
+                                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                                    class="w-full h-full opacity-0 absolute inset-0 cursor-pointer z-50">
                                 <div class="text-center">
                                     <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
                                     <p class="text-sm text-gray-600">Drag and drop files here or click to browse</p>
@@ -228,8 +232,8 @@
                     <!-- Ubicación -->
                     <div class="col-span-12 sm:col-span-6">
                         <x-base.form-label for="edit_location">Location</x-base.form-label>
-                        <x-base.form-input id="edit_location" name="location" type="text"
-                            placeholder="City, State" required />
+                        <x-base.form-input id="edit_location" name="location" type="text" placeholder="City, State"
+                            required />
                     </div>
 
                     <!-- Cargo -->
@@ -245,13 +249,15 @@
                         <x-base.form-input id="edit_penalty" name="penalty" type="text"
                             placeholder="Fine, License Suspension, etc." required />
                     </div>
-                    
+
                     <!-- Documentos -->
                     <div class="col-span-12">
                         <x-base.form-label for="documents">Documents</x-base.form-label>
                         <div class="border-2 border-dashed rounded-md p-6 text-center">
                             <div class="mx-auto cursor-pointer relative">
-                                <input type="file" name="documents[]" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" class="w-full h-full opacity-0 absolute inset-0 cursor-pointer z-50">
+                                <input type="file" name="documents[]" multiple
+                                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                                    class="w-full h-full opacity-0 absolute inset-0 cursor-pointer z-50">
                                 <div class="text-center">
                                     <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
                                     <p class="text-sm text-gray-600">Drag and drop files here or click to browse</p>
@@ -261,7 +267,8 @@
                         </div>
                         <div class="flex justify-between items-center mt-2">
                             <p class="text-xs text-gray-500">You can add more documents later</p>
-                            <a href="#" id="view_documents_link" class="text-xs text-blue-600 hover:text-blue-800 flex items-center">
+                            <a href="#" id="view_documents_link"
+                                class="text-xs text-blue-600 hover:text-blue-800 flex items-center">
                                 <i class="fas fa-eye mr-1"></i> View existing documents
                             </a>
                         </div>
@@ -304,31 +311,31 @@
     </x-base.dialog>
 
     @push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Manejar edición de infracción de tráfico
-            $('.edit-conviction').on('click', function() {
-                const conviction = $(this).data('conviction');
-                
-                // Configurar la acción del formulario
-                $('#edit_conviction_form').attr('action', `/admin/traffic/${conviction.id}`);
-                
-                // Rellenar los campos del formulario
-                $('#edit_conviction_date').val(conviction.conviction_date.split('T')[0]); // Formatear fecha
-                $('#edit_location').val(conviction.location);
-                $('#edit_charge').val(conviction.charge);
-                $('#edit_penalty').val(conviction.penalty);
-                
-                // Configurar el enlace para ver documentos
-                $('#view_documents_link').attr('href', `/admin/traffic/${conviction.id}/documents`);
-            });
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Manejar edición de infracción de tráfico
+                $('.edit-conviction').on('click', function() {
+                    const conviction = $(this).data('conviction');
 
-            // Manejar eliminación de infracción de tráfico
-            $('.delete-conviction').on('click', function() {
-                const convictionId = $(this).data('conviction-id');
-                $('#delete_conviction_form').attr('action', `/admin/traffic/${convictionId}`);
+                    // Configurar la acción del formulario
+                    $('#edit_conviction_form').attr('action', `/admin/traffic/${conviction.id}`);
+
+                    // Rellenar los campos del formulario
+                    $('#edit_conviction_date').val(conviction.conviction_date.split('T')[0]); // Formatear fecha
+                    $('#edit_location').val(conviction.location);
+                    $('#edit_charge').val(conviction.charge);
+                    $('#edit_penalty').val(conviction.penalty);
+
+                    // Configurar el enlace para ver documentos
+                    $('#view_documents_link').attr('href', `/admin/traffic/${conviction.id}/documents`);
+                });
+
+                // Manejar eliminación de infracción de tráfico
+                $('.delete-conviction').on('click', function() {
+                    const convictionId = $(this).data('conviction-id');
+                    $('#delete_conviction_form').attr('action', `/admin/traffic/${convictionId}`);
+                });
             });
-        });
-    </script>
+        </script>
     @endpush
 @endsection

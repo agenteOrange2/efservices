@@ -51,16 +51,36 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Columna Izquierda -->
                         <div class="space-y-4">
+                            <!-- Carrier -->
+                            <div>
+                                <x-base.form-label for="carrier_id" required>Carrier</x-base.form-label>
+                                <select id="carrier_id" name="carrier_id" 
+                                    class="tom-select w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 @error('carrier_id') border-danger @enderror" required>
+                                    <option value="">Select Carrier</option>
+                                    @foreach ($carriers as $carrier)
+                                        <option value="{{ $carrier->id }}" {{ old('carrier_id') == $carrier->id ? 'selected' : '' }}>
+                                            {{ $carrier->name }} (DOT: {{ $carrier->dot_number }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('carrier_id')
+                                    <div class="text-danger mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+
                             <!-- Conductor -->
                             <div>
                                 <x-base.form-label for="user_driver_detail_id" required>Driver</x-base.form-label>
-                                <select name="user_driver_detail_id" id="user_driver_detail_id" class="tom-select w-full @error('user_driver_detail_id') border-danger @enderror" required>
+                                <select id="user_driver_detail_id" name="user_driver_detail_id" 
+                                    class="tom-select w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 @error('user_driver_detail_id') border-danger @enderror" required>
                                     <option value="">Select Driver</option>
-                                    @foreach ($drivers as $driver)
-                                        <option value="{{ $driver->id }}" {{ old('user_driver_detail_id') == $driver->id ? 'selected' : '' }}>
-                                            {{ $driver->user->name }} {{ $driver->user->last_name ?? '' }}
-                                        </option>
-                                    @endforeach
+                                    @if(isset($drivers))
+                                        @foreach ($drivers as $driver)
+                                            <option value="{{ $driver->id }}">
+                                                {{ $driver->user->name }} {{ $driver->user->last_name }}
+                                            </option>
+                                        @endforeach
+                                    @endif
                                 </select>
                                 @error('user_driver_detail_id')
                                     <div class="text-danger mt-1">{{ $message }}</div>
@@ -198,7 +218,7 @@
 
 @push('scripts')
     <script>
-        // Validación del formulario
+        // Inicialización del formulario
         document.addEventListener('DOMContentLoaded', function() {
             // Verificar que la fecha de fin es posterior a la fecha de inicio
             document.getElementById('schoolForm').addEventListener('submit', function(event) {
@@ -208,6 +228,51 @@
                 if (endDate < startDate) {
                     event.preventDefault();
                     alert('End date must be after or equal to start date');
+                }
+            });
+            
+            // Manejar cambio de carrier para filtrar conductores
+            document.getElementById('carrier_id').addEventListener('change', function() {
+                const carrierId = this.value;
+                
+                // Limpiar el select de conductores usando JavaScript nativo
+                const driverSelect = document.getElementById('user_driver_detail_id');
+                driverSelect.innerHTML = '<option value="">Select Driver</option>';
+                
+                if (carrierId) {
+                    // Hacer una petición AJAX para obtener los conductores activos de esta transportista
+                    fetch(`/api/active-drivers-by-carrier/${carrierId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data && data.length > 0) {
+                                // Hay conductores activos, agregarlos al select
+                                data.forEach(function(driver) {
+                                    const option = document.createElement('option');
+                                    option.value = driver.id;
+                                    option.textContent = `${driver.user.name} ${driver.user.last_name || ''}`;
+                                    driverSelect.appendChild(option);
+                                });
+                            } else {
+                                // No hay conductores activos para este carrier
+                                const option = document.createElement('option');
+                                option.value = '';
+                                option.disabled = true;
+                                option.textContent = 'No active drivers found for this carrier';
+                                driverSelect.appendChild(option);
+                            }
+                            
+                            // Disparar un evento change para que se actualice la UI
+                            driverSelect.dispatchEvent(new Event('change'));
+                        })
+                        .catch(error => {
+                            console.error('Error loading drivers:', error);
+                            const option = document.createElement('option');
+                            option.value = '';
+                            option.disabled = true;
+                            option.textContent = 'Error loading drivers';
+                            driverSelect.appendChild(option);
+                            driverSelect.dispatchEvent(new Event('change'));
+                        });
                 }
             });
         });

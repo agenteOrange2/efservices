@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\Driver\AccidentsController;
 use App\Http\Controllers\Admin\Vehicles\VehicleController;
 use App\Http\Controllers\Admin\Driver\DriverListController;
 use App\Http\Controllers\Admin\Driver\InspectionsController;
+use App\Http\Controllers\Admin\Driver\DocumentsController;
 use App\Http\Controllers\Admin\UserCarrierDocumentController;
 use App\Http\Controllers\Admin\Vehicles\MaintenanceController;
 use App\Http\Controllers\Admin\Vehicles\VehicleMakeController;
@@ -55,6 +56,12 @@ Route::post('/dashboard/ajax-update', [DashboardController::class, 'ajaxUpdate']
 
 // API para obtener conductores activos por carrier (para Ajax)
 Route::get('/api/drivers/by-carrier/{carrier}', [AccidentsController::class, 'getDriversByCarrier'])->name('api.drivers.by-carrier');
+
+// Ruta para eliminar documentos de traffic convictions (usada por el formulario)
+Route::delete('traffic/documents/{document}', [TrafficConvictionsController::class, 'destroyDocument'])->name('traffic.documents.delete');
+
+// Ruta para eliminar documentos de training schools (usada por el formulario)
+Route::delete('training-schools/documents/{document}', [TrainingSchoolsController::class, 'destroyDocument'])->name('training-schools.documents.delete');
 
 // Rutas para gestión de documentos de accidentes
 Route::prefix('accidents')->name('accidents.')->group(function () {
