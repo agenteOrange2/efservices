@@ -83,7 +83,7 @@
                         <div>
                             <x-base.form-label for="accident_date">Accident Date</x-base.form-label>
                             <x-base.form-input id="accident_date" name="accident_date" type="date" class="w-full"
-                                value="{{ $accident->accident_date->format('Y-m-d') }}" required />
+                                value="{{ $accident->accident_date->format('m-d-Y') }}" required />
                             @error('accident_date')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -92,7 +92,7 @@
                         <!-- Registration Date (Read-only) -->
                         <div>
                             <x-base.form-label>Registration Date</x-base.form-label>
-                            <x-base.form-input type="text" class="w-full" value="{{ $accident->created_at->format('Y-m-d') }}"
+                            <x-base.form-input type="text" class="w-full" value="{{ $accident->created_at->format('m-d-Y') }}"
                                 readonly />
                         </div>
 

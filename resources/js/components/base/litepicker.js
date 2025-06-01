@@ -1,42 +1,45 @@
 (function () {
     "use strict";
 
-    // Litepicker
+    // Litepicker - Configuración global para toda la aplicación
     $(".datepicker").each(function () {
+        // Configuración base
         let options = {
-            autoApply: false,
-            singleMode: false,
-            numberOfColumns: 2,
-            numberOfMonths: 2,
-            showWeekNumbers: true,
-            format: "D MMM, YYYY",
+            autoApply: true,
+            singleMode: true,
+            numberOfColumns: 1,
+            numberOfMonths: 1,
+            showWeekNumbers: false,
+            format: "MM/DD/YYYY",
+            allowRepick: true,
             dropdowns: {
                 minYear: 1990,
-                maxYear: null,
+                maxYear: 2050,
                 months: true,
                 years: true,
             },
+            setup: (picker) => {
+                picker.on('selected', (date) => {
+                    // Simplemente seleccionar la fecha sin modificarla
+                });
+            }
         };
 
-        if ($(this).data("single-mode")) {
-            options.singleMode = true;
-            options.numberOfColumns = 1;
-            options.numberOfMonths = 1;
-        }
-
+        // Permitir sobreescritura de opciones mediante atributos data
         if ($(this).data("format")) {
             options.format = $(this).data("format");
         }
 
-        if (!$(this).val()) {
-            let date = dayjs().format(options.format);
-            date += !options.singleMode
-                ? " - " + dayjs().add(1, "month").format(options.format)
-                : "";
-            $(this).val(date);
+        if ($(this).data("number-of-columns")) {
+            options.numberOfColumns = $(this).data("number-of-columns");
         }
 
-        new Litepicker({
+        if ($(this).data("number-of-months")) {
+            options.numberOfMonths = $(this).data("number-of-months");
+        }
+        
+        // Creación de la instancia de Litepicker
+        let picker = new Litepicker({
             element: this,
             ...options,
         });

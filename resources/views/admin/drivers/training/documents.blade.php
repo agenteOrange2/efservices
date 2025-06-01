@@ -1,6 +1,8 @@
 @extends('../themes/' . $activeTheme)
 @section('title', 'All Training School Documents')
 @php
+    use Illuminate\Support\Facades\Storage;
+    
     $breadcrumbLinks = [
         ['label' => 'App', 'url' => route('admin.dashboard')],
         ['label' => 'Training Schools', 'url' => route('admin.training-schools.index')],
@@ -106,7 +108,7 @@
         <!-- Documentos -->
         <div class="box box--stacked mt-5">
             <div class="box-header">
-                <h3 class="box-title">Documents ({{ $documents->total() }})</h3>
+                <h3 class="box-title">Documents ({{ $documents->count() }})</h3>
             </div>
             <div class="box-body p-0">
                 @if ($documents->count() > 0)
@@ -152,18 +154,18 @@
                                         <td>{{ strtoupper(pathinfo($document->file_name, PATHINFO_EXTENSION)) }}</td>
                                         <td>{{ $document->human_readable_size }}</td>
                                         <td>
-                                            <a href="{{ route('admin.training-schools.show', $document->model->id) }}" class="text-primary hover:underline">
-                                                {{ $document->model->school_name }}
+                                            <a href="{{ route('admin.training-schools.show', $document->documentable->id) }}" class="text-primary hover:underline">
+                                                {{ $document->documentable->school_name }}
                                             </a>
                                         </td>
                                         <td>
-                                            {{ $document->model->driver->user->name }}
-                                            {{ $document->model->driver->user->last_name ?? '' }}
+                                            {{ $document->documentable->userDriverDetail->user->name }}
+                                            {{ $document->documentable->userDriverDetail->user->last_name ?? '' }}
                                         </td>
                                         <td>{{ $document->created_at->format('m/d/Y H:i') }}</td>
                                         <td class="text-center">
                                             <div class="flex justify-center">
-                                                <a href="{{ $document->getUrl() }}" class="btn btn-sm btn-primary mr-2" target="_blank">
+                                                <a href="{{ Storage::url($document->file_path) }}" class="btn btn-sm btn-primary mr-2" target="_blank">
                                                     <x-base.lucide class="w-4 h-4" icon="eye" />
                                                 </a>
                                                 <a href="{{ route('admin.training-schools.edit', $document->documentable_id) }}" class="btn btn-sm btn-warning mr-2">
@@ -206,33 +208,8 @@
         </div>
     </div>
 
-    <!-- Modal de confirmación para eliminar documento -->
-    <div id="delete-confirmation-modal" class="modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-body p-0">
-                    <div class="p-5 text-center">
-                        <x-base.lucide class="w-16 h-16 text-danger mx-auto mt-3" icon="x-circle" />
-                        <div class="text-3xl mt-5">Are you sure?</div>
-                        <div class="text-slate-500 mt-2">
-                            Do you really want to delete this document? <br>
-                            This process cannot be undone.
-                        </div>
-                    </div>
-                    <div class="px-5 pb-8 text-center">
-                        <form id="delete-document-form" action="{{ route('admin.training-schools.ajax-destroy.document', 0) }}" method="POST" style="display: inline-block;">
-                            @csrf
-                            @method('DELETE')
-                            <input type="hidden" id="delete-document-id" name="id" value="">
-                            <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24 mr-1">Cancel</button>
-                            <button type="submit" class="btn btn-danger w-24">Delete</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-@endsection
+
+
 
 @push('scripts')
     <script>
@@ -258,80 +235,9 @@
                 new TomSelect('#file_type');
             }
             
-            // Configurar el modal de eliminación
-            const modal = document.getElementById('delete-confirmation-modal');
-            const deleteForm = document.getElementById('delete-document-form');
-            const deleteIdInput = document.getElementById('delete-document-id');
-            
-            document.querySelectorAll('.delete-document-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const documentId = this.getAttribute('data-document-id');
-                    deleteIdInput.value = documentId;
-                    
-                    // Actualizar la ruta del formulario
-                    deleteForm.action = "{{ route('admin.training-schools.ajax-destroy.document', '') }}/" + documentId;
-                    
-                    // Mostrar modal
-                    const instance = tailwind.Modal.getInstance(modal);
-                    instance.show();
-                });
-            });
-            
-            // Manejar la eliminación AJAX
-            deleteForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const documentId = deleteIdInput.value;
-                const formAction = this.action;
-                const formData = new FormData(this);
-                
-                fetch(formAction, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Ocultar el modal
-                        const instance = tailwind.Modal.getInstance(modal);
-                        instance.hide();
-                        
-                        // Eliminar la fila de la tabla
-                        const documentRow = document.getElementById('document-row-' + documentId);
-                        if (documentRow) {
-                            documentRow.remove();
-                        }
-                        
-                        // Mostrar mensaje de éxito
-                        const successAlert = `
-                            <div class="alert alert-success flex items-center mb-5">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                ${data.message}
-                            </div>
-                        `;
-                        
-                        document.querySelector('.box').insertAdjacentHTML('beforebegin', successAlert);
-                        
-                        // Eliminar el mensaje después de 5 segundos
-                        setTimeout(() => {
-                            const alertElement = document.querySelector('.alert');
-                            if (alertElement) {
-                                alertElement.remove();
-                            }
-                        }, 5000);
-                    } else {
-                        console.error('Error:', data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-            });
+            // Inicializar tom-select para selectores que quedan
         });
     </script>
 @endpush
+
+@endsection

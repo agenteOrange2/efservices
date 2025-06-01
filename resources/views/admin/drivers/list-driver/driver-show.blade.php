@@ -484,7 +484,7 @@
                             @php
                                 $hasCertificates = false;
                                 foreach($driver->trainingSchools as $school) {
-                                    if($school->getMedia('school_certificates')->count() > 0) {
+                                    if($school->getDocuments('school_certificates')->count() > 0) {
                                         $hasCertificates = true;
                                         break;
                                     }
@@ -496,11 +496,11 @@
                                     <p class="font-medium">Training Certificates</p>
                                     <div class="space-y-2 mt-1">
                                         @foreach($driver->trainingSchools as $school)
-                                            @if($school->getMedia('school_certificates')->count() > 0)
+                                            @if($school->getDocuments('school_certificates')->count() > 0)
                                                 <div>
                                                     <p class="text-slate-500 text-sm">{{ $school->school_name }}</p>
                                                     <div class="flex flex-wrap gap-2 mt-1">
-                                                        @foreach($school->getMedia('school_certificates') as $certificate)
+                                                        @foreach($school->getDocuments('school_certificates') as $certificate)
                                                             <a href="{{ $certificate->getUrl() }}" 
                                                                target="_blank" 
                                                                class="text-blue-600 hover:underline flex items-center text-sm">

@@ -31,6 +31,7 @@ use App\Http\Controllers\Admin\Driver\DriverRecruitmentController;
 use App\Http\Controllers\Admin\Vehicles\VehicleDocumentController;
 use App\Http\Controllers\Admin\Driver\TrafficConvictionsController;
 use App\Http\Controllers\Admin\Driver\TrainingSchoolsController;
+use App\Http\Controllers\Admin\Driver\CoursesController;
 use App\Http\Controllers\Admin\Vehicles\VehicleServiceItemController;
 use App\Http\Controllers\Admin\Vehicles\MaintenanceNotificationController;
 use App\Http\Controllers\FileUploaderController;
@@ -359,6 +360,33 @@ Route::get('/carrier/documents/refresh', [CarrierDocumentController::class, 'ref
 Route::resource('document-types', DocumentTypeController::class)
     ->except('show');
 
+/*
+|--------------------------------------------------------------------------
+| RUTAS ADMIN INSPECTIONS
+|--------------------------------------------------------------------------
+*/
+Route::prefix('inspections')->name('inspections.')->
+group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'store'])->name('store');
+    Route::get('/{inspection}/edit', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'edit'])->name('edit');
+    Route::put('/{inspection}', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'update'])->name('update');
+    Route::delete('/{inspection}', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'destroy'])->name('destroy');
+    
+    // Rutas para manejo de documentos
+    Route::delete('/{inspection}/files/{document}', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'deleteFile'])->name('delete-file');
+    Route::get('/{inspection}/files', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'getFiles'])->name('files');
+    Route::post('/document/delete', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'ajaxDestroyDocument'])->name('document.delete.ajax');
+    Route::delete('/document/{document}', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'destroyDocument'])->name('document.delete');
+    
+    // Rutas para obtener vehículos y conductores por transportista
+    Route::get('/carrier/{carrier}/drivers', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'getDriversByCarrier'])->name('drivers.by.carrier');
+    Route::get('/carrier/{carrier}/vehicles', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'getVehiclesByCarrier'])->name('vehicles.by.carrier');
+    Route::get('/driver/{driver}/vehicles', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'getVehiclesByDriver'])->name('vehicles.by.driver');
+});
+
+
 
 // Route::resource('user_carrier', UserCarrierController::class);
 Route::post('user_carrier/{user_carrier}/delete-photo', [UserCarrierController::class, 'deletePhoto'])->name('user_carrier.delete-photo');
@@ -420,6 +448,35 @@ Route::prefix('driver-recruitment')->name('driver-recruitment.')->group(function
     Route::get('/', [DriverRecruitmentController::class, 'index'])->name('index');
     Route::get('/{driverId}', [DriverRecruitmentController::class, 'show'])->name('show');
 });
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS ADMIN CURSOS
+|--------------------------------------------------------------------------
+*/
+Route::prefix('courses')->name('courses.')->
+group(function () {
+    Route::get('/', [CoursesController::class, 'index'])->name('index');
+    Route::get('/create', [CoursesController::class, 'create'])->name('create');
+    Route::post('/', [CoursesController::class, 'store'])->name('store');
+    Route::get('/{course}/edit', [CoursesController::class, 'edit'])->name('edit');
+    Route::put('/{course}', [CoursesController::class, 'update'])->name('update');
+    Route::delete('/{course}', [CoursesController::class, 'destroy'])->name('destroy');
+    
+    // Rutas para manejo de documentos
+    Route::get('/{course}/files', [CoursesController::class, 'getFiles'])->name('files');
+    Route::post('/document/delete', [CoursesController::class, 'ajaxDestroyDocument'])->name('document.delete.ajax');
+    Route::delete('/document/{document}', [CoursesController::class, 'destroyDocument'])->name('document.delete');
+    
+    // Rutas para obtener conductores por transportista
+    Route::get('/carrier/{carrier}/drivers', [CoursesController::class, 'getDriversByCarrier'])->name('drivers.by.carrier');
+    
+    // Ruta alternativa que coincide con el formato usado en el JavaScript
+    Route::get('carrier/{carrier}/drivers', [CoursesController::class, 'getDriversByCarrier'])->name('carrier.drivers');
+});
+
+// Ruta para historial de cursos de un conductor
+Route::get('drivers/{driver}/course-history', [CoursesController::class, 'driverHistory'])->name('drivers.course-history');
 
 /*
 |--------------------------------------------------------------------------

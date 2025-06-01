@@ -122,7 +122,7 @@ $breadcrumbLinks = [
                 </x-base.button>
             </form>
             
-            <x-base.button data-tw-toggle="modal" data-tw-target="#add-inspection-modal"
+            <x-base.button as="a" href="{{ route('admin.inspections.create') }}"
                 variant="primary" class="flex items-center">
                 <x-base.lucide class="h-4 w-4 mr-2" icon="plus" />
                 Add Inspection
@@ -156,10 +156,10 @@ $breadcrumbLinks = [
                         </th>
                         <th scope="col" class="px-6 py-3">Vehicle</th>
                         <th scope="col" class="px-6 py-3">Inspection Type</th>
+                        <th scope="col" class="px-6 py-3">Documents</th>
                         <th scope="col" class="px-6 py-3">Inspector</th>
                         <th scope="col" class="px-6 py-3">Status</th>
                         <th scope="col" class="px-6 py-3">Safe to Operate</th>
-                        <th scope="col" class="px-6 py-3">Documents</th>
                         <th scope="col" class="px-6 py-3 text-center">Actions</th>
                     </tr>
                 </thead>
@@ -168,13 +168,14 @@ $breadcrumbLinks = [
                     <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
                         <td class="px-6 py-4">{{ $inspection->inspection_date->format('M d, Y') }}</td>
                         <td class="px-6 py-4">
-                            @if($inspection->vehicle)
-                                {{ $inspection->vehicle->license_plate }} - {{ $inspection->vehicle->brand }}
+                            @if ($inspection->vehicle)
+                                {{ $inspection->vehicle->license_plate }} - {{ $inspection->vehicle->brand }} {{ $inspection->vehicle->model }}
                             @else
-                                <span class="text-slate-400">No Vehicle</span>
+                                -
                             @endif
                         </td>
                         <td class="px-6 py-4">{{ $inspection->inspection_type }}</td>
+                        <td class="px-6 py-4">{{ $inspection->documents()->count() }}</td>
                         <td class="px-6 py-4">{{ $inspection->inspector_name }}</td>
                         <td class="px-6 py-4">
                             <span class="px-2 py-1 text-xs font-medium rounded-full 
@@ -195,44 +196,12 @@ $breadcrumbLinks = [
                                 </span>
                             @endif
                         </td>
-                        <td class="px-6 py-4">
-                            @if($inspection->media && $inspection->media->count() > 0)
-                                <div class="flex gap-1">
-                                    @php
-                                        $reports = $inspection->getMedia('inspection_reports');
-                                        $photos = $inspection->getMedia('defect_photos');
-                                        $repairs = $inspection->getMedia('repair_documents');
-                                    @endphp
-                                    
-                                    @if(count($reports) > 0)
-                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-primary/20 text-primary">
-                                        {{ count($reports) }} Reports
-                                    </span>
-                                    @endif
-                                    
-                                    @if(count($photos) > 0)
-                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-warning/20 text-warning">
-                                        {{ count($photos) }} Photos
-                                    </span>
-                                    @endif
-                                    
-                                    @if(count($repairs) > 0)
-                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-info/20 text-info">
-                                        {{ count($repairs) }} Repairs
-                                    </span>
-                                    @endif
-                                </div>
-                            @else
-                                <span class="text-slate-400">No Files</span>
-                            @endif
-                        </td>
                         <td class="text-center">
                             <div class="flex justify-center items-center">
-                                <x-base.button data-tw-toggle="modal" data-tw-target="#edit-inspection-modal"
-                                    variant="primary" class="mr-2 p-1 edit-inspection"
-                                    data-inspection="{{ json_encode($inspection) }}">
+                                <a href="{{ route('admin.inspections.edit', $inspection->id) }}"
+                                    class="btn btn-primary mr-2 p-1">
                                     <x-base.lucide class="w-4 h-4" icon="edit" />
-                                </x-base.button>
+                                </a>
                                 <x-base.button data-tw-toggle="modal" data-tw-target="#delete-inspection-modal"
                                     variant="danger" class="p-1 delete-inspection"
                                     data-inspection-id="{{ $inspection->id }}">
@@ -247,11 +216,11 @@ $breadcrumbLinks = [
                             <div class="flex flex-col items-center">
                                 <x-base.lucide class="h-16 w-16 text-gray-300" icon="alert-triangle" />
                                 <p class="mt-2 text-gray-500">No inspection records found for this driver</p>
-                                <x-base.button data-tw-toggle="modal" data-tw-target="#add-inspection-modal"
-                                    variant="outline-primary" class="mt-4">
+                                <a href="{{ route('admin.inspections.create', ['driver_id' => $driver->id]) }}"
+                                    class="btn btn-primary mt-4">
                                     <x-base.lucide class="h-4 w-4 mr-1" icon="plus" />
                                     Add First Inspection
-                                </x-base.button>
+                                </a>
                             </div>
                         </td>
                     </tr>

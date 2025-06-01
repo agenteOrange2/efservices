@@ -1,6 +1,9 @@
 @extends('../themes/' . $activeTheme)
-@section('title', 'Training School Documents')
+@section('title', 'Training School Details')
+
 @php
+    use Illuminate\Support\Facades\Storage;
+    
     $breadcrumbLinks = [
         ['label' => 'App', 'url' => route('admin.dashboard')],
         ['label' => 'Training Schools', 'url' => route('admin.training-schools.index')],
@@ -51,11 +54,11 @@
             <div class="box-body p-5">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
-                        <table class="table">
+                        <table class="table w-full">
                             <tbody>
                                 <tr>
                                     <th class="whitespace-nowrap w-40">Driver</th>
-                                    <td>{{ $school->driver->user->name }} {{ $school->driver->user->last_name ?? '' }}</td>
+                                    <td>{{ $school->userDriverDetail->user->name }} {{ $school->userDriverDetail->user->last_name ?? '' }}</td>
                                 </tr>
                                 <tr>
                                     <th class="whitespace-nowrap">School Name</th>
@@ -173,12 +176,14 @@
             </div>
             <div class="box-body p-0">
                 @php
-                    $documents = $school->getMedia('training_files');
+                    $documents = \App\Models\DocumentAttachment::where('documentable_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)
+                        ->where('documentable_id', $school->id)
+                        ->get();
                 @endphp
                 
                 @if (count($documents) > 0)
                     <div class="overflow-x-auto">
-                        <table class="table table-striped">
+                        <table class="table table-striped w-full">
                             <thead>
                                 <tr>
                                     <th class="whitespace-nowrap">#</th>
@@ -219,18 +224,43 @@
                                         <td>{{ $document->created_at->format('m/d/Y H:i') }}</td>
                                         <td>
                                             <div class="flex justify-center items-center">
-                                                <a href="{{ route('admin.training-schools.preview.document', $document->id) }}" target="_blank" class="flex items-center text-primary mr-3" title="View">
+                                                <a href="{{ Storage::url($document->file_path) }}" target="_blank" class="flex items-center text-primary mr-3" title="View">
                                                     <x-base.lucide class="w-4 h-4" icon="eye" />
                                                 </a>
-                                                <a href="{{ route('admin.training-schools.preview.document', ['id' => $document->id, 'download' => true]) }}" class="flex items-center text-info mr-3" title="Download">
+                                                <a href="{{ Storage::url($document->file_path) }}" download="{{ $document->file_name }}" class="flex items-center text-info mr-3" title="Download">
                                                     <x-base.lucide class="w-4 h-4" icon="download" />
                                                 </a>
                                                 <button type="button" 
-                                                    data-document-id="{{ $document->id }}"
-                                                    class="flex items-center text-danger delete-document-btn" 
+                                                    data-tw-toggle="modal"
+                                                    data-tw-target="#delete-document-modal-{{ $document->id }}"
+                                                    class="flex items-center text-danger" 
                                                     title="Delete">
                                                     <x-base.lucide class="w-4 h-4" icon="trash-2" />
                                                 </button>
+                                                
+                                                <!-- Modal Eliminar Documento para cada registro -->
+                                                <x-base.dialog id="delete-document-modal-{{ $document->id }}" size="md">
+                                                    <x-base.dialog.panel>
+                                                        <div class="p-5 text-center">
+                                                            <x-base.lucide class="mx-auto mt-3 h-16 w-16 text-danger" icon="x-circle" />
+                                                            <div class="mt-5 text-2xl">Are you sure?</div>
+                                                            <div class="mt-2 text-slate-500">
+                                                                Do you really want to delete this document? <br>
+                                                                This process cannot be undone.
+                                                            </div>
+                                                        </div>
+                                                        <form action="{{ route('admin.training-schools.destroy.document', $document->id) }}" method="POST" class="px-5 pb-8 text-center">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <x-base.button data-tw-dismiss="modal" type="button" variant="outline-secondary" class="mr-1 w-24">
+                                                                Cancel
+                                                            </x-base.button>
+                                                            <x-base.button type="submit" variant="danger" class="w-24">
+                                                                Delete
+                                                            </x-base.button>
+                                                        </form>
+                                                    </x-base.dialog.panel>
+                                                </x-base.dialog>
                                             </div>
                                         </td>
                                     </tr>
@@ -256,54 +286,4 @@
         </div>
     </div>
 
-    <!-- Modal de confirmación para eliminar documento -->
-    <div id="delete-confirmation-modal" class="modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-body p-0">
-                    <div class="p-5 text-center">
-                        <x-base.lucide class="w-16 h-16 text-danger mx-auto mt-3" icon="x-circle" />
-                        <div class="text-3xl mt-5">Are you sure?</div>
-                        <div class="text-slate-500 mt-2">
-                            Do you really want to delete this document? <br>
-                            This process cannot be undone.
-                        </div>
-                    </div>
-                    <div class="px-5 pb-8 text-center">
-                        <form id="delete-document-form" action="{{ route('admin.training-schools.destroy.document', 0) }}" method="POST" style="display: inline-block;">
-                            @csrf
-                            @method('DELETE')
-                            <input type="hidden" id="delete-document-id" name="id" value="">
-                            <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24 mr-1">Cancel</button>
-                            <button type="submit" class="btn btn-danger w-24">Delete</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 @endsection
-
-@push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const modal = document.getElementById('delete-confirmation-modal');
-            const deleteForm = document.getElementById('delete-document-form');
-            const deleteIdInput = document.getElementById('delete-document-id');
-            
-            document.querySelectorAll('.delete-document-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const documentId = this.getAttribute('data-document-id');
-                    deleteIdInput.value = documentId;
-                    
-                    // Actualizar la ruta del formulario
-                    deleteForm.action = "{{ route('admin.training-schools.destroy.document', '') }}/" + documentId;
-                    
-                    // Mostrar modal
-                    const instance = tailwind.Modal.getInstance(modal);
-                    instance.show();
-                });
-            });
-        });
-    </script>
-@endpush

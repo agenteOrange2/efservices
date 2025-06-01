@@ -4,15 +4,13 @@ namespace App\Models\Admin\Driver;
 
 use App\Models\UserDriverDetail;
 use App\Models\Admin\Vehicle\Vehicle;
-use Spatie\MediaLibrary\HasMedia;
+use App\Traits\HasDocuments;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class DriverInspection extends Model implements HasMedia
+class DriverInspection extends Model
 {
-    use HasFactory, InteractsWithMedia;
+    use HasFactory, HasDocuments;
 
     protected $fillable = [
         'user_driver_detail_id',
@@ -55,31 +53,20 @@ class DriverInspection extends Model implements HasMedia
     }
 
     /**
-     * Define media collections for this model.
+     * Define la ruta donde se guardarán los documentos.
+     *
+     * @param string $collection Nombre de la colección
+     * @param string|null $fileName Nombre del archivo (opcional)
+     * @return string Ruta relativa
      */
-    public function registerMediaCollections(): void
+    protected function getDocumentPath(string $collection, ?string $fileName = null): string
     {
-        // Collection for inspection reports
-        $this->addMediaCollection('inspection_reports');
+        // Obtener el ID del conductor desde la relación
+        $driverId = $this->user_driver_detail_id ?? 'unknown';
         
-        // Collection for defect photos
-        $this->addMediaCollection('defect_photos');
+        // Crear la ruta siguiendo el patrón solicitado: driver/{id}/inspections/{id}/
+        $path = "driver/{$driverId}/inspections/{$this->id}";
         
-        // Collection for repair documentation
-        $this->addMediaCollection('repair_documents');
-    }
-
-    /**
-     * Register media conversions.
-     */
-    public function registerMediaConversions(Media $media = null): void
-    {
-        $this->addMediaConversion('webp')
-            ->format('webp')
-            ->keepOriginalImageFormat();
-        
-        $this->addMediaConversion('thumb')
-            ->width(200)
-            ->height(200);
+        return $fileName ? "{$path}/{$fileName}" : $path;
     }
 }

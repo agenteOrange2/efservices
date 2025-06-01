@@ -1,5 +1,6 @@
 <x-base.form-input
     type="text"
+    data-single-mode="true"
     {{ $attributes->class(merge(['datepicker', $attributes->whereStartsWith('class')->first()]))->merge($attributes->whereDoesntStartWith('class')->getAttributes()) }}
 />
 

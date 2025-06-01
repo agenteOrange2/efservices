@@ -199,6 +199,8 @@
                         
                         <!-- Componente Livewire para carga de archivos -->
                         <livewire:components.file-uploader model-name="training_files" model-index="0" label="Upload Training Documents" :existing-files="[]" />
+                        <!-- Campo oculto para almacenar los archivos subidos -->
+                        <input type="hidden" name="training_files" id="training_files_input">
                     </div>
 
                     <!-- Botones del formulario -->
@@ -220,14 +222,89 @@
     <script>
         // Inicialización del formulario
         document.addEventListener('DOMContentLoaded', function() {
-            // Verificar que la fecha de fin es posterior a la fecha de inicio
+            // Almacenar archivos subidos del componente Livewire
+            const trainingFilesInput = document.getElementById('training_files_input');
+            let trainingFiles = [];
+            
+            // Escuchar eventos emitidos por el componente Livewire
+            // Este evento se dispara cuando se sube un nuevo archivo
+            document.addEventListener('livewire:initialized', () => {
+                Livewire.on('fileUploaded', (data) => {
+                    const fileData = data[0];
+                    
+                    if (fileData.modelName === 'training_files') {
+                        // Agregar el archivo al array
+                        trainingFiles.push({
+                            name: fileData.originalName,
+                            original_name: fileData.originalName,
+                            mime_type: fileData.mimeType,
+                            size: fileData.size,
+                            is_temp: true,
+                            tempPath: fileData.tempPath,
+                            path: fileData.tempPath,
+                            id: fileData.previewData.id
+                        });
+                        
+                        // Actualizar el input hidden con los datos JSON
+                        trainingFilesInput.value = JSON.stringify(trainingFiles);
+                        console.log('Archivo agregado:', fileData.originalName);
+                        console.log('Total archivos:', trainingFiles.length);
+                    }
+                });
+                
+                // Este evento se dispara cuando se elimina un archivo
+                Livewire.on('fileRemoved', (fileId) => {
+                    // Encontrar y eliminar el archivo del array
+                    trainingFiles = trainingFiles.filter(file => file.id !== fileId);
+                    
+                    // Actualizar el input hidden
+                    trainingFilesInput.value = JSON.stringify(trainingFiles);
+                    console.log('Archivo eliminado, ID:', fileId);
+                    console.log('Total archivos restantes:', trainingFiles.length);
+                });
+            });
+            
+            // La inicialización de Litepicker está manejada globalmente por el componente
+            
+            const dateStartEl = document.getElementById('date_start');
+            const dateEndEl = document.getElementById('date_end');
+
+            // Formatear las fechas en formato estadounidense (m-d-Y) antes de enviar el formulario
             document.getElementById('schoolForm').addEventListener('submit', function(event) {
-                const startDate = new Date(document.getElementById('date_start').value);
-                const endDate = new Date(document.getElementById('date_end').value);
+                const dateStartEl = document.getElementById('date_start');
+                const dateEndEl = document.getElementById('date_end');
+                
+                // Verificar que la fecha de fin es posterior a la fecha de inicio
+                const startDate = new Date(dateStartEl.value);
+                const endDate = new Date(dateEndEl.value);
                 
                 if (endDate < startDate) {
                     event.preventDefault();
                     alert('End date must be after or equal to start date');
+                    return;
+                }
+                
+                // Asegurarse de que las fechas estén en formato YYYY-MM-DD que Laravel puede validar
+                if (dateStartEl.value) {
+                    // Solo reformatear si hay una fecha
+                    const start = new Date(dateStartEl.value);
+                    if (!isNaN(start.getTime())) {
+                        const year = start.getFullYear();
+                        const month = (start.getMonth() + 1).toString().padStart(2, '0');
+                        const day = start.getDate().toString().padStart(2, '0');
+                        dateStartEl.value = `${year}-${month}-${day}`;
+                    }
+                }
+                
+                if (dateEndEl.value) {
+                    // Solo reformatear si hay una fecha
+                    const end = new Date(dateEndEl.value);
+                    if (!isNaN(end.getTime())) {
+                        const year = end.getFullYear();
+                        const month = (end.getMonth() + 1).toString().padStart(2, '0');
+                        const day = end.getDate().toString().padStart(2, '0');
+                        dateEndEl.value = `${year}-${month}-${day}`;
+                    }
                 }
             });
             
