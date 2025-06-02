@@ -15,6 +15,14 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Traffic Convictions API
     Route::put('/traffic/convictions/{conviction}', [\App\Http\Controllers\Admin\Driver\TrafficConvictionsController::class, 'apiUpdate']);
+    
+    // Driver Testing API Routes
+    Route::prefix('drivers/testing')->name('api.drivers.testing.')->group(function () {
+        Route::get('search-carriers', [\App\Http\Controllers\Admin\Driver\DriverTestingController::class, 'searchCarriers'])->name('search-carriers');
+        Route::get('get-drivers/{carrier}', [\App\Http\Controllers\Admin\Driver\DriverTestingController::class, 'getDriversByCarrier'])->name('get-drivers');
+        Route::get('by-carrier/{carrier}', [\App\Http\Controllers\Admin\Driver\DriverTestingController::class, 'getDriversByCarrier'])->name('by-carrier');
+        Route::get('driver-details/{driverDetail}', [\App\Http\Controllers\Admin\Driver\DriverTestingController::class, 'getDriverDetails'])->name('driver-details');
+    });
 });
 
 // En routes/api.php

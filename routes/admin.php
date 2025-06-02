@@ -34,6 +34,7 @@ use App\Http\Controllers\Admin\Driver\TrainingSchoolsController;
 use App\Http\Controllers\Admin\Driver\CoursesController;
 use App\Http\Controllers\Admin\Vehicles\VehicleServiceItemController;
 use App\Http\Controllers\Admin\Vehicles\MaintenanceNotificationController;
+use App\Http\Controllers\Admin\Driver\DriverTestingController;
 use App\Http\Controllers\FileUploaderController;
 
 
@@ -231,6 +232,35 @@ Route::post('carrier/{carrier}/delete-photo', [CarrierController::class, 'delete
 /*
 Route::post('carrier/{carrier}/delete-photo', [CarrierController::class, 'deletePhoto'])->name('carrier.delete-photo');
 */
+/*
+    |----------------------------------------------------------------------
+    | RUTAS ADMIN DRIVER TESTING (DRUG & ALCOHOL TESTS)
+    |----------------------------------------------------------------------
+*/
+
+// Rutas para gestión de pruebas de drogas y alcohol (accesible a todos los usuarios autenticados)
+Route::middleware('auth')->group(function() {
+    Route::prefix('driver-testings')->name('driver-testings.')->group(function () {
+        // Listado y filtro de tests
+        Route::get('/', [DriverTestingController::class, 'index'])->name('index');
+        
+        // Crear y guardar tests
+        Route::get('/create', [DriverTestingController::class, 'create'])->name('create');
+        Route::post('/', [DriverTestingController::class, 'store'])->name('store');
+        
+        // Ver, editar y actualizar tests
+        Route::get('/{driverTesting}', [DriverTestingController::class, 'show'])->name('show');
+        Route::get('/{driverTesting}/edit', [DriverTestingController::class, 'edit'])->name('edit');
+        Route::put('/{driverTesting}', [DriverTestingController::class, 'update'])->name('update');
+        
+        // Eliminar test
+        Route::delete('/{driverTesting}', [DriverTestingController::class, 'destroy'])->name('destroy');
+        
+        // Descargar PDF del test
+        Route::get('/{driverTesting}/download-pdf', [DriverTestingController::class, 'downloadPdf'])->name('download-pdf');
+    });        
+});
+
 /*
     |----------------------------------------------------------------------
     | RUTAS ADMIN CARRIERS (CON TABS USERS Y DOCUMENTS)
@@ -478,26 +508,30 @@ group(function () {
 // Ruta para historial de cursos de un conductor
 Route::get('drivers/{driver}/course-history', [CoursesController::class, 'driverHistory'])->name('drivers.course-history');
 
+// Eliminadas las rutas antiguas de testings para evitar conflictos
+// Ahora todas las rutas de pruebas de conductores están en el grupo driver-testings
+Route::get('drivers/{driver}/testing-history', [TestingsController::class, 'driverHistory'])->name('drivers.testing-history');
+
 /*
 |--------------------------------------------------------------------------
-| RUTAS PARA TESTINGS (PRUEBAS DE CONDUCTORES)
+| RUTAS PARA DRIVER TESTINGS (PRUEBAS DE CONDUCTORES)
 |--------------------------------------------------------------------------
 */
-
-// Rutas para todos los testings (pruebas)
-Route::prefix('testings')->name('testings.')->group(function () {
-    Route::get('/', [TestingsController::class, 'index'])->name('index');
-    Route::post('/', [TestingsController::class, 'store'])->name('store');
-    Route::put('/{testing}', [TestingsController::class, 'update'])->name('update');
-    Route::delete('/{testing}', [TestingsController::class, 'destroy'])->name('destroy');
-
-    // Ruta para obtener conductores por transportista (si no existiera ya)
-    Route::get('/carriers/{carrier}/drivers', [TestingsController::class, 'getDriversByCarrier'])->name('drivers.by.carrier');
+Route::prefix('driver-testings')->name('driver-testings.')->group(function () {
+    Route::get('/', [DriverTestingController::class, 'index'])->name('index');
+    Route::get('/create', [DriverTestingController::class, 'create'])->name('create');
+    Route::post('/', [DriverTestingController::class, 'store'])->name('store');
+    Route::get('/{driverTesting}', [DriverTestingController::class, 'show'])->name('show');
+    Route::get('/{driverTesting}/edit', [DriverTestingController::class, 'edit'])->name('edit');
+    Route::put('/{driverTesting}', [DriverTestingController::class, 'update'])->name('update');
+    Route::delete('/{driverTesting}', [DriverTestingController::class, 'destroy'])->name('destroy');
+    Route::get('/{driverTesting}/download-pdf', [DriverTestingController::class, 'downloadPdf'])->name('download-pdf');
+    
+    // Rutas API para búsqueda dinámica
+    Route::get('/api/search-carriers', [DriverTestingController::class, 'searchCarriers'])->name('search-carriers');
+    Route::get('/api/get-drivers/{carrier}', [DriverTestingController::class, 'getDriversByCarrier'])->name('get-drivers');
+    Route::get('/api/get-driver-details/{driverDetail}', [DriverTestingController::class, 'getDriverDetails'])->name('get-driver-details');
 });
-
-// Añadir esta ruta a las rutas existentes de conductores (drivers)
-// Historia de tests específica para un conductor
-Route::get('drivers/{driver}/testing-history', [TestingsController::class, 'driverHistory'])->name('drivers.testing-history');
 
 /*
 |--------------------------------------------------------------------------
@@ -557,28 +591,11 @@ Route::prefix('vehicles')->name('vehicles.')->group(function () {
         Route::post('/', [VehicleServiceItemController::class, 'store'])->name('store');
         Route::get('/{serviceItem}', [VehicleServiceItemController::class, 'show'])->name('show');
         Route::get('/{serviceItem}/edit', [VehicleServiceItemController::class, 'edit'])->name('edit');
-        Route::put('/{serviceItem}', [VehicleServiceItemController::class, 'update'])->name('update');
-        Route::delete('/{serviceItem}', [VehicleServiceItemController::class, 'destroy'])->name('destroy');
-        Route::delete('/{serviceItem}/files/{mediaId}', [VehicleServiceItemController::class, 'deleteFile'])->name('delete-file');
-    });
-
-    // Rutas para documentos anidadas bajo un vehículo específico
-    Route::prefix('{vehicle}/documents')->name('documents.')->group(function () {
-        Route::get('/', [VehicleDocumentController::class, 'index'])->name('index');
-        Route::get('/create', [VehicleDocumentController::class, 'create'])->name('create');
-        Route::post('/', [VehicleDocumentController::class, 'store'])->name('store');
-        Route::get('/{document}', [VehicleDocumentController::class, 'show'])->name('show');
-        Route::get('/{document}/edit', [VehicleDocumentController::class, 'edit'])->name('edit');
-        Route::put('/{document}', [VehicleDocumentController::class, 'update'])->name('update');
-        Route::delete('/{document}', [VehicleDocumentController::class, 'destroy'])->name('destroy');
-        Route::get('/{document}/download', [VehicleDocumentController::class, 'download'])->name('download');
-        Route::get('/{document}/preview', [VehicleDocumentController::class, 'preview'])->name('preview');
     });
 });
 
 // Rutas para administrar marcas de vehículos (como entidad separada)
 Route::resource('vehicle-makes', VehicleMakeController::class)->names('vehicle-makes');
-Route::get('vehicle-makes/search', [VehicleMakeController::class, 'search'])->name('vehicle-makes.search');
 
 // Rutas para administrar tipos de vehículos (como entidad separada)
 Route::resource('vehicle-types', VehicleTypeController::class)->names('vehicle-types');
