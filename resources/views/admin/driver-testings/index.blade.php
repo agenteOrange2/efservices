@@ -145,30 +145,36 @@
                             @forelse ($driverTestings as $test)
                                 <tr class="bg-white border-b hover:bg-gray-50">
                                     <td class="px-6 py-4">{{ $test->id }}</td>
-                                    <td class="px-6 py-4">{{ $test->test_date->format('m/d/Y') }}</td>
-                                    <td class="px-6 py-4">{{ $test->carrier->name }}</td>
+                                    <td class="px-6 py-4">{{ $test->test_date ? date('m/d/Y', strtotime($test->test_date)) : 'N/A' }}</td>
                                     <td class="px-6 py-4">
-                                        {{ $test->userDriverDetail->user->name }} {{ $test->userDriverDetail->user->last_name }}
+                                        @if($test->userDriverDetail && $test->userDriverDetail->carrier)
+                                            {{ $test->userDriverDetail->carrier->name }}
+                                        @else
+                                            <span class="text-red-500">Carrier data missing</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if($test->userDriverDetail && $test->userDriverDetail->user)
+                                            {{ $test->userDriverDetail->user->name }} {{ $test->userDriverDetail->user->last_name ?? '' }}
+                                        @else
+                                            <span class="text-red-500">Driver data missing</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4">{{ $test->test_type }}</td>
                                     <td class="px-6 py-4">
-                                        <span class="px-2 py-1 rounded-full text-xs font-medium 
-                                            @if($test->status == 'approved') bg-green-100 text-green-800 
-                                            @elseif($test->status == 'rejected') bg-red-100 text-red-800 
-                                            @else bg-yellow-100 text-yellow-800 @endif">
+                                        <span class="px-2 py-1 rounded-full text-xs
+                                              {{ $test->status == 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800' }}">
                                             {{ \App\Models\Admin\Driver\DriverTesting::getStatuses()[$test->status] }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4">
                                         <span class="px-2 py-1 rounded-full text-xs font-medium 
-                                            @if($test->test_result == 'passed') bg-green-100 text-green-800 
-                                            @elseif($test->test_result == 'failed') bg-red-100 text-red-800 
-                                            @else bg-blue-100 text-blue-800 @endif">
-                                            {{ ucfirst($test->test_result) }}
+{{ $test->test_result == 'Positive' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' }}">
+                                            {{ $test->test_result }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4">{{ $test->location }}</td>
-                                    <td class="px-6 py-4 text-right flex justify-end space-x-1">
+                                    <td class="px-6 py-4 text-center space-x-1">
                                         <!-- Ver detalles -->
                                         <a href="{{ route('admin.driver-testings.show', $test->id) }}" 
                                            class="btn btn-sm btn-outline-secondary">

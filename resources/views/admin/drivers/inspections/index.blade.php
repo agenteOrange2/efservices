@@ -149,11 +149,11 @@
 
         <!-- Tabla -->
         <div class="box box--stacked mt-5">
-            <div class="box-body p-5">
+            <div class="box-body p-0">
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                         <thead>
-                            <tr class="bg-slate-50/60">
+                            <tr>
                                 <th class="whitespace-nowrap">
                                     <a href="{{ route(
                                         'admin.inspections.index',
@@ -171,10 +171,8 @@
                                 <th scope="col" class="px-6 py-3">Carrier</th>
                                 <th scope="col" class="px-6 py-3">Driver</th>
                                 <th scope="col" class="px-6 py-3">Vehicle</th>
-                                <th scope="col" class="px-6 py-3">Inspection Type</th>
-                                <th scope="col" class="px-6 py-3">Inspector</th>
-                                <th scope="col" class="px-6 py-3">Status</th>
-                                <th scope="col" class="px-6 py-3">Safe to Operate</th>
+                                <th scope="col" class="px-6 py-3">Inspection Type</th>                                
+                                <th scope="col" class="px-6 py-3">Status</th>                                
                                 <th scope="col" class="px-6 py-3">Created At</th>
                                 <th scope="col" class="px-6 py-3 text-center">Actions</th>
                             </tr>
@@ -207,8 +205,7 @@
                                             N/A
                                         @endif
                                     </td>
-                                    <td class="px-6 py-4">{{ $inspection->inspection_type }}</td>
-                                    <td class="px-6 py-4">{{ $inspection->inspector_name }}</td>
+                                    <td class="px-6 py-4">{{ $inspection->inspection_type }}</td>                                    
                                     <td class="px-6 py-4">
                                         @if ($inspection->status == 'Passed')
                                             <span
@@ -224,19 +221,6 @@
                                             <span
                                                 class="px-2 py-1 text-xs font-medium rounded-full bg-warning/20 text-warning">
                                                 {{ $inspection->status }}
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        @if ($inspection->is_vehicle_safe_to_operate)
-                                            <span
-                                                class="px-2 py-1 text-xs font-medium rounded-full bg-success/20 text-success">
-                                                Yes
-                                            </span>
-                                        @else
-                                            <span
-                                                class="px-2 py-1 text-xs font-medium rounded-full bg-danger/20 text-danger">
-                                                No
                                             </span>
                                         @endif
                                     </td>
@@ -266,8 +250,8 @@
                                 <tr class="bg-white border-b">
                                     <td colspan="10" class="px-6 py-4 text-center text-gray-500">
                                         No inspection records found.
-                                        <x-base.button data-tw-toggle="modal" data-tw-target="#add-inspection-modal"
-                                            variant="primary" class="mt-2">
+                                        <x-base.button as="a" href="{{ route('admin.inspections.create') }}"
+                                            variant="outline-primary" class="mt-2">
                                             <x-base.lucide class="w-4 h-4 mr-1" icon="plus" />
                                             Add First Inspection Record
                                         </x-base.button>

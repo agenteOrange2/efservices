@@ -58,6 +58,17 @@ class DriverTestingController extends Controller
         $statuses = DriverTesting::getStatuses();
         $carriers = Carrier::orderBy('name')->pluck('name', 'id');
         
+        // Log any records with missing relationships for debugging
+        foreach ($driverTestings as $test) {
+            if (!$test->userDriverDetail) {
+                Log::warning("Driver Testing ID {$test->id} has null userDriverDetail");
+            } elseif (!$test->userDriverDetail->user) {
+                Log::warning("Driver Testing ID {$test->id} has null user relationship");
+            } elseif (!$test->userDriverDetail->carrier) {
+                Log::warning("Driver Testing ID {$test->id} has null carrier relationship");
+            }
+        }
+        
         return view('admin.driver-testings.index', compact('driverTestings', 'locations', 'statuses', 'carriers'));
     }
 

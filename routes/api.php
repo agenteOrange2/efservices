@@ -7,11 +7,15 @@ use App\Http\Controllers\Admin\TempUploadController;
 use App\Http\Controllers\Admin\UserDriverController;
 use App\Http\Controllers\Api\UserDriverApiController;
 use App\Http\Controllers\Api\UploadController;
+use App\Http\Controllers\Api\DocumentController;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+    
+    // Ruta para eliminar documentos de manera segura (evitando la eliminación en cascada)
+    Route::delete('documents/{mediaId}', [DocumentController::class, 'safeDelete'])->name('api.documents.delete');
     
     // Traffic Convictions API
     Route::put('/traffic/convictions/{conviction}', [\App\Http\Controllers\Admin\Driver\TrafficConvictionsController::class, 'apiUpdate']);
@@ -52,5 +56,17 @@ Route::get('/active-carriers', function () {
     return response()->json($carriers);
 });
 
-// Ruta API para carga de archivos (sin autenticación ni CSRF)
-Route::post('/upload', [UploadController::class, 'upload']);
+// Rutas API para gestión de documentos (sin autenticación ni CSRF para facilitar desarrollo)
+Route::prefix('documents')->group(function () {
+    // Ruta para carga temporal de archivos
+    Route::post('/upload', [UploadController::class, 'upload']);
+    
+    // Rutas para guardar documentos permanentes en diferentes colecciones
+    Route::post('/store', [UploadController::class, 'storeDocument']);
+    
+    // Ruta para eliminar documentos
+    Route::delete('/{id}', [UploadController::class, 'deleteDocument']);
+    
+    // Ruta para obtener documentos de un modelo
+    Route::get('/model/{type}/{id}', [UploadController::class, 'getDocuments']);
+});

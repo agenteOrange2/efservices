@@ -186,7 +186,7 @@
                             formData.append('file', file);
                             formData.append('type', 'school_certificates');
                             try {
-                                const response = await fetch('/api/upload', {
+                                const response = await fetch('/api/documents/upload', {
                                     method: 'POST',
                                     body: formData,
                                     headers: {
@@ -445,7 +445,7 @@
                                     formData.append('file', file);
                                     formData.append('type', 'course_certificates');
                                     try {
-                                        const response = await fetch('/api/upload', {
+                                        const response = await fetch('/api/documents/upload', {
                                             method: 'POST',
                                             body: formData,
                                             headers: {

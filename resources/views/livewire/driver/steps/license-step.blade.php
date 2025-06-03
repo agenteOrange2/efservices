@@ -182,7 +182,7 @@
                             const formData = new FormData();
                             formData.append('file', file);
                             formData.append('type', 'license_front');
-                            fetch('/api/upload', {
+                            fetch('/api/documents/upload', {
                                 method: 'POST',
                                 body: formData,
                                 headers: {
@@ -281,7 +281,7 @@
                             const formData = new FormData();
                             formData.append('file', file);
                             formData.append('type', 'license_back');
-                            fetch('/api/upload', {
+                            fetch('/api/documents/upload', {
                                 method: 'POST',
                                 body: formData,
                                 headers: {

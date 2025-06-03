@@ -96,10 +96,10 @@
             @if($trainingSchools->count() > 0)
                 <div class="box-body p-0">
                     <div class="overflow-x-auto">
-                        <table class="table w-full">
-                            <thead>
-                                <tr>
-                                    <th class="whitespace-nowrap">
+                        <x-base.table class="border-separate border-spacing-y-[10px]">
+                            <x-base.table.thead>
+                                <x-base.table.tr>
+                                    <x-base.table.th class="whitespace-nowrap">
                                         <a href="{{ route('admin.training-schools.index', ['sort_field' => 'created_at', 'sort_direction' => request('sort_field') == 'created_at' && request('sort_direction') == 'asc' ? 'desc' : 'asc']) }}" class="flex items-center">
                                             Created At
                                             @if (request('sort_field') == 'created_at')
@@ -110,14 +110,14 @@
                                                 @endif
                                             @endif
                                         </a>
-                                    </th>
-                                    <th class="whitespace-nowrap">
+                                    </x-base.table.th>
+                                    <x-base.table.th class="whitespace-nowrap">
                                         Driver
-                                    </th>
-                                    <th class="whitespace-nowrap">
+                                    </x-base.table.th>
+                                    <x-base.table.th class="whitespace-nowrap">
                                         Carrier
-                                    </th>
-                                    <th class="whitespace-nowrap">
+                                    </x-base.table.th>
+                                    <x-base.table.th class="whitespace-nowrap">
                                         <a href="{{ route('admin.training-schools.index', ['sort_field' => 'school_name', 'sort_direction' => request('sort_field') == 'school_name' && request('sort_direction') == 'asc' ? 'desc' : 'asc']) }}" class="flex items-center">
                                             School Name
                                             @if (request('sort_field') == 'school_name')
@@ -128,8 +128,8 @@
                                                 @endif
                                             @endif
                                         </a>
-                                    </th>
-                                    <th class="whitespace-nowrap">
+                                    </x-base.table.th>
+                                    <x-base.table.th class="whitespace-nowrap">
                                         <a href="{{ route('admin.training-schools.index', ['sort_field' => 'date_end', 'sort_direction' => request('sort_field') == 'date_end' && request('sort_direction') == 'asc' ? 'desc' : 'asc']) }}" class="flex items-center">
                                             Expiration Date
                                             @if (request('sort_field') == 'date_end')
@@ -140,66 +140,87 @@
                                                 @endif
                                             @endif
                                         </a>
-                                    </th>
-                                    <th class="whitespace-nowrap">
+                                    </x-base.table.th>
+                                    <x-base.table.th class="whitespace-nowrap">
                                         Documents
-                                    </th>
-                                    <th class="whitespace-nowrap text-center">
+                                    </x-base.table.th>
+                                    <x-base.table.th class="whitespace-nowrap">
                                         Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($trainingSchools as $school)
-                                    <tr class="intro-x">
-                                        <td>{{ $school->created_at->format('m/d/Y') }}</td>
-                                        <td>
-                                            {{ $school->userDriverDetail->user->name ?? '---' }} 
-                                            {{ $school->userDriverDetail->user->last_name ?? '' }}
-                                        </td>
-                                        <td>
-                                            {{ $school->userDriverDetail->carrier->name ?? '---' }}
-                                        </td>
-                                        <td>{{ $school->school_name }}</td>
-                                        <td>{{ $school->date_end }}</td>
-                                        <td class="whitespace-nowrap">
-                                            @php
-                                                $docsCount = \App\Models\DocumentAttachment::where('documentable_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)
-                                                    ->where('documentable_id', $school->id)
-                                                    ->count();
-                                            @endphp
-                                            <a href="{{ route('admin.training-schools.show.documents', $school->id) }}" class="flex items-center">
-                                                <span class="bg-primary/20 text-primary rounded px-2 py-1 text-xs">
-                                                    <x-base.lucide class="w-3 h-3 inline-block" icon="file-text" />
-                                                    {{ $docsCount }} {{ Str::plural('Document', $docsCount) }}
-                                                </span>
-                                            </a>
-                                        </td>
-                                        <td class="table-report__action">
-                                            <div class="flex justify-center items-center">
-                                                <a href="{{ route('admin.training-schools.show', $school->id) }}" 
-                                                   class="btn-sm btn-danger p-1 flex mr-2" title="View Documents">
-                                                    <x-base.lucide class="w-4 h-4" icon="file-text" />
-                                                    <span class="ml-1">
-                                                        {{ \App\Models\DocumentAttachment::where('documentable_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)->where('documentable_id', $school->id)->count() }}
+                                    </x-base.table.th>
+                                </x-base.table.tr>
+                            </x-base.table.thead>
+                            <x-base.table.tbody>                                                                   
+                                    @forelse ($trainingSchools as $school)
+                                        <x-base.table.tr>
+                                            <x-base.table.td  class="px-6 py-4">{{ $school->created_at->format('m/d/Y') }}</x-base.table.td>
+                                            <x-base.table.td  class="px-6 py-4">
+                                                {{ $school->userDriverDetail->user->name ?? '---' }} 
+                                                {{ $school->userDriverDetail->user->last_name ?? '' }}
+                                            </x-base.table.td>
+                                            <x-base.table.td  class="px-6 py-4">
+                                                {{ $school->userDriverDetail->carrier->name ?? '---' }}
+                                            </x-base.table.td>
+                                            <x-base.table.td  class="px-6 py-4">{{ $school->school_name }}</x-base.table.td>
+                                            <x-base.table.td  class="px-6 py-4">{{ $school->date_end }}</x-base.table.td>
+                                            <x-base.table.td  class="px-6 py-4">
+                                                @php
+                                                    $docsCount = \App\Models\DocumentAttachment::where('documentable_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)
+                                                        ->where('documentable_id', $school->id)
+                                                        ->count();
+                                                @endphp
+                                                <a href="{{ route('admin.training-schools.show.documents', $school->id) }}" class="flex items-center">
+                                                    <span class="bg-primary/20 text-primary rounded px-2 py-1 text-xs">
+                                                        <x-base.lucide class="w-3 h-3 inline-block" icon="file-text" />
+                                                        {{ $docsCount }} {{ Str::plural('Document', $docsCount) }}
                                                     </span>
                                                 </a>
-                                                <a href="{{ route('admin.training-schools.edit', $school->id) }}" class="btn btn-sm btn-primary mr-2">
-                                                    <x-base.lucide class="w-4 h-4" icon="edit" />
-                                                </a>
-                                                <form action="{{ route('admin.training-schools.destroy', $school->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this training school record?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger">
-                                                        <x-base.lucide class="w-4 h-4" icon="trash-2" />
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                            </x-base.table.td>
+                                            <x-base.table.td>
+                                                <x-base.menu class="h-5">
+                                                    <x-base.menu.button class="h-5 w-5 text-slate-500">
+                                                        <x-base.lucide class="h-5 w-5 fill-slate-400/70 stroke-slate-400/70"
+                                                            icon="MoreVertical" />
+                                                    </x-base.menu.button>
+
+                                                <x-base.menu.items class="w-40">
+                                                    <div class="flex  flex-col gap-3">
+                                                    <a href="{{ route('admin.training-schools.show', $school->id) }}" 
+                                                       class="flex mr-1 text-primary" title="View Documents">
+                                                       <x-base.lucide class="w-4 h-4 mr-3" icon="file-text" />
+                                                       Documents                                                        
+                                                       <span class="ml-1">
+                                                           ({{ \App\Models\DocumentAttachment::where('documentable_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)->where('documentable_id', $school->id)->count() }})
+                                                        </span>                                                        
+                                                    </a>
+                                                    <a href="{{ route('admin.training-schools.edit', $school->id) }}" class="btn btn-sm btn-primary flex">
+                                                        <x-base.lucide class="w-4 h-4 mr-3" icon="edit" />
+                                                        Edit
+                                                    </a>
+                                                    <form action="{{ route('admin.training-schools.destroy', $school->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this training school record?');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm text-red-600  flex">
+                                                            <x-base.lucide class="w-4 h-4 mr-3" icon="trash-2" />
+                                                            Delete
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                                </x-base.menu.items>
+                                            </x-base.menu>
+                                            </x-base.table.td>
+                                        </x-base.table.tr>
+                                        @empty
+                                        <x-base.table.tr>
+                                            <x-base.table.td colspan="6" class="text-center">
+                                                <div class="flex flex-col items-center justify-center py-16">
+                                                    <x-base.lucide class="h-8 w-8 text-slate-400" icon="Users" />
+                                                    No Training School found
+                                                </div>
+                                            </x-base.table.td>
+                                        </x-base.table.tr>
+                                    @endforelse                                
+                            </x-base.table.tbody>
+                        </x-base.table>
                     </div>
                 </div>
                 <!-- Paginación -->

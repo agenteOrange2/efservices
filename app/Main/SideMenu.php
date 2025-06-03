@@ -83,7 +83,7 @@ class SideMenu
                     ],
                     [
                         'icon' => "badge-info",
-                        'route_name' => "admin.testings.index",
+                        'route_name' => "admin.driver-testings.index",
                         'params' => [],
                         'title' => "Testing",
                     ],
@@ -101,9 +101,9 @@ class SideMenu
                     ],
                     [
                         'icon' => "shield-check",
-                        'route_name' => "admin.product-grid",
+                        'route_name' => "admin.courses.index",
                         'params' => [],
-                        'title' => "Safety Scoring",
+                        'title' => "Courses",
                     ],
                     [
                         'icon' => "clock-1",

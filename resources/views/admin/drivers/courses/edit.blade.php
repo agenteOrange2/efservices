@@ -47,7 +47,7 @@
             </div>
             
             <div class="box-body p-5">
-                <form action="{{ route('admin.courses.update', $course) }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('admin.courses.update', $course->id) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     
@@ -58,7 +58,7 @@
                                 class="tom-select w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
                                 <option value="">Select Carrier</option>
                                 @foreach ($carriers as $carrier)
-                                    <option value="{{ $carrier->id }}" {{ isset($course->userDriverDetail) && $course->userDriverDetail->carrier_id == $carrier->id ? 'selected' : '' }}>
+                                    <option value="{{ $carrier->id }}" {{ $course->driverDetail->carrier_id == $carrier->id ? 'selected' : '' }}>
                                         {{ $carrier->name }}
                                     </option>
                                 @endforeach
@@ -68,16 +68,19 @@
                             @enderror
                         </div>
                         
+                        <!-- Driver Selection -->
                         <div>
                             <x-base.form-label for="user_driver_detail_id">Driver</x-base.form-label>
                             <select id="user_driver_detail_id" name="user_driver_detail_id"
                                 class="tom-select w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
                                 <option value="">Select Driver</option>
-                                @foreach ($drivers as $driver)
-                                    <option value="{{ $driver->id }}" {{ $course->user_driver_detail_id == $driver->id ? 'selected' : '' }}>
-                                        {{ $driver->user->name }} {{ $driver->last_name }}
-                                    </option>
-                                @endforeach
+                                @if(isset($drivers))
+                                    @foreach ($drivers as $driver)
+                                        <option value="{{ $driver->id }}" {{ $course->user_driver_detail_id == $driver->id ? 'selected' : '' }}>
+                                            {{ $driver->user->name }} {{ $driver->last_name }}
+                                        </option>
+                                    @endforeach
+                                @endif
                             </select>
                             @error('user_driver_detail_id')
                                 <div class="text-danger mt-1">{{ $message }}</div>
@@ -89,7 +92,7 @@
                         <div>
                             <x-base.form-label for="organization_name">Organization Name</x-base.form-label>
                             <x-base.form-input id="organization_name" name="organization_name" type="text" 
-                                value="{{ old('organization_name', $course->organization_name) }}" class="block w-full" />
+                                value="{{ $course->organization_name }}" class="block w-full" />
                             @error('organization_name')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -98,7 +101,7 @@
                         <div>
                             <x-base.form-label for="phone">Phone</x-base.form-label>
                             <x-base.form-input id="phone" name="phone" type="text" 
-                                value="{{ old('phone', $course->phone) }}" class="block w-full" />
+                                value="{{ $course->phone }}" class="block w-full" />
                             @error('phone')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -109,7 +112,7 @@
                         <div>
                             <x-base.form-label for="city">City</x-base.form-label>
                             <x-base.form-input id="city" name="city" type="text" 
-                                value="{{ old('city', $course->city) }}" class="block w-full" />
+                                value="{{ $course->city }}" class="block w-full" />
                             @error('city')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -118,7 +121,7 @@
                         <div>
                             <x-base.form-label for="state">State</x-base.form-label>
                             <x-base.form-input id="state" name="state" type="text" 
-                                value="{{ old('state', $course->state) }}" class="block w-full" />
+                                value="{{ $course->state }}" class="block w-full" />
                             @error('state')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -127,7 +130,7 @@
                         <div>
                             <x-base.form-label for="experience">Experience</x-base.form-label>
                             <x-base.form-input id="experience" name="experience" type="text" 
-                                value="{{ old('experience', $course->experience) }}" class="block w-full" />
+                                value="{{ $course->experience }}" class="block w-full" />
                             @error('experience')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -138,7 +141,7 @@
                         <div>
                             <x-base.form-label for="certification_date">Certification Date</x-base.form-label>
                             <x-base.form-input id="certification_date" name="certification_date" type="date" 
-                                value="{{ old('certification_date', $course->certification_date ? $course->certification_date->format('Y-m-d') : '') }}" class="block w-full" />
+                                value="{{ $course->certification_date ? date('Y-m-d', strtotime($course->certification_date)) : '' }}" class="block w-full" />
                             @error('certification_date')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -147,7 +150,7 @@
                         <div>
                             <x-base.form-label for="expiration_date">Expiration Date</x-base.form-label>
                             <x-base.form-input id="expiration_date" name="expiration_date" type="date" 
-                                value="{{ old('expiration_date', $course->expiration_date ? $course->expiration_date->format('Y-m-d') : '') }}" class="block w-full" />
+                                value="{{ $course->expiration_date ? date('Y-m-d', strtotime($course->expiration_date)) : '' }}" class="block w-full" />
                             @error('expiration_date')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -157,8 +160,8 @@
                             <x-base.form-label for="status">Status</x-base.form-label>
                             <select id="status" name="status"
                                 class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
-                                <option value="active" {{ old('status', $course->status) == 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="inactive" {{ old('status', $course->status) == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                <option value="active" {{ $course->status == 'active' ? 'selected' : '' }}>Active</option>
+                                <option value="inactive" {{ $course->status == 'inactive' ? 'selected' : '' }}>Inactive</option>
                             </select>
                             @error('status')
                                 <div class="text-danger mt-1">{{ $message }}</div>
@@ -167,23 +170,37 @@
                     </div>
                     
                     <div class="mt-6">
-                        <x-base.form-label>Course Certificates</x-base.form-label>
-                        <div class="border border-dashed rounded-md p-4 mt-2">                            
-                                <input type="hidden" id="certificate_files_input" name="certificate_files">
-                                <livewire:components.file-uploader 
-                                    :modelName="'certificate_files'" 
-                                    :modelIndex="0" 
-                                    :label="'Upload Certificate Files'" 
-                                    :multiple="true" 
-                                    :existing-files="$existingFilesArray ?? []" 
-                                />                            
+                        <!-- Documentos con FileUploader de Livewire -->
+                        <div class="mt-4">
+                            @php
+                                $existingFilesArray = [];
+                                if($course->hasMedia('certificates')) {
+                                    foreach($course->getMedia('certificates') as $certificate) {
+                                        $existingFilesArray[] = [
+                                            'id' => $certificate->id,
+                                            'name' => $certificate->file_name,
+                                            'original_name' => $certificate->file_name,
+                                            'mime_type' => $certificate->mime_type,
+                                            'size' => $certificate->size,
+                                            'created_at' => $certificate->created_at->format('Y-m-d H:i:s'),
+                                            'url' => $certificate->getUrl(),
+                                            'is_temp' => false,
+                                        ];
+                                    }
+                                }
+                            @endphp
+                            
+                            <livewire:components.file-uploader
+                                model-name="certificate_files"
+                                :model-index="0"
+                                label="Course Certificates"
+                                :existing-files="$existingFilesArray"
+                            />
+                            
+                            <!-- Campo oculto para almacenar los archivos -->
+                            <input type="hidden" name="certificate_files" id="certificate_files_input">
                         </div>
-                        @error('certificate_files')
-                            <div class="text-danger mt-1">{{ $message }}</div>
-                        @enderror
                     </div>
-                    
-                    <!-- Nota: El componente Livewire FileUploader arriba ya maneja los documentos existentes -->
                     
                     <div class="mt-6 flex justify-end">
                         <x-base.button as="a" href="{{ route('admin.courses.index') }}" class="mr-2"
@@ -207,7 +224,8 @@
             const driverSelect = document.getElementById('user_driver_detail_id');
             const oldCarrierId = '{{ old('carrier_id', isset($course->userDriverDetail) ? $course->userDriverDetail->carrier_id : '') }}';
             const oldDriverId = '{{ old('user_driver_detail_id', $course->user_driver_detail_id) }}';
-            const certificateFilesInput = document.getElementById('certificate_files_input');
+            // La variable certificateFilesInput se inicializará después de crear el elemento
+            let certificateFilesInput;
             let certificateFiles = [];
             
             // Inicializar los certificados existentes
@@ -412,6 +430,111 @@
                 // Disparar manualmente el evento change para cargar los drivers
                 carrierSelect.dispatchEvent(new Event('change'));
             }
+        });
+    </script>
+    <script>
+        // Declarar uploadedFiles a nivel global para que esté disponible en todos los eventos
+        let uploadedFiles = [];
+        
+        document.addEventListener('DOMContentLoaded', function () {
+            // Crear campo oculto para los archivos si no existe
+            if (!document.getElementById('certificate_files_input')) {
+                const inputElement = document.createElement('input');
+                inputElement.type = 'hidden';
+                inputElement.name = 'certificate_files';
+                inputElement.id = 'certificate_files_input';
+                document.querySelector('form').appendChild(inputElement);
+            }
+            
+            // Asignar el elemento a la variable global
+            certificateFilesInput = document.getElementById('certificate_files_input');
+            console.log('Campo oculto encontrado:', certificateFilesInput ? 'Sí' : 'No');
+            
+            // Inicializar el valor del campo oculto si está vacío
+            if (certificateFilesInput && (!certificateFilesInput.value || certificateFilesInput.value === '')) {
+                certificateFilesInput.value = JSON.stringify([]);
+            }
+            
+            // Escuchar eventos del componente Livewire
+            window.addEventListener('livewire:initialized', () => {
+                console.log('Livewire inicializado, preparando escucha de eventos');
+                
+                // Escuchar el evento fileRemoved del componente Livewire
+                Livewire.on('fileRemoved', (eventData) => {
+                    console.log('Archivo eliminado:', eventData);
+                    // Extraer los datos del evento
+                    const data = eventData[0]; // Los datos vienen como primer elemento del array
+                    
+                    if (data.modelName === 'certificate_files') {
+                        const fileId = data.fileId;
+                        
+                        // Si es un archivo permanente (no temporal), eliminarlo de la base de datos
+                        if (!data.isTemp) {
+                            // Llamar a la API para eliminar el documento de manera segura
+                            fetch('{{ route("api.documents.delete", "") }}/' + fileId, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(result => {
+                                if (result.success) {
+                                    console.log('Documento eliminado con éxito de la base de datos');
+                                } else {
+                                    console.error('Error al eliminar documento:', result.message);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error en la solicitud AJAX:', error);
+                            });
+                        }
+                        
+                        // Eliminar el archivo del array de archivos temporales
+                        uploadedFiles = uploadedFiles.filter(file => {
+                            return !((data.isTemp && file.isTemp && file.id === fileId) || 
+                                     (!data.isTemp && !file.isTemp && parseInt(file.id) === parseInt(fileId)));
+                        });
+                        
+                        // Actualizar el campo oculto con el nuevo array
+                        certificateFilesInput.value = JSON.stringify(uploadedFiles);
+                        console.log('Archivos actualizados después de eliminar:', certificateFilesInput.value);
+                    }
+                });
+                
+                // Escuchar el evento fileUploaded del componente Livewire
+                Livewire.on('fileUploaded', (eventData) => {
+                    console.log('Archivo subido evento recibido:', eventData);
+                    // Extraer los datos del evento
+                    const data = eventData[0]; // Los datos vienen como primer elemento del array
+                    
+                    if (data.modelName === 'certificate_files') {
+                        console.log('Archivo subido para certificate_files');
+                        // Añadir el archivo al array de archivos
+                        uploadedFiles.push({
+                            name: data.originalName,
+                            original_name: data.originalName,
+                            mime_type: data.mimeType,
+                            size: data.size,
+                            path: data.tempPath,
+                            tempPath: data.tempPath,
+                            is_temp: true
+                        });
+                        
+                        // Asegurarnos que el campo oculto sigue existiendo
+                        const hiddenInput = document.getElementById('certificate_files_input');
+                        if (hiddenInput) {
+                            hiddenInput.value = JSON.stringify(uploadedFiles);
+                            console.log('Campo actualizado con:', hiddenInput.value);
+                        } else {
+                            console.error('Campo oculto no encontrado en el DOM');
+                        }
+                    }
+                });
+                
+                // El evento fileRemoved ya está implementado arriba, así que eliminamos este duplicado
+            });
         });
     </script>
 @endpush

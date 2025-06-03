@@ -124,18 +124,21 @@
             <div class="box-body p-5">
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                        <thead>
-                            <tr class="bg-gray-50 border-b dark:bg-gray-800 dark:border-gray-700">
-                                <th scope="col" class="px-6 py-3">
+                        <thead class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 cursor-pointer" data-sort-field="user_driver_detail_id">
                                     Driver
                                 </th>
                                 <th scope="col" class="px-6 py-3">
-                                    Organization Name
+                                    Carrier
                                 </th>
-                                <th scope="col" class="px-6 py-3">
+                                <th scope="col" class="px-6 py-3 cursor-pointer" data-sort-field="organization_name">
+                                    Organization
+                                </th>
+                                <th scope="col" class="px-6 py-3 cursor-pointer" data-sort-field="certification_date">
                                     Certification Date
                                 </th>
-                                <th scope="col" class="px-6 py-3">
+                                <th scope="col" class="px-6 py-3 cursor-pointer" data-sort-field="expiration_date">
                                     Expiration Date
                                 </th>
                                 <th scope="col" class="px-6 py-3">
@@ -151,66 +154,66 @@
                         </thead>
                         <tbody>
                             @forelse ($courses as $course)
-                                <tr class="bg-white border-b hover:bg-gray-50">
-                                    <td class="px-6 py-4">
-                                        @if($course->userDriverDetail && $course->userDriverDetail->user)
-                                            {{ $course->userDriverDetail->user->name }} {{ $course->userDriverDetail->last_name }}
-                                            <div class="text-xs text-gray-500">
-                                                {{ $course->userDriverDetail->carrier ? $course->userDriverDetail->carrier->name : 'No Carrier' }}
-                                            </div>
-                                        @else
-                                            <span class="text-gray-400">No driver assigned</span>
-                                        @endif
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        {{ $course->organization_name }}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        {{ $course->certification_date ? $course->certification_date->format('m/d/Y') : 'N/A' }}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        {{ $course->expiration_date ? $course->expiration_date->format('m/d/Y') : 'N/A' }}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        @if ($course->status === 'active')
-                                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                                                Active
-                                            </span>
-                                        @else
-                                            <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">
-                                                Inactive
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        @if ($course->getMedia('certificates')->count() > 0)
-                                            <div class="flex flex-wrap gap-2">
-                                                @foreach ($course->getMedia('certificates') as $media)
-                                                    <a href="{{ $media->getUrl() }}" target="_blank"
-                                                        class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs flex items-center">
-                                                        <x-base.lucide class="w-3 h-3 mr-1" icon="file-text" />
-                                                        {{ Str::limit($media->file_name, 15) }}
-                                                    </a>
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            <span class="text-gray-400 text-xs">No documents</span>
-                                        @endif
-                                    </td>
-                                    <td class="px-6 py-4 text-center">
-                                        <div class="flex justify-center space-x-2">
-                                            <a href="{{ route('admin.courses.edit', $course->id) }}"
-                                                class="text-blue-600 hover:text-blue-900">
-                                                <x-base.lucide class="w-5 h-5" icon="edit" />
-                                            </a>
-                                            <button type="button" data-tw-toggle="modal" data-tw-target="#delete-confirmation-modal"
-                                                class="text-red-600 hover:text-red-900 delete-course"
-                                                data-course-id="{{ $course->id }}">
-                                                <x-base.lucide class="w-5 h-5" icon="trash-2" />
+                            <tr class="bg-white border-b hover:bg-gray-50">
+                                <td class="px-6 py-4">
+                                    @if($course->driverDetail && $course->driverDetail->user)
+                                        {{ $course->driverDetail->user->name ?? '---' }} 
+                                        {{ $course->driverDetail->user->last_name ?? '' }}
+                                    @else
+                                        <span class="text-red-500">No driver assigned</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if($course->driverDetail && $course->driverDetail->carrier)
+                                        {{ $course->driverDetail->carrier->name }}
+                                    @else
+                                        <span class="text-red-500">No carrier assigned</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4">
+                                    {{ $course->organization_name }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    {{ $course->certification_date ? $course->certification_date->format('m/d/Y') : 'N/A' }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    {{ $course->expiration_date ? $course->expiration_date->format('m/d/Y') : 'N/A' }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if($course->status == 'active')
+                                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
+                                            Active
+                                        </span>
+                                    @else
+                                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600">
+                                            {{ ucfirst($course->status ?? 'inactive') }}
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if ($course->getDocuments('certificates')->count() > 0)
+                                        <a href="{{ route('admin.courses.edit', $course) }}" class="bg-primary/20 text-primary rounded px-2 py-1 text-xs">
+                                            <i class="fas fa-file-alt mr-1"></i>{{ $course->getDocuments('certificates')->count() }} {{ Str::plural('Document', $course->getDocuments('certificates')->count()) }}
+                                        </a>
+                                    @else
+                                        <span class="text-gray-400 text-xs">No documents</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <div class="flex justify-center items-center">
+                                        <a href="{{ route('admin.courses.edit', $course) }}" class="mr-2" title="Edit Course">
+                                            <x-base.lucide class="w-4 h-4 mr-3" icon="edit" />                                            
+                                        </a>
+                                        <form action="{{ route('admin.courses.destroy', $course) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this course?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-500" title="Delete Course">
+                                                <x-base.lucide class="w-4 h-4 mr-3" icon="trash-2" />                                                
                                             </button>
-                                        </div>
-                                    </td>
-                                </tr>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
                             @empty
                                 <tr>
                                     <td colspan="7" class="px-6 py-4 text-center text-gray-500">

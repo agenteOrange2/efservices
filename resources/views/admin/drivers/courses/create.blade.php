@@ -39,7 +39,7 @@
             </div>
         </div>
 
-        <!-- Formulario de Creación -->
+        <!-- Formulario de Creación con Livewire -->
         <div class="box box--stacked mt-5">
             <div class="box-header">
                 <h3 class="box-title">Course Details</h3>
@@ -169,9 +169,15 @@
                     
                     <div class="mt-6">
                         <x-base.form-label>Course Certificate</x-base.form-label>
-                        <div class="border border-dashed rounded-md p-4 mt-2">                            
-                                <input type="hidden" id="certificate_files_input" name="certificate_files">
-                                <livewire:components.file-uploader :modelName="'certificate_files'" :modelIndex="0" :label="'Upload Certificate Files'" :multiple="true" />                            
+                        <div class="border border-dashed rounded-md p-4 mt-2">
+                            <livewire:components.file-uploader
+                                model-name="course_certificate"
+                                :model-index="0"
+                                :auto-upload="true"
+                                class="border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer"
+                            />
+                            <!-- Campo oculto para almacenar los archivos subidos - valor inicial vacío pero no null -->
+                            <input type="hidden" name="certificate_files" id="certificate_files_input" value="">
                         </div>
                         @error('certificate_files')
                             <div class="text-danger mt-1">{{ $message }}</div>
@@ -251,45 +257,68 @@
                 carrierSelect.dispatchEvent(new Event('change'));
             }
             
-            // Almacenar archivos subidos del componente Livewire
+            // Inicializar el array para almacenar los archivos
+            let uploadedFiles = [];
+            // IMPORTANTE: Asegurarnos que el campo oculto esté accesible en toda la función
             const certificateFilesInput = document.getElementById('certificate_files_input');
-            let certificateFiles = [];
+            console.log('Campo oculto encontrado:', certificateFilesInput ? 'Sí' : 'No');
             
-            // Escuchar eventos emitidos por el componente Livewire
-            // Este evento se dispara cuando se sube un nuevo archivo
-            document.addEventListener('livewire:initialized', () => {
-                Livewire.on('fileUploaded', (data) => {
-                    const fileData = data[0];
+            // Escuchar eventos del componente Livewire
+            window.addEventListener('livewire:initialized', () => {
+                console.log('Livewire inicializado, preparando escucha de eventos');
+                
+                // Escuchar el evento fileUploaded del componente Livewire
+                Livewire.on('fileUploaded', (eventData) => {
+                    console.log('Archivo subido evento recibido:', eventData);
+                    // Extraer los datos del evento
+                    const data = eventData[0]; // Los datos vienen como primer elemento del array
                     
-                    if (fileData.modelName === 'certificate_files') {
-                        // Agregar el archivo al array
-                        certificateFiles.push({
-                            name: fileData.originalName,
-                            original_name: fileData.originalName,
-                            mime_type: fileData.mimeType,
-                            size: fileData.size,
-                            is_temp: true,
-                            tempPath: fileData.tempPath,
-                            path: fileData.tempPath,
-                            id: fileData.previewData.id
+                    if (data.modelName === 'course_certificate') {
+                        console.log('Archivo subido para course_certificate');
+                        // Añadir el archivo al array de archivos
+                        uploadedFiles.push({
+                            name: data.originalName,
+                            original_name: data.originalName,
+                            mime_type: data.mimeType,
+                            size: data.size,
+                            path: data.tempPath,
+                            tempPath: data.tempPath,
+                            is_temp: true
                         });
                         
-                        // Actualizar el input hidden con los datos JSON
-                        certificateFilesInput.value = JSON.stringify(certificateFiles);
-                        console.log('Archivo agregado:', fileData.originalName);
-                        console.log('Total archivos:', certificateFiles.length);
+                        // Asegurarnos que el campo oculto sigue existiendo
+                        const hiddenInput = document.getElementById('certificate_files_input');
+                        if (hiddenInput) {
+                            hiddenInput.value = JSON.stringify(uploadedFiles);
+                            console.log('Campo actualizado con:', hiddenInput.value);
+                        } else {
+                            console.error('Campo oculto no encontrado en el DOM');
+                        }
                     }
                 });
                 
-                // Este evento se dispara cuando se elimina un archivo
-                Livewire.on('fileRemoved', (fileId) => {
-                    // Remover el archivo del array por su ID
-                    certificateFiles = certificateFiles.filter(file => file.id !== fileId);
+                // Escuchar el evento fileRemoved del componente Livewire
+                Livewire.on('fileRemoved', (eventData) => {
+                    console.log('Archivo eliminado:', eventData);
+                    // Extraer los datos del evento
+                    const data = eventData[0]; // Los datos vienen como primer elemento del array
                     
-                    // Actualizar el input hidden con los datos JSON
-                    certificateFilesInput.value = JSON.stringify(certificateFiles);
-                    console.log('Archivo eliminado, ID:', fileId);
-                    console.log('Total archivos restantes:', certificateFiles.length);
+                    if (data.modelName === 'course_certificate') {
+                        // Eliminar el archivo del array
+                        const fileId = data.fileId;
+                        uploadedFiles = uploadedFiles.filter((file, index) => {
+                            // Para archivos temporales, el ID contiene un timestamp
+                            if (fileId.startsWith('temp_') && index === uploadedFiles.length - 1) {
+                                // Eliminar el último archivo añadido si es temporal
+                                return false;
+                            }
+                            return true;
+                        });
+                        
+                        // Actualizar el campo oculto con el nuevo array
+                        certificateFilesInput.value = JSON.stringify(uploadedFiles);
+                        console.log('Archivos actualizados después de eliminar:', certificateFilesInput.value);
+                    }
                 });
             });
         });
