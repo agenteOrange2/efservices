@@ -615,7 +615,9 @@
 
                                     <!-- Habilidades de capacitación -->
                                     @php
-                                        $trainingSkills = is_string($school->training_skills) ? json_decode($school->training_skills, true) : $school->training_skills;
+                                        $trainingSkills = is_string($school->training_skills)
+                                            ? json_decode($school->training_skills, true)
+                                            : $school->training_skills;
                                     @endphp
                                     @if ($trainingSkills && is_array($trainingSkills) && count($trainingSkills) > 0)
                                         <div class="mt-3 pt-3 border-t border-slate-200">
@@ -761,823 +763,11 @@
                                 @endforeach
                             </div>
                         @else
-                            <div class="text-slate-500 italic">No hay documentos disponibles. Por favor, regenera los documentos.</div>
+                            <div class="text-slate-500 italic">No hay documentos disponibles. Por favor, regenera los
+                                documentos.</div>
                         @endif
 
-                        <!-- Categorías de documentos -->
-                        <div class="mt-8">
-                            <h3 class="text-lg font-medium mb-4">Document Categories</h3>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Licencias -->
-                                <div class="border rounded-lg p-4 bg-white shadow-sm">
-                                    <div class="flex justify-between items-center mb-3">
-                                        <h4 class="font-medium text-primary">License Documents</h4>
-                                        <button type="button" wire:click="openUploadModal('license')"
-                                            class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                            <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                            </svg>
-                                            Upload
-                                        </button>
-                                    </div>
-                                    <div class="text-sm">
-                                        @php
-                                            $licenseDocuments = collect($generatedPdfs)->filter(function($pdf) {
-                                                return isset($pdf['category']) && $pdf['category'] === 'license';
-                                            })->all();
-                                        @endphp
-                                        
-                                        @if(count($licenseDocuments) > 0)
-                                            <ul class="divide-y">
-                                                @foreach($licenseDocuments as $key => $pdf)
-                                                    <li class="py-2 flex justify-between items-center">
-                                                        <span class="truncate">{{ $pdf['name'] }}</span>
-                                                        <a href="{{ $pdf['url'] }}" target="_blank" class="text-blue-600 hover:underline ml-2">View</a>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        @else
-                                            <p class="text-slate-500 italic">No license documents uploaded</p>
-                                        @endif
-                                    </div>
-                                </div>
-                                
-                                <!-- Documentos médicos -->
-                                <div class="border rounded-lg p-4 bg-white shadow-sm">
-                                    <div class="flex justify-between items-center mb-3">
-                                        <h4 class="font-medium text-primary">Medical Documents</h4>
-                                        <button type="button" wire:click="openUploadModal('medical')"
-                                            class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                            <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                            </svg>
-                                            Upload
-                                        </button>
-                                    </div>
-                                    <div class="text-sm">
-                                        @php
-                                            $medicalDocuments = collect($generatedPdfs)->filter(function($pdf) {
-                                                return isset($pdf['category']) && $pdf['category'] === 'medical';
-                                            })->all();
-                                        @endphp
-                                        
-                                        @if(count($medicalDocuments) > 0)
-                                            <ul class="divide-y">
-                                                @foreach($medicalDocuments as $key => $pdf)
-                                                    <li class="py-2 flex justify-between items-center">
-                                                        <span class="truncate">{{ $pdf['name'] }}</span>
-                                                        <a href="{{ $pdf['url'] }}" target="_blank" class="text-blue-600 hover:underline ml-2">View</a>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        @else
-                                            <p class="text-slate-500 italic">No medical documents uploaded</p>
-                                        @endif
-                                    </div>
-                                </div>
-                                
-                                <!-- Records -->
-                                <div class="border rounded-lg p-4 bg-white shadow-sm mb-4">
-                                    <div class="flex justify-between items-center mb-3">
-                                        <h4 class="font-medium text-primary">Record Documents</h4>
-                                        <button type="button" wire:click="openUploadModal('record')"
-                                            class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                            <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                            </svg>
-                                            Upload
-                                        </button>
-                                    </div>
-                                    
-                                    <!-- Accidents & Violations Records -->
-                                    <div class="text-sm">
-                                        <h5 class="font-medium mb-2 text-slate-600">Accidents & Violations</h5>
-                                        
-                                        <!-- Tabla de accidentes -->
-                                        @if($driver->accidents && $driver->accidents->count() > 0)
-                                            <div class="mb-4">
-                                                <h6 class="font-medium mb-2 text-slate-500">Accident Records</h6>
-                                                <div class="overflow-x-auto">
-                                                    <table class="min-w-full border divide-y divide-slate-200">
-                                                        <thead>
-                                                            <tr class="bg-slate-50">
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Location</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Nature</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Fatalities</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Injuries</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody class="bg-white divide-y divide-slate-200">
-                                                            @foreach($driver->accidents as $accident)
-                                                                <tr>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $accident->date ? $accident->date->format('m/d/Y') : 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $accident->location ?? 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $accident->nature ?? 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $accident->fatalities ?? 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $accident->injuries ?? 'N/A' }}</td>
-                                                                </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        @else
-                                            <p class="text-slate-500 italic mb-3">No accident records found</p>
-                                        @endif
 
-                                        <!-- Tabla de violaciones de tráfico -->
-                                        @if($driver->trafficConvictions && $driver->trafficConvictions->count() > 0)
-                                            <div class="mb-4">
-                                                <h6 class="font-medium mb-2 text-slate-500">Traffic Violation Records</h6>
-                                                <div class="overflow-x-auto">
-                                                    <table class="min-w-full border divide-y divide-slate-200">
-                                                        <thead>
-                                                            <tr class="bg-slate-50">
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Location</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Charge</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Penalty</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody class="bg-white divide-y divide-slate-200">
-                                                            @foreach($driver->trafficConvictions as $violation)
-                                                                <tr>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $violation->date ? $violation->date->format('m/d/Y') : 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $violation->location ?? 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $violation->charge ?? 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $violation->penalty ?? 'N/A' }}</td>
-                                                                </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        @else
-                                            <p class="text-slate-500 italic mb-3">No traffic violation records found</p>
-                                        @endif
-                                        
-                                        <!-- Documentos relacionados -->
-                                        <h6 class="font-medium mb-2 text-slate-500">Related Documents</h6>
-                                        @php
-                                            $accidentViolationDocs = collect($generatedPdfs)->filter(function($pdf) {
-                                                return isset($pdf['category']) && $pdf['category'] === 'record' && 
-                                                       in_array($pdf['record_type'] ?? '', ['accident', 'violation']);
-                                            })->all();
-                                        @endphp
-                                        
-                                        @if(count($accidentViolationDocs) > 0)
-                                            <ul class="divide-y">
-                                                @foreach($accidentViolationDocs as $key => $pdf)
-                                                    <li class="py-2 flex justify-between items-center">
-                                                        <div>
-                                                            <span class="truncate">{{ $pdf['name'] }}</span>
-                                                            <span class="text-xs text-slate-500 ml-2">({{ ucfirst($pdf['record_type'] ?? 'Record') }})</span>
-                                                        </div>
-                                                        <a href="{{ $pdf['url'] }}" target="_blank" class="text-blue-600 hover:underline ml-2">View</a>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        @else
-                                            <p class="text-slate-500 italic mb-3">No accident or violation documents uploaded</p>
-                                        @endif
-                                    </div>
-                                </div>
-                                
-                                <!-- Courses Documents -->
-                                <div class="border rounded-lg p-4 bg-white shadow-sm mb-4">
-                                    <div class="flex justify-between items-center mb-3">
-                                        <h4 class="font-medium text-primary">Courses & Training Documents</h4>
-                                        <button type="button" wire:click="openUploadModal('record')"
-                                            class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                            <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                            </svg>
-                                            Upload
-                                        </button>
-                                    </div>
-                                    <div class="text-sm">
-                                        <!-- Tabla de cursos -->
-                                        @if(isset($driver->courses) && $driver->courses->count() > 0)
-                                            <div class="mb-4">
-                                                <h6 class="font-medium mb-2 text-slate-500">Course Records</h6>
-                                                <div class="overflow-x-auto">
-                                                    <table class="min-w-full border divide-y divide-slate-200">
-                                                        <thead>
-                                                            <tr class="bg-slate-50">
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">School</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody class="bg-white divide-y divide-slate-200">
-                                                            @foreach($driver->courses as $course)
-                                                                <tr>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $course->name ?? 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $course->school ?? 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $course->date ? $course->date->format('m/d/Y') : 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $course->status ?? 'N/A' }}</td>
-                                                                </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        @else
-                                            <p class="text-slate-500 italic mb-3">No course records found</p>
-                                        @endif
-
-                                        <!-- Tabla de training schools -->
-                                        @if($driver->trainingSchools && $driver->trainingSchools->count() > 0)
-                                            <div class="mb-4">
-                                                <h6 class="font-medium mb-2 text-slate-500">Training School Records</h6>
-                                                <div class="overflow-x-auto">
-                                                    <table class="min-w-full border divide-y divide-slate-200">
-                                                        <thead>
-                                                            <tr class="bg-slate-50">
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Location</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">From</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">To</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody class="bg-white divide-y divide-slate-200">
-                                                            @foreach($driver->trainingSchools as $training)
-                                                                <tr>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $training->name ?? 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $training->location ?? 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $training->from_date ? $training->from_date->format('m/d/Y') : 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $training->to_date ? $training->to_date->format('m/d/Y') : 'N/A' }}</td>
-                                                                </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        @else
-                                            <p class="text-slate-500 italic mb-3">No training school records found</p>
-                                        @endif
-                                        
-                                        <!-- Documentos relacionados -->
-                                        <h6 class="font-medium mb-2 text-slate-500">Related Documents</h6>
-                                        @php
-                                            $courseTrainingDocs = collect($generatedPdfs)->filter(function($pdf) {
-                                                return isset($pdf['category']) && $pdf['category'] === 'record' && 
-                                                       in_array($pdf['record_type'] ?? '', ['course', 'training']);
-                                            })->all();
-                                        @endphp
-                                        
-                                        @if(count($courseTrainingDocs) > 0)
-                                            <ul class="divide-y">
-                                                @foreach($courseTrainingDocs as $key => $pdf)
-                                                    <li class="py-2 flex justify-between items-center">
-                                                        <div>
-                                                            <span class="truncate">{{ $pdf['name'] }}</span>
-                                                            <span class="text-xs text-slate-500 ml-2">({{ ucfirst($pdf['record_type'] ?? 'Record') }})</span>
-                                                        </div>
-                                                        <a href="{{ $pdf['url'] }}" target="_blank" class="text-blue-600 hover:underline ml-2">View</a>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        @else
-                                            <p class="text-slate-500 italic">No course or training documents uploaded</p>
-                                        @endif
-                                    </div>
-                                </div>
-                                
-                                <!-- Testing & Inspection Documents -->
-                                <div class="border rounded-lg p-4 bg-white shadow-sm mb-4">
-                                    <div class="flex justify-between items-center mb-3">
-                                        <h4 class="font-medium text-primary">Testing & Inspection Documents</h4>
-                                        <button type="button" wire:click="openUploadModal('record')"
-                                            class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                            <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                            </svg>
-                                            Upload
-                                        </button>
-                                    </div>
-                                    <div class="text-sm">
-                                        <!-- Tabla de testings -->
-                                        @if(isset($driver->testings) && $driver->testings->count() > 0)
-                                            <div class="mb-4">
-                                                <h6 class="font-medium mb-2 text-slate-500">Testing Records</h6>
-                                                <div class="overflow-x-auto">
-                                                    <table class="min-w-full border divide-y divide-slate-200">
-                                                        <thead>
-                                                            <tr class="bg-slate-50">
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Result</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Location</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody class="bg-white divide-y divide-slate-200">
-                                                            @foreach($driver->testings as $testing)
-                                                                <tr>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $testing->date ? $testing->date->format('m/d/Y') : 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $testing->test_type ?? 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $testing->result ?? 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $testing->location ?? 'N/A' }}</td>
-                                                                </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        @else
-                                            <p class="text-slate-500 italic mb-3">No testing records found</p>
-                                        @endif
-
-                                        <!-- Tabla de inspecciones -->
-                                        @if(isset($driver->inspections) && $driver->inspections->count() > 0)
-                                            <div class="mb-4">
-                                                <h6 class="font-medium mb-2 text-slate-500">Inspection Records</h6>
-                                                <div class="overflow-x-auto">
-                                                    <table class="min-w-full border divide-y divide-slate-200">
-                                                        <thead>
-                                                            <tr class="bg-slate-50">
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Result</th>
-                                                                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Location</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody class="bg-white divide-y divide-slate-200">
-                                                            @foreach($driver->inspections as $inspection)
-                                                                <tr>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $inspection->date ? $inspection->date->format('m/d/Y') : 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $inspection->type ?? 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $inspection->result ?? 'N/A' }}</td>
-                                                                    <td class="px-3 py-2 whitespace-nowrap text-xs">{{ $inspection->location ?? 'N/A' }}</td>
-                                                                </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        @else
-                                            <p class="text-slate-500 italic mb-3">No inspection records found</p>
-                                        @endif
-                                        
-                                        <!-- Documentos relacionados -->
-                                        <h6 class="font-medium mb-2 text-slate-500">Related Documents</h6>
-                                        @php
-                                            $testingInspectionDocs = collect($generatedPdfs)->filter(function($pdf) {
-                                                return isset($pdf['category']) && $pdf['category'] === 'record' && 
-                                                       in_array($pdf['record_type'] ?? '', ['drug_test', 'inspection']);
-                                            })->all();
-                                        @endphp
-                                        
-                                        @if(count($testingInspectionDocs) > 0)
-                                            <ul class="divide-y">
-                                                @foreach($testingInspectionDocs as $key => $pdf)
-                                                    <li class="py-2 flex justify-between items-center">
-                                                        <div>
-                                                            <span class="truncate">{{ $pdf['name'] }}</span>
-                                                            <span class="text-xs text-slate-500 ml-2">({{ $pdf['record_type'] === 'drug_test' ? 'Drug Test' : ucfirst($pdf['record_type'] ?? 'Record') }})</span>
-                                                        </div>
-                                                        <a href="{{ $pdf['url'] }}" target="_blank" class="text-blue-600 hover:underline ml-2">View</a>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        @else
-                                            <p class="text-slate-500 italic">No testing or inspection documents uploaded</p>
-                                        @endif
-                                    </div>
-                                </div>
-                                
-                                <!-- Otros documentos -->
-                                <div class="border rounded-lg p-4 bg-white shadow-sm">
-                                    <div class="flex justify-between items-center mb-3">
-                                        <h4 class="font-medium text-primary">Other Documents</h4>
-                                        <button type="button" wire:click="openUploadModal('other')"
-                                            class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                            <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                            </svg>
-                                            Upload
-                                        </button>
-                                    </div>
-                                    <div class="text-sm">
-                                        @php
-                                            $otherDocuments = collect($generatedPdfs)->filter(function($pdf) {
-                                                return isset($pdf['category']) && $pdf['category'] === 'other';
-                                            })->all();
-                                        @endphp
-                                        
-                                        @if(count($otherDocuments) > 0)
-                                            <ul class="divide-y">
-                                                @foreach($otherDocuments as $key => $pdf)
-                                                    <li class="py-2 flex justify-between items-center">
-                                                        <span class="truncate">{{ $pdf['name'] }}</span>
-                                                        <a href="{{ $pdf['url'] }}" target="_blank" class="text-blue-600 hover:underline ml-2">View</a>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        @else
-                                            <p class="text-slate-500 italic">No other documents uploaded</p>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Sección de documentos por categoría -->
-                        <div class="mt-8">
-                            <h3 class="text-lg font-medium mb-4">Documentos Subidos por Categoría</h3>
-                            
-                            <!-- Licencia -->
-                            <div class="mb-6">
-                                <div class="flex justify-between items-center mb-2">
-                                    <h4 class="font-medium text-slate-700">Licencia</h4>
-                                    <button type="button" wire:click="openUploadModal('license')" 
-                                        class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                        <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                        </svg>
-                                        Subir Documento
-                                    </button>
-                                </div>
-                                @if(count($licenseDocuments) > 0)
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        @foreach($licenseDocuments as $document)
-                                            <div class="border rounded p-3 flex items-center bg-white hover:bg-slate-50 transition-colors">
-                                                <div class="mr-3 text-slate-400">
-                                                    <svg class="h-5 w-5" fill="#000000" viewBox="0 0 487.89 487.89">
-                                                        <path d="M409.046,453.807c0,2.762-2.239,5-5,5H69.414c-2.761,0-5-2.238-5-5s2.239-5,5-5h334.632 C406.808,448.807,409.046,451.045,409.046,453.807z"></path>
-                                                    </svg>
-                                                </div>
-                                                <div class="flex-1">
-                                                    <div class="font-medium">{{ $document['description'] }}</div>
-                                                    <div class="text-xs text-slate-500">{{ $document['size'] }} - Subido: {{ $document['date'] }}</div>
-                                                </div>
-                                                <div class="flex items-center space-x-2">
-                                                    <a href="{{ $document['url'] }}" target="_blank" 
-                                                        class="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-sm flex items-center">
-                                                        <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none">
-                                                            <circle cx="12" cy="12" r="2.5" stroke="#222222"></circle>
-                                                            <path d="M18.22 11.38c.13.25.2.38.2.62s-.07.36-.2.62C17.6 13.85 15.81 16.5 12 16.5s-5.6-2.65-6.22-3.88c-.13-.26-.2-.38-.2-.62s.07-.37.2-.62C6.4 10.15 8.19 7.5 12 7.5s5.6 2.65 6.22 3.88z" stroke="#222222"></path>
-                                                        </svg>
-                                                        Ver
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @else
-                                    <div class="text-slate-500 italic p-3 bg-slate-50 rounded">
-                                        No hay documentos de licencia subidos.
-                                    </div>
-                                @endif
-                            </div>
-                            
-                            <!-- Médico -->
-                            <div class="mb-6">
-                                <div class="flex justify-between items-center mb-2">
-                                    <h4 class="font-medium text-slate-700">Médico</h4>
-                                    <button type="button" wire:click="openUploadModal('medical')" 
-                                        class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                        <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                        </svg>
-                                        Subir Documento
-                                    </button>
-                                </div>
-                                @if(count($medicalDocuments) > 0)
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        @foreach($medicalDocuments as $document)
-                                            <div class="border rounded p-3 flex items-center bg-white hover:bg-slate-50 transition-colors">
-                                                <div class="mr-3 text-slate-400">
-                                                    <svg class="h-5 w-5" fill="#000000" viewBox="0 0 487.89 487.89">
-                                                        <path d="M409.046,453.807c0,2.762-2.239,5-5,5H69.414c-2.761,0-5-2.238-5-5s2.239-5,5-5h334.632 C406.808,448.807,409.046,451.045,409.046,453.807z"></path>
-                                                    </svg>
-                                                </div>
-                                                <div class="flex-1">
-                                                    <div class="font-medium">{{ $document['description'] }}</div>
-                                                    <div class="text-xs text-slate-500">{{ $document['size'] }} - Subido: {{ $document['date'] }}</div>
-                                                </div>
-                                                <div class="flex items-center space-x-2">
-                                                    <a href="{{ $document['url'] }}" target="_blank" 
-                                                        class="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-sm flex items-center">
-                                                        <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none">
-                                                            <circle cx="12" cy="12" r="2.5" stroke="#222222"></circle>
-                                                            <path d="M18.22 11.38c.13.25.2.38.2.62s-.07.36-.2.62C17.6 13.85 15.81 16.5 12 16.5s-5.6-2.65-6.22-3.88c-.13-.26-.2-.38-.2-.62s.07-.37.2-.62C6.4 10.15 8.19 7.5 12 7.5s5.6 2.65 6.22 3.88z" stroke="#222222"></path>
-                                                        </svg>
-                                                        Ver
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @else
-                                    <div class="text-slate-500 italic p-3 bg-slate-50 rounded">
-                                        No hay documentos médicos subidos.
-                                    </div>
-                                @endif
-                            </div>
-
-                            <!-- Récord -->
-                            <div class="mb-6">
-                                <div class="flex justify-between items-center mb-2">
-                                    <h4 class="font-medium text-slate-700">Récord</h4>
-                                    <button type="button" wire:click="openUploadModal('record')" 
-                                        class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                        <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                        </svg>
-                                        Subir Documento
-                                    </button>
-                                </div>
-                                @if(count($recordDocuments) > 0)
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        @foreach($recordDocuments as $document)
-                                            <div class="border rounded p-3 flex items-center bg-white hover:bg-slate-50 transition-colors">
-                                                <div class="mr-3 text-slate-400">
-                                                    <svg class="h-5 w-5" fill="#000000" viewBox="0 0 487.89 487.89">
-                                                        <path d="M409.046,453.807c0,2.762-2.239,5-5,5H69.414c-2.761,0-5-2.238-5-5s2.239-5,5-5h334.632 C406.808,448.807,409.046,451.045,409.046,453.807z"></path>
-                                                    </svg>
-                                                </div>
-                                                <div class="flex-1">
-                                                    <div class="font-medium">{{ $document['description'] }}</div>
-                                                    <div class="text-xs text-slate-500">{{ $document['size'] }} - Subido: {{ $document['date'] }}</div>
-                                                </div>
-                                                <div class="flex items-center space-x-2">
-                                                    <a href="{{ $document['url'] }}" target="_blank" 
-                                                        class="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-sm flex items-center">
-                                                        <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none">
-                                                            <circle cx="12" cy="12" r="2.5" stroke="#222222"></circle>
-                                                            <path d="M18.22 11.38c.13.25.2.38.2.62s-.07.36-.2.62C17.6 13.85 15.81 16.5 12 16.5s-5.6-2.65-6.22-3.88c-.13-.26-.2-.38-.2-.62s.07-.37.2-.62C6.4 10.15 8.19 7.5 12 7.5s5.6 2.65 6.22 3.88z" stroke="#222222"></path>
-                                                        </svg>
-                                                        Ver
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @else
-                                    <div class="text-slate-500 italic p-3 bg-slate-50 rounded">
-                                        No hay documentos de récord subidos.
-                                    </div>
-                                @endif
-                            </div>
-
-                            <!-- Otros -->
-                            <div class="mb-6">
-                                <div class="flex justify-between items-center mb-2">
-                                    <h4 class="font-medium text-slate-700">Otros Documentos</h4>
-                                    <button type="button" wire:click="openUploadModal('other')" 
-                                        class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                        <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                        </svg>
-                                        Subir Documento
-                                    </button>
-                                </div>
-                                @if(count($otherDocuments) > 0)
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        @foreach($otherDocuments as $document)
-                                            <div class="border rounded p-3 flex items-center bg-white hover:bg-slate-50 transition-colors">
-                                                <div class="mr-3 text-slate-400">
-                                                    <svg class="h-5 w-5" fill="#000000" viewBox="0 0 487.89 487.89">
-                                                        <path d="M409.046,453.807c0,2.762-2.239,5-5,5H69.414c-2.761,0-5-2.238-5-5s2.239-5,5-5h334.632 C406.808,448.807,409.046,451.045,409.046,453.807z"></path>
-                                                    </svg>
-                                                </div>
-                                                <div class="flex-1">
-                                                    <div class="font-medium">{{ $document['description'] }}</div>
-                                                    <div class="text-xs text-slate-500">{{ $document['size'] }} - Subido: {{ $document['date'] }}</div>
-                                                </div>
-                                                <div class="flex items-center space-x-2">
-                                                    <a href="{{ $document['url'] }}" target="_blank" 
-                                                        class="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-sm flex items-center">
-                                                        <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none">
-                                                            <circle cx="12" cy="12" r="2.5" stroke="#222222"></circle>
-                                                            <path d="M18.22 11.38c.13.25.2.38.2.62s-.07.36-.2.62C17.6 13.85 15.81 16.5 12 16.5s-5.6-2.65-6.22-3.88c-.13-.26-.2-.38-.2-.62s.07-.37.2-.62C6.4 10.15 8.19 7.5 12 7.5s5.6 2.65 6.22 3.88z" stroke="#222222"></path>
-                                                        </svg>
-                                                        Ver
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @else
-                                    <div class="text-slate-500 italic p-3 bg-slate-50 rounded">
-                                        No hay otros documentos subidos.
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-
-                        <!-- Modal para subir documentos -->
-                        <div class="modal" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true" x-data="{open: @entangle('showUploadModal')}" x-show="open" x-cloak>
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="uploadModalLabel">Subir Documento</h5>
-                                        <button type="button" class="close" wire:click="closeUploadModal">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="mb-4">
-                                            <label for="document-category" class="block font-medium text-sm text-gray-700">Categoría</label>
-                                            <select id="document-category" wire:model="documentCategory" class="w-full border-gray-300 rounded-md shadow-sm">
-                                                <option value="license">Licencia</option>
-                                                <option value="medical">Médico</option>
-                                                <option value="record">Récord</option>
-                                                <option value="other">Otro</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-4">
-                                            <label for="documentDescription" class="block font-medium text-sm text-gray-700">Descripción</label>
-                                            <input id="documentDescription" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" wire:model="documentDescription" placeholder="Ingrese una descripción para el documento">
-                                            @error('documentDescription') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                        </div>
-                                        
-                                        <!-- Paso 1: Seleccionar el registro específico -->
-                                        @if ($documentCategory == 'license')
-                                        <div class="mb-4">
-                                            <label for="selectedRecordId" class="block font-medium text-sm text-gray-700">Seleccione la Licencia</label>
-                                            <select id="selectedRecordId" wire:model="selectedRecordId" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                                <option value="">-- Seleccionar Licencia --</option>
-                                                @foreach ($this->driverLicenses ?? [] as $license)
-                                                <option value="{{ $license->id }}">{{ $license->license_number }} - {{ $license->license_class }} (Exp. {{ $license->expiration_date }})</option>
-                                                @endforeach
-                                            </select>
-                                            @error('selectedRecordId') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                        </div>
-                                        @endif
-                                        
-                                        @if ($documentCategory == 'medical')
-                                        <div class="mb-4">
-                                            <label for="selectedRecordId" class="block font-medium text-sm text-gray-700">Seleccione la Tarjeta Médica</label>
-                                            <select id="selectedRecordId" wire:model="selectedRecordId" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                                <option value="">-- Seleccionar Tarjeta Médica --</option>
-                                                @foreach ($this->medicalCards ?? [] as $card)
-                                                <option value="{{ $card->id }}">Tarjeta Médica (Exp. {{ $card->expiration_date }})</option>
-                                                @endforeach
-                                            </select>
-                                            @error('selectedRecordId') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                        </div>
-                                        @endif
-                                        
-                                        @if ($documentCategory == 'record')
-                                        <div class="mb-4">
-                                            <label for="selectedRecordType" class="block font-medium text-sm text-gray-700">Tipo de Registro</label>
-                                            <select id="selectedRecordType" wire:model="selectedRecordType" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                                <option value="">-- Seleccionar Tipo de Registro --</option>
-                                                <option value="accident">Accidente</option>
-                                                <option value="violation">Violación/Infracción</option>
-                                                <option value="training">Entrenamiento</option>
-                                                <option value="course">Curso</option>
-                                                <option value="inspection">Inspección</option>
-                                                <option value="drug_test">Prueba de Drogas</option>
-                                                <option value="testing_drugs">Prueba de Drogas (Laboratorio)</option>
-                                            </select>
-                                            @error('selectedRecordType') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                        </div>
-                                        
-                                        <!-- Selector para elegir un registro específico dentro del tipo seleccionado -->
-                                        <div class="mb-4" x-data="{}" x-show="$wire.selectedRecordType">
-                                            <label for="selectedRecordId" class="block font-medium text-sm text-gray-700">
-                                                Registro Específico
-                                            </label>
-                                            <select id="selectedRecordId" wire:model="selectedRecordId" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                                <option value="">-- Seleccionar Registro --</option>
-                                                @if ($selectedRecordType == 'accident')
-                                                    @foreach ($this->accidents ?? [] as $accident)
-                                                    <option value="{{ $accident->id }}">{{ $accident->date }} - {{ $accident->description }}</option>
-                                                    @endforeach
-                                                @endif
-                                                @if ($selectedRecordType == 'violation')
-                                                    @foreach ($this->violations ?? [] as $violation)
-                                                    <option value="{{ $violation->id }}">{{ $violation->date }} - {{ $violation->description }}</option>
-                                                    @endforeach
-                                                @endif
-                                                @if ($selectedRecordType == 'training')
-                                                    @foreach ($this->trainings ?? [] as $training)
-                                                    <option value="{{ $training->id }}">{{ $training->date }} - {{ $training->description }}</option>
-                                                    @endforeach
-                                                @endif
-                                                @if ($selectedRecordType == 'course')
-                                                    @foreach ($this->courses ?? [] as $course)
-                                                    <option value="{{ $course->id }}">{{ $course->date }} - {{ $course->description }}</option>
-                                                    @endforeach
-                                                @endif
-                                                @if ($selectedRecordType == 'drug_test' || $selectedRecordType == 'testing_drugs')
-                                                    @foreach ($this->drugTests ?? [] as $test)
-                                                    <option value="{{ $test->id }}">{{ $test->date }} - {{ $test->test_type }}</option>
-                                                    @endforeach
-                                                @endif
-                                                @if ($selectedRecordType == 'inspection')
-                                                    @foreach ($this->inspections ?? [] as $inspection)
-                                                    <option value="{{ $inspection->id }}">{{ $inspection->date }} - {{ $inspection->description }}</option>
-                                                    @endforeach
-                                                @endif
-                                            </select>
-                                            @error('selectedRecordId') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                        </div>
-                                        @endif
-                                        
-                                        <!-- Paso 2: Una vez seleccionado un registro, elegir el tipo de documento -->
-                                        <div class="mb-4" x-data="{}" x-show="$wire.selectedRecordId">
-                                            <label for="documentType" class="block font-medium text-sm text-gray-700">Tipo de Documento</label>
-                                            <select id="documentType" wire:model="documentType" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                                <option value="">-- Seleccionar Tipo de Documento --</option>
-                                                @if ($documentCategory == 'license')
-                                                    <option value="license_front">Licencia - Frente</option>
-                                                    <option value="license_back">Licencia - Reverso</option>
-                                                    <option value="license_complete">Licencia - Completa</option>
-                                                @endif
-                                                @if ($documentCategory == 'medical')
-                                                    <option value="medical_card_front">Tarjeta Médica - Frente</option>
-                                                    <option value="medical_card_back">Tarjeta Médica - Reverso</option>
-                                                    <option value="medical_card_complete">Tarjeta Médica - Completa</option>
-                                                @endif
-                                                @if ($documentCategory == 'record')
-                                                    <option value="report">Reporte</option>
-                                                    <option value="certificate">Certificado</option>
-                                                    <option value="form">Formulario</option>
-                                                    <option value="evidence">Evidencia</option>
-                                                    <option value="image">Imagen</option>
-                                                    <option value="other">Otro</option>
-                                                @endif
-                                            </select>
-                                            @error('documentType') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                        </div>
-
-                                        <div class="mb-4">
-                                            <label for="documentFile" class="block font-medium text-sm text-gray-700">Archivo (PDF, JPG, PNG)</label>
-                                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                                                <div class="space-y-1 text-center">
-                                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                                    </svg>
-                                                    <div class="flex text-sm text-gray-600">
-                                                        <label for="documentFile" class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary-focus">
-                                                            <span>Sube un archivo</span>
-                                                            <input id="documentFile" type="file" class="sr-only" wire:model="documentFile" accept=".pdf,.jpg,.jpeg,.png">
-                                                        </label>
-                                                        <p class="pl-1">o arrastra y suelta</p>
-                                                    </div>
-                                                    <p class="text-xs text-gray-500">
-                                                        PDF, JPG o PNG hasta 10MB
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            @error('documentFile') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                        </div>
-
-                                        <!-- Vista previa del archivo si está cargado -->
-                                        @if ($documentFile)
-                                            <div class="mt-4 p-3 bg-gray-50 rounded-md">
-                                                <div class="flex items-center">
-                                                    <svg class="h-6 w-6 text-gray-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
-                                                    </svg>
-                                                    <div class="text-sm">
-                                                        <p class="font-medium text-gray-900">{{ $documentFile->getClientOriginalName() }}</p>
-                                                        <p class="text-gray-500">{{ $this->formatFileSize($documentFile->getSize()) }}</p>
-                                                    </div>
-                                                </div>
-                                                <!-- Vista previa para imágenes -->
-                                                @if (in_array(strtolower($documentFile->getClientOriginalExtension()), ['jpg', 'jpeg', 'png']))
-                                                    <div class="mt-2">
-                                                        <img src="{{ $documentFile->temporaryUrl() }}" alt="Vista previa" class="max-w-full h-auto max-h-48 mx-auto">
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        @endif
-
-                                        <!-- Barra de progreso de carga -->
-                                        <div class="mt-4 relative pt-1" wire:loading wire:target="documentFile">
-                                            <div class="flex mb-2 items-center justify-between">
-                                                <div>
-                                                    <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-primary bg-primary-50">
-                                                        Cargando archivo
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-primary-200">
-                                                <div style="width: 100%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary animate-pulse"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" wire:click="closeUploadModal" wire:loading.attr="disabled">
-                                            Cancelar
-                                        </button>
-                                        <button type="button" class="btn btn-primary ml-2" wire:click="saveDocument" wire:loading.attr="disabled">
-                                            <span wire:loading.remove wire:target="saveDocument">Guardar Documento</span>
-                                            <span wire:loading wire:target="saveDocument">Guardando...</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
                         <!-- FMCSR Data -->
                         @if ($driver->fmcsrData)
@@ -2212,9 +1402,9 @@
                                     <span wire:loading wire:target="regenerateDocuments">Procesando...</span>
                                 </button>
                             </div>
-                            
+
                             <script>
-                                document.addEventListener('livewire:initialized', function () {
+                                document.addEventListener('livewire:initialized', function() {
                                     // Manejar el evento fileUploaded desde el componente Livewire
                                     @this.on('fileUploaded', (data) => {
                                         // Actualizar la vista previa del archivo usando los campos correctos
@@ -2222,7 +1412,7 @@
                                         if (data.tempPath) {
                                             // Crear URL para la vista previa del archivo
                                             const fileUrl = '/storage/' + data.tempPath;
-                                            
+
                                             // Aquí podrías actualizar una vista previa del PDF si es necesario
                                             console.log('Archivo cargado temporalmente:', {
                                                 tempPath: data.tempPath,
@@ -2239,6 +1429,1401 @@
 
                     </div>
                 @endif
+
+
+                <!-- Categorías de documentos -->
+                <div class="mt-8">
+                    <h3 class="text-lg font-medium mb-4">Document Categories</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Licencias -->
+                        <div class="border rounded-lg p-4 bg-white shadow-sm">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-medium text-primary">License Documents</h4>
+                                <button type="button" wire:click="openUploadModal('license')"
+                                    class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
+                                    <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    Upload
+                                </button>
+                            </div>
+                            <div class="text-sm">
+                                @php
+                                    $licenseDocuments = collect($generatedPdfs)
+                                        ->filter(function ($pdf) {
+                                            return isset($pdf['category']) && $pdf['category'] === 'license';
+                                        })
+                                        ->all();
+                                @endphp
+
+                                @if (count($licenseDocuments) > 0)
+                                    <ul class="divide-y">
+                                        @foreach ($licenseDocuments as $key => $pdf)
+                                            <li class="py-2 flex justify-between items-center">
+                                                <span class="truncate">{{ $pdf['name'] }}</span>
+                                                <a href="{{ $pdf['url'] }}" target="_blank"
+                                                    class="text-blue-600 hover:underline ml-2">View</a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="text-slate-500 italic">No license documents uploaded</p>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Documentos médicos -->
+                        <div class="border rounded-lg p-4 bg-white shadow-sm">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-medium text-primary">Medical Documents</h4>
+                                <button type="button" wire:click="openUploadModal('medical')"
+                                    class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
+                                    <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    Upload
+                                </button>
+                            </div>
+                            <div class="text-sm">
+                                @php
+                                    $medicalDocuments = collect($generatedPdfs)
+                                        ->filter(function ($pdf) {
+                                            return isset($pdf['category']) && $pdf['category'] === 'medical';
+                                        })
+                                        ->all();
+                                @endphp
+
+                                @if (count($medicalDocuments) > 0)
+                                    <ul class="divide-y">
+                                        @foreach ($medicalDocuments as $key => $pdf)
+                                            <li class="py-2 flex justify-between items-center">
+                                                <span class="truncate">{{ $pdf['name'] }}</span>
+                                                <a href="{{ $pdf['url'] }}" target="_blank"
+                                                    class="text-blue-600 hover:underline ml-2">View</a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="text-slate-500 italic">No medical documents uploaded</p>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Records -->
+                        <div class="border rounded-lg p-4 bg-white shadow-sm mb-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-medium text-primary">Record Documents</h4>
+                                <button type="button" wire:click="openUploadModal('record')"
+                                    class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
+                                    <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    Upload
+                                </button>
+                            </div>
+
+                            <!-- Accidents & Violations Records -->
+                            <div class="text-sm">
+                                <h5 class="font-medium mb-2 text-slate-600">Accidents & Violations</h5>
+
+                                <!-- Tabla de accidentes -->
+                                @if ($driver->accidents && $driver->accidents->count() > 0)
+                                    <div class="mb-4">
+                                        <h6 class="font-medium mb-2 text-slate-500">Accident Records</h6>
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full border divide-y divide-slate-200">
+                                                <thead>
+                                                    <tr class="bg-slate-50">
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Date</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Location</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Nature</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Fatalities</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Injuries</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="bg-white divide-y divide-slate-200">
+                                                    @foreach ($driver->accidents as $accident)
+                                                        <tr>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $accident->date ? $accident->date->format('m/d/Y') : 'N/A' }}
+                                                            </td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $accident->location ?? 'N/A' }}</td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $accident->nature ?? 'N/A' }}</td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $accident->fatalities ?? 'N/A' }}</td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $accident->injuries ?? 'N/A' }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                @else
+                                    <p class="text-slate-500 italic mb-3">No accident records found</p>
+                                @endif
+
+                                <!-- Tabla de violaciones de tráfico -->
+                                @if ($driver->trafficConvictions && $driver->trafficConvictions->count() > 0)
+                                    <div class="mb-4">
+                                        <h6 class="font-medium mb-2 text-slate-500">Traffic Violation Records</h6>
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full border divide-y divide-slate-200">
+                                                <thead>
+                                                    <tr class="bg-slate-50">
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Date</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Location</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Charge</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Penalty</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="bg-white divide-y divide-slate-200">
+                                                    @foreach ($driver->trafficConvictions as $violation)
+                                                        <tr>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $violation->date ? $violation->date->format('m/d/Y') : 'N/A' }}
+                                                            </td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $violation->location ?? 'N/A' }}</td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $violation->charge ?? 'N/A' }}</td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $violation->penalty ?? 'N/A' }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                @else
+                                    <p class="text-slate-500 italic mb-3">No traffic violation records found</p>
+                                @endif
+
+                                <!-- Documentos relacionados -->
+                                <h6 class="font-medium mb-2 text-slate-500">Related Documents</h6>
+                                @php
+                                    $accidentViolationDocs = collect($generatedPdfs)
+                                        ->filter(function ($pdf) {
+                                            return isset($pdf['category']) &&
+                                                $pdf['category'] === 'record' &&
+                                                in_array($pdf['record_type'] ?? '', ['accident', 'violation']);
+                                        })
+                                        ->all();
+                                @endphp
+
+                                @if (count($accidentViolationDocs) > 0)
+                                    <ul class="divide-y">
+                                        @foreach ($accidentViolationDocs as $key => $pdf)
+                                            <li class="py-2 flex justify-between items-center">
+                                                <div>
+                                                    <span class="truncate">{{ $pdf['name'] }}</span>
+                                                    <span
+                                                        class="text-xs text-slate-500 ml-2">({{ ucfirst($pdf['record_type'] ?? 'Record') }})</span>
+                                                </div>
+                                                <a href="{{ $pdf['url'] }}" target="_blank"
+                                                    class="text-blue-600 hover:underline ml-2">View</a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="text-slate-500 italic mb-3">No accident or violation documents uploaded
+                                    </p>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Courses Documents -->
+                        <div class="border rounded-lg p-4 bg-white shadow-sm mb-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-medium text-primary">Courses & Training Documents</h4>
+                                <button type="button" wire:click="openUploadModal('record')"
+                                    class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
+                                    <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    Upload
+                                </button>
+                            </div>
+                            <div class="text-sm">
+                                <!-- Tabla de cursos -->
+                                @if (isset($driver->courses) && $driver->courses->count() > 0)
+                                    <div class="mb-4">
+                                        <h6 class="font-medium mb-2 text-slate-500">Course Records</h6>
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full border divide-y divide-slate-200">
+                                                <thead>
+                                                    <tr class="bg-slate-50">
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Name</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            School</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Date</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="bg-white divide-y divide-slate-200">
+                                                    @foreach ($driver->courses as $course)
+                                                        <tr>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $course->name ?? 'N/A' }}</td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $course->school ?? 'N/A' }}</td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $course->date ? $course->date->format('m/d/Y') : 'N/A' }}
+                                                            </td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $course->status ?? 'N/A' }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                @else
+                                    <p class="text-slate-500 italic mb-3">No course records found</p>
+                                @endif
+
+                                <!-- Tabla de training schools -->
+                                @if ($driver->trainingSchools && $driver->trainingSchools->count() > 0)
+                                    <div class="mb-4">
+                                        <h6 class="font-medium mb-2 text-slate-500">Training School Records</h6>
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full border divide-y divide-slate-200">
+                                                <thead>
+                                                    <tr class="bg-slate-50">
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Name</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Location</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            From</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            To</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="bg-white divide-y divide-slate-200">
+                                                    @foreach ($driver->trainingSchools as $training)
+                                                        <tr>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $training->name ?? 'N/A' }}</td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $training->location ?? 'N/A' }}</td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $training->from_date ? $training->from_date->format('m/d/Y') : 'N/A' }}
+                                                            </td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $training->to_date ? $training->to_date->format('m/d/Y') : 'N/A' }}
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                @else
+                                    <p class="text-slate-500 italic mb-3">No training school records found</p>
+                                @endif
+
+                                <!-- Documentos relacionados -->
+                                <h6 class="font-medium mb-2 text-slate-500">Related Documents</h6>
+                                @php
+                                    $courseTrainingDocs = collect($generatedPdfs)
+                                        ->filter(function ($pdf) {
+                                            return isset($pdf['category']) &&
+                                                $pdf['category'] === 'record' &&
+                                                in_array($pdf['record_type'] ?? '', ['course', 'training']);
+                                        })
+                                        ->all();
+                                @endphp
+
+                                @if (count($courseTrainingDocs) > 0)
+                                    <ul class="divide-y">
+                                        @foreach ($courseTrainingDocs as $key => $pdf)
+                                            <li class="py-2 flex justify-between items-center">
+                                                <div>
+                                                    <span class="truncate">{{ $pdf['name'] }}</span>
+                                                    <span
+                                                        class="text-xs text-slate-500 ml-2">({{ ucfirst($pdf['record_type'] ?? 'Record') }})</span>
+                                                </div>
+                                                <a href="{{ $pdf['url'] }}" target="_blank"
+                                                    class="text-blue-600 hover:underline ml-2">View</a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="text-slate-500 italic">No course or training documents uploaded</p>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Testing & Inspection Documents -->
+                        <div class="border rounded-lg p-4 bg-white shadow-sm mb-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-medium text-primary">Testing & Inspection Documents</h4>
+                                <button type="button" wire:click="openUploadModal('record')"
+                                    class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
+                                    <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    Upload
+                                </button>
+                            </div>
+                            <div class="text-sm">
+                                <!-- Tabla de testings -->
+                                @if (isset($driver->testings) && $driver->testings->count() > 0)
+                                    <div class="mb-4">
+                                        <h6 class="font-medium mb-2 text-slate-500">Testing Records</h6>
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full border divide-y divide-slate-200">
+                                                <thead>
+                                                    <tr class="bg-slate-50">
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Date</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Type</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Result</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Location</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="bg-white divide-y divide-slate-200">
+                                                    @foreach ($driver->testings as $testing)
+                                                        <tr>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $testing->date ? $testing->date->format('m/d/Y') : 'N/A' }}
+                                                            </td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $testing->test_type ?? 'N/A' }}</td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $testing->result ?? 'N/A' }}</td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $testing->location ?? 'N/A' }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                @else
+                                    <p class="text-slate-500 italic mb-3">No testing records found</p>
+                                @endif
+
+                                <!-- Tabla de inspecciones -->
+                                @if (isset($driver->inspections) && $driver->inspections->count() > 0)
+                                    <div class="mb-4">
+                                        <h6 class="font-medium mb-2 text-slate-500">Inspection Records</h6>
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full border divide-y divide-slate-200">
+                                                <thead>
+                                                    <tr class="bg-slate-50">
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Date</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Type</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Result</th>
+                                                        <th
+                                                            class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                            Location</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="bg-white divide-y divide-slate-200">
+                                                    @foreach ($driver->inspections as $inspection)
+                                                        <tr>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $inspection->date ? $inspection->date->format('m/d/Y') : 'N/A' }}
+                                                            </td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $inspection->type ?? 'N/A' }}</td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $inspection->result ?? 'N/A' }}</td>
+                                                            <td class="px-3 py-2 whitespace-nowrap text-xs">
+                                                                {{ $inspection->location ?? 'N/A' }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                @else
+                                    <p class="text-slate-500 italic mb-3">No inspection records found</p>
+                                @endif
+
+                                <!-- Documentos relacionados -->
+                                <h6 class="font-medium mb-2 text-slate-500">Related Documents</h6>
+                                @php
+                                    $testingInspectionDocs = collect($generatedPdfs)
+                                        ->filter(function ($pdf) {
+                                            return isset($pdf['category']) &&
+                                                $pdf['category'] === 'record' &&
+                                                in_array($pdf['record_type'] ?? '', ['drug_test', 'inspection']);
+                                        })
+                                        ->all();
+                                @endphp
+
+                                @if (count($testingInspectionDocs) > 0)
+                                    <ul class="divide-y">
+                                        @foreach ($testingInspectionDocs as $key => $pdf)
+                                            <li class="py-2 flex justify-between items-center">
+                                                <div>
+                                                    <span class="truncate">{{ $pdf['name'] }}</span>
+                                                    <span
+                                                        class="text-xs text-slate-500 ml-2">({{ $pdf['record_type'] === 'drug_test' ? 'Drug Test' : ucfirst($pdf['record_type'] ?? 'Record') }})</span>
+                                                </div>
+                                                <a href="{{ $pdf['url'] }}" target="_blank"
+                                                    class="text-blue-600 hover:underline ml-2">View</a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="text-slate-500 italic">No testing or inspection documents uploaded</p>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Otros documentos -->
+                        <div class="border rounded-lg p-4 bg-white shadow-sm">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-medium text-primary">Other Documents</h4>
+                                <button type="button" wire:click="openUploadModal('other')"
+                                    class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
+                                    <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    Upload
+                                </button>
+                            </div>
+                            <div class="text-sm">
+                                @php
+                                    $otherDocuments = collect($generatedPdfs)
+                                        ->filter(function ($pdf) {
+                                            return isset($pdf['category']) && $pdf['category'] === 'other';
+                                        })
+                                        ->all();
+                                @endphp
+
+                                @if (count($otherDocuments) > 0)
+                                    <ul class="divide-y">
+                                        @foreach ($otherDocuments as $key => $pdf)
+                                            <li class="py-2 flex justify-between items-center">
+                                                <span class="truncate">{{ $pdf['name'] }}</span>
+                                                <a href="{{ $pdf['url'] }}" target="_blank"
+                                                    class="text-blue-600 hover:underline ml-2">View</a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="text-slate-500 italic">No other documents uploaded</p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección de documentos por categoría -->
+                <div class="mt-8">
+                    <h3 class="text-lg font-medium mb-4">Documentos Subidos por Categoría</h3>
+
+                    <!-- Licencia -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-medium text-slate-700">Licencia</h4>
+                            <button type="button" wire:click="openUploadModal('license')"
+                                class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
+                                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Subir Documento
+                            </button>
+                        </div>
+                        @if (count($licenseDocuments) > 0)
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                @foreach ($licenseDocuments as $document)
+                                    <div
+                                        class="border rounded p-3 flex items-center bg-white hover:bg-slate-50 transition-colors">
+                                        <div class="mr-3 text-slate-400">
+                                            <svg class="h-5 w-5" fill="#000000" viewBox="0 0 487.89 487.89">
+                                                <path
+                                                    d="M409.046,453.807c0,2.762-2.239,5-5,5H69.414c-2.761,0-5-2.238-5-5s2.239-5,5-5h334.632 C406.808,448.807,409.046,451.045,409.046,453.807z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="font-medium">{{ $document['description'] }}</div>
+                                            <div class="text-xs text-slate-500">{{ $document['size'] }} - Subido:
+                                                {{ $document['date'] }}</div>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <a href="{{ $document['url'] }}" target="_blank"
+                                                class="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-sm flex items-center">
+                                                <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none">
+                                                    <circle cx="12" cy="12" r="2.5" stroke="#222222">
+                                                    </circle>
+                                                    <path
+                                                        d="M18.22 11.38c.13.25.2.38.2.62s-.07.36-.2.62C17.6 13.85 15.81 16.5 12 16.5s-5.6-2.65-6.22-3.88c-.13-.26-.2-.38-.2-.62s.07-.37.2-.62C6.4 10.15 8.19 7.5 12 7.5s5.6 2.65 6.22 3.88z"
+                                                        stroke="#222222"></path>
+                                                </svg>
+                                                Ver
+                                            </a>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-slate-500 italic p-3 bg-slate-50 rounded">
+                                No hay documentos de licencia subidos.
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Médico -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-medium text-slate-700">Médico</h4>
+                            <button type="button" wire:click="openUploadModal('medical')"
+                                class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
+                                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Subir Documento
+                            </button>
+                        </div>
+                        @if (count($medicalDocuments) > 0)
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                @foreach ($medicalDocuments as $document)
+                                    <div
+                                        class="border rounded p-3 flex items-center bg-white hover:bg-slate-50 transition-colors">
+                                        <div class="mr-3 text-slate-400">
+                                            <svg class="h-5 w-5" fill="#000000" viewBox="0 0 487.89 487.89">
+                                                <path
+                                                    d="M409.046,453.807c0,2.762-2.239,5-5,5H69.414c-2.761,0-5-2.238-5-5s2.239-5,5-5h334.632 C406.808,448.807,409.046,451.045,409.046,453.807z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="font-medium">{{ $document['description'] }}</div>
+                                            <div class="text-xs text-slate-500">{{ $document['size'] }} - Subido:
+                                                {{ $document['date'] }}</div>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <a href="{{ $document['url'] }}" target="_blank"
+                                                class="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-sm flex items-center">
+                                                <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none">
+                                                    <circle cx="12" cy="12" r="2.5" stroke="#222222">
+                                                    </circle>
+                                                    <path
+                                                        d="M18.22 11.38c.13.25.2.38.2.62s-.07.36-.2.62C17.6 13.85 15.81 16.5 12 16.5s-5.6-2.65-6.22-3.88c-.13-.26-.2-.38-.2-.62s.07-.37.2-.62C6.4 10.15 8.19 7.5 12 7.5s5.6 2.65 6.22 3.88z"
+                                                        stroke="#222222"></path>
+                                                </svg>
+                                                Ver
+                                            </a>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-slate-500 italic p-3 bg-slate-50 rounded">
+                                No hay documentos médicos subidos.
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Récord -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-medium text-slate-700">Récord</h4>
+                            <button type="button" wire:click="openUploadModal('record')"
+                                class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
+                                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Subir Documento
+                            </button>
+                        </div>
+                        @if (count($recordDocuments) > 0)
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                @foreach ($recordDocuments as $document)
+                                    <div
+                                        class="border rounded p-3 flex items-center bg-white hover:bg-slate-50 transition-colors">
+                                        <div class="mr-3 text-slate-400">
+                                            <svg class="h-5 w-5" fill="#000000" viewBox="0 0 487.89 487.89">
+                                                <path
+                                                    d="M409.046,453.807c0,2.762-2.239,5-5,5H69.414c-2.761,0-5-2.238-5-5s2.239-5,5-5h334.632 C406.808,448.807,409.046,451.045,409.046,453.807z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="font-medium">{{ $document['description'] }}</div>
+                                            <div class="text-xs text-slate-500">{{ $document['size'] }} - Subido:
+                                                {{ $document['date'] }}</div>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <a href="{{ $document['url'] }}" target="_blank"
+                                                class="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-sm flex items-center">
+                                                <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none">
+                                                    <circle cx="12" cy="12" r="2.5" stroke="#222222">
+                                                    </circle>
+                                                    <path
+                                                        d="M18.22 11.38c.13.25.2.38.2.62s-.07.36-.2.62C17.6 13.85 15.81 16.5 12 16.5s-5.6-2.65-6.22-3.88c-.13-.26-.2-.38-.2-.62s.07-.37.2-.62C6.4 10.15 8.19 7.5 12 7.5s5.6 2.65 6.22 3.88z"
+                                                        stroke="#222222"></path>
+                                                </svg>
+                                                Ver
+                                            </a>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-slate-500 italic p-3 bg-slate-50 rounded">
+                                No hay documentos de récord subidos.
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Otros -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-medium text-slate-700">Otros Documentos</h4>
+                            <button type="button" wire:click="openUploadModal('other')"
+                                class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
+                                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Subir Documento
+                            </button>
+                        </div>
+                        @if (count($otherDocuments) > 0)
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                @foreach ($otherDocuments as $document)
+                                    <div
+                                        class="border rounded p-3 flex items-center bg-white hover:bg-slate-50 transition-colors">
+                                        <div class="mr-3 text-slate-400">
+                                            <svg class="h-5 w-5" fill="#000000" viewBox="0 0 487.89 487.89">
+                                                <path
+                                                    d="M409.046,453.807c0,2.762-2.239,5-5,5H69.414c-2.761,0-5-2.238-5-5s2.239-5,5-5h334.632 C406.808,448.807,409.046,451.045,409.046,453.807z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="font-medium">{{ $document['description'] }}</div>
+                                            <div class="text-xs text-slate-500">{{ $document['size'] }} - Subido:
+                                                {{ $document['date'] }}</div>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <a href="{{ $document['url'] }}" target="_blank"
+                                                class="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-sm flex items-center">
+                                                <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none">
+                                                    <circle cx="12" cy="12" r="2.5" stroke="#222222">
+                                                    </circle>
+                                                    <path
+                                                        d="M18.22 11.38c.13.25.2.38.2.62s-.07.36-.2.62C17.6 13.85 15.81 16.5 12 16.5s-5.6-2.65-6.22-3.88c-.13-.26-.2-.38-.2-.62s.07-.37.2-.62C6.4 10.15 8.19 7.5 12 7.5s5.6 2.65 6.22 3.88z"
+                                                        stroke="#222222"></path>
+                                                </svg>
+                                                Ver
+                                            </a>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-slate-500 italic p-3 bg-slate-50 rounded">
+                                No hay otros documentos subidos.
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Modal para subir documentos -->
+                <div class="modal" id="uploadModal" tabindex="-1" role="dialog"
+                    aria-labelledby="uploadModalLabel" aria-hidden="true" x-data="{ open: @entangle('showUploadModal') }" x-show="open"
+                    x-cloak>
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="uploadModalLabel">Subir Documento</h5>
+                                <button type="button" class="close" wire:click="closeUploadModal">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-4">
+                                    <label for="document-category"
+                                        class="block font-medium text-sm text-gray-700">Categoría</label>
+                                    <select id="document-category" wire:model="documentCategory"
+                                        class="w-full border-gray-300 rounded-md shadow-sm">
+                                        <option value="license">Licencia</option>
+                                        <option value="medical">Médico</option>
+                                        <option value="record">Récord</option>
+                                        <option value="other">Otro</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="documentDescription"
+                                        class="block font-medium text-sm text-gray-700">Descripción</label>
+                                    <input id="documentDescription" type="text"
+                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                                        wire:model="documentDescription"
+                                        placeholder="Ingrese una descripción para el documento">
+                                    @error('documentDescription')
+                                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <!-- Paso 1: Seleccionar el registro específico -->
+                                @if ($documentCategory == 'license')
+                                    <div class="mb-4">
+                                        <label for="selectedRecordId"
+                                            class="block font-medium text-sm text-gray-700">Seleccione la
+                                            Licencia</label>
+                                        <select id="selectedRecordId" wire:model="selectedRecordId"
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                                            <option value="">-- Seleccionar Licencia --</option>
+                                            @foreach ($this->driverLicenses ?? [] as $license)
+                                                <option value="{{ $license->id }}">{{ $license->license_number }}
+                                                    - {{ $license->license_class }} (Exp.
+                                                    {{ $license->expiration_date }})</option>
+                                            @endforeach
+                                        </select>
+                                        @error('selectedRecordId')
+                                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                @endif
+
+                                @if ($documentCategory == 'medical')
+                                    <div class="mb-4">
+                                        <label for="selectedRecordId"
+                                            class="block font-medium text-sm text-gray-700">Seleccione la Tarjeta
+                                            Médica</label>
+                                        <select id="selectedRecordId" wire:model="selectedRecordId"
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                                            <option value="">-- Seleccionar Tarjeta Médica --</option>
+                                            @foreach ($this->medicalCards ?? [] as $card)
+                                                <option value="{{ $card->id }}">Tarjeta Médica (Exp.
+                                                    {{ $card->expiration_date }})</option>
+                                            @endforeach
+                                        </select>
+                                        @error('selectedRecordId')
+                                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                @endif
+
+                                @if ($documentCategory == 'record')
+                                    <div class="mb-4">
+                                        <label for="selectedRecordType"
+                                            class="block font-medium text-sm text-gray-700">Tipo de Registro</label>
+                                        <select id="selectedRecordType" wire:model="selectedRecordType"
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                                            <option value="">-- Seleccionar Tipo de Registro --</option>
+                                            <option value="accident">Accidente</option>
+                                            <option value="violation">Violación/Infracción</option>
+                                            <option value="training">Entrenamiento</option>
+                                            <option value="course">Curso</option>
+                                            <option value="inspection">Inspección</option>
+                                            <option value="drug_test">Prueba de Drogas</option>
+                                            <option value="testing_drugs">Prueba de Drogas (Laboratorio)</option>
+                                        </select>
+                                        @error('selectedRecordType')
+                                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Selector para elegir un registro específico dentro del tipo seleccionado -->
+                                    <div class="mb-4" x-data="{}" x-show="$wire.selectedRecordType">
+                                        <label for="selectedRecordId"
+                                            class="block font-medium text-sm text-gray-700">
+                                            Registro Específico
+                                        </label>
+                                        <select id="selectedRecordId" wire:model="selectedRecordId"
+                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                                            <option value="">-- Seleccionar Registro --</option>
+                                            @if ($selectedRecordType == 'accident')
+                                                @foreach ($this->accidents ?? [] as $accident)
+                                                    <option value="{{ $accident->id }}">{{ $accident->date }} -
+                                                        {{ $accident->description }}</option>
+                                                @endforeach
+                                            @endif
+                                            @if ($selectedRecordType == 'violation')
+                                                @foreach ($this->violations ?? [] as $violation)
+                                                    <option value="{{ $violation->id }}">{{ $violation->date }} -
+                                                        {{ $violation->description }}</option>
+                                                @endforeach
+                                            @endif
+                                            @if ($selectedRecordType == 'training')
+                                                @foreach ($this->trainings ?? [] as $training)
+                                                    <option value="{{ $training->id }}">{{ $training->date }} -
+                                                        {{ $training->description }}</option>
+                                                @endforeach
+                                            @endif
+                                            @if ($selectedRecordType == 'course')
+                                                @foreach ($this->courses ?? [] as $course)
+                                                    <option value="{{ $course->id }}">{{ $course->date }} -
+                                                        {{ $course->description }}</option>
+                                                @endforeach
+                                            @endif
+                                            @if ($selectedRecordType == 'drug_test' || $selectedRecordType == 'testing_drugs')
+                                                @foreach ($this->drugTests ?? [] as $test)
+                                                    <option value="{{ $test->id }}">{{ $test->date }} -
+                                                        {{ $test->test_type }}</option>
+                                                @endforeach
+                                            @endif
+                                            @if ($selectedRecordType == 'inspection')
+                                                @foreach ($this->inspections ?? [] as $inspection)
+                                                    <option value="{{ $inspection->id }}">{{ $inspection->date }}
+                                                        - {{ $inspection->description }}</option>
+                                                @endforeach
+                                            @endif
+                                        </select>
+                                        @error('selectedRecordId')
+                                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                @endif
+
+                                <!-- Paso 2: Una vez seleccionado un registro, elegir el tipo de documento -->
+                                <div class="mb-4" x-data="{}" x-show="$wire.selectedRecordId">
+                                    <label for="documentType" class="block font-medium text-sm text-gray-700">Tipo
+                                        de Documento</label>
+                                    <select id="documentType" wire:model="documentType"
+                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                                        <option value="">-- Seleccionar Tipo de Documento --</option>
+                                        @if ($documentCategory == 'license')
+                                            <option value="license_front">Licencia - Frente</option>
+                                            <option value="license_back">Licencia - Reverso</option>
+                                            <option value="license_complete">Licencia - Completa</option>
+                                        @endif
+                                        @if ($documentCategory == 'medical')
+                                            <option value="medical_card_front">Tarjeta Médica - Frente</option>
+                                            <option value="medical_card_back">Tarjeta Médica - Reverso</option>
+                                            <option value="medical_card_complete">Tarjeta Médica - Completa</option>
+                                        @endif
+                                        @if ($documentCategory == 'record')
+                                            <option value="report">Reporte</option>
+                                            <option value="certificate">Certificado</option>
+                                            <option value="form">Formulario</option>
+                                            <option value="evidence">Evidencia</option>
+                                            <option value="image">Imagen</option>
+                                            <option value="other">Otro</option>
+                                        @endif
+                                    </select>
+                                    @error('documentType')
+                                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="documentFile"
+                                        class="block font-medium text-sm text-gray-700">Archivo (PDF, JPG,
+                                        PNG)</label>
+                                    <div
+                                        class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                                        <div class="space-y-1 text-center">
+                                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor"
+                                                fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                                <path
+                                                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                                    stroke-width="2" stroke-linecap="round"
+                                                    stroke-linejoin="round" />
+                                            </svg>
+                                            <div class="flex text-sm text-gray-600">
+                                                <label for="documentFile"
+                                                    class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary-focus">
+                                                    <span>Sube un archivo</span>
+                                                    <input id="documentFile" type="file" class="sr-only"
+                                                        wire:model="documentFile" accept=".pdf,.jpg,.jpeg,.png">
+                                                </label>
+                                                <p class="pl-1">o arrastra y suelta</p>
+                                            </div>
+                                            <p class="text-xs text-gray-500">
+                                                PDF, JPG o PNG hasta 10MB
+                                            </p>
+                                        </div>
+                                    </div>
+                                    @error('documentFile')
+                                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <!-- Vista previa del archivo si está cargado -->
+                                @if ($documentFile)
+                                    <div class="mt-4 p-3 bg-gray-50 rounded-md">
+                                        <div class="flex items-center">
+                                            <svg class="h-6 w-6 text-gray-400 mr-2" fill="currentColor"
+                                                viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            <div class="text-sm">
+                                                <p class="font-medium text-gray-900">
+                                                    {{ $documentFile->getClientOriginalName() }}</p>
+                                                <p class="text-gray-500">
+                                                    {{ $this->formatFileSize($documentFile->getSize()) }}</p>
+                                            </div>
+                                        </div>
+                                        <!-- Vista previa para imágenes -->
+                                        @if (in_array(strtolower($documentFile->getClientOriginalExtension()), ['jpg', 'jpeg', 'png']))
+                                            <div class="mt-2">
+                                                <img src="{{ $documentFile->temporaryUrl() }}" alt="Vista previa"
+                                                    class="max-w-full h-auto max-h-48 mx-auto">
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+
+                                <!-- Barra de progreso de carga -->
+                                <div class="mt-4 relative pt-1" wire:loading wire:target="documentFile">
+                                    <div class="flex mb-2 items-center justify-between">
+                                        <div>
+                                            <span
+                                                class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-primary bg-primary-50">
+                                                Cargando archivo
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-primary-200">
+                                        <div style="width: 100%"
+                                            class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary animate-pulse">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" wire:click="closeUploadModal"
+                                    wire:loading.attr="disabled">
+                                    Cancelar
+                                </button>
+                                <button type="button" class="btn btn-primary ml-2" wire:click="saveDocument"
+                                    wire:loading.attr="disabled">
+                                    <span wire:loading.remove wire:target="saveDocument">Guardar Documento</span>
+                                    <span wire:loading wire:target="saveDocument">Guardando...</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Categorías de documentos (Sección independiente) -->
+                <div class="box box--stacked mt-5 p-5">
+                    <h3 class="text-lg font-medium mb-4">Document Categories</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Licencias -->
+                        <div class="border rounded-lg p-4 bg-white shadow-sm">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-medium text-primary">License Documents</h4>
+                                <button type="button" wire:click="openUploadModal('license')"
+                                    class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
+                                    <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    Upload
+                                </button>
+                            </div>
+                            <div class="text-sm">
+                                @php
+                                    $licenseDocuments = collect($generatedPdfs)->filter(function($pdf) {
+                                        return isset($pdf['category']) && $pdf['category'] === 'license';
+                                    })->all();
+                                @endphp
+                                
+                                @if(count($licenseDocuments) > 0)
+                                    <ul class="divide-y">
+                                        @foreach($licenseDocuments as $key => $pdf)
+                                            <li class="py-2 flex justify-between items-center">
+                                                <span class="truncate">{{ $pdf['name'] }}</span>
+                                                <a href="{{ $pdf['url'] }}" target="_blank" class="text-blue-600 hover:underline ml-2">View</a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="text-slate-500 italic">No license documents uploaded</p>
+                                @endif
+                            </div>
+                        </div>
+                        
+                        <!-- Documentos médicos -->
+                        <div class="border rounded-lg p-4 bg-white shadow-sm">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-medium text-primary">Medical Documents</h4>
+                                <button type="button" wire:click="openUploadModal('medical')"
+                                    class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
+                                    <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    Upload
+                                </button>
+                            </div>
+                            <div class="text-sm">
+                                @php
+                                    $medicalDocuments = collect($generatedPdfs)->filter(function($pdf) {
+                                        return isset($pdf['category']) && $pdf['category'] === 'medical';
+                                    })->all();
+                                @endphp
+                                
+                                @if(count($medicalDocuments) > 0)
+                                    <ul class="divide-y">
+                                        @foreach($medicalDocuments as $key => $pdf)
+                                            <li class="py-2 flex justify-between items-center">
+                                                <span class="truncate">{{ $pdf['name'] }}</span>
+                                                <a href="{{ $pdf['url'] }}" target="_blank" class="text-blue-600 hover:underline ml-2">View</a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="text-slate-500 italic">No medical documents uploaded</p>
+                                @endif
+                            </div>
+                        </div>
+                        
+                        <!-- Records -->
+                        <div class="border rounded-lg p-4 bg-white shadow-sm mb-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-medium text-primary">Record Documents</h4>
+                                <button type="button" wire:click="openUploadModal('record')"
+                                    class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
+                                    <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    Upload
+                                </button>
+                            </div>
+                            
+                            <!-- Accidents & Violations Records -->
+                            <div class="text-sm">
+                                <h5 class="font-medium mb-2 text-slate-600">Accidents & Violations</h5>
+                                
+                                @php
+                                    $accidentViolationDocs = collect($generatedPdfs)->filter(function($pdf) {
+                                        return isset($pdf['category']) && $pdf['category'] === 'record' && 
+                                               in_array($pdf['record_type'] ?? '', ['accident', 'violation']);
+                                    })->all();
+                                @endphp
+                                
+                                @if(count($accidentViolationDocs) > 0)
+                                    <ul class="divide-y">
+                                        @foreach($accidentViolationDocs as $key => $pdf)
+                                            <li class="py-2 flex justify-between items-center">
+                                                <div>
+                                                    <span class="truncate">{{ $pdf['name'] }}</span>
+                                                    <span class="text-xs text-slate-500 ml-2">({{ ucfirst($pdf['record_type'] ?? 'Record') }})</span>
+                                                </div>
+                                                <a href="{{ $pdf['url'] }}" target="_blank" class="text-blue-600 hover:underline ml-2">View</a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="text-slate-500 italic mb-3">No accident or violation documents uploaded</p>
+                                @endif
+                            </div>
+                        </div>
+                        
+                        <!-- Courses & Training Documents -->
+                        <div class="border rounded-lg p-4 bg-white shadow-sm mb-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-medium text-primary">Courses & Training Documents</h4>
+                                <button type="button" wire:click="openUploadModal('record')"
+                                    class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
+                                    <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    Upload
+                                </button>
+                            </div>
+                            <div class="text-sm">
+                                @php
+                                    $trainingDocs = collect($generatedPdfs)->filter(function($pdf) {
+                                        return isset($pdf['category']) && $pdf['category'] === 'record' && 
+                                               in_array($pdf['record_type'] ?? '', ['training', 'course']);
+                                    })->all();
+                                @endphp
+                                
+                                @if(count($trainingDocs) > 0)
+                                    <ul class="divide-y">
+                                        @foreach($trainingDocs as $key => $pdf)
+                                            <li class="py-2 flex justify-between items-center">
+                                                <div>
+                                                    <span class="truncate">{{ $pdf['name'] }}</span>
+                                                    <span class="text-xs text-slate-500 ml-2">({{ ucfirst($pdf['record_type'] ?? 'Record') }})</span>
+                                                </div>
+                                                <a href="{{ $pdf['url'] }}" target="_blank" class="text-blue-600 hover:underline ml-2">View</a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="text-slate-500 italic mb-3">No training or course documents uploaded</p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal para subir documentos -->
+                    <div class="modal" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true" x-data="{open: @entangle('showUploadModal')}" x-show="open" x-cloak>
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="uploadModalLabel">Subir Documento</h5>
+                                    <button type="button" class="close" wire:click="closeUploadModal">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-4">
+                                        <label for="document-category" class="block font-medium text-sm text-gray-700">Categoría</label>
+                                        <select id="document-category" wire:model="documentCategory" class="w-full border-gray-300 rounded-md shadow-sm">
+                                            <option value="license">Licencia</option>
+                                            <option value="medical">Médico</option>
+                                            <option value="record">Récord</option>
+                                            <option value="other">Otro</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <label for="documentDescription" class="block font-medium text-sm text-gray-700">Descripción</label>
+                                        <input id="documentDescription" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" wire:model="documentDescription" placeholder="Ingrese una descripción para el documento">
+                                        @error('documentDescription') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+                                    
+                                    <!-- Paso 1: Seleccionar el registro específico -->
+                                    @if ($documentCategory == 'license')
+                                    <div class="mb-4">
+                                        <label for="selectedRecordId" class="block font-medium text-sm text-gray-700">Seleccione la Licencia</label>
+                                        <select id="selectedRecordId" wire:model="selectedRecordId" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                                            <option value="">-- Seleccionar Licencia --</option>
+                                            @foreach ($this->driverLicenses ?? [] as $license)
+                                            <option value="{{ $license->id }}">{{ $license->license_number }} - {{ $license->license_class }} (Exp. {{ $license->expiration_date }})</option>
+                                            @endforeach
+                                        </select>
+                                        @error('selectedRecordId') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+                                    @endif
+                                    
+                                    @if ($documentCategory == 'medical')
+                                    <div class="mb-4">
+                                        <label for="selectedRecordId" class="block font-medium text-sm text-gray-700">Seleccione la Tarjeta Médica</label>
+                                        <select id="selectedRecordId" wire:model="selectedRecordId" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                                            <option value="">-- Seleccionar Tarjeta Médica --</option>
+                                            @foreach ($this->medicalCards ?? [] as $card)
+                                            <option value="{{ $card->id }}">Tarjeta Médica (Exp. {{ $card->expiration_date }})</option>
+                                            @endforeach
+                                        </select>
+                                        @error('selectedRecordId') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+                                    @endif
+                                    
+                                    @if ($documentCategory == 'record')
+                                    <div class="mb-4">
+                                        <label for="selectedRecordType" class="block font-medium text-sm text-gray-700">Tipo de Registro</label>
+                                        <select id="selectedRecordType" wire:model="selectedRecordType" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                                            <option value="">-- Seleccionar Tipo de Registro --</option>
+                                            <option value="accident">Accidente</option>
+                                            <option value="violation">Violación/Infracción</option>
+                                            <option value="training">Entrenamiento</option>
+                                            <option value="course">Curso</option>
+                                            <option value="inspection">Inspección</option>
+                                            <option value="drug_test">Prueba de Drogas</option>
+                                            <option value="testing_drugs">Prueba de Drogas (Laboratorio)</option>
+                                        </select>
+                                        @error('selectedRecordType') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+                                    
+                                    <!-- Selector para elegir un registro específico dentro del tipo seleccionado -->
+                                    <div class="mb-4" x-data="{}" x-show="$wire.selectedRecordType">
+                                        <label for="selectedRecordId" class="block font-medium text-sm text-gray-700">
+                                            Registro Específico
+                                        </label>
+                                        <select id="selectedRecordId" wire:model="selectedRecordId" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                                            <option value="">-- Seleccionar Registro --</option>
+                                            @if ($selectedRecordType == 'accident')
+                                                @foreach ($this->accidents ?? [] as $accident)
+                                                <option value="{{ $accident->id }}">{{ $accident->date }} - {{ $accident->description }}</option>
+                                                @endforeach
+                                            @endif
+                                            @if ($selectedRecordType == 'violation')
+                                                @foreach ($this->violations ?? [] as $violation)
+                                                <option value="{{ $violation->id }}">{{ $violation->date }} - {{ $violation->description }}</option>
+                                                @endforeach
+                                            @endif
+                                            @if ($selectedRecordType == 'training')
+                                                @foreach ($this->trainings ?? [] as $training)
+                                                <option value="{{ $training->id }}">{{ $training->date }} - {{ $training->description }}</option>
+                                                @endforeach
+                                            @endif
+                                            @if ($selectedRecordType == 'course')
+                                                @foreach ($this->courses ?? [] as $course)
+                                                <option value="{{ $course->id }}">{{ $course->date }} - {{ $course->description }}</option>
+                                                @endforeach
+                                            @endif
+                                            @if ($selectedRecordType == 'drug_test' || $selectedRecordType == 'testing_drugs')
+                                                @foreach ($this->drugTests ?? [] as $test)
+                                                <option value="{{ $test->id }}">{{ $test->date }} - {{ $test->test_type }}</option>
+                                                @endforeach
+                                            @endif
+                                            @if ($selectedRecordType == 'inspection')
+                                                @foreach ($this->inspections ?? [] as $inspection)
+                                                <option value="{{ $inspection->id }}">{{ $inspection->date }} - {{ $inspection->description }}</option>
+                                                @endforeach
+                                            @endif
+                                        </select>
+                                        @error('selectedRecordId') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+                                    @endif
+                                    
+                                    <!-- Paso 2: Una vez seleccionado un registro, elegir el tipo de documento -->
+                                    <div class="mb-4" x-data="{}" x-show="$wire.selectedRecordId">
+                                        <label for="documentType" class="block font-medium text-sm text-gray-700">Tipo de Documento</label>
+                                        <select id="documentType" wire:model="documentType" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                                            <option value="">-- Seleccionar Tipo de Documento --</option>
+                                            @if ($documentCategory == 'license')
+                                                <option value="license_front">Licencia - Frente</option>
+                                                <option value="license_back">Licencia - Reverso</option>
+                                                <option value="license_complete">Licencia - Completa</option>
+                                            @endif
+                                            @if ($documentCategory == 'medical')
+                                                <option value="medical_card_front">Tarjeta Médica - Frente</option>
+                                                <option value="medical_card_back">Tarjeta Médica - Reverso</option>
+                                                <option value="medical_card_complete">Tarjeta Médica - Completa</option>
+                                            @endif
+                                            @if ($documentCategory == 'record')
+                                                <option value="report">Reporte</option>
+                                                <option value="certificate">Certificado</option>
+                                                <option value="form">Formulario</option>
+                                                <option value="evidence">Evidencia</option>
+                                                <option value="image">Imagen</option>
+                                                <option value="other">Otro</option>
+                                            @endif
+                                        </select>
+                                        @error('documentType') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <label for="documentFile" class="block font-medium text-sm text-gray-700">Archivo (PDF, JPG, PNG)</label>
+                                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                                            <div class="space-y-1 text-center">
+                                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg>
+                                                <div class="flex text-sm text-gray-600">
+                                                    <label for="documentFile" class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary-focus">
+                                                        <span>Sube un archivo</span>
+                                                        <input id="documentFile" type="file" class="sr-only" wire:model="documentFile" accept=".pdf,.jpg,.jpeg,.png">
+                                                    </label>
+                                                    <p class="pl-1">o arrastra y suelta</p>
+                                                </div>
+                                                <p class="text-xs text-gray-500">
+                                                    PDF, JPG o PNG hasta 10MB
+                                                </p>
+                                            </div>
+                                        </div>
+                                        @error('documentFile') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <!-- Vista previa del archivo si está cargado -->
+                                    @if ($documentFile)
+                                        <div class="mt-4 p-3 bg-gray-50 rounded-md">
+                                            <div class="flex items-center">
+                                                <svg class="h-6 w-6 text-gray-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                                                </svg>
+                                                <div class="text-sm">
+                                                    <p class="font-medium text-gray-900">{{ $documentFile->getClientOriginalName() }}</p>
+                                                    <p class="text-gray-500">{{ $this->formatFileSize($documentFile->getSize()) }}</p>
+                                                </div>
+                                            </div>
+                                            <!-- Vista previa para imágenes -->
+                                            @if (in_array(strtolower($documentFile->getClientOriginalExtension()), ['jpg', 'jpeg', 'png']))
+                                                <div class="mt-2">
+                                                    <img src="{{ $documentFile->temporaryUrl() }}" alt="Vista previa" class="max-w-full h-auto max-h-48 mx-auto">
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
+
+                                    <!-- Barra de progreso de carga -->
+                                    <div class="mt-4 relative pt-1" wire:loading wire:target="documentFile">
+                                        <div class="flex mb-2 items-center justify-between">
+                                            <div>
+                                                <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-primary bg-primary-50">
+                                                    Cargando archivo
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-primary-200">
+                                            <div style="width: 100%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary animate-pulse"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" wire:click="closeUploadModal" wire:loading.attr="disabled">
+                                        Cancelar
+                                    </button>
+                                    <button type="button" class="btn btn-primary ml-2" wire:click="saveDocument" wire:loading.attr="disabled">
+                                        <span wire:loading.remove wire:target="saveDocument">Guardar Documento</span>
+                                        <span wire:loading wire:target="saveDocument">Guardando...</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="box box--stacked mt-5 p-5">
                     <h3 class="text-lg font-medium mb-4">Recruiter Notes</h3>
@@ -2383,7 +2968,8 @@
 
                     <!-- Verificaciones adicionales -->
                     <div class="border border-slate-200 rounded-lg overflow-hidden">
-                        <div class="bg-slate-50 px-4 py-2 font-medium text-sm border-b border-slate-200">Verificaciones
+                        <div class="bg-slate-50 px-4 py-2 font-medium text-sm border-b border-slate-200">
+                            Verificaciones
                             Adicionales</div>
                         <div class="p-3 space-y-2">
                             @foreach (['criminal_check', 'drug_test', 'mvr_check', 'policy_agreed', 'vehicle_info'] as $key)
@@ -2458,7 +3044,8 @@
                     </div>
                 @elseif($application->status === 'rejected')
                     <div class="border border-danger/30 rounded-lg overflow-hidden">
-                        <div class="bg-danger/10 px-4 py-2 font-medium text-danger border-b border-danger/30">Solicitud
+                        <div class="bg-danger/10 px-4 py-2 font-medium text-danger border-b border-danger/30">
+                            Solicitud
                             Rechazada</div>
                         <div class="p-4 bg-danger/5">
                             <div class="flex items-start">
@@ -2607,7 +3194,8 @@
 
                     <!-- Campo de motivo -->
                     <div class="mb-4">
-                        <label for="documentReason" class="block text-sm font-medium mb-1">Motivo por el que solicita
+                        <label for="documentReason" class="block text-sm font-medium mb-1">Motivo por el que
+                            solicita
                             este documento</label>
                         <textarea id="documentReason" wire:model.live="documentReason" rows="4"
                             class="w-full border rounded px-3 py-2 text-sm"
@@ -2619,9 +3207,9 @@
 
                     <!-- Mensaje informativo -->
                     <div class="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-600 mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round" class="h-4 w-4 inline-block mr-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 inline-block mr-1">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="16" x2="12" y2="12"></line>
                             <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -2635,7 +3223,8 @@
                             class="px-4 py-2 bg-slate-200 text-slate-700 rounded hover:bg-slate-300 mr-2">
                             Cancelar
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-focus">
+                        <button type="submit"
+                            class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-focus">
                             Guardar
                         </button>
                     </div>
