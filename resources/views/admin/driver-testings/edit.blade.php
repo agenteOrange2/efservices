@@ -264,6 +264,33 @@
                                     value="1" {{ old('is_reasonable_suspicion_test', $driverTesting->is_reasonable_suspicion_test) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="is_reasonable_suspicion_test">Reasonable Suspicion Test</label>
                             </div>
+                            <div class="form-check">
+                                <input id="is_pre_employment_test" name="is_pre_employment_test" type="checkbox" class="form-check-input" 
+                                    value="1" {{ old('is_pre_employment_test', $driverTesting->is_pre_employment_test ?? false) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="is_pre_employment_test">Pre-Employment Test</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="is_follow_up_test" name="is_follow_up_test" type="checkbox" class="form-check-input" 
+                                    value="1" {{ old('is_follow_up_test', $driverTesting->is_follow_up_test ?? false) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="is_follow_up_test">Follow-Up Test</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="is_return_to_duty_test" name="is_return_to_duty_test" type="checkbox" class="form-check-input" 
+                                    value="1" {{ old('is_return_to_duty_test', $driverTesting->is_return_to_duty_test ?? false) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="is_return_to_duty_test">Return-To-Duty Test</label>
+                            </div>
+                            <div class="form-check">
+                                <input id="is_other_reason_test" name="is_other_reason_test" type="checkbox" class="form-check-input" 
+                                    value="1" {{ old('is_other_reason_test', $driverTesting->is_other_reason_test ?? false) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="is_other_reason_test">Other Reason</label>
+                            </div>
+                        </div>
+                        <!-- Campo de descripción para Other Reason -->
+                        <div id="other_reason_container" class="mt-3" style="display: none;">
+                            <input type="text" id="other_reason_description" name="other_reason_description" 
+                                   class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8" 
+                                   placeholder="Specify other reason" 
+                                   value="{{ old('other_reason_description', $driverTesting->other_reason_description) }}">
                         </div>
                     </div>
 
@@ -441,6 +468,25 @@
             
             return true;
         });
+        
+        // Control de visibilidad para el campo Other Reason Description
+        const otherReasonCheckbox = document.getElementById('is_other_reason_test');
+        const otherReasonContainer = document.getElementById('other_reason_container');
+        
+        // Función para manejar la visibilidad del campo de descripción
+        function toggleOtherReasonField() {
+            if (otherReasonCheckbox.checked) {
+                otherReasonContainer.style.display = 'block';
+            } else {
+                otherReasonContainer.style.display = 'none';
+            }
+        }
+        
+        // Manejar cambio en el checkbox
+        otherReasonCheckbox.addEventListener('change', toggleOtherReasonField);
+        
+        // Inicializar estado al cargar la página
+        toggleOtherReasonField();
         
         // Inicializar array para archivos subidos
         let uploadedFiles = [];

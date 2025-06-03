@@ -32,6 +32,11 @@ class DriverTesting extends Model implements HasMedia
         'is_random_test',
         'is_post_accident_test',
         'is_reasonable_suspicion_test',
+        'is_pre_employment_test',
+        'is_follow_up_test',
+        'is_return_to_duty_test',
+        'is_other_reason_test',
+        'other_reason_description',
         'bill_to',
         'created_by',
         'updated_by'
@@ -44,6 +49,10 @@ class DriverTesting extends Model implements HasMedia
         'is_random_test' => 'boolean',
         'is_post_accident_test' => 'boolean',
         'is_reasonable_suspicion_test' => 'boolean',
+        'is_pre_employment_test' => 'boolean',
+        'is_follow_up_test' => 'boolean',
+        'is_return_to_duty_test' => 'boolean',
+        'is_other_reason_test' => 'boolean',
     ];
 
     /**

@@ -196,10 +196,7 @@ class DriverRecruitmentReview extends Component
             'criminalHistory',
             'companyPolicy',
             'certification',
-            'relatedEmployments', // Cargar empleos relacionados
-            'courses',            // Cursos de capacitación
-            'testings',           // Pruebas de drogas
-            'inspections'         // Inspecciones
+            'relatedEmployments' // Cargar empleos relacionados
         ])->findOrFail($this->driverId);
     
         // Procesar fechas
@@ -490,49 +487,49 @@ class DriverRecruitmentReview extends Component
         // Cargar documentos de licencia
         $licenses = \App\Models\Admin\Driver\DriverLicense::where('user_driver_detail_id', $this->driver->id)->get();
         foreach ($licenses as $license) {
-            $this->loadModelMedia($license, 'license');
+            $this->loadMediaFromModel($license, 'license');
         }
         
         // Cargar documentos de calificación médica
         $medicalCards = \App\Models\Admin\Driver\DriverMedicalQualification::where('user_driver_detail_id', $this->driver->id)->get();
         foreach ($medicalCards as $medicalCard) {
-            $this->loadModelMedia($medicalCard, 'medical');
+            $this->loadMediaFromModel($medicalCard, 'medical');
         }
         
         // Cargar documentos de accidentes
         $accidents = \App\Models\Admin\Driver\DriverAccident::where('user_driver_detail_id', $this->driver->id)->get();
         foreach ($accidents as $accident) {
-            $this->loadModelMedia($accident, 'record', 'accident');
+            $this->loadMediaFromModel($accident, 'record', 'accident');
         }
         
         // Cargar documentos de infracciones de tráfico
         $violations = \App\Models\Admin\Driver\DriverTrafficConviction::where('user_driver_detail_id', $this->driver->id)->get();
         foreach ($violations as $violation) {
-            $this->loadModelMedia($violation, 'record', 'violation');
+            $this->loadMediaFromModel($violation, 'record', 'violation');
         }
         
         // Cargar documentos de escuelas de entrenamiento
         $trainings = \App\Models\Admin\Driver\DriverTrainingSchool::where('user_driver_detail_id', $this->driver->id)->get();
         foreach ($trainings as $training) {
-            $this->loadModelMedia($training, 'record', 'training');
+            $this->loadMediaFromModel($training, 'record', 'training');
         }
         
         // Cargar documentos de cursos
         $courses = \App\Models\Admin\Driver\DriverCourse::where('user_driver_detail_id', $this->driver->id)->get();
         foreach ($courses as $course) {
-            $this->loadModelMedia($course, 'record', 'course');
+            $this->loadMediaFromModel($course, 'record', 'course');
         }
         
         // Cargar documentos de inspecciones
         $inspections = \App\Models\Admin\Driver\DriverInspection::where('user_driver_detail_id', $this->driver->id)->get();
         foreach ($inspections as $inspection) {
-            $this->loadModelMedia($inspection, 'record', 'inspection');
+            $this->loadMediaFromModel($inspection, 'record', 'inspection');
         }
         
         // Cargar documentos de pruebas de drogas
         $drugTests = \App\Models\Admin\Driver\DriverTesting::where('user_driver_detail_id', $this->driver->id)->get();
         foreach ($drugTests as $drugTest) {
-            $this->loadModelMedia($drugTest, 'record', 'drug_test');
+            $this->loadMediaFromModel($drugTest, 'record', 'drug_test');
         }
         
         // SOPORTE PARA CÓDIGO LEGADO - Cargar documentos desde el sistema de archivos
@@ -1034,7 +1031,7 @@ class DriverRecruitmentReview extends Component
                     'description' => $this->documentDescription,
                     'document_type' => $this->documentType,
                     'category' => $this->documentCategory,
-                    'uploaded_by' => \Illuminate\Support\Facades\Auth::id(),
+                    'uploaded_by' => auth()->id(),
                     'record_type' => $this->selectedRecordType ?? null
                 ])
                 ->toMediaCollection($mediaCollection);
@@ -1084,14 +1081,15 @@ class DriverRecruitmentReview extends Component
     }
     
     /**
-     * Método auxiliar para el procesamiento de documentos
-     * @internal Este método reemplaza la duplicación de saveDocument()
+     * Guarda el documento subido
      */
-    private function processDocument()
+    public function saveDocument()
     {
-        // Este método se ha renombrado porque duplicaba saveDocument()
-        // Usar el método saveDocument() original (línea ~910) en su lugar
-        // Esto evita el error: Cannot redeclare App\Livewire\Admin\Driver\Recruitment\DriverRecruitmentReview::saveDocument()
+        // Validación básica
+        if (empty($this->documentFile) || empty($this->documentCategory)) {
+            session()->flash('error', 'Falta el archivo o la categoría');
+            return;
+        }
         
         // Validar que se haya seleccionado un registro existente (excepto para documentos generales)
         if ($this->documentCategory !== 'other' && empty($this->selectedRecordId)) {
@@ -1214,7 +1212,7 @@ class DriverRecruitmentReview extends Component
                 ->withCustomProperties([
                     'description' => $this->documentDescription,
                     'document_type' => $this->documentType,
-                    'uploaded_by' => \Illuminate\Support\Facades\Auth::id(),
+                    'uploaded_by' => auth()->id(),
                     'category' => $this->documentCategory,
                     'record_type' => $this->documentCategory === 'record' ? $this->selectedRecordType : null,
                 ])
@@ -1229,11 +1227,11 @@ class DriverRecruitmentReview extends Component
             $fileSize = $this->formatFileSize($this->documentFile->getSize());
             $fileDate = $this->formatFileDate(now()->timestamp);
             
-            $mediaId = isset($media) && $media ? $media->id : 0;
+            $mediaId = $media->id ?? 0;
             $uniqueKey = \Illuminate\Support\Str::random(10) . '_' . $mediaId;
             $this->generatedPdfs[$uniqueKey] = [
                 'name' => $this->documentDescription,
-                'url' => isset($media) && $media ? $media->getUrl() : '',
+                'url' => $media->getUrl(),
                 'size' => $fileSize,
                 'date' => $fileDate,
                 'category' => $this->documentCategory,
@@ -1252,8 +1250,7 @@ class DriverRecruitmentReview extends Component
             session()->flash('message', 'Documento guardado correctamente');
             $this->closeUploadModal();
             $this->loadGeneratedPdfs(); // Recargar lista de documentos
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Error al guardar documento', [
                 'driver_id' => $this->driver->id,
                 'error' => $e->getMessage(),
@@ -1328,62 +1325,15 @@ class DriverRecruitmentReview extends Component
         // Crear un registro base del documento
         $documentData = [
             'driver_id' => $this->driver->id,
-            'application_id' => isset($this->application) && $this->application ? $this->application->id : null,
+            'application_id' => $this->application->id ?? null,
             'category' => $this->documentCategory,
             'file_path' => $filePath,
             'file_name' => $fileName,
             'description' => $this->documentDescription,
             'document_type' => $this->documentType,
-            'uploaded_by' => \Illuminate\Support\Facades\Auth::id(),
+            'uploaded_by' => auth()->id(),
             'record_type' => $this->documentCategory === 'record' ? $this->selectedRecordType : null,
         ];
-        
-        // Obtener el modelo según la categoría y tipo de registro
-        $model = null;
-        $mediaCollection = 'documents';
-        
-        switch ($this->documentCategory) {
-            case 'license':
-                $model = \App\Models\Admin\Driver\DriverLicense::findOrFail($this->selectedRecordId);
-                $mediaCollection = $this->documentType;
-                break;
-            case 'medical':
-                $model = \App\Models\Admin\Driver\DriverMedicalQualification::findOrFail($this->selectedRecordId);
-                $mediaCollection = 'medical_card';
-                break;
-            case 'record':
-                switch ($this->selectedRecordType) {
-                    case 'accident':
-                        $model = \App\Models\Admin\Driver\DriverAccident::findOrFail($this->selectedRecordId);
-                        break;
-                    case 'violation':
-                        $model = \App\Models\Admin\Driver\DriverTrafficConviction::findOrFail($this->selectedRecordId);
-                        break;
-                    case 'training':
-                        $model = \App\Models\Admin\Driver\DriverTrainingSchool::findOrFail($this->selectedRecordId);
-                        break;
-                    case 'course':
-                        $model = \App\Models\Admin\Driver\DriverCourse::findOrFail($this->selectedRecordId);
-                        break;
-                    case 'inspection':
-                        $model = \App\Models\Admin\Driver\DriverInspection::findOrFail($this->selectedRecordId);
-                        break;
-                    case 'drug_test':
-                    case 'testing_drugs':
-                        $model = \App\Models\Admin\Driver\DriverTesting::findOrFail($this->selectedRecordId);
-                        break;
-                }
-                $mediaCollection = $this->documentType;
-                break;
-            default:
-                $model = $this->driver;
-                $mediaCollection = 'other_documents';
-                break;
-        }
-        
-        if (!$model) {
-            return null;
-        }
         
         // Agregar el archivo a la colección de medios del modelo
         $media = $model->addMedia($filePath)
@@ -1393,42 +1343,38 @@ class DriverRecruitmentReview extends Component
             
         // Actualizar el modelo para indicar que tiene documentos
         if (method_exists($model, 'update')) {
-            $model->update(['has_documents' => true]);
-        }
+        $model->update(['has_documents' => true]);
+    }
             
-        // Actualizar la lista de documentos generados
-        if (isset($media) && $media) {
-            $fileSize = $this->formatFileSize($this->documentFile->getSize());
-            $fileDate = $this->formatFileDate(now()->timestamp);
+    // Actualizar la lista de documentos generados
+    $fileSize = $this->formatFileSize($this->documentFile->getSize());
+    $fileDate = $this->formatFileDate(now()->timestamp);
             
-            $mediaId = $media->id ?? 0;
-            $uniqueKey = Str::random(10) . '_' . $mediaId;
-            $this->generatedPdfs[$uniqueKey] = [
-                'name' => $this->documentDescription,
-                'url' => $media->getUrl(),
-                'size' => $fileSize,
-                'date' => $fileDate,
-                'category' => $this->documentCategory,
-                'record_type' => $this->documentCategory === 'record' ? $this->selectedRecordType : null,
-                'record_id' => $this->selectedRecordId,
-                'document_type' => $this->documentType,
-                'id' => $mediaId
-            ];
+    $mediaId = $media->id ?? 0;
+    $uniqueKey = Str::random(10) . '_' . $mediaId;
+    $this->generatedPdfs[$uniqueKey] = [
+        'name' => $this->documentDescription,
+        'url' => $media->getUrl(),
+        'size' => $fileSize,
+        'date' => $fileDate,
+        'category' => $this->documentCategory,
+        'record_type' => $this->documentCategory === 'record' ? $this->selectedRecordType : null,
+        'record_id' => $this->selectedRecordId,
+        'document_type' => $this->documentType,
+        'id' => $mediaId
+    ];
             
-            // Si es un documento médico, actualizar información médica
-            if ($this->documentCategory === 'medical') {
-                $this->loadDriverData(); // Recargar datos del conductor
-                $this->dispatch('medicalDocumentUpdated'); // Emitir evento para actualizar UI
-            }
-        }
-        
-        // Mostrar mensaje de éxito y limpiar el formulario
-        session()->flash('message', 'Documento guardado correctamente');
-        $this->closeUploadModal();
-        $this->loadGeneratedPdfs(); // Recargar lista de documentos
-        
-        return $media;
-    }  // Fin del método
+    // Si es un documento médico, actualizar información médica
+    if ($this->documentCategory === 'medical') {
+        $this->loadDriverData(); // Recargar datos del conductor
+        $this->dispatch('medicalDocumentUpdated'); // Emitir evento para actualizar UI
+    }
+    
+    // Mostrar mensaje de éxito y limpiar el formulario
+    session()->flash('message', 'Documento guardado correctamente');
+    $this->closeUploadModal();
+    $this->loadGeneratedPdfs(); // Recargar lista de documentos
+}  // Fin del método
 
 /**
  * Maneja errores durante el proceso de guardar documentos
@@ -1451,13 +1397,8 @@ private function handleDocumentError(\Exception $e)
 /**
  * Carga los documentos PDF generados para este conductor/solicitud usando Spatie Media Library
  */
-/**
- * Método auxiliar para el procesamiento de documentos (reemplaza loadGeneratedPdfs duplicado)
- * @internal Este método se ha renombrado para evitar duplicación
- */
-private function loadAllDocuments()
+public function loadGeneratedPdfs()
 {
-    // Este método se ha renombrado porque duplicaba loadGeneratedPdfs
     if (!$this->driver || !$this->driver->id) {
         return;
     }
@@ -1468,43 +1409,43 @@ private function loadAllDocuments()
     // Cargar documentos de licencia
     $licenses = \App\Models\Admin\Driver\DriverLicense::where('user_driver_detail_id', $this->driver->id)->get();
     foreach ($licenses as $license) {
-        $this->loadModelMedia($license, 'license');
+        $this->loadMediaFromModel($license, 'license');
     }
             
     // Cargar documentos de calificación médica
     $medicalCards = \App\Models\Admin\Driver\DriverMedicalQualification::where('user_driver_detail_id', $this->driver->id)->get();
     foreach ($medicalCards as $medicalCard) {
-        $this->loadModelMedia($medicalCard, 'medical');
+        $this->loadMediaFromModel($medicalCard, 'medical');
     }
             
     // Cargar documentos de accidentes
     $accidents = \App\Models\Admin\Driver\DriverAccident::where('user_driver_detail_id', $this->driver->id)->get();
     foreach ($accidents as $accident) {
-        $this->loadModelMedia($accident, 'record', 'accident');
+        $this->loadMediaFromModel($accident, 'record', 'accident');
     }
             
     // Cargar documentos de violaciones
     $violations = \App\Models\Admin\Driver\DriverTrafficConviction::where('user_driver_detail_id', $this->driver->id)->get();
     foreach ($violations as $violation) {
-        $this->loadModelMedia($violation, 'record', 'violation');
+        $this->loadMediaFromModel($violation, 'record', 'violation');
     }
             
     // Cargar documentos de entrenamientos
     $trainings = \App\Models\Admin\Driver\DriverTrainingSchool::where('user_driver_detail_id', $this->driver->id)->get();
     foreach ($trainings as $training) {
-        $this->loadModelMedia($training, 'record', 'training');
+        $this->loadMediaFromModel($training, 'record', 'training');
     }
             
     // Cargar documentos de cursos
     $courses = \App\Models\Admin\Driver\DriverCourse::where('user_driver_detail_id', $this->driver->id)->get();
     foreach ($courses as $course) {
-        $this->loadModelMedia($course, 'record', 'course');
+        $this->loadMediaFromModel($course, 'record', 'course');
     }
             
     // Cargar documentos de inspecciones
     $inspections = \App\Models\Admin\Driver\DriverInspection::where('user_driver_detail_id', $this->driver->id)->get();
     foreach ($inspections as $inspection) {
-        $this->loadModelMedia($inspection, 'record', 'inspection');
+        $this->loadMediaFromModel($inspection, 'record', 'inspection');
     }
             
     // Cargar documentos de pruebas de drogas
@@ -1512,22 +1453,20 @@ private function loadAllDocuments()
         ->where('test_type', 'drug_test')
         ->get();
     foreach ($drugTests as $drugTest) {
-        $this->loadModelMedia($drugTest, 'record', 'drug_test');
+        $this->loadMediaFromModel($drugTest, 'record', 'drug_test');
     }
             
     // Cargar documentos generales del conductor
     if (method_exists($this->driver, 'getMedia')) {
-        $this->loadModelMedia($this->driver, 'other');
+        $this->loadMediaFromModel($this->driver, 'other');
     }
 }
 
 /**
- * Método auxiliar para cargar los medios (documentos) de un modelo (segunda versión)
- * @internal Este método se ha renombrado para evitar duplicación
+ * Método auxiliar para cargar los medios (documentos) de un modelo
  */
-private function loadModelMedia($model, $category, $recordType = null)
+private function loadMediaFromModel($model, $category, $recordType = null)
 {
-    // Este método se ha renombrado porque duplicaba loadMediaFromModel
     if (!method_exists($model, 'getMedia')) {
         return;
     }
@@ -1566,14 +1505,6 @@ private function loadModelMedia($model, $category, $recordType = null)
                         $recordTable = 'driver_accidents';
                     } elseif ($this->recordSubtype === 'violation') {
                         $recordTable = 'driver_traffic_convictions';
-                    } elseif ($this->recordSubtype === 'course') {
-                        $recordTable = 'driver_courses';
-                    } elseif ($this->recordSubtype === 'inspection') {
-                        $recordTable = 'driver_inspections';
-                    } elseif ($this->recordSubtype === 'drug_test') {
-                        $recordTable = 'driver_testings';
-                    } elseif ($this->recordSubtype === 'training') {
-                        $recordTable = 'driver_trainings';
                     }
                     
                     if ($recordTable) {
@@ -1585,8 +1516,7 @@ private function loadModelMedia($model, $category, $recordType = null)
             }
         }
         
-        // No se necesita devolver nada ya que este método solo actualiza registros
-        return true;
+        return $documentId;
     }
     
     /**

@@ -46,18 +46,13 @@ class DriverRecruitmentReview extends Component
     public $isRegeneratingPdfs = false;
     
     // Propiedades para manejo de carga de documentos
-    public $documentCategory = ''; // license, medical, record, other
+    public $documentCategory = ''; // licencia, medical, record, other
     public $documentDescription = '';
     public $documentFile = null;
     public $tempDocumentPath = null;
     public $tempDocumentName = null;
     public $tempDocumentSize = null;
     public $showUploadModal = false;
-    
-    // Propiedades para asociar documentos a registros existentes
-    public $selectedRecordType = ''; // license, medical_card, accident, violation, training, course, drug_test
-    public $selectedRecordId = null; // ID del registro seleccionado
-    public $documentType = ''; // tipo de documento (license_front, license_back, etc.)
     
     // Documentos por categoría
     public $licenseDocuments = [];
@@ -196,10 +191,7 @@ class DriverRecruitmentReview extends Component
             'criminalHistory',
             'companyPolicy',
             'certification',
-            'relatedEmployments', // Cargar empleos relacionados
-            'courses',            // Cursos de capacitación
-            'testings',           // Pruebas de drogas
-            'inspections'         // Inspecciones
+            'relatedEmployments' // Cargar empleos relacionados
         ])->findOrFail($this->driverId);
     
         // Procesar fechas
@@ -477,187 +469,170 @@ class DriverRecruitmentReview extends Component
     }
 
     /**
-     * Carga los documentos PDF generados para este conductor/solicitud usando Spatie Media Library
+     * Carga los PDFs generados para la aplicación
      */
     protected function loadGeneratedPdfs()
     {
         $this->generatedPdfs = [];
 
-        if (!$this->driver || !$this->driver->id) {
-            return;
-        }
-        
-        // Cargar documentos de licencia
-        $licenses = \App\Models\Admin\Driver\DriverLicense::where('user_driver_detail_id', $this->driver->id)->get();
-        foreach ($licenses as $license) {
-            $this->loadModelMedia($license, 'license');
-        }
-        
-        // Cargar documentos de calificación médica
-        $medicalCards = \App\Models\Admin\Driver\DriverMedicalQualification::where('user_driver_detail_id', $this->driver->id)->get();
-        foreach ($medicalCards as $medicalCard) {
-            $this->loadModelMedia($medicalCard, 'medical');
-        }
-        
-        // Cargar documentos de accidentes
-        $accidents = \App\Models\Admin\Driver\DriverAccident::where('user_driver_detail_id', $this->driver->id)->get();
-        foreach ($accidents as $accident) {
-            $this->loadModelMedia($accident, 'record', 'accident');
-        }
-        
-        // Cargar documentos de infracciones de tráfico
-        $violations = \App\Models\Admin\Driver\DriverTrafficConviction::where('user_driver_detail_id', $this->driver->id)->get();
-        foreach ($violations as $violation) {
-            $this->loadModelMedia($violation, 'record', 'violation');
-        }
-        
-        // Cargar documentos de escuelas de entrenamiento
-        $trainings = \App\Models\Admin\Driver\DriverTrainingSchool::where('user_driver_detail_id', $this->driver->id)->get();
-        foreach ($trainings as $training) {
-            $this->loadModelMedia($training, 'record', 'training');
-        }
-        
-        // Cargar documentos de cursos
-        $courses = \App\Models\Admin\Driver\DriverCourse::where('user_driver_detail_id', $this->driver->id)->get();
-        foreach ($courses as $course) {
-            $this->loadModelMedia($course, 'record', 'course');
-        }
-        
-        // Cargar documentos de inspecciones
-        $inspections = \App\Models\Admin\Driver\DriverInspection::where('user_driver_detail_id', $this->driver->id)->get();
-        foreach ($inspections as $inspection) {
-            $this->loadModelMedia($inspection, 'record', 'inspection');
-        }
-        
-        // Cargar documentos de pruebas de drogas
-        $drugTests = \App\Models\Admin\Driver\DriverTesting::where('user_driver_detail_id', $this->driver->id)->get();
-        foreach ($drugTests as $drugTest) {
-            $this->loadModelMedia($drugTest, 'record', 'drug_test');
-        }
-        
-        // SOPORTE PARA CÓDIGO LEGADO - Cargar documentos desde el sistema de archivos
-        // Solo se utiliza mientras se completa la migración a Spatie Media Library
-        $this->loadLegacyDocuments();
-    }
-    
-    /**
-     * Carga documentos usando el método antiguo del sistema de archivos
-     * Este método se eliminará una vez completada la migración a Spatie Media Library
-     */
-    private function loadLegacyDocuments()
-    {
-        if (!$this->driver || !$this->driver->id) {
-            return;
-        }
-        
-        // Definir rutas para los documentos
-        $driverId = $this->driver->id;
-        $vehicleVerificationsPath = "driver/{$driverId}/vehicle-verifications/";
-        $vehicleVerificationsFullPath = storage_path("app/public/{$vehicleVerificationsPath}");
-        
-        // Verificar si el directorio de verificaciones de vehículos existe
-        if (file_exists($vehicleVerificationsFullPath)) {
-            // Buscar los archivos de consentimiento de terceros (con formato de nombre que incluye timestamp)
-            $consentFiles = glob("{$vehicleVerificationsFullPath}third_party_consent_*.pdf");
-            
-            // Si no hay archivos con el nuevo formato, buscar con el nombre antiguo
-            if (empty($consentFiles)) {
-                $oldConsentFile = "{$vehicleVerificationsFullPath}consentimiento_propietario_third_party.pdf";
-                if (file_exists($oldConsentFile)) {
-                    $consentFiles[] = $oldConsentFile;
+        if ($this->driver && $this->driver->id) {
+            $basePath = "driver/{$this->driver->id}/";
+            $fullPath = storage_path("app/public/{$basePath}");
+
+            // Comprobar si el directorio existe
+            if (file_exists($fullPath)) {
+                // Buscar PDF combinado
+                if (file_exists("{$fullPath}solicitud_completa.pdf")) {
+                    $fileSize = $this->formatFileSize(filesize("{$fullPath}solicitud_completa.pdf"));
+                    $fileDate = $this->formatFileDate(filemtime("{$fullPath}solicitud_completa.pdf"));
+                    
+                    $this->generatedPdfs['combined'] = [
+                        'name' => 'Solicitud Completa',
+                        'url' => asset("storage/{$basePath}solicitud_completa.pdf"),
+                        'size' => $fileSize,
+                        'date' => $fileDate
+                    ];
                 }
-            }
-            
-            // Tomar el archivo más reciente (si existe)
-            if (!empty($consentFiles)) {
-                // Ordenar por fecha de modificación (más reciente primero)
-                usort($consentFiles, function($a, $b) {
-                    return filemtime($b) - filemtime($a);
-                });
-                
-                $latestConsentFile = $consentFiles[0];
-                $consentFileName = basename($latestConsentFile);
-                $fileSize = $this->formatFileSize(filesize($latestConsentFile));
-                $fileDate = $this->formatFileDate(filemtime($latestConsentFile));
-                
-                $this->generatedPdfs['third_party_consent'] = [
-                    'name' => 'Third Party Consent',
-                    'url' => asset("storage/{$vehicleVerificationsPath}{$consentFileName}") . "?v=" . time(),
-                    'size' => $fileSize,
-                    'date' => $fileDate,
-                    'category' => 'other',
-                    'document_type' => 'third_party_consent'
-                ];
-            }
-            
-            // Buscar los archivos de lease agreement para third party (con formato de nombre que incluye timestamp)
-            $leaseFiles = glob("{$vehicleVerificationsFullPath}lease_agreement_third_party_*.pdf");
-            
-            // Si no hay archivos con el nuevo formato, buscar con el nombre antiguo
-            if (empty($leaseFiles)) {
-                $oldLeaseFile = "{$vehicleVerificationsFullPath}lease_agreement_third_party.pdf";
-                if (file_exists($oldLeaseFile)) {
-                    $leaseFiles[] = $oldLeaseFile;
+
+                // Buscar PDFs individuales en el subdirectorio
+                $appSubPath = "{$basePath}driver_applications/";
+                $appFullPath = storage_path("app/public/{$appSubPath}");
+
+                if (file_exists($appFullPath)) {
+                    // Definir los archivos a buscar y sus nombres legibles
+                    $pdfFiles = [
+                        'informacion_general.pdf' => 'Información General',
+                        'informacion_direccion.pdf' => 'Información de Dirección',
+                        'detalles_aplicacion.pdf' => 'Detalles de Aplicación',
+                        'informacion_licencias.pdf' => 'Licencias',
+                        'calificacion_medica.pdf' => 'Calificación Médica',
+                        'escuelas_entrenamiento.pdf' => 'Entrenamiento',
+                        'infracciones_trafico.pdf' => 'Infracciones de Tráfico',
+                        'registro_accidentes.pdf' => 'Registro de Accidentes',
+                        'requisitos_fmcsr.pdf' => 'Requisitos FMCSR',
+                        'historial_empleo.pdf' => 'Historial de Empleo',
+                        'certificacion.pdf' => 'Certificación',
+                    ];
+
+                    foreach ($pdfFiles as $file => $name) {
+                        if (file_exists("{$appFullPath}{$file}")) {
+                            $fileSize = $this->formatFileSize(filesize("{$appFullPath}{$file}"));
+                            $fileDate = $this->formatFileDate(filemtime("{$appFullPath}{$file}"));
+                            
+                            $this->generatedPdfs[$file] = [
+                                'name' => $name,
+                                'url' => asset("storage/{$appSubPath}{$file}") . "?v=" . time(),
+                                'size' => $fileSize,
+                                'date' => $fileDate
+                            ];
+                        }
+                    }
                 }
-            }
-            
-            // Tomar el archivo más reciente (si existe)
-            if (!empty($leaseFiles)) {
-                // Ordenar por fecha de modificación (más reciente primero)
-                usort($leaseFiles, function($a, $b) {
-                    return filemtime($b) - filemtime($a);
-                });
                 
-                $latestLeaseFile = $leaseFiles[0];
-                $leaseFileName = basename($latestLeaseFile);
-                $fileSize = $this->formatFileSize(filesize($latestLeaseFile));
-                $fileDate = $this->formatFileDate(filemtime($latestLeaseFile));
+                // Buscar documentos de verificación de vehículos independientemente del tipo de conductor
+                $vehicleVerificationsPath = "{$basePath}vehicle_verifications/";
+                $vehicleVerificationsFullPath = storage_path("app/public/{$vehicleVerificationsPath}");
                 
-                $this->generatedPdfs['lease_agreement_third_party'] = [
-                    'name' => 'Lease Agreement (Third Party)',
-                    'url' => asset("storage/{$vehicleVerificationsPath}{$leaseFileName}") . "?v=" . time(),
-                    'size' => $fileSize,
-                    'date' => $fileDate,
-                    'category' => 'other',
-                    'document_type' => 'lease_agreement'
-                ];
-            }
-            
-            // Buscar los archivos de lease agreement para owner operators (con formato de nombre que incluye timestamp)
-            $ownerLeaseFiles = glob("{$vehicleVerificationsFullPath}lease_agreement_owner_operator_*.pdf");
-            
-            // Si no hay archivos con el nuevo formato, buscar con el nombre antiguo
-            if (empty($ownerLeaseFiles)) {
-                $oldOwnerLeaseFile = "{$vehicleVerificationsFullPath}lease_agreement_owner_operator.pdf";
-                if (file_exists($oldOwnerLeaseFile)) {
-                    $ownerLeaseFiles[] = $oldOwnerLeaseFile;
+                // Verificar si el directorio de verificaciones de vehículos existe
+                if (file_exists($vehicleVerificationsFullPath)) {
+                    // Buscar los archivos de consentimiento de terceros (con formato de nombre que incluye timestamp)
+                    $consentFiles = glob("{$vehicleVerificationsFullPath}third_party_consent_*.pdf");
+                    
+                    // Si no hay archivos con el nuevo formato, buscar con el nombre antiguo
+                    if (empty($consentFiles)) {
+                        $oldConsentFile = "{$vehicleVerificationsFullPath}consentimiento_propietario_third_party.pdf";
+                        if (file_exists($oldConsentFile)) {
+                            $consentFiles[] = $oldConsentFile;
+                        }
+                    }
+                    
+                    // Tomar el archivo más reciente (si existe)
+                    if (!empty($consentFiles)) {
+                        // Ordenar por fecha de modificación (más reciente primero)
+                        usort($consentFiles, function($a, $b) {
+                            return filemtime($b) - filemtime($a);
+                        });
+                        
+                        $latestConsentFile = $consentFiles[0];
+                        $consentFileName = basename($latestConsentFile);
+                        $fileSize = $this->formatFileSize(filesize($latestConsentFile));
+                        $fileDate = $this->formatFileDate(filemtime($latestConsentFile));
+                        
+                        $this->generatedPdfs['third_party_consent'] = [
+                            'name' => 'Consentimiento del Propietario (Third Party)',
+                            'url' => asset("storage/{$vehicleVerificationsPath}{$consentFileName}") . "?v=" . time(),
+                            'size' => $fileSize,
+                            'date' => $fileDate
+                        ];
+                    }
+                    
+                    // Buscar los archivos de lease agreement para conductores de terceros (con formato de nombre que incluye timestamp)
+                    $leaseFiles = glob("{$vehicleVerificationsFullPath}lease_agreement_third_party_*.pdf");
+                    
+                    // Si no hay archivos con el nuevo formato, buscar con el nombre antiguo
+                    if (empty($leaseFiles)) {
+                        $oldLeaseFile = "{$vehicleVerificationsFullPath}lease_agreement_third_party.pdf";
+                        if (file_exists($oldLeaseFile)) {
+                            $leaseFiles[] = $oldLeaseFile;
+                        }
+                    }
+                    
+                    // Tomar el archivo más reciente (si existe)
+                    if (!empty($leaseFiles)) {
+                        // Ordenar por fecha de modificación (más reciente primero)
+                        usort($leaseFiles, function($a, $b) {
+                            return filemtime($b) - filemtime($a);
+                        });
+                        
+                        $latestLeaseFile = $leaseFiles[0];
+                        $leaseFileName = basename($latestLeaseFile);
+                        $fileSize = $this->formatFileSize(filesize($latestLeaseFile));
+                        $fileDate = $this->formatFileDate(filemtime($latestLeaseFile));
+                        
+                        $this->generatedPdfs['lease_agreement_third_party'] = [
+                            'name' => 'Lease Agreement (Third Party)',
+                            'url' => asset("storage/{$vehicleVerificationsPath}{$leaseFileName}") . "?v=" . time(),
+                            'size' => $fileSize,
+                            'date' => $fileDate
+                        ];
+                    }
+                    
+                    // Buscar los archivos de lease agreement para owner operators (con formato de nombre que incluye timestamp)
+                    $ownerLeaseFiles = glob("{$vehicleVerificationsFullPath}lease_agreement_owner_operator_*.pdf");
+                    
+                    // Si no hay archivos con el nuevo formato, buscar con el nombre antiguo
+                    if (empty($ownerLeaseFiles)) {
+                        $oldOwnerLeaseFile = "{$vehicleVerificationsFullPath}lease_agreement_owner_operator.pdf";
+                        if (file_exists($oldOwnerLeaseFile)) {
+                            $ownerLeaseFiles[] = $oldOwnerLeaseFile;
+                        }
+                    }
+                    
+                    // Tomar el archivo más reciente (si existe)
+                    if (!empty($ownerLeaseFiles)) {
+                        // Ordenar por fecha de modificación (más reciente primero)
+                        usort($ownerLeaseFiles, function($a, $b) {
+                            return filemtime($b) - filemtime($a);
+                        });
+                        
+                        $latestOwnerLeaseFile = $ownerLeaseFiles[0];
+                        $ownerLeaseFileName = basename($latestOwnerLeaseFile);
+                        $fileSize = $this->formatFileSize(filesize($latestOwnerLeaseFile));
+                        $fileDate = $this->formatFileDate(filemtime($latestOwnerLeaseFile));
+                        
+                        $this->generatedPdfs['lease_agreement_owner'] = [
+                            'name' => 'Lease Agreement (Owner Operator)',
+                            'url' => asset("storage/{$vehicleVerificationsPath}{$ownerLeaseFileName}") . "?v=" . time(),
+                            'size' => $fileSize,
+                            'date' => $fileDate
+                        ];
+                    }
                 }
-            }
-            
-            // Tomar el archivo más reciente (si existe)
-            if (!empty($ownerLeaseFiles)) {
-                // Ordenar por fecha de modificación (más reciente primero)
-                usort($ownerLeaseFiles, function($a, $b) {
-                    return filemtime($b) - filemtime($a);
-                });
-                
-                $latestOwnerLeaseFile = $ownerLeaseFiles[0];
-                $ownerLeaseFileName = basename($latestOwnerLeaseFile);
-                $fileSize = $this->formatFileSize(filesize($latestOwnerLeaseFile));
-                $fileDate = $this->formatFileDate(filemtime($latestOwnerLeaseFile));
-                
-                $this->generatedPdfs['lease_agreement_owner'] = [
-                    'name' => 'Lease Agreement (Owner Operator)',
-                    'url' => asset("storage/{$vehicleVerificationsPath}{$ownerLeaseFileName}") . "?v=" . time(),
-                    'size' => $fileSize,
-                    'date' => $fileDate,
-                    'category' => 'other',
-                    'document_type' => 'lease_agreement'
-                ];
+
             }
         }
     }
-    
+
     /**
      * Formatea el tamaño del archivo en una forma legible
      *
@@ -689,204 +664,22 @@ class DriverRecruitmentReview extends Component
     }
     
     /**
-     * Método auxiliar para cargar los medios (documentos) de un modelo
-     * 
-     * @param mixed $model El modelo del que cargar los medios
-     * @param string $category Categoría del documento (license, medical, record, other)
-     * @param string|null $recordType Tipo de registro (solo para category=record)
-     * @return void
-     */
-    protected function loadMediaFromModel($model, $category, $recordType = null)
-    {
-        if (!method_exists($model, 'getMedia')) {
-            return;
-        }
-        
-        // Obtener todas las colecciones de medios del modelo
-        $allMedia = $model->getMedia();
-        
-        foreach ($allMedia as $media) {
-            $fileSize = $this->formatFileSize($media->size);
-            $fileDate = $this->formatFileDate(strtotime($media->created_at));
-            $documentType = $media->getCustomProperty('document_type') ?? $media->collection_name;
-            
-            $uniqueKey = \Illuminate\Support\Str::random(10) . '_' . $media->id;
-            $this->generatedPdfs[$uniqueKey] = [
-                'name' => $media->name,
-                'url' => $media->getUrl(),
-                'size' => $fileSize,
-                'date' => $fileDate,
-                'category' => $category,
-                'record_type' => $recordType,
-                'record_id' => $model->id,
-                'document_type' => $documentType,
-                'id' => $media->id
-            ];
-        }
-    }
-    
-    /**
      * Abre el modal para subir un documento
      */
     public function openUploadModal($category)
     {
         $this->resetDocumentUpload();
         $this->documentCategory = $category;
-        
-        // Cada categoría ahora requiere un selector específico primero
-        if ($category == 'license') {
-            $this->selectedRecordType = 'license';
-        } elseif ($category == 'medical') {
-            $this->selectedRecordType = 'medical_card';
-        } elseif ($category == 'record') {
-            // No preseleccionamos el tipo de registro para records - el usuario debe elegir
-        } elseif ($category == 'other') {
-            // Para documentos generales no necesitamos asociarlo a un registro
-        }
-        
         $this->showUploadModal = true;
     }
     
     /**
-     * Cierra el modal de subir documentos
+     * Cierra el modal de subida de documentos
      */
     public function closeUploadModal()
     {
-        $this->resetDocumentUpload();
         $this->showUploadModal = false;
-    }
-    
-    /**
-     * Obtiene la lista de accidentes del conductor para el selector
-     */
-    public function getAccidentsProperty()
-    {
-        if (!$this->driver || !$this->driver->id) {
-            return [];
-        }
-        
-        return DB::table('driver_accidents')
-            ->where('user_driver_detail_id', $this->driver->id)
-            ->select('id', 'date', 'description')
-            ->orderBy('date', 'desc')
-            ->get();
-    }
-    
-    /**
-     * Obtiene la lista de violaciones/infracciones del conductor para el selector
-     */
-    public function getViolationsProperty()
-    {
-        if (!$this->driver || !$this->driver->id) {
-            return [];
-        }
-        
-        return DB::table('driver_traffic_convictions')
-            ->where('user_driver_detail_id', $this->driver->id)
-            ->select('id', 'date', 'description')
-            ->orderBy('date', 'desc')
-            ->get();
-    }
-    
-    /**
-     * Obtiene la lista de licencias del conductor para el selector
-     */
-    public function getDriverLicensesProperty()
-    {
-        if (!$this->driver || !$this->driver->id) {
-            return [];
-        }
-        
-        return DB::table('driver_licenses')
-            ->where('user_driver_detail_id', $this->driver->id)
-            ->select('id', 'license_number', 'license_class', 'expiration_date')
-            ->orderBy('expiration_date', 'desc')
-            ->get();
-    }
-    
-    /**
-     * Obtiene la calificación médica del conductor para el selector
-     */
-    public function getMedicalCardsProperty()
-    {
-        if (!$this->driver || !$this->driver->id) {
-            return [];
-        }
-        
-        // La tabla es driver_medical_qualifications, no driver_medical_cards
-        $medicalQualification = DB::table('driver_medical_qualifications')
-            ->where('user_driver_detail_id', $this->driver->id)
-            ->select('id', 'medical_examiner_name as card_number', 'medical_card_expiration_date as expiration_date')
-            ->get();
-            
-        return $medicalQualification;
-    }
-    
-    /**
-     * Obtiene la lista de entrenamientos del conductor para el selector
-     */
-    public function getTrainingsProperty()
-    {
-        if (!$this->driver || !$this->driver->id) {
-            return [];
-        }
-        
-        return DB::table('driver_training_schools')
-            ->where('user_driver_detail_id', $this->driver->id)
-            ->select('id', 'date_from as date', 'school_name as description')
-            ->orderBy('date', 'desc')
-            ->get();
-    }
-    
-    /**
-     * Obtiene la lista de cursos del conductor para el selector
-     */
-    public function getCoursesProperty()
-    {
-        if (!$this->driver || !$this->driver->id) {
-            return [];
-        }
-        
-        return DB::table('driver_courses')
-            ->where('user_driver_detail_id', $this->driver->id)
-            ->select('id', DB::raw('created_at as date'), 'course_name as description')
-            ->orderBy('date', 'desc')
-            ->get();
-    }
-    
-    /**
-     * Obtiene la lista de inspecciones del conductor para el selector
-     */
-    public function getInspectionsProperty()
-    {
-        if (!$this->driver || !$this->driver->id) {
-            return [];
-        }
-        
-        return DB::table('driver_inspections')
-            ->where('user_driver_detail_id', $this->driver->id)
-            ->select('id', 'inspection_date as date', 'description')
-            ->orderBy('date', 'desc')
-            ->get();
-    }
-    
-    /**
-     * Obtiene la lista de pruebas de drogas del conductor para el selector
-     */
-    public function getDrugTestsProperty()
-    {
-        if (!$this->driver || !$this->driver->id) {
-            return [];
-        }
-        
-        // Pruebas de drogas desde DriverTesting
-        $driverTestings = DB::table('driver_testings')
-            ->where('user_driver_detail_id', $this->driver->id)
-            ->where('test_type', 'drug_test')
-            ->select('id', 'test_date as date', 'test_type')
-            ->get();
-            
-        return $driverTestings;
+        $this->resetDocumentUpload();
     }
     
     /**
@@ -900,170 +693,6 @@ class DriverRecruitmentReview extends Component
         $this->tempDocumentPath = null;
         $this->tempDocumentName = null;
         $this->tempDocumentSize = null;
-        $this->selectedRecordType = '';
-        $this->selectedRecordId = null;
-        $this->documentType = '';
-    }
-    
-    /**
-     * Guarda un documento en Spatie Media Library y lo asocia con el registro correcto
-     * 
-     * @return void
-     */
-    public function saveDocument()
-    {
-        // Validación básica
-        if (empty($this->documentFile) || empty($this->documentCategory)) {
-            session()->flash('error', 'Falta el archivo o la categoría');
-            return;
-        }
-        
-        // Validar que se haya seleccionado un registro existente (excepto para documentos generales)
-        if ($this->documentCategory !== 'other' && empty($this->selectedRecordId)) {
-            session()->flash('error', 'Debe seleccionar un registro existente primero');
-            return;
-        }
-        
-        // Validar que se haya seleccionado un tipo de documento
-        if (empty($this->documentType)) {
-            session()->flash('error', 'Debe seleccionar un tipo de documento');
-            return;
-        }
-        
-        // Construir reglas de validación
-        $rules = [
-            'documentFile' => 'required|file|max:10240|mimes:pdf,jpg,jpeg,png', // 10MB máx, permitir PDF e imágenes
-            'documentDescription' => 'required|string|min:3|max:100',
-            'documentCategory' => 'required|string|in:license,medical,record,other',
-            'documentType' => 'required|string'
-        ];
-        
-        if ($this->documentCategory !== 'other') {
-            $rules['selectedRecordId'] = 'required|integer|min:1';
-            
-            if ($this->documentCategory === 'record') {
-                $rules['selectedRecordType'] = 'required|string|in:accident,violation,training,course,inspection,drug_test,testing_drugs';
-            }
-        }
-        
-        $messages = [
-            'documentFile.required' => 'Debe seleccionar un archivo',
-            'documentFile.file' => 'El archivo no es válido',
-            'documentFile.max' => 'El archivo no debe exceder los 10MB',
-            'documentFile.mimes' => 'El archivo debe ser PDF, JPG o PNG',
-            'documentDescription.required' => 'La descripción es obligatoria',
-            'documentDescription.min' => 'La descripción debe tener al menos 3 caracteres',
-            'documentCategory.required' => 'Debe seleccionar una categoría',
-            'documentCategory.in' => 'La categoría seleccionada no es válida',
-            'documentType.required' => 'Debe seleccionar un tipo de documento',
-            'selectedRecordId.required' => 'Debe seleccionar un registro existente',
-            'selectedRecordId.integer' => 'El registro seleccionado no es válido',
-            'selectedRecordType.required' => 'Debe seleccionar un tipo de registro',
-            'selectedRecordType.in' => 'El tipo de registro seleccionado no es válido'
-        ];
-        
-        // Validar el archivo
-        $this->validate($rules, $messages);
-        
-        try {
-            // Obtener el modelo correspondiente según la categoría
-            $model = null;
-            $mediaCollection = null;
-            
-            switch ($this->documentCategory) {
-                case 'license':
-                    $model = \App\Models\Admin\Driver\DriverLicense::findOrFail($this->selectedRecordId);
-                    $mediaCollection = $this->documentType;
-                    break;
-                case 'medical':
-                    $model = \App\Models\Admin\Driver\DriverMedicalQualification::findOrFail($this->selectedRecordId);
-                    $mediaCollection = 'medical_card';
-                    break;
-                case 'record':
-                    switch ($this->selectedRecordType) {
-                        case 'accident':
-                            $model = \App\Models\Admin\Driver\DriverAccident::findOrFail($this->selectedRecordId);
-                            break;
-                        case 'violation':
-                            $model = \App\Models\Admin\Driver\DriverTrafficConviction::findOrFail($this->selectedRecordId);
-                            break;
-                        case 'training':
-                            $model = \App\Models\Admin\Driver\DriverTrainingSchool::findOrFail($this->selectedRecordId);
-                            break;
-                        case 'course':
-                            $model = \App\Models\Admin\Driver\DriverCourse::findOrFail($this->selectedRecordId);
-                            break;
-                        case 'inspection':
-                            $model = \App\Models\Admin\Driver\DriverInspection::findOrFail($this->selectedRecordId);
-                            break;
-                        case 'drug_test':
-                        case 'testing_drugs':
-                            $model = \App\Models\Admin\Driver\DriverTesting::findOrFail($this->selectedRecordId);
-                            break;
-                        default:
-                            session()->flash('error', 'Tipo de registro no válido');
-                            return;
-                    }
-                    $mediaCollection = $this->selectedRecordType;
-                    break;
-                case 'other':
-                    // Para documentos generales, asociar directamente al driver
-                    $model = $this->driver;
-                    $mediaCollection = 'other_documents';
-                    break;
-                default:
-                    session()->flash('error', 'Categoría no válida');
-                    return;
-            }
-            
-            if (!$model) {
-                session()->flash('error', 'No se pudo encontrar el registro seleccionado');
-                return;
-            }
-            
-            // Asegurarse que el modelo utiliza el trait HasMedia
-            if (!method_exists($model, 'addMedia')) {
-                session()->flash('error', 'Este tipo de registro no soporta la carga de documentos');
-                return;
-            }
-            
-            // Agregar el archivo al modelo usando Spatie Media Library
-            $media = $model->addMedia($this->documentFile->getRealPath())
-                ->usingName($this->documentDescription)
-                ->withCustomProperties([
-                    'description' => $this->documentDescription,
-                    'document_type' => $this->documentType,
-                    'category' => $this->documentCategory,
-                    'uploaded_by' => \Illuminate\Support\Facades\Auth::id(),
-                    'record_type' => $this->selectedRecordType ?? null
-                ])
-                ->toMediaCollection($mediaCollection);
-            
-            // Actualizar el estado del registro para indicar que tiene documentos
-            if (Schema::hasColumn($model->getTable(), 'has_documents')) {
-                $model->update(['has_documents' => true]);
-            }
-            
-            // Limpiar el formulario
-            $this->resetDocumentUpload();
-            $this->showUploadModal = false;
-            
-            // Recargar documentos
-            $this->loadGeneratedPdfs();
-            
-            // Mostrar mensaje de éxito
-            session()->flash('message', 'Documento guardado correctamente');
-            
-            // Emitir evento para actualizar la vista
-            $this->dispatch('documentUploaded');
-            
-        } catch (\Exception $e) {
-            // Registrar el error
-            \Illuminate\Support\Facades\Log::error('Error al guardar documento: ' . $e->getMessage());
-            
-            // Mostrar mensaje de error
-            session()->flash('error', 'Error al guardar el documento: ' . $e->getMessage());
-        }
     }
     
     /**
@@ -1084,44 +713,22 @@ class DriverRecruitmentReview extends Component
     }
     
     /**
-     * Método auxiliar para el procesamiento de documentos
-     * @internal Este método reemplaza la duplicación de saveDocument()
+     * Guarda el documento subido
      */
-    private function processDocument()
+    public function saveDocument()
     {
-        // Este método se ha renombrado porque duplicaba saveDocument()
-        // Usar el método saveDocument() original (línea ~910) en su lugar
-        // Esto evita el error: Cannot redeclare App\Livewire\Admin\Driver\Recruitment\DriverRecruitmentReview::saveDocument()
-        
-        // Validar que se haya seleccionado un registro existente (excepto para documentos generales)
-        if ($this->documentCategory !== 'other' && empty($this->selectedRecordId)) {
-            session()->flash('error', 'Debe seleccionar un registro existente primero');
+        // Validación básica
+        if (empty($this->documentFile) || empty($this->documentCategory)) {
+            session()->flash('error', 'Falta el archivo o la categoría');
             return;
         }
         
-        // Validar que se haya seleccionado un tipo de documento
-        if (empty($this->documentType)) {
-            session()->flash('error', 'Debe seleccionar un tipo de documento');
-            return;
-        }
-        
-        // Construir reglas de validación
-        $rules = [
+        // Validar el archivo
+        $this->validate([
             'documentFile' => 'required|file|max:10240|mimes:pdf,jpg,jpeg,png', // 10MB máx, permitir PDF e imágenes
             'documentDescription' => 'required|string|min:3|max:100',
-            'documentCategory' => 'required|string|in:license,medical,record,other',
-            'documentType' => 'required|string'
-        ];
-        
-        if ($this->documentCategory !== 'other') {
-            $rules['selectedRecordId'] = 'required|integer|min:1';
-            
-            if ($this->documentCategory === 'record') {
-                $rules['selectedRecordType'] = 'required|string|in:accident,violation,training,course,inspection,drug_test,testing_drugs';
-            }
-        }
-        
-        $messages = [
+            'documentCategory' => 'required|string|in:license,medical,record,other'
+        ], [
             'documentFile.required' => 'Debe seleccionar un archivo',
             'documentFile.file' => 'El archivo no es válido',
             'documentFile.max' => 'El archivo no debe exceder los 10MB',
@@ -1129,132 +736,48 @@ class DriverRecruitmentReview extends Component
             'documentDescription.required' => 'La descripción es obligatoria',
             'documentDescription.min' => 'La descripción debe tener al menos 3 caracteres',
             'documentCategory.required' => 'Debe seleccionar una categoría',
-            'documentCategory.in' => 'La categoría seleccionada no es válida',
-            'documentType.required' => 'Debe seleccionar un tipo de documento',
-            'selectedRecordId.required' => 'Debe seleccionar un registro existente',
-            'selectedRecordId.integer' => 'El registro seleccionado no es válido',
-            'selectedRecordType.required' => 'Debe seleccionar un tipo de registro',
-            'selectedRecordType.in' => 'El tipo de registro seleccionado no es válido'
-        ];
-        
-        // Validar el archivo
-        $this->validate($rules, $messages);
+            'documentCategory.in' => 'La categoría seleccionada no es válida'
+        ]);
         
         try {
-            // Obtener el modelo correspondiente según la categoría
-            $model = null;
-            $mediaCollection = null;
+            // Determinar directorio según categoría
+            $categoryMap = [
+                'license' => 'licenses',
+                'medical' => 'medical',
+                'record' => 'records',
+                'other' => 'documents'
+            ];
             
-            switch ($this->documentCategory) {
-                case 'license':
-                    // Buscar la licencia
-                    $model = \App\Models\Admin\Driver\DriverLicense::findOrFail($this->selectedRecordId);
-                    $mediaCollection = $this->documentType; // license_front, license_back, etc.
-                    break;
-                    
-                case 'medical':
-                    // Buscar la calificación médica
-                    $model = \App\Models\Admin\Driver\DriverMedicalQualification::findOrFail($this->selectedRecordId);
-                    $mediaCollection = 'medical_card'; // Definido en DriverMedicalQualification
-                    break;
-                    
-                case 'record':
-                    // Buscar el registro según su tipo
-                    switch ($this->selectedRecordType) {
-                        case 'accident':
-                            $model = \App\Models\Admin\Driver\DriverAccident::findOrFail($this->selectedRecordId);
-                            break;
-                        case 'violation':
-                            $model = \App\Models\Admin\Driver\DriverTrafficConviction::findOrFail($this->selectedRecordId);
-                            break;
-                        case 'training':
-                            $model = \App\Models\Admin\Driver\DriverTrainingSchool::findOrFail($this->selectedRecordId);
-                            break;
-                        case 'course':
-                            $model = \App\Models\Admin\Driver\DriverCourse::findOrFail($this->selectedRecordId);
-                            break;
-                        case 'inspection':
-                            $model = \App\Models\Admin\Driver\DriverInspection::findOrFail($this->selectedRecordId);
-                            break;
-                        case 'drug_test':
-                        case 'testing_drugs':
-                            $model = \App\Models\Admin\Driver\DriverTesting::findOrFail($this->selectedRecordId);
-                            break;
-                    }
-                    $mediaCollection = $this->documentType; // report, certificate, form, etc.
-                    break;
-                    
-                case 'other':
-                    // Para documentos generales, adjuntar directamente al driver
-                    $model = $this->driver;
-                    $mediaCollection = 'other_documents';
-                    break;
-            }
+            $subDir = $categoryMap[$this->documentCategory] ?? 'documents';
+            $driverPath = 'driver/' . $this->driver->id;
+            $targetDir = $driverPath . '/' . $subDir;
             
-            if (!$model) {
-                throw new \Exception('No se pudo encontrar el registro seleccionado');
-            }
+            // Asegurarse que el directorio exista
+            Storage::disk('public')->makeDirectory($targetDir);
             
-            // Verificar si el modelo implementa HasMedia
-            if (!method_exists($model, 'addMedia')) {
-                throw new \Exception('El registro seleccionado no soporta archivos adjuntos');
-            }
+            // Obtener la extensión original del archivo
+            $extension = $this->documentFile->getClientOriginalExtension();
             
-            // Guardar el archivo temporal en el servidor
-            $tempPath = $this->documentFile->store('temp', 'public');
-            $fullTempPath = storage_path('app/public/' . $tempPath);
+            // Generar nombre único para el archivo manteniendo la extensión original
+            $fileName = $this->documentDescription ? 
+                Str::slug($this->documentDescription) . '_' . time() . '.' . $extension :
+                'document_' . time() . '.' . $extension;
+            
+            // Guardar el archivo usando el método store de Livewire
+            $storedPath = $this->documentFile->store($targetDir, 'public');
             
             // Obtener información del archivo para la vista previa
             $this->tempDocumentName = $this->documentFile->getClientOriginalName();
             $this->tempDocumentSize = $this->documentFile->getSize();
             
-            // Añadir el archivo a la colección de medios del modelo usando Spatie Media Library
-            $media = $model->addMedia($fullTempPath)
-                ->usingName($this->documentDescription)
-                ->withCustomProperties([
-                    'description' => $this->documentDescription,
-                    'document_type' => $this->documentType,
-                    'uploaded_by' => \Illuminate\Support\Facades\Auth::id(),
-                    'category' => $this->documentCategory,
-                    'record_type' => $this->documentCategory === 'record' ? $this->selectedRecordType : null,
-                ])
-                ->toMediaCollection($mediaCollection);
-            
-            // Actualizar el modelo para indicar que tiene documentos
-            if (method_exists($model, 'update')) {
-                $model->update(['has_documents' => true]);
-            }
-            
-            // Actualizar la lista de documentos generados
-            $fileSize = $this->formatFileSize($this->documentFile->getSize());
-            $fileDate = $this->formatFileDate(now()->timestamp);
-            
-            $mediaId = isset($media) && $media ? $media->id : 0;
-            $uniqueKey = \Illuminate\Support\Str::random(10) . '_' . $mediaId;
-            $this->generatedPdfs[$uniqueKey] = [
-                'name' => $this->documentDescription,
-                'url' => isset($media) && $media ? $media->getUrl() : '',
-                'size' => $fileSize,
-                'date' => $fileDate,
-                'category' => $this->documentCategory,
-                'record_type' => $this->documentCategory === 'record' ? $this->selectedRecordType : null,
-                'record_id' => $this->selectedRecordId,
-                'document_type' => $this->documentType,
-                'id' => $mediaId
-            ];
-            
-            // Si es un documento médico, actualizar información médica
-            if ($this->documentCategory === 'medical') {
-                $this->loadDriverData(); // Recargar datos del conductor
-                $this->dispatch('medicalDocumentUpdated'); // Emitir evento para actualizar UI
-            }
+            // Registrar en la base de datos según la categoría
+            $this->registerDocumentInDatabase($storedPath, $fileName);
             
             session()->flash('message', 'Documento guardado correctamente');
             $this->closeUploadModal();
             $this->loadGeneratedPdfs(); // Recargar lista de documentos
-        }
-        catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Error al guardar documento', [
+        } catch (\Exception $e) {
+            Log::error('Error al guardar documento', [
                 'driver_id' => $this->driver->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -1265,330 +788,40 @@ class DriverRecruitmentReview extends Component
     }
     
     /**
-     * Actualiza el registro seleccionado para indicar que tiene documentos asociados
-     */
-    protected function updateRecordWithDocumentInfo()
-    {
-        if (empty($this->selectedRecordId)) {
-            return;
-        }
-        
-        $table = null;
-        $updateData = ['has_documents' => true, 'updated_at' => now()];
-        
-        switch ($this->documentCategory) {
-            case 'license':
-                $table = 'driver_licenses';
-                break;
-            case 'medical':
-                $table = 'driver_medical_cards';
-                break;
-            case 'record':
-                switch ($this->selectedRecordType) {
-                    case 'accident':
-                        $table = 'driver_accidents';
-                        break;
-                    case 'violation':
-                        $table = 'driver_traffic_convictions';
-                        break;
-                    case 'training':
-                        $table = 'driver_trainings';
-                        break;
-                    case 'course':
-                        $table = 'driver_courses';
-                        break;
-                    case 'inspection':
-                        $table = 'driver_inspections';
-                        break;
-                    case 'drug_test':
-                        $table = 'driver_drug_tests';
-                        break;
-                    case 'testing_drugs':
-                        $table = 'driver_testings';
-                        break;
-                }
-                break;
-        }
-        
-        if ($table) {
-            DB::table($table)
-                ->where('id', $this->selectedRecordId)
-                ->update($updateData);
-        }
-    }
-    
-    /**
      * Registra el documento en la base de datos según su categoría
      */
     protected function registerDocumentInDatabase($filePath, $fileName)
     {
-        // ID del documento a devolver
-        $documentId = null;
-        
-        // Crear un registro base del documento
-        $documentData = [
-            'driver_id' => $this->driver->id,
-            'application_id' => isset($this->application) && $this->application ? $this->application->id : null,
-            'category' => $this->documentCategory,
-            'file_path' => $filePath,
-            'file_name' => $fileName,
-            'description' => $this->documentDescription,
-            'document_type' => $this->documentType,
-            'uploaded_by' => \Illuminate\Support\Facades\Auth::id(),
-            'record_type' => $this->documentCategory === 'record' ? $this->selectedRecordType : null,
-        ];
-        
-        // Obtener el modelo según la categoría y tipo de registro
-        $model = null;
-        $mediaCollection = 'documents';
-        
+        // Implementar según la estructura de la base de datos
+        // Este método debe adaptarse a la estructura específica del proyecto
         switch ($this->documentCategory) {
             case 'license':
-                $model = \App\Models\Admin\Driver\DriverLicense::findOrFail($this->selectedRecordId);
-                $mediaCollection = $this->documentType;
+                // Registrar en la tabla de licencias si es necesario
                 break;
             case 'medical':
-                $model = \App\Models\Admin\Driver\DriverMedicalQualification::findOrFail($this->selectedRecordId);
-                $mediaCollection = 'medical_card';
+                // Registrar en la tabla de documentos médicos
                 break;
             case 'record':
-                switch ($this->selectedRecordType) {
-                    case 'accident':
-                        $model = \App\Models\Admin\Driver\DriverAccident::findOrFail($this->selectedRecordId);
-                        break;
-                    case 'violation':
-                        $model = \App\Models\Admin\Driver\DriverTrafficConviction::findOrFail($this->selectedRecordId);
-                        break;
-                    case 'training':
-                        $model = \App\Models\Admin\Driver\DriverTrainingSchool::findOrFail($this->selectedRecordId);
-                        break;
-                    case 'course':
-                        $model = \App\Models\Admin\Driver\DriverCourse::findOrFail($this->selectedRecordId);
-                        break;
-                    case 'inspection':
-                        $model = \App\Models\Admin\Driver\DriverInspection::findOrFail($this->selectedRecordId);
-                        break;
-                    case 'drug_test':
-                    case 'testing_drugs':
-                        $model = \App\Models\Admin\Driver\DriverTesting::findOrFail($this->selectedRecordId);
-                        break;
-                }
-                $mediaCollection = $this->documentType;
+                // Registrar en la tabla de récords
                 break;
-            default:
-                $model = $this->driver;
-                $mediaCollection = 'other_documents';
+            case 'other':
+                // Registrar como documento general
                 break;
         }
         
-        if (!$model) {
-            return null;
-        }
-        
-        // Agregar el archivo a la colección de medios del modelo
-        $media = $model->addMedia($filePath)
-            ->usingName($fileName)
-            ->withCustomProperties($documentData)
-            ->toMediaCollection($mediaCollection);
-            
-        // Actualizar el modelo para indicar que tiene documentos
-        if (method_exists($model, 'update')) {
-            $model->update(['has_documents' => true]);
-        }
-            
         // Actualizar la lista de documentos generados
-        if (isset($media) && $media) {
-            $fileSize = $this->formatFileSize($this->documentFile->getSize());
-            $fileDate = $this->formatFileDate(now()->timestamp);
-            
-            $mediaId = $media->id ?? 0;
-            $uniqueKey = Str::random(10) . '_' . $mediaId;
-            $this->generatedPdfs[$uniqueKey] = [
-                'name' => $this->documentDescription,
-                'url' => $media->getUrl(),
-                'size' => $fileSize,
-                'date' => $fileDate,
-                'category' => $this->documentCategory,
-                'record_type' => $this->documentCategory === 'record' ? $this->selectedRecordType : null,
-                'record_id' => $this->selectedRecordId,
-                'document_type' => $this->documentType,
-                'id' => $mediaId
-            ];
-            
-            // Si es un documento médico, actualizar información médica
-            if ($this->documentCategory === 'medical') {
-                $this->loadDriverData(); // Recargar datos del conductor
-                $this->dispatch('medicalDocumentUpdated'); // Emitir evento para actualizar UI
-            }
-        }
+        $fileSize = $this->formatFileSize(Storage::disk('public')->size($filePath));
+        $fileDate = $this->formatFileDate(time());
         
-        // Mostrar mensaje de éxito y limpiar el formulario
-        session()->flash('message', 'Documento guardado correctamente');
-        $this->closeUploadModal();
-        $this->loadGeneratedPdfs(); // Recargar lista de documentos
-        
-        return $media;
-    }  // Fin del método
-
-/**
- * Maneja errores durante el proceso de guardar documentos
- * 
- * @param \Exception $e La excepción capturada
- * @return void
- */
-private function handleDocumentError(\Exception $e)
-{
-    // Registrar el error en los logs
-    \Illuminate\Support\Facades\Log::error('Error al guardar documento', [
-        'driver_id' => $this->driver->id ?? 'unknown',
-        'error' => $e->getMessage(),
-        'trace' => $e->getTraceAsString()
-    ]);
-            
-    session()->flash('error', 'Error al guardar documento: ' . $e->getMessage());
-}
-
-/**
- * Carga los documentos PDF generados para este conductor/solicitud usando Spatie Media Library
- */
-/**
- * Método auxiliar para el procesamiento de documentos (reemplaza loadGeneratedPdfs duplicado)
- * @internal Este método se ha renombrado para evitar duplicación
- */
-private function loadAllDocuments()
-{
-    // Este método se ha renombrado porque duplicaba loadGeneratedPdfs
-    if (!$this->driver || !$this->driver->id) {
-        return;
-    }
-            
-    $this->generatedPdfs = [];
-    $collections = ['license_front', 'license_back', 'medical_card', 'other_documents', 'report', 'certificate', 'form'];
-            
-    // Cargar documentos de licencia
-    $licenses = \App\Models\Admin\Driver\DriverLicense::where('user_driver_detail_id', $this->driver->id)->get();
-    foreach ($licenses as $license) {
-        $this->loadModelMedia($license, 'license');
-    }
-            
-    // Cargar documentos de calificación médica
-    $medicalCards = \App\Models\Admin\Driver\DriverMedicalQualification::where('user_driver_detail_id', $this->driver->id)->get();
-    foreach ($medicalCards as $medicalCard) {
-        $this->loadModelMedia($medicalCard, 'medical');
-    }
-            
-    // Cargar documentos de accidentes
-    $accidents = \App\Models\Admin\Driver\DriverAccident::where('user_driver_detail_id', $this->driver->id)->get();
-    foreach ($accidents as $accident) {
-        $this->loadModelMedia($accident, 'record', 'accident');
-    }
-            
-    // Cargar documentos de violaciones
-    $violations = \App\Models\Admin\Driver\DriverTrafficConviction::where('user_driver_detail_id', $this->driver->id)->get();
-    foreach ($violations as $violation) {
-        $this->loadModelMedia($violation, 'record', 'violation');
-    }
-            
-    // Cargar documentos de entrenamientos
-    $trainings = \App\Models\Admin\Driver\DriverTrainingSchool::where('user_driver_detail_id', $this->driver->id)->get();
-    foreach ($trainings as $training) {
-        $this->loadModelMedia($training, 'record', 'training');
-    }
-            
-    // Cargar documentos de cursos
-    $courses = \App\Models\Admin\Driver\DriverCourse::where('user_driver_detail_id', $this->driver->id)->get();
-    foreach ($courses as $course) {
-        $this->loadModelMedia($course, 'record', 'course');
-    }
-            
-    // Cargar documentos de inspecciones
-    $inspections = \App\Models\Admin\Driver\DriverInspection::where('user_driver_detail_id', $this->driver->id)->get();
-    foreach ($inspections as $inspection) {
-        $this->loadModelMedia($inspection, 'record', 'inspection');
-    }
-            
-    // Cargar documentos de pruebas de drogas
-    $drugTests = \App\Models\Admin\Driver\DriverTesting::where('user_driver_detail_id', $this->driver->id)
-        ->where('test_type', 'drug_test')
-        ->get();
-    foreach ($drugTests as $drugTest) {
-        $this->loadModelMedia($drugTest, 'record', 'drug_test');
-    }
-            
-    // Cargar documentos generales del conductor
-    if (method_exists($this->driver, 'getMedia')) {
-        $this->loadModelMedia($this->driver, 'other');
-    }
-}
-
-/**
- * Método auxiliar para cargar los medios (documentos) de un modelo (segunda versión)
- * @internal Este método se ha renombrado para evitar duplicación
- */
-private function loadModelMedia($model, $category, $recordType = null)
-{
-    // Este método se ha renombrado porque duplicaba loadMediaFromModel
-    if (!method_exists($model, 'getMedia')) {
-        return;
-    }
-            
-    // Obtener todas las colecciones de medios del modelo
-    $allMedia = $model->getMedia();
-            
-    foreach ($allMedia as $media) {
-        $fileSize = $this->formatFileSize($media->size);
-        $fileDate = $this->formatFileDate(strtotime($media->created_at));
-        $documentType = $media->getCustomProperty('document_type') ?? $media->collection_name;
-                
-        $uniqueKey = Str::random(10) . '_' . $media->id;
-        $this->generatedPdfs[$uniqueKey] = [
-            'name' => $media->name,
-            'url' => $media->getUrl(),
+        $this->generatedPdfs[$fileName] = [
+            'name' => $this->documentDescription ?: 'Documento: ' . $fileName,
+            'url' => asset('storage/' . $filePath),
             'size' => $fileSize,
             'date' => $fileDate,
-            'category' => $category,
-            'record_type' => $recordType,
-            'record_id' => $model->id,
-            'document_type' => $documentType,
-            'id' => $media->id
+            'category' => $this->documentCategory
         ];
-        
-        // Procesar acciones especiales según categoría
-        if ($category === 'medical') {
-            // Actualizar fecha de vencimiento médica si es necesario
-            // Código para actualizar información médica
-        } elseif ($category === 'record') {
-            // Actualizar estado del récord relacionado si existe
-            if (!empty($this->recordSubtype) && !empty($this->relatedRecordId)) {
-                $recordTable = null;
-                
-                if ($this->recordSubtype === 'accident') {
-                        $recordTable = 'driver_accidents';
-                    } elseif ($this->recordSubtype === 'violation') {
-                        $recordTable = 'driver_traffic_convictions';
-                    } elseif ($this->recordSubtype === 'course') {
-                        $recordTable = 'driver_courses';
-                    } elseif ($this->recordSubtype === 'inspection') {
-                        $recordTable = 'driver_inspections';
-                    } elseif ($this->recordSubtype === 'drug_test') {
-                        $recordTable = 'driver_testings';
-                    } elseif ($this->recordSubtype === 'training') {
-                        $recordTable = 'driver_trainings';
-                    }
-                    
-                    if ($recordTable) {
-                        DB::table($recordTable)
-                            ->where('id', $this->relatedRecordId)
-                            ->update(['has_documents' => true]);
-                    }
-                }
-            }
-        }
-        
-        // No se necesita devolver nada ya que este método solo actualiza registros
-        return true;
     }
-    
+
     /**
      * Regenera todos los documentos PDF para la aplicación del conductor
      */
