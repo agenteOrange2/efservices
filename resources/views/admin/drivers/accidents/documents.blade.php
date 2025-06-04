@@ -125,13 +125,26 @@
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <a href="{{ route('admin.accidents.document.show', $document->id) }}" 
-                                                       class="font-medium whitespace-nowrap truncate max-w-[250px] inline-block" 
-                                                       target="_blank" title="{{ $document->original_name }}">
-                                                        {{ $document->original_name ?? $document->file_name }}
-                                                    </a>
+                                                    @if(isset($document->source) && $document->source === 'media_library')
+                                                        <a href="{{ route('admin.accidents.document.preview', $document->id) }}" 
+                                                           class="font-medium whitespace-nowrap truncate max-w-[250px] inline-block" 
+                                                           target="_blank" title="{{ $document->original_name }}">
+                                                            {{ $document->original_name ?? $document->file_name }}
+                                                        </a>
+                                                    @else
+                                                        <a href="{{ route('admin.accidents.document.preview', $document->id) }}" 
+                                                           class="font-medium whitespace-nowrap truncate max-w-[250px] inline-block" 
+                                                           target="_blank" title="{{ $document->original_name }}">
+                                                            {{ $document->original_name ?? $document->file_name }}
+                                                        </a>
+                                                    @endif
                                                     <div class="text-slate-500 text-xs whitespace-nowrap mt-0.5">
                                                         {{ round($document->size / 1024, 2) }} KB · {{ strtoupper($extension) }}
+                                                        @if(isset($document->source))
+                                                            <span class="text-xs text-primary ml-1">
+                                                                {{ $document->source === 'media_library' ? '(Media Library)' : '' }}
+                                                            </span>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
@@ -161,21 +174,42 @@
                                         </td>
                                         <td class="table-report__action w-56">
                                             <div class="flex justify-center items-center">
-                                                <a href="{{ route('admin.accidents.document.preview', $document->id) }}" class="btn btn-sm btn-primary mr-2" target="_blank">
-                                                    <x-base.lucide class="w-4 h-4" icon="eye" />
-                                                </a>
-                                                @if(isset($document->accident))
-                                                    <a href="{{ route('admin.accidents.edit', $document->accident->id) }}#documents" class="btn btn-sm btn-warning mr-2">
+                                                @if(isset($document->source) && $document->source === 'media_library')
+                                                    <!-- Vista previa para archivos de Media Library -->
+                                                    <a href="{{ route('admin.accidents.document.preview', $document->id) }}" class="btn btn-sm btn-primary mr-2" target="_blank">
+                                                        <x-base.lucide class="w-4 h-4" icon="eye" />
+                                                    </a>
+                                                @else
+                                                    <!-- Acciones para documentos del sistema antiguo -->
+                                                    <a href="{{ route('admin.accidents.document.preview', $document->id) }}" class="btn btn-sm btn-primary mr-2" target="_blank">
+                                                        <x-base.lucide class="w-4 h-4" icon="eye" />
+                                                    </a>
+                                                @endif
+                                                
+                                                <!-- Botón para ir a la edición del accidente -->
+                                                @if(isset($document->accident_id))
+                                                    <a href="{{ route('admin.accidents.edit', $document->accident_id) }}#documents" class="btn btn-sm btn-warning mr-2">
                                                         <x-base.lucide class="w-4 h-4" icon="clipboard-list" />
                                                     </a>
                                                 @endif
-                                                <form action="{{ route('admin.accidents.documents.destroy', $document->id) }}" method="POST" class="inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Está seguro de eliminar este documento?')">
+                                                
+                                                <!-- Botón para eliminar el documento -->
+                                                @if(isset($document->source) && $document->source === 'media_library')
+                                                    <!-- Eliminar archivo de Media Library -->
+                                                    <button type="button" class="btn btn-sm btn-danger" 
+                                                            onclick="deleteMedia('{{ $document->media_id }}', this)">
                                                         <x-base.lucide class="w-4 h-4" icon="trash" />
                                                     </button>
-                                                </form>
+                                                @else
+                                                    <!-- Eliminar documento del sistema antiguo -->
+                                                    <form action="{{ route('admin.accidents.documents.destroy', $document->id) }}" method="POST" class="inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Está seguro de eliminar este documento?')">
+                                                            <x-base.lucide class="w-4 h-4" icon="trash" />
+                                                        </button>
+                                                    </form>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>
@@ -250,6 +284,57 @@
         </x-base.dialog.panel>
     </x-base.dialog>
     @endif
+    
+    <!-- Scripts para manejo de Media Library -->
+    <script>
+        function deleteMedia(mediaId, button) {
+            if (!confirm('¿Está seguro de eliminar este archivo?')) {
+                return;
+            }
+            
+            // Mostrar indicador de carga
+            const originalContent = button.innerHTML;
+            button.innerHTML = '<svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            button.disabled = true;
+            
+            // Realizar la solicitud AJAX para eliminar el archivo
+            fetch('/api/documents/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    mediaId: mediaId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Eliminar la fila de la tabla
+                    const row = button.closest('tr');
+                    row.classList.add('bg-red-100');
+                    setTimeout(() => {
+                        row.style.transition = 'opacity 0.5s';
+                        row.style.opacity = '0';
+                        setTimeout(() => {
+                            row.remove();
+                        }, 500);
+                    }, 300);
+                } else {
+                    alert('Error al eliminar el archivo: ' + (data.message || 'Error desconocido'));
+                    button.innerHTML = originalContent;
+                    button.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al eliminar el archivo. Consulte la consola para más detalles.');
+                button.innerHTML = originalContent;
+                button.disabled = false;
+            });
+        }
+    </script>
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {

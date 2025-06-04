@@ -83,7 +83,7 @@
                         <div>
                             <x-base.form-label for="accident_date">Accident Date</x-base.form-label>
                             <x-base.form-input id="accident_date" name="accident_date" type="date" class="w-full"
-                                value="{{ $accident->accident_date->format('m-d-Y') }}" required />
+                                value="{{ $accident->accident_date ? $accident->accident_date->format('Y-m-d') : '' }}" required />
                             @error('accident_date')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -195,6 +195,51 @@
                             <!-- Campo oculto para almacenar los archivos subidos -->
                             <input type="hidden" name="accident_files" id="accident_files_input">
                         </div>
+                    </div>
+
+                    <!-- Archivos de Media Library -->
+                    <div class="mt-8 border-t pt-6" id="media_files">
+                        <h3 class="text-lg font-medium mb-4">Images and Media Files</h3>
+                        
+                        @if($mediaFiles && count($mediaFiles) > 0)
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                @foreach($mediaFiles as $media)
+                                    <div class="border rounded-md p-2 relative group">
+                                        @php
+                                            $extension = pathinfo($media->file_name, PATHINFO_EXTENSION);
+                                            $isImage = in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif']);
+                                        @endphp
+                                        
+                                        @if($isImage)
+                                            <img src="{{ $media->getUrl() }}" alt="{{ $media->file_name }}" class="w-full h-auto rounded">
+                                        @else
+                                            <div class="flex items-center justify-center bg-gray-100 rounded h-32">
+                                                <x-base.lucide class="w-12 h-12 text-gray-500" icon="file" />
+                                                <span class="ml-2">{{ $extension }}</span>
+                                            </div>
+                                        @endif
+                                        
+                                        <div class="mt-2">
+                                            <p class="text-sm truncate">{{ $media->file_name }}</p>
+                                            <p class="text-xs text-gray-500">{{ number_format($media->size / 1024, 2) }} KB</p>
+                                        </div>
+                                        
+                                        <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <a href="{{ $media->getUrl() }}" target="_blank" class="bg-blue-500 text-white p-1 rounded mr-1">
+                                                <x-base.lucide class="w-4 h-4" icon="eye" />
+                                            </a>
+                                            <button type="button" 
+                                                onclick="deleteMedia({{ $media->id }}, '{{ $media->file_name }}')" 
+                                                class="bg-red-500 text-white p-1 rounded">
+                                                <x-base.lucide class="w-4 h-4" icon="trash" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-gray-500">No media files found.</div>
+                        @endif
                     </div>
                         
                         <!-- Ya no necesitamos este componente porque lo agregamos arriba -->        
@@ -318,6 +363,34 @@
                         document.getElementById('number_of_fatalities').value = '';
                     }
                 });
+                
+                // Función para eliminar archivos de Media Library
+                window.deleteMedia = function(mediaId, fileName) {
+                    if (confirm('¿Estás seguro de que quieres eliminar el archivo ' + fileName + '?')) {
+                        fetch('{{ route("admin.accidents.ajax-destroy-media", "") }}/' + mediaId, {
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.success) {
+                                // Mostrar mensaje de éxito
+                                alert('Archivo eliminado correctamente');
+                                // Recargar la página para reflejar los cambios
+                                location.reload();
+                            } else {
+                                alert('Error al eliminar archivo: ' + (result.message || 'Error desconocido'));
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error en la solicitud AJAX:', error);
+                            alert('Error al eliminar archivo: ' + error.message);
+                        });
+                    }
+                };
             });
         </script>
     @endpush

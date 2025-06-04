@@ -123,32 +123,36 @@
                             @enderror
                         </div>
                         <div class="col-span-1 md:col-span-2">
-                            @php
-                            // Prepara los archivos existentes para el componente Livewire
-                            $existingFilesArray = [];
-                            $documents = $conviction->documents()->where('collection', 'traffic_convictions')->get();
-                            foreach($documents as $document) {
-                                $existingFilesArray[] = [
-                                    'id' => $document->id,
-                                    'name' => $document->file_name,
-                                    'file_name' => $document->file_name,
-                                    'mime_type' => $document->mime_type,
-                                    'size' => $document->size,
-                                    'created_at' => $document->created_at->format('Y-m-d H:i:s'),
-                                    'url' => $document->getUrl(),
-                                    'is_temp' => false
-                                ];
-                            }
-                            @endphp
+                            <x-base.form-label>Traffic Conviction Images</x-base.form-label>
+                            <div class="border border-dashed rounded-md p-4 mt-2">
+                                @php
+                                // Prepara los archivos existentes para el componente Livewire desde Spatie Media Library
+                                $existingFilesArray = [];
+                                $mediaItems = $conviction->getMedia('traffic-images');
+                                
+                                foreach($mediaItems as $media) {
+                                    $existingFilesArray[] = [
+                                        'id' => $media->id,
+                                        'name' => $media->file_name,
+                                        'file_name' => $media->file_name,
+                                        'mime_type' => $media->mime_type,
+                                        'size' => $media->size,
+                                        'created_at' => $media->created_at->format('Y-m-d H:i:s'),
+                                        'url' => $media->getUrl(),
+                                        'is_temp' => false
+                                    ];
+                                }
+                                @endphp
 
-                            <livewire:components.file-uploader
-                                model-name="traffic_files"
-                                :model-index="0"
-                                :label="'Upload Documents'"
-                                :existing-files="$existingFilesArray"
-                            />
-                            <!-- Campo oculto para almacenar los archivos subidos -->
-                            <input type="hidden" name="traffic_files" id="traffic_files_input">
+                                <livewire:components.file-uploader
+                                    model-name="traffic_images"
+                                    :model-index="0"
+                                    :auto-upload="true"
+                                    class="border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer"
+                                    :existing-files="$existingFilesArray"
+                                />
+                                <!-- Campo oculto para almacenar los archivos subidos - valor inicial vacío pero no null -->
+                                <input type="hidden" name="traffic_image_files" id="traffic_image_files_input" value="">
                         </div>
                     </div>
 
@@ -168,80 +172,109 @@
 
     @push('scripts')
         <script>
-            // Inicializar el array para almacenar los archivos
-            let uploadedFiles = [];
-            
             document.addEventListener('DOMContentLoaded', function() {
-                const trafficFilesInput = document.getElementById('traffic_files_input');
+                // Inicializar carrier y drivers
+                const carrierId = {{ $conviction->userDriverDetail->carrier_id }};
+                if (carrierId) {
+                    document.getElementById('carrier').value = carrierId;
+                    updateDrivers(carrierId);
+                }
+                
+                // Inicializar el array para almacenar los archivos
+                let uploadedFiles = [];
+                const trafficImagesInput = document.getElementById('traffic_image_files_input');
+                console.log('Campo oculto encontrado:', trafficImagesInput ? 'Sí' : 'No');
                 
                 // Escuchar eventos del componente Livewire
                 window.addEventListener('livewire:initialized', () => {
+                    console.log('Livewire inicializado, preparando escucha de eventos');
+                    
                     // Escuchar el evento fileUploaded del componente Livewire
                     Livewire.on('fileUploaded', (eventData) => {
-                        console.log('Archivo subido:', eventData);
+                        console.log('Archivo subido evento recibido:', eventData);
                         // Extraer los datos del evento
                         const data = eventData[0]; // Los datos vienen como primer elemento del array
                         
-                        if (data.modelName === 'traffic_files') {
+                        if (data.modelName === 'traffic_images') {
+                            console.log('Archivo subido para traffic_images');
                             // Añadir el archivo al array de archivos
                             uploadedFiles.push({
-                                path: data.tempPath,
+                                name: data.originalName,
                                 original_name: data.originalName,
                                 mime_type: data.mimeType,
-                                size: data.size
+                                size: data.size,
+                                path: data.tempPath,
+                                tempPath: data.tempPath,
+                                is_temp: true
                             });
                             
-                            // Actualizar el campo oculto con el nuevo array
-                            trafficFilesInput.value = JSON.stringify(uploadedFiles);
-                            console.log('Archivos actualizados:', trafficFilesInput.value);
-                        }
+                            // Asegurarnos que el campo oculto sigue existiendo
+                            if (trafficImagesInput) {
+                                trafficImagesInput.value = JSON.stringify(uploadedFiles);
+                                console.log('Campo actualizado con:', trafficImagesInput.value);
+                            } else {
+                                console.error('Campo oculto no encontrado en el DOM');
+                            }
+                        }    
                     });
                     
                     // Escuchar el evento fileRemoved del componente Livewire
                     Livewire.on('fileRemoved', (eventData) => {
-                        console.log('Archivo eliminado:', eventData);
+                        console.log('Archivo eliminado evento recibido:', eventData);
                         // Extraer los datos del evento
                         const data = eventData[0]; // Los datos vienen como primer elemento del array
                         
-                        if (data.modelName === 'traffic_files') {
-                            const fileId = data.fileId;
+                        if (data.modelName === 'traffic_images') {
+                            console.log('Eliminando archivo de traffic_images');
                             
-                            // Si no es un archivo temporal, eliminarlo mediante formulario
-                            if (!data.isTemp && !fileId.startsWith('temp_')) {
-                                // Crear y enviar un formulario para eliminar el documento
-                                const form = document.createElement('form');
-                                form.method = 'POST';
-                                form.action = '{{ route("admin.traffic.documents.delete", "") }}/' + fileId;
-                                form.style.display = 'none';
+                            // Si no es un archivo temporal, eliminarlo mediante AJAX
+                            if (!data.isTemp && data.fileId) {
+                                console.log('Eliminando archivo permanente con ID:', data.fileId);
+                                const mediaId = data.fileId;
                                 
-                                const csrfField = document.createElement('input');
-                                csrfField.type = 'hidden';
-                                csrfField.name = '_token';
-                                csrfField.value = '{{ csrf_token() }}';
-                                form.appendChild(csrfField);
-                                
-                                const methodField = document.createElement('input');
-                                methodField.type = 'hidden';
-                                methodField.name = '_method';
-                                methodField.value = 'DELETE';
-                                form.appendChild(methodField);
-                                
-                                document.body.appendChild(form);
-                                form.submit();
+                                // Llamada AJAX para eliminar el archivo usando la nueva ruta ajaxDestroyDocument
+                                fetch('{{ route("admin.traffic.ajax-destroy-document", "") }}/' + mediaId, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json',
+                                    },
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        console.log('Documento eliminado con éxito');
+                                    } else {
+                                        console.error('Error al eliminar documento:', data.message);
+                                        // Mostrar algún mensaje de error si es necesario
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error en la petición AJAX:', error);
+                                });
                             }
                             
-                            // Para archivos temporales, solo actualizamos el array local
-                            if (data.isTemp || fileId.startsWith('temp_')) {
-                                uploadedFiles = uploadedFiles.filter((file, index) => {
-                                    if (fileId.startsWith('temp_') && index === uploadedFiles.length - 1) {
-                                        return false;
-                                    }
-                                    return true;
-                                });
-                                
-                                // Actualizar el campo oculto con el nuevo array
-                                trafficFilesInput.value = JSON.stringify(uploadedFiles);
-                                console.log('Archivos actualizados después de eliminar:', trafficFilesInput.value);
+                            // Eliminar archivo del array por nombre o índice (para temporales)
+                            const fileIndex = uploadedFiles.findIndex(file => 
+                                file.name === data.fileName || 
+                                file.original_name === data.fileName);
+                            
+                            if (fileIndex > -1) {
+                                uploadedFiles.splice(fileIndex, 1);
+                                console.log('Archivo encontrado y eliminado del arreglo');
+                            } else {
+                                // Si no se encuentra por nombre, eliminar el último (para archivos temporales)
+                                console.log('Archivo no encontrado por nombre, eliminando el último');
+                                uploadedFiles.pop();
+                            }
+                            
+                            // Actualizar el campo oculto
+                            if (trafficImagesInput) {
+                                trafficImagesInput.value = JSON.stringify(uploadedFiles);
+                                console.log('Campo actualizado después de eliminar:', trafficImagesInput.value);
+                            } else {
+                                console.error('Campo oculto no encontrado en el DOM después de eliminar');
                             }
                         }
                     });

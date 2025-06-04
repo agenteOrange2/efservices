@@ -14,8 +14,9 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
     
-    // Ruta para eliminar documentos de manera segura (evitando la eliminación en cascada)
+    // Rutas para eliminar documentos de manera segura (evitando la eliminación en cascada)
     Route::delete('documents/{mediaId}', [DocumentController::class, 'safeDelete'])->name('api.documents.delete');
+    Route::post('documents/delete', [DocumentController::class, 'safeDeletePost'])->name('api.documents.delete.post');
     
     // Traffic Convictions API
     Route::put('/traffic/convictions/{conviction}', [\App\Http\Controllers\Admin\Driver\TrafficConvictionsController::class, 'apiUpdate']);

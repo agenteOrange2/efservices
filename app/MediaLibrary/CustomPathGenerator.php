@@ -76,17 +76,20 @@ class CustomPathGenerator implements PathGenerator
 
         if ($model instanceof \App\Models\Admin\Driver\DriverCertification) {
             $driverId = $model->userDriverDetail->id ?? 'unknown';
-            return "driver/{$driverId}/certification/";
+            $certificationId = $model->id;
+            return "driver/{$driverId}/certification/{$certificationId}/";
         }
         
         if ($model instanceof \App\Models\Admin\Driver\DriverTrafficConviction) {
             $driverId = $model->userDriverDetail->id ?? 'unknown';
-            return "driver/{$driverId}/traffic_convictions/";
+            $convictionId = $model->id;
+            return "driver/{$driverId}/traffic_convictions/{$convictionId}/";
         }
         
         if ($model instanceof \App\Models\Admin\Driver\DriverAccident) {
             $driverId = $model->userDriverDetail->id ?? 'unknown';
-            return "driver/{$driverId}/accidents/";
+            $accidentId = $model->id;
+            return "driver/{$driverId}/accidents/{$accidentId}/";
         }
         
         if ($model instanceof \App\Models\VehicleVerificationToken) {

@@ -81,6 +81,7 @@ Route::prefix('accidents')->name('accidents.')->group(function () {
     Route::get('document/{document}/preview', [AccidentsController::class, 'previewDocument'])->name('document.preview'); // Alias para compatibilidad
     Route::get('document/{document}/show', [AccidentsController::class, 'previewDocument'])->name('document.show'); // Alias para compatibilidad
     Route::post('documents/ajax-delete', [AccidentsController::class, 'ajaxDestroyDocument'])->name('documents.ajax-destroy');
+    Route::delete('ajax-destroy-media/{media}', [AccidentsController::class, 'ajaxDestroyMedia'])->name('ajax-destroy-media');
 });
 
 // Rutas para gestión de documentos de infracciones de tráfico
@@ -88,6 +89,7 @@ Route::prefix('traffic')->name('traffic.')->group(function () {
     Route::post('{conviction}/documents', [TrafficConvictionsController::class, 'storeDocuments'])->name('documents.store');
     Route::delete('documents/{media}', [TrafficConvictionsController::class, 'destroyDocument'])->name('documents.destroy');
     Route::get('documents/{media}/preview', [TrafficConvictionsController::class, 'previewDocument'])->name('documents.preview');
+    Route::delete('ajax-destroy-document/{media}', [TrafficConvictionsController::class, 'ajaxDestroyDocument'])->name('ajax-destroy-document');
 });
 
 // Rutas para gestión de documentos de pruebas de conductores
