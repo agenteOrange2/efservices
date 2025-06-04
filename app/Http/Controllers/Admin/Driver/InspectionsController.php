@@ -4,649 +4,674 @@ namespace App\Http\Controllers\Admin\Driver;
 
 use App\Http\Controllers\Controller;
 use App\Models\UserDriverDetail;
-use App\Models\Admin\Driver\DriverInspection;
-use App\Models\Admin\Vehicle\Vehicle;
+use App\Models\Admin\Driver\DriverTrafficConviction;
 use App\Models\Carrier;
 use App\Models\DocumentAttachment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Str;
 
-class InspectionsController extends Controller
+class TrafficConvictionsController extends Controller
 {
-    // Vista para todas las inspecciones
+    // Vista para todas las infracciones de tráfico
     public function index(Request $request)
     {
-        // Log para depuración - guardar todos los parámetros recibidos
-        \Illuminate\Support\Facades\Log::info('Parámetros de filtro recibidos:', [
-            'all_parameters' => $request->all(),
-            'driver_filter' => $request->driver_filter,
-            'carrier_filter' => $request->carrier_filter,
-            'vehicle_filter' => $request->vehicle_filter,
-            'date_from' => $request->date_from,
-            'date_to' => $request->date_to,
-            'inspection_type' => $request->inspection_type,
-            'status' => $request->status,
-            'sort_field' => $request->sort_field,
-            'sort_direction' => $request->sort_direction,
-        ]);
-        
-        $query = DriverInspection::query()
-            ->with(['userDriverDetail.user', 'userDriverDetail.carrier', 'vehicle']);
+        $query = DriverTrafficConviction::query()
+            ->with(['userDriverDetail.user', 'userDriverDetail.carrier']);
 
         // Aplicar filtros
         if ($request->filled('search_term')) {
-            // Usar where con paréntesis para agrupar las condiciones OR
             $query->where(function ($q) use ($request) {
-                $searchTerm = '%' . $request->search_term . '%';
-                $q->where('inspection_type', 'like', $searchTerm)
-                  ->orWhere('notes', 'like', $searchTerm)
-                  ->orWhere('inspector_name', 'like', $searchTerm);
+                $q->where('charge', 'like', '%' . $request->search_term . '%')
+                    ->orWhere('location', 'like', '%' . $request->search_term . '%')
+                    ->orWhere('penalty', 'like', '%' . $request->search_term . '%');
             });
         }
 
-        if ($request->filled('driver_filter') && $request->driver_filter != '') {
+        if ($request->filled('driver_filter')) {
             $query->where('user_driver_detail_id', $request->driver_filter);
         }
 
-        if ($request->filled('carrier_filter') && $request->carrier_filter != '') {
+        if ($request->filled('carrier_filter')) {
             $query->whereHas('userDriverDetail', function ($subq) use ($request) {
                 $subq->where('carrier_id', $request->carrier_filter);
             });
         }
 
-        if ($request->filled('vehicle_filter') && $request->vehicle_filter != '') {
-            $query->where('vehicle_id', $request->vehicle_filter);
+        if ($request->filled('date_from')) {
+            $query->whereDate('conviction_date', '>=', $request->date_from);
         }
 
-        if ($request->filled('date_from') && $request->date_from != '') {
-            $query->whereDate('inspection_date', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to') && $request->date_to != '') {
-            $query->whereDate('inspection_date', '<=', $request->date_to);
-        }
-
-        if ($request->filled('inspection_type') && $request->inspection_type != '') {
-            $query->where('inspection_type', $request->inspection_type);
-        }
-
-        if ($request->filled('status') && $request->status != '') {
-            $query->where('status', $request->status);
+        if ($request->filled('date_to')) {
+            $query->whereDate('conviction_date', '<=', $request->date_to);
         }
 
         // Ordenar resultados
-        $sortField = $request->get('sort_field', 'inspection_date');
+        $sortField = $request->get('sort_field', 'conviction_date');
         $sortDirection = $request->get('sort_direction', 'desc');
         $query->orderBy($sortField, $sortDirection);
 
-        $inspections = $query->paginate(10);
+        $convictions = $query->paginate(10);
         $drivers = UserDriverDetail::with('user')->get();
         $carriers = Carrier::where('status', 1)->get();
-        $vehicles = Vehicle::all();
 
-        // Obtener valores únicos para los filtros de desplegable
-        $inspectionTypes = DriverInspection::distinct()->pluck('inspection_type')->filter()->toArray();
-        $statuses = DriverInspection::distinct()->pluck('status')->filter()->toArray();
-
-        return view('admin.drivers.inspections.index', compact(
-            'inspections',
-            'drivers',
-            'carriers',
-            'vehicles',
-            'inspectionTypes',
-            'statuses'
-        ));
+        return view('admin.drivers.traffic.index', compact('convictions', 'drivers', 'carriers'));
     }
 
-    // Vista para el historial de inspecciones de un conductor específico
+    // Vista para el historial de infracciones de tráfico de un conductor específico
     public function driverHistory(UserDriverDetail $driver, Request $request)
     {
-        $query = DriverInspection::where('user_driver_detail_id', $driver->id);
+        $query = DriverTrafficConviction::where('user_driver_detail_id', $driver->id);
 
         // Aplicar filtros si existen
         if ($request->filled('search_term')) {
-            $query->where('inspection_type', 'like', '%' . $request->search_term . '%')
-                ->orWhere('notes', 'like', '%' . $request->search_term . '%')
-                ->orWhere('inspector_name', 'like', '%' . $request->search_term . '%');
-        }
-
-        if ($request->filled('vehicle_filter')) {
-            $query->where('vehicle_id', $request->vehicle_filter);
-        }
-
-        if ($request->filled('inspection_type')) {
-            $query->where('inspection_type', $request->inspection_type);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $query->where('charge', 'like', '%' . $request->search_term . '%')
+                ->orWhere('location', 'like', '%' . $request->search_term . '%')
+                ->orWhere('penalty', 'like', '%' . $request->search_term . '%');
         }
 
         // Ordenar resultados
-        $sortField = $request->get('sort_field', 'inspection_date');
+        $sortField = $request->get('sort_field', 'conviction_date');
         $sortDirection = $request->get('sort_direction', 'desc');
         $query->orderBy($sortField, $sortDirection);
 
-        $inspections = $query->paginate(10);
+        $convictions = $query->paginate(10);
 
-        // Obtener vehículos del conductor para el filtro
-        $driverVehicles = Vehicle::where(function ($query) use ($driver) {
-            $query->where('user_driver_detail_id', $driver->id)
-                ->orWhereHas('driverInspections', function ($q) use ($driver) {
-                    $q->where('user_driver_detail_id', $driver->id);
-                });
-        })->get();
-
-        // Obtener valores únicos para los filtros de desplegable
-        $inspectionTypes = DriverInspection::where('user_driver_detail_id', $driver->id)
-            ->distinct()->pluck('inspection_type')->filter()->toArray();
-        $statuses = DriverInspection::where('user_driver_detail_id', $driver->id)
-            ->distinct()->pluck('status')->filter()->toArray();
-
-        return view('admin.drivers.inspections.driver_history', compact(
-            'driver',
-            'inspections',
-            'driverVehicles',
-            'inspectionTypes',
-            'statuses'
-        ));
+        return view('admin.drivers.traffic.driver_history', compact('driver', 'convictions'));
     }
 
     /**
-     * Muestra el formulario para crear una nueva inspección
-     * 
-     * @return \Illuminate\View\View
+     * Mostrar el formulario para crear una nueva infracción de tráfico
      */
     public function create()
     {
-        // Obtener todos los transportistas activos ordenados por nombre
-        $carriers = Carrier::where('status', 1)->orderBy('name')->get();
-        
-        // Inicialmente no cargamos conductores, se cargarán dinámicamente por AJAX
-        $drivers = [];
-        
-        return view('admin.drivers.inspections.create', compact('carriers', 'drivers'));
+        // Inicialmente no cargamos conductores, se cargarán vía AJAX cuando se seleccione un carrier
+        $drivers = collect(); // Colección vacía
+        $carriers = Carrier::where('status', 1)->get();
+
+        return view('admin.drivers.traffic.create', compact('drivers', 'carriers'));
     }
 
     /**
-     * Muestra el formulario para editar una inspección existente
-     * 
-     * @param \App\Models\Admin\Driver\DriverInspection $inspection
-     * @return \Illuminate\View\View
+     * Método para almacenar una nueva infracción de tráfico
      */
-    public function edit(DriverInspection $inspection)
-    {
-        // Obtener todos los transportistas activos ordenados por nombre
-        $carriers = Carrier::where('status', 1)->orderBy('name')->get();
-        
-        // Obtener los conductores relacionados con el transportista de esta inspección
-        $carrierIdFromInspection = isset($inspection->user_driver_detail) ? $inspection->user_driver_detail->carrier_id : null;
-        $drivers = [];
-        
-        if ($carrierIdFromInspection) {
-            $drivers = UserDriverDetail::where('carrier_id', $carrierIdFromInspection)
-                ->with(['user'])
-                ->orderBy('created_at', 'desc')
-                ->get();
-        }
-        
-        // Obtener los documentos asociados a esta inspección - usando el método del trait
-        $documents = $inspection->getDocuments('document_attachments');
-        
-        return view('admin.drivers.inspections.edit', compact('inspection', 'carriers', 'drivers', 'documents'));
-    }
-
-    // Método para almacenar una nueva inspección
     public function store(Request $request)
-    {
+    {        
         //dd($request->all());
-        // Validación básica
-        $validated = $request->validate([
-            'user_driver_detail_id' => 'required|exists:user_driver_details,id',
-            'vehicle_id' => 'nullable|exists:vehicles,id',
-            'inspection_date' => 'required|date',
-            'inspection_type' => 'required|string',
-            'inspection_level' => 'nullable|string',
-            'inspector_name' => 'required|string|max:100',
-            'inspector_number' => 'nullable|string|max:50',
-            'location' => 'nullable|string|max:200',
-            'status' => 'nullable|string|max:50',
-            'vehicle_safe' => 'nullable|boolean',
-            'comments' => 'nullable|string',
-            'inspection_files' => 'nullable|string', // Campo JSON para los archivos de Livewire
-            // Campos adicionales (pueden ser nulos si no se usan en este formulario)
-            'defects_found' => 'nullable|string',
-            'corrective_actions' => 'nullable|string',
-            'is_defects_corrected' => 'nullable|boolean',
-            'defects_corrected_date' => 'nullable|date',
-            'corrected_by' => 'nullable|string|max:100',
-        ]);
-
+        DB::beginTransaction();
         try {
-            // Iniciar transacción
-            DB::beginTransaction();
+            $validated = $request->validate([
+                'user_driver_detail_id' => 'required|exists:user_driver_details,id',
+                'conviction_date' => 'required|date',
+                'location' => 'required|string|max:255',
+                'charge' => 'required|string|max:255',
+                'penalty' => 'required|string|max:255',
+            ]);
+
+            $conviction = new DriverTrafficConviction($validated);
+            $conviction->save();
+
+            // Procesar los archivos subidos vía Livewire
+            $files = $request->get('traffic_files');
+            $uploadedCount = 0;
             
-            // Crear la inspección
-            $inspection = DriverInspection::create([
-                'user_driver_detail_id' => $request->user_driver_detail_id,
-                'vehicle_id' => $request->vehicle_id,
-                'inspection_date' => $request->inspection_date,
-                'inspection_type' => $request->inspection_type,
-                'inspection_level' => $request->inspection_level,
-                'inspector_name' => $request->inspector_name,
-                'inspector_number' => $request->inspector_number,
-                'location' => $request->location,
-                'status' => $request->status,
-                'is_vehicle_safe_to_operate' => $request->has('vehicle_safe'),
-                'notes' => $request->comments,
-                // Campos adicionales (pueden ser nulos)
-                'defects_found' => $request->defects_found,
-                'corrective_actions' => $request->corrective_actions,
-                'is_defects_corrected' => $request->has('is_defects_corrected'),
-                'defects_corrected_date' => $request->defects_corrected_date,
-                'corrected_by' => $request->corrected_by,
+            Log::info('Procesando archivos en store', [
+                'files_data' => $files,
+                'conviction_id' => $conviction->id
             ]);
             
-            // Procesar documentos si hay datos
-            if ($request->filled('inspection_files')) {
-                $this->processLivewireFiles($inspection, $request->inspection_files, 'inspection_documents');
+            if (!empty($files)) {
+                $filesArray = json_decode($files, true);
+                
+                if (is_array($filesArray)) {
+                    foreach ($filesArray as $file) {
+                        // Verificamos que el archivo exista
+                        if (!empty($file['path'])) {
+                            $filePath = $file['path'];
+                            $disk = config('filesystems.default', 'local');
+                            
+                            // Si la ruta no tiene el formato completo con base (cuando viene de StorageServiceProvider)
+                            if (strpos($filePath, '/') !== 0 && strpos($filePath, ':\\') !== 1) {
+                                Log::info('Ruta de archivo relativa: ' . $filePath);
+                            } else {
+                                // Si es una ruta absoluta, ajustamos para usar el disco correcto
+                                $basePath = storage_path('app/' . $disk . '/');
+                                $filePath = str_replace($basePath, '', $filePath);
+                                Log::info('Ruta de archivo absoluta convertida a relativa: ' . $filePath);
+                            }
+                            
+                            // Verificar que el archivo exista en el disco temporal
+                            if (Storage::disk($disk)->exists($filePath)) {
+                                $driverId = $conviction->userDriverDetail->id;
+                                
+                                try {
+                                    $tempPath = Storage::disk($disk)->path($filePath);
+                                    $customProperties = [
+                                        'conviction_id' => $conviction->id,
+                                        'driver_id' => $driverId,
+                                        'original_name' => $file['original_name'] ?? 'document',
+                                        'mime_type' => $file['mime_type'] ?? 'application/octet-stream',
+                                        'size' => $file['size'] ?? 0
+                                    ];
+                                    
+                                    $document = $conviction->addDocument($tempPath, 'traffic_convictions', $customProperties);
+                                    $uploadedCount++;
+                                    
+                                    Log::info('Documento de infracción de tráfico subido correctamente', [
+                                        'conviction_id' => $conviction->id,
+                                        'document_id' => $document->id,
+                                        'file_name' => $document->file_name,
+                                        'original_name' => $file['original_name'],
+                                        'collection' => $document->collection,
+                                        'driver_id' => $driverId
+                                    ]);
+                                } catch (\Exception $e) {
+                                    Log::error('Error al subir documento de infracción', [
+                                        'error' => $e->getMessage(),
+                                        'file' => $filePath,
+                                        'conviction_id' => $conviction->id
+                                    ]);
+                                }
+                            } else {
+                                Log::error('Archivo no encontrado en disco temporal', [
+                                    'path' => $filePath,
+                                    'disk' => $disk,
+                                    'full_path' => storage_path('app/' . $disk . '/' . $filePath)
+                                ]);
+                            }
+                        }
+                    }
+                } else {
+                    Log::error('JSON inválido en traffic_files', ['raw_data' => $files]);
+                }
             }
             
-            // Confirmación de la transacción
+            // También manejar archivos subidos directamente vía formulario (no Livewire)
+            if ($request->hasFile('documents')) {
+                foreach ($request->file('documents') as $file) {
+                    $driverId = $conviction->userDriverDetail->id;
+                    
+                    $media = $conviction->addMedia($file)
+                        ->usingName($file->getClientOriginalName())
+                        ->usingFileName($file->getClientOriginalName())
+                        ->withCustomProperties([
+                            'original_filename' => $file->getClientOriginalName(),
+                            'mime_type' => $file->getMimeType(),
+                            'conviction_id' => $conviction->id,
+                            'driver_id' => $driverId
+                        ])
+                        ->toMediaCollection('traffic-tickets');
+                        
+                    $uploadedCount++;
+                    
+                    Log::info('Documento de infracción de tráfico subido directamente durante creación', [
+                        'conviction_id' => $conviction->id,
+                        'media_id' => $media->id,
+                        'file_name' => $media->file_name,
+                        'collection' => $media->collection_name
+                    ]);
+                }
+            }
+
             DB::commit();
             
-            // Mensaje de éxito
-            Session::flash('success', 'Inspection record created successfully.');
-            
-            // Redirección a la vista index con el nombre correcto de la ruta
-            return redirect()->route('admin.inspections.index');
-            
-        } catch (\Exception $e) {
-            // Deshacer transacción en caso de error
-            DB::rollBack();
-            
-            // Log del error
-            Log::error('Error al crear inspección', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'request_data' => $request->except(['_token'])
+            Log::info('Traffic conviction created successfully', [
+                'conviction_id' => $conviction->id,
+                'driver_id' => $conviction->user_driver_detail_id
             ]);
-            
-            // Mensaje de error
-            Session::flash('error', 'An error occurred while creating the inspection record: ' . $e->getMessage());
-            
-            // Redirección con datos antiguos
-            return redirect()->back()->withInput();
-        }
-    }
 
-    // Método para actualizar una inspección existente
-    public function update(DriverInspection $inspection, Request $request)
-    {
-        // Validación básica
-        $validated = $request->validate([
-            'user_driver_detail_id' => 'required|exists:user_driver_details,id',
-            'vehicle_id' => 'nullable|exists:vehicles,id',
-            'inspection_date' => 'required|date',
-            'inspection_type' => 'required|string',
-            'inspection_level' => 'nullable|string',
-            'inspector_name' => 'required|string|max:100',
-            'inspector_number' => 'nullable|string|max:50',
-            'location' => 'nullable|string|max:200',
-            'status' => 'nullable|string|max:50',
-            'vehicle_safe' => 'nullable|boolean',
-            'comments' => 'nullable|string',
-            'inspection_files' => 'nullable|string', // Campo JSON para los archivos de Livewire
-            // Campos adicionales (pueden ser nulos si no se usan en este formulario)
-            'defects_found' => 'nullable|string',
-            'corrective_actions' => 'nullable|string',
-            'is_defects_corrected' => 'nullable|boolean',
-            'defects_corrected_date' => 'nullable|date',
-            'corrected_by' => 'nullable|string|max:100',
-        ]);
-
-        try {
-            // Iniciar transacción
-            DB::beginTransaction();
-            
-            // Actualizar datos de la inspección
-            $inspection->update([
-                'user_driver_detail_id' => $request->user_driver_detail_id,
-                'vehicle_id' => $request->vehicle_id,
-                'inspection_date' => $request->inspection_date,
-                'inspection_type' => $request->inspection_type,
-                'inspection_level' => $request->inspection_level,
-                'inspector_name' => $request->inspector_name,
-                'inspector_number' => $request->inspector_number,
-                'location' => $request->location,
-                'status' => $request->status,
-                'is_vehicle_safe_to_operate' => $request->has('vehicle_safe'),
-                'notes' => $request->comments,
-                // Campos adicionales (pueden ser nulos)
-                'defects_found' => $request->defects_found,
-                'corrective_actions' => $request->corrective_actions,
-                'is_defects_corrected' => $request->has('is_defects_corrected'),
-                'defects_corrected_date' => $request->defects_corrected_date,
-                'corrected_by' => $request->corrected_by,
-            ]);
-            
-            // Procesar documentos si hay datos nuevos
-            if ($request->filled('inspection_files')) {
-                $this->processLivewireFiles($inspection, $request->inspection_files, 'inspection_documents');
-            }
-            
-            // Confirmación de la transacción
-            DB::commit();
-            
-            // Mensaje de éxito
-            Session::flash('success', 'Inspection record updated successfully.');
-            
-            // Redirección a la vista index con el nombre correcto de la ruta
-            return redirect()->route('admin.inspections.index');
-            
-        } catch (\Exception $e) {
-            // Deshacer transacción en caso de error
-            DB::rollBack();
-            
-            // Log del error
-            Log::error('Error al actualizar inspección', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'inspection_id' => $inspection->id,
-                'request_data' => $request->except(['_token'])
-            ]);
-            
-            // Mensaje de error
-            Session::flash('error', 'An error occurred while updating the inspection record: ' . $e->getMessage());
-            
-            // Redirección con datos antiguos
-            return redirect()->back()->withInput();
-        }
-    }
-
-    // Método para eliminar una inspección
-    public function destroy(DriverInspection $inspection)
-    {
-        try {
-            // Eliminar todos los documentos asociados
-            $inspection->deleteAllDocuments();
-            
-            // Eliminar el registro de la inspección
-            $inspection->delete();
-            
-            Session::flash('success', 'Inspection record deleted successfully.');
-        } catch (\Exception $e) {
-            Log::error('Error al eliminar inspección', [
-                'error' => $e->getMessage(),
-                'inspection_id' => $inspection->id,
-            ]);
-            
-            Session::flash('error', 'An error occurred while deleting the inspection record.');
-        }
-        
-        return redirect()->route('admin.driver-inspections.index');
-    }
-
-    // Método para eliminar un archivo específico (DEPRECATED)
-    public function deleteFile($inspectionId, $documentId)
-    {
-        $inspection = DriverInspection::findOrFail($inspectionId);
-        $inspection->deleteDocument($documentId);
-        
-        return response()->json(['status' => 'success']);
-    }
-    
-    /**
-     * Elimina un documento mediante una solicitud AJAX
-     * 
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function ajaxDestroyDocument(Request $request)
-    {
-        try {
-            $documentId = $request->input('document_id');
-            if (!$documentId) {
-                return response()->json(['error' => 'Document ID is required'], 400);
-            }
-            
-            // 1. Buscar el documento en nuestra tabla document_attachments
-            $document = \App\Models\DocumentAttachment::findOrFail($documentId);
-            
-            // 2. Verificar que pertenece a una inspección (tipo de modelo correcto)
-            if ($document->documentable_type !== DriverInspection::class) {
-                return response()->json(['error' => 'El documento no pertenece a una inspección'], 403);
-            }
-            
-            $inspectionId = $document->documentable_id;
-            $inspection = DriverInspection::find($inspectionId);
-            
-            if (!$inspection) {
-                return response()->json(['error' => 'No se encontró la inspección asociada al documento'], 404);
-            }
-            
-            // 3. Eliminar el documento usando el método del trait HasDocuments
-            $result = $inspection->deleteDocument($documentId);
-            
-            if (!$result) {
-                return response()->json(['error' => 'No se pudo eliminar el documento'], 500);
-            }
-            
-            return response()->json([
-                'success' => true, 
-                'message' => 'Documento eliminado correctamente'
-            ]);
+            return redirect()
+                ->route('admin.traffic.index')
+                ->with('success', 'Traffic conviction created successfully.');
                 
         } catch (\Exception $e) {
-            Log::error('Error al eliminar documento mediante AJAX', [
-                'document_id' => $request->input('document_id'),
+            DB::rollBack();
+            Log::error('Error creating traffic conviction: ' . $e->getMessage(), [
+                'error' => $e->getMessage()
+            ]);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Error creating traffic conviction: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Mostrar el formulario para editar una infracción de tráfico
+     */
+    public function edit(DriverTrafficConviction $conviction)
+    {
+        // Obtenemos el carrier del conductor asociado a la infracción
+        $carrierId = $conviction->userDriverDetail->carrier_id;
+
+        // Obtenemos todos los conductores activos del carrier seleccionado
+        $drivers = UserDriverDetail::where('carrier_id', $carrierId)
+            ->where('status', UserDriverDetail::STATUS_ACTIVE)
+            ->with('user')
+            ->get();
+
+        // Si el conductor de la infracción no está en la lista (podría estar inactivo),
+        // lo añadimos manualmente para que aparezca en el formulario
+        $driverExists = $drivers->contains('id', $conviction->user_driver_detail_id);
+        if (!$driverExists) {
+            $convictionDriver = UserDriverDetail::with('user')->find($conviction->user_driver_detail_id);
+            if ($convictionDriver) {
+                $drivers->push($convictionDriver);
+            }
+        }
+
+        $carriers = Carrier::where('status', 1)->get();
+
+        return view('admin.drivers.traffic.edit', compact('conviction', 'drivers', 'carriers'));
+    }
+
+    /**
+     * Método para actualizar una infracción de tráfico existente
+     */
+    public function update(DriverTrafficConviction $conviction, Request $request)
+    {
+        DB::beginTransaction();
+        
+        try {
+            // Validar datos de la infracción
+            $validated = $request->validate([
+                'user_driver_detail_id' => 'required|exists:user_driver_details,id',
+                'conviction_date' => 'required|date',
+                'location' => 'required|string|max:255',
+                'charge' => 'required|string|max:255',
+                'penalty' => 'required|string|max:255',
+            ]);
+
+            // Actualizar la infracción con los datos validados
+            $conviction->update($validated);
+            $uploadedCount = 0;
+            
+            // 1. Procesar archivos subidos por Livewire
+            $files = $request->get('traffic_files');
+            
+            Log::info('Procesando archivos en update', [
+                'files_data' => $files,
+                'conviction_id' => $conviction->id
+            ]);
+            
+            if (!empty($files)) {
+                try {
+                    $filesArray = json_decode($files, true);
+                    
+                    if (is_array($filesArray)) {
+                        foreach ($filesArray as $file) {
+                            if (empty($file['path'])) {
+                                continue;
+                            }
+                            
+                            // Obtener la ruta completa del archivo
+                            $filePath = $file['path'];
+                            $fullPath = storage_path('app/' . $filePath);
+                            
+                            // Verificar si el archivo existe físicamente
+                            if (!file_exists($fullPath)) {
+                                Log::error('Archivo no encontrado', [
+                                    'path' => $filePath,
+                                    'full_path' => $fullPath,
+                                    'conviction_id' => $conviction->id
+                                ]);
+                                continue;
+                            }
+                            
+                            $driverId = $conviction->userDriverDetail->id;
+                            
+                            // Usar addDocument del trait HasDocuments
+                            $customProperties = [
+                                'conviction_id' => $conviction->id,
+                                'driver_id' => $driverId,
+                                'original_name' => $file['original_name'] ?? 'document',
+                                'mime_type' => $file['mime_type'] ?? 'application/octet-stream',
+                                'size' => $file['size'] ?? 0
+                            ];
+                            
+                            $document = $conviction->addDocument($fullPath, 'traffic_convictions', $customProperties);
+                            $uploadedCount++;
+                            
+                            Log::info('Documento subido correctamente en update', [
+                                'conviction_id' => $conviction->id,
+                                'document_id' => $document->id,
+                                'file_name' => $document->file_name,
+                                'collection' => 'traffic_convictions'
+                            ]);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error al procesar documentos vía Livewire', [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                        'conviction_id' => $conviction->id
+                    ]);
+                }
+            }
+            
+            // 2. Procesar archivos subidos directamente vía formulario
+            if ($request->hasFile('documents')) {
+                foreach ($request->file('documents') as $file) {
+                    // Obtener el ID del conductor
+                    $driverId = $conviction->userDriverDetail->id;
+                    
+                    // Almacenar temporalmente el archivo
+                    $tempPath = $file->store('temp');
+                    $fullPath = storage_path('app/' . $tempPath);
+                    
+                    // Propiedades personalizadas para el documento
+                    $customProperties = [
+                        'conviction_id' => $conviction->id,
+                        'driver_id' => $driverId,
+                        'original_name' => $file->getClientOriginalName(),
+                        'mime_type' => $file->getMimeType(),
+                        'size' => $file->getSize()
+                    ];
+                    
+                    // Usar addDocument del trait HasDocuments
+                    $document = $conviction->addDocument($fullPath, 'traffic_convictions', $customProperties);
+                    $uploadedCount++;
+                    
+                    Log::info('Documento subido directamente en update', [
+                        'conviction_id' => $conviction->id,
+                        'document_id' => $document->id,
+                        'file_name' => $document->file_name,
+                        'collection' => 'traffic_convictions'
+                    ]);
+                }
+            }
+
+            // Registrar el éxito en el log
+            Log::info('Traffic conviction updated successfully', [
+                'conviction_id' => $conviction->id,
+                'driver_id' => $conviction->user_driver_detail_id
+            ]);
+
+            DB::commit();
+
+            // Redireccionar con mensaje de éxito
+            return redirect()->route('admin.traffic.index')
+                ->with('success', 'Traffic conviction updated successfully');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error updating traffic conviction', [
+                'conviction_id' => $conviction->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['error' => 'Error al eliminar documento: ' . $e->getMessage()], 500);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error updating traffic conviction: ' . $e->getMessage());
         }
     }
-    
+
+    // Método para eliminar una infracción de tráfico
+    public function destroy(DriverTrafficConviction $conviction)
+    {
+        $driverId = $conviction->user_driver_detail_id;
+        $conviction->delete();
+
+        Session::flash('success', 'Traffic conviction record deleted successfully!');
+
+        // Determinar la ruta de retorno basado en la URL de referencia
+        $referer = request()->headers->get('referer');
+        if (strpos($referer, 'traffic-history') !== false) {
+            return redirect()->route('admin.drivers.traffic-history', $driverId);
+        }
+
+        return redirect()->route('admin.traffic.index');
+    }
+
+    public function getDriversByCarrier(Carrier $carrier)
+    {
+        $drivers = UserDriverDetail::where('carrier_id', $carrier->id)
+            ->where('status', UserDriverDetail::STATUS_ACTIVE)
+            ->with(['user'])
+            ->get();
+
+        return response()->json($drivers);
+    }
+
     /**
-     * Elimina un documento usando nuestro nuevo sistema de documentos
+     * Mostrar los documentos de una infracción de tráfico
+     */
+    public function showDocuments(DriverTrafficConviction $conviction)
+    {
+        // Recuperar todos los documentos asociados con esta infracción de tráfico usando DocumentAttachment
+        $documents = \App\Models\DocumentAttachment::where('documentable_type', DriverTrafficConviction::class)
+            ->where('documentable_id', $conviction->id)
+            ->get();
+
+        // Información de depuración
+        $debugInfo = [
+            'conviction_id' => $conviction->id,
+            'user_driver_detail_id' => $conviction->user_driver_detail_id,
+            'documents_count' => $documents->count(),
+            'collections' => [
+                'traffic-tickets' => $documents->where('collection_name', 'traffic-tickets')->count(),
+                'traffic_documents' => $documents->where('collection_name', 'traffic_documents')->count(),
+                'all_documents' => $documents->count(),
+            ],
+            'document_info' => $documents->map(function ($document) {
+                return [
+                    'id' => $document->id,
+                    'file_name' => $document->file_name,
+                    'collection_name' => $document->collection_name,
+                    'mime_type' => $document->mime_type,
+                    'size' => $document->size,
+                ];
+            }),
+        ];
+
+        return view('admin.drivers.traffic.documents', compact('conviction', 'documents', 'debugInfo'));
+    }
+
+    /**
+     * Previsualiza un documento relacionado con infracciones de tráfico.
+     * 
+     * @param int $documentId ID del documento a previsualizar
+        }
+        
+        // Si es un PDF, abrirlo en el navegador
+        if ($mime === 'application/pdf') {
+     */
+    public function previewDocument($documentId)
+    {
+        try {
+            // Iniciar una transacción de base de datos para controlar la operación
+            DB::beginTransaction();
+            
+            // 1. Buscar el documento
+            $document = DocumentAttachment::findOrFail($documentId);
+            $fileName = $document->file_name;
+            $filePath = $document->getPath();
+            $mime = $document->mime_type;
+            
+            // 2. Verificar que el archivo exista físicamente
+            if (!file_exists($filePath)) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'El archivo no existe');
+            }
+            
+            // 3. Previsualizar el documento
+            if ($mime === 'application/pdf') {
+                return response()->file($filePath, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline; filename="' . $fileName . '"'
+                ]);
+            } elseif (in_array($mime, ['image/jpeg', 'image/png', 'image/jpg'])) {
+                return response()->file($filePath, [
+                    'Content-Type' => $mime,
+                    'Content-Disposition' => 'inline; filename="' . $fileName . '"'
+                ]);
+            } else {
+                return response()->download($filePath, $fileName, [
+                    'Content-Type' => $mime,
+                ]);
+            }
+            
+            // 4. Confirmar transacción
+            DB::commit();
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Error al previsualizar documento', [
+                'document_id' => $documentId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()->with('error', 'Error al previsualizar documento: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Elimina un documento asociado a una infracción de tráfico
      * 
      * @param int $documentId ID del documento a eliminar
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
     public function destroyDocument($documentId)
     {
         try {
-            // 1. Buscar el documento en nuestra tabla document_attachments
-            $document = \App\Models\DocumentAttachment::findOrFail($documentId);
+            // Iniciar una transacción de base de datos para controlar la operación
+            DB::beginTransaction();
             
-            // 2. Obtener información del documento antes de eliminarlo
-            $fileName = $document->original_name ?? $document->file_name;
+            // 1. Buscar el documento
+            $document = DocumentAttachment::findOrFail($documentId);
+            $fileName = $document->file_name;
             
-            // 3. Verificar que pertenece a una inspección (tipo de modelo correcto)
-            if ($document->documentable_type !== DriverInspection::class) {
-                return redirect()->back()->with('error', 'El documento no pertenece a una inspección');
+            // 2. Verificar que pertenezca a una infracción de tráfico
+            if ($document->documentable_type !== DriverTrafficConviction::class) {
+                DB::rollBack();
+                
+                if (request()->ajax() || request()->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'El documento no pertenece a una infracción de tráfico'
+                    ], 400);
+                }
+                
+                return redirect()->back()->with('error', 'El documento no pertenece a una infracción de tráfico');
             }
             
-            $inspectionId = $document->documentable_id;
-            $inspection = DriverInspection::find($inspectionId);
-            
-            if (!$inspection) {
-                return redirect()->route('admin.inspections.index')
-                    ->with('error', 'No se encontró la inspección asociada al documento');
-            }
+            // 3. Obtener la infracción asociada
+            $convictionId = $document->documentable_id;
+            $conviction = DriverTrafficConviction::findOrFail($convictionId);
             
             // 4. Eliminar el documento usando el método del trait HasDocuments
-            $result = $inspection->deleteDocument($documentId);
+            $conviction->deleteDocument($documentId);
             
-            if (!$result) {
-                return redirect()->back()->with('error', 'No se pudo eliminar el documento');
+            // 5. Registrar la operación
+            Log::info('Documento eliminado exitosamente', [
+                'document_id' => $documentId,
+                'conviction_id' => $convictionId,
+                'file_name' => $fileName
+            ]);
+            
+            // 6. Confirmar transacción
+            DB::commit();
+            
+            // 7. Devolver respuesta según el tipo de solicitud
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Documento {$fileName} eliminado correctamente",
+                    'conviction_id' => $convictionId
+                ]);
             }
             
-            return redirect()->route('admin.inspections.edit', $inspectionId)
-                ->with('success', "Documento '{$fileName}' eliminado correctamente");
-                
+            return redirect()->route('admin.traffic.edit', $convictionId)
+                ->with('success', "Documento {$fileName} eliminado correctamente");
+            
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             Log::error('Error al eliminar documento', [
                 'document_id' => $documentId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return redirect()->back()->with('error', 'Error al eliminar documento: ' . $e->getMessage());
-        }
-    }
-
-    // Método para obtener los documentos de una inspección
-    public function getFiles(DriverInspection $inspection)
-    {
-        $documents = $inspection->documents()->get();
-        $files = [];
-        
-        foreach ($documents as $document) {
-            $files[] = [
-                'id' => $document->id,
-                'name' => $document->original_name,
-                'url' => Storage::url($document->file_path),
-                'mime_type' => $document->mime_type,
-                'size' => $document->size,
-                'collection' => $document->collection,
-            ];
-        }
-        
-        return response()->json($files);
-    }
-
-    // Obtener vehículos por transportista
-    public function getVehiclesByCarrier($carrierId)
-    {
-        $vehicles = Vehicle::where('carrier_id', $carrierId)->orderBy('company_unit_number')->get();
-        return response()->json($vehicles);
-    }
-
-    // Obtener vehículos por conductor basándose en su tipo (owner, third-party, company)
-    public function getVehiclesByDriver($driverId)
-    {
-        try {
-            // Obtener el conductor
-            $driver = UserDriverDetail::findOrFail($driverId);
             
-            // Primero vamos a obtener todos los vehículos directamente asignados al conductor
-            $driverVehicles = Vehicle::where('user_driver_detail_id', $driver->id)
-                ->orderBy('company_unit_number')
-                ->get();
-            
-            // También obtenemos vehículos del carrier que no estén asignados a ningún conductor
-            $unassignedCarrierVehicles = Vehicle::where('carrier_id', $driver->carrier_id)
-                ->whereNull('user_driver_detail_id')
-                ->orderBy('company_unit_number')
-                ->get();
-            
-            // Combinamos ambas colecciones
-            $allVehicles = $driverVehicles->merge($unassignedCarrierVehicles);
-            
-            // Si no hay vehículos, devolver un array vacío para evitar errores
-            if ($allVehicles->isEmpty()) {
-                return response()->json([]);
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error: ' . $e->getMessage()
+                ], 500);
             }
             
-            return response()->json($allVehicles->values()->all());
-        } catch (\Exception $e) {
-            // Registrar el error para depuración
-            \Illuminate\Support\Facades\Log::error('Error al cargar vehículos: ' . $e->getMessage());
-            
-            // Devolver una respuesta vacía en caso de error
-            return response()->json([], 200);
+            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
         }
     }
 
-    public function getDriversByCarrier($carrier)
-    {
-        $drivers = UserDriverDetail::where('carrier_id', $carrier)
-            ->whereHas('user', function ($query) {
-                $query->where('status', 1);
-            })
-            ->with('user')
-            ->get();
-
-        return response()->json($drivers);
-    }
-    
     /**
-     * Método privado para procesar archivos subidos vía Livewire
+     * Elimina un documento mediante una solicitud AJAX
      * 
-     * @param DriverInspection $inspection Inspección a la que asociar los archivos
-     * @param string $filesJson Datos de los archivos en formato JSON
-     * @param string $collection Nombre de la colección donde guardar los archivos
-     * @return int Número de archivos procesados correctamente
+     * @param int $documentId ID del documento a eliminar
+     * @return \Illuminate\Http\JsonResponse
      */
-    private function processLivewireFiles(DriverInspection $inspection, $filesJson, $collection)
+    public function ajaxDestroyDocument($documentId)
     {
-        $uploadedCount = 0;
-        
         try {
-            // Si no hay datos de archivos, salir
-            if (empty($filesJson)) {
-                return 0;
+            // Iniciar una transacción de base de datos
+            DB::beginTransaction();
+            
+            // 1. Buscar el documento
+            $document = DocumentAttachment::findOrFail($documentId);
+            $fileName = $document->file_name;
+            
+            // 2. Verificar que pertenezca a una infracción de tráfico
+            if ($document->documentable_type !== DriverTrafficConviction::class) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El documento no pertenece a una infracción de tráfico'
+                ], 400);
             }
             
-            $filesArray = json_decode($filesJson, true);
+            // 3. Obtener la infracción asociada
+            $convictionId = $document->documentable_id;
+            $conviction = DriverTrafficConviction::findOrFail($convictionId);
             
-            if (is_array($filesArray)) {
-                foreach ($filesArray as $file) {
-                    if (empty($file['path'])) {
-                        continue;
-                    }
-                    
-                    // Obtener la ruta completa del archivo
-                    $filePath = $file['path'];
-                    $fullPath = storage_path('app/' . $filePath);
-                    
-                    // Verificar si el archivo existe físicamente
-                    if (!file_exists($fullPath)) {
-                        Log::error('Archivo no encontrado', [
-                            'path' => $filePath,
-                            'full_path' => $fullPath,
-                            'inspection_id' => $inspection->id
-                        ]);
-                        continue;
-                    }
-                    
-                    // Usar addDocument desde el trait HasDocuments
-                    // La colección será 'document_attachments' para seguir el estándar del sistema
-                    $document = $inspection->addDocument(
-                        $fullPath,
-                        'document_attachments',
-                        [
-                            'original_name' => $file['original_name'] ?? basename($fullPath),
-                            'mime_type' => $file['mime_type'] ?? mime_content_type($fullPath),
-                            'inspection_id' => $inspection->id,
-                            'driver_id' => $inspection->user_driver_detail_id,
-                            'document_type' => 'inspection_document',
-                            'size' => $file['size'] ?? filesize($fullPath)
-                        ]
-                    );
-                    
-                    $uploadedCount++;
-                    
-                    Log::info('Documento de inspección subido correctamente', [
-                        'inspection_id' => $inspection->id,
-                        'document_id' => $document->id,
-                        'file_name' => $document->file_name,
-                        'collection' => $document->collection
-                    ]);
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error('Error al procesar documentos de inspección', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'inspection_id' => $inspection->id,
-                'collection' => $collection
+            // 4. Eliminar el documento usando el método del trait HasDocuments
+            $result = $conviction->deleteDocument($documentId);
+            
+            // 5. Registrar la operación
+            Log::info('Documento eliminado exitosamente vía AJAX', [
+                'document_id' => $documentId,
+                'conviction_id' => $convictionId,
+                'file_name' => $fileName,
+                'result' => $result
             ]);
+            
+            // 6. Confirmar transacción
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Documento {$fileName} eliminado correctamente"
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Error al eliminar documento vía AJAX', [
+                'document_id' => $documentId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
         }
-        
-        return $uploadedCount;
     }
 }

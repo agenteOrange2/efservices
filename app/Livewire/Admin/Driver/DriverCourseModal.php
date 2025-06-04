@@ -2,84 +2,66 @@
 
 namespace App\Livewire\Admin\Driver;
 
-use Livewire\Component;
-use Livewire\WithFileUploads;
+use App\Models\Admin\Driver\DriverCourse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use App\Models\Admin\Driver\DriverTrainingSchool;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Component;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class DriverTrainingModal extends Component
+class DriverCourseModal extends Component
 {
-    use WithFileUploads;
-    
-    // Flag para controlar la visibilidad del modal
+    // Propiedades públicas para el formulario
     public $showModal = false;
-    
-    // ID del conductor asociado
     public $userDriverDetailId;
-    
-    // ID de la escuela (para edición)
-    public $trainingSchoolId = null;
+    public $courseId = null;
     
     // Campos del formulario
-    public $school_name;
-    public $city;
-    public $state;
-    public $phone_number;
-    public $date_start;
-    public $date_end;
-    public $graduated = false;
-    public $training_skills = [];
+    public $organization_name = '';
+    public $phone = '';
+    public $city = '';
+    public $state = '';
+    public $certification_date = null;
+    public $experience = '';
+    public $expiration_date = null;
+    public $status = 'Active';
     
-    // Para la carga de certificados
+    // Archivos
     public $tempFiles = [];
     public $existingFiles = [];
     
-    // Lista de habilidades seleccionables
-    public $availableSkills = [
-        'cdl_training',
-        'hazmat_training',
-        'passenger_training',
-        'tanker_training',
-        'doubles_triples_training',
-        'defensive_driving',
-        'mountain_driving',
-        'winter_driving',
-        'emergency_procedures',
-        'vehicle_inspection',
-    ];
-    
-    // Event listeners
-    protected $listeners = [
-        'openTrainingModal' => 'openModal',
-        'fileUploaded' => 'handleFileUploaded',
-        'fileRemoved' => 'handleFileRemoved'
-    ];
-    
     // Reglas de validación
     protected $rules = [
-        'school_name' => 'required|string|max:255',
-        'city' => 'required|string|max:100',
-        'state' => 'required|string|max:100',
-        'phone_number' => 'required|string|max:20',
-        'date_start' => 'required|date',
-        'date_end' => 'required|date|after_or_equal:date_start',
+        'organization_name' => 'required|string|max:255',
+        'phone' => 'nullable|string|max:15',
+        'city' => 'nullable|string|max:255',
+        'state' => 'nullable|string|max:255',
+        'certification_date' => 'nullable|date',
+        'experience' => 'nullable|string|max:1000',
+        'expiration_date' => 'nullable|date',
+        'status' => 'nullable|string|in:Active,Expired,Pending',
+    ];
+    
+    protected $listeners = [
+        'openDriverCourseModal' => 'openModal',
+        'fileUploaded' => 'handleFileUploaded',
+        'fileRemoved' => 'handleFileRemoved',
     ];
     
     /**
-     * Abre el modal para crear o editar
+     * Abre el modal para crear o editar un curso
      */
-    public function openModal($driverId, $trainingSchoolId = null)
+    public function openModal($driverId, $courseId = null)
     {
         $this->userDriverDetailId = $driverId;
-        $this->trainingSchoolId = $trainingSchoolId;
-        $this->resetForm();
+        $this->courseId = $courseId;
         
-        if ($this->trainingSchoolId) {
-            $this->loadTrainingSchool();
+        if ($courseId) {
+            // Es una edición, cargar datos existentes
+            $this->loadCourseData($courseId);
+        } else {
+            // Es una creación, resetear formulario
+            $this->resetForm();
         }
         
         $this->showModal = true;
@@ -95,40 +77,92 @@ class DriverTrainingModal extends Component
     }
     
     /**
-     * Carga los datos de la escuela para edición
+     * Carga los datos del curso para edición
      */
-    public function loadTrainingSchool()
+    protected function loadCourseData($courseId)
     {
-        $school = DriverTrainingSchool::findOrFail($this->trainingSchoolId);
-        
-        $this->school_name = $school->school_name;
-        $this->city = $school->city;
-        $this->state = $school->state;
-        $this->phone_number = $school->phone_number;
-        $this->date_start = optional($school->date_start)->format('Y-m-d');
-        $this->date_end = optional($school->date_end)->format('Y-m-d');
-        $this->graduated = $school->graduated;
-        
-        // Cargar habilidades
-        if (is_string($school->training_skills)) {
-            $this->training_skills = json_decode($school->training_skills, true) ?: [];
-        } else {
-            $this->training_skills = $school->training_skills ?: [];
-        }
-        
-        // Cargar certificados existentes
-        if ($school->hasMedia('school_certificates')) {
-            foreach ($school->getMedia('school_certificates') as $media) {
-                $this->existingFiles[] = [
-                    'id' => $media->id,
-                    'name' => $media->name,
-                    'url' => $media->getUrl(),
-                    'mime_type' => $media->mime_type,
-                    'size' => $media->size ?? 0, // Tamaño en bytes
-                    'created_at' => $media->created_at->format('Y-m-d H:i:s'), // Fecha de creación
-                ];
+        try {
+            $course = DriverCourse::find($courseId);
+            
+            if (!$course) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'No se encontró el curso especificado'
+                ]);
+                return;
             }
+            
+            // Cargar datos del curso
+            $this->organization_name = $course->organization_name;
+            $this->phone = $course->phone;
+            $this->city = $course->city;
+            $this->state = $course->state;
+            $this->certification_date = $course->certification_date ? $course->certification_date->format('Y-m-d') : null;
+            $this->experience = $course->experience;
+            $this->expiration_date = $course->expiration_date ? $course->expiration_date->format('Y-m-d') : null;
+            $this->status = $course->status;
+            
+            // Cargar archivos existentes
+            $this->loadExistingFiles($course);
+            
+        } catch (\Exception $e) {
+            Log::error('Error al cargar datos del curso: ' . $e->getMessage(), [
+                'exception' => $e,
+                'course_id' => $courseId
+            ]);
+            
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Error al cargar datos del curso: ' . $e->getMessage()
+            ]);
         }
+    }
+    
+    /**
+     * Carga archivos existentes del curso
+     */
+    protected function loadExistingFiles($course)
+    {
+        $this->existingFiles = [];
+        
+        $mediaItems = $course->getMedia('course_certificates');
+        
+        foreach ($mediaItems as $media) {
+            $this->existingFiles[] = [
+                'id' => $media->id,
+                'name' => $media->file_name,
+                'size' => $media->size,
+                'url' => $media->getUrl(),
+                'mime_type' => $media->mime_type,
+                'created_at' => $media->created_at->format('Y-m-d H:i:s'), // Añadido campo created_at
+            ];
+        }
+        
+        Log::info('Archivos existentes cargados', [
+            'count' => count($this->existingFiles),
+            'files' => $this->existingFiles
+        ]);
+    }
+    
+    /**
+     * Resetea el formulario
+     */
+    protected function resetForm()
+    {
+        $this->courseId = null;
+        $this->organization_name = '';
+        $this->phone = '';
+        $this->city = '';
+        $this->state = '';
+        $this->certification_date = null;
+        $this->experience = '';
+        $this->expiration_date = null;
+        $this->status = 'Active';
+        $this->tempFiles = [];
+        $this->existingFiles = [];
+        
+        // Reiniciar validación
+        $this->resetValidation();
     }
     
     /**
@@ -137,14 +171,14 @@ class DriverTrainingModal extends Component
     public function handleFileUploaded($event)
     {
         // Registramos la información recibida para propósitos de depuración
-        Log::info('FileUpload event recibido en DriverTrainingModal', [
+        Log::info('FileUpload event recibido en DriverCourseModal', [
             'event' => $event,
             'modelName' => $event['modelName'] ?? 'no model',
             'tempPath' => $event['tempPath'] ?? 'no path'
         ]);
         
         // Verificar que el evento corresponde a este modelo
-        if (!isset($event['modelName']) || $event['modelName'] !== 'school_certificates') {
+        if (!isset($event['modelName']) || $event['modelName'] !== 'course_certificates') {
             return;
         }
         
@@ -164,6 +198,11 @@ class DriverTrainingModal extends Component
                 'name' => $originalName,
                 'mime_type' => $mimeType
             ];
+            
+            Log::info('Archivo temporal añadido correctamente', [
+                'path' => $relativePath,
+                'name' => $originalName
+            ]);
         }
     }
     
@@ -173,14 +212,14 @@ class DriverTrainingModal extends Component
     public function handleFileRemoved($event)
     {
         // Registramos la información recibida para propósitos de depuración
-        Log::info('FileRemoved event recibido en DriverTrainingModal', [
+        Log::info('FileRemoved event recibido en DriverCourseModal', [
             'event' => $event,
             'fileId' => $event['fileId'] ?? 'no id',
             'modelName' => $event['modelName'] ?? 'no model',
         ]);
         
         // Verificar que el evento corresponde a este modelo
-        if (!isset($event['modelName']) || $event['modelName'] !== 'school_certificates') {
+        if (!isset($event['modelName']) || $event['modelName'] !== 'course_certificates') {
             return;
         }
         
@@ -251,106 +290,9 @@ class DriverTrainingModal extends Component
     }
     
     /**
-     * Guarda la escuela de capacitación
-     */
-    public function save()
-    {
-        $this->validate();
-        
-        $data = [
-            'user_driver_detail_id' => $this->userDriverDetailId,
-            'school_name' => $this->school_name,
-            'city' => $this->city,
-            'state' => $this->state,
-            'phone_number' => $this->phone_number,
-            'date_start' => $this->date_start,
-            'date_end' => $this->date_end,
-            'graduated' => $this->graduated ? 1 : 0,
-            'training_skills' => json_encode($this->training_skills),
-        ];
-        
-        DB::beginTransaction();
-        try {
-            if ($this->trainingSchoolId) {
-                // Actualizar escuela existente
-                $school = DriverTrainingSchool::find($this->trainingSchoolId);
-                $school->update($data);
-            } else {
-                // Crear nueva escuela
-                $school = DriverTrainingSchool::create($data);
-            }
-
-            // Procesar archivos temporales
-            if (count($this->tempFiles) > 0) {
-                $this->processLivewireFiles($school, $this->tempFiles, 'school_certificates');
-            }
-
-            DB::commit();
-        
-        // Cerrar directamente el modal
-        $this->showModal = false;
-        
-        // Emitir notificación de éxito
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => 'Escuela de capacitación guardada exitosamente.'
-        ]);
-        
-        // Emitir un evento para actualizar la vista principal con los nuevos datos
-        // Este evento será escuchado por el componente DriverRecruitmentReview
-        $this->dispatch('training-school-updated', [
-            'driverId' => $this->userDriverDetailId,
-            'schoolId' => $school->id,
-            'timestamp' => now()->timestamp
-        ]);
-        
-        // Resetear el formulario
-        $this->resetForm();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error al guardar escuela de capacitación: ' . $e->getMessage(), [
-                'exception' => $e,
-                'data' => $data
-            ]);
-            $this->dispatch('error', 'Ha ocurrido un error al guardar la escuela de capacitación: ' . $e->getMessage());
-        }
-    }
-    
-    /**
-     * Resetea el formulario
-     */
-    private function resetForm()
-    {
-        $this->reset([
-            'school_name',
-            'city',
-            'state',
-            'phone_number',
-            'date_start',
-            'date_end',
-            'graduated',
-            'training_skills',
-            'tempFiles',
-            'existingFiles',
-        ]);
-        
-        // Valores predeterminados
-        $this->graduated = false;
-        $this->training_skills = [];
-    }
-    
-    /**
-     * Renderiza el componente
-     */
-    public function render()
-    {
-        return view('livewire.admin.driver.driver-training-modal');
-    }
-    
-    /**
      * Procesa los archivos subidos a través de Livewire y los adjunta al modelo
      * 
-     * @param DriverTrainingSchool $model Modelo al que se adjuntarán los archivos
+     * @param DriverCourse $model Modelo al que se adjuntarán los archivos
      * @param array $files Array de archivos temporales con sus metadatos
      * @param string $collection Nombre de la colección de archivos
      * @return bool
@@ -358,7 +300,7 @@ class DriverTrainingModal extends Component
     private function processLivewireFiles($model, $files, $collection)
     {
         // Registrar para depuración lo que estamos intentando procesar
-        Log::info('processLivewireFiles en DriverTrainingModal', [
+        Log::info('processLivewireFiles en DriverCourseModal', [
             'model_id' => $model->id,
             'collection' => $collection,
             'files_count' => count($files),
@@ -407,7 +349,7 @@ class DriverTrainingModal extends Component
                           'original_name' => $fileData['name'] ?? $fileName,
                           'mime_type' => $fileData['mime_type'] ?? null
                       ])
-                      ->withResponsiveImagesIf(in_array(strtolower(pathinfo($fileData['path'], PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png']), ['school_certificate_thumb'])
+                      ->withResponsiveImagesIf(in_array(strtolower(pathinfo($fileData['path'], PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png']), ['course_certificate_thumb'])
                       ->toMediaCollection($collection, 'public');
                       
                 Log::info('Archivo adjuntado exitosamente', [
@@ -427,5 +369,81 @@ class DriverTrainingModal extends Component
         }
         
         return true;
+    }
+    
+    /**
+     * Guarda el curso
+     */
+    public function save()
+    {
+        $this->validate();
+        
+        $data = [
+            'user_driver_detail_id' => $this->userDriverDetailId,
+            'organization_name' => $this->organization_name,
+            'phone' => $this->phone,
+            'city' => $this->city,
+            'state' => $this->state,
+            'certification_date' => $this->certification_date,
+            'experience' => $this->experience,
+            'expiration_date' => $this->expiration_date,
+            'status' => $this->status,
+        ];
+        
+        DB::beginTransaction();
+        try {
+            if ($this->courseId) {
+                // Actualizar curso existente
+                $course = DriverCourse::find($this->courseId);
+                $course->update($data);
+            } else {
+                // Crear nuevo curso
+                $course = DriverCourse::create($data);
+            }
+
+            // Procesar archivos temporales
+            if (count($this->tempFiles) > 0) {
+                $this->processLivewireFiles($course, $this->tempFiles, 'course_certificates');
+            }
+
+            DB::commit();
+            
+            // Cerrar directamente el modal
+            $this->showModal = false;
+            
+            // Emitir notificación de éxito
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => 'Curso guardado exitosamente.'
+            ]);
+            
+            // Emitir un evento para actualizar la vista principal con los nuevos datos
+            $this->dispatch('course-updated', [
+                'driverId' => $this->userDriverDetailId,
+                'courseId' => $course->id,
+                'timestamp' => now()->timestamp
+            ]);
+            
+            // Resetear el formulario
+            $this->resetForm();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error al guardar curso: ' . $e->getMessage(), [
+                'exception' => $e,
+                'data' => $data
+            ]);
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Ha ocurrido un error al guardar el curso: ' . $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * Render del componente
+     */
+    public function render()
+    {
+        return view('livewire.admin.driver.driver-course-modal');
     }
 }

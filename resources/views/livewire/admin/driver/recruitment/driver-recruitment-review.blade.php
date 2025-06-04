@@ -689,12 +689,34 @@
                         <div class="border-t my-5"></div>
 
                         <!-- Courses Section -->
-                        <h3 class="text-lg font-medium mb-4">Courses</h3>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-medium">Courses</h3>
+                            <button type="button" 
+                                wire:click="$dispatch('openDriverCourseModal', { driverId: {{ $driver->id }} })" 
+                                class="bg-primary hover:bg-primary-dark text-white py-1 px-3 rounded text-sm flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                Add Course
+                            </button>
+                        </div>
 
                         @if (isset($driver->courses) && $driver->courses->isNotEmpty())
                             <div class="space-y-4">
                                 @foreach ($driver->courses as $course)
                                     <div class="bg-slate-50 p-4 rounded-lg">
+                                        <!-- Botones de acción -->
+                                        <div class="flex justify-end mb-2">
+                                            <button type="button" 
+                                                wire:click="$dispatch('openDriverCourseModal', { driverId: {{ $driver->id }}, courseId: {{ $course->id }} })" 
+                                                class="text-slate-500 hover:text-primary">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
                                                 <div class="text-sm text-slate-500">Organization Name</div>
@@ -741,6 +763,9 @@
                         @else
                             <div class="text-slate-500 italic mb-4">No courses have been recorded.</div>
                         @endif
+                        
+                        <!-- Componente Modal para Agregar/Editar Cursos -->
+                        @livewire('admin.driver.driver-course-modal')
 
                         <!-- Divider -->
                         <div class="border-t my-5"></div>
