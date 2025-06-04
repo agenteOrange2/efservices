@@ -120,11 +120,27 @@ class DriverTrainingSchool extends Model implements HasMedia
     }
     
     /**
-     * Método que se ejecuta al agregar un archivo a media
+     * Registra las conversiones de medios para generar miniaturas
+     * cuando se suben imágenes al modelo.
+     * 
+     * @param Media $media
+     * @return void
      */
     public function registerMediaConversions(Media $media = null): void
     {
-        // Este método es necesario para la interfaz HasMedia
+        $this->addMediaConversion('thumb')
+             ->width(200)
+             ->height(200)
+             ->sharpen(10)
+             ->nonQueued()
+             ->performOnCollections('school_certificates');
+             
+        $this->addMediaConversion('preview')
+             ->width(400)
+             ->height(300)
+             ->sharpen(10)
+             ->nonQueued()
+             ->performOnCollections('school_certificates');
     }
     
     /**

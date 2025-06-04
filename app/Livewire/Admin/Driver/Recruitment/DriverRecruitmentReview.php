@@ -22,6 +22,11 @@ use Livewire\WithFileUploads;
 class DriverRecruitmentReview extends Component
 {
     use WithFileUploads;
+    
+    // Define los eventos a escuchar
+    protected $listeners = [
+        'training-school-updated' => 'handleTrainingSchoolUpdated',
+    ];
     public $driverId;
     public $driver;
     public $application;
@@ -2291,6 +2296,29 @@ private function loadModelMedia($model, $category, $recordType = null)
 
     // Resto de los métodos igual que antes...
 
+    /**
+     * Maneja el evento cuando se actualiza una escuela de capacitación
+     * Este método se llama cuando el componente DriverTrainingModal emite el evento 'training-school-updated'
+     *
+     * @param array $data Los datos del evento que incluyen driverId, schoolId y timestamp
+     * @return void
+     */
+    public function handleTrainingSchoolUpdated($data)
+    {
+        // Verificar que los datos del evento corresponden al driver actual
+        if (isset($data['driverId']) && $data['driverId'] == $this->driverId) {
+            // Recargar los datos del driver para actualizar la información en tiempo real
+            Log::info('Recargando datos del driver después de actualizar escuela de capacitación', [
+                'driver_id' => $this->driverId,
+                'updated_school_id' => $data['schoolId'] ?? null,
+                'timestamp' => $data['timestamp'] ?? now()->timestamp
+            ]);
+            
+            // Recargar los datos del driver
+            $this->loadDriverData();
+        }
+    }
+    
     public function render()
     {
         return view('livewire.admin.driver.recruitment.driver-recruitment-review');

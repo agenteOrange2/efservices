@@ -585,12 +585,32 @@
                 <!-- Capacitación -->
                 @if ($currentTab === 'records')
                     <div class="mb-5">
-                        <!-- Training Schools Section -->
-                        <h3 class="text-lg font-medium mb-4">Commercial Driver Training Schools</h3>
 
-                        @if ($driver->trainingSchools->isNotEmpty())
+                        <!-- Training Schools Section -->
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium">Commercial Driver Training Schools</h3>
+                            
+                                <button type="button" 
+                                    wire:click="$dispatch('openTrainingModal', { driverId: {{ $driver->id }} })" 
+                                    class="bg-primary hover:bg-primary-dark text-white py-1 px-3 rounded text-sm flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    Add Training
+                                </button>                            
+                        </div>
+
+                        @if (isset($driver->trainingSchools) && $driver->trainingSchools->isNotEmpty())
                             @foreach ($driver->trainingSchools as $school)
-                                <div class="bg-slate-50 p-4 rounded-lg mb-4">
+                                <div class="bg-slate-50 p-4 rounded-lg mb-4 relative">
+                                    <div class="absolute bottom-4 right-4 flex space-x-2">                                        
+                                            <a href="#" 
+                                                wire:click.prevent="$dispatch('openTrainingModal', { driverId: {{ $driver->id }}, trainingSchoolId: {{ $school->id }} })" 
+                                                class="uppercase font-bold text-sm bg-blue-500 hover:bg-blue-600 text-white py-1 px-4 rounded">
+                                                EDIT
+                                            </a>                                                                                
+                                    </div>
+                                    
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
                                             <div class="text-sm text-slate-500">School Name</div>
@@ -603,8 +623,8 @@
                                         <div>
                                             <div class="text-sm text-slate-500">Period</div>
                                             <div class="font-medium">
-                                                {{ $school->date_start->format('m/Y') }} -
-                                                {{ $school->date_end->format('m/Y') }}
+                                                {{ $school->date_start ? $school->date_start->format('m/Y') : 'N/A' }} -
+                                                {{ $school->date_end ? $school->date_end->format('m/Y') : 'N/A' }}
                                             </div>
                                         </div>
                                         <div>
@@ -638,30 +658,13 @@
                                             <div class="text-sm text-slate-500 mb-2">School Certificates</div>
                                             <div class="flex flex-wrap gap-2">
                                                 @foreach ($school->getMedia('school_certificates') as $certificate)
-                                                    <a href="{{ $certificate->getUrl() }}" target="_blank"
-                                                        class="block">
+                                                    <a href="{{ $certificate->getUrl() }}" target="_blank" class="block">
                                                         @if (strpos($certificate->mime_type, 'image/') === 0)
                                                             <img src="{{ $certificate->getUrl() }}" alt="Certificado"
-                                                                class="h-24 border rounded object-contain bg-white">
+                                                                 class="h-24 border rounded object-contain bg-white">
                                                         @else
-                                                            <div
-                                                                class="h-24 w-24 border rounded flex items-center justify-center bg-white">
-                                                                <svg class="h-5 w-5 mr-1" viewBox="0 0 24 24"
-                                                                    fill="#9a9a9a" xmlns="http://www.w3.org/2000/svg">
-                                                                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                                                    <g id="SVGRepo_tracerCarrier"
-                                                                        stroke-linecap="round"
-                                                                        stroke-linejoin="round"></g>
-                                                                    <g id="SVGRepo_iconCarrier">
-                                                                        <g id="File / File_Document">
-                                                                            <path id="Vector"
-                                                                                d="M9 17H15M9 14H15M13.0004 3.00087C12.9048 3 12.7974 3 12.6747 3H8.2002C7.08009 3 6.51962 3 6.0918 3.21799C5.71547 3.40973 5.40973 3.71547 5.21799 4.0918C5 4.51962 5 5.08009 5 6.2002V17.8002C5 18.9203 5 19.4801 5.21799 19.9079C5.40973 20.2842 5.71547 20.5905 6.0918 20.7822C6.51921 21 7.079 21 8.19694 21L15.8031 21C16.921 21 17.48 21 17.9074 20.7822C18.2837 20.5905 18.5905 20.2842 18.7822 19.9079C19 19.4805 19 18.9215 19 17.8036V9.32568C19 9.20302 18.9999 9.09553 18.999 9M13.0004 3.00087C13.2858 3.00348 13.4657 3.01407 13.6382 3.05547C13.8423 3.10446 14.0379 3.18526 14.2168 3.29492C14.4186 3.41857 14.5918 3.59181 14.9375 3.9375L18.063 7.06298C18.4089 7.40889 18.5809 7.58136 18.7046 7.78319C18.8142 7.96214 18.8953 8.15726 18.9443 8.36133C18.9857 8.53379 18.9964 8.71454 18.999 9M13.0004 3.00087L13 5.80021C13 6.92031 13 7.48015 13.218 7.90797C13.4097 8.2843 13.7155 8.59048 14.0918 8.78223C14.5192 9 15.079 9 16.1969 9H18.999"
-                                                                                stroke="#9a9a9a" stroke-width="2"
-                                                                                stroke-linecap="round"
-                                                                                stroke-linejoin="round"></path>
-                                                                        </g>
-                                                                    </g>
-                                                                </svg>
+                                                            <div class="h-24 w-24 border rounded flex items-center justify-center bg-white">
+                                                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20M13 13V17H10V13H13Z"></path></svg>
                                                             </div>
                                                         @endif
                                                     </a>
@@ -678,6 +681,278 @@
                         @else
                             <div class="text-slate-500 italic">No training schools are registered.</div>
                         @endif
+                        
+                        <!-- Componente Modal para Agregar/Editar Escuelas de Capacitación -->
+                        @livewire('admin.driver.driver-training-modal')
+
+                        <!-- Divider -->
+                        <div class="border-t my-5"></div>
+
+                        <!-- Courses Section -->
+                        <h3 class="text-lg font-medium mb-4">Courses</h3>
+
+                        @if (isset($driver->courses) && $driver->courses->isNotEmpty())
+                            <div class="space-y-4">
+                                @foreach ($driver->courses as $course)
+                                    <div class="bg-slate-50 p-4 rounded-lg">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <div class="text-sm text-slate-500">Organization Name</div>
+                                                <div class="font-medium">{{ $course->organization_name }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Contact Phone</div>
+                                                <div class="font-medium">{{ $course->phone }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Location</div>
+                                                <div class="font-medium">{{ $course->city }}, {{ $course->state }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Certification Date</div>
+                                                <div class="font-medium">{{ $course->certification_date ? $course->certification_date->format('d/m/Y') : 'N/A' }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Expiration Date</div>
+                                                <div class="font-medium">{{ $course->expiration_date ? $course->expiration_date->format('d/m/Y') : 'N/A' }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Experience</div>
+                                                <div class="font-medium">{{ $course->experience }}</div>
+                                            </div>
+                                            @if ($course->hasMedia('certificates'))
+                                            <div class="col-span-2">
+                                                <div class="text-sm text-slate-500 mb-2">Certificates</div>
+                                                <div class="flex flex-wrap gap-2">
+                                                    @foreach ($course->getMedia('certificates') as $certificate)
+                                                        <a href="{{ $certificate->getUrl() }}" target="_blank" class="block">
+                                                            <div class="h-20 w-20 border rounded flex items-center justify-center bg-primary/10 text-primary">
+                                                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20M13 13V17H10V13H13Z"></path></svg>
+                                                            </div>
+                                                        </a>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-slate-500 italic mb-4">No courses have been recorded.</div>
+                        @endif
+
+                        <!-- Divider -->
+                        <div class="border-t my-5"></div>
+
+                        <!-- Testing Section -->
+                        <h3 class="text-lg font-medium mb-4">Testing</h3>
+
+                        @if (isset($driver->testings) && $driver->testings->isNotEmpty())
+                            <div class="space-y-4">
+                                @foreach ($driver->testings as $test)
+                                    <div class="bg-slate-50 p-4 rounded-lg">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <div class="text-sm text-slate-500">Test Type</div>
+                                                <div class="font-medium">{{ $test->test_type }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Test Date</div>
+                                                <div class="font-medium">{{ $test->test_date ? $test->test_date->format('d/m/Y') : 'N/A' }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Test Result</div>
+                                                <div class="font-medium">{{ $test->test_result }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Status</div>
+                                                <div class="font-medium">{{ $test->status }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Administered By</div>
+                                                <div class="font-medium">{{ $test->administered_by }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Requester</div>
+                                                <div class="font-medium">{{ $test->requester_name }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Location</div>
+                                                <div class="font-medium">{{ $test->location }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Scheduled Time</div>
+                                                <div class="font-medium">{{ $test->scheduled_time ? $test->scheduled_time->format('d/m/Y H:i') : 'N/A' }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Next Test Due</div>
+                                                <div class="font-medium">{{ $test->next_test_due ? $test->next_test_due->format('d/m/Y') : 'N/A' }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Bill To</div>
+                                                <div class="font-medium">{{ $test->bill_to }}</div>
+                                            </div>
+                                            @if ($test->notes)
+                                            <div class="col-span-2">
+                                                <div class="text-sm text-slate-500">Notes</div>
+                                                <div class="font-medium">{{ $test->notes }}</div>
+                                            </div>
+                                            @endif
+                                            
+                                            @if ($test->is_random_test || $test->is_post_accident_test || $test->is_reasonable_suspicion_test || $test->is_pre_employment_test || $test->is_follow_up_test || $test->is_return_to_duty_test || $test->is_other_reason_test)
+                                            <div class="col-span-2 mt-2">
+                                                <div class="text-sm text-slate-500 mb-2">Test Reasons</div>
+                                                <div class="flex flex-wrap gap-2">
+                                                    @if ($test->is_random_test)
+                                                        <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Random Test</span>
+                                                    @endif
+                                                    @if ($test->is_post_accident_test)
+                                                        <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Post Accident</span>
+                                                    @endif
+                                                    @if ($test->is_reasonable_suspicion_test)
+                                                        <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Reasonable Suspicion</span>
+                                                    @endif
+                                                    @if ($test->is_pre_employment_test)
+                                                        <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Pre-Employment</span>
+                                                    @endif
+                                                    @if ($test->is_follow_up_test)
+                                                        <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Follow-up</span>
+                                                    @endif
+                                                    @if ($test->is_return_to_duty_test)
+                                                        <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Return to Duty</span>
+                                                    @endif
+                                                    @if ($test->is_other_reason_test)
+                                                        <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Other: {{ $test->other_reason_description }}</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            @endif
+                                            
+                                            <!-- Documentos relacionados con el test -->
+                                            @if ($test->hasMedia())
+                                            <div class="col-span-2 mt-2">
+                                                <div class="text-sm text-slate-500 mb-2">Test Documents</div>
+                                                <div class="flex flex-wrap gap-3">
+                                                    @if ($test->hasMedia('drug_test_pdf'))
+                                                        <a href="{{ $test->getFirstMedia('drug_test_pdf')->getUrl() }}" target="_blank" class="flex items-center px-3 py-2 bg-slate-100 rounded hover:bg-slate-200">
+                                                            <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20Z"></path></svg>
+                                                            Drug Test Report
+                                                        </a>
+                                                    @endif
+                                                    @if ($test->hasMedia('test_results'))
+                                                        <a href="{{ $test->getFirstMedia('test_results')->getUrl() }}" target="_blank" class="flex items-center px-3 py-2 bg-slate-100 rounded hover:bg-slate-200">
+                                                            <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20Z"></path></svg>
+                                                            Test Results
+                                                        </a>
+                                                    @endif
+                                                    @if ($test->hasMedia('test_certificates'))
+                                                        <a href="{{ $test->getFirstMedia('test_certificates')->getUrl() }}" target="_blank" class="flex items-center px-3 py-2 bg-slate-100 rounded hover:bg-slate-200">
+                                                            <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20Z"></path></svg>
+                                                            Certificate
+                                                        </a>
+                                                    @endif
+                                                    @if ($test->hasMedia('test_authorization'))
+                                                        <a href="{{ $test->getFirstMedia('test_authorization')->getUrl() }}" target="_blank" class="flex items-center px-3 py-2 bg-slate-100 rounded hover:bg-slate-200">
+                                                            <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20Z"></path></svg>
+                                                            Authorization
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-slate-500 italic mb-4">No tests have been recorded.</div>
+                        @endif
+
+                        <!-- Divider -->
+                        <div class="border-t my-5"></div>
+
+                        <!-- Inspections Section -->
+                        <h3 class="text-lg font-medium mb-4">Inspections</h3>
+
+                        @if (isset($driver->inspections) && $driver->inspections->isNotEmpty())
+                            <div class="space-y-4">
+                                @foreach ($driver->inspections as $inspection)
+                                    <div class="bg-slate-50 p-4 rounded-lg">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <div class="text-sm text-slate-500">Inspection Date</div>
+                                                <div class="font-medium">{{ $inspection->inspection_date ? $inspection->inspection_date->format('d/m/Y') : 'N/A' }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Inspection Type</div>
+                                                <div class="font-medium">{{ $inspection->inspection_type }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Inspector Name</div>
+                                                <div class="font-medium">{{ $inspection->inspector_name }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Location</div>
+                                                <div class="font-medium">{{ $inspection->location }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Status</div>
+                                                <div class="font-medium">{{ $inspection->status }}</div>
+                                            </div>
+                                            @if ($inspection->vehicle)
+                                            <div>
+                                                <div class="text-sm text-slate-500">Vehicle</div>
+                                                <div class="font-medium">{{ $inspection->vehicle->name ?? ($inspection->vehicle->make . ' ' . $inspection->vehicle->model) }}</div>
+                                            </div>
+                                            @endif
+                                            @if ($inspection->defects_found)
+                                            <div class="col-span-2">
+                                                <div class="text-sm text-slate-500">Defects Found</div>
+                                                <div class="font-medium">{{ $inspection->defects_found }}</div>
+                                            </div>
+                                            @endif
+                                            @if ($inspection->corrective_actions)
+                                            <div class="col-span-2">
+                                                <div class="text-sm text-slate-500">Corrective Actions</div>
+                                                <div class="font-medium">{{ $inspection->corrective_actions }}</div>
+                                            </div>
+                                            @endif
+                                            <div>
+                                                <div class="text-sm text-slate-500">Defects Corrected</div>
+                                                <div class="font-medium">{{ $inspection->is_defects_corrected ? 'Yes' : 'No' }}</div>
+                                            </div>
+                                            @if ($inspection->is_defects_corrected && $inspection->defects_corrected_date)
+                                            <div>
+                                                <div class="text-sm text-slate-500">Correction Date</div>
+                                                <div class="font-medium">{{ $inspection->defects_corrected_date->format('d/m/Y') }}</div>
+                                            </div>
+                                            @endif
+                                            @if ($inspection->corrected_by)
+                                            <div>
+                                                <div class="text-sm text-slate-500">Corrected By</div>
+                                                <div class="font-medium">{{ $inspection->corrected_by }}</div>
+                                            </div>
+                                            @endif
+                                            <div>
+                                                <div class="text-sm text-slate-500">Safe to Operate</div>
+                                                <div class="font-medium {{ $inspection->is_vehicle_safe_to_operate ? 'text-green-600' : 'text-red-600' }}">
+                                                    {{ $inspection->is_vehicle_safe_to_operate ? 'Yes' : 'No' }}
+                                                </div>
+                                            </div>
+                                            @if ($inspection->notes)
+                                            <div class="col-span-2">
+                                                <div class="text-sm text-slate-500">Notes</div>
+                                                <div class="font-medium">{{ $inspection->notes }}</div>
+                                            </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-slate-500 italic mb-4">No inspections have been recorded.</div>
+                        @endif
 
                         <!-- Divider -->
                         <div class="border-t my-5"></div>
@@ -685,29 +960,76 @@
                         <!-- Traffic Convictions Section -->
                         <h3 class="text-lg font-medium mb-4">Traffic Violations</h3>
 
-                        @if ($driver->trafficConvictions->isNotEmpty())
-                            <div class="overflow-x-auto">
-                                <table class="w-full border-collapse">
-                                    <thead>
-                                        <tr class="bg-slate-100">
-                                            <th class="border px-4 py-2 text-left">Date</th>
-                                            <th class="border px-4 py-2 text-left">Location</th>
-                                            <th class="border px-4 py-2 text-left">Charge</th>
-                                            <th class="border px-4 py-2 text-left">Penalty</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($driver->trafficConvictions as $conviction)
-                                            <tr>
-                                                <td class="border px-4 py-2">
-                                                    {{ $conviction->conviction_date->format('d/m/Y') }}</td>
-                                                <td class="border px-4 py-2">{{ $conviction->location }}</td>
-                                                <td class="border px-4 py-2">{{ $conviction->charge }}</td>
-                                                <td class="border px-4 py-2">{{ $conviction->penalty }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                        @if (isset($driver->trafficConvictions) && $driver->trafficConvictions->isNotEmpty())
+                            <div class="space-y-4">
+                                @foreach ($driver->trafficConvictions as $conviction)
+                                    <div class="bg-slate-50 p-4 rounded-lg">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <div class="text-sm text-slate-500">Conviction Date</div>
+                                                <div class="font-medium">{{ $conviction->conviction_date ? $conviction->conviction_date->format('d/m/Y') : 'N/A' }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Location</div>
+                                                <div class="font-medium">{{ $conviction->location }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Charge</div>
+                                                <div class="font-medium">{{ $conviction->charge }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-slate-500">Penalty</div>
+                                                <div class="font-medium">{{ $conviction->penalty }}</div>
+                                            </div>
+                                            @if ($conviction->conviction_type)
+                                            <div>
+                                                <div class="text-sm text-slate-500">Type</div>
+                                                <div class="font-medium">{{ $conviction->conviction_type }}</div>
+                                            </div>
+                                            @endif
+                                            @if ($conviction->description)
+                                            <div class="col-span-2">
+                                                <div class="text-sm text-slate-500">Description</div>
+                                                <div class="font-medium">{{ $conviction->description }}</div>
+                                            </div>
+                                            @endif
+                                        </div>
+                                        
+                                        <!-- Related Documents -->
+                                        @if (method_exists($conviction, 'getDocumentsGroupedByType') && count($conviction->getDocumentsGroupedByType()) > 0)
+                                        <div class="mt-3 pt-3 border-t border-slate-200">
+                                            <div class="text-sm text-slate-500 mb-2">Related Documents</div>
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                @foreach ($conviction->getDocumentsGroupedByType() as $type => $documents)
+                                                    <div>
+                                                        <div class="text-xs font-semibold mb-1">{{ ucwords(str_replace('_', ' ', $type)) }}</div>
+                                                        <div class="flex flex-wrap gap-2">
+                                                            @foreach ($documents as $document)
+                                                                <a href="{{ route('documents.show', $document) }}" target="_blank" class="block">
+                                                                    @if (Str::startsWith($document->mime_type, 'image/'))
+                                                                        <img src="{{ route('documents.show', $document) }}" 
+                                                                            alt="{{ $document->name }}" 
+                                                                            class="h-16 border rounded object-contain bg-white">
+                                                                    @else
+                                                                        <div class="h-16 w-16 border rounded flex items-center justify-center bg-white text-xs text-center p-1" title="{{ $document->name }}">
+                                                                            <div>
+                                                                                <svg class="h-5 w-5 mx-auto" viewBox="0 0 24 24" fill="#9a9a9a">
+                                                                                    <path d="M9 17h6m-6-3h6M9 9h1m3 0h2M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v16a2 2 0 002 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                                                </svg>
+                                                                                <span>{{ Str::limit($document->name, 10) }}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    @endif
+                                                                </a>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                        @endif
+                                    </div>
+                                @endforeach
                             </div>
                         @else
                             <div class="text-slate-500 italic mb-4">No traffic violations have been recorded.</div>
@@ -727,7 +1049,7 @@
                                             <div>
                                                 <div class="text-sm text-slate-500">Accident Date</div>
                                                 <div class="font-medium">
-                                                    {{ $accident->accident_date->format('d/m/Y') }}</div>
+                                                    {{ $accident->accident_date ? $accident->accident_date->format('d/m/Y') : 'N/A' }}</div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Nature of Accident</div>
