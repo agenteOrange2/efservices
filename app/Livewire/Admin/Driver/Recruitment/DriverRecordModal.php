@@ -1,5 +1,4 @@
 <?php
-<?php
 
 namespace App\Livewire\Admin\Driver\Recruitment;
 
@@ -402,16 +401,44 @@ class DriverRecordModal extends Component
      */
     public function removeExistingDocument($documentId)
     {
-        DB::table('media')->where('id', $documentId)->delete();
-        
-        $this->recordDocuments = array_filter($this->recordDocuments, function($doc) use ($documentId) {
-            return $doc['id'] != $documentId;
-        });
-        
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => 'Documento eliminado correctamente'
-        ]);
+        try {
+            // Usar el modelo Spatie Media en lugar de DB::table directamente
+            $media = \Spatie\MediaLibrary\MediaCollections\Models\Media::find($documentId);
+            
+            if ($media) {
+                // Esto maneja tanto la eliminación del registro como el archivo físico
+                $media->delete();
+                
+                // Actualiza la lista de documentos en la interfaz
+                $this->recordDocuments = array_filter($this->recordDocuments, function($doc) use ($documentId) {
+                    return $doc['id'] != $documentId;
+                });
+                
+                $this->dispatch('notify', [
+                    'type' => 'success',
+                    'message' => 'Documento eliminado correctamente'
+                ]);
+                
+                // Agregar log para depuración
+                Log::info("Documento eliminado correctamente", ['media_id' => $documentId]);
+            } else {
+                Log::warning("Intento de eliminar media inexistente", ['media_id' => $documentId]);
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'No se encontró el documento a eliminar'
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error("Error al eliminar media: " . $e->getMessage(), [
+                'media_id' => $documentId,
+                'exception' => $e
+            ]);
+            
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Error al eliminar el documento: ' . $e->getMessage()
+            ]);
+        }
     }
     
     /**

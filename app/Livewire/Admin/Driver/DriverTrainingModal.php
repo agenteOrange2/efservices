@@ -193,6 +193,7 @@ class DriverTrainingModal extends Component
                 if (isset($file['id']) && $file['id'] == $fileId) {
                     unset($this->tempFiles[$index]);
                     $this->tempFiles = array_values($this->tempFiles); // Reindexar
+                    Log::info('Archivo temporal eliminado de la interfaz', ['file_id' => $fileId]);
                     break;
                 }
             }
@@ -200,11 +201,49 @@ class DriverTrainingModal extends Component
             // Es un archivo existente (en la base de datos)
             foreach ($this->existingFiles as $index => $file) {
                 if (isset($file['id']) && $file['id'] == $fileId) {
-                    // Marcar para eliminación al guardar utilizando la API documentos
-                    // que evita la eliminación en cascada
-                    $this->dispatch('documentMarkedForDeletion', ['mediaId' => $fileId]);
+                    try {
+                        // Buscar el archivo en la base de datos
+                        $media = Media::find($fileId);
+                        
+                        if ($media) {
+                            // Eliminar el archivo físico y el registro en la base de datos
+                            $media->delete();
+                            
+                            Log::info('Archivo permanente eliminado correctamente', [
+                                'file_id' => $fileId,
+                                'file_name' => $file['name'] ?? 'unknown'
+                            ]);
+                            
+                            // Notificar éxito al usuario
+                            $this->dispatch('notify', [
+                                'type' => 'success',
+                                'message' => 'Archivo eliminado correctamente'
+                            ]);
+                        } else {
+                            Log::warning('Media no encontrado para eliminar', ['file_id' => $fileId]);
+                            // Notificar error al usuario
+                            $this->dispatch('notify', [
+                                'type' => 'error',
+                                'message' => 'No se encontró el archivo a eliminar'
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Error al eliminar archivo', [
+                            'file_id' => $fileId,
+                            'error' => $e->getMessage()
+                        ]);
+                        
+                        // Notificar error al usuario
+                        $this->dispatch('notify', [
+                            'type' => 'error',
+                            'message' => 'Error al eliminar el archivo: ' . $e->getMessage()
+                        ]);
+                    }
+                    
+                    // Eliminar de la interfaz (independientemente del resultado)
                     unset($this->existingFiles[$index]);
                     $this->existingFiles = array_values($this->existingFiles); // Reindexar
+                    Log::info('Archivo permanente eliminado de la interfaz', ['file_id' => $fileId]);
                     break;
                 }
             }
