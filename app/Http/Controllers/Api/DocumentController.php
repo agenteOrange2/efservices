@@ -83,6 +83,7 @@ class DocumentController extends Controller
     
     /**
      * Elimina un archivo de manera segura sin eliminar el modelo relacionado (método POST)
+     * Este método está diseñado para ser accesible sin autenticación API, solo con protección CSRF
      * 
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -92,7 +93,8 @@ class DocumentController extends Controller
         try {
             // Validar que se ha proporcionado el ID del media
             $request->validate([
-                'mediaId' => 'required|numeric'
+                'mediaId' => 'required|numeric',
+                '_token' => 'required' // Verificar que se ha enviado el token CSRF
             ]);
             
             $mediaId = $request->mediaId;

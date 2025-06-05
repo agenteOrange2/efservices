@@ -127,29 +127,37 @@
                             <div class="border border-dashed rounded-md p-4 mt-2">
                                 @php
                                 // Prepara los archivos existentes para el componente Livewire desde Spatie Media Library
-                                $existingFilesArray = [];
-                                $mediaItems = $conviction->getMedia('traffic-images');
+                                $existingFiles = [];
                                 
-                                foreach($mediaItems as $media) {
-                                    $existingFilesArray[] = [
+                                // Obtener todos los archivos de media para esta infracción
+                                $mediaItems = $conviction->media->where('collection_name', 'traffic_convictions');
+                                
+                                // Si no hay archivos en la colección específica, buscar en todas las colecciones
+                                // Esto es útil cuando los archivos se suben desde diferentes partes del sistema
+                                if ($mediaItems->isEmpty()) {
+                                    $mediaItems = $conviction->media;
+                                }
+                                
+                                foreach ($mediaItems as $media) {
+                                    $existingFiles[] = [
                                         'id' => $media->id,
                                         'name' => $media->file_name,
-                                        'file_name' => $media->file_name,
-                                        'mime_type' => $media->mime_type,
                                         'size' => $media->size,
-                                        'created_at' => $media->created_at->format('Y-m-d H:i:s'),
+                                        'mime_type' => $media->mime_type,
+                                        'original_name' => $media->file_name,
                                         'url' => $media->getUrl(),
-                                        'is_temp' => false
+                                        'is_temp' => false,
+                                        'created_at' => $media->created_at->toDateTimeString()
                                     ];
                                 }
                                 @endphp
 
                                 <livewire:components.file-uploader
-                                    model-name="traffic_images"
+                                    model-name="traffic_convictions"
                                     :model-index="0"
                                     :auto-upload="true"
                                     class="border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer"
-                                    :existing-files="$existingFilesArray"
+                                    :existing-files="$existingFiles"
                                 />
                                 <!-- Campo oculto para almacenar los archivos subidos - valor inicial vacío pero no null -->
                                 <input type="hidden" name="traffic_image_files" id="traffic_image_files_input" value="">

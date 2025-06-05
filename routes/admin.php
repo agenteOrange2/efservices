@@ -451,14 +451,17 @@ Route::prefix('accidents')->name('accidents.')->group(function () {
     Route::put('/{accident}', [AccidentsController::class, 'update'])->name('update');
     Route::delete('/{accident}', [AccidentsController::class, 'destroy'])->name('destroy');
 
-    // Accidentes - Documentos
-    Route::get('accidents/{accident}/documents', [AccidentsController::class, 'showDocuments'])->name('admin.accidents.documents');
-    Route::post('accidents/{accident}/documents', [AccidentsController::class, 'storeDocuments'])->name('admin.accidents.documents.store');
-    Route::delete('accidents/documents/{media}', [AccidentsController::class, 'deleteDocumentDirectly'])->name('admin.accidents.documents.destroy');
-    Route::get('accidents/document/{documentId}/preview', [AccidentsController::class, 'previewDocument'])->name('admin.accidents.document.preview');
+    // Documentos específicos de un accidente
+    Route::get('{accident}/documents', [AccidentsController::class, 'showDocuments'])->name('documents.show');
+    Route::post('{accident}/documents', [AccidentsController::class, 'storeDocuments'])->name('documents.store');
+    Route::get('document/{documentId}/preview', [AccidentsController::class, 'previewDocument'])->name('document.preview');
     // Obtener conductores por transportista (ruta legacy para compatibilidad)
     Route::get('/carriers/{carrier}/drivers', [AccidentsController::class, 'getDriversByCarrier'])->name('drivers.by.carrier');
 });
+
+// Vista general de todos los documentos de accidentes
+Route::get('/accidents/documents', [AccidentsController::class, 'documents'])->name('accidents.documents.index');
+Route::delete('/accidents/document/{media}', [AccidentsController::class, 'deleteDocumentDirectly'])->name('accidents.document.destroy');
 
 // Rutas para infracciones de tráfico
 Route::prefix('traffic')->name('traffic.')->group(function () {

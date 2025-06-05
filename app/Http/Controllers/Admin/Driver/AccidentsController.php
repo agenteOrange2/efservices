@@ -436,7 +436,7 @@ class AccidentsController extends Controller
             'drivers' => $drivers
         ]);
     }
-
+    
     /**
      * Muestra todos los documentos de accidentes en una vista resumida
      * 
@@ -446,138 +446,110 @@ class AccidentsController extends Controller
     public function documents(Request $request)
     {
         try {
-            // Variable para almacenar todos los documentos (sistema antiguo + Media Library)
+            // Variable para almacenar todos los documentos (solo Media Library)
             $allDocuments = collect();
             
-            // Filtro por accidente específico
+            // Filtros
             $specificAccidentId = $request->get('accident_id');
-            $specificAccident = null;
+            $startDate = $request->get('start_date');
+            $endDate = $request->get('end_date');
+            $carrierId = $request->get('carrier_id');
             
-            if ($specificAccidentId) {
-                $specificAccident = DriverAccident::find($specificAccidentId);
-            }
+            // Construir consulta directa a la tabla media para mejor rendimiento
+            $mediaQuery = DB::table('media')
+                ->select(
+                    'media.*', 
+                    'driver_accidents.accident_date', 
+                    'driver_accidents.nature_of_accident', 
+                    'driver_accidents.id as accident_id', 
+                    'driver_accidents.user_driver_detail_id',
+                    'users.name', 
+                    'user_driver_details.last_name',
+                    'user_driver_details.carrier_id',
+                    'carriers.name as carrier_name'
+                )
+                ->join('driver_accidents', 'media.model_id', '=', 'driver_accidents.id')
+                ->join('user_driver_details', 'driver_accidents.user_driver_detail_id', '=', 'user_driver_details.id')
+                ->join('users', 'user_driver_details.user_id', '=', 'users.id')
+                ->join('carriers', 'user_driver_details.carrier_id', '=', 'carriers.id')
+                ->where('media.model_type', '=', DriverAccident::class)
+                ->where('media.collection_name', '=', 'accident-images');
             
-            // 1. Obtener documentos del sistema antiguo
-            $query = DocumentAttachment::where('documentable_type', DriverAccident::class)
-                ->with(['documentable' => function($q) {
-                    $q->with('userDriverDetail.user');
-                }]);
-
             // Filtro por conductor
             if ($request->has('driver_id') && !empty($request->driver_id)) {
-                $query->whereHas('documentable', function($q) use ($request) {
-                    $q->where('user_driver_detail_id', $request->driver_id);
-                });
+                $mediaQuery->where('driver_accidents.user_driver_detail_id', $request->driver_id);
             }
-
+            
+            // Filtro por transportista (carrier)
+            if ($carrierId) {
+                $mediaQuery->where('user_driver_details.carrier_id', $carrierId);
+            }
+            
+            // Filtro por accidente específico
+            if ($specificAccidentId) {
+                $mediaQuery->where('driver_accidents.id', $specificAccidentId);
+            }
+            
+            // Filtro por rango de fechas de accidente
+            if ($startDate) {
+                $mediaQuery->where('driver_accidents.accident_date', '>=', $startDate);
+            }
+            
+            if ($endDate) {
+                $mediaQuery->where('driver_accidents.accident_date', '<=', $endDate);
+            }
+            
             // Filtro por tipo de archivo
             if ($request->has('file_type') && !empty($request->file_type)) {
                 switch ($request->file_type) {
                     case 'image':
-                        $query->where('mime_type', 'like', 'image/%');
+                        $mediaQuery->where('media.mime_type', 'like', 'image/%');
                         break;
                     case 'pdf':
-                        $query->where('mime_type', 'application/pdf');
+                        $mediaQuery->where('media.mime_type', '=', 'application/pdf');
                         break;
                     case 'document':
-                        $query->where(function($q) {
-                            $q->where('mime_type', 'like', '%word%')
-                              ->orWhere('mime_type', 'like', '%excel%')
-                              ->orWhere('mime_type', 'like', '%sheet%')
-                              ->orWhere('mime_type', 'like', '%csv%')
-                              ->orWhere('mime_type', 'like', '%powerpoint%')
-                              ->orWhere('mime_type', 'like', '%presentation%');
+                        $mediaQuery->where(function($q) {
+                            $q->where('media.mime_type', 'like', '%word%')
+                              ->orWhere('media.mime_type', 'like', '%excel%')
+                              ->orWhere('media.mime_type', 'like', '%sheet%')
+                              ->orWhere('media.mime_type', 'like', '%csv%')
+                              ->orWhere('media.mime_type', 'like', '%powerpoint%')
+                              ->orWhere('media.mime_type', 'like', '%presentation%');
                         });
                         break;
                 }
             }
-
-            // Si estamos filtrando por un accidente específico, limitamos la consulta
-            if ($specificAccidentId) {
-                $query->where('documentable_id', $specificAccidentId);
-            }
             
             // Ordenar por fecha de creación (más recientes primero)
-            $oldDocuments = $query->orderBy('created_at', 'desc')->get();
+            $mediaFiles = $mediaQuery->orderBy('media.created_at', 'desc')->get();
             
-            // Incluir información adicional para cada documento del sistema antiguo
-            $oldDocumentsCollection = $oldDocuments->map(function ($document) {
+            // Transformar archivos de Media Library al formato necesario para la vista
+            $mediaFilesCollection = collect($mediaFiles)->map(function ($media) {
                 try {
-                    // Obtener el accidente relacionado
-                    $accident = $document->documentable;
-                    if ($accident) {
-                        $document->accident_date = $accident->accident_date;
-                        $document->driver = $accident->userDriverDetail->user->name . ' ' . 
-                                          ($accident->userDriverDetail->user->lastname ?? '');
-                        $document->driver_id = $accident->userDriverDetail->id;
-                        $document->accident_id = $accident->id;
-                        $document->nature = $accident->nature_of_accident;
-                        $document->source = 'old_system';
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Error al obtener información adicional del documento', [
-                        'document_id' => $document->id,
-                        'error' => $e->getMessage()
-                    ]);
-                }
-                return $document;
-            });
-            
-            // Añadir documentos del sistema antiguo a la colección general
-            $allDocuments = $allDocuments->concat($oldDocumentsCollection);
-            
-            // 2. Obtener archivos de Media Library
-            if ($specificAccidentId && $specificAccident) {
-                // Si estamos filtrando por un accidente específico, obtenemos solo sus archivos
-                $mediaFiles = $specificAccident->getMedia('accident-images');
-            } else {
-                // Si no hay filtro, obtenemos todos los archivos de todos los accidentes
-                // Esto es más complejo, necesitamos obtener todos los accidentes primero
-                $accidentsQuery = DriverAccident::query();
-                
-                // Aplicar filtro por conductor si existe
-                if ($request->has('driver_id') && !empty($request->driver_id)) {
-                    $accidentsQuery->where('user_driver_detail_id', $request->driver_id);
-                }
-                
-                $accidents = $accidentsQuery->get();
-                $mediaFiles = collect();
-                
-                foreach ($accidents as $accident) {
-                    $files = $accident->getMedia('accident-images');
-                    $mediaFiles = $mediaFiles->concat($files);
-                }
-            }
-            
-            // Transformar archivos de Media Library al mismo formato que los documentos antiguos
-            $mediaFilesCollection = $mediaFiles->map(function ($media) {
-                try {
-                    // Obtener el accidente relacionado
-                    $accident = DriverAccident::find($media->model_id);
-                    if ($accident) {
-                        // Crear un objeto similar a DocumentAttachment para mantener consistencia
-                        $mediaDoc = new \stdClass();
-                        $mediaDoc->id = 'media_' . $media->id; // Añadir prefijo para distinguir en previewDocument
-                        $mediaDoc->file_name = $media->file_name;
-                        $mediaDoc->original_name = $media->name;
-                        $mediaDoc->mime_type = $media->mime_type;
-                        $mediaDoc->size = $media->size;
-                        $mediaDoc->created_at = $media->created_at;
-                        $mediaDoc->accident_date = $accident->accident_date;
-                        $mediaDoc->driver = $accident->userDriverDetail->user->name . ' ' . 
-                                          ($accident->userDriverDetail->user->lastname ?? '');
-                        $mediaDoc->driver_id = $accident->userDriverDetail->id;
-                        $mediaDoc->accident_id = $accident->id;
-                        $mediaDoc->nature = $accident->nature_of_accident;
-                        $mediaDoc->source = 'media_library';
-                        $mediaDoc->media_id = $media->id;
-                        
-                        // Construir URL para vista previa
-                        $diskPath = 'public/driver/' . $accident->userDriverDetail->id . '/accidents/' . $accident->id . '/' . $media->file_name;
-                        $mediaDoc->media_url = Storage::url($diskPath);
-                        
-                        return $mediaDoc;
-                    }
+                    // Crear un objeto con la información necesaria para la vista
+                    $mediaDoc = new \stdClass();
+                    $mediaDoc->id = 'media_' . $media->id; // Añadir prefijo para distinguir en previewDocument
+                    $mediaDoc->file_name = $media->file_name;
+                    $mediaDoc->original_name = $media->name ?? $media->file_name;
+                    $mediaDoc->mime_type = $media->mime_type;
+                    $mediaDoc->size = $media->size;
+                    $mediaDoc->created_at = $media->created_at;
+                    $mediaDoc->accident_date = $media->accident_date;
+                    $mediaDoc->driver = $media->name . ' ' . ($media->last_name ?? '');
+                    $mediaDoc->driver_id = $media->user_driver_detail_id;
+                    $mediaDoc->accident_id = $media->accident_id;
+                    $mediaDoc->nature = $media->nature_of_accident;
+                    $mediaDoc->carrier_id = $media->carrier_id;
+                    $mediaDoc->carrier_name = $media->carrier_name;
+                    $mediaDoc->source = 'media_library';
+                    $mediaDoc->media_id = $media->id;
+                    
+                    // Construir URL para vista previa usando la ruta del disco local
+                    $diskPath = 'public/driver/' . $media->user_driver_detail_id . '/accidents/' . $media->accident_id . '/' . $media->file_name;
+                    $mediaDoc->media_url = Storage::url($diskPath);
+                    
+                    return $mediaDoc;
                 } catch (\Exception $e) {
                     Log::error('Error al transformar archivo de Media Library', [
                         'media_id' => $media->id,
@@ -586,61 +558,49 @@ class AccidentsController extends Controller
                     ]);
                     return null;
                 }
-            })->filter(); // Eliminar elementos nulos
+            })->filter();
             
-            // Añadir archivos de Media Library a la colección general
-            $allDocuments = $allDocuments->concat($mediaFilesCollection);
+            // Usar la colección de Media Library como todos los documentos
+            $allDocuments = $mediaFilesCollection;
             
-            // Aplicar filtro por tipo de archivo si existe
-            if ($request->has('file_type') && !empty($request->file_type)) {
-                $allDocuments = $allDocuments->filter(function ($doc) use ($request) {
-                    $mimeType = $doc->mime_type ?? '';
-                    
-                    switch ($request->file_type) {
-                        case 'image':
-                            return strpos($mimeType, 'image/') === 0;
-                        case 'pdf':
-                            return $mimeType === 'application/pdf';
-                        case 'document':
-                            return strpos($mimeType, 'word') !== false ||
-                                   strpos($mimeType, 'excel') !== false ||
-                                   strpos($mimeType, 'sheet') !== false ||
-                                   strpos($mimeType, 'csv') !== false ||
-                                   strpos($mimeType, 'powerpoint') !== false ||
-                                   strpos($mimeType, 'presentation') !== false;
-                        default:
-                            return true;
-                    }
-                });
-            }
-            
-            // Ordenar todos los documentos por fecha (más recientes primero)
-            $allDocuments = $allDocuments->sortByDesc('created_at');
-            
-            // Paginar manualmente
+            // Paginación manual
             $perPage = 15;
             $currentPage = $request->get('page', 1);
-            $currentPageItems = $allDocuments->forPage($currentPage, $perPage);
+            $offset = ($currentPage - 1) * $perPage;
             
-            // Crear un paginador personalizado
-            $documents = new \Illuminate\Pagination\LengthAwarePaginator(
-                $currentPageItems,
+            $paginatedDocuments = $allDocuments->slice($offset, $perPage)->values();
+            $paginator = new \Illuminate\Pagination\LengthAwarePaginator(
+                $paginatedDocuments,
                 $allDocuments->count(),
                 $perPage,
                 $currentPage,
                 ['path' => $request->url(), 'query' => $request->query()]
             );
             
-            // Cargar todos los conductores para el filtro
-            $drivers = UserDriverDetail::whereHas('accidents')->with('user')->get();
+            // Obtener lista de conductores para el filtro
+            $drivers = UserDriverDetail::with('user')->get();
             
-            return view('admin.drivers.accidents.documents', compact('documents', 'drivers'));
+            // Obtener lista de transportistas para el filtro
+            $carriers = Carrier::where('status', 1)->get();
+            
+            return view('admin.drivers.accidents.documents', [
+                'documents' => $paginator,
+                'drivers' => $drivers,
+                'carriers' => $carriers,
+                'selectedDriver' => $request->driver_id,
+                'selectedCarrier' => $carrierId,
+                'selectedFileType' => $request->file_type,
+                'selectedAccident' => $specificAccidentId,
+                'startDate' => $startDate,
+                'endDate' => $endDate
+            ]);
+            
         } catch (\Exception $e) {
-            Log::error('Error al cargar documentos de accidentes', [
+            Log::error('Error al obtener documentos de accidentes', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return redirect()->back()->with('error', 'Error al cargar documentos: ' . $e->getMessage());
+            return back()->with('error', 'Error al cargar los documentos: ' . $e->getMessage());
         }
     }
 
@@ -761,150 +721,154 @@ class AccidentsController extends Controller
     }
 
     /**
-     * Muestra una vista previa o descarga un documento usando nuestro nuevo sistema
+     * Muestra una vista previa o descarga un documento de accidente
      * 
-     * @param int $documentId ID del documento
+     * @param int $documentId ID del documento (con prefijo 'media_')
      * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\StreamedResponse
      */
     public function previewDocument($documentId)
     {
         try {
-            // Verificar si es un documento de Media Library (prefijo media_)
+            // Verificar si es un documento de Media Library (prefijo "media_")
             if (strpos($documentId, 'media_') === 0) {
                 // Extraer el ID real del media
-                $mediaId = substr($documentId, 6); // Quitar el prefijo 'media_'
+                $mediaId = substr($documentId, 6); // Quitar "media_"
                 
-                // Buscar el media en la tabla media
+                // Buscar el archivo en la tabla media con información del accidente
                 $media = DB::table('media')
+                    ->select('media.*', 'driver_accidents.user_driver_detail_id', 'driver_accidents.id as accident_id')
                     ->join('driver_accidents', 'media.model_id', '=', 'driver_accidents.id')
-                    ->join('user_driver_details', 'driver_accidents.user_driver_detail_id', '=', 'user_driver_details.id')
-                    ->select('media.*', 'driver_accidents.id as accident_id', 'user_driver_details.id as driver_id')
                     ->where('media.id', $mediaId)
-                    ->where('media.model_type', DriverAccident::class)
                     ->first();
                 
                 if (!$media) {
-                    return response()->json(['error' => 'Media not found'], 404);
+                    return response()->json(['error' => 'Archivo no encontrado'], 404);
                 }
                 
-                // Construir la ruta al archivo en el disco local
-                $diskPath = 'public/driver/' . $media->driver_id . '/accidents/' . $media->accident_id . '/' . $media->file_name;
+                // Construir la ruta al archivo físico
+                $filePath = storage_path('app/public/driver/' . $media->user_driver_detail_id . 
+                                         '/accidents/' . $media->accident_id . '/' . $media->file_name);
                 
-                // Verificar si el archivo existe en el disco
-                if (Storage::exists($diskPath)) {
-                    $filePath = Storage::path($diskPath);
-                } else {
-                    // Intentar con la ruta directa de Spatie
-                    $filePath = storage_path('app/public/' . $media->id . '/' . $media->file_name);
-                    
-                    if (!file_exists($filePath)) {
-                        return response()->json(['error' => 'El archivo no existe en el disco'], 404);
-                    }
-                }
-                
-                // Servir el archivo
-                $headers = [
-                    'Content-Type' => $media->mime_type,
-                    'Content-Disposition' => 'inline; filename="' . $media->file_name . '"'
-                ];
-                
-                return response()->file($filePath, $headers);
-            } else {
-                // Es un documento del sistema antiguo
-                $document = \App\Models\DocumentAttachment::findOrFail($documentId);
-                
-                // Verificar que pertenece a un accidente (tipo de modelo correcto)
-                if ($document->documentable_type !== DriverAccident::class) {
-                    return response()->json(['error' => 'El documento no pertenece a un accidente'], 403);
-                }
-                
-                // Obtener la ruta del archivo
-                $filePath = $document->getPath();
-                
+                // Verificar si el archivo existe físicamente
                 if (!file_exists($filePath)) {
-                    return response()->json(['error' => 'El archivo no existe en el disco'], 404);
+                    return response()->json([
+                        'error' => 'Archivo físico no encontrado',
+                        'path' => $filePath
+                    ], 404);
                 }
                 
                 // Determinar el tipo de contenido
-                $mimeType = $document->mime_type;
+                $contentType = $media->mime_type;
                 
                 // Servir el archivo
-                $headers = [
-                    'Content-Type' => $mimeType,
-                    'Content-Disposition' => 'inline; filename="' . $document->original_name . '"'
-                ];
-                
-                return response()->file($filePath, $headers);
+                return response()->file($filePath, [
+                    'Content-Type' => $contentType,
+                    'Content-Disposition' => 'inline; filename="' . $media->file_name . '"'
+                ]);
+            } else {
+                // Si no tiene el prefijo 'media_', devolver error
+                return response()->json(['error' => 'Formato de ID de documento inválido. Debe tener prefijo media_'], 400);
             }
         } catch (\Exception $e) {
-            Log::error('Error al previsualizar documento', [
+            Log::error('Error al mostrar vista previa del documento', [
                 'document_id' => $documentId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['error' => 'Error al previsualizar documento: ' . $e->getMessage()], 500);
+            
+            return response()->json(['error' => 'Error al mostrar vista previa: ' . $e->getMessage()], 500);
         }
     }
     
-
-
-
-
     /**
-     * Elimina un documento mediante una solicitud AJAX (para documentos tradicionales)
+     * Elimina un documento de accidente de manera segura
+     * Usa eliminación directa de la tabla media para evitar eliminación en cascada
      * 
-     * @param \Illuminate\Http\Request $request
+     * @param int $mediaId ID del documento en la tabla media
      * @return \Illuminate\Http\JsonResponse
      */
-    public function ajaxDestroyDocument(Request $request)
+    public function deleteDocumentDirectly($mediaId)
     {
         try {
-            $documentId = $request->input('document_id');
-            if (!$documentId) {
-                return response()->json(['error' => 'Document ID is required'], 400);
+            // Extraer el ID numérico si viene en formato 'media_XXX'
+            if (is_string($mediaId) && strpos($mediaId, 'media_') === 0) {
+                $mediaId = (int) substr($mediaId, 6); // Extraer el número después de 'media_'
             }
             
-            // 1. Buscar el documento en nuestra tabla document_attachments
-            $document = \App\Models\DocumentAttachment::findOrFail($documentId);
-            
-            // 2. Verificar que pertenece a un accidente (tipo de modelo correcto)
-            if ($document->documentable_type !== DriverAccident::class) {
-                return response()->json(['error' => 'El documento no pertenece a un accidente'], 403);
-            }
-            
-            $accidentId = $document->documentable_id;
-            $accident = DriverAccident::find($accidentId);
-            
-            if (!$accident) {
-                return response()->json(['error' => 'No se encontró el accidente asociado al documento'], 404);
-            }
-            
-            // 3. Eliminar el documento usando el método del trait HasDocuments
-            $result = $accident->deleteDocument($documentId);
-            
-            if (!$result) {
-                return response()->json(['error' => 'No se pudo eliminar el documento'], 500);
-            }
-            
-            return response()->json([
-                'success' => true, 
-                'message' => 'Documento eliminado correctamente'
+            // Registrar inicio de la operación para depuración
+            Log::info('Iniciando eliminación de documento', [
+                'media_id' => $mediaId,
+                'user_id' => Auth::id()
             ]);
+            
+            // Buscar el archivo en la tabla media para obtener información del archivo físico
+            $media = DB::table('media')
+                ->select('media.*', 'driver_accidents.user_driver_detail_id', 'driver_accidents.id as accident_id')
+                ->join('driver_accidents', 'media.model_id', '=', 'driver_accidents.id')
+                ->where('media.id', $mediaId)
+                ->first();
+            
+            if (!$media) {
+                Log::warning('Documento no encontrado para eliminar', ['media_id' => $mediaId]);
+                return response()->json(['error' => 'Documento no encontrado'], 404);
+            }
+            
+            // Ruta al archivo físico
+            $filePath = storage_path('app/public/driver/' . $media->user_driver_detail_id . 
+                                 '/accidents/' . $media->accident_id . '/' . $media->file_name);
+            
+            Log::info('Información del documento a eliminar', [
+                'media_id' => $mediaId,
+                'file_path' => $filePath,
+                'file_exists' => file_exists($filePath)
+            ]);
+            
+            // Eliminar el archivo físico si existe
+            if (file_exists($filePath)) {
+                unlink($filePath);
+                Log::info('Archivo físico eliminado', ['file_path' => $filePath]);
+            }
+            
+            // IMPORTANTE: Eliminar directamente de la tabla media para evitar eliminación en cascada
+            // NO usar $media->delete() ya que esto eliminaría también el registro de accidente
+            $deleted = DB::table('media')->where('id', $mediaId)->delete();
+            
+            if ($deleted) {
+                // Registrar la eliminación exitosa
+                Log::info('Documento eliminado correctamente de la base de datos', [
+                    'media_id' => $mediaId,
+                    'user_id' => Auth::id()
+                ]);
                 
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Documento eliminado correctamente',
+                    'media_id' => $mediaId
+                ]);
+            } else {
+                Log::warning('No se pudo eliminar el documento de la base de datos', ['media_id' => $mediaId]);
+                return response()->json([
+                    'error' => 'No se pudo eliminar el documento de la base de datos'
+                ], 500);
+            }
+            
         } catch (\Exception $e) {
-            Log::error('Error al eliminar documento mediante AJAX', [
-                'document_id' => $request->input('document_id'),
+            Log::error('Error al eliminar documento', [
+                'media_id' => $mediaId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['error' => 'Error al eliminar documento: ' . $e->getMessage()], 500);
+            
+            return response()->json([
+                'error' => 'Error al eliminar el documento: ' . $e->getMessage()
+            ], 500);
         }
     }
     
     /**
-     * Elimina una imagen de Media Library mediante una solicitud AJAX
-     * 
-     * @param int $mediaId El ID del medio a eliminar
+     * Elimina un documento mediante una solicitud AJAX (para documentos tradicionales)
+     *
+     * @param int $mediaId ID del documento a eliminar
      * @return \Illuminate\Http\JsonResponse
      */
     public function ajaxDestroyMedia($mediaId)
@@ -1035,47 +999,115 @@ class AccidentsController extends Controller
     }
 
     /**
-     * Subir documentos para un accidente específico usando nuestro sistema personalizado de documentos
+     * Subir documentos para un accidente específico usando Spatie Media Library
      * 
      * @param DriverAccident $accident El accidente al que se subirán los documentos
-     * @param Request $request Solicitud con los documentos a subir
+     * @param Request $request Solicitud con los documentos a subir o JSON de archivos temporales de Livewire
      * @return \Illuminate\Http\RedirectResponse Redirección con mensaje de éxito o error
      */
     public function storeDocuments(DriverAccident $accident, Request $request)
     {
         try {
-            $request->validate([
-                'documents' => 'required|array',
-                'documents.*' => 'file|max:10240|mimes:jpg,jpeg,png,pdf,doc,docx'
-            ]);
-
+            DB::beginTransaction();
+            
             $uploadedCount = 0;
-
-            foreach ($request->file('documents') as $file) {
-                // Usar nuestro nuevo método addDocument del trait HasDocuments
-                $document = $accident->addDocument(
-                    $file,                  // El archivo
-                    'accident_documents',   // La colección
-                    [                       // Propiedades personalizadas
-                        'accident_id' => $accident->id,
-                        'driver_id' => $accident->userDriverDetail->id,
-                        'uploaded_at' => date('Y-m-d H:i:s')
-                    ]
-                );
-
-                $uploadedCount++;
-
-                Log::info('Documento de accidente subido correctamente con el nuevo sistema', [
-                    'accident_id' => $accident->id,
-                    'document_id' => $document->id,
-                    'file_name' => $document->file_name,
-                    'collection' => $document->collection,
-                    'driver_id' => $accident->userDriverDetail->id
+            $errors = [];
+            
+            // Verificar si estamos recibiendo archivos directos o JSON de Livewire
+            if ($request->hasFile('documents')) {
+                // Método tradicional con archivos directos
+                $request->validate([
+                    'documents' => 'required|array',
+                    'documents.*' => 'file|max:10240|mimes:jpg,jpeg,png,pdf,doc,docx'
                 ]);
+                
+                foreach ($request->file('documents') as $file) {
+                    // Subir directamente a Media Library
+                    $media = $accident->addMedia($file)
+                        ->withCustomProperties([
+                            'accident_id' => $accident->id,
+                            'driver_id' => $accident->userDriverDetail->id,
+                            'uploaded_at' => now()->format('Y-m-d H:i:s')
+                        ])
+                        ->toMediaCollection('accident-images');
+                    
+                    $uploadedCount++;
+                    
+                    Log::info('Documento de accidente subido correctamente', [
+                        'accident_id' => $accident->id,
+                        'media_id' => $media->id,
+                        'file_name' => $media->file_name
+                    ]);
+                }
+            } elseif ($request->filled('livewire_files')) {
+                // Método Livewire con archivos temporales
+                $livewireFiles = json_decode($request->input('livewire_files'), true);
+                
+                if (!is_array($livewireFiles) || empty($livewireFiles)) {
+                    return redirect()->back()->with('error', 'No se recibieron archivos válidos');
+                }
+                
+                // Procesar los archivos temporales de Livewire
+                foreach ($livewireFiles as $fileData) {
+                    // Verificar que tenemos la información necesaria
+                    if (!isset($fileData['path']) || !isset($fileData['name'])) {
+                        $errors[] = 'Datos de archivo incompletos';
+                        continue;
+                    }
+                    
+                    $tempPath = storage_path('app/' . $fileData['path']);
+                    
+                    // Verificar que el archivo temporal existe
+                    if (!file_exists($tempPath)) {
+                        $errors[] = "Archivo temporal no encontrado: {$fileData['name']}";
+                        continue;
+                    }
+                    
+                    try {
+                        // Subir desde el archivo temporal a Media Library
+                        $media = $accident->addMedia($tempPath)
+                            ->usingName($fileData['name'])
+                            ->withCustomProperties([
+                                'accident_id' => $accident->id,
+                                'driver_id' => $accident->userDriverDetail->id,
+                                'uploaded_at' => now()->format('Y-m-d H:i:s'),
+                                'original_name' => $fileData['name']
+                            ])
+                            ->toMediaCollection('accident-images');
+                        
+                        $uploadedCount++;
+                        
+                        Log::info('Documento de accidente subido desde Livewire', [
+                            'accident_id' => $accident->id,
+                            'media_id' => $media->id,
+                            'file_name' => $media->file_name,
+                            'original_name' => $fileData['name']
+                        ]);
+                    } catch (\Exception $e) {
+                        $errors[] = "Error al procesar {$fileData['name']}: {$e->getMessage()}";
+                        Log::error('Error al procesar archivo temporal', [
+                            'file' => $fileData,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+            } else {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'No se recibieron archivos para subir');
             }
-
-            return redirect()->back()->with('success', "$uploadedCount documentos subidos correctamente");
+            
+            DB::commit();
+            
+            $message = "$uploadedCount documentos subidos correctamente";
+            if (!empty($errors)) {
+                $message .= ", pero hubo errores con algunos archivos: " . implode(", ", $errors);
+                return redirect()->back()->with('warning', $message);
+            }
+            
+            return redirect()->back()->with('success', $message);
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             Log::error('Error al subir documentos de accidente', [
                 'accident_id' => $accident->id,
                 'error' => $e->getMessage(),

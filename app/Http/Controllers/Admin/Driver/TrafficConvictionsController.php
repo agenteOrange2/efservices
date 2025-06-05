@@ -21,7 +21,7 @@ class TrafficConvictionsController extends Controller
     public function index(Request $request)
     {
         $query = DriverTrafficConviction::query()
-            ->with(['userDriverDetail.user', 'userDriverDetail.carrier']);
+            ->with(['userDriverDetail.user', 'userDriverDetail.carrier', 'media']);
 
         // Aplicar filtros
         if ($request->filled('search_term')) {
@@ -127,7 +127,7 @@ class TrafficConvictionsController extends Controller
             if (!empty($files)) {
                 try {
                     // Utilizar el nuevo método processLivewireFiles para procesar los archivos
-                    $uploadedCount = $this->processLivewireFiles($conviction, $files, 'traffic-images');
+                    $uploadedCount = $this->processLivewireFiles($conviction, $files, 'traffic_convictions');
                     
                     Log::info('Resultados de proceso de archivos vía Livewire', [
                         'conviction_id' => $conviction->id,
@@ -156,7 +156,7 @@ class TrafficConvictionsController extends Controller
                             'conviction_id' => $conviction->id,
                             'driver_id' => $driverId
                         ])
-                        ->toMediaCollection('traffic-tickets');
+                        ->toMediaCollection('traffic_convictions');
                         
                     $uploadedCount++;
                     
@@ -216,6 +216,9 @@ class TrafficConvictionsController extends Controller
             }
         }
 
+        // Cargar los archivos de Media Library asociados a esta infracción
+        $conviction->load('media');
+        
         $carriers = Carrier::where('status', 1)->get();
 
         return view('admin.drivers.traffic.edit', compact('conviction', 'drivers', 'carriers'));
@@ -253,7 +256,8 @@ class TrafficConvictionsController extends Controller
             if (!empty($files)) {
                 try {
                     // Utilizar el nuevo método processLivewireFiles para procesar los archivos
-                    $uploadedCount = $this->processLivewireFiles($conviction, $files, 'traffic-images');
+                    // Usamos 'traffic_convictions' como nombre de colección para mantener consistencia
+                    $uploadedCount = $this->processLivewireFiles($conviction, $files, 'traffic_convictions');
                     
                     Log::info('Resultados de proceso de archivos vía Livewire en update', [
                         'conviction_id' => $conviction->id,
@@ -287,15 +291,19 @@ class TrafficConvictionsController extends Controller
                         'size' => $file->getSize()
                     ];
                     
-                    // Usar addDocument del trait HasDocuments
-                    $document = $conviction->addDocument($fullPath, 'traffic_convictions', $customProperties);
+                    // Usar Media Library directamente para mantener consistencia
+                    $media = $conviction->addMedia($fullPath)
+                        ->usingName($file->getClientOriginalName())
+                        ->withCustomProperties($customProperties)
+                        ->toMediaCollection('traffic_convictions');
+                        
                     $uploadedCount++;
                     
                     Log::info('Documento subido directamente en update', [
                         'conviction_id' => $conviction->id,
-                        'document_id' => $document->id,
-                        'file_name' => $document->file_name,
-                        'collection' => 'traffic_convictions'
+                        'media_id' => $media->id,
+                        'file_name' => $media->file_name,
+                        'collection' => 'traffic_images'
                     ]);
                 }
             }

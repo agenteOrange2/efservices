@@ -5,6 +5,8 @@ namespace App\Livewire\Components;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Session;
 
 class FileUploader extends Component
 {
@@ -247,26 +249,81 @@ class FileUploader extends Component
             return;
         }
         
-        // Para archivos no temporales, emitir evento al componente padre
-        $this->dispatch('fileRemoved', [
-            'fileId' => $fileId,
-            'modelName' => $this->modelName,
-            'modelIndex' => $this->modelIndex,
-            'isTemp' => false
-        ]);
-        
-        // Inmediatamente actualizar la interfaz para reflejar la eliminación
-        foreach ($this->existingFiles as $key => $file) {
-            if (isset($file['id']) && $file['id'] == $fileId) {
-                // Eliminar el archivo de la lista
-                unset($this->existingFiles[$key]);
-                // Reindexar el array
-                $this->existingFiles = array_values($this->existingFiles);
-                \Illuminate\Support\Facades\Log::info('Archivo permanente eliminado de la interfaz', [
-                    'file_id' => $fileId
+        // Para archivos no temporales, realizar eliminación segura a través de la API
+        // y emitir evento al componente padre
+        try {
+            // Obtener el ID real del media (que debería ser el mismo que fileId para archivos no temporales)
+            $mediaId = $fileId;
+            
+            // Llamar a la API para eliminar el archivo de forma segura
+            $response = \Illuminate\Support\Facades\Http::post(route('api.documents.delete.post'), [
+                'mediaId' => $mediaId,
+                '_token' => csrf_token()
+            ]);
+            
+            $result = $response->json();
+            
+            \Illuminate\Support\Facades\Log::info('Respuesta de API de eliminación segura', [
+                'media_id' => $mediaId,
+                'success' => $result['success'] ?? false,
+                'message' => $result['message'] ?? 'No message',
+                'status' => $response->status()
+            ]);
+            
+            if ($response->successful() && ($result['success'] ?? false)) {
+                // Emitir evento al componente padre
+                $this->dispatch('fileRemoved', [
+                    'fileId' => $fileId,
+                    'modelName' => $this->modelName,
+                    'modelIndex' => $this->modelIndex,
+                    'isTemp' => false
                 ]);
-                break;
+                
+                // Emitir evento para notificar a otros componentes que puedan estar escuchando
+                $this->dispatch('document-deleted', [
+                    'mediaId' => $mediaId
+                ]);
+                
+                // Inmediatamente actualizar la interfaz para reflejar la eliminación
+                foreach ($this->existingFiles as $key => $file) {
+                    if (isset($file['id']) && $file['id'] == $fileId) {
+                        // Eliminar el archivo de la lista
+                        unset($this->existingFiles[$key]);
+                        // Reindexar el array
+                        $this->existingFiles = array_values($this->existingFiles);
+                        \Illuminate\Support\Facades\Log::info('Archivo permanente eliminado de la interfaz', [
+                            'file_id' => $fileId
+                        ]);
+                        break;
+                    }
+                }
+            } else {
+                // Si la API falló, registrar el error
+                \Illuminate\Support\Facades\Log::error('Error al eliminar archivo a través de API', [
+                    'media_id' => $mediaId,
+                    'response' => $result,
+                    'status' => $response->status()
+                ]);
+                
+                // Mostrar mensaje de error
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'Error deleting file: ' . ($result['message'] ?? 'Unknown error')
+                ]);
             }
+        } catch (\Exception $e) {
+            // Registrar cualquier excepción
+            \Illuminate\Support\Facades\Log::error('Excepción al eliminar archivo', [
+                'file_id' => $fileId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Mostrar mensaje de error
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
         }
     }
     

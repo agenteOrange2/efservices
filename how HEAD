@@ -1,0 +1,163 @@
+[1mdiff --git a/fixed_controller.php b/fixed_controller.php[m
+[1mdeleted file mode 100644[m
+[1mindex bb650f3..0000000[m
+[1m--- a/fixed_controller.php[m
+[1m+++ /dev/null[m
+[36m@@ -1,500 +0,0 @@[m
+[31m-<?php[m
+[31m-[m
+[31m-namespace App\Http\Controllers\Admin\Driver;[m
+[31m-[m
+[31m-use App\Http\Controllers\Controller;[m
+[31m-use App\Models\Carrier;[m
+[31m-use App\Models\Admin\Driver\DriverTesting;[m
+[31m-use App\Models\UserDriverDetail;[m
+[31m-use Illuminate\Http\Request;[m
+[31m-use Illuminate\Support\Facades\Auth;[m
+[31m-use Illuminate\Support\Facades\Storage;[m
+[31m-use Illuminate\Support\Facades\Log;[m
+[31m-use Barryvdh\DomPDF\Facade\Pdf;[m
+[31m-use Carbon\Carbon;[m
+[31m-use Illuminate\Support\Facades\Mail;[m
+[31m-[m
+[31m-class DriverTestingController extends Controller[m
+[31m-{[m
+[31m-    /**[m
+[31m-     * Display a listing of the resource.[m
+[31m-     */[m
+[31m-    public function index(Request $request)[m
+[31m-    {[m
+[31m-        $query = DriverTesting::query()[m
+[31m-            ->with(['userDriverDetail.user', 'userDriverDetail.carrier']);[m
+[31m-            [m
+[31m-        // Apply filters if they exist[m
+[31m-        if ($request->has('status') && $request->status != '') {[m
+[31m-            $query->where('status', $request->status);[m
+[31m-        }[m
+[31m-        [m
+[31m-        if ($request->has('location') && $request->location != '') {[m
+[31m-            $query->where('location', $request->location);[m
+[31m-        }[m
+[31m-        [m
+[31m-        if ($request->has('test_date_from') && $request->test_date_from != '') {[m
+[31m-            $query->whereDate('test_date', '>=', $request->test_date_from);[m
+[31m-        }[m
+[31m-        [m
+[31m-        if ($request->has('test_date_to') && $request->test_date_to != '') {[m
+[31m-            $query->whereDate('test_date', '<=', $request->test_date_to);[m
+[31m-        }[m
+[31m-        [m
+[31m-        if ($request->has('carrier_id') && $request->carrier_id != '') {[m
+[31m-            $query->whereHas('userDriverDetail', function($q) use($request) {[m
+[31m-                $q->where('carrier_id', $request->carrier_id);[m
+[31m-            });[m
+[31m-        }[m
+[31m-        [m
+[31m-        $driverTestings = $query->latest()->paginate(15);[m
+[31m-        [m
+[31m-        $locations = DriverTesting::getLocations();[m
+[31m-        $statuses = DriverTesting::getStatuses();[m
+[31m-        $carriers = Carrier::orderBy('name')->pluck('name', 'id');[m
+[31m-        [m
+[31m-        return view('admin.driver-testings.index', compact('driverTestings', 'locations', 'statuses', 'carriers'));[m
+[31m-    }[m
+[31m-[m
+[31m-    /**[m
+[31m-     * Show the form for creating a new resource.[m
+[31m-     */[m
+[31m-    public function create()[m
+[31m-    {[m
+[31m-        $locations = DriverTesting::getLocations();[m
+[31m-        $testTypes = DriverTesting::getDrugTestTypes();[m
+[31m-        $billOptions = DriverTesting::getBillOptions();[m
+[31m-        $carriers = Carrier::where('status', 1)->orderBy('name')->get();[m
+[31m-        [m
+[31m-        return view('admin.driver-testings.create', compact('locations', 'testTypes', 'billOptions', 'carriers'));[m
+[31m-    }[m
+[31m-[m
+[31m-    /**[m
+[31m-     * Store a newly created resource in storage.[m
+[31m-     */[m
+[31m-    public function store(Request $request)[m
+[31m-    {[m
+[31m-        // Log para debug[m
+[31m-        Log::info('Driver Testing Store - Request data', ['files' => $request->driver_testing_files]);        [m
+[31m-[m
+[31m-        $request->validate([[m
+[31m-            'user_driver_detail_id' => 'required|exists:user_driver_details,id',[m
+[31m-            'carrier_id' => 'required|exists:carriers,id',[m
+[31m-            'test_date' => 'required|date',[m
+[31m-            'test_type' => 'required|string',[m
+[31m-            'administered_by' => 'required|string',[m
+[31m-            'location' => 'required|string',[m
+[31m-            'bill_to' => 'required|string',[m
+[31m-        ]);[m
+[31m-        [m
+[31m-        // Crear registro en la base de datos[m
+[31m-        $driverTesting = new DriverTesting($request->all());[m
+[31m-        $driverTesting->test_result = $request->test_result ?? 'Pending';[m
+[31m-        $driverTesting->status = 'pending';[m
+[31m-        $driverTesting->created_by = Auth::id();[m
+[31m-        $driverTesting->updated_by = Auth::id();[m
+[31m-        $driverTesting->save();[m
+[31m-        [m
+[31m-        // Asegurar que tenemos el objeto con el ID asignado[m
+[31m-        $driverTestingId = $driverTesting->getKey();[m
+[31m-        $driverTesting = DriverTesting::findOrFail($driverTestingId);[m
+[31m-        [m
+[31m-        // Procesar archivos adjuntos si existen[m
+[31m-        if ($request->has('driver_testing_files') && !empty($request->driver_testing_files)) {[m
+[31m-            $filesData = json_decode($request->driver_testing_files, true);[m
+[31m-            [m
+[31m-            Log::info('Driver Testing Store - Files data decoded', ['filesData' => $filesData]);[m
+[31m-            [m
+[31m-            if (is_array($filesData) && count($filesData) > 0) {[m
+[31m-                foreach ($filesData as $fileData) {[m
+[31m-                    // Si el archivo tiene un path temporal, es un archivo recién subido[m
+[31m-                    if (isset($fileData['path']) && !empty($fileData['path'])) {[m
+[31m-                        // Obtener el archivo temporal del disco temporal[m
+[31m-                        $tempPath = storage_path('app/' . $fileData['path']);[m
+[31m-                        [m
+[31m-                        Log::info('Driver Testing Store - Processing file', [[m
+[31m-                            'tempPath' => $tempPath, [m
+[31m-                            'originalName' => $fileData['original_name'][m
+[31m-                        ]);[m
+[31m-                        [m
+[31m-                        if (file_exists($tempPath)) {[m
+[31m-                            // Guardar en la colección de media para este registro[m
+[31m-                            $driverTesting->addMedia($tempPath)[m
+[31m-                                ->usingName($fileData['original_name'])[m
+[31m-                                ->preservingOriginal()[m
+[31m-                                ->toMediaCollection('document_attachments');[m
+[31m-                                [m
+[31m-                            Log::info('Driver Testing Store - File successfully added to media collection', [[m
+[31m-                                'filename' => $fileData['original_name'][m
+[31m-                            ]);[m
+[31m-                        } else {[m
+[31m-                            Log::error('Driver Testing Store - Temp file does not exist', [[m
+[31m-                                'tempPath' => $tempPath[m
+[31m-                            ]);[m
+[31m-                        }[m
+[31m-                    } else {[m
+[31m-                        Log::warning('Driver Testing Store - File data missing path', ['fileData' => $fileData]);[m
+[31m-                    }[m
+[31m-                }[m
+[31m-            } else {[m
+[31m-                Log::warning('Driver Testing Store - No valid files data found in JSON');[m
+[31m-            }[m
+[31m-        } else {[m
+[31m-            Log::info('Driver Testing Store - No files to process');[m
+[31m-        }[m
+[31m-        [m
+[31m-        // Generate PDF[m
+[31m-        $pdf = $this->generatePDF($driverTesting);[m
+[31m-        $testingId = $driverTesting->getKey(); // Usar getKey() en lugar de acceder directamente a ->id[m
+[31m-        $pdfPath = storage_path('app/public/driver_testings/driver_testing_' . $testingId . '.pdf');[m
+[31m-        [m
+[31m-        // Make sure directory exists[m
+[31m-        $directory = storage_path('app/public/driver_testings');[m
+[31m-        if (!file_exists($directory)) {[m
+[31m-            mkdir($directory, 0755, true);[m
+[31m-        }[m
+[31m-        [m
+[31m-        // S

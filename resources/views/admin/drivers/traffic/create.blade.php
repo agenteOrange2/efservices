@@ -116,7 +116,7 @@
                             <x-base.form-label>Traffic Conviction Images</x-base.form-label>
                             <div class="border border-dashed rounded-md p-4 mt-2">
                                 <livewire:components.file-uploader
-                                    model-name="traffic_images"
+                                    model-name="traffic_convictions"
                                     :model-index="0"
                                     :auto-upload="true"
                                     class="border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer"
