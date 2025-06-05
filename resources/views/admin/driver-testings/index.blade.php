@@ -219,32 +219,28 @@
     </div>
 
     <!-- Modal de confirmación de eliminación -->
-    <div id="delete-confirmation-modal" class="modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-body p-0">
-                    <div class="p-5 text-center">
-                        <x-base.lucide class="w-16 h-16 text-danger mx-auto mt-3" icon="x-circle" />
-                        <div class="text-3xl mt-5">Are you sure?</div>
-                        <div class="text-slate-500 mt-2">
-                            Do you really want to delete this test record? <br>
-                            This process cannot be undone.
-                        </div>
-                    </div>
-                    <div class="px-5 pb-8 text-center">
-                        <form id="delete_testing_form" method="POST" action="">
-                            @csrf
-                            @method('DELETE')
-                            <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-24 mr-1">
-                                Cancel
-                            </button>
-                            <button type="submit" class="btn btn-danger w-24">Delete</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <x-base.dialog id="delete-confirmation-modal">
+        <x-base.dialog.panel>
+            <x-base.dialog.title>
+                <h2 class="mr-auto text-base font-medium">Confirm Deletion</h2>
+            </x-base.dialog.title>
+            <x-base.dialog.description>
+                Are you sure you want to delete this test record? This action cannot be undone.
+            </x-base.dialog.description>
+            <x-base.dialog.footer>
+                <form id="delete_testing_form" method="POST" action="">
+                    @csrf
+                    @method('DELETE')
+                    <x-base.button data-tw-dismiss="modal" type="button" variant="outline-secondary" class="mr-1 w-20">
+                        Cancel
+                    </x-base.button>
+                    <x-base.button type="submit" variant="danger" class="w-20">
+                        Delete
+                    </x-base.button>
+                </form>
+            </x-base.dialog.footer>
+        </x-base.dialog.panel>
+    </x-base.dialog>
 
 @endsection
 
@@ -257,7 +253,7 @@
                 button.addEventListener('click', function() {
                     const testingId = this.getAttribute('data-testing-id');
                     document.getElementById('delete_testing_form').action = 
-                        `{{ route('admin.driver-testings.index') }}/${testingId}`;
+                        `{{ url('/admin/driver-testings') }}/${testingId}`;
                 });
             });
         });

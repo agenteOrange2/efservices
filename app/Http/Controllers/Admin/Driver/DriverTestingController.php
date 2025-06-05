@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Carbon\Carbon;
@@ -349,10 +350,30 @@ class DriverTestingController extends Controller
      */
     public function destroy(DriverTesting $driverTesting)
     {
-        $driverTesting->delete();
-        
-        return redirect()->route('admin.driver-testings.index')
-            ->with('success', 'Drug test deleted successfully.');
+        try {
+            // Primero eliminar los archivos de media manualmente para evitar problemas de cascada
+            $mediaItems = $driverTesting->getMedia('document_attachments');
+            foreach ($mediaItems as $media) {
+                // Usar DB::table para eliminar directamente el registro de media sin afectar al modelo principal
+                DB::table('media')->where('id', $media->id)->delete();
+            }
+            
+            // Eliminar el PDF generado si existe
+            $pdfMedia = $driverTesting->getMedia('drug_test_pdf');
+            foreach ($pdfMedia as $media) {
+                DB::table('media')->where('id', $media->id)->delete();
+            }
+            
+            // Ahora eliminar el registro principal
+            $driverTesting->delete();
+            
+            return redirect()->route('admin.driver-testings.index')
+                ->with('success', 'Drug test deleted successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error deleting driver testing: ' . $e->getMessage());
+            return redirect()->route('admin.driver-testings.index')
+                ->with('error', 'Error deleting drug test. Please try again.');
+        }
     }
 
     /**
