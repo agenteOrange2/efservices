@@ -274,7 +274,7 @@ class DriverTrafficStep extends Component
         ]);
         
         // Verificar que el modelo y el índice sean correctos
-        if ($modelName === 'ticket_files' && isset($this->traffic_convictions[$modelIndex])) {
+        if ($modelName === 'traffic_images' && isset($this->traffic_convictions[$modelIndex])) {
             // Inicializar el array de documentos si no existe
             if (!isset($this->traffic_convictions[$modelIndex]['documents'])) {
                 $this->traffic_convictions[$modelIndex]['documents'] = [];
@@ -618,7 +618,7 @@ class DriverTrafficStep extends Component
                 $trafficConviction = $userDriverDetail->trafficConvictions()->find($convictionId);
                 if ($trafficConviction) {
                     // Obtener documentos asociados a esta convicción específica
-                    $ticketMedia = $trafficConviction->getMedia('traffic_tickets');
+                    $ticketMedia = $trafficConviction->getMedia('traffic_images');
                     
                     // Almacenar información de documentos en el array de convictions
                     $this->traffic_convictions[$index]['documents'] = [];

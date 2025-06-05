@@ -72,7 +72,7 @@
                 <!-- Componente de carga de archivos para esta convicción específica -->
                 <livewire:components.file-uploader 
                     :key="'traffic-uploader-' . $index"
-                    model-name="ticket_files"
+                    model-name="traffic_images"
                     :model-index="$index"
                     label="Upload Ticket Documents"
                     :existing-files="isset($conviction['documents']) ? $conviction['documents'] : []"

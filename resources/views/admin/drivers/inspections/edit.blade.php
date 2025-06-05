@@ -7,6 +7,9 @@
         ['label' => 'Driver Inspections Management', 'url' => route('admin.inspections.index')],
         ['label' => 'Edit Inspection Record', 'active' => true],
     ];
+    
+    // Convertir los documentos a formato JSON para inicializar el componente de archivos
+    $existingFilesJson = json_encode($documents);
 @endphp
 
 @section('subcontent')
@@ -191,18 +194,18 @@
                         </div>
                         
                         <div>
-                            <x-base.form-label for="vehicle_safe">Vehicle Safe to Operate?</x-base.form-label>
+                            <x-base.form-label for="is_vehicle_safe_to_operate">Vehicle Safe to Operate?</x-base.form-label>
                             <div class="mt-2">
                                 <label class="form-check mr-2 inline-block">
-                                    <input id="vehicle_safe_yes" name="vehicle_safe" type="radio" class="form-check-input" value="1" {{ (old('vehicle_safe', $inspection->vehicle_safe ?? '') == '1') ? 'checked' : '' }}>
+                                    <input id="vehicle_safe_yes" name="is_vehicle_safe_to_operate" type="radio" class="form-check-input" value="1" {{ (old('is_vehicle_safe_to_operate', $inspection->is_vehicle_safe_to_operate) == '1' || $inspection->is_vehicle_safe_to_operate === true) ? 'checked' : '' }}>
                                     <span class="form-check-label">Yes</span>
                                 </label>
                                 <label class="form-check mr-2 inline-block">
-                                    <input id="vehicle_safe_no" name="vehicle_safe" type="radio" class="form-check-input" value="0" {{ (old('vehicle_safe', $inspection->vehicle_safe ?? '') == '0') ? 'checked' : '' }}>
+                                    <input id="vehicle_safe_no" name="is_vehicle_safe_to_operate" type="radio" class="form-check-input" value="0" {{ (old('is_vehicle_safe_to_operate', $inspection->is_vehicle_safe_to_operate) == '0' || $inspection->is_vehicle_safe_to_operate === false) ? 'checked' : '' }}>
                                     <span class="form-check-label">No</span>
                                 </label>
                             </div>
-                            @error('vehicle_safe')
+                            @error('is_vehicle_safe_to_operate')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
                         </div>
@@ -220,46 +223,15 @@
                     </div>
                     
                     <!-- Sección de Documentos -->
-                    <div class="mt-6">
-                        <h3 class="text-base font-medium mb-3">Inspection Documents</h3>
-                        <div class="border border-slate-200 rounded-md p-4 bg-slate-50">
-                            @php
-                                // Preparar archivos existentes para el componente
-                                $existingFilesArray = [];
-                                
-                                if (isset($documents) && count($documents) > 0) {
-                                    foreach ($documents as $doc) {
-                                        if (is_object($doc)) {
-                                            try {
-                                                $existingFilesArray[] = [
-                                                    'id' => $doc->id,
-                                                    'name' => $doc->original_name ?? $doc->file_name ?? 'Unknown',
-                                                    'size' => $doc->size ?? 0,
-                                                    'mime_type' => $doc->mime_type ?? 'application/octet-stream',
-                                                    'type' => $doc->mime_type ?? 'application/octet-stream',
-                                                    'url' => Storage::url($doc->file_path ?? ''),
-                                                    'created_at' => $doc->created_at ? $doc->created_at->format('Y-m-d H:i:s') : now()->format('Y-m-d H:i:s'),
-                                                    'isExisting' => true
-                                                ];
-                                            } catch (\Exception $e) {
-                                                // Si hay error al acceder a alguna propiedad, lo ignoramos
-                                                \Illuminate\Support\Facades\Log::error('Error al procesar documento para vista', [
-                                                    'document_id' => $doc->id ?? 'unknown',
-                                                    'error' => $e->getMessage()
-                                                ]);
-                                            }
-                                        }
-                                    }
-                                }
-                                
-                                $existingFilesJson = json_encode($existingFilesArray);
-                            @endphp
+                    <div class="mt-4">
+                        <div class="mb-5">
+                            <h3 class="text-lg font-medium">Inspection Documents</h3>
                             
                             @livewire('components.file-uploader', [
                                 'modelName' => 'inspection_files',
                                 'modelIndex' => 0,
                                 'label' => 'Upload Inspection Documents',
-                                'existingFiles' => $existingFilesArray
+                                'existingFiles' => $documents
                             ])
                         </div>
                         <input type="hidden" name="inspection_files" id="inspection_files_input">
@@ -407,16 +379,12 @@
             const inspectionFilesInput = document.getElementById('inspection_files_input');
             let inspectionFiles = [];
             
-            // Inicializar con los archivos existentes si hay
-            if (typeof existingFilesJson !== 'undefined' && existingFilesJson) {
-                try {
-                    inspectionFiles = JSON.parse(existingFilesJson);
-                    inspectionFilesInput.value = existingFilesJson;
-                    console.log('Archivos existentes cargados:', inspectionFiles.length);
-                } catch (e) {
-                    console.error('Error al parsear archivos existentes:', e);
-                }
-            }
+            // Inicializar con los archivos existentes desde MediaLibrary
+            @if(isset($documents) && count($documents) > 0)
+                inspectionFiles = @json($documents);
+                inspectionFilesInput.value = JSON.stringify(inspectionFiles);
+                console.log('Archivos existentes cargados:', inspectionFiles.length);
+            @endif
             
             // Escuchar eventos emitidos por el componente Livewire
             document.addEventListener('livewire:initialized', () => {
@@ -425,7 +393,7 @@
                     const fileData = data[0];
                     
                     if (fileData.modelName === 'inspection_files') {
-                        // Agregar el archivo al array
+                        // Agregar el archivo al array con la estructura correcta para MediaLibrary
                         inspectionFiles.push({
                             name: fileData.originalName,
                             original_name: fileData.originalName,
@@ -434,6 +402,8 @@
                             is_temp: true,
                             tempPath: fileData.tempPath,
                             path: fileData.tempPath,
+                            // URL formateada para vista previa
+                            url: '/storage/' + fileData.tempPath,
                             id: fileData.previewData.id
                         });
                         

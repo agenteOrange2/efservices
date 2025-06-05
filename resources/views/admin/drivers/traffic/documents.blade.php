@@ -84,24 +84,24 @@
                 <h3 class="box-title">Documents</h3>
             </div>
             <div class="box-body p-5">
-                @if (count($documents) > 0)
+                @if (count($mediaItems) > 0)
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        @foreach ($documents as $document)
+                        @foreach ($mediaItems as $media)
                             <div class="border border-gray-200 rounded-md p-4 hover:shadow-md transition-shadow bg-white">
                                 <div class="flex items-start">
                                     <div class="flex-shrink-0">
-                                        @if (Str::contains($document->mime_type, 'image'))
+                                        @if (Str::contains($media->mime_type, 'image'))
                                             <div
                                                 class="h-16 w-16 flex items-center justify-center bg-gray-50 rounded-md border border-gray-200">
-                                                <img src="{{ $document->getUrl() }}" alt="{{ $document->file_name }}"
+                                                <img src="{{ $media->getUrl() }}" alt="{{ $media->file_name }}"
                                                     class="h-14 w-14 object-cover rounded">
                                             </div>
-                                        @elseif(Str::contains($document->mime_type, 'pdf'))
+                                        @elseif(Str::contains($media->mime_type, 'pdf'))
                                             <div
                                                 class="h-16 w-16 flex items-center justify-center bg-gray-50 rounded-md border border-gray-200">
                                                 <i class="fas fa-file-pdf text-red-500 text-xl"></i>
                                             </div>
-                                        @elseif(Str::contains($document->mime_type, 'word') || Str::contains($document->mime_type, 'doc'))
+                                        @elseif(Str::contains($media->mime_type, 'word') || Str::contains($media->mime_type, 'doc'))
                                             <div
                                                 class="h-16 w-16 flex items-center justify-center bg-gray-50 rounded-md border border-gray-200">
                                                 <i class="fas fa-file-word text-blue-500 text-xl"></i>
@@ -114,38 +114,123 @@
                                         @endif
                                     </div>
                                     <div class="ml-3 flex-1">
-                                        <p class="text-sm font-medium truncate" title="{{ $document->file_name }}">
-                                            {{ $document->file_name ?? ($document->name ?? 'Unnamed Document') }}
+                                        <p class="text-sm font-medium truncate" title="{{ $media->file_name }}">
+                                            {{ $media->file_name ?? 'Unnamed Document' }}
                                         </p>
-                                        <p class="text-xs text-gray-500">{{ round($document->size / 1024, 2) }} KB</p>
-                                        <p class="text-xs text-gray-500">{{ $document->created_at->format('M d, Y H:i') }}
+                                        <p class="text-xs text-gray-500">{{ round($media->size / 1024, 2) }} KB</p>
+                                        <p class="text-xs text-gray-500">{{ $media->created_at->format('M d, Y H:i') }}
                                         </p>
-                                        @if ($document->custom_properties)
+                                        @if ($media->custom_properties)
                                             <p class="text-xs text-gray-500 mt-1">
                                                 <span class="font-semibold">Source:</span>
-                                                {{ isset($document->custom_properties['source']) ? ucfirst($document->custom_properties['source']) : 'Admin' }}
+                                                {{ isset($media->custom_properties['source']) ? ucfirst($media->custom_properties['source']) : 'Admin' }}
                                             </p>
                                         @endif
                                         <div class="flex mt-2">
-                                            <a href="{{ $document->getUrl() }}" target="_blank"
+                                            <a href="{{ $media->getUrl() }}" target="_blank"
                                                 class="text-xs text-blue-600 hover:text-blue-800 mr-3 flex items-center">
                                                 <i class="fas fa-eye mr-1"></i> View
                                             </a>
-                                            <a href="{{ $document->getUrl() }}" download
+                                            <a href="{{ $media->getUrl() }}" download
                                                 class="text-xs text-green-600 hover:text-green-800 mr-3 flex items-center">
                                                 <i class="fas fa-download mr-1"></i> Download
                                             </a>
-                                            <a href="{{ route('admin.traffic.documents.delete', $document->id) }}"
-                                                onclick="event.preventDefault(); if(confirm('Are you sure you want to delete this document?')) document.getElementById('delete-form-{{ $document->id }}').submit();"
+                                            <a href="{{ route('admin.traffic.documents.delete', $media->id) }}"
+                                                onclick="event.preventDefault(); if(confirm('Are you sure you want to delete this document?')) document.getElementById('delete-form-{{ $media->id }}').submit();"
                                                 class="text-xs text-red-600 hover:text-red-800 flex items-center">
                                                 <i class="fas fa-trash mr-1"></i> Delete
                                             </a>
-                                            <form id="delete-form-{{ $document->id }}"
-                                                action="{{ route('admin.traffic.documents.delete', $document->id) }}"
+                                            <form id="delete-form-{{ $media->id }}"
+                                                action="{{ route('admin.traffic.documents.delete', $media->id) }}"
                                                 method="POST" style="display: none;">
                                                 @csrf
                                                 @method('DELETE')
                                             </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    
+                    @if (count($legacyDocuments) > 0)
+                        <div class="mt-8">
+                            <h4 class="text-base font-medium mb-3">Legacy Documents</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                @foreach ($legacyDocuments as $document)
+                                    <div class="border border-gray-200 rounded-md p-4 hover:shadow-md transition-shadow bg-white">
+                                        <div class="flex items-start">
+                                            <div class="flex-shrink-0">
+                                                @if (Str::contains($document->mime_type, 'image'))
+                                                    <div class="h-16 w-16 flex items-center justify-center bg-gray-50 rounded-md border border-gray-200">
+                                                        <img src="{{ $document->getUrl() }}" alt="{{ $document->file_name }}" class="h-14 w-14 object-cover rounded">
+                                                    </div>
+                                                @elseif(Str::contains($document->mime_type, 'pdf'))
+                                                    <div class="h-16 w-16 flex items-center justify-center bg-gray-50 rounded-md border border-gray-200">
+                                                        <i class="fas fa-file-pdf text-red-500 text-xl"></i>
+                                                    </div>
+                                                @else
+                                                    <div class="h-16 w-16 flex items-center justify-center bg-gray-50 rounded-md border border-gray-200">
+                                                        <i class="fas fa-file-alt text-gray-500 text-xl"></i>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                            <div class="ml-3 flex-1">
+                                                <p class="text-sm font-medium truncate" title="{{ $document->file_name }}">
+                                                    {{ $document->file_name ?? 'Unnamed Document' }}
+                                                    <span class="text-xs text-amber-600">(Legacy)</span>
+                                                </p>
+                                                <p class="text-xs text-gray-500">{{ round($document->size / 1024, 2) }} KB</p>
+                                                <p class="text-xs text-gray-500">{{ $document->created_at->format('M d, Y H:i') }}</p>
+                                                <div class="flex mt-2">
+                                                    <a href="{{ $document->getUrl() }}" target="_blank" class="text-xs text-blue-600 hover:text-blue-800 mr-3 flex items-center">
+                                                        <i class="fas fa-eye mr-1"></i> View
+                                                    </a>
+                                                    <a href="{{ $document->getUrl() }}" download class="text-xs text-green-600 hover:text-green-800 mr-3 flex items-center">
+                                                        <i class="fas fa-download mr-1"></i> Download
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                @elseif (count($legacyDocuments) > 0)
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        @foreach ($legacyDocuments as $document)
+                            <div class="border border-gray-200 rounded-md p-4 hover:shadow-md transition-shadow bg-white">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        @if (Str::contains($document->mime_type, 'image'))
+                                            <div class="h-16 w-16 flex items-center justify-center bg-gray-50 rounded-md border border-gray-200">
+                                                <img src="{{ $document->getUrl() }}" alt="{{ $document->file_name }}" class="h-14 w-14 object-cover rounded">
+                                            </div>
+                                        @elseif(Str::contains($document->mime_type, 'pdf'))
+                                            <div class="h-16 w-16 flex items-center justify-center bg-gray-50 rounded-md border border-gray-200">
+                                                <i class="fas fa-file-pdf text-red-500 text-xl"></i>
+                                            </div>
+                                        @else
+                                            <div class="h-16 w-16 flex items-center justify-center bg-gray-50 rounded-md border border-gray-200">
+                                                <i class="fas fa-file-alt text-gray-500 text-xl"></i>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-sm font-medium truncate" title="{{ $document->file_name }}">
+                                            {{ $document->file_name ?? 'Unnamed Document' }}
+                                            <span class="text-xs text-amber-600">(Legacy)</span>
+                                        </p>
+                                        <p class="text-xs text-gray-500">{{ round($document->size / 1024, 2) }} KB</p>
+                                        <p class="text-xs text-gray-500">{{ $document->created_at->format('M d, Y H:i') }}</p>
+                                        <div class="flex mt-2">
+                                            <a href="{{ $document->getUrl() }}" target="_blank" class="text-xs text-blue-600 hover:text-blue-800 mr-3 flex items-center">
+                                                <i class="fas fa-eye mr-1"></i> View
+                                            </a>
+                                            <a href="{{ $document->getUrl() }}" download class="text-xs text-green-600 hover:text-green-800 mr-3 flex items-center">
+                                                <i class="fas fa-download mr-1"></i> Download
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
@@ -170,16 +255,41 @@
                         <ul class="space-y-1 text-sm">
                             <li><strong>ID de infracción:</strong> {{ $debugInfo['conviction_id'] }}</li>
                             <li><strong>ID de conductor:</strong> {{ $debugInfo['user_driver_detail_id'] }}</li>
-                            <li><strong>Total de documentos:</strong> {{ $debugInfo['documents_count'] }}</li>
-                            <li><strong>Documentos en 'traffic-tickets':</strong>
-                                {{ $debugInfo['collections']['traffic-tickets'] }}</li>
-                            <li><strong>Documentos en 'traffic_documents':</strong>
-                                {{ $debugInfo['collections']['traffic_documents'] }}</li>
+                            <li><strong>Documentos en Media Library (traffic_images):</strong> {{ $debugInfo['media_items_count'] }}</li>
+                            <li><strong>Documentos legacy (DocumentAttachment):</strong> {{ $debugInfo['legacy_documents_count'] }}</li>
                         </ul>
 
+                        @if(count($debugInfo['media_items']) > 0)
+                            <div class="mt-3">
+                                <p class="text-sm font-medium">Detalles de Media Items:</p>
+                                <div class="mt-1 text-xs text-gray-600 max-h-40 overflow-y-auto">
+                                    <table class="w-full text-left">
+                                        <thead>
+                                            <tr>
+                                                <th class="p-1">ID</th>
+                                                <th class="p-1">Nombre</th>
+                                                <th class="p-1">Colección</th>
+                                                <th class="p-1">Tipo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($debugInfo['media_items'] as $item)
+                                                <tr>
+                                                    <td class="p-1">{{ $item['id'] }}</td>
+                                                    <td class="p-1 truncate max-w-[150px]" title="{{ $item['file_name'] }}">{{ $item['file_name'] }}</td>
+                                                    <td class="p-1">{{ $item['collection_name'] }}</td>
+                                                    <td class="p-1">{{ $item['mime_type'] }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        @endif
+
                         <div class="mt-3">
-                            <p class="text-xs text-gray-500">Ruta esperada de documentos:
-                                storage/app/public/driver/{{ $debugInfo['user_driver_detail_id'] }}/traffic_convictions/
+                            <p class="text-xs text-gray-500">Ruta esperada de documentos Media Library:
+                                storage/app/public/{{ $conviction->id }}/traffic_images/
                             </p>
                         </div>
                     </div>

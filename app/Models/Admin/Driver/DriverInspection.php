@@ -20,7 +20,9 @@ class DriverInspection extends Model implements HasMedia
         'vehicle_id',
         'inspection_date',
         'inspection_type',
+        'inspection_level',
         'inspector_name',
+        'inspector_number',
         'location',
         'status',
         'defects_found',
@@ -55,15 +57,7 @@ class DriverInspection extends Model implements HasMedia
         return $this->belongsTo(Vehicle::class);
     }
 
-    /**
-     * Define el valor por defecto para la colección de documentos
-     * 
-     * @return string
-     */
-    public function getDefaultDocumentCollection(): string
-    {
-        return 'inspection_documents';
-    }
+
     
     /**
      * Registra colecciones de medios

@@ -8,6 +8,7 @@ use App\Models\Admin\Driver\DriverTrafficConviction;
 use App\Models\Carrier;
 use App\Models\DocumentAttachment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -127,7 +128,7 @@ class TrafficConvictionsController extends Controller
             if (!empty($files)) {
                 try {
                     // Utilizar el nuevo método processLivewireFiles para procesar los archivos
-                    $uploadedCount = $this->processLivewireFiles($conviction, $files, 'traffic_convictions');
+                    $uploadedCount = $this->processLivewireFiles($conviction, $files, 'traffic_images');
                     
                     Log::info('Resultados de proceso de archivos vía Livewire', [
                         'conviction_id' => $conviction->id,
@@ -156,7 +157,7 @@ class TrafficConvictionsController extends Controller
                             'conviction_id' => $conviction->id,
                             'driver_id' => $driverId
                         ])
-                        ->toMediaCollection('traffic_convictions');
+                        ->toMediaCollection('traffic_images');
                         
                     $uploadedCount++;
                     
@@ -256,8 +257,8 @@ class TrafficConvictionsController extends Controller
             if (!empty($files)) {
                 try {
                     // Utilizar el nuevo método processLivewireFiles para procesar los archivos
-                    // Usamos 'traffic_convictions' como nombre de colección para mantener consistencia
-                    $uploadedCount = $this->processLivewireFiles($conviction, $files, 'traffic_convictions');
+                    // Usamos 'traffic_images' como nombre de colección para mantener consistencia
+                    $uploadedCount = $this->processLivewireFiles($conviction, $files, 'traffic_images');
                     
                     Log::info('Resultados de proceso de archivos vía Livewire en update', [
                         'conviction_id' => $conviction->id,
@@ -295,7 +296,7 @@ class TrafficConvictionsController extends Controller
                     $media = $conviction->addMedia($fullPath)
                         ->usingName($file->getClientOriginalName())
                         ->withCustomProperties($customProperties)
-                        ->toMediaCollection('traffic_convictions');
+                        ->toMediaCollection('traffic_images');
                         
                     $uploadedCount++;
                     
@@ -303,31 +304,24 @@ class TrafficConvictionsController extends Controller
                         'conviction_id' => $conviction->id,
                         'media_id' => $media->id,
                         'file_name' => $media->file_name,
-                        'collection' => 'traffic_images'
                     ]);
                 }
             }
-
-            // Registrar el éxito en el log
-            Log::info('Traffic conviction updated successfully', [
-                'conviction_id' => $conviction->id,
-                'driver_id' => $conviction->user_driver_detail_id
-            ]);
-
+            
             DB::commit();
 
-            // Redireccionar con mensaje de éxito
             return redirect()->route('admin.traffic.index')
-                ->with('success', 'Traffic conviction updated successfully');
-
+                ->withInput()
+                ->with('success', 'Traffic conviction updated successfully!');
+                
         } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Error updating traffic conviction', [
+            DB::rollBack();
+            Log::error('Error al actualizar infracción de tráfico: ' . $e->getMessage(), [
                 'conviction_id' => $conviction->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-
+            
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Error updating traffic conviction: ' . $e->getMessage());
@@ -363,36 +357,48 @@ class TrafficConvictionsController extends Controller
 
     /**
      * Mostrar los documentos de una infracción de tráfico
+     * 
+     * @param \App\Models\Admin\Driver\DriverTrafficConviction $conviction
+     * @return \Illuminate\View\View
      */
     public function showDocuments(DriverTrafficConviction $conviction)
     {
-        // Recuperar todos los documentos asociados con esta infracción de tráfico usando DocumentAttachment
-        $documents = \App\Models\DocumentAttachment::where('documentable_type', DriverTrafficConviction::class)
+        // Cargar la relación con el conductor y el transportista
+        $conviction->load(['userDriverDetail.user', 'userDriverDetail.carrier']);
+        
+        // Obtener los documentos de la colección 'traffic_images' usando Spatie Media Library
+        $mediaItems = $conviction->getMedia('traffic_images');
+        
+        // Obtener también los documentos antiguos usando DocumentAttachment para compatibilidad
+        $legacyDocuments = \App\Models\DocumentAttachment::where('documentable_type', DriverTrafficConviction::class)
             ->where('documentable_id', $conviction->id)
             ->get();
-
+        
         // Información de depuración
         $debugInfo = [
             'conviction_id' => $conviction->id,
             'user_driver_detail_id' => $conviction->user_driver_detail_id,
-            'documents_count' => $documents->count(),
-            'collections' => [
-                'traffic-tickets' => $documents->where('collection_name', 'traffic-tickets')->count(),
-                'traffic_documents' => $documents->where('collection_name', 'traffic_documents')->count(),
-                'all_documents' => $documents->count(),
-            ],
-            'document_info' => $documents->map(function ($document) {
+            'media_items_count' => $mediaItems->count(),
+            'legacy_documents_count' => $legacyDocuments->count(),
+            'media_items' => $mediaItems->map(function ($media) {
                 return [
-                    'id' => $document->id,
-                    'file_name' => $document->file_name,
-                    'collection_name' => $document->collection_name,
-                    'mime_type' => $document->mime_type,
-                    'size' => $document->size,
+                    'id' => $media->id,
+                    'file_name' => $media->file_name,
+                    'collection_name' => $media->collection_name,
+                    'mime_type' => $media->mime_type,
+                    'size' => $media->size,
+                    'url' => $media->getUrl(),
                 ];
             }),
         ];
+        
+        Log::info('Mostrando documentos de infracción de tráfico', [
+            'conviction_id' => $conviction->id,
+            'media_count' => $mediaItems->count(),
+            'legacy_count' => $legacyDocuments->count()
+        ]);
 
-        return view('admin.drivers.traffic.documents', compact('conviction', 'documents', 'debugInfo'));
+        return view('admin.drivers.traffic.documents', compact('conviction', 'mediaItems', 'legacyDocuments', 'debugInfo'));
     }
 
     /**
@@ -457,12 +463,21 @@ class TrafficConvictionsController extends Controller
 
     /**
      * Elimina un documento asociado a una infracción de tráfico
+     * Maneja tanto documentos antiguos (DocumentAttachment) como documentos de Media Library
      * 
-     * @param int $documentId ID del documento a eliminar
+     * @param int|string $documentId ID del documento a eliminar
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
     public function destroyDocument($documentId)
     {
+        // Verificar si el ID comienza con 'media_' o es numérico pero corresponde a un Media item
+        if ((is_string($documentId) && strpos($documentId, 'media_') === 0) || 
+            (is_numeric($documentId) && \Spatie\MediaLibrary\MediaCollections\Models\Media::find($documentId))) {
+            // Es un documento de Media Library, usar el método deleteDocumentDirectly
+            return $this->deleteDocumentDirectly($documentId);
+        }
+        
+        // Es un documento antiguo (DocumentAttachment)
         try {
             // Iniciar una transacción de base de datos para controlar la operación
             DB::beginTransaction();
@@ -493,7 +508,7 @@ class TrafficConvictionsController extends Controller
             $conviction->deleteDocument($documentId);
             
             // 5. Registrar la operación
-            Log::info('Documento eliminado exitosamente', [
+            Log::info('Documento antiguo eliminado exitosamente', [
                 'document_id' => $documentId,
                 'conviction_id' => $convictionId,
                 'file_name' => $fileName
@@ -517,7 +532,7 @@ class TrafficConvictionsController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             
-            Log::error('Error al eliminar documento', [
+            Log::error('Error al eliminar documento antiguo', [
                 'document_id' => $documentId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -720,4 +735,151 @@ class TrafficConvictionsController extends Controller
         
         return $uploadedCount;
     }
+    
+    /**
+     * Elimina un documento de infracción de tráfico de manera segura
+     * Usa eliminación directa de la tabla media para evitar eliminación en cascada
+     * 
+     * @param int $mediaId ID del documento en la tabla media
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function deleteDocumentDirectly($mediaId)
+    {
+        try {
+            // Extraer el ID numérico si viene en formato 'media_XXX'
+            if (is_string($mediaId) && strpos($mediaId, 'media_') === 0) {
+                $mediaId = (int) substr($mediaId, 6); // Extraer el número después de 'media_'
+            }
+            
+            // Registrar inicio de la operación para depuración
+            Log::info('Iniciando eliminación de documento de infracción de tráfico', [
+                'media_id' => $mediaId,
+                'user_id' => Auth::id()
+            ]);
+            
+            // Buscar el archivo en la tabla media para obtener información del archivo físico
+            $media = DB::table('media')
+                ->select('media.*', 'driver_traffic_convictions.user_driver_detail_id', 'driver_traffic_convictions.id as conviction_id')
+                ->join('driver_traffic_convictions', 'media.model_id', '=', 'driver_traffic_convictions.id')
+                ->where('media.id', $mediaId)
+                ->where('media.model_type', 'App\\Models\\Admin\\Driver\\DriverTrafficConviction')
+                ->first();
+            
+            if (!$media) {
+                Log::warning('Documento no encontrado para eliminar', ['media_id' => $mediaId]);
+                
+                if (request()->ajax() || request()->wantsJson()) {
+                    return response()->json(['error' => 'Documento no encontrado'], 404);
+                }
+                
+                return redirect()->back()->with('error', 'Documento no encontrado');
+            }
+            
+            // Registrar información del documento para depuración
+            Log::info('Información del documento a eliminar', [
+                'media_id' => $mediaId,
+                'file_name' => $media->file_name ?? 'unknown',
+                'conviction_id' => $media->conviction_id ?? 'unknown',
+                'driver_id' => $media->user_driver_detail_id ?? 'unknown'
+            ]);
+            
+            // Lista de posibles rutas donde podría estar el archivo físico
+            $possiblePaths = [
+                // Ruta estándar de Media Library
+                storage_path('app/public/' . $media->id . '/' . $media->file_name),
+                storage_path('app/' . $media->id . '/' . $media->file_name),
+                
+                // Rutas basadas en la estructura de carpetas personalizada
+                storage_path('app/public/driver/' . $media->user_driver_detail_id . '/traffic/' . $media->conviction_id . '/' . $media->file_name),
+                storage_path('app/public/' . $media->conviction_id . '/traffic_images/' . $media->file_name),
+                storage_path('app/public/traffic_images/' . $media->conviction_id . '/' . $media->file_name),
+                
+                // Rutas adicionales basadas en posibles convenciones
+                storage_path('app/public/' . $media->model_id . '/' . $media->file_name),
+                storage_path('app/public/traffic_images/' . $media->file_name),
+                storage_path('app/public/driver/' . $media->user_driver_detail_id . '/traffic_convictions/' . $media->file_name)
+            ];
+            
+            // Variable para rastrear si se eliminó algún archivo
+            $fileDeleted = false;
+            
+            // Intentar eliminar el archivo en todas las posibles ubicaciones
+            foreach ($possiblePaths as $path) {
+                if (file_exists($path)) {
+                    Log::info('Archivo físico encontrado', ['path' => $path]);
+                    
+                    try {
+                        unlink($path);
+                        $fileDeleted = true;
+                        Log::info('Archivo físico eliminado correctamente', ['path' => $path]);
+                    } catch (\Exception $e) {
+                        Log::warning('Error al eliminar archivo físico', [
+                            'path' => $path,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+            }
+            
+            if (!$fileDeleted) {
+                Log::warning('No se encontró el archivo físico para eliminar', [
+                    'media_id' => $mediaId,
+                    'file_name' => $media->file_name ?? 'unknown'
+                ]);
+            }
+            
+            // Eliminar directamente de la tabla media para evitar eliminación en cascada
+            // NO usar $media->delete() ya que esto podría causar problemas con relaciones
+            $deleted = DB::table('media')->where('id', $mediaId)->delete();
+            
+            if ($deleted) {
+                // Registrar la eliminación exitosa
+                Log::info('Documento de infracción de tráfico eliminado correctamente', [
+                    'media_id' => $mediaId,
+                    'user_id' => Auth::id(),
+                    'conviction_id' => $media->conviction_id ?? null
+                ]);
+                
+                if (request()->ajax() || request()->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Documento eliminado correctamente',
+                        'media_id' => $mediaId
+                    ]);
+                }
+                
+                // Determinar la URL de retorno basada en la referencia
+                $referer = request()->headers->get('referer');
+                return redirect($referer ?: route('admin.traffic.index'))
+                    ->with('success', 'Documento eliminado correctamente');
+            } else {
+                Log::warning('No se pudo eliminar el documento de la base de datos', ['media_id' => $mediaId]);
+                
+                if (request()->ajax() || request()->wantsJson()) {
+                    return response()->json([
+                        'error' => 'No se pudo eliminar el documento de la base de datos'
+                    ], 500);
+                }
+                
+                return redirect()->back()->with('error', 'No se pudo eliminar el documento');
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar documento de infracción de tráfico', [
+                'media_id' => $mediaId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'error' => 'Error al eliminar documento: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->back()->with('error', 'Error al eliminar documento: ' . $e->getMessage());
+        }
+    }
+    
+
 }

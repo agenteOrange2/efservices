@@ -16,8 +16,10 @@ return new class extends Migration
             $table->foreignId('user_driver_detail_id')->constrained()->onDelete('cascade');
             $table->foreignId('vehicle_id')->nullable()->constrained()->nullOnDelete();
             $table->date('inspection_date');
-            $table->string('inspection_type'); // e.g., Pre-trip, Post-trip, DOT, Annual
             $table->string('inspector_name');
+            $table->string('inspection_type'); // e.g., Pre-trip, Post-trip, DOT, Annual
+            $table->string('inspection_level')->nullable();
+            $table->string('inspector_number')->nullable();
             $table->string('location')->nullable();
             $table->string('status'); // e.g., Passed, Failed, Pending Repairs
             $table->text('defects_found')->nullable();

@@ -192,18 +192,18 @@
                         </div>
                         
                         <div>
-                            <x-base.form-label for="vehicle_safe">Vehicle Safe to Operate?</x-base.form-label>
+                            <x-base.form-label for="is_vehicle_safe_to_operate">Vehicle Safe to Operate?</x-base.form-label>
                             <div class="mt-2">
                                 <label class="form-check mr-2 inline-block">
-                                    <input id="vehicle_safe_yes" name="vehicle_safe" type="radio" class="form-check-input" value="1" {{ old('vehicle_safe') == '1' ? 'checked' : '' }}>
+                                    <input id="vehicle_safe_yes" name="is_vehicle_safe_to_operate" type="radio" class="form-check-input" value="1" {{ old('is_vehicle_safe_to_operate') == '1' ? 'checked' : 'checked' }}>
                                     <span class="form-check-label">Yes</span>
                                 </label>
                                 <label class="form-check mr-2 inline-block">
-                                    <input id="vehicle_safe_no" name="vehicle_safe" type="radio" class="form-check-input" value="0" {{ old('vehicle_safe') == '0' ? 'checked' : '' }}>
+                                    <input id="vehicle_safe_no" name="is_vehicle_safe_to_operate" type="radio" class="form-check-input" value="0" {{ old('is_vehicle_safe_to_operate') == '0' ? 'checked' : '' }}>
                                     <span class="form-check-label">No</span>
                                 </label>
                             </div>
-                            @error('vehicle_safe')
+                            @error('is_vehicle_safe_to_operate')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
                         </div>
@@ -401,7 +401,7 @@
                     const fileData = data[0];
                     
                     if (fileData.modelName === 'inspection_files') {
-                        // Agregar el archivo al array
+                        // Agregar el archivo al array con la estructura correcta para MediaLibrary
                         inspectionFiles.push({
                             name: fileData.originalName,
                             original_name: fileData.originalName,
@@ -410,6 +410,8 @@
                             is_temp: true,
                             tempPath: fileData.tempPath,
                             path: fileData.tempPath,
+                            // URL formateada para vista previa
+                            url: '/storage/' + fileData.tempPath,
                             id: fileData.previewData.id
                         });
                         

@@ -153,7 +153,7 @@
                                 @endphp
 
                                 <livewire:components.file-uploader
-                                    model-name="traffic_convictions"
+                                    model-name="traffic_images"
                                     :model-index="0"
                                     :auto-upload="true"
                                     class="border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer"
@@ -265,8 +265,8 @@
                             
                             // Eliminar archivo del array por nombre o índice (para temporales)
                             const fileIndex = uploadedFiles.findIndex(file => 
-                                file.name === data.fileName || 
-                                file.original_name === data.fileName);
+                                file.name === data.originalName || 
+                                file.original_name === data.originalName);
                             
                             if (fileIndex > -1) {
                                 uploadedFiles.splice(fileIndex, 1);

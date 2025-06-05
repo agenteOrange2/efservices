@@ -116,7 +116,7 @@
                             <x-base.form-label>Traffic Conviction Images</x-base.form-label>
                             <div class="border border-dashed rounded-md p-4 mt-2">
                                 <livewire:components.file-uploader
-                                    model-name="traffic_convictions"
+                                    model-name="traffic_images"
                                     :model-index="0"
                                     :auto-upload="true"
                                     class="border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer"
@@ -191,8 +191,8 @@
                         console.log('Eliminando archivo de traffic_images');
                         // Eliminar el archivo del array por nombre o índice
                         const fileIndex = uploadedFiles.findIndex(file => 
-                            file.name === data.fileName || 
-                            file.original_name === data.fileName);
+                            file.name === data.originalName || 
+                            file.original_name === data.originalName);
                         
                         if (fileIndex > -1) {
                             uploadedFiles.splice(fileIndex, 1);

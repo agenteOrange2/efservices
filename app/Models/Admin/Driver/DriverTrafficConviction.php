@@ -89,7 +89,7 @@ class DriverTrafficConviction extends Model implements HasMedia
      */
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('traffic-images')
+        $this->addMediaCollection('traffic_images')
             ->useDisk('public');
     }
     

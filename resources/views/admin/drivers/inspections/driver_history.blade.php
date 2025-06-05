@@ -175,7 +175,7 @@ $breadcrumbLinks = [
                             @endif
                         </td>
                         <td class="px-6 py-4">{{ $inspection->inspection_type }}</td>
-                        <td class="px-6 py-4">{{ $inspection->documents()->count() }}</td>
+                        <td class="px-6 py-4">{{ $inspection->getMedia('inspection_documents')->count() }}</td>
                         <td class="px-6 py-4">{{ $inspection->inspector_name }}</td>
                         <td class="px-6 py-4">
                             <span class="px-2 py-1 text-xs font-medium rounded-full 
