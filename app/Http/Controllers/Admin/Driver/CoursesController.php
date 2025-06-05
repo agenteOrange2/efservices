@@ -3,18 +3,22 @@
 namespace App\Http\Controllers\Admin\Driver;
 
 use App\Http\Controllers\Controller;
-use App\Models\UserDriverDetail;
 use App\Models\Admin\Driver\DriverCourse;
 use App\Models\Carrier;
 use App\Models\DocumentAttachment;
+use App\Models\UserDriverDetail;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Support\Collection;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class CoursesController extends Controller
 {
+    // Los métodos destroyDocument y previewDocument se han movido más abajo en el controlador
     // Vista para todos los cursos
     public function index(Request $request)
     {
@@ -148,35 +152,14 @@ class CoursesController extends Controller
         $driver = $course->driverDetail;
         $carriers = Carrier::where('status', 1)->get();
         
-        // Cargar documentos existentes para mostrarlos
-        $documents = DocumentAttachment::where('documentable_type', DriverCourse::class)
-            ->where('documentable_id', $course->id)
-            ->get();
-        
-        // Convertir los documentos a un formato que el componente FileUploader pueda entender
-        $existingFilesArray = [];
-        foreach ($documents as $document) {
-            // Formato exactamente igual al que se usa en la vista de training
-            $existingFilesArray[] = [
-                'id' => $document->id,
-                'name' => $document->file_name,
-                'file_name' => $document->file_name,  // Campo adicional necesario
-                'original_name' => $document->original_name,
-                'mime_type' => $document->mime_type,
-                'size' => $document->size,
-                'created_at' => $document->created_at->format('Y-m-d H:i:s'),
-                'url' => Storage::url($document->file_path),  // URL para descargar/ver el archivo
-                'is_temp' => false,  // Usar is_temp en lugar de is_existing
-                'file_path' => $document->file_path
-            ];
-        }
+        // Los documentos ya se cargan directamente en la vista usando $course->getMedia('course_certificates')
+        // No es necesario cargarlos aquí ya que la vista ya está configurada para usar Spatie Media Library
         
         return view('admin.drivers.courses.edit', compact(
             'course',
             'drivers',
             'driver',
-            'carriers',
-            'existingFilesArray'
+            'carriers'
         ));
     }
 
@@ -223,7 +206,7 @@ class CoursesController extends Controller
                 $filesProcessed = $this->processLivewireFiles(
                     $course, 
                     $request->certificate_files, 
-                    'certificates'
+                    'course_certificates'
                 );
                 
                 Log::info('Archivos procesados para el curso', [
@@ -234,7 +217,7 @@ class CoursesController extends Controller
             
             DB::commit();
             
-            Session::flash('success', 'Curso creado correctamente');
+            session()->flash('success', 'Curso creado correctamente');
             
             // Redirigir a la vista de edición
             return redirect()->route('admin.courses.edit', $course->id);
@@ -332,7 +315,7 @@ class CoursesController extends Controller
                         'course_id' => $course->id,
                         'files_count' => count($filesData)
                     ]);
-                    $this->processLivewireFiles($course, $jsonFiles, 'certificates');
+                    $this->processLivewireFiles($course, $jsonFiles, 'course_certificates');
                 }
             }
             
@@ -342,7 +325,7 @@ class CoursesController extends Controller
                     'course_id' => $course->id,
                     'certificate_files' => $request->certificate_files
                 ]);
-                $this->processLivewireFiles($course, $request->certificate_files, 'certificates');
+                $this->processLivewireFiles($course, $request->certificate_files, 'course_certificates');
             }
             
             DB::commit();
@@ -368,7 +351,7 @@ class CoursesController extends Controller
     {
         try {
             $course->delete();
-            Session::flash('success', 'Curso eliminado correctamente');
+            session()->flash('success', 'Curso eliminado correctamente');
             return back();
         } catch (\Exception $e) {
             Log::error('Error al eliminar curso', [
@@ -381,7 +364,7 @@ class CoursesController extends Controller
     }
 
     /**
-     * Elimina un documento mediante una solicitud AJAX usando el trait HasDocuments
+     * Elimina un documento mediante una solicitud AJAX usando Spatie Media Library
      * 
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -407,19 +390,21 @@ class CoursesController extends Controller
                 ], 400);
             }
             
-            $documentId = $request->document_id;
+            $mediaId = $request->document_id;
             $courseId = $request->course_id;
             
             // Obtener el curso
             $course = DriverCourse::findOrFail($courseId);
             Log::info('Curso encontrado', ['course_id' => $course->id]);
             
-            // Obtener el documento
-            $document = DocumentAttachment::where('id', $documentId)
-                ->first(); // Removido el filtro por documentable_type y documentable_id para diagnosticar
+            // Obtener el documento desde la tabla media
+            $media = Media::where('id', $mediaId)
+                ->where('model_type', DriverCourse::class)
+                ->where('model_id', $courseId)
+                ->first();
             
-            if (!$document) {
-                Log::warning('Documento no encontrado', ['document_id' => $documentId]);
+            if (!$media) {
+                Log::warning('Documento no encontrado', ['media_id' => $mediaId]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Documento no encontrado'
@@ -427,14 +412,29 @@ class CoursesController extends Controller
             }
             
             Log::info('Documento encontrado', [
-                'document_id' => $document->id,
-                'documentable_type' => $document->documentable_type,
-                'documentable_id' => $document->documentable_id,
-                'file_path' => $document->file_path
+                'media_id' => $media->id,
+                'model_type' => $media->model_type,
+                'model_id' => $media->model_id,
+                'file_name' => $media->file_name,
+                'disk' => $media->disk
             ]);
             
-            // Eliminar el documento usando el método del trait HasDocuments
-            $result = $course->deleteDocument($documentId);
+            // Eliminar el archivo físico si existe
+            $diskName = $media->disk;
+            $filePath = $media->id . '/' . $media->file_name;
+            
+            if (\Illuminate\Support\Facades\Storage::disk($diskName)->exists($filePath)) {
+                \Illuminate\Support\Facades\Storage::disk($diskName)->delete($filePath);
+            }
+            
+            // Eliminar directorio del media si existe
+            $dirPath = $media->id;
+            if (\Illuminate\Support\Facades\Storage::disk($diskName)->exists($dirPath)) {
+                \Illuminate\Support\Facades\Storage::disk($diskName)->deleteDirectory($dirPath);
+            }
+            
+            // Eliminar el registro directamente de la base de datos para evitar problemas de eliminación en cascada
+            $result = DB::table('media')->where('id', $mediaId)->delete();
             
             Log::info('Resultado de eliminación', ['success' => $result ? 'true' : 'false']);
             
@@ -465,7 +465,50 @@ class CoursesController extends Controller
     }
     
     /**
-     * Elimina un documento usando el trait HasDocuments
+     * Previsualiza un documento usando Spatie Media Library
+     * 
+     * @param int $id ID del documento a previsualizar
+     * @return \Illuminate\Http\Response
+     */
+    public function previewDocument($id)
+    {
+        try {
+            // Buscar el documento en la tabla media
+            $media = Media::findOrFail($id);
+            
+            // Verificar que el documento pertenece a un curso
+            if ($media->model_type !== DriverCourse::class) {
+                abort(404, 'Tipo de documento inválido');
+            }
+            
+            // Obtener la ruta del archivo
+            $filePath = $media->getPath();
+            
+            // Verificar que el archivo existe
+            if (!file_exists($filePath)) {
+                abort(404, 'Archivo no encontrado');
+            }
+            
+            // Obtener el tipo MIME del archivo
+            $mimeType = $media->mime_type;
+            
+            // Devolver el archivo como respuesta
+            return response()->file($filePath, [
+                'Content-Type' => $mimeType,
+                'Content-Disposition' => 'inline; filename="' . $media->file_name . '"'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error al previsualizar documento', [
+                'document_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            abort(500, 'Error al previsualizar documento: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Elimina un documento usando Spatie Media Library
      * 
      * @param int $id ID del documento a eliminar
      * @return \Illuminate\Http\RedirectResponse
@@ -473,16 +516,16 @@ class CoursesController extends Controller
     public function destroyDocument($id)
     {
         try {
-            // Buscar el documento en nuestra tabla document_attachments
-            $document = DocumentAttachment::findOrFail($id);
-
+            // Verificar que el documento existe en la tabla media
+            $media = Media::findOrFail($id);
+            
             // Verificar que el documento pertenece a un curso
-            if ($document->documentable_type !== DriverCourse::class) {
+            if ($media->model_type !== DriverCourse::class) {
                 return redirect()->back()->with('error', 'Tipo de documento inválido');
             }
 
-            $fileName = $document->file_name;
-            $courseId = $document->documentable_id;
+            $fileName = $media->file_name;
+            $courseId = $media->model_id;
             $course = DriverCourse::find($courseId);
 
             if (!$course) {
@@ -490,13 +533,37 @@ class CoursesController extends Controller
                     ->with('error', 'No se encontró el curso asociado al documento');
             }
 
-            // Eliminar el documento usando el método del trait HasDocuments
-            $result = $course->deleteDocument($id);
+            // Eliminar el archivo físico si existe
+            $diskName = $media->disk;
+            $filePath = $media->id . '/' . $media->file_name;
+            
+            if (\Illuminate\Support\Facades\Storage::disk($diskName)->exists($filePath)) {
+                \Illuminate\Support\Facades\Storage::disk($diskName)->delete($filePath);
+            }
+            
+            // Eliminar directorio del media si existe
+            $dirPath = $media->id;
+            if (\Illuminate\Support\Facades\Storage::disk($diskName)->exists($dirPath)) {
+                \Illuminate\Support\Facades\Storage::disk($diskName)->deleteDirectory($dirPath);
+            }
+            
+            // Eliminar el registro directamente de la base de datos para evitar problemas de eliminación en cascada
+            $result = DB::table('media')->where('id', $id)->delete();
 
             if (!$result) {
                 return redirect()->back()->with('error', 'No se pudo eliminar el documento');
             }
 
+            // Determinar la URL de retorno según el origen de la solicitud
+            $referer = request()->headers->get('referer');
+            
+            // Si la URL contiene 'files', redirigir a la página de archivos
+            if (strpos($referer, 'files') !== false) {
+                return redirect()->route('admin.courses.files', $courseId)
+                    ->with('success', "Documento '{$fileName}' eliminado correctamente");
+            }
+            
+            // Si no, redirigir a la página de edición
             return redirect()->route('admin.courses.edit', $courseId)
                 ->with('success', "Documento '{$fileName}' eliminado correctamente");
         } catch (\Exception $e) {
@@ -508,14 +575,121 @@ class CoursesController extends Controller
             return redirect()->back()->with('error', 'Error al eliminar documento: ' . $e->getMessage());
         }
     }
-
-    // Método para obtener los documentos de un curso
+    
+    /**
+     * Muestra los documentos de un curso específico
+     *
+     * @param DriverCourse $course
+     * @return \Illuminate\View\View
+     */
     public function getFiles(DriverCourse $course)
     {
-        $certificates = $course->getMedia('certificates');
+        $documents = $course->getMedia('course_certificates');
         
-        return response()->json([
-            'certificates' => $certificates,
+        // Asegurarse de que los documentos se cargan correctamente
+        \Illuminate\Support\Facades\Log::info('Documentos cargados para el curso: ' . $course->id, [
+            'count' => $documents->count(),
+            'course_name' => $course->organization_name,
+            'url' => request()->url(),
+            'route' => request()->route()->getName()
+        ]);
+        
+        return view('admin.drivers.courses.documents', [
+            'course' => $course,
+            'documents' => $documents,
+        ]);
+    }
+    
+    /**
+     * Muestra todos los documentos de todos los cursos
+     *
+     * @param Request $request
+     * @return \Illuminate\View\View
+     */
+    public function getAllDocuments(Request $request)
+    {
+        // Iniciar la consulta para obtener todos los documentos de la colección 'course_certificates'
+        $query = DB::table('media')
+            ->where('collection_name', 'course_certificates')
+            ->where('model_type', DriverCourse::class);
+            
+        // Log para depuración
+        \Illuminate\Support\Facades\Log::info('Iniciando consulta de todos los documentos', [
+            'request' => $request->all()
+        ]);
+        
+        // Filtrar por curso si se especifica
+        if ($request->filled('course')) {
+            $query->where('model_id', $request->course);
+        }
+        
+        // Filtrar por conductor si se especifica
+        if ($request->filled('driver')) {
+            $driverId = $request->driver;
+            $courseIds = DriverCourse::where('user_driver_detail_id', $driverId)->pluck('id');
+            $query->whereIn('model_id', $courseIds);
+        }
+        
+        // Filtrar por tipo de archivo
+        if ($request->filled('file_type')) {
+            $fileType = $request->file_type;
+            if ($fileType === 'pdf') {
+                $query->where('mime_type', 'application/pdf');
+            } elseif ($fileType === 'image') {
+                $query->where('mime_type', 'like', 'image/%');
+            } elseif ($fileType === 'doc') {
+                $query->where(function($q) {
+                    $q->where('mime_type', 'like', 'application/msword%')
+                      ->orWhere('mime_type', 'like', 'application/vnd.openxmlformats-officedocument.wordprocessingml%');
+                });
+            }
+        }
+        
+        // Filtrar por fecha de subida
+        if ($request->filled('upload_from')) {
+            $query->whereDate('created_at', '>=', $request->upload_from);
+        }
+        
+        if ($request->filled('upload_to')) {
+            $query->whereDate('created_at', '<=', $request->upload_to);
+        }
+        
+        // Ordenar por fecha de creación descendente (más reciente primero)
+        $query->orderBy('created_at', 'desc');
+        
+        // Paginar los resultados
+        $mediaItems = $query->paginate(15);
+        
+        // Convertir los resultados de DB a objetos Media
+        $documents = collect($mediaItems->items())->map(function ($item) {
+            $media = Media::find($item->id);
+            return $media;
+        });
+        
+        // Mantener la paginación
+        $documents = new \Illuminate\Pagination\LengthAwarePaginator(
+            $documents,
+            $mediaItems->total(),
+            $mediaItems->perPage(),
+            $mediaItems->currentPage(),
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+        
+        // Obtener todos los cursos y conductores para los filtros
+        $courses = DriverCourse::orderBy('organization_name')->get();
+        $drivers = UserDriverDetail::with('user')->get();
+        
+        // Log para depuración
+        \Illuminate\Support\Facades\Log::info('Renderizando vista all_documents', [
+            'document_count' => $documents->count(),
+            'course_count' => $courses->count(),
+            'driver_count' => $drivers->count()
+        ]);
+        
+        return view('admin.drivers.courses.all_documents', [
+            'documents' => $documents,
+            'courses' => $courses,
+            'drivers' => $drivers,
         ]);
     }
 

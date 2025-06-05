@@ -207,24 +207,8 @@
                         <h4 class="font-medium">Documents</h4>
                         <div class="mt-3">
                             @php
-                            // Prepara los archivos existentes para el componente Livewire
-                            $existingFilesArray = [];
-                            $documents = \App\Models\DocumentAttachment::where('documentable_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)
-                                ->where('documentable_id', $trainingSchool->id)
-                                ->get();
-                                
-                            foreach($documents as $document) {
-                                $existingFilesArray[] = [
-                                    'id' => $document->id,
-                                    'name' => $document->file_name,
-                                    'file_name' => $document->file_name,
-                                    'mime_type' => $document->mime_type,
-                                    'size' => $document->size,
-                                    'created_at' => $document->created_at->format('Y-m-d H:i:s'),
-                                    'url' => $document->getUrl(),
-                                    'is_temp' => false
-                                ];
-                            }
+                            // Los archivos existentes ya vienen preparados desde el controlador
+                            // $existingFilesArray contiene los documentos de Spatie Media Library
                             @endphp
 
                             <livewire:components.file-uploader

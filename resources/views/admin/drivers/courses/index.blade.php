@@ -191,9 +191,9 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4">
-                                    @if ($course->getDocuments('certificates')->count() > 0)
-                                        <a href="{{ route('admin.courses.edit', $course) }}" class="bg-primary/20 text-primary rounded px-2 py-1 text-xs">
-                                            <i class="fas fa-file-alt mr-1"></i>{{ $course->getDocuments('certificates')->count() }} {{ Str::plural('Document', $course->getDocuments('certificates')->count()) }}
+                                    @if ($course->hasMedia('course_certificates'))
+                                        <a href="{{ route('admin.courses.documents', $course) }}" class="bg-primary/20 text-primary rounded px-2 py-1 text-xs">
+                                            <i class="fas fa-file-alt mr-1"></i>{{ $course->getMedia('course_certificates')->count() }} {{ Str::plural('Document', $course->getMedia('course_certificates')->count()) }}
                                         </a>
                                     @else
                                         <span class="text-gray-400 text-xs">No documents</span>

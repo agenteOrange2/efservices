@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class InspectionsController extends Controller
 {
@@ -584,6 +585,122 @@ class InspectionsController extends Controller
             ->get();
 
         return response()->json($drivers);
+    }
+    
+    /**
+     * Vista para todos los documentos de inspecciones
+     * 
+     * @param Request $request
+     * @return \Illuminate\View\View
+     */
+    public function allDocuments(Request $request)
+    {
+        // Construir la consulta base para los documentos
+        $query = Media::where('collection_name', 'inspection_documents')
+            ->where('model_type', DriverInspection::class);
+            
+        // Aplicar filtros
+        if ($request->filled('driver_filter') && $request->driver_filter != '') {
+            $query->whereJsonContains('custom_properties->driver_id', (int)$request->driver_filter);
+        }
+        
+        if ($request->filled('carrier_filter') && $request->carrier_filter != '') {
+            // Obtener IDs de inspecciones para el carrier seleccionado
+            $inspectionIds = DriverInspection::whereHas('userDriverDetail', function($q) use ($request) {
+                $q->where('carrier_id', $request->carrier_filter);
+            })->pluck('id')->toArray();
+            
+            $query->whereIn('model_id', $inspectionIds);
+        }
+        
+        if ($request->filled('date_from') && $request->date_from != '') {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to') && $request->date_to != '') {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        
+        if ($request->filled('search_term') && $request->search_term != '') {
+            $searchTerm = '%' . $request->search_term . '%';
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'like', $searchTerm)
+                  ->orWhere('file_name', 'like', $searchTerm);
+            });
+        }
+        
+        // Ordenar resultados
+        $sortField = $request->get('sort_field', 'created_at');
+        $sortDirection = $request->get('sort_direction', 'desc');
+        $query->orderBy($sortField, $sortDirection);
+        
+        // Paginar resultados
+        $documents = $query->paginate(20);
+        
+        // Cargar datos relacionados para los filtros
+        $drivers = UserDriverDetail::with('user')->get();
+        $carriers = Carrier::where('status', 1)->get();
+        
+        return view('admin.drivers.inspections.all-documents', compact(
+            'documents',
+            'drivers',
+            'carriers'
+        ));
+    }
+    
+    /**
+     * Vista para los documentos de inspecciones de un conductor específico
+     * 
+     * @param UserDriverDetail $driver
+     * @param Request $request
+     * @return \Illuminate\View\View
+     */
+    public function driverDocuments(UserDriverDetail $driver, Request $request)
+    {
+        // Obtener la licencia del conductor (la primera registrada)
+        $license = Media::where('collection_name', 'driver_license')
+            ->where('model_type', UserDriverDetail::class)
+            ->where('model_id', $driver->id)
+            ->orderBy('created_at', 'asc')
+            ->first();
+            
+        // Obtener IDs de todas las inspecciones del conductor
+        $inspectionIds = DriverInspection::where('user_driver_detail_id', $driver->id)
+            ->pluck('id')
+            ->toArray();
+        
+        // Consultar documentos basados en los IDs de inspecciones
+        $query = Media::where('collection_name', 'inspection_documents')
+            ->where('model_type', DriverInspection::class)
+            ->whereIn('model_id', $inspectionIds);
+            
+        if ($request->filled('date_from') && $request->date_from != '') {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to') && $request->date_to != '') {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        
+        if ($request->filled('search_term') && $request->search_term != '') {
+            $searchTerm = '%' . $request->search_term . '%';
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'like', $searchTerm)
+                  ->orWhere('file_name', 'like', $searchTerm);
+            });
+        }
+        
+        $sortField = $request->get('sort_field', 'created_at');
+        $sortDirection = $request->get('sort_direction', 'desc');
+        $query->orderBy($sortField, $sortDirection);
+        
+        $documents = $query->paginate(20);
+        
+        return view('admin.drivers.inspections.driver-documents', compact(
+            'documents',
+            'driver',
+            'license'
+        ));
     }
     
     /**

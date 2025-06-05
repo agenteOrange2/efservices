@@ -21,7 +21,12 @@
             <h2 class="text-lg font-medium mr-auto">
                 Driver Inspections Management
             </h2>
-            <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
+            <div class="w-full sm:w-auto flex mt-4 sm:mt-0 gap-2">
+                <x-base.button as="a" href="{{ route('admin.inspections.documents') }}" variant="outline-secondary"
+                    class="flex items-center">
+                    <x-base.lucide class="w-4 h-4 mr-2" icon="file-text" />
+                    All Documents
+                </x-base.button>
                 <x-base.button as="a" href="{{ route('admin.inspections.create') }}" variant="primary"
                     class="flex items-center">
                     <x-base.lucide class="w-4 h-4 mr-2" icon="plus" />
@@ -192,9 +197,18 @@
                                         @endphp
                                         {{ $carrier ?? 'N/A' }}
                                     </td>
-                                    <td class="px-6 py-4">
-                                        {{ $inspection->userDriverDetail->user->name }}
-                                        {{ $inspection->userDriverDetail->last_name }}
+                                    <td class="px-4 py-3 text-sm">
+                                        @if ($inspection->userDriverDetail)
+                                            <div class="flex items-center">
+                                                <span>{{ $inspection->userDriverDetail->user->name }} {{ $inspection->userDriverDetail->last_name }}</span>
+                                                <a href="{{ route('admin.inspections.driver.documents', $inspection->userDriverDetail) }}" 
+                                                   class="ml-2 text-blue-600 hover:text-blue-800" title="View driver documents">
+                                                    <x-base.lucide class="w-4 h-4" icon="file-text" />
+                                                </a>
+                                            </div>
+                                        @else
+                                            <span class="text-gray-400">N/A</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4">
                                         @if ($inspection->vehicle)

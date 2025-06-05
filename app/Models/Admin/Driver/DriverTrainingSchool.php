@@ -6,14 +6,14 @@ use App\Models\UserDriverDetail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\DB;
-use App\Traits\HasDocuments;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\MediaLibrary\MediaCollections\File;
 
 class DriverTrainingSchool extends Model implements HasMedia
 {
-    use HasFactory, HasDocuments, InteractsWithMedia;
+    use HasFactory, InteractsWithMedia;
 
     protected $fillable = [
         'user_driver_detail_id',
@@ -50,42 +50,15 @@ class DriverTrainingSchool extends Model implements HasMedia
     {
         return $this->userDriverDetail();
     }
-
-    /**
-     * Define el valor por defecto para la colección de documentos
-     * 
-     * @return string
-     */
-    public function getDefaultDocumentCollection(): string
-    {
-        return 'training_documents';
-    }
     
     /**
-     * Define la ruta donde se guardarán los documentos.
-     *
-     * @param string $collection Nombre de la colección
-     * @param string|null $fileName Nombre del archivo (opcional)
-     * @return string Ruta relativa
-     */
-    protected function getDocumentPath(string $collection, ?string $fileName = null): string
-    {
-        // Obtener el ID del conductor desde la relación
-        $driverId = $this->user_driver_detail_id ?? 'unknown';
-        
-        // Crear la ruta siguiendo el patrón solicitado: driver/{id}/training_schools/{id}/
-        $path = "driver/{$driverId}/training_schools/{$this->id}";
-        
-        return $fileName ? "{$path}/{$fileName}" : $path;
-    }
-    
-    /**
-     * Registra colecciones de medios
+     * Registra las colecciones de medios para este modelo
      */
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('school_certificates')
-            ->useDisk('public');
+            ->useDisk('public')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']);
     }
     
     /**
@@ -120,27 +93,14 @@ class DriverTrainingSchool extends Model implements HasMedia
     }
     
     /**
-     * Registra las conversiones de medios para generar miniaturas
-     * cuando se suben imágenes al modelo.
+     * Registra las conversiones de medios para el modelo.
      * 
      * @param Media $media
      * @return void
      */
     public function registerMediaConversions(Media $media = null): void
     {
-        $this->addMediaConversion('thumb')
-             ->width(200)
-             ->height(200)
-             ->sharpen(10)
-             ->nonQueued()
-             ->performOnCollections('school_certificates');
-             
-        $this->addMediaConversion('preview')
-             ->width(400)
-             ->height(300)
-             ->sharpen(10)
-             ->nonQueued()
-             ->performOnCollections('school_certificates');
+        // No se crean conversiones adicionales, solo se guarda la imagen original
     }
     
     /**

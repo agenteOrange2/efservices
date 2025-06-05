@@ -164,8 +164,9 @@
                                             <x-base.table.td  class="px-6 py-4">{{ $school->date_end }}</x-base.table.td>
                                             <x-base.table.td  class="px-6 py-4">
                                                 @php
-                                                    $docsCount = \App\Models\DocumentAttachment::where('documentable_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)
-                                                        ->where('documentable_id', $school->id)
+                                                    $docsCount = \Spatie\MediaLibrary\MediaCollections\Models\Media::where('model_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)
+                                                        ->where('model_id', $school->id)
+                                                        ->where('collection_name', 'school_certificates')
                                                         ->count();
                                                 @endphp
                                                 <a href="{{ route('admin.training-schools.show.documents', $school->id) }}" class="flex items-center">
@@ -189,7 +190,7 @@
                                                        <x-base.lucide class="w-4 h-4 mr-3" icon="file-text" />
                                                        Documents                                                        
                                                        <span class="ml-1">
-                                                           ({{ \App\Models\DocumentAttachment::where('documentable_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)->where('documentable_id', $school->id)->count() }})
+                                                           ({{ \Spatie\MediaLibrary\MediaCollections\Models\Media::where('model_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)->where('model_id', $school->id)->where('collection_name', 'school_certificates')->count() }})
                                                         </span>                                                        
                                                     </a>
                                                     <a href="{{ route('admin.training-schools.edit', $school->id) }}" class="btn btn-sm btn-primary flex">

@@ -34,7 +34,19 @@
             <h2 class="text-lg font-medium mr-auto">
                 Edit Inspection Record
             </h2>
-            <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
+            <div class="w-full sm:w-auto flex mt-4 sm:mt-0 gap-2">
+                @if($inspection->userDriverDetail)
+                <x-base.button as="a" href="{{ route('admin.inspections.driver.documents', $inspection->userDriverDetail) }}" class="w-full sm:w-auto"
+                    variant="outline-secondary">
+                    <x-base.lucide class="mr-2 h-4 w-4" icon="file-text" />
+                    Driver Documents
+                </x-base.button>
+                @endif
+                <x-base.button as="a" href="{{ route('admin.inspections.documents') }}" class="w-full sm:w-auto"
+                    variant="outline-secondary">
+                    <x-base.lucide class="mr-2 h-4 w-4" icon="files" />
+                    All Documents
+                </x-base.button>
                 <x-base.button as="a" href="{{ route('admin.inspections.index') }}" class="w-full sm:w-auto"
                     variant="outline-primary">
                     <x-base.lucide class="mr-2 h-4 w-4" icon="ArrowLeft" />

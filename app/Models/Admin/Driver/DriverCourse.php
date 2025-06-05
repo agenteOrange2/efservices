@@ -64,7 +64,7 @@ class DriverCourse extends Model implements HasMedia
      */
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('certificates')
+        $this->addMediaCollection('course_certificates')
             ->useDisk('public');
     }
     

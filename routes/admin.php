@@ -132,8 +132,40 @@ Route::prefix('training-schools')->name('training-schools.')->group(function () 
     
     // Rutas para operaciones con documentos individuales
     Route::get('document/{id}/preview', [TrainingSchoolsController::class, 'previewDocument'])->name('preview.document');
+    // Rutas adicionales con los nombres que se usan en las vistas para compatibilidad
+    Route::get('documents/{id}/preview', [TrainingSchoolsController::class, 'previewDocument'])->name('documents.preview');
+    Route::delete('documents/{id}', [TrainingSchoolsController::class, 'destroyDocument'])->name('documents.delete');
+    
+    // Rutas originales
     Route::delete('document/{id}', [TrainingSchoolsController::class, 'destroyDocument'])->name('destroy.document');
     Route::delete('document/{id}/ajax', [TrainingSchoolsController::class, 'ajaxDestroyDocument'])->name('ajax-destroy.document');
+});
+
+/*
+    |--------------------------------------------------------------------------
+    | RUTAS PARA CURSOS DE CONDUCTORES
+    |--------------------------------------------------------------------------    
+*/
+
+// Rutas estándar de recursos para cursos
+Route::resource('courses', CoursesController::class)->except(['show']);
+
+// Rutas para gestión de documentos de cursos
+Route::prefix('courses')->name('courses.')->group(function () {
+    // Vista de todos los documentos
+    Route::get('all/documents', [CoursesController::class, 'getAllDocuments'])->name('all-documents');
+    
+    // Rutas para documentos de un curso específico
+    Route::get('{course}/documents', [CoursesController::class, 'getFiles'])->name('documents');
+    
+    // Rutas para operaciones con documentos individuales
+    Route::get('document/{id}/preview', [CoursesController::class, 'previewDocument'])->name('preview.document');
+    // Rutas adicionales con los nombres que se usan en las vistas para compatibilidad
+    Route::get('documents/preview/{id}', [CoursesController::class, 'previewDocument'])->name('documents.preview');
+    Route::delete('document/{document}', [CoursesController::class, 'destroyDocument'])->name('document.delete');
+    
+    // Rutas para obtener conductores por transportista
+    Route::get('carrier/{carrier}/drivers', [CoursesController::class, 'getDriversByCarrier'])->name('drivers.by.carrier');
 });
 
 /*
@@ -411,6 +443,8 @@ group(function () {
     Route::get('/{inspection}/files', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'getFiles'])->name('files');
     Route::post('/document/delete', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'ajaxDestroyDocument'])->name('document.delete.ajax');
     Route::delete('/document/{document}', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'destroyDocument'])->name('document.delete');
+    Route::get('/documents', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'allDocuments'])->name('documents');
+    Route::get('/driver/{driver}/documents', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'driverDocuments'])->name('driver.documents');
     
     // Rutas para obtener vehículos y conductores por transportista
     Route::get('/carrier/{carrier}/drivers', [\App\Http\Controllers\Admin\Driver\InspectionsController::class, 'getDriversByCarrier'])->name('drivers.by.carrier');
@@ -484,33 +518,6 @@ Route::prefix('driver-recruitment')->name('driver-recruitment.')->group(function
     Route::get('/{driverId}', [DriverRecruitmentController::class, 'show'])->name('show');
 });
 
-/*
-|--------------------------------------------------------------------------
-| RUTAS ADMIN CURSOS
-|--------------------------------------------------------------------------
-*/
-Route::prefix('courses')->name('courses.')->
-group(function () {
-    Route::get('/', [CoursesController::class, 'index'])->name('index');
-    Route::get('/create', [CoursesController::class, 'create'])->name('create');
-    Route::post('/', [CoursesController::class, 'store'])->name('store');
-    Route::get('/{course}/edit', [CoursesController::class, 'edit'])->name('edit');
-    Route::put('/{course}', [CoursesController::class, 'update'])->name('update');
-    Route::delete('/{course}', [CoursesController::class, 'destroy'])->name('destroy');
-    
-    // Rutas para manejo de documentos
-    Route::get('/{course}/files', [CoursesController::class, 'getFiles'])->name('files');
-    Route::post('/document/delete', [CoursesController::class, 'ajaxDestroyDocument'])->name('document.delete.ajax');
-    Route::delete('/document/{document}', [CoursesController::class, 'destroyDocument'])->name('document.delete');
-    
-    // Rutas para obtener conductores por transportista
-    Route::get('/carrier/{carrier}/drivers', [CoursesController::class, 'getDriversByCarrier'])->name('drivers.by.carrier');
-    
-    // Ruta alternativa que coincide con el formato usado en el JavaScript
-    Route::get('carrier/{carrier}/drivers', [CoursesController::class, 'getDriversByCarrier'])->name('carrier.drivers');
-});
-
-// Ruta para historial de cursos de un conductor
 Route::get('drivers/{driver}/course-history', [CoursesController::class, 'driverHistory'])->name('drivers.course-history');
 
 // Eliminadas las rutas antiguas de testings para evitar conflictos

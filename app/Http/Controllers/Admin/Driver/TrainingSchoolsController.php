@@ -106,24 +106,15 @@ class TrainingSchoolsController extends Controller
 
             $trainingSchool->save();
 
-            // Procesar archivos si existen
+            // Procesar archivos si existen usando Spatie Media Library
             if ($request->filled('training_files')) {
                 $filesData = json_decode($request->training_files, true);
                 
                 if (is_array($filesData)) {
-                    // Obtener el ID del conductor
-                    $driverId = $trainingSchool->user_driver_detail_id;
-                    
-                    // Crear el directorio de destino con la estructura correcta
-                    $destinationDir = "public/driver/{$driverId}/training_schools/{$trainingSchool->id}";
-                    if (!Storage::exists($destinationDir)) {
-                        Storage::makeDirectory($destinationDir);
-                    }
-                    
                     foreach ($filesData as $fileData) {
                         if (!empty($fileData['name'])) {
                             try {
-                                // Ruta del archivo temporal - CORREGIDO para usar las claves correctas
+                                // Ruta del archivo temporal
                                 $tempPath = isset($fileData['tempPath']) 
                                     ? $fileData['tempPath'] 
                                     : (isset($fileData['path']) 
@@ -149,42 +140,29 @@ class TrainingSchoolsController extends Controller
                                     }
                                 }
                                 
-                                $fileName = $fileData['name'];
-                                $destinationPath = "{$destinationDir}/{$fileName}";
+                                // Obtener la ruta completa del archivo temporal
+                                $fullTempPath = Storage::path($tempPath);
                                 
-                                // Mover el archivo de temp a la ubicación final
-                                if (Storage::move($tempPath, $destinationPath)) {
-                                    // Crear registro en la DB
-                                    $document = new DocumentAttachment();
-                                    $document->documentable_type = DriverTrainingSchool::class;
-                                    $document->documentable_id = $trainingSchool->id;
-                                    $document->file_path = $destinationPath;
-                                    $document->file_name = $fileName;
-                                    $document->original_name = $fileData['name'];
-                                    $document->mime_type = $fileData['mime_type'] ?? 'application/octet-stream';
-                                    $document->size = $fileData['size'] ?? 0;
-                                    $document->collection = 'training_files';
-                                    $document->custom_properties = json_encode([
+                                // Añadir el archivo a la colección de Spatie Media Library
+                                $media = $trainingSchool->addMedia($fullTempPath)
+                                    ->usingName($fileData['name'])
+                                    ->usingFileName($fileData['name'])
+                                    ->withCustomProperties([
                                         'document_type' => 'training_certificate',
                                         'uploaded_by' => Auth::id(),
                                         'description' => 'Training School Document'
-                                    ]);
-                                    $document->save();
-                                    
-                                    Log::info('Documento guardado correctamente', [
-                                        'document_id' => $document->id,
-                                        'file_name' => $fileName,
-                                        'training_school_id' => $trainingSchool->id
-                                    ]);
-                                } else {
-                                    Log::error('No se pudo mover el archivo temporal', [
-                                        'temp_path' => $tempPath,
-                                        'destination_path' => $destinationPath
-                                    ]);
-                                }
+                                    ])
+                                    ->toMediaCollection('school_certificates');
+                                
+                                Log::info('Documento guardado correctamente con Spatie Media Library', [
+                                    'media_id' => $media->id,
+                                    'file_name' => $fileData['name'],
+                                    'training_school_id' => $trainingSchool->id
+                                ]);
                             } catch (\Exception $e) {
-                                Log::error('Error al procesar archivo', [
+                                Log::error('Error al procesar archivo con Spatie Media Library', [
                                     'error' => $e->getMessage(),
+                                    'trace' => $e->getTraceAsString(),
                                     'file' => $fileData
                                 ]);
                             }
@@ -240,23 +218,26 @@ class TrainingSchoolsController extends Controller
                 ->get();
         }
         
-        // Cargar documentos existentes para mostrarlos
-        $documents = DocumentAttachment::where('documentable_type', DriverTrainingSchool::class)
-            ->where('documentable_id', $trainingSchool->id)
+        // Cargar documentos existentes desde Spatie Media Library para mostrarlos
+        $documents = Media::where('model_type', DriverTrainingSchool::class)
+            ->where('model_id', $trainingSchool->id)
+            ->where('collection_name', 'school_certificates')
             ->get();
         
         // Convertir los documentos a un formato que el componente FileUploader pueda entender
         $existingFilesArray = [];
-        foreach ($documents as $document) {
+        foreach ($documents as $media) {
             $existingFilesArray[] = [
-                'id' => $document->id,
-                'name' => $document->file_name,
-                'original_name' => $document->original_name,
-                'mime_type' => $document->mime_type,
-                'size' => $document->size,
-                'file_path' => $document->file_path,
+                'id' => $media->id,
+                'name' => $media->file_name,
+                'original_name' => $media->name,
+                'mime_type' => $media->mime_type,
+                'size' => $media->size,
+                'file_path' => $media->getUrl(),
+                'url' => $media->getUrl(),
                 'is_existing' => true,
-                'document_id' => $document->id
+                'document_id' => $media->id,
+                'created_at' => $media->created_at->format('Y-m-d H:i:s')
             ];
         }
         
@@ -310,24 +291,20 @@ class TrainingSchoolsController extends Controller
             
             $trainingSchool->save();
             
-            // Procesar archivos si existen
+            // Procesar archivos si existen usando Spatie Media Library
             if ($request->filled('training_files')) {
                 $filesData = json_decode($request->training_files, true);
                 
                 if (is_array($filesData)) {
-                    // Obtener el ID del conductor
-                    $driverId = $trainingSchool->user_driver_detail_id;
-                    
-                    // Crear el directorio de destino con la estructura correcta
-                    $destinationDir = "public/driver/{$driverId}/training_schools/{$trainingSchool->id}";
-                    if (!Storage::exists($destinationDir)) {
-                        Storage::makeDirectory($destinationDir);
-                    }
-                    
                     foreach ($filesData as $fileData) {
                         if (!empty($fileData['name'])) {
                             try {
-                                // Ruta del archivo temporal - CORREGIDO para usar las claves correctas
+                                // Si es un archivo existente, omitirlo ya que no necesitamos procesarlo nuevamente
+                                if (isset($fileData['is_existing']) && $fileData['is_existing']) {
+                                    continue;
+                                }
+                                
+                                // Ruta del archivo temporal
                                 $tempPath = isset($fileData['tempPath']) 
                                     ? $fileData['tempPath'] 
                                     : (isset($fileData['path']) 
@@ -336,11 +313,6 @@ class TrainingSchoolsController extends Controller
                                 
                                 if (empty($tempPath)) {
                                     Log::warning('Archivo sin ruta temporal', ['file' => $fileData]);
-                                    continue;
-                                }
-                                
-                                // Si es un archivo existente, omitirlo ya que no necesitamos moverlo nuevamente
-                                if (isset($fileData['is_existing']) && $fileData['is_existing']) {
                                     continue;
                                 }
                                 
@@ -358,42 +330,29 @@ class TrainingSchoolsController extends Controller
                                     }
                                 }
                                 
-                                $fileName = $fileData['name'];
-                                $destinationPath = "{$destinationDir}/{$fileName}";
+                                // Obtener la ruta completa del archivo temporal
+                                $fullTempPath = Storage::path($tempPath);
                                 
-                                // Mover el archivo de temp a la ubicación final
-                                if (Storage::move($tempPath, $destinationPath)) {
-                                    // Crear registro en la DB
-                                    $document = new DocumentAttachment();
-                                    $document->documentable_type = DriverTrainingSchool::class;
-                                    $document->documentable_id = $trainingSchool->id;
-                                    $document->file_path = $destinationPath;
-                                    $document->file_name = $fileName;
-                                    $document->original_name = $fileData['name'];
-                                    $document->mime_type = $fileData['mime_type'] ?? 'application/octet-stream';
-                                    $document->size = $fileData['size'] ?? 0;
-                                    $document->collection = 'training_files';
-                                    $document->custom_properties = json_encode([
+                                // Añadir el archivo a la colección de Spatie Media Library
+                                $media = $trainingSchool->addMedia($fullTempPath)
+                                    ->usingName($fileData['name'])
+                                    ->usingFileName($fileData['name'])
+                                    ->withCustomProperties([
                                         'document_type' => 'training_certificate',
                                         'uploaded_by' => Auth::id(),
                                         'description' => 'Training School Document'
-                                    ]);
-                                    $document->save();
-                                    
-                                    Log::info('Documento guardado correctamente (update)', [
-                                        'document_id' => $document->id,
-                                        'file_name' => $fileName,
-                                        'training_school_id' => $trainingSchool->id
-                                    ]);
-                                } else {
-                                    Log::error('No se pudo mover el archivo temporal (update)', [
-                                        'temp_path' => $tempPath,
-                                        'destination_path' => $destinationPath
-                                    ]);
-                                }
+                                    ])
+                                    ->toMediaCollection('school_certificates');
+                                
+                                Log::info('Documento guardado correctamente con Spatie Media Library (update)', [
+                                    'media_id' => $media->id,
+                                    'file_name' => $fileData['name'],
+                                    'training_school_id' => $trainingSchool->id
+                                ]);
                             } catch (\Exception $e) {
-                                Log::error('Error al procesar archivo (update)', [
+                                Log::error('Error al procesar archivo con Spatie Media Library (update)', [
                                     'error' => $e->getMessage(),
+                                    'trace' => $e->getTraceAsString(),
                                     'file' => $fileData
                                 ]);
                             }
@@ -454,24 +413,24 @@ class TrainingSchoolsController extends Controller
 
     /**
      * Muestra los documentos de una escuela de entrenamiento específica
+     * Utilizando Spatie Media Library
      */
     public function showDocuments(DriverTrainingSchool $school)
     {
         $school->load('userDriverDetail.user');
         
-        // Obtener documentos asociados (con paginación) y cargar la relación documentable
-        $documents = DocumentAttachment::where('documentable_type', DriverTrainingSchool::class)
-            ->where('documentable_id', $school->id)
-            ->with('documentable.userDriverDetail.user') // Cargar relaciones necesarias
+        // Obtener documentos asociados usando Spatie Media Library
+        $documents = Media::where('model_type', DriverTrainingSchool::class)
+            ->where('model_id', $school->id)
             ->orderBy('created_at', 'desc')
-            ->paginate(15); // Usar paginación en lugar de get()
+            ->paginate(15);
         
         // Obtener todas las escuelas y conductores para los filtros
         $schools = DriverTrainingSchool::orderBy('school_name')->get();
         $drivers = UserDriverDetail::with('user')->get();
         
         $debugInfo = [
-            'documents_count' => $documents->total(), // Usar total() en vez de count() para objetos paginados
+            'documents_count' => $documents->total(),
             'school_id' => $school->id
         ];
         
@@ -480,31 +439,36 @@ class TrainingSchoolsController extends Controller
 
     /**
      * Muestra todos los documentos de escuelas de entrenamiento en una vista resumida
+     * Utilizando Spatie Media Library
      */
     public function documents(Request $request)
     {
         try {
-            $query = DocumentAttachment::where('documentable_type', DriverTrainingSchool::class)
-                ->with('documentable.userDriverDetail.user');
+            // Usar Spatie Media Library en lugar del antiguo sistema
+            $query = Media::where('model_type', DriverTrainingSchool::class);
             
             // Aplicar filtros
             if ($request->filled('search_term')) {
-                $query->where(function($q) use ($request) {
-                    $q->where('file_name', 'like', '%' . $request->search_term . '%')
-                      ->orWhere('original_name', 'like', '%' . $request->search_term . '%');
+                $searchTerm = '%' . $request->search_term . '%';
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('name', 'like', $searchTerm)
+                      ->orWhere('file_name', 'like', $searchTerm);
                 });
             }
             
             if ($request->filled('driver_filter')) {
                 $driverId = $request->driver_filter;
-                $query->whereHas('documentable', function ($q) use ($driverId) {
-                    $q->where('user_driver_detail_id', $driverId);
-                });
+                // Obtener IDs de escuelas asociadas a este conductor
+                $schoolIds = DriverTrainingSchool::where('user_driver_detail_id', $driverId)
+                    ->pluck('id')
+                    ->toArray();
+                    
+                $query->whereIn('model_id', $schoolIds);
             }
             
             if ($request->filled('school_filter')) {
                 $schoolId = $request->school_filter;
-                $query->where('documentable_id', $schoolId);
+                $query->where('model_id', $schoolId);
             }
             
             if ($request->filled('date_from')) {
@@ -524,7 +488,6 @@ class TrainingSchoolsController extends Controller
             
             // Datos para filtros
             $drivers = UserDriverDetail::with('user')->get();
-            
             $schools = DriverTrainingSchool::orderBy('school_name')->get();
             
             return view('admin.drivers.training.all_documents', compact('documents', 'drivers', 'schools'));
@@ -540,7 +503,7 @@ class TrainingSchoolsController extends Controller
 
     /**
      * Elimina un documento mediante AJAX
-     * Usa el trait HasDocuments para eliminar correctamente
+     * Usa eliminación directa de DB para evitar problemas con Spatie Media Library
      * 
      * @param Request $request La solicitud HTTP
      * @param int $id ID del documento a eliminar
@@ -549,29 +512,52 @@ class TrainingSchoolsController extends Controller
     public function ajaxDestroyDocument(Request $request, $id)
     {
         try {
-            // Buscar el documento en nuestra tabla document_attachments
-            $document = DocumentAttachment::findOrFail($id);
-
+            // Verificar que el documento existe en la tabla media
+            $media = Media::findOrFail($id);
+            
             // Verificar que el documento pertenece a una escuela de entrenamiento
-            if ($document->documentable_type !== DriverTrainingSchool::class) {
-                return response()->json(['success' => false, 'message' => 'Invalid document type'], 400);
+            if ($media->model_type !== DriverTrainingSchool::class) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid document type'
+                ], 400);
             }
-
-            $fileName = $document->file_name;
-            $schoolId = $document->documentable_id;
+            
+            $fileName = $media->file_name;
+            $schoolId = $media->model_id;
             $school = DriverTrainingSchool::find($schoolId);
-
+            
             if (!$school) {
-                return response()->json(['success' => false, 'message' => 'Training school not found'], 404);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Training school not found'
+                ], 404);
             }
-
-            // Eliminar el documento usando el método del trait HasDocuments
-            $result = $school->deleteDocument($id);
-
+            
+            // Eliminar el archivo físico si existe
+            $diskName = $media->disk;
+            $filePath = $media->id . '/' . $media->file_name;
+            
+            if (\Illuminate\Support\Facades\Storage::disk($diskName)->exists($filePath)) {
+                \Illuminate\Support\Facades\Storage::disk($diskName)->delete($filePath);
+            }
+            
+            // Eliminar directorio del media si existe
+            $dirPath = $media->id;
+            if (\Illuminate\Support\Facades\Storage::disk($diskName)->exists($dirPath)) {
+                \Illuminate\Support\Facades\Storage::disk($diskName)->deleteDirectory($dirPath);
+            }
+            
+            // Eliminar el registro directamente de la base de datos
+            $result = DB::table('media')->where('id', $id)->delete();
+            
             if (!$result) {
-                return response()->json(['success' => false, 'message' => 'Failed to delete document'], 500);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to delete document'
+                ], 500);
             }
-
+            
             return response()->json([
                 'success' => true,
                 'message' => "Document '{$fileName}' deleted successfully"
@@ -582,7 +568,7 @@ class TrainingSchoolsController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error deleting document: ' . $e->getMessage()
@@ -591,7 +577,7 @@ class TrainingSchoolsController extends Controller
     }
 
     /**
-     * Elimina un documento usando el trait HasDocuments
+     * Elimina un documento usando eliminación directa de DB para evitar problemas con Spatie Media Library
      * 
      * @param int $id ID del documento a eliminar
      * @return \Illuminate\Http\RedirectResponse
@@ -599,16 +585,16 @@ class TrainingSchoolsController extends Controller
     public function destroyDocument($id)
     {
         try {
-            // Buscar el documento en nuestra tabla document_attachments
-            $document = DocumentAttachment::findOrFail($id);
+            // Verificar que el documento existe en la tabla media
+            $media = Media::findOrFail($id);
 
             // Verificar que el documento pertenece a una escuela de entrenamiento
-            if ($document->documentable_type !== DriverTrainingSchool::class) {
+            if ($media->model_type !== DriverTrainingSchool::class) {
                 return redirect()->back()->with('error', 'Invalid document type');
             }
 
-            $fileName = $document->file_name;
-            $schoolId = $document->documentable_id;
+            $fileName = $media->file_name;
+            $schoolId = $media->model_id;
             $school = DriverTrainingSchool::find($schoolId);
 
             if (!$school) {
@@ -616,15 +602,40 @@ class TrainingSchoolsController extends Controller
                     ->with('error', 'No se encontró la escuela de entrenamiento asociada al documento');
             }
 
-            // Eliminar el documento usando el método del trait HasDocuments
-            $result = $school->deleteDocument($id);
+            // Eliminar el archivo físico si existe
+            $diskName = $media->disk;
+            $filePath = $media->id . '/' . $media->file_name;
+            
+            if (\Illuminate\Support\Facades\Storage::disk($diskName)->exists($filePath)) {
+                \Illuminate\Support\Facades\Storage::disk($diskName)->delete($filePath);
+            }
+            
+            // Eliminar directorio del media si existe
+            $dirPath = $media->id;
+            if (\Illuminate\Support\Facades\Storage::disk($diskName)->exists($dirPath)) {
+                \Illuminate\Support\Facades\Storage::disk($diskName)->deleteDirectory($dirPath);
+            }
+            
+            // Eliminar el registro directamente de la base de datos para evitar problemas de eliminación en cascada
+            $result = DB::table('media')->where('id', $id)->delete();
 
             if (!$result) {
                 return redirect()->back()->with('error', 'No se pudo eliminar el documento');
             }
 
+            // Determinar la URL de retorno según el origen de la solicitud
+            $referer = request()->headers->get('referer');
+            
+            // Si la URL contiene 'documents', redirigir a la página de documentos
+            if (strpos($referer, 'documents') !== false) {
+                return redirect()->route('admin.training-schools.show.documents', $schoolId)
+                    ->with('success', "Documento '{$fileName}' eliminado correctamente");
+            }
+            
+            // Si no, redirigir a la página de edición
             return redirect()->route('admin.training-schools.edit', $schoolId)
                 ->with('success', "Documento '{$fileName}' eliminado correctamente");
+                
         } catch (\Exception $e) {
             Log::error('Error al eliminar documento', [
                 'document_id' => $id,
@@ -649,6 +660,7 @@ class TrainingSchoolsController extends Controller
 
     /**
      * Previsualiza o descarga un documento adjunto a una escuela de entrenamiento
+     * Utilizando Spatie Media Library
      * 
      * @param int $id ID del documento a previsualizar o descargar
      * @param Request $request La solicitud HTTP con parámetro opcional 'download'
@@ -657,38 +669,33 @@ class TrainingSchoolsController extends Controller
     public function previewDocument($id, Request $request = null)
     {
         try {
-            // Buscar el documento en nuestra tabla document_attachments
-            $document = DocumentAttachment::findOrFail($id);
+            // Buscar el documento en la tabla media de Spatie
+            $media = Media::findOrFail($id);
 
             // Verificar que el documento pertenece a una escuela de entrenamiento
-            if ($document->documentable_type !== DriverTrainingSchool::class) {
+            if ($media->model_type !== DriverTrainingSchool::class) {
                 return redirect()->back()->with('error', 'Tipo de documento inválido');
             }
-
-            // Verificar que el archivo existe
-            if (!Storage::disk('documents')->exists($document->path)) {
-                return redirect()->back()->with('error', 'El archivo no existe en el servidor');
-            }
-
-            $file = Storage::disk('documents')->path($document->path);
-            $contentType = mime_content_type($file) ?: 'application/octet-stream';
 
             // Determinar si es descarga o visualización
             $isDownload = $request && $request->has('download');
 
-            $headers = [
-                'Content-Type' => $contentType,
-            ];
-
             if ($isDownload) {
-                // Si es descarga, agregar headers adicionales
-                $headers['Content-Disposition'] = 'attachment; filename="' . $document->file_name . '"';
+                // Si es descarga, usar el método de descarga de Spatie
+                return response()->download(
+                    $media->getPath(), 
+                    $media->file_name,
+                    ['Content-Type' => $media->mime_type]
+                );
             } else {
                 // Si es visualización, usar 'inline' para mostrar en el navegador si es posible
-                $headers['Content-Disposition'] = 'inline; filename="' . $document->file_name . '"';
+                $headers = [
+                    'Content-Type' => $media->mime_type,
+                    'Content-Disposition' => 'inline; filename="' . $media->file_name . '"',
+                ];
+                
+                return response()->file($media->getPath(), $headers);
             }
-
-            return response()->file($file, $headers);
         } catch (\Exception $e) {
             Log::error('Error al previsualizar documento', [
                 'document_id' => $id,

@@ -176,8 +176,9 @@
             </div>
             <div class="box-body p-0">
                 @php
-                    $documents = \App\Models\DocumentAttachment::where('documentable_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)
-                        ->where('documentable_id', $school->id)
+                    $documents = \Spatie\MediaLibrary\MediaCollections\Models\Media::where('model_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)
+                        ->where('model_id', $school->id)
+                        ->where('collection_name', 'school_certificates')
                         ->get();
                 @endphp
                 
@@ -204,14 +205,14 @@
                                                     $extension = pathinfo($document->file_name, PATHINFO_EXTENSION);
                                                     $iconClass = 'file-text';
                                                     
-                                                    if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                                                    if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'])) {
                                                         $iconClass = 'image';
+                                                    } elseif (in_array($extension, ['pdf'])) {
+                                                        $iconClass = 'file-text';
                                                     } elseif (in_array($extension, ['doc', 'docx'])) {
-                                                        $iconClass = 'file-text';
-                                                    } elseif (in_array($extension, ['xls', 'xlsx'])) {
+                                                        $iconClass = 'file';
+                                                    } elseif (in_array($extension, ['xls', 'xlsx', 'csv'])) {
                                                         $iconClass = 'file-spreadsheet';
-                                                    } elseif ($extension == 'pdf') {
-                                                        $iconClass = 'file-text';
                                                     }
                                                 @endphp
                                                 
@@ -224,10 +225,10 @@
                                         <td>{{ $document->created_at->format('m/d/Y H:i') }}</td>
                                         <td>
                                             <div class="flex justify-center items-center">
-                                                <a href="{{ Storage::url($document->file_path) }}" target="_blank" class="flex items-center text-primary mr-3" title="View">
+                                                <a href="{{ route('admin.training-schools.documents.preview', $document->id) }}" target="_blank" class="flex items-center text-primary mr-3" title="View">
                                                     <x-base.lucide class="w-4 h-4" icon="eye" />
                                                 </a>
-                                                <a href="{{ Storage::url($document->file_path) }}" download="{{ $document->file_name }}" class="flex items-center text-info mr-3" title="Download">
+                                                <a href="{{ route('admin.training-schools.documents.preview', $document->id) }}?download=true" class="flex items-center text-info mr-3" title="Download">
                                                     <x-base.lucide class="w-4 h-4" icon="download" />
                                                 </a>
                                                 <button type="button" 
@@ -249,7 +250,7 @@
                                                                 This process cannot be undone.
                                                             </div>
                                                         </div>
-                                                        <form action="{{ route('admin.training-schools.destroy.document', $document->id) }}" method="POST" class="px-5 pb-8 text-center">
+                                                        <form action="{{ route('admin.training-schools.documents.delete', $document->id) }}" method="POST" class="px-5 pb-8 text-center">
                                                             @csrf
                                                             @method('DELETE')
                                                             <x-base.button data-tw-dismiss="modal" type="button" variant="outline-secondary" class="mr-1 w-24">

@@ -154,8 +154,8 @@ class DriverTrainingStep extends Component
             $this->courses = [];
             foreach ($courses as $course) {
                 $certificates = [];
-                if ($course->hasMedia('certificates')) {
-                    foreach ($course->getMedia('certificates') as $certificate) {
+                if ($course->hasMedia('course_certificates')) {
+                    foreach ($course->getMedia('course_certificates') as $certificate) {
                         $certificates[] = [
                             'id' => $certificate->id,
                             'filename' => $certificate->file_name,
