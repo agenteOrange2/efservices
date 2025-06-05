@@ -10,7 +10,6 @@ use App\Models\Admin\Driver\DriverTrainingSchool;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
-
 class DriverTrainingModal extends Component
 {
     use WithFileUploads;

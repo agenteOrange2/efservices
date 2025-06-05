@@ -9,6 +9,10 @@ use App\Http\Controllers\Api\UserDriverApiController;
 use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\DocumentController;
 
+// Ruta pública para eliminar documentos de manera segura (solo requiere CSRF)
+// Esta ruta es necesaria para el funcionamiento del modal de eliminación de documentos
+Route::post('documents/delete', [DocumentController::class, 'safeDeletePost'])->name('api.documents.delete.post');
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();

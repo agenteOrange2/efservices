@@ -45,10 +45,25 @@
                 <h3 class="box-title">Filter Documents</h3>
             </div>
             <div class="box-body p-5">
-                <form action="{{ route('admin.accidents.documents.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <form action="{{ route('admin.accidents.documents.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     @if(request()->has('accident_id'))
                     <input type="hidden" name="accident_id" value="{{ request('accident_id') }}">
                     @endif
+                    
+                    <!-- Carrier Filter -->
+                    <div>
+                        <x-base.form-label for="carrier_id">Carrier</x-base.form-label>
+                        <select id="carrier_id" name="carrier_id" class="tom-select w-full">
+                            <option value="">All Carriers</option>
+                            @foreach ($carriers ?? [] as $carrier)
+                                <option value="{{ $carrier->id }}" {{ request('carrier_id') == $carrier->id ? 'selected' : '' }}>
+                                    {{ $carrier->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    
+                    <!-- Driver Filter -->
                     <div>
                         <x-base.form-label for="driver_id">Driver</x-base.form-label>
                         <select id="driver_id" name="driver_id" class="tom-select w-full">
@@ -61,6 +76,28 @@
                         </select>
                     </div>
                     
+                    <!-- Date Range Filters -->
+                    <div>
+                        <x-base.form-label for="start_date">Start Date</x-base.form-label>
+                        <div class="relative">
+                            <div class="absolute rounded-l w-10 h-full flex items-center justify-center bg-slate-100 border text-slate-500 dark:bg-darkmode-700 dark:border-darkmode-800 dark:text-slate-400">
+                                <x-base.lucide icon="calendar" class="w-4 h-4" />
+                            </div>
+                            <input type="date" id="start_date" name="start_date" value="{{ request('start_date') }}" class="form-control pl-12" />
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <x-base.form-label for="end_date">End Date</x-base.form-label>
+                        <div class="relative">
+                            <div class="absolute rounded-l w-10 h-full flex items-center justify-center bg-slate-100 border text-slate-500 dark:bg-darkmode-700 dark:border-darkmode-800 dark:text-slate-400">
+                                <x-base.lucide icon="calendar" class="w-4 h-4" />
+                            </div>
+                            <input type="date" id="end_date" name="end_date" value="{{ request('end_date') }}" class="form-control pl-12" />
+                        </div>
+                    </div>
+                    
+                    <!-- File Type Filter -->
                     <div>
                         <x-base.form-label for="file_type">File Type</x-base.form-label>
                         <select id="file_type" name="file_type" class="tom-select w-full">
@@ -71,6 +108,7 @@
                         </select>
                     </div>
                     
+                    <!-- Submit Button -->
                     <div class="flex items-end">
                         <x-base.button type="submit" variant="primary" class="w-full">
                             <x-base.lucide class="w-4 h-4 mr-2" icon="filter" />
@@ -94,16 +132,63 @@
                         <table class="table table-report mt-2 w-full">
                             <thead>
                                 <tr>
-                                    <th class="whitespace-nowrap">Documento</th>
-                                    <th class="whitespace-nowrap">Conductor</th>
-                                    <th class="whitespace-nowrap">Fecha del Accidente</th>
-                                    <th class="whitespace-nowrap">Naturaleza</th>
-                                    <th class="whitespace-nowrap">Acciones</th>
+                                    <th class="whitespace-nowrap">Date Created</th>
+                                    <th class="whitespace-nowrap">Carrier</th>
+                                    <th class="whitespace-nowrap">Driver</th>
+                                    <th class="whitespace-nowrap">Accident Date</th>
+                                    <th class="whitespace-nowrap">Nature of Accident</th>
+                                    <th class="whitespace-nowrap">Documents</th>
+                                    <th class="whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($documents as $document)
-                                    <tr class="intro-x">
+                                    <tr class="intro-x" data-media-id="{{ $document->id }}">                                        
+                                        <td>
+                                            @if(isset($document->created_at))
+                                                <span>{{ is_string($document->created_at) ? date('m/d/Y', strtotime($document->created_at)) : $document->created_at->format('d/m/Y H:i') }}</span>
+                                            @else
+                                                <span class="text-slate-500">No disponible</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if(isset($document->carrier_name) && !empty($document->carrier_name))
+                                                <span class="font-medium whitespace-nowrap">{{ $document->carrier_name }}</span>
+                                            @else
+                                                <span class="text-slate-500">No disponible</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if(isset($document->driver) && !empty($document->driver))
+                                                <a href="{{ route('admin.drivers.show', $document->driver_id) }}" class="font-medium whitespace-nowrap">
+                                                    {{ $document->driver }}
+                                                </a>
+                                            @elseif(isset($document->documentable) && isset($document->documentable->userDriverDetail))
+                                                <a href="{{ route('admin.drivers.show', $document->documentable->userDriverDetail->id) }}" class="font-medium whitespace-nowrap">
+                                                    {{ $document->documentable->userDriverDetail->user->name }} {{ $document->documentable->userDriverDetail->user->last_name ?? '' }}
+                                                </a>
+                                            @else
+                                                <span class="text-slate-500">No disponible</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if(isset($document->accident_date))
+                                                <span>{{ is_string($document->accident_date) ? date('d/m/Y', strtotime($document->accident_date)) : $document->accident_date->format('d/m/Y') }}</span>
+                                            @elseif(isset($document->documentable) && isset($document->documentable->accident_date))
+                                                <span>{{ $document->documentable->accident_date->format('d/m/Y') }}</span>
+                                            @else
+                                                <span class="text-slate-500">No disponible</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if(isset($document->nature))
+                                                <span>{{ Str::limit($document->nature, 30) }}</span>
+                                            @elseif(isset($document->documentable))
+                                                <span>{{ Str::limit($document->documentable->nature_of_accident, 30) }}</span>
+                                            @else
+                                                <span class="text-slate-500">No disponible</span>
+                                            @endif
+                                        </td>
                                         <td class="w-40">
                                             <div class="flex items-center">
                                                 @php
@@ -125,57 +210,68 @@
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <a href="{{ route('admin.accidents.document.show', $document->id) }}" 
-                                                       class="font-medium whitespace-nowrap truncate max-w-[250px] inline-block" 
-                                                       target="_blank" title="{{ $document->original_name }}">
-                                                        {{ $document->original_name ?? $document->file_name }}
-                                                    </a>
+                                                    @if(isset($document->source) && $document->source === 'media_library')
+                                                        <a href="{{ route('admin.accidents.document.preview', $document->id) }}" 
+                                                           class="font-medium whitespace-nowrap truncate max-w-[250px] inline-block" 
+                                                           target="_blank" title="{{ $document->original_name }}">
+                                                            {{ $document->original_name ?? $document->file_name }}
+                                                        </a>
+                                                    @else
+                                                        <a href="{{ route('admin.accidents.document.preview', $document->id) }}" 
+                                                           class="font-medium whitespace-nowrap truncate max-w-[250px] inline-block" 
+                                                           target="_blank" title="{{ $document->original_name }}">
+                                                            {{ $document->original_name ?? $document->file_name }}
+                                                        </a>
+                                                    @endif
                                                     <div class="text-slate-500 text-xs whitespace-nowrap mt-0.5">
                                                         {{ round($document->size / 1024, 2) }} KB · {{ strtoupper($extension) }}
+                                                        @if(isset($document->source))
+                                                            <span class="text-xs text-primary ml-1">
+                                                                {{ $document->source === 'media_library' ? '(Media Library)' : '' }}
+                                                            </span>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
-                                            @if(isset($document->documentable) && isset($document->documentable->userDriverDetail))
-                                                <a href="{{ route('admin.drivers.show', $document->documentable->userDriverDetail->id) }}" class="font-medium whitespace-nowrap">
-                                                    {{ $document->documentable->userDriverDetail->user->name }} {{ $document->documentable->userDriverDetail->user->last_name ?? '' }}
-                                                </a>
-                                            @else
-                                                <span class="text-slate-500">No disponible</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if(isset($document->documentable) && isset($document->documentable->accident_date))
-                                                <span>{{ $document->documentable->accident_date->format('d/m/Y') }}</span>
-                                            @else
-                                                <span class="text-slate-500">No disponible</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if(isset($document->documentable))
-                                                <span>{{ Str::limit($document->documentable->nature_of_accident, 30) }}</span>
-                                            @else
-                                                <span class="text-slate-500">No disponible</span>
-                                            @endif
-                                        </td>
                                         <td class="table-report__action w-56">
                                             <div class="flex justify-center items-center">
-                                                <a href="{{ route('admin.accidents.document.preview', $document->id) }}" class="btn btn-sm btn-primary mr-2" target="_blank">
-                                                    <x-base.lucide class="w-4 h-4" icon="eye" />
-                                                </a>
-                                                @if(isset($document->accident))
-                                                    <a href="{{ route('admin.accidents.edit', $document->accident->id) }}#documents" class="btn btn-sm btn-warning mr-2">
+                                                @if(isset($document->source) && $document->source === 'media_library')
+                                                    <!-- Vista previa para archivos de Media Library -->
+                                                    <a href="{{ route('admin.accidents.document.preview', $document->id) }}" class="btn btn-sm btn-primary mr-2" target="_blank">
+                                                        <x-base.lucide class="w-4 h-4" icon="eye" />
+                                                    </a>
+                                                @else
+                                                    <!-- Acciones para documentos del sistema antiguo -->
+                                                    <a href="{{ route('admin.accidents.document.preview', $document->id) }}" class="btn btn-sm btn-primary mr-2" target="_blank">
+                                                        <x-base.lucide class="w-4 h-4" icon="eye" />
+                                                    </a>
+                                                @endif
+                                                
+                                                <!-- Botón para ir a la edición del accidente -->
+                                                @if(isset($document->accident_id))
+                                                    <a href="{{ route('admin.accidents.edit', $document->accident_id) }}#documents" class="btn btn-sm btn-warning mr-2">
                                                         <x-base.lucide class="w-4 h-4" icon="clipboard-list" />
                                                     </a>
                                                 @endif
-                                                <form action="{{ route('admin.accidents.documents.destroy', $document->id) }}" method="POST" class="inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Está seguro de eliminar este documento?')">
-                                                        <x-base.lucide class="w-4 h-4" icon="trash" />
+                                                
+                                                <!-- Botón para eliminar el documento -->
+                                                @if(isset($document->source) && $document->source === 'media_library')
+                                                    <!-- Eliminar archivo de Media Library -->
+                                                    <button type="button" class="btn btn-sm btn-danger" 
+                                                            onclick="deleteMedia('{{ $document->id }}', this)">
+                                                        <x-base.lucide class="w-4 h-4" icon="trash-2" />
                                                     </button>
-                                                </form>
+                                                @else
+                                                    <!-- Eliminar documento del sistema antiguo -->
+                                                    <form action="{{ route('admin.accidents.documents.destroy', $document->id) }}" method="POST" class="inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Está seguro de eliminar este documento?')">
+                                                            <x-base.lucide class="w-4 h-4" icon="trash" />
+                                                        </button>
+                                                    </form>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>
@@ -250,7 +346,174 @@
         </x-base.dialog.panel>
     </x-base.dialog>
     @endif
+    
+    <!-- Scripts para manejo de Media Library -->
+    <!-- Modal de confirmación para eliminar documento -->
+    <x-base.dialog id="delete-confirmation-modal">
+        <x-base.dialog.panel>
+            <div class="p-5 text-center">
+                <x-base.lucide class="w-16 h-16 text-danger mx-auto mt-3" icon="x-circle" />
+                <div class="text-3xl mt-5">¿Estás seguro?</div>
+                <div class="text-slate-500 mt-2">¿Realmente deseas eliminar este documento? <br>Esta acción no se puede deshacer.</div>
+            </div>
+            <div class="px-5 pb-8 text-center">
+                <x-base.button data-tw-dismiss="modal" type="button" variant="outline-secondary" class="w-24 mr-1">Cancelar</x-base.button>
+                <x-base.button id="confirm-delete" type="button" variant="danger" class="w-24">Eliminar</x-base.button>
+            </div>
+        </x-base.dialog.panel>
+    </x-base.dialog>
+        
     @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Variable para almacenar el ID del documento a eliminar
+            let mediaIdToDelete = null;
+            let rowToDelete = null;
+            const confirmDeleteButton = document.getElementById('confirm-delete');
+            
+            // Inicializar el modal de confirmación
+            const deleteModal = document.getElementById('delete-confirmation-modal');
+            
+            // Función global para eliminar un documento de Media Library
+            window.deleteMedia = function(mediaId, button) {
+                // Guardar el ID del documento a eliminar para usarlo en la confirmación
+                mediaIdToDelete = mediaId;
+                rowToDelete = button.closest('tr');
+                
+                // Mostrar información de depuración
+                //console.log('ID del documento a eliminar:', mediaId);
+                
+                // Mostrar el modal usando la API de Tailwind
+                const modal = tailwind.Modal.getOrCreateInstance(deleteModal);
+                modal.show();
+            };
+            
+            // Configurar el evento para el botón de confirmación
+            if (confirmDeleteButton) {
+                confirmDeleteButton.addEventListener('click', function() {
+                    if (!mediaIdToDelete) return;
+                    
+                    // Mostrar indicador de carga
+                    confirmDeleteButton.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Eliminando...';
+                    confirmDeleteButton.disabled = true;
+                    
+                    // Extraer el ID numérico si es necesario
+                    let mediaIdForDelete = mediaIdToDelete;
+                    if (typeof mediaIdToDelete === 'string' && mediaIdToDelete.startsWith('media_')) {
+                        mediaIdForDelete = mediaIdToDelete.replace('media_', '');
+                    }
+                    
+                    // Usar el endpoint de API para eliminar documentos de manera segura
+                    const apiUrl = '{{ url("/api/documents/delete") }}';
+                    /*
+                    console.log('ID original:', mediaIdToDelete);
+                    console.log('ID para eliminar:', mediaIdForDelete);
+                    console.log('URL API:', apiUrl);
+                    */
+                    
+                    // Crear los datos para la solicitud POST
+                    const formData = new FormData();
+                    formData.append('mediaId', mediaIdForDelete);
+                    formData.append('_token', '{{ csrf_token() }}');
+                    
+                    // Realizar la solicitud AJAX para eliminar el documento usando el endpoint de API
+                    fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        body: formData,
+                        credentials: 'same-origin' // Asegurar que se envíen las cookies
+                    })
+                    .then(response => {
+                        //console.log('Respuesta del servidor:', response);
+                        // Verificar si la respuesta es exitosa
+                        if (!response.ok) {
+                            throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        //console.log('Datos recibidos:', data);
+                        // Cerrar el modal
+                        const modal = tailwind.Modal.getOrCreateInstance(deleteModal);
+                        modal.hide();
+                        
+                        // Restablecer el estado del botón de confirmación
+                        confirmDeleteButton.innerHTML = 'Eliminar';
+                        confirmDeleteButton.disabled = false;
+                        
+                        if (data.success) {
+                            // Mostrar mensaje de éxito
+                            Toastify({
+                                text: "Documento eliminado correctamente",
+                                duration: 3000,
+                                close: true,
+                                gravity: "top",
+                                position: "right",
+                                style: {
+                                    background: "#10b981",
+                                },
+                            }).showToast();
+                            
+                            // Eliminar la fila de la tabla
+                            const row = document.querySelector(`tr[data-media-id="${mediaIdToDelete}"]`);
+                            if (row) {
+                                row.classList.add('bg-red-100');
+                                setTimeout(() => {
+                                    row.style.transition = 'opacity 0.5s';
+                                    row.style.opacity = '0';
+                                    setTimeout(() => {
+                                        row.remove();
+                                    }, 500);
+                                }, 300);
+                            } else {
+                                // Si no se encuentra la fila, recargar la página
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 1000);
+                            }
+                        } else {
+                            // Mostrar mensaje de error
+                            Toastify({
+                                text: data.error || "Error al eliminar el documento",
+                                duration: 3000,
+                                close: true,
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#ef4444",
+                            }).showToast();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al eliminar documento:', error);
+                        
+                        // Cerrar el modal
+                        const modal = tailwind.Modal.getOrCreateInstance(deleteModal);
+                        modal.hide();
+                        
+                        // Restablecer el estado del botón de confirmación
+                        confirmDeleteButton.innerHTML = 'Eliminar';
+                        confirmDeleteButton.disabled = false;
+                        
+                        // Mostrar mensaje de error
+                        Toastify({
+                            text: "Error al procesar la solicitud",
+                            duration: 3000,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            style: {
+                                background: "#ef4444",
+                            },
+                        }).showToast();
+                    });
+                });
+            }
+        });
+    </script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 // Previsualización de documentos al hacer clic

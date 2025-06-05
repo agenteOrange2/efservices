@@ -113,13 +113,16 @@
                             @enderror
                         </div>
                         <div class="col-span-1 md:col-span-2">
-                            <livewire:components.file-uploader
-                                model-name="traffic_files"
-                                :model-index="0"
-                                :label="'Upload Documents'"
-                            />
-                            <!-- Campo oculto para almacenar los archivos subidos -->
-                            <input type="hidden" name="traffic_files" id="traffic_files_input">
+                            <x-base.form-label>Traffic Conviction Images</x-base.form-label>
+                            <div class="border border-dashed rounded-md p-4 mt-2">
+                                <livewire:components.file-uploader
+                                    model-name="traffic_convictions"
+                                    :model-index="0"
+                                    :auto-upload="true"
+                                    class="border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer"
+                                />
+                                <!-- Campo oculto para almacenar los archivos subidos - valor inicial vacío pero no null -->
+                                <input type="hidden" name="traffic_image_files" id="traffic_image_files_input" value="">
                         </div>
                     </div>
                     <div class="flex justify-end mt-5">
@@ -142,52 +145,71 @@
             
             // Inicializar el array para almacenar los archivos
             let uploadedFiles = [];
-            const trafficFilesInput = document.getElementById('traffic_files_input');
+            const trafficImagesInput = document.getElementById('traffic_image_files_input');
+            console.log('Campo oculto encontrado:', trafficImagesInput ? 'Sí' : 'No');
             
             // Escuchar eventos del componente Livewire
             window.addEventListener('livewire:initialized', () => {
+                console.log('Livewire inicializado, preparando escucha de eventos');
+                
                 // Escuchar el evento fileUploaded del componente Livewire
                 Livewire.on('fileUploaded', (eventData) => {
-                    console.log('Archivo subido:', eventData);
+                    console.log('Archivo subido evento recibido:', eventData);
                     // Extraer los datos del evento
                     const data = eventData[0]; // Los datos vienen como primer elemento del array
                     
-                    if (data.modelName === 'traffic_files') {
+                    if (data.modelName === 'traffic_images') {
+                        console.log('Archivo subido para traffic_images');
                         // Añadir el archivo al array de archivos
                         uploadedFiles.push({
-                            path: data.tempPath,
+                            name: data.originalName,
                             original_name: data.originalName,
                             mime_type: data.mimeType,
-                            size: data.size
+                            size: data.size,
+                            path: data.tempPath,
+                            tempPath: data.tempPath,
+                            is_temp: true
                         });
                         
-                        // Actualizar el campo oculto con el nuevo array
-                        trafficFilesInput.value = JSON.stringify(uploadedFiles);
-                        console.log('Archivos actualizados:', trafficFilesInput.value);
+                        // Asegurarnos que el campo oculto sigue existiendo
+                        if (trafficImagesInput) {
+                            trafficImagesInput.value = JSON.stringify(uploadedFiles);
+                            console.log('Campo actualizado con:', trafficImagesInput.value);
+                        } else {
+                            console.error('Campo oculto no encontrado en el DOM');
+                        }
                     }
                 });
                 
                 // Escuchar el evento fileRemoved del componente Livewire
                 Livewire.on('fileRemoved', (eventData) => {
-                    console.log('Archivo eliminado:', eventData);
+                    console.log('Archivo eliminado evento recibido:', eventData);
                     // Extraer los datos del evento
                     const data = eventData[0]; // Los datos vienen como primer elemento del array
                     
-                    if (data.modelName === 'traffic_files') {
-                        // Eliminar el archivo del array
-                        const fileId = data.fileId;
-                        uploadedFiles = uploadedFiles.filter((file, index) => {
-                            // Para archivos temporales, el ID contiene un timestamp
-                            if (fileId.startsWith('temp_') && index === uploadedFiles.length - 1) {
-                                // Eliminar el último archivo añadido si es temporal
-                                return false;
-                            }
-                            return true;
-                        });
+                    if (data.modelName === 'traffic_images') {
+                        console.log('Eliminando archivo de traffic_images');
+                        // Eliminar el archivo del array por nombre o índice
+                        const fileIndex = uploadedFiles.findIndex(file => 
+                            file.name === data.fileName || 
+                            file.original_name === data.fileName);
                         
-                        // Actualizar el campo oculto con el nuevo array
-                        trafficFilesInput.value = JSON.stringify(uploadedFiles);
-                        console.log('Archivos actualizados después de eliminar:', trafficFilesInput.value);
+                        if (fileIndex > -1) {
+                            uploadedFiles.splice(fileIndex, 1);
+                            console.log('Archivo encontrado y eliminado del arreglo');
+                        } else {
+                            // Si no se encuentra por nombre, eliminar el último (para archivos temporales)
+                            console.log('Archivo no encontrado por nombre, eliminando el último');
+                            uploadedFiles.pop();
+                        }
+                        
+                        // Actualizar el campo oculto
+                        if (trafficImagesInput) {
+                            trafficImagesInput.value = JSON.stringify(uploadedFiles);
+                            console.log('Campo actualizado después de eliminar:', trafficImagesInput.value);
+                        } else {
+                            console.error('Campo oculto no encontrado en el DOM después de eliminar');
+                        }
                     }
                 });
             });

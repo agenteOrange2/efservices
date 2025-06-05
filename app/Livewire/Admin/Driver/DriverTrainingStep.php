@@ -140,7 +140,7 @@ class DriverTrainingStep extends Component
                     'graduated' => (bool)($school->graduated ?? false),
                     'subject_to_safety_regulations' => (bool)($school->subject_to_safety_regulations ?? false),
                     'performed_safety_functions' => (bool)($school->performed_safety_functions ?? false),
-                    'training_skills' => is_string($school->training_skills) ? json_decode($school->training_skills) : ($school->training_skills ?: []),
+                    'training_skills' => json_decode($school->training_skills) ?: [],
                     'certificates' => $certificates,
                     'temp_certificate_tokens' => []
                 ];
@@ -472,24 +472,11 @@ class DriverTrainingStep extends Component
                 }
                 
                 if ($tempPath && file_exists($tempPath)) {
-                    // Asegurar que el archivo se guarde en la ruta correcta
-                    // driver/{id}/training_schools/{idtraining_schools}/
-                    $driverId = $school->userDriverDetail->id;
-                    $schoolId = $school->id;
-                    
                     $school->addMedia($tempPath)
-                        ->withCustomProperties([
-                            'driver_id' => $driverId,
-                            'school_id' => $schoolId
-                        ])
-                        ->usingName(pathinfo(basename($tempPath), PATHINFO_FILENAME))
                         ->toMediaCollection('school_certificates');
-                    
-                    Log::info('Certificate added to school with correct path', [
+                    Log::info('Certificate added to media collection', [
                         'school_id' => $school->id,
-                        'driver_id' => $driverId,
-                        'path' => $tempPath,
-                        'destination' => "driver/{$driverId}/training_schools/{$schoolId}/"
+                        'path' => $tempPath
                     ]);
                 } else {
                     Log::error('Failed to process school certificate - file not found', [
@@ -597,26 +584,15 @@ class DriverTrainingStep extends Component
                     $originalFileName = basename($tempPath);
                     $fileName = $certData['filename'] ?? $originalFileName;
                     
-                    // Asegurar que el archivo se guarde en la ruta correcta
-                    // driver/{id}/courses/{id}/
-                    $driverId = $course->driverDetail->id;
-                    $courseId = $course->id;
-                    
                     $course->addMedia($tempPath)
-                        ->withCustomProperties([
-                            'driver_id' => $driverId,
-                            'course_id' => $courseId
-                        ])
                         ->usingName(pathinfo($fileName, PATHINFO_FILENAME))
                         ->usingFileName($fileName)
                         ->toMediaCollection('certificates');
                     
-                    Log::info('Certificate added to course with correct path', [
+                    Log::info('Certificate added to course', [
                         'course_id' => $course->id,
-                        'driver_id' => $driverId,
                         'path' => $tempPath,
                         'filename' => $fileName,
-                        'destination' => "driver/{$driverId}/courses/{$courseId}/",
                         'collection' => 'certificates'
                     ]);
                 }
@@ -713,15 +689,16 @@ class DriverTrainingStep extends Component
     // Remove course certificate
     public function removeCourseCertificate($courseIndex, $tokenIndex)
     {
-        if (!isset($this->courses[$courseIndex]['temp_certificate_tokens'][$tokenIndex])) {
+        if (!isset($this->courses[$courseIndex]) || 
+            !isset($this->courses[$courseIndex]['temp_certificate_tokens'][$tokenIndex])) {
             return;
         }
         
-        // Remove the certificate from temp tokens
+        // Remove the certificate token
         unset($this->courses[$courseIndex]['temp_certificate_tokens'][$tokenIndex]);
         $this->courses[$courseIndex]['temp_certificate_tokens'] = 
             array_values($this->courses[$courseIndex]['temp_certificate_tokens']);
-            
+        
         // Force refresh
         $this->dispatch('certificates-updated');
     }
@@ -730,28 +707,30 @@ class DriverTrainingStep extends Component
     public function removeCertificateByIdFromCourse($courseIndex, $certificateId)
     {
         try {
-            if (!$this->driverId) return false;
-
-            $courseData = $this->courses[$courseIndex] ?? null;
-            if (!$courseData || empty($courseData['id'])) return false;
-
+            if (!$this->driverId || !isset($this->courses[$courseIndex])) {
+                return false;
+            }
+            
+            $courseData = $this->courses[$courseIndex];
+            if (empty($courseData['id'])) {
+                return false;
+            }
+            
             $userDriverDetail = UserDriverDetail::find($this->driverId);
-            if (!$userDriverDetail) return false;
-
+            if (!$userDriverDetail) {
+                return false;
+            }
+            
             $course = $userDriverDetail->courses()->find($courseData['id']);
-            if (!$course) return false;
+            if (!$course) {
+                return false;
+            }
             
-            Log::info('Eliminando certificado de curso', [
-                'certificate_id' => $certificateId,
-                'course_id' => $course->id,
-                'driver_id' => $this->driverId
-            ]);
-            
-            // Usar directamente el método safeDeleteMedia que elimina de la tabla media
-            // para evitar la eliminación en cascada según la memoria anterior
-            $result = $course->safeDeleteMedia($certificateId);
-            
-            if ($result) {
+            // Buscar y eliminar el certificado específico
+            $media = $course->getMedia('certificates')->find($certificateId);
+            if ($media) {
+                $media->delete();
+                
                 // Recargar los certificados
                 $this->refreshCourseCertificates($courseIndex, $course);
                 
@@ -764,7 +743,7 @@ class DriverTrainingStep extends Component
             return false;
         } catch (\Exception $e) {
             Log::error('Error eliminando certificado de curso', [
-                'message' => $e->getMessage(),
+                'error' => $e->getMessage(),
                 'course_index' => $courseIndex,
                 'certificate_id' => $certificateId
             ]);
@@ -910,45 +889,24 @@ class DriverTrainingStep extends Component
             $school = $userDriverDetail->trainingSchools()->find($schoolData['id']);
             if (!$school) return false;
 
-            // Log de eliminación para debugging
-            Log::info('Eliminando certificado de escuela', [
-                'certificate_id' => $certificateId,
-                'school_id' => $school->id,
-                'driver_id' => $this->driverId
-            ]);
-            
-            // Método 1: Usar la API centralizada para eliminar el documento
-            try {
-                $response = Http::delete(url('/api/documents/' . $certificateId));
-                
-                if ($response->successful()) {
-                    // Actualizar certificados y forzar actualización
-                    $this->refreshSchoolData($schoolIndex, $school);
-                    $this->dispatch('certificates-updated');
-                    return true;
-                }
-                
-                Log::warning('API centralizada falló, intentando método alternativo', [
-                    'status' => $response->status(),
-                    'response' => $response->body(),
-                    'certificate_id' => $certificateId
+            $mediaItem = $school->getMedia('school_certificates')->firstWhere('id', $certificateId);
+            if ($mediaItem) {
+                // Log de eliminación para debugging
+                Log::info('Eliminando certificado', [
+                    'media_id' => $certificateId,
+                    'school_id' => $school->id,
+                    'driver_id' => $this->driverId
                 ]);
-            } catch (\Exception $apiEx) {
-                Log::warning('Error con API centralizada, intentando método alternativo', [
-                    'error' => $apiEx->getMessage()
-                ]);
-            }
-            
-            // Método 2: Usar el método safeDeleteMedia para evitar la eliminación en cascada
-            $result = $school->safeDeleteMedia($certificateId);
-            
-            if ($result) {
+
+                // Eliminar el archivo
+                $mediaItem->delete();
+
                 // Actualizar la lista de certificados en el componente
                 $this->refreshSchoolData($schoolIndex, $school);
 
                 // Forzar actualización completa
                 $this->dispatch('certificates-updated');
-                
+
                 return true;
             }
 

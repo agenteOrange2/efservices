@@ -405,7 +405,7 @@ class DriverTrafficStep extends Component
                 $media = $conviction->addMediaFromDisk($tempPath, 'local')
                     ->usingName($originalName)
                     ->usingFileName($originalName)
-                    ->toMediaCollection('traffic_tickets');
+                    ->toMediaCollection('traffic_images');
                 
                 Log::info('Archivo guardado permanentemente', [
                     'media_id' => $media->id,
@@ -491,7 +491,7 @@ class DriverTrafficStep extends Component
                     }
                 }
             } else {
-                // Para archivos reales (no temporales), eliminar de la base de datos y del disco
+                // Para archivos reales (no temporales), eliminar de la base de datos y del disco usando la API segura
                 $media = Media::find($mediaId);
                 if ($media) {
                     // Registrar información antes de eliminar
@@ -499,25 +499,31 @@ class DriverTrafficStep extends Component
                     $collectionName = $media->collection_name;
                     $fileName = $media->file_name;
                     
-                    Log::info('Eliminando archivo de la base de datos y disco', [
+                    Log::info('Eliminando archivo de la base de datos y disco usando API segura', [
                         'media_id' => $mediaId,
                         'file_path' => $filePath,
                         'collection' => $collectionName,
                         'file_name' => $fileName
                     ]);
                     
-                    // Eliminar el archivo de la base de datos (esto también elimina el archivo del disco)
-                    $deleted = $media->delete();
-                    Log::info('Resultado de eliminación de base de datos', ['deleted' => $deleted]);
-                    
-                    // Verificar si el archivo se eliminó correctamente del disco
-                    if (file_exists($filePath)) {
-                        Log::warning('El archivo no se eliminó del disco, intentando eliminación manual', [
-                            'file_path' => $filePath
+                    // Usar la API de eliminación segura para evitar eliminación en cascada
+                    try {
+                        // Eliminar directamente de la tabla media sin usar el método delete() del modelo
+                        $deleted = DB::table('media')->where('id', $mediaId)->delete();
+                        
+                        Log::info('Resultado de eliminación segura en base de datos', ['deleted' => $deleted]);
+                        
+                        // Verificar si el archivo se eliminó correctamente del disco
+                        if (file_exists($filePath)) {
+                            // Intentar eliminar manualmente
+                            $unlinkResult = @unlink($filePath);
+                            Log::info('Resultado de eliminación manual del archivo físico', ['unlink_result' => $unlinkResult]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Error al eliminar archivo de forma segura', [
+                            'media_id' => $mediaId,
+                            'error' => $e->getMessage()
                         ]);
-                        // Intentar eliminar manualmente
-                        $unlinkResult = @unlink($filePath);
-                        Log::info('Resultado de eliminación manual', ['unlink_result' => $unlinkResult]);
                     }
                     
                     // Eliminar el documento de la lista de documentos en la convicción correspondiente
