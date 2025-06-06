@@ -97,7 +97,7 @@ class SideMenu
                         'icon' => "school",
                         'route_name' => "admin.training-schools.index",
                         'params' => [],
-                        'title' => "Training Schools",
+                        'title' => "Driving Schools",
                     ],
                     [
                         'icon' => "shield-check",
@@ -107,7 +107,7 @@ class SideMenu
                     ],
                     [
                         'icon' => "clock-1",
-                        'route_name' => "admin.product-grid",
+                        'route_name' => "#",
                         'params' => [],
                         'title' => "Travel Time ",
                     ],

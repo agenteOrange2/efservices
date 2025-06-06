@@ -102,7 +102,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Employee Name</label>
-                <p class="px-3 py-2 bg-gray-100 rounded-md text-sm">{{ $company_name }}</p>
+                <p class="px-3 py-2 bg-gray-100 rounded-md text-sm">{{ $company_name }} / EFCTS </p>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Commercial Driver's License Number</label>

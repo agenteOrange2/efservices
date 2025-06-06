@@ -264,7 +264,7 @@
                 <!-- Logo -->
                 <div class="flex items-center">
                     <img class="w-11" src="{{ asset('respaldo/img/logo_efservices_logo.png') }}" alt="">
-                    <span class="text-2xl font-bold">EF Services TCS</span>
+                    <span class="text-2xl font-bold">EFTCS</span>
                 </div>
 
                 <!-- Desktop Menu -->

@@ -17,7 +17,7 @@
     <link rel="icon" class="js-site-favicon" type="image/svg+xml" href="{{asset('build/img/favicon_efservices.png')}}" data-bse-href="{{asset('build/img/favicon_efservices.png')}}">
     {{-- <link href="https://unpkg.com/filepond/dist/filepond.min.css" rel="stylesheet"> --}}
 
-    <title>@yield('title') | EF Services</title>
+    <title>@yield('title') | EFCTS</title>
     {{-- @yield('head') --}}
 
     @stack('head')
