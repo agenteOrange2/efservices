@@ -27,6 +27,7 @@ class DriverRecruitmentReview extends Component
     // Define los eventos a escuchar
     protected $listeners = [
         'training-school-updated' => 'handleTrainingSchoolUpdated',
+        'fileUploaded' => 'handleFileUploaded',
     ];
     public $driverId;
     public $driver;
@@ -2760,6 +2761,88 @@ private function loadModelMedia($model, $category, $recordType = null)
             
             // Recargar los datos del driver
             $this->loadDriverData();
+        }
+    }
+    
+    /**
+     * Abre el modal para editar la foto de la licencia
+     * 
+     * @return void
+     */
+    public function editLicensePhoto()
+    {
+        $this->documentCategory = 'license';
+        $this->documentType = 'license_photo';
+        $this->documentDescription = 'Foto de Licencia de Conducir';
+        $this->selectedRecordType = 'license';
+        
+        // Si el conductor tiene licencias, seleccionar la primera por defecto
+        if ($this->driver && $this->driver->licenses && count($this->driver->licenses) > 0) {
+            $this->selectedRecordId = $this->driver->licenses[0]->id;
+        }
+        
+        $this->showUploadModal = true;
+        $this->dispatch('open-upload-modal');
+    }
+    
+    /**
+     * Maneja el evento cuando se sube un archivo
+     * 
+     * @param array $data Los datos del archivo subido
+     * @return void
+     */
+    public function handleFileUploaded($data)
+    {
+        // Guardar información del archivo temporal
+        $this->tempDocumentPath = $data['tempPath'] ?? null;
+        $this->tempDocumentName = $data['originalName'] ?? null;
+        $this->tempDocumentSize = $data['size'] ?? null;
+        
+        if ($this->tempDocumentPath) {
+            // Si estamos editando una foto de licencia
+            if ($this->documentCategory === 'license' && $this->documentType === 'license_photo' && $this->selectedRecordId) {
+                try {
+                    // Buscar la licencia seleccionada
+                    $license = DB::table('driver_licenses')->where('id', $this->selectedRecordId)->first();
+                    
+                    if ($license) {
+                        // Guardar el archivo en la ubicación correcta
+                        $storagePath = 'public/driver/' . $this->driverId . '/licenses';
+                        $fileName = 'license_' . $this->selectedRecordId . '_' . time() . '.' . pathinfo($this->tempDocumentName, PATHINFO_EXTENSION);
+                        
+                        // Mover el archivo desde la ubicación temporal a la ubicación final
+                        if (Storage::exists('public/' . $this->tempDocumentPath)) {
+                            Storage::move('public/' . $this->tempDocumentPath, $storagePath . '/' . $fileName);
+                            
+                            // Actualizar el registro de la licencia con la nueva ruta de la imagen
+                            DB::table('driver_licenses')
+                                ->where('id', $this->selectedRecordId)
+                                ->update([
+                                    'license_image' => 'driver/' . $this->driverId . '/licenses/' . $fileName,
+                                    'updated_at' => now()
+                                ]);
+                                
+                            // Cerrar el modal y mostrar mensaje de éxito
+                            $this->closeUploadModal();
+                            session()->flash('message', 'La foto de la licencia ha sido actualizada correctamente.');
+                            
+                            // Recargar los documentos
+                            $this->loadDriverData();
+                        } else {
+                            session()->flash('error', 'No se encontró el archivo temporal.');
+                        }
+                    } else {
+                        session()->flash('error', 'No se encontró la licencia seleccionada.');
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error al actualizar la foto de la licencia', [
+                        'driver_id' => $this->driverId,
+                        'license_id' => $this->selectedRecordId,
+                        'error' => $e->getMessage()
+                    ]);
+                    session()->flash('error', 'Error al actualizar la foto de la licencia: ' . $e->getMessage());
+                }
+            }
         }
     }
     
