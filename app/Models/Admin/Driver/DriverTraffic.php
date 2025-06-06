@@ -13,43 +13,40 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class DriverAccident extends Model implements HasMedia
+class DriverTraffic extends Model implements HasMedia
 {
     use HasFactory, HasDocuments, InteractsWithMedia;
 
     /**
-     * Este método garantiza la integridad de los datos de accidentes
-     * al eliminar los documentos asociados cuando se elimina un accidente
+     * Este método garantiza la integridad de los datos de infracciones de tráfico
+     * al eliminar los documentos asociados cuando se elimina un registro
      */
     protected static function boot()
     {
         parent::boot();
         
-        // Cuando se elimina un accidente, eliminar también sus documentos
-        static::deleting(function (DriverAccident $accident) {
-            $accident->deleteAllDocuments();
+        // Cuando se elimina un registro de tráfico, eliminar también sus documentos
+        static::deleting(function (DriverTraffic $traffic) {
+            $traffic->deleteAllDocuments();
             // Eliminar también los archivos de media library
-            $accident->clearMediaCollection('accident-images');
+            $traffic->clearMediaCollection('traffic-images');
         });
     }
 
     protected $fillable = [
         'user_driver_detail_id',
-        'accident_date',
-        'nature_of_accident',
-        'had_fatalities',
-        'had_injuries',
-        'number_of_fatalities',
-        'number_of_injuries',
+        'traffic_date',
+        'violation_type',
+        'points_deducted',
+        'fine_amount',
+        'location',
         'comments',
     ];
 
     protected $casts = [
-        'accident_date' => 'date',
-        'had_fatalities' => 'boolean',
-        'had_injuries' => 'boolean',
-        'number_of_fatalities' => 'integer',
-        'number_of_injuries' => 'integer',
+        'traffic_date' => 'date',
+        'points_deducted' => 'integer',
+        'fine_amount' => 'decimal:2',
     ];
 
     public function userDriverDetail()
@@ -62,7 +59,7 @@ class DriverAccident extends Model implements HasMedia
      */
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('accident-images')
+        $this->addMediaCollection('traffic-images')
             ->useDisk('public');
     }
     
@@ -82,7 +79,7 @@ class DriverAccident extends Model implements HasMedia
             public function getPath(\Spatie\MediaLibrary\MediaCollections\Models\Media $media): string 
             {
                 $driverId = $this->model->user_driver_detail_id;
-                return "driver/{$driverId}/accidents/{$this->model->id}/";
+                return "driver/{$driverId}/traffic/{$this->model->id}/";
             }
             
             public function getPathForConversions(\Spatie\MediaLibrary\MediaCollections\Models\Media $media): string 
@@ -121,7 +118,7 @@ class DriverAccident extends Model implements HasMedia
         
         if ($mediaRecord) {
             // Logs para depuración - Mostrar todos los datos del registro media
-            \Illuminate\Support\Facades\Log::info('Detalles del registro media a eliminar (accidente)', [
+            \Illuminate\Support\Facades\Log::info('Detalles del registro media a eliminar (tráfico)', [
                 'media_id' => $mediaId,
                 'datos_completos' => $mediaRecord,
             ]);
@@ -146,8 +143,8 @@ class DriverAccident extends Model implements HasMedia
             \Illuminate\Support\Facades\Log::info('¿Existe el archivo en ruta tradicional?', ['exists' => $exists ? 'Sí' : 'No']);
             
             // Ruta alternativa: usar directamente file_name en la carpeta personalizada
-            $path = ($mediaRecord->collection_name === 'accident-images')
-                ? "driver/{$this->user_driver_detail_id}/accidents/{$this->id}/{$mediaRecord->file_name}"
+            $path = ($mediaRecord->collection_name === 'traffic-images')
+                ? "driver/{$this->user_driver_detail_id}/traffic/{$this->id}/{$mediaRecord->file_name}"
                 : $filePath;
                 
             $existsAlt = \Illuminate\Support\Facades\Storage::disk($diskName)->exists($path);
@@ -175,7 +172,7 @@ class DriverAccident extends Model implements HasMedia
             }
             
             // También intentar eliminar la carpeta personalizada
-            $customDir = "driver/{$this->user_driver_detail_id}/accidents/{$this->id}";
+            $customDir = "driver/{$this->user_driver_detail_id}/traffic/{$this->id}";
             if (\Illuminate\Support\Facades\Storage::disk($diskName)->exists($customDir)) {
                 \Illuminate\Support\Facades\Log::info('Eliminando directorio personalizado', ['dir' => $customDir]);
                 \Illuminate\Support\Facades\Storage::disk($diskName)->deleteDirectory($customDir);

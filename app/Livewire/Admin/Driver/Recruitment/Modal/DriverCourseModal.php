@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Admin\Driver;
+namespace App\Livewire\Admin\Driver\Recruitment\Modal;
 
 use App\Models\Admin\Driver\DriverCourse;
 use Illuminate\Support\Facades\DB;
@@ -444,6 +444,6 @@ class DriverCourseModal extends Component
      */
     public function render()
     {
-        return view('livewire.admin.driver.driver-course-modal');
+        return view('livewire.admin.driver.recruitment.modal.driver-course-modal');
     }
 }

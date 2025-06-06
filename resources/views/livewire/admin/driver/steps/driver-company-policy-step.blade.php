@@ -93,7 +93,7 @@
             Clearinghouse</h4>
 
         <div class="prose prose-sm max-w-none mb-4 text-gray-700">
-            <p>I hereby consent to EF Services conducting limited queries of the Federal Motor Carrier Safety
+            <p>I hereby consent to {{ $company_name }} conducting limited queries of the Federal Motor Carrier Safety
                 Administration (FMCSA) Commercial Driver's License Drug and Alcohol Clearinghouse to determine whether
                 drug or alcohol violation information about me exists in the Clearinghouse.</p>
             <!-- Aquí iría todo el texto de la política -->

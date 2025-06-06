@@ -14,7 +14,7 @@
                         <div class="sm:flex sm:items-start">
                             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                                 <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                                    {{ $trainingSchoolId ? 'Editar' : 'Agregar' }} Escuela de Capacitación
+                                    {{ $trainingSchoolId ? 'Edit' : 'Add' }} Training School
                                 </h3>
                                 
                                 <!-- Formulario -->
@@ -83,7 +83,9 @@
                                             <div class="grid grid-cols-2 gap-2">
                                                 @foreach ($availableSkills as $skill)
                                                     <label class="flex items-center space-x-2 cursor-pointer">
-                                                        <input type="checkbox" wire:model="training_skills" value="{{ $skill }}" 
+                                                        <input type="checkbox" 
+                                                            wire:model.live="training_skills" 
+                                                            value="{{ $skill }}" 
                                                             class="rounded border-gray-300 text-primary focus:ring-primary">
                                                         <span class="text-sm text-gray-700">{{ ucfirst(str_replace('_', ' ', $skill)) }}</span>
                                                     </label>

@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use Livewire\Component;
 use Illuminate\Support\Str;
+use App\Models\Admin\Vehicle\Vehicle;
 use App\Models\UserDriverDetail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -492,52 +493,89 @@ class DriverRecruitmentReview extends Component
             return;
         }
         
+        // Cargar el PDF de la aplicación completa si existe
+        if ($this->driver->application) {
+            $applicationMedia = $this->driver->application->getMedia('application_pdf');
+            foreach ($applicationMedia as $media) {
+                $fileSize = $this->formatFileSize($media->size);
+                $fileDate = $this->formatFileDate(strtotime($media->created_at));
+                
+                $this->generatedPdfs['complete_application'] = [
+                    'name' => 'Complete Application',
+                    'url' => $media->getUrl(),
+                    'size' => $fileSize,
+                    'date' => $fileDate,
+                    'category' => 'application',
+                    'document_type' => 'complete_application',
+                    'id' => $media->id
+                ];
+            }
+            
+            // Si no hay media pero existe el archivo en storage público
+            if (empty($applicationMedia) && $this->driver->application->pdf_path) {
+                $filePath = storage_path('app/public/' . $this->driver->application->pdf_path);
+                if (file_exists($filePath)) {
+                    $fileSize = $this->formatFileSize(filesize($filePath));
+                    $fileDate = $this->formatFileDate(filemtime($filePath));
+                    
+                    $this->generatedPdfs['complete_application'] = [
+                        'name' => 'Complete Application',
+                        'url' => asset('storage/' . $this->driver->application->pdf_path) . '?v=' . time(),
+                        'size' => $fileSize,
+                        'date' => $fileDate,
+                        'category' => 'application',
+                        'document_type' => 'complete_application'
+                    ];
+                }
+            }
+        }
+        
         // Cargar documentos de licencia
         $licenses = \App\Models\Admin\Driver\DriverLicense::where('user_driver_detail_id', $this->driver->id)->get();
         foreach ($licenses as $license) {
-            $this->loadModelMedia($license, 'license');
+            $this->loadMediaFromModel($license, 'license');
         }
         
         // Cargar documentos de calificación médica
         $medicalCards = \App\Models\Admin\Driver\DriverMedicalQualification::where('user_driver_detail_id', $this->driver->id)->get();
         foreach ($medicalCards as $medicalCard) {
-            $this->loadModelMedia($medicalCard, 'medical');
+            $this->loadMediaFromModel($medicalCard, 'medical');
         }
         
         // Cargar documentos de accidentes
         $accidents = \App\Models\Admin\Driver\DriverAccident::where('user_driver_detail_id', $this->driver->id)->get();
         foreach ($accidents as $accident) {
-            $this->loadModelMedia($accident, 'record', 'accident');
+            $this->loadMediaFromModel($accident, 'record', 'accident');
         }
         
         // Cargar documentos de infracciones de tráfico
         $violations = \App\Models\Admin\Driver\DriverTrafficConviction::where('user_driver_detail_id', $this->driver->id)->get();
         foreach ($violations as $violation) {
-            $this->loadModelMedia($violation, 'record', 'violation');
+            $this->loadMediaFromModel($violation, 'record', 'violation');
         }
         
         // Cargar documentos de escuelas de entrenamiento
         $trainings = \App\Models\Admin\Driver\DriverTrainingSchool::where('user_driver_detail_id', $this->driver->id)->get();
         foreach ($trainings as $training) {
-            $this->loadModelMedia($training, 'record', 'training');
+            $this->loadMediaFromModel($training, 'record', 'training');
         }
         
         // Cargar documentos de cursos
         $courses = \App\Models\Admin\Driver\DriverCourse::where('user_driver_detail_id', $this->driver->id)->get();
         foreach ($courses as $course) {
-            $this->loadModelMedia($course, 'record', 'course');
+            $this->loadMediaFromModel($course, 'record', 'course');
         }
         
         // Cargar documentos de inspecciones
         $inspections = \App\Models\Admin\Driver\DriverInspection::where('user_driver_detail_id', $this->driver->id)->get();
         foreach ($inspections as $inspection) {
-            $this->loadModelMedia($inspection, 'record', 'inspection');
+            $this->loadMediaFromModel($inspection, 'record', 'inspection');
         }
         
         // Cargar documentos de pruebas de drogas
         $drugTests = \App\Models\Admin\Driver\DriverTesting::where('user_driver_detail_id', $this->driver->id)->get();
         foreach ($drugTests as $drugTest) {
-            $this->loadModelMedia($drugTest, 'record', 'drug_test');
+            $this->loadMediaFromModel($drugTest, 'record', 'drug_test');
         }
         
         // SOPORTE PARA CÓDIGO LEGADO - Cargar documentos desde el sistema de archivos
@@ -557,6 +595,49 @@ class DriverRecruitmentReview extends Component
         
         // Definir rutas para los documentos
         $driverId = $this->driver->id;
+        
+        // Cargar los PDFs individuales de la aplicación
+        $applicationPdfsPath = "driver/{$driverId}/driver_applications/";
+        $applicationPdfsFullPath = storage_path("app/public/{$applicationPdfsPath}");
+        
+        // Verificar si el directorio de aplicaciones existe
+        if (file_exists($applicationPdfsFullPath)) {
+            // Lista de archivos PDF esperados
+            $expectedPdfs = [
+                'general.pdf' => 'General Information',
+                'address.pdf' => 'Address Information',
+                'application.pdf' => 'Application Details',
+                'licenses.pdf' => 'Licenses Information',
+                'medical.pdf' => 'Medical Qualification',
+                'training.pdf' => 'Training Information',
+                'traffic_violations.pdf' => 'Traffic Violations',
+                'accidents.pdf' => 'Accidents Record',
+                'fmcsr_requirements.pdf' => 'FMCSR Requirements',
+                'employment_history.pdf' => 'Employment History',
+                'certification.pdf' => 'Certification',
+            ];
+            
+            // Cargar cada PDF si existe
+            foreach ($expectedPdfs as $filename => $title) {
+                $pdfPath = $applicationPdfsFullPath . $filename;
+                if (file_exists($pdfPath)) {
+                    $fileSize = $this->formatFileSize(filesize($pdfPath));
+                    $fileDate = $this->formatFileDate(filemtime($pdfPath));
+                    
+                    $key = 'application_' . str_replace('.pdf', '', $filename);
+                    $this->generatedPdfs[$key] = [
+                        'name' => $title,
+                        'url' => asset("storage/{$applicationPdfsPath}{$filename}") . "?v=" . time(),
+                        'size' => $fileSize,
+                        'date' => $fileDate,
+                        'category' => 'application',
+                        'document_type' => 'application_section'
+                    ];
+                }
+            }
+        }
+        
+        // Definir rutas para los documentos de verificación de vehículos
         $vehicleVerificationsPath = "driver/{$driverId}/vehicle-verifications/";
         $vehicleVerificationsFullPath = storage_path("app/public/{$vehicleVerificationsPath}");
         
@@ -1473,43 +1554,43 @@ private function loadAllDocuments()
     // Cargar documentos de licencia
     $licenses = \App\Models\Admin\Driver\DriverLicense::where('user_driver_detail_id', $this->driver->id)->get();
     foreach ($licenses as $license) {
-        $this->loadModelMedia($license, 'license');
+        $this->loadMediaFromModel($license, 'license');
     }
             
     // Cargar documentos de calificación médica
     $medicalCards = \App\Models\Admin\Driver\DriverMedicalQualification::where('user_driver_detail_id', $this->driver->id)->get();
     foreach ($medicalCards as $medicalCard) {
-        $this->loadModelMedia($medicalCard, 'medical');
+        $this->loadMediaFromModel($medicalCard, 'medical');
     }
             
     // Cargar documentos de accidentes
     $accidents = \App\Models\Admin\Driver\DriverAccident::where('user_driver_detail_id', $this->driver->id)->get();
     foreach ($accidents as $accident) {
-        $this->loadModelMedia($accident, 'record', 'accident');
+        $this->loadMediaFromModel($accident, 'record', 'accident');
     }
             
     // Cargar documentos de violaciones
     $violations = \App\Models\Admin\Driver\DriverTrafficConviction::where('user_driver_detail_id', $this->driver->id)->get();
     foreach ($violations as $violation) {
-        $this->loadModelMedia($violation, 'record', 'violation');
+        $this->loadMediaFromModel($violation, 'record', 'violation');
     }
             
     // Cargar documentos de entrenamientos
     $trainings = \App\Models\Admin\Driver\DriverTrainingSchool::where('user_driver_detail_id', $this->driver->id)->get();
     foreach ($trainings as $training) {
-        $this->loadModelMedia($training, 'record', 'training');
+        $this->loadMediaFromModel($training, 'record', 'training');
     }
             
     // Cargar documentos de cursos
     $courses = \App\Models\Admin\Driver\DriverCourse::where('user_driver_detail_id', $this->driver->id)->get();
     foreach ($courses as $course) {
-        $this->loadModelMedia($course, 'record', 'course');
+        $this->loadMediaFromModel($course, 'record', 'course');
     }
             
     // Cargar documentos de inspecciones
     $inspections = \App\Models\Admin\Driver\DriverInspection::where('user_driver_detail_id', $this->driver->id)->get();
     foreach ($inspections as $inspection) {
-        $this->loadModelMedia($inspection, 'record', 'inspection');
+        $this->loadMediaFromModel($inspection, 'record', 'inspection');
     }
             
     // Cargar documentos de pruebas de drogas
@@ -1517,12 +1598,12 @@ private function loadAllDocuments()
         ->where('test_type', 'drug_test')
         ->get();
     foreach ($drugTests as $drugTest) {
-        $this->loadModelMedia($drugTest, 'record', 'drug_test');
+        $this->loadMediaFromModel($drugTest, 'record', 'drug_test');
     }
             
     // Cargar documentos generales del conductor
     if (method_exists($this->driver, 'getMedia')) {
-        $this->loadModelMedia($this->driver, 'other');
+        $this->loadMediaFromModel($this->driver, 'other');
     }
 }
 
@@ -1630,8 +1711,11 @@ private function loadModelMedia($model, $category, $recordType = null)
                 return;
             }
 
-            // Generar los PDFs
+            // Generar los PDFs de la aplicación
             $this->generateApplicationPDFs($this->driver, $signaturePath);
+            
+            // Generar documentos específicos según el tipo de conductor
+            $this->generateSpecificDocuments($this->driver, $signaturePath);
             
             // Recargar la lista de PDFs generados
             $this->loadGeneratedPdfs();
@@ -1651,7 +1735,367 @@ private function loadModelMedia($model, $category, $recordType = null)
     }
 
     /**
-     * Prepara la firma para ser usada en los PDFs
+     * Genera documentos específicos según el tipo de conductor (owner_operator o third_party_driver)
+     * @param UserDriverDetail $userDriverDetail
+     * @param string $signaturePath Ruta al archivo de firma
+     */
+    private function generateSpecificDocuments($userDriverDetail, $signaturePath)
+    {
+        try {
+            // Verificar si el conductor tiene una aplicación con detalles
+            if (!$userDriverDetail->application || !$userDriverDetail->application->details) {
+                Log::warning('No se pueden generar documentos específicos: faltan datos de aplicación', [
+                    'driver_id' => $userDriverDetail->id,
+                    'has_application' => $userDriverDetail->application ? 'yes' : 'no',
+                    'has_details' => ($userDriverDetail->application && $userDriverDetail->application->details) ? 'yes' : 'no'
+                ]);
+                return;
+            }
+            
+            // Obtener el tipo de conductor
+            $applyingPosition = $userDriverDetail->application->details->applying_position ?? 'unknown';
+            
+            Log::info('Verificando tipo de conductor para generar documentos específicos', [
+                'driver_id' => $userDriverDetail->id,
+                'applying_position' => $applyingPosition
+            ]);
+            
+            // Generar documentos según el tipo de conductor
+            if ($applyingPosition === 'owner_operator') {
+                $this->generateLeaseAgreementOwner($userDriverDetail, $signaturePath);
+            } elseif ($applyingPosition === 'third_party_driver') {
+                $this->generateThirdPartyDocuments($userDriverDetail, $signaturePath);
+            } else {
+                Log::info('No se generan documentos específicos para este tipo de conductor', [
+                    'driver_id' => $userDriverDetail->id,
+                    'applying_position' => $applyingPosition
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error al generar documentos específicos', [
+                'driver_id' => $userDriverDetail->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+    
+    /**
+     * Genera el contrato de arrendamiento para propietarios-operadores
+     * @param UserDriverDetail $userDriverDetail
+     * @param string $signaturePath Ruta al archivo de firma
+     */
+    private function generateLeaseAgreementOwner($userDriverDetail, $signaturePath)
+    {
+        try {
+            // Cargar todas las relaciones necesarias para asegurar que tenemos los datos completos
+            $userDriverDetail->load([
+                'application.details', 
+                'application.ownerOperatorDetail', 
+                'user',
+                'carrier'
+            ]);
+            
+            // Verificar cada relación individualmente y registrar qué datos faltan
+            $missingData = [];
+            
+            if (!$userDriverDetail->application) {
+                $missingData[] = 'application';
+            } elseif (!$userDriverDetail->application->details) {
+                $missingData[] = 'application.details';
+            }
+            
+            // Intentar obtener el vehículo a través de la aplicación o buscar por driver_id
+            $vehicle = null;
+            if ($userDriverDetail->application && method_exists($userDriverDetail->application, 'vehicle')) {
+                $vehicle = $userDriverDetail->application->vehicle;
+            }
+            
+            // Si no se encuentra, buscar en la tabla de vehículos directamente
+            if (!$vehicle) {
+                $vehicle = \App\Models\Admin\Vehicle\Vehicle::where('user_driver_detail_id', $userDriverDetail->id)->first();
+            }
+            
+            if (!$userDriverDetail->carrier) {
+                $missingData[] = 'carrier';
+            }
+            
+            if (!$userDriverDetail->user) {
+                $missingData[] = 'user';
+            }
+            
+            // Si faltan datos críticos, registrar el error y salir
+            if (!empty($missingData)) {
+                Log::error('Datos insuficientes para generar contrato de arrendamiento de propietario-operador', [
+                    'driver_id' => $userDriverDetail->id,
+                    'missing_data' => $missingData
+                ]);
+                return;
+            }
+            
+            $application = $userDriverDetail->application;
+            $carrier = $userDriverDetail->carrier;
+            $user = $userDriverDetail->user;
+            
+            // Preparar los datos para el PDF
+            $ownerDetails = $application->ownerOperatorDetail;
+            $applicationDetails = $application->details;
+            
+            $data = [
+                'carrierName' => $carrier->name ?? 'EF Services',
+                'carrierAddress' => $carrier->address ?? '',
+                'ownerName' => $applicationDetails->owner_name ?? $userDriverDetail->user->name ?? '',
+                'ownerDba' => $ownerDetails->business_name ?? '',
+                'ownerAddress' => $ownerDetails->address ?? $userDriverDetail->current_address ?? '',
+                'ownerPhone' => $ownerDetails->phone ?? $userDriverDetail->phone ?? '',
+                'ownerEmail' => $ownerDetails->email ?? $userDriverDetail->user->email ?? '',
+                'ownerFein' => $ownerDetails->tax_id ?? '',
+                'ownerLicense' => $userDriverDetail->license_number ?? '',
+                'ownerCdlExpiry' => $userDriverDetail->license_expiry_date ? $userDriverDetail->license_expiry_date->format('m/d/Y') : '',
+                'vehicleYear' => $vehicle->year ?? '',
+                'vehicleMake' => $vehicle->make ?? '',
+                'vehicleVin' => $vehicle->vin ?? '',
+                'vehicleUnit' => $vehicle->company_unit_number ?? '',
+                'signedDate' => now()->format('m/d/Y'),
+                'carrierMc' => $carrier->mc_number ?? '',
+                'carrierUsdot' => $carrier->state_dot ?? '',
+                'signaturePath' => $signaturePath,
+                'signature' => null // Mantenemos este campo como NULL para compatibilidad
+            ];
+            
+            try {
+                Log::info('Intentando cargar vista de contrato de propietario-operador', [
+                    'driver_id' => $userDriverDetail->id,
+                    'view' => 'pdfs.lease-agreement-owner',
+                    'data_keys' => array_keys($data)
+                ]);
+                
+                // Cargar la vista del contrato de arrendamiento para propietarios-operadores
+                $pdf = \Barryvdh\DomPDF\Facade\PDF::loadView('pdfs.lease-agreement-owner', $data);
+                
+                // Asegurarnos de que estamos usando el ID correcto
+                $driverId = $userDriverDetail->id;
+                $dirPath = 'driver/' . $driverId . '/vehicle-verifications';
+                $filePath = $dirPath . '/lease_agreement_owner_operator_' . time() . '.pdf';
+                
+                Log::info('Guardando PDF de contrato de arrendamiento para propietario-operador', [
+                    'driver_id' => $driverId,
+                    'file_path' => $filePath
+                ]);
+                
+                // Asegurarnos de que el directorio existe
+                Storage::disk('public')->makeDirectory($dirPath);
+                
+                // Guardar el PDF
+                $pdfContent = $pdf->output();
+                Storage::disk('public')->put($filePath, $pdfContent);
+                
+            } catch (\Exception $e) {
+                Log::error('Error al generar PDF de contrato de arrendamiento para propietario-operador', [
+                    'driver_id' => $userDriverDetail->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error al generar contrato de arrendamiento para propietario-operador', [
+                'driver_id' => $userDriverDetail->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+    
+    /**
+     * Genera documentos específicos para conductores third-party
+     * @param UserDriverDetail $userDriverDetail
+     * @param string $signaturePath Ruta al archivo de firma
+     */
+    private function generateThirdPartyDocuments($userDriverDetail, $signaturePath)
+    {
+        try {
+            // Cargar todas las relaciones necesarias para asegurar que tenemos los datos completos
+            $userDriverDetail->load([
+                'application.details', 
+                'application.thirdPartyDetail', 
+                'user',
+                'carrier'
+            ]);
+            
+            // Verificar cada relación individualmente y registrar qué datos faltan
+            $missingData = [];
+            
+            if (!$userDriverDetail->application) {
+                $missingData[] = 'application';
+            } elseif (!$userDriverDetail->application->details) {
+                $missingData[] = 'application.details';
+            }
+            
+            // Intentar obtener el vehículo a través de la aplicación o buscar por driver_id
+            $vehicle = null;
+            if ($userDriverDetail->application && method_exists($userDriverDetail->application, 'vehicle')) {
+                $vehicle = $userDriverDetail->application->vehicle;
+            }
+            
+            // Si no se encuentra, buscar en la tabla de vehículos directamente
+            if (!$vehicle) {
+                $vehicle = \App\Models\Admin\Vehicle\Vehicle::where('user_driver_detail_id', $userDriverDetail->id)->first();
+            }
+            
+            if (!$userDriverDetail->carrier) {
+                $missingData[] = 'carrier';
+            }
+            
+            if (!$userDriverDetail->user) {
+                $missingData[] = 'user';
+            }
+            
+            // Si faltan datos críticos, registrar el error y salir
+            if (!empty($missingData)) {
+                Log::error('Datos insuficientes para generar documentos de third-party', [
+                    'driver_id' => $userDriverDetail->id,
+                    'missing_data' => $missingData
+                ]);
+                return;
+            }
+            
+            $application = $userDriverDetail->application;
+            $carrier = $userDriverDetail->carrier;
+            $user = $userDriverDetail->user;
+            $thirdPartyDetails = $application->thirdPartyDetail;
+            $applicationDetails = $application->details;
+            
+            // Preparar los datos para el PDF de consentimiento de terceros
+            $consentData = [
+                'carrierName' => $carrier->name ?? 'EF Services',
+                'carrierAddress' => $carrier->address ?? '',
+                'driverName' => $user->name ?? '',
+                'driverAddress' => $userDriverDetail->current_address ?? '',
+                'driverPhone' => $userDriverDetail->phone ?? '',
+                'driverEmail' => $user->email ?? '',
+                'thirdPartyName' => $thirdPartyDetails->third_party_name ?? '',
+                'thirdPartyDba' => $thirdPartyDetails->third_party_dba ?? '',
+                'thirdPartyAddress' => $thirdPartyDetails->third_party_address ?? '',
+                'thirdPartyPhone' => $thirdPartyDetails->third_party_phone ?? '',
+                'thirdPartyEmail' => $thirdPartyDetails->third_party_email ?? '',
+                'thirdPartyContact' => $thirdPartyDetails->third_party_contact ?? '',
+                'thirdPartyFein' => $thirdPartyDetails->third_party_fein ?? '',
+                'signedDate' => now()->format('m/d/Y'),
+                'signaturePath' => $signaturePath,
+                'signature' => null // Mantenemos este campo como NULL para compatibilidad
+            ];
+            
+            // Generar el PDF de consentimiento de terceros
+            try {
+                Log::info('Intentando cargar vista de consentimiento de terceros', [
+                    'driver_id' => $userDriverDetail->id,
+                    'view' => 'pdfs.third-party-consent',
+                    'data_keys' => array_keys($consentData)
+                ]);
+                
+                // Cargar la vista del consentimiento de terceros
+                $pdf = \Barryvdh\DomPDF\Facade\PDF::loadView('pdfs.third-party-consent', $consentData);
+                
+                // Asegurarnos de que estamos usando el ID correcto
+                $driverId = $userDriverDetail->id;
+                $dirPath = 'driver/' . $driverId . '/vehicle-verifications';
+                $filePath = $dirPath . '/third_party_consent_' . time() . '.pdf';
+                
+                Log::info('Guardando PDF de consentimiento de terceros', [
+                    'driver_id' => $driverId,
+                    'file_path' => $filePath
+                ]);
+                
+                // Asegurarnos de que el directorio existe
+                Storage::disk('public')->makeDirectory($dirPath);
+                
+                // Guardar el PDF
+                $pdfContent = $pdf->output();
+                Storage::disk('public')->put($filePath, $pdfContent);
+                
+            } catch (\Exception $e) {
+                Log::error('Error al generar PDF de consentimiento de terceros', [
+                    'driver_id' => $userDriverDetail->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+            
+            // Preparar los datos para el PDF de contrato de arrendamiento para third-party
+            $leaseData = [
+                'carrierName' => $carrier->name ?? 'EF Services',
+                'carrierAddress' => $carrier->address ?? '',
+                'driverName' => $user->name ?? '',
+                'driverAddress' => $userDriverDetail->current_address ?? '',
+                'driverPhone' => $userDriverDetail->phone ?? '',
+                'driverEmail' => $user->email ?? '',
+                'thirdPartyName' => $thirdPartyDetails->third_party_name ?? '',
+                'thirdPartyDba' => $thirdPartyDetails->third_party_dba ?? '',
+                'thirdPartyAddress' => $thirdPartyDetails->third_party_address ?? '',
+                'thirdPartyPhone' => $thirdPartyDetails->third_party_phone ?? '',
+                'thirdPartyEmail' => $thirdPartyDetails->third_party_email ?? '',
+                'thirdPartyContact' => $thirdPartyDetails->third_party_contact ?? '',
+                'thirdPartyFein' => $thirdPartyDetails->third_party_fein ?? '',
+                'vehicleYear' => $vehicle->year ?? '',
+                'vehicleMake' => $vehicle->make ?? '',
+                'vehicleVin' => $vehicle->vin ?? '',
+                'vehicleUnit' => $vehicle->company_unit_number ?? '',
+                'signedDate' => now()->format('m/d/Y'),
+                'carrierMc' => $carrier->mc_number ?? '',
+                'carrierUsdot' => $carrier->state_dot ?? '',
+                'signaturePath' => $signaturePath,
+                'signature' => null // Mantenemos este campo como NULL para compatibilidad
+            ];
+            
+            // Generar el PDF de contrato de arrendamiento para third-party
+            try {
+                Log::info('Intentando cargar vista de contrato de arrendamiento para third-party', [
+                    'driver_id' => $userDriverDetail->id,
+                    'view' => 'pdfs.lease-agreement',
+                    'data_keys' => array_keys($leaseData)
+                ]);
+                
+                // Cargar la vista del contrato de arrendamiento para third-party
+                $pdf = \Barryvdh\DomPDF\Facade\PDF::loadView('pdfs.lease-agreement', $leaseData);
+                
+                // Asegurarnos de que estamos usando el ID correcto
+                $driverId = $userDriverDetail->id;
+                $dirPath = 'driver/' . $driverId . '/vehicle-verifications';
+                $filePath = $dirPath . '/lease_agreement_third_party_' . time() . '.pdf';
+                
+                Log::info('Guardando PDF de contrato de arrendamiento para third-party', [
+                    'driver_id' => $driverId,
+                    'file_path' => $filePath
+                ]);
+                
+                // Asegurarnos de que el directorio existe
+                Storage::disk('public')->makeDirectory($dirPath);
+                
+                // Guardar el PDF
+                $pdfContent = $pdf->output();
+                Storage::disk('public')->put($filePath, $pdfContent);
+                
+            } catch (\Exception $e) {
+                Log::error('Error al generar PDF de contrato de arrendamiento para third-party', [
+                    'driver_id' => $userDriverDetail->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Error al generar documentos para third-party', [
+                'driver_id' => $userDriverDetail->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+    
+    /**
+     * Prepara la firma para usarla en PDFs
+     * @param string $signature La firma en formato base64 o ruta de archivo
+     * @return string|null La ruta al archivo de firma
      */
     private function prepareSignatureForPDF($signature)
     {
@@ -1730,17 +2174,17 @@ private function loadModelMedia($model, $category, $recordType = null)
         
         // Configuraciones de pasos - definir la vista y nombre de archivo para cada paso
         $steps = [
-            ['view' => 'pdf.driver.general', 'filename' => 'informacion_general.pdf', 'title' => 'Información General'],
-            ['view' => 'pdf.driver.address', 'filename' => 'informacion_direccion.pdf', 'title' => 'Información de Dirección'],
-            ['view' => 'pdf.driver.application', 'filename' => 'detalles_aplicacion.pdf', 'title' => 'Detalles de Aplicación'],
-            ['view' => 'pdf.driver.licenses', 'filename' => 'informacion_licencias.pdf', 'title' => 'Licencias'],
-            ['view' => 'pdf.driver.medical', 'filename' => 'calificacion_medica.pdf', 'title' => 'Calificación Médica'],
-            ['view' => 'pdf.driver.training', 'filename' => 'escuelas_entrenamiento.pdf', 'title' => 'Entrenamiento'],
-            ['view' => 'pdf.driver.traffic', 'filename' => 'infracciones_trafico.pdf', 'title' => 'Infracciones de Tráfico'],
-            ['view' => 'pdf.driver.accident', 'filename' => 'registro_accidentes.pdf', 'title' => 'Registro de Accidentes'],
-            ['view' => 'pdf.driver.fmcsr', 'filename' => 'requisitos_fmcsr.pdf', 'title' => 'Requisitos FMCSR'],
-            ['view' => 'pdf.driver.employment', 'filename' => 'historial_empleo.pdf', 'title' => 'Historial de Empleo'],
-            ['view' => 'pdf.driver.certification', 'filename' => 'certificacion.pdf', 'title' => 'Certificación'],
+            ['view' => 'pdf.driver.general', 'filename' => 'general.pdf', 'title' => 'General'],
+            ['view' => 'pdf.driver.address', 'filename' => 'address.pdf', 'title' => 'Address'],
+            ['view' => 'pdf.driver.application', 'filename' => 'application.pdf', 'title' => 'Application'],
+            ['view' => 'pdf.driver.licenses', 'filename' => 'licenses.pdf', 'title' => 'Licenses'],
+            ['view' => 'pdf.driver.medical', 'filename' => 'medical.pdf', 'title' => 'Medical'],
+            ['view' => 'pdf.driver.training', 'filename' => 'training.pdf', 'title' => 'Training'],
+            ['view' => 'pdf.driver.traffic', 'filename' => 'traffic_violations.pdf', 'title' => 'Traffic Violations'],
+            ['view' => 'pdf.driver.accident', 'filename' => 'accidents.pdf', 'title' => 'Accidents'],
+            ['view' => 'pdf.driver.fmcsr', 'filename' => 'fmcsr_requirements.pdf', 'title' => 'FMCSR Requirements'],
+            ['view' => 'pdf.driver.employment', 'filename' => 'employment_history.pdf', 'title' => 'Employment History'],
+            ['view' => 'pdf.driver.certification', 'filename' => 'certification.pdf', 'title' => 'Certification'],
         ];
         
         // Generar PDF para cada paso
@@ -1786,7 +2230,7 @@ private function loadModelMedia($model, $category, $recordType = null)
     private function generateCombinedPDF($userDriverDetail, $signaturePath)
     {
         try {
-            $pdf = \Barryvdh\DomPDF\Facade\PDF::loadView('pdf.driver.solicitud_completa', [
+            $pdf = \Barryvdh\DomPDF\Facade\PDF::loadView('pdf.driver.complete_application', [
                 'userDriverDetail' => $userDriverDetail,
                 'signaturePath' => $signaturePath,
                 'date' => now()->format('d/m/Y')
@@ -1794,7 +2238,7 @@ private function loadModelMedia($model, $category, $recordType = null)
             
             // Asegurarnos de que estamos usando el ID correcto
             $driverId = $userDriverDetail->id;
-            $filePath = 'driver/' . $driverId . '/solicitud_completa.pdf';
+            $filePath = 'driver/' . $driverId . '/complete_application.pdf';
             
             Log::info('Guardando PDF combinado para conductor', ['driver_id' => $driverId, 'file_path' => $filePath]);
             
@@ -1803,7 +2247,7 @@ private function loadModelMedia($model, $category, $recordType = null)
             Storage::disk('public')->put($filePath, $pdfContent);
             
             // Guardar PDF temporalmente para adjuntarlo a MediaLibrary
-            $tempPath = tempnam(sys_get_temp_dir(), 'solicitud_completa_') . '.pdf';
+            $tempPath = tempnam(sys_get_temp_dir(), 'complete_application_') . '.pdf';
             file_put_contents($tempPath, $pdfContent);
             
             // Adjuntar el PDF a la aplicación

@@ -637,7 +637,7 @@
 
 
         <!-- Vista previa del PDF -->
-        <div class="box box--stacked mt-5">
+        {{-- <div class="box box--stacked mt-5">
             <div class="box-header box-header--transparent">
                 <div class="box-title">PDF Preview</div>
             </div>
@@ -653,7 +653,7 @@
                     </div>
                 @endif
             </div>
-        </div>
+        </div> --}}
         
         <!-- Espacio para botones adicionales si se necesitan en el futuro -->
         <div class="mt-5"></div>

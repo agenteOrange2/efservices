@@ -39,16 +39,12 @@ class DriverTrainingModal extends Component
     
     // Lista de habilidades seleccionables
     public $availableSkills = [
-        'cdl_training',
-        'hazmat_training',
-        'passenger_training',
-        'tanker_training',
-        'doubles_triples_training',
-        'defensive_driving',
-        'mountain_driving',
-        'winter_driving',
-        'emergency_procedures',
-        'vehicle_inspection',
+        'double_trailer',
+        'passenger',
+        'tank_vehicle',
+        'hazardous_material',
+        'combination_vehicle',
+        'air_brakes',
     ];
     
     // Event listeners
@@ -108,12 +104,36 @@ class DriverTrainingModal extends Component
         $this->date_end = optional($school->date_end)->format('Y-m-d');
         $this->graduated = $school->graduated;
         
-        // Cargar habilidades
-        if (is_string($school->training_skills)) {
-            $this->training_skills = json_decode($school->training_skills, true) ?: [];
-        } else {
-            $this->training_skills = $school->training_skills ?: [];
+        // Cargar habilidades - asegurarnos que siempre sea un array
+        $this->training_skills = [];
+        
+        // Registrar el valor original para depuración
+        Log::info('Training skills original', [
+            'value' => $school->training_skills,
+            'type' => gettype($school->training_skills)
+        ]);
+        
+        // Procesar las habilidades según su formato
+        if (!empty($school->training_skills)) {
+            if (is_string($school->training_skills)) {
+                try {
+                    $decoded = json_decode($school->training_skills, true);
+                    if (is_array($decoded)) {
+                        $this->training_skills = $decoded;
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error al decodificar training_skills: ' . $e->getMessage());
+                }
+            } elseif (is_array($school->training_skills)) {
+                $this->training_skills = $school->training_skills;
+            }
         }
+        
+        // Registrar el valor procesado para depuración
+        Log::info('Training skills procesados', [
+            'processed' => $this->training_skills,
+            'available_skills' => $this->availableSkills
+        ]);
         
         // Cargar certificados existentes
         if ($school->hasMedia('school_certificates')) {
@@ -337,6 +357,7 @@ class DriverTrainingModal extends Component
         $this->graduated = false;
         $this->training_skills = [];
     }
+    
     
     /**
      * Renderiza el componente

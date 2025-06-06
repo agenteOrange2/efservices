@@ -48,7 +48,7 @@ class MaintenanceController extends Controller
         $maintenance = VehicleMaintenance::with('vehicle')->findOrFail($id);
         $vehicle = $maintenance->vehicle;
         
-        return view('admin.maintenance.show', compact('maintenance', 'vehicle'));
+        return view('admin.vehicles.maintenance.show', compact('maintenance', 'vehicle'));
     }
     
     /**
@@ -71,8 +71,8 @@ class MaintenanceController extends Controller
         $maintenance = VehicleMaintenance::findOrFail($id);
         $maintenance->delete();
         
-        return redirect()->route('maintenance.index')
-                ->with('success', 'Registro de mantenimiento eliminado correctamente.');
+        return redirect()->route('admin.maintenance.index')
+                ->with('success', 'Registro de mantenimiento eliminado correctamente');
     }
     
     /**
@@ -83,8 +83,8 @@ class MaintenanceController extends Controller
         // Para futura implementación de exportación
         // return (new VehicleMaintenanceExport)->download('vehicle-maintenance.xlsx');
         
-        return redirect()->route('maintenance.index')
-            ->with('info', 'La funcionalidad de exportación estará disponible próximamente.');
+        return redirect()->route('admin.maintenance.index')
+            ->with('info', 'La funcionalidad de exportación estará disponible próximamente');
     }
     
     /**
@@ -93,7 +93,7 @@ class MaintenanceController extends Controller
     public function reports()
     {
         // Para futura implementación de reportes
-        return view('admin.maintenance.reports');
+        return view('admin.vehicles.maintenance.reports');
     }
     
     /**
@@ -106,6 +106,6 @@ class MaintenanceController extends Controller
             ->where('next_service_date', '>=', now())
             ->get();
             
-        return view('admin.maintenance.calendar', compact('maintenances'));
+        return view('admin.vehicles.maintenance.calendar', compact('maintenances'));
     }
 }

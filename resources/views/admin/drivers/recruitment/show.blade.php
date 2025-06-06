@@ -28,6 +28,10 @@
             
             <!-- Componente Livewire -->
             @livewire('admin.driver.recruitment.driver-recruitment-review', ['driverId' => $driverId])
+            
+            <!-- Componentes Modal -->
+            @livewire('admin.driver.driver-accident-modal')
+            @livewire('admin.driver.driver-traffic-modal')
         </div>
     </div>
 @endsection

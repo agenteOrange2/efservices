@@ -104,7 +104,7 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($accidents as $accident)
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">{{ $accident->accident_date->format('M d, Y') }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ $accident->accident_date ? (is_string($accident->accident_date) ? $accident->accident_date : $accident->accident_date->format('M d, Y')) : 'N/A' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ $accident->userDriverDetail->carrier->name }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {{ $accident->userDriverDetail->user->name }} {{ $accident->userDriverDetail->last_name }}

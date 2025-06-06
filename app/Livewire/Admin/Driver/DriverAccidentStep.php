@@ -105,7 +105,7 @@ class DriverAccidentStep extends Component
                 $this->accidents[] = [
                     'id' => $accident->id,
                     'accident_date' => $accident->accident_date ? 
-                        $accident->accident_date->format('Y-m-d') : null,
+                        (is_string($accident->accident_date) ? $accident->accident_date : $accident->accident_date->format('Y-m-d')) : null,
                     'nature_of_accident' => $accident->nature_of_accident,
                     'had_injuries' => $accident->had_injuries,
                     'number_of_injuries' => $accident->number_of_injuries,

@@ -43,7 +43,7 @@
                     <div class="flex items-center mt-1">
                         <div class="text-gray-500 mr-2">Last Accident:</div>
                         <div class="text-red-600">
-                            {{ $accidents->first()->accident_date->format('M d, Y') }}
+                            {{ $accidents->first()->accident_date ? (is_string($accidents->first()->accident_date) ? $accidents->first()->accident_date : $accidents->first()->accident_date->format('M d, Y')) : 'N/A' }}
                         </div>
                     </div>
                 @endif
@@ -113,7 +113,7 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($accidents as $accident)
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">{{ $accident->accident_date->format('M d, Y') }}
+                            <td class="px-6 py-4 whitespace-nowrap">{{ $accident->accident_date ? (is_string($accident->accident_date) ? $accident->accident_date : $accident->accident_date->format('M d, Y')) : 'N/A' }}
                             </td>
                             <td class="px-6 py-4">{{ $accident->nature_of_accident }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">

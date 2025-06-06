@@ -589,13 +589,22 @@ Route::prefix('vehicles')->name('vehicles.')->group(function () {
     Route::get('/{vehicle}/edit', [VehicleController::class, 'edit'])->name('edit');
     Route::put('/{vehicle}', [VehicleController::class, 'update'])->name('update');
     Route::delete('/{vehicle}', [VehicleController::class, 'destroy'])->name('destroy');
-
-    Route::get('/drivers-by-carrier/{carrierId}', [VehicleController::class, 'getDriversByCarrier'])
-        ->name('drivers-by-carrier');
-        
-    // Ruta para obtener detalles del driver
+    Route::post('/{vehicle}/delete-photo', [VehicleController::class, 'deletePhoto'])->name('delete-photo');
+    
+    // API para obtener conductores por carrier
     Route::get('/driver-details/{userDriverDetail}', [VehicleController::class, 'getDriverDetails'])
         ->name('driver-details');
+        
+    // Rutas para documentos de vehículos
+    Route::get('/{vehicle}/documents', [VehicleDocumentController::class, 'index'])->name('documents.index');
+    Route::get('/{vehicle}/documents/create', [VehicleDocumentController::class, 'create'])->name('documents.create');
+    Route::post('/{vehicle}/documents', [VehicleDocumentController::class, 'store'])->name('documents.store');
+    Route::get('/{vehicle}/documents/{document}', [VehicleDocumentController::class, 'show'])->name('documents.show');
+    Route::get('/{vehicle}/documents/{document}/edit', [VehicleDocumentController::class, 'edit'])->name('documents.edit');
+    Route::put('/{vehicle}/documents/{document}', [VehicleDocumentController::class, 'update'])->name('documents.update');
+    Route::delete('/{vehicle}/documents/{document}', [VehicleDocumentController::class, 'destroy'])->name('documents.destroy');
+    Route::get('/{vehicle}/documents/{document}/download', [VehicleDocumentController::class, 'download'])->name('documents.download');
+    Route::get('/{vehicle}/documents/{document}/preview', [VehicleDocumentController::class, 'preview'])->name('documents.preview');
 
     // Rutas para ítems de servicio anidadas bajo un vehículo específico
     Route::prefix('{vehicle}/service-items')->name('service-items.')->group(function () {

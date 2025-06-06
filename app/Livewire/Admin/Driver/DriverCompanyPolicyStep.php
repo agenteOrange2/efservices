@@ -19,7 +19,7 @@ class DriverCompanyPolicyStep extends Component
     public $substance_testing_consent = false;
     public $authorization_consent = false;
     public $fmcsa_clearinghouse_consent = false;
-    public $company_name = 'EF Services';
+    public $company_name = '';
     public $license_number;
     public $license_state;
     public $policyDocumentPath;
@@ -44,6 +44,9 @@ class DriverCompanyPolicyStep extends Component
         
         if ($this->driverId) {
             $this->loadExistingData();
+            
+            // Cargar el nombre del carrier asociado al conductor
+            $this->loadCarrierName();
         }
         
         // Cargar datos de licencia si no existe información
@@ -214,6 +217,27 @@ class DriverCompanyPolicyStep extends Component
         
         // Si no hay documento personalizado ni aprobado, usar el documento por defecto genérico
         $this->loadDefaultPolicyDocument();
+    }
+    
+    // Cargar el nombre del carrier asociado al conductor
+    protected function loadCarrierName()
+    {
+        $userDriverDetail = UserDriverDetail::find($this->driverId);
+        if (!$userDriverDetail || !$userDriverDetail->carrier_id) {
+            // Si no hay conductor o no tiene carrier asociado, usar un valor por defecto
+            $this->company_name = 'EF Services';
+            return;
+        }
+        
+        // Obtener el carrier asociado al conductor
+        $carrier = \App\Models\Carrier::find($userDriverDetail->carrier_id);
+        if ($carrier) {
+            // Usar el nombre del carrier
+            $this->company_name = $carrier->name;
+        } else {
+            // Si no se encuentra el carrier, usar un valor por defecto
+            $this->company_name = 'EF Services';
+        }
     }
     
     // Cargar el documento de política por defecto

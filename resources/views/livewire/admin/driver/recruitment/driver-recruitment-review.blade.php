@@ -606,9 +606,11 @@
                                     <div class="absolute bottom-4 right-4 flex space-x-2">                                        
                                             <a href="#" 
                                                 wire:click.prevent="$dispatch('openTrainingModal', { driverId: {{ $driver->id }}, trainingSchoolId: {{ $school->id }} })" 
-                                                class="uppercase font-bold text-sm bg-blue-500 hover:bg-blue-600 text-white py-1 px-4 rounded">
-                                                EDIT
-                                            </a>                                                                                
+                                                class="text-slate-500 hover:text-primary">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                                                </svg>
+                                            </a>                                                   
                                     </div>
                                     
                                     <div class="grid grid-cols-2 gap-4">
@@ -741,16 +743,21 @@
                                             <div>
                                                 <div class="text-sm text-slate-500">Experience</div>
                                                 <div class="font-medium">{{ $course->experience }}</div>
-                                            </div>
-                                            @if ($course->hasMedia('certificates'))
+                                            </div>                                            
+                                            @if ($course->hasMedia('course_certificates'))
                                             <div class="col-span-2">
                                                 <div class="text-sm text-slate-500 mb-2">Certificates</div>
                                                 <div class="flex flex-wrap gap-2">
-                                                    @foreach ($course->getMedia('certificates') as $certificate)
+                                                    @foreach ($course->getMedia('course_certificates') as $certificate)
                                                         <a href="{{ $certificate->getUrl() }}" target="_blank" class="block">
-                                                            <div class="h-20 w-20 border rounded flex items-center justify-center bg-primary/10 text-primary">
-                                                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20M13 13V17H10V13H13Z"></path></svg>
-                                                            </div>
+                                                            @if (strpos($certificate->mime_type, 'image/') === 0)
+                                                                <img src="{{ $certificate->getUrl() }}" alt="Certificado"
+                                                                     class="h-24 border rounded object-contain bg-white">
+                                                            @else
+                                                                <div class="h-24 w-24 border rounded flex items-center justify-center bg-white">
+                                                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20M13 13V17H10V13H13Z"></path></svg>
+                                                                </div>
+                                                            @endif
                                                         </a>
                                                     @endforeach
                                                 </div>
@@ -765,7 +772,7 @@
                         @endif
                         
                         <!-- Componente Modal para Agregar/Editar Cursos -->
-                        @livewire('admin.driver.driver-course-modal')
+                        @livewire('admin.driver.recruitment.modal.driver-course-modal')
 
                         <!-- Divider -->
                         <div class="border-t my-5"></div>
@@ -982,143 +989,177 @@
                         <!-- Divider -->
                         <div class="border-t my-5"></div>
 
+                        
                         <!-- Traffic Convictions Section -->
-                        <h3 class="text-lg font-medium mb-4">Traffic Violations</h3>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium">Traffic Convictions</h3>
+                            <button type="button" 
+                                class="px-3 py-1.5 bg-primary text-white rounded-md text-sm flex items-center hover:bg-primary-focus"
+                                wire:click="$dispatch('openTrafficModal', { driverId: {{ $driver->id }} })">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                Add Traffic Conviction
+                            </button>
+                        </div>
 
-                        @if (isset($driver->trafficConvictions) && $driver->trafficConvictions->isNotEmpty())
+                        @if ($driver->trafficConvictions && $driver->trafficConvictions->isNotEmpty())
                             <div class="space-y-4">
-                                @foreach ($driver->trafficConvictions as $conviction)
+                                @foreach ($driver->trafficConvictions as $traffic)
                                     <div class="bg-slate-50 p-4 rounded-lg">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <div class="font-medium">{{ $traffic->conviction_date ? (is_string($traffic->conviction_date) ? $traffic->conviction_date : $traffic->conviction_date->format('m-d-Y')) : 'N/A' }} - {{ $traffic->location }}</div>
+                                            <button type="button" 
+                                                class="text-slate-500 hover:text-primary"
+                                                wire:click="$dispatch('openTrafficModal', { driverId: {{ $driver->id }}, trafficId: {{ $traffic->id }} })">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                                            </button>
+                                        </div>
+                                        
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
                                                 <div class="text-sm text-slate-500">Conviction Date</div>
-                                                <div class="font-medium">{{ $conviction->conviction_date ? $conviction->conviction_date->format('d/m/Y') : 'N/A' }}</div>
+                                                <div class="font-medium">{{ $traffic->conviction_date ? $traffic->conviction_date->format('m/d/Y') : 'N/A' }}</div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Location</div>
-                                                <div class="font-medium">{{ $conviction->location }}</div>
+                                                <div class="font-medium">{{ $traffic->location }}</div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Charge</div>
-                                                <div class="font-medium">{{ $conviction->charge }}</div>
+                                                <div class="font-medium">{{ $traffic->charge }}</div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Penalty</div>
-                                                <div class="font-medium">{{ $conviction->penalty }}</div>
+                                                <div class="font-medium">{{ $traffic->penalty }}</div>
                                             </div>
-                                            @if ($conviction->conviction_type)
-                                            <div>
-                                                <div class="text-sm text-slate-500">Type</div>
-                                                <div class="font-medium">{{ $conviction->conviction_type }}</div>
-                                            </div>
-                                            @endif
-                                            @if ($conviction->description)
-                                            <div class="col-span-2">
-                                                <div class="text-sm text-slate-500">Description</div>
-                                                <div class="font-medium">{{ $conviction->description }}</div>
-                                            </div>
-                                            @endif
+
                                         </div>
-                                        
-                                        <!-- Related Documents -->
-                                        @if (method_exists($conviction, 'getDocumentsGroupedByType') && count($conviction->getDocumentsGroupedByType()) > 0)
-                                        <div class="mt-3 pt-3 border-t border-slate-200">
-                                            <div class="text-sm text-slate-500 mb-2">Related Documents</div>
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                @foreach ($conviction->getDocumentsGroupedByType() as $type => $documents)
-                                                    <div>
-                                                        <div class="text-xs font-semibold mb-1">{{ ucwords(str_replace('_', ' ', $type)) }}</div>
-                                                        <div class="flex flex-wrap gap-2">
-                                                            @foreach ($documents as $document)
-                                                                <a href="{{ route('documents.show', $document) }}" target="_blank" class="block">
-                                                                    @if (Str::startsWith($document->mime_type, 'image/'))
-                                                                        <img src="{{ route('documents.show', $document) }}" 
-                                                                            alt="{{ $document->name }}" 
-                                                                            class="h-16 border rounded object-contain bg-white">
-                                                                    @else
-                                                                        <div class="h-16 w-16 border rounded flex items-center justify-center bg-white text-xs text-center p-1" title="{{ $document->name }}">
-                                                                            <div>
-                                                                                <svg class="h-5 w-5 mx-auto" viewBox="0 0 24 24" fill="#9a9a9a">
-                                                                                    <path d="M9 17h6m-6-3h6M9 9h1m3 0h2M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v16a2 2 0 002 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                                                </svg>
-                                                                                <span>{{ Str::limit($document->name, 10) }}</span>
-                                                                            </div>
+
+                                        @if (method_exists($traffic, 'getMedia') && $traffic->getMedia('traffic_images')->count() > 0)
+                                            <div class="mt-3 pt-3 border-t border-slate-200">
+                                                <div class="text-sm text-slate-500 mb-2">Documents</div>
+                                                <div class="flex flex-wrap gap-2">
+                                                    @foreach ($traffic->getMedia('traffic_images') as $document)
+                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="block">
+                                                            @if (Str::startsWith($document->mime_type, 'image/'))
+                                                                <img src="{{ $document->getUrl() }}" 
+                                                                    alt="{{ $document->name }}" 
+                                                                    class="h-24 w-24 border rounded flex items-center justify-center bg-white">
+                                                            @else                                                            
+                                                                <div class="h-24 w-24 border rounded flex items-center justify-center bg-white" title="{{ $document->name }}">
+                                                                    <div>
+                                                                        <div class="h-24 w-24 border rounded flex items-center justify-center bg-white">
+                                                                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20M13 13V17H10V13H13Z"></path></svg>
                                                                         </div>
-                                                                    @endif
-                                                                </a>
-                                                            @endforeach
-                                                        </div>
-                                                    </div>
-                                                @endforeach
+                                                                    </div>
+                                                                </div>
+                                                            @endif
+                                                        </a>
+                                                    @endforeach
+                                                </div>
                                             </div>
-                                        </div>
                                         @endif
                                     </div>
                                 @endforeach
                             </div>
                         @else
-                            <div class="text-slate-500 italic mb-4">No traffic violations have been recorded.</div>
+                            <div class="text-slate-500 italic mb-4">No traffic convictions have been registered.</div>
                         @endif
 
                         <!-- Divider -->
                         <div class="border-t my-5"></div>
 
                         <!-- Accidents Section -->
-                        <h3 class="text-lg font-medium mb-4">Accident Record</h3>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium">Accident Record</h3>
+                            <button type="button" 
+                                class="px-3 py-1.5 bg-primary text-white rounded-md text-sm flex items-center hover:bg-primary-focus"
+                                wire:click="$dispatch('openAccidentModal', { driverId: {{ $driver->id }} })">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                Add Accident
+                            </button>
+                        </div>
 
                         @if ($driver->accidents->isNotEmpty())
                             <div class="space-y-4">
                                 @foreach ($driver->accidents as $accident)
                                     <div class="bg-slate-50 p-4 rounded-lg">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <div class="font-medium">{{ $accident->accident_date ? (is_string($accident->accident_date) ? $accident->accident_date : $accident->accident_date->format('m-d-Y')) : 'N/A' }} - {{ $accident->location }}</div>
+                                            <button type="button" 
+                                                class="text-slate-500 hover:text-primary"
+                                                wire:click="$dispatch('openAccidentModal', { driverId: {{ $driver->id }}, accidentId: {{ $accident->id }} })">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                                            </button>
+                                        </div>
+                                        
                                         <div class="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <div class="text-sm text-slate-500">Accident Date</div>
-                                                <div class="font-medium">
-                                                    {{ $accident->accident_date ? $accident->accident_date->format('d/m/Y') : 'N/A' }}</div>
-                                            </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Nature of Accident</div>
                                                 <div class="font-medium">{{ $accident->nature_of_accident }}</div>
-                                            </div>
+                                            </div>                                            
                                         </div>
 
-                                        <div class="grid grid-cols-2 gap-4 mt-2">
-                                            @if ($accident->had_injuries)
-                                                <div>
-                                                    <div class="text-sm text-slate-500">Injuries</div>
-                                                    <div class="font-medium text-warning">Yes,
-                                                        {{ $accident->number_of_injuries }} person(s)</div>
-                                                </div>
-                                            @endif
-
+                                        <div class="grid grid-cols-3 gap-4 mt-2">
                                             @if ($accident->had_fatalities)
                                                 <div>
                                                     <div class="text-sm text-slate-500">Fatalities</div>
-                                                    <div class="font-medium text-danger">Yes,
-                                                        {{ $accident->number_of_fatalities }} person(s)</div>
+                                                    <div class="font-medium text-danger">Yes, {{ $accident->number_of_fatalities }} person(s)</div>
                                                 </div>
                                             @endif
+
+                                            @if ($accident->had_injuries)
+                                                <div>
+                                                    <div class="text-sm text-slate-500">Injuries</div>
+                                                    <div class="font-medium text-warning">Yes, {{ $accident->number_of_injuries }} person(s)</div>
+                                                </div>
+                                            @endif                                            
                                         </div>
 
                                         @if ($accident->comments)
-                                            <div class="mt-2">
+                                            <div class="mt-3">
                                                 <div class="text-sm text-slate-500">Comments</div>
-                                                <div class="text-sm">{{ $accident->comments }}</div>
+                                                <div class="text-sm mt-1">{{ $accident->comments }}</div>
+                                            </div>
+                                        @endif
+
+                                        @if (method_exists($accident, 'getMedia') && $accident->getMedia('accident-images')->count() > 0)
+                                            <div class="mt-3 pt-3 border-t border-slate-200">
+                                                <div class="text-sm text-slate-500 mb-2">Documents</div>
+                                                <div class="flex flex-wrap gap-2">
+                                                    @foreach ($accident->getMedia('accident-images') as $document)
+                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="block">
+                                                            @if (Str::startsWith($document->mime_type, 'image/'))
+                                                                <img src="{{ $document->getUrl() }}" 
+                                                                    alt="{{ $document->name }}" 
+                                                                    class="h-24 w-24 border rounded flex items-center justify-center bg-white">
+                                                            @else                                                            
+                                                                <div class="h-24 w-24 border rounded flex items-center justify-center bg-white" title="{{ $document->name }}">
+                                                                    <div>
+                                                                        <div class="h-24 w-24 border rounded flex items-center justify-center bg-white">
+                                                                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20M13 13V17H10V13H13Z"></path></svg>
+                                                                        </div>
+                                                                        {{-- <span>{{ Str::limit($document->name, 10) }}</span> --}}
+                                                                    </div>
+                                                                </div>
+                                                            @endif
+                                                        </a>
+                                                    @endforeach
+                                                </div>
                                             </div>
                                         @endif
                                     </div>
                                 @endforeach
                             </div>
                         @else
-                            <div class="text-slate-500 italic">No hay documentos disponibles. Por favor, regenera los
-                                documentos.</div>
+                            <div class="text-slate-500 italic mb-4">No accidents have been registered.</div>
                         @endif
 
+                        <div class="border-t my-5"></div>
 
 
                         <!-- FMCSR Data -->
                         @if ($driver->fmcsrData)
-                            <h3 class="text-lg font-medium mb-4 mt-8">Datos FMCSR</h3>
+                            <h3 class="text-lg font-medium mb-4 mt-8">FMCSR Data</h3>
                             <div class="bg-slate-50 p-4 rounded-lg">
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
@@ -2348,7 +2389,7 @@
                                             </svg>
                                         </div>
                                         <div class="flex-1">
-                                            <div class="font-medium">{{ $document['description'] }}</div>
+                                            <div class="font-medium">{{ $document['name'] }}</div>
                                             <div class="text-xs text-slate-500">{{ $document['size'] }} - Subido:
                                                 {{ $document['date'] }}</div>
                                         </div>
@@ -2401,7 +2442,7 @@
                                             </svg>
                                         </div>
                                         <div class="flex-1">
-                                            <div class="font-medium">{{ $document['description'] }}</div>
+                                            <div class="font-medium">{{ $document['name'] }}</div>
                                             <div class="text-xs text-slate-500">{{ $document['size'] }} - Subido:
                                                 {{ $document['date'] }}</div>
                                         </div>
@@ -2454,7 +2495,7 @@
                                             </svg>
                                         </div>
                                         <div class="flex-1">
-                                            <div class="font-medium">{{ $document['description'] }}</div>
+                                            <div class="font-medium">{{ $document['name'] }}</div>
                                             <div class="text-xs text-slate-500">{{ $document['size'] }} - Subido:
                                                 {{ $document['date'] }}</div>
                                         </div>
@@ -2507,7 +2548,7 @@
                                             </svg>
                                         </div>
                                         <div class="flex-1">
-                                            <div class="font-medium">{{ $document['description'] }}</div>
+                                            <div class="font-medium">{{ $document['name'] }}</div>
                                             <div class="text-xs text-slate-500">{{ $document['size'] }} - Subido:
                                                 {{ $document['date'] }}</div>
                                         </div>
