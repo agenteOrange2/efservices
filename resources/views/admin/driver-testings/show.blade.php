@@ -30,6 +30,12 @@
                         Download PDF
                     </x-base.button>
                 </a>
+                <a href="{{ route('admin.driver-testings.regenerate-pdf', ['driverTesting' => $driverTesting->id]) }}">
+                    <x-base.button variant="outline-warning" class="flex items-center">
+                        <x-base.lucide class="w-4 h-4 mr-2" icon="refresh-cw" />
+                        Regenerate PDF
+                    </x-base.button>
+                </a>
                 <a href="{{ route('admin.driver-testings.edit', ['driverTesting' => $driverTesting->id]) }}">
                     <x-base.button variant="outline-success" class="flex items-center">
                         <x-base.lucide class="w-4 h-4 mr-2" icon="edit" />
@@ -388,21 +394,21 @@
                                     <div class="flex flex-wrap gap-2">
                                         @if ($driverTesting->is_random_test)
                                             <span
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
                                                 <i class="fas fa-random mr-1"></i>
                                                 Random
                                             </span>
                                         @endif
                                         @if ($driverTesting->is_post_accident_test)
                                             <span
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">
                                                 <i class="fas fa-exclamation-triangle mr-1"></i>
                                                 Post Accident
                                             </span>
                                         @endif
                                         @if ($driverTesting->is_reasonable_suspicion_test)
                                             <span
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-red-100 text-red-800 border border-red-200">
                                                 <i class="fas fa-eye mr-1"></i>
                                                 Reasonable Suspicion
                                             </span>
@@ -630,6 +636,25 @@
         </div>
 
 
+        <!-- Vista previa del PDF -->
+        <div class="box box--stacked mt-5">
+            <div class="box-header box-header--transparent">
+                <div class="box-title">PDF Preview</div>
+            </div>
+            <div class="box-body p-5">
+                @if($driverTesting->hasMedia('drug_test_pdf'))
+                    <div class="w-full h-[800px] border border-slate-200 rounded-md overflow-hidden">
+                        <iframe src="{{ $driverTesting->getFirstMediaUrl('drug_test_pdf') }}" class="w-full h-full" frameborder="0"></iframe>
+                    </div>
+                @else
+                    <div class="flex items-center justify-center p-10 text-slate-500">
+                        <x-base.lucide class="w-6 h-6 mr-2" icon="file-x" />
+                        No PDF available. Please regenerate the PDF.
+                    </div>
+                @endif
+            </div>
+        </div>
+        
         <!-- Espacio para botones adicionales si se necesitan en el futuro -->
         <div class="mt-5"></div>
     </div>

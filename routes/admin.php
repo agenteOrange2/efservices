@@ -538,6 +538,7 @@ Route::prefix('driver-testings')->name('driver-testings.')->group(function () {
     Route::put('/{driverTesting}', [DriverTestingController::class, 'update'])->name('update');
     Route::delete('/{driverTesting}', [DriverTestingController::class, 'destroy'])->name('destroy');
     Route::get('/{driverTesting}/download-pdf', [DriverTestingController::class, 'downloadPdf'])->name('download-pdf');
+    Route::get('/{driverTesting}/regenerate-pdf', [DriverTestingController::class, 'regeneratePdf'])->name('regenerate-pdf');
     
     // Rutas API para búsqueda dinámica
     Route::get('/api/search-carriers', [DriverTestingController::class, 'searchCarriers'])->name('search-carriers');

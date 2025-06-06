@@ -420,6 +420,36 @@ class DriverTestingController extends Controller
         return response()->download($media->getPath(), $media->file_name);
     }
     
+    /**
+     * Regenerate PDF for a driver testing record
+     */
+    public function regeneratePdf(DriverTesting $driverTesting)
+    {
+        // Regenerar el PDF con la información actualizada
+        $pdf = $this->generatePDF($driverTesting);
+        $testingId = $driverTesting->getKey();
+        $pdfPath = storage_path('app/public/driver_testings/driver_testing_' . $testingId . '.pdf');
+        
+        // Asegurar que el directorio existe
+        $directory = storage_path('app/public/driver_testings');
+        if (!file_exists($directory)) {
+            mkdir($directory, 0755, true);
+        }
+        
+        // Guardar el PDF
+        file_put_contents($pdfPath, $pdf->output());
+        
+        // Eliminar PDF anterior si existe
+        $driverTesting->clearMediaCollection('drug_test_pdf');
+        
+        // Adjuntar el nuevo PDF a la biblioteca de medios en la colección correcta
+        $driverTesting->addMedia($pdfPath)
+            ->toMediaCollection('drug_test_pdf');
+        
+        return redirect()->route('admin.driver-testings.show', ['driverTesting' => $driverTesting->getKey()])
+            ->with('success', 'PDF has been regenerated successfully with the updated template.');
+    }
+    
 
     
     /**
