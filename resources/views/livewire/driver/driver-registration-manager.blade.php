@@ -17,7 +17,7 @@
         <div class="flex justify-between mb-3">
             <div class="text-lg font-semibold">
                 @if ($isIndependent)
-                    Independent Driver Registration
+                Registration Application (Independent)
                 @else
                     Driver Registration for {{ $carrier?->name ?? 'Your Carrier' }}
                 @endif

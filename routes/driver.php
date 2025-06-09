@@ -11,6 +11,15 @@ use App\Http\Controllers\Driver\RegistrationController;
 use App\Http\Controllers\Auth\DriverRegistrationController;
 
 
+// Rutas para el módulo de entrenamientos del conductor
+Route::middleware('auth')->prefix('trainings')->name('driver.trainings.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Driver\DriverTrainingController::class, 'index'])->name('index');
+    Route::get('/{driverTraining}', [\App\Http\Controllers\Driver\DriverTrainingController::class, 'show'])->name('show');
+    Route::post('/{driverTraining}/complete', [\App\Http\Controllers\Driver\DriverTrainingController::class, 'complete'])->name('complete');
+    Route::post('/{driverTraining}/start-progress', [\App\Http\Controllers\Driver\DriverTrainingController::class, 'startProgress'])->name('start-progress');
+    Route::get('/documents/{media}/preview', [\App\Http\Controllers\Driver\DriverTrainingController::class, 'previewDocument'])->name('documents.preview');
+});
+
 // Rutas públicas (no requieren autenticación)
 Route::middleware('guest')->group(function () {
     // Registro por referencia de carrier

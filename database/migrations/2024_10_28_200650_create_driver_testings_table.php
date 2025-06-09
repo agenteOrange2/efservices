@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('driver_testings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_driver_detail_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_driver_detail_id')->constrained()->onDelete('cascade');            
             $table->foreignId('carrier_id')->nullable()->constrained('carriers');
             $table->date('test_date');
             $table->string('test_type'); // e.g., Drug, Alcohol, Skills, Knowledge
@@ -37,9 +37,7 @@ return new class extends Migration
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');            
             // Campos adicionales para generar el PDF y gestionar resultados
-            $table->timestamps();
-
-
+            $table->timestamps();    
         });
     }
 

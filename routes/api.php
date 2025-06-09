@@ -33,13 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-// En routes/api.php
-Route::get('/get-drivers-by-carrier-id/{carrierId}', function ($carrierId) {
-    $drivers = \App\Models\UserDriverDetail::where('carrier_id', $carrierId)
-        ->with('user')
-        ->get(['id', 'user_id', 'last_name']);
-    return response()->json($drivers);
-});
+// La ruta para obtener conductores filtrados por transportista se ha movido a admin.php
 
 // Ruta para obtener conductores activos por carrier
 Route::get('/active-drivers-by-carrier/{carrierId}', function ($carrierId) {

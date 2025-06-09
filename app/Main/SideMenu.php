@@ -100,6 +100,18 @@ class SideMenu
                         'title' => "Driving Schools",
                     ],
                     [
+                        'icon' => "graduation-cap",
+                        'route_name' => "admin.trainings.index",
+                        'params' => [],
+                        'title' => "Trainings",
+                    ],
+                    [
+                        'icon' => "clipboard-list",
+                        'route_name' => "admin.trainings.assignments.index",
+                        'params' => [],
+                        'title' => "Training Assignments",
+                    ],
+                    [
                         'icon' => "shield-check",
                         'route_name' => "admin.courses.index",
                         'params' => [],

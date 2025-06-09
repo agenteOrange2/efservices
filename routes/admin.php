@@ -6,6 +6,7 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\FileUploaderController;
 use App\Http\Controllers\Admin\CarrierController;
 use App\Http\Controllers\Admin\DriversController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -16,26 +17,26 @@ use App\Http\Controllers\Admin\UserDriverController;
 use App\Http\Controllers\Admin\UserCarrierController;
 use App\Http\Controllers\Admin\DocumentTypeController;
 use App\Http\Controllers\Admin\NotificationsController;
+use App\Http\Controllers\Admin\Driver\CoursesController;
 use App\Http\Controllers\Admin\CarrierDocumentController;
 use App\Http\Controllers\Admin\Driver\TestingsController;
 use App\Http\Controllers\Admin\Driver\AccidentsController;
+use App\Http\Controllers\Admin\Driver\DocumentsController;
 use App\Http\Controllers\Admin\Vehicles\VehicleController;
 use App\Http\Controllers\Admin\Driver\DriverListController;
 use App\Http\Controllers\Admin\Driver\InspectionsController;
-use App\Http\Controllers\Admin\Driver\DocumentsController;
+use App\Http\Controllers\Admin\TrainingAssignmentsController;
 use App\Http\Controllers\Admin\UserCarrierDocumentController;
+use App\Http\Controllers\Admin\Driver\DriverTestingController;
 use App\Http\Controllers\Admin\Vehicles\MaintenanceController;
 use App\Http\Controllers\Admin\Vehicles\VehicleMakeController;
 use App\Http\Controllers\Admin\Vehicles\VehicleTypeController;
+use App\Http\Controllers\Admin\Driver\TrainingSchoolsController;
 use App\Http\Controllers\Admin\Driver\DriverRecruitmentController;
 use App\Http\Controllers\Admin\Vehicles\VehicleDocumentController;
 use App\Http\Controllers\Admin\Driver\TrafficConvictionsController;
-use App\Http\Controllers\Admin\Driver\TrainingSchoolsController;
-use App\Http\Controllers\Admin\Driver\CoursesController;
 use App\Http\Controllers\Admin\Vehicles\VehicleServiceItemController;
 use App\Http\Controllers\Admin\Vehicles\MaintenanceNotificationController;
-use App\Http\Controllers\Admin\Driver\DriverTestingController;
-use App\Http\Controllers\FileUploaderController;
 
 
 Route::get('theme-switcher/{activeTheme}', [ThemeController::class, 'switch'])->name('theme-switcher');
@@ -64,6 +65,9 @@ Route::delete('traffic/documents/{document}', [TrafficConvictionsController::cla
 
 // Ruta para eliminar documentos de training schools (usada por el formulario)
 Route::delete('training-schools/documents/{document}', [TrainingSchoolsController::class, 'destroyDocument'])->name('training-schools.documents.delete');
+
+
+
 
 // Rutas para gestión de documentos de accidentes
 Route::prefix('accidents')->name('accidents.')->group(function () {
@@ -122,7 +126,41 @@ Route::prefix('maintenance-notifications')->name('maintenance-notifications.')->
 // Rutas estándar de recursos para escuelas de entrenamiento
 Route::resource('training-schools', TrainingSchoolsController::class);
 
-// Rutas para gestión de documentos de escuelas de entrenamiento
+// Rutas para el nuevo módulo de entrenamientos
+Route::resource('trainings', \App\Http\Controllers\Admin\TrainingsController::class);
+
+// Rutas para asignaciones de entrenamientos
+Route::prefix('trainings')->name('trainings.')->group(function () {
+    // Rutas para asignar entrenamientos
+    Route::get('/assign-select', [\App\Http\Controllers\Admin\TrainingsController::class, 'assignSelect'])->name('assign.select');
+    Route::get('/{training}/assign', [\App\Http\Controllers\Admin\TrainingsController::class, 'showAssignForm'])->name('assign.form');
+    Route::post('/{training}/assign', [\App\Http\Controllers\Admin\TrainingsController::class, 'assign'])->name('assign');
+    
+    // API para obtener conductores filtrados por transportista
+    Route::get('carrier/{carrier}/drivers', [\App\Http\Controllers\Admin\TrainingsController::class, 'getDrivers'])->name('drivers.by.carrier');
+    
+    // Rutas para gestión de documentos de entrenamientos
+    Route::delete('/documents/{document}', [\App\Http\Controllers\Admin\TrainingsController::class, 'destroyDocument'])->name('documents.delete');
+    Route::get('/documents/{document}/preview', [\App\Http\Controllers\Admin\TrainingsController::class, 'previewDocument'])->name('preview-document');
+});
+
+// Rutas para gestión de asignaciones de entrenamientos
+Route::resource('training-assignments', \App\Http\Controllers\Admin\TrainingAssignmentsController::class, [
+    'as' => 'trainings.assignments'
+]);
+
+// Rutas adicionales para asignaciones de entrenamientos
+Route::prefix('training-assignments')->name('trainings.assignments.')->group(function () {
+    Route::post('/{training}/mark-complete', [\App\Http\Controllers\Admin\TrainingAssignmentsController::class, 'markComplete'])->name('complete');
+});
+
+
+/*
+    |--------------------------------------------------------------------------
+    | RUTAS PARA GESTION DE DOCUMENTOS DE ESCUELA DE ENTRENAMIENTO
+    |--------------------------------------------------------------------------    
+*/
+
 Route::prefix('training-schools')->name('training-schools.')->group(function () {
     // Vista de todos los documentos
     Route::get('all/documents', [TrainingSchoolsController::class, 'documents'])->name('documents');
