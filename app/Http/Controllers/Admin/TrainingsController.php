@@ -53,7 +53,7 @@ class TrainingsController extends Controller
 
         $trainings = $query->withCount('driverAssignments')->paginate(10);
 
-        return view('admin.trainings.index', compact('trainings'));
+        return view('admin.drivers.trainings.index', compact('trainings'));
     }
 
     /**
@@ -63,7 +63,7 @@ class TrainingsController extends Controller
      */
     public function create()
     {
-        return view('admin.trainings.create');
+        return view('admin.drivers.trainings.create');
     }
 
     /**
@@ -189,7 +189,7 @@ class TrainingsController extends Controller
             'pending' => $training->driverAssignments()->where('status', 'pending')->count(),
         ];
 
-        return view('admin.trainings.show', compact('training', 'assignmentStats'));
+        return view('admin.drivers.trainings.show', compact('training', 'assignmentStats'));
     }
 
     /**
@@ -201,7 +201,7 @@ class TrainingsController extends Controller
     public function edit(Training $training)
     {
         $training->load('media');
-        return view('admin.trainings.edit', compact('training'));
+        return view('admin.drivers.trainings.edit', compact('training'));
     }
 
     /**
@@ -421,19 +421,7 @@ class TrainingsController extends Controller
         }
     }
 
-    /**
-     * Show the form for assigning training to drivers.
-     *
-     * @param  \App\Models\Training  $training
-     * @return \Illuminate\Http\Response
-     */
-    public function showAssignForm(Training $training)
-    {
-        $carriers = Carrier::where('status', 'active')->get();
-        $selectedTraining = $training;
-        $trainings = Training::where('status', 'active')->get();
-        return view('admin.trainings.assign', compact('selectedTraining', 'carriers', 'trainings'));
-    }
+    // El método showAssignForm ha sido movido a TrainingAssignmentsController
     
     /**
      * Show the training selection page for assignments.
@@ -443,70 +431,10 @@ class TrainingsController extends Controller
     public function assignSelect()
     {
         $trainings = Training::where('status', 'active')->get();
-        return view('admin.trainings.assign-select', compact('trainings'));
+        return view('admin.drivers.trainings.assign-select', compact('trainings'));
     }
 
-    /**
-     * Assign training to drivers.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Training  $training
-     * @return \Illuminate\Http\Response
-     */
-    public function assign(Request $request, Training $training)
-    {
-        $validated = $request->validate([
-            'driver_ids' => 'required|array',
-            'driver_ids.*' => 'exists:user_driver_details,id',
-            'due_date' => 'nullable|date',
-            'status' => 'required|in:pending,in_progress,completed',
-            'notes' => 'nullable|string',
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $assignedCount = 0;
-            $alreadyAssignedCount = 0;
-
-            foreach ($validated['driver_ids'] as $driverId) {
-                // Check if already assigned
-                $exists = DriverTraining::where('driver_id', $driverId)
-                    ->where('training_id', $training->id)
-                    ->exists();
-
-                if (!$exists) {
-                    DriverTraining::create([
-                        'driver_id' => $driverId,
-                        'training_id' => $training->id,
-                        'due_date' => $validated['due_date'],
-                        'status' => $validated['status'],
-                        'notes' => $validated['notes'],
-                        'assigned_by' => Auth::id(),
-                    ]);
-                    $assignedCount++;
-                } else {
-                    $alreadyAssignedCount++;
-                }
-            }
-
-            DB::commit();
-
-            $message = "{$assignedCount} drivers assigned successfully.";
-            if ($alreadyAssignedCount > 0) {
-                $message .= " {$alreadyAssignedCount} drivers were already assigned.";
-            }
-
-            return redirect()->route('admin.trainings.assignments.index')
-                ->with('success', $message);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error assigning training: ' . $e->getMessage());
-            
-            return back()->withInput()
-                ->with('error', 'Error assigning training: ' . $e->getMessage());
-        }
-    }
+    // El método assign ha sido movido a TrainingAssignmentsController
 
     /**
      * Remove a document from a training.
@@ -533,34 +461,5 @@ class TrainingsController extends Controller
             Log::error('Error deleting document: ' . $e->getMessage());
             return response()->json(['error' => 'Error deleting document'], 500);
         }
-    }
-    
-    /**
-     * Get drivers filtered by carrier ID.
-     *
-     * @param  int  $carrier
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getDrivers($carrier)
-    {
-        $drivers = UserDriverDetail::where('carrier_id', $carrier)
-            ->whereHas('user', function ($query) {
-                $query->where('status', 1); // Only active users
-            })
-            ->where('status', 'active') // Only active driver details
-            ->with('user:id,name') // Only get necessary user fields
-            ->get(['id', 'user_id', 'last_name', 'carrier_id']);
-        
-        // Format the response with driver name and ID
-        $formattedDrivers = $drivers->map(function($driver) {
-            return [
-                'id' => $driver->id,
-                'name' => $driver->user->name . ' ' . ($driver->last_name ?? '')
-            ];
-        });
-
-        return response()->json([
-            'drivers' => $formattedDrivers
-        ]);
     }
 }

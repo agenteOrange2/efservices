@@ -207,11 +207,11 @@
 
                 <!-- Attached Files -->
                 @if ($training->content_type === 'file')
-                    <div class="box mt-6">
+                    <div class="box box--stacked mt-5 p-3">
                         <div class="box-header">
                             <h3 class="box-title">Attached Files</h3>
                         </div>
-                        <div class="box-content">
+                        <div >
                             @if ($training->media->count() > 0)
                                 <ul class="divide-y divide-gray-200">
                                     @foreach ($training->media as $file)
@@ -350,7 +350,7 @@
 
                         <div class="mt-3">
                             <x-base.button as="a"
-                                href="{{ route('admin.trainings.assignments.index', ['training_id' => $training->id]) }}"
+                                href="{{ route('admin.training-assignments.index') }}"
                                 variant="outline-primary" class="w-full justify-center">
                                 {{-- <x-base.icon.clipboard-list class="w-5 h-5 mr-2" /> --}}
                                 View Assignments

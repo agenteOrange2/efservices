@@ -49,8 +49,6 @@ Route::post('/dashboard/ajax-update', [DashboardController::class, 'ajaxUpdate']
 // Aquí solo mantenemos las rutas del dashboard principal
 
 
-
-
 /*
     |--------------------------------------------------------------------------
     | RUTAS API ADMIN PARA AJAX
@@ -129,31 +127,33 @@ Route::resource('training-schools', TrainingSchoolsController::class);
 // Rutas para el nuevo módulo de entrenamientos
 Route::resource('trainings', \App\Http\Controllers\Admin\TrainingsController::class);
 
+// Ruta directa para seleccionar entrenamientos para asignar
+Route::get('/select-training-for-assignment', [\App\Http\Controllers\Admin\TrainingsController::class, 'assignSelect'])->name('select-training');
+
+
+
 // Rutas para asignaciones de entrenamientos
-Route::prefix('trainings')->name('trainings.')->group(function () {
-    // Rutas para asignar entrenamientos
-    Route::get('/assign-select', [\App\Http\Controllers\Admin\TrainingsController::class, 'assignSelect'])->name('assign.select');
-    Route::get('/{training}/assign', [\App\Http\Controllers\Admin\TrainingsController::class, 'showAssignForm'])->name('assign.form');
-    Route::post('/{training}/assign', [\App\Http\Controllers\Admin\TrainingsController::class, 'assign'])->name('assign');
+Route::prefix('trainings')->group(function () {
+    // Asignación de entrenamientos (usar TrainingAssignmentsController para la lógica de asignación)
+    Route::get('/{training}/assign', [\App\Http\Controllers\Admin\TrainingAssignmentsController::class, 'showAssignForm'])->name('trainings.assign.form');
+    Route::post('/{training}/assign', [\App\Http\Controllers\Admin\TrainingAssignmentsController::class, 'assign'])->name('trainings.assign');
     
     // API para obtener conductores filtrados por transportista
-    Route::get('carrier/{carrier}/drivers', [\App\Http\Controllers\Admin\TrainingsController::class, 'getDrivers'])->name('drivers.by.carrier');
+    Route::get('carrier/{carrier}/drivers', [\App\Http\Controllers\Admin\TrainingAssignmentsController::class, 'getDrivers'])->name('trainings.drivers.by.carrier');
     
-    // Rutas para gestión de documentos de entrenamientos
-    Route::delete('/documents/{document}', [\App\Http\Controllers\Admin\TrainingsController::class, 'destroyDocument'])->name('documents.delete');
-    Route::get('/documents/{document}/preview', [\App\Http\Controllers\Admin\TrainingsController::class, 'previewDocument'])->name('preview-document');
+    // Rutas para gestión de documentos de entrenamientos (permanecen en TrainingsController)
+    Route::delete('/documents/{document}', [\App\Http\Controllers\Admin\TrainingsController::class, 'destroyDocument'])->name('trainings.documents.delete');
+    Route::get('/documents/{document}/preview', [\App\Http\Controllers\Admin\TrainingsController::class, 'previewDocument'])->name('trainings.preview-document');
 });
 
 // Rutas para gestión de asignaciones de entrenamientos
-Route::resource('training-assignments', \App\Http\Controllers\Admin\TrainingAssignmentsController::class, [
-    'as' => 'trainings.assignments'
-]);
+Route::resource('training-assignments', \App\Http\Controllers\Admin\TrainingAssignmentsController::class);
 
 // Rutas adicionales para asignaciones de entrenamientos
-Route::prefix('training-assignments')->name('trainings.assignments.')->group(function () {
-    Route::post('/{training}/mark-complete', [\App\Http\Controllers\Admin\TrainingAssignmentsController::class, 'markComplete'])->name('complete');
+Route::prefix('training-assignments')->group(function () {
+    Route::post('/{assignment}/mark-complete', [\App\Http\Controllers\Admin\TrainingAssignmentsController::class, 'markComplete'])->name('training-assignments.mark-complete');
+    Route::get('/get-drivers/{carrier}', [\App\Http\Controllers\Admin\TrainingAssignmentsController::class, 'getDrivers'])->name('training-assignments.get-drivers');
 });
-
 
 /*
     |--------------------------------------------------------------------------

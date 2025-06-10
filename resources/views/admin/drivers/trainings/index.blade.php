@@ -22,18 +22,23 @@
                     Create Training
                 </x-base.button>
                 
-                <x-base.button as="a" href="{{ route('admin.trainings.assign.select') }}" class="w-full sm:w-auto" variant="outline-primary">
-                    <x-base.lucide class="w-5 h-5 mr-2" icon="users" />
-                    Assign Training
-                </x-base.button>
+                {{-- Se eliminó el botón general de asignar entrenamientos --}}
                 
-                <x-base.button as="a" href="{{ route('admin.trainings.assignments.index') }}" class="w-full sm:w-auto" variant="outline-primary">
+                <x-base.button as="a" href="{{ route('admin.training-assignments.index') }}" class="w-full sm:w-auto" variant="outline-primary">
                     <x-base.lucide class="w-5 h-5 mr-2" icon="clipboard-list" />
                     View Assignments
                 </x-base.button>
             </div>
         </div>
 
+        <!-- Instrucciones de asignación -->
+        <div class="box box--stacked mt-5 p-3 bg-blue-50">
+            <h3 class="box-title text-blue-700">Instrucciones para asignar entrenamientos</h3>
+            <div class="p-3">
+                <p class="text-blue-600"><strong>Para asignar un entrenamiento:</strong> Haz clic en el botón "Ver detalles" de cualquier entrenamiento activo y luego usa el botón "Asignar a conductores" en la página de detalles.</p>
+            </div>
+        </div>
+        
         <!-- Filtros -->
         <div class="box box--stacked mt-5 p-3">
             <h3 class="box-title">Filter Trainings</h3>
@@ -199,6 +204,14 @@
                                                    title="Ver detalles">
                                                     <x-base.lucide class="w-5 h-5" icon="eye" />
                                                 </a>
+                                                
+                                                @if($training->status == 'active')
+                                                <a href="/admin/trainings/{{ $training->id }}/assign" 
+                                                   class="text-green-600 hover:text-green-900" 
+                                                   title="Asignar a conductores">
+                                                    <x-base.lucide class="w-5 h-5" icon="users" />
+                                                </a>
+                                                @endif
                                                 
                                                 <a href="{{ route('admin.trainings.edit', $training->id) }}" 
                                                    class="text-blue-600 hover:text-blue-900" 

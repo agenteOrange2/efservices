@@ -52,7 +52,7 @@ class TrainingSchoolsController extends Controller
         $trainingSchools = $query->paginate(10);
         $drivers = UserDriverDetail::with('user')->get();
 
-        return view('admin.drivers.training.index', compact('trainingSchools', 'drivers'));
+        return view('admin.drivers.training-school.index', compact('trainingSchools', 'drivers'));
     }
 
     /**
@@ -63,7 +63,7 @@ class TrainingSchoolsController extends Controller
         // No cargar conductores inicialmente, se cargarán vía AJAX después de seleccionar un carrier
         // Usando el mismo filtro que en accidents: status=1
         $carriers = \App\Models\Carrier::where('status', 1)->orderBy('name')->get();
-        return view('admin.drivers.training.create', compact('carriers'));
+        return view('admin.drivers.training-school.create', compact('carriers'));
     }
 
     /**
@@ -193,7 +193,7 @@ class TrainingSchoolsController extends Controller
     {
         $trainingSchool->load('userDriverDetail.user');
         $school = $trainingSchool; // Renombrar para consistencia con la vista
-        return view('admin.drivers.training.show', compact('school'));
+        return view('admin.drivers.training-school.show', compact('school'));
     }
 
     /**
@@ -241,7 +241,7 @@ class TrainingSchoolsController extends Controller
             ];
         }
         
-        return view('admin.drivers.training.edit', compact(
+        return view('admin.drivers.training-school.edit', compact(
             'trainingSchool', 
             'carriers', 
             'drivers', 
@@ -434,7 +434,7 @@ class TrainingSchoolsController extends Controller
             'school_id' => $school->id
         ];
         
-        return view('admin.drivers.training.documents', compact('school', 'schools', 'drivers', 'documents', 'debugInfo'));
+        return view('admin.drivers.training-school.documents', compact('school', 'schools', 'drivers', 'documents', 'debugInfo'));
     }
 
     /**
@@ -490,7 +490,7 @@ class TrainingSchoolsController extends Controller
             $drivers = UserDriverDetail::with('user')->get();
             $schools = DriverTrainingSchool::orderBy('school_name')->get();
             
-            return view('admin.drivers.training.all_documents', compact('documents', 'drivers', 'schools'));
+            return view('admin.drivers.training-school.all_documents', compact('documents', 'drivers', 'schools'));
         } catch (\Exception $e) {
             Log::error('Error loading training documents', [
                 'error' => $e->getMessage(),

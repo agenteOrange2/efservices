@@ -107,7 +107,7 @@ class SideMenu
                     ],
                     [
                         'icon' => "clipboard-list",
-                        'route_name' => "admin.trainings.assignments.index",
+                        'route_name' => "admin.training-assignments.index",
                         'params' => [],
                         'title' => "Training Assignments",
                     ],

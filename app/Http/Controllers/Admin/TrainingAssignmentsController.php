@@ -78,7 +78,7 @@ class TrainingAssignmentsController extends Controller
         $carriers = Carrier::where('status', 'active')->get();
         $trainings = Training::where('status', 'active')->get();
         
-        return view('admin.trainings.assignments', compact('assignments', 'carriers', 'trainings'));
+        return view('admin.drivers.trainings.assignments.index', compact('assignments', 'carriers', 'trainings'));
     }
     
     /**
@@ -157,5 +157,110 @@ class TrainingAssignmentsController extends Controller
                 'message' => 'Error deleting training assignment.',
             ], 500);
         }
+    }
+    
+    /**
+     * Show the form for assigning training to drivers.
+     *
+     * @param  \App\Models\Admin\Driver\Training  $training
+     * @return \Illuminate\Http\Response
+     */
+    public function showAssignForm(Training $training)
+    {
+        // Usar la constante STATUS_ACTIVE del modelo Carrier
+        $carriers = Carrier::where('status', Carrier::STATUS_ACTIVE)->get();
+        $selectedTraining = $training;
+        $trainings = Training::where('status', 'active')->get();
+        return view('admin.drivers.trainings.assign', compact('selectedTraining', 'carriers', 'trainings'));
+    }
+    
+    /**
+     * Assign training to drivers.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Admin\Driver\Training  $training
+     * @return \Illuminate\Http\Response
+     */
+    public function assign(Request $request, Training $training)
+    {
+        $validated = $request->validate([
+            'driver_ids' => 'required|array',
+            'driver_ids.*' => 'exists:user_driver_details,id',
+            'due_date' => 'nullable|date',
+            'status' => 'required|in:assigned,in_progress,completed',
+            'notes' => 'nullable|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $assignedCount = 0;
+            $alreadyAssignedCount = 0;
+
+            foreach ($validated['driver_ids'] as $driverId) {
+                // Check if already assigned
+                $exists = DriverTraining::where('user_driver_detail_id', $driverId)
+                    ->where('training_id', $training->id)
+                    ->exists();
+
+                if (!$exists) {
+                    DriverTraining::create([
+                        'user_driver_detail_id' => $driverId,
+                        'training_id' => $training->id,
+                        'assigned_date' => now(),
+                        'due_date' => $validated['due_date'],
+                        'status' => $validated['status'],
+                        'completion_notes' => $validated['notes'],
+                        'assigned_by' => Auth::id(),
+                    ]);
+                    $assignedCount++;
+                } else {
+                    $alreadyAssignedCount++;
+                }
+            }
+
+            DB::commit();
+            
+            $message = "{$assignedCount} drivers assigned successfully.";
+            if ($alreadyAssignedCount > 0) {
+                $message .= " {$alreadyAssignedCount} drivers were already assigned.";
+            }
+
+            return redirect()->route('admin.training-assignments.index')
+                ->with('success', $message);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error assigning training: ' . $e->getMessage());
+            
+            return back()->withInput()
+                ->with('error', 'Error assigning training: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Get drivers filtered by carrier ID.
+     * If carrier ID is 0, returns all active drivers.
+     *
+     * @param  int  $carrier
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getDrivers($carrier)
+    {
+        $query = UserDriverDetail::query()
+            ->whereHas('user', function ($query) {
+                $query->where('status', 1); // Only active users
+            })
+            ->where('status', UserDriverDetail::STATUS_ACTIVE); // Usar la constante para conductores activos
+            
+        // Si carrier_id no es 0, filtra por la transportista específica
+        if ($carrier != 0) {
+            $query->where('carrier_id', $carrier);
+        }
+        
+        $drivers = $query->with('user')
+            ->get();
+        
+        // Devolver directamente los conductores como array JSON
+        return response()->json($drivers);
     }
 }

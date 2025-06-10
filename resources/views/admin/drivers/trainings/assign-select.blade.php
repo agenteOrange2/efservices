@@ -60,7 +60,7 @@
                                     </div>
                                     
                                     <div class="flex justify-end">
-                                        <x-base.button as="a" href="{{ route('admin.trainings.assign.form', $training) }}" variant="primary">
+                                        <x-base.button as="a" href="{{ route('admin.trainings.assign.form', $training->id) }}" variant="primary">
                                             <x-base.lucide class="w-5 h-5 mr-2" icon="users" />
                                             Asignar
                                         </x-base.button>
@@ -86,3 +86,4 @@
         </div>
     </div>
 @endsection
+
