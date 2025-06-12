@@ -40,11 +40,27 @@ class DriverTestingController extends Controller
         }
         
         if ($request->has('test_date_from') && $request->test_date_from != '') {
-            $query->whereDate('test_date', '>=', $request->test_date_from);
+            try {
+                $formattedDateFrom = Carbon::createFromFormat('m/d/Y', $request->test_date_from)->format('Y-m-d');
+                $query->whereDate('test_date', '>=', $formattedDateFrom);
+            } catch (\Exception $e) {
+                // Log error pero no interrumpir el flujo
+                Log::error('Error parsing test_date_from: ' . $e->getMessage(), [
+                    'input' => $request->test_date_from
+                ]);
+            }
         }
         
         if ($request->has('test_date_to') && $request->test_date_to != '') {
-            $query->whereDate('test_date', '<=', $request->test_date_to);
+            try {
+                $formattedDateTo = Carbon::createFromFormat('m/d/Y', $request->test_date_to)->format('Y-m-d');
+                $query->whereDate('test_date', '<=', $formattedDateTo);
+            } catch (\Exception $e) {
+                // Log error pero no interrumpir el flujo
+                Log::error('Error parsing test_date_to: ' . $e->getMessage(), [
+                    'input' => $request->test_date_to
+                ]);
+            }
         }
         
         if ($request->has('carrier_id') && $request->carrier_id != '') {
@@ -58,6 +74,17 @@ class DriverTestingController extends Controller
         $locations = DriverTesting::getLocations();
         $statuses = DriverTesting::getStatuses();
         $carriers = Carrier::orderBy('name')->pluck('name', 'id');
+        
+        // Log filter parameters for debugging
+        Log::info('Driver Testing Filter Parameters', [
+            'test_date_from' => $request->test_date_from,
+            'test_date_to' => $request->test_date_to,
+            'status' => $request->status,
+            'location' => $request->location,
+            'carrier_id' => $request->carrier_id,
+            'search_term' => $request->search_term,
+            'total_results' => $driverTestings->total()
+        ]);
         
         // Log any records with missing relationships for debugging
         foreach ($driverTestings as $test) {

@@ -69,7 +69,7 @@
                 </div>
 
                 <div class="text-sm">
-                    Apply: {{ $driver->created_at->format('d/m/Y') }}
+                    Apply: {{ $driver->created_at->format('m/d/Y') }}
                 </div>
             </div>
         </div>
@@ -84,7 +84,7 @@
                     </div>
                     <div class="bg-slate-50 p-4 rounded-lg">
                         <div class="text-sm text-slate-500">Date Of Birthday</div>
-                        <div class="font-medium">{{ $driver->date_of_birth->format('d/m/Y') }}</div>
+                        <div class="font-medium">{{ $driver->date_of_birth->format('m/d/Y') }}</div>
                     </div>
                     <div class="bg-slate-50 p-4 rounded-lg">
                         <div class="text-sm text-slate-500">License</div>
@@ -230,7 +230,7 @@
                             </div>
                             <div>
                                 <div class="text-sm text-slate-500">Date of Birth</div>
-                                <div class="font-medium">{{ $driver->date_of_birth->format('d/m/Y') }}</div>
+                                <div class="font-medium">{{ $driver->date_of_birth->format('m/d/Y') }}</div>
                             </div>
                         </div>
                     </div>
@@ -257,7 +257,7 @@
                                 </div>
                                 <div>
                                     <div class="text-sm text-slate-500">Resident since</div>
-                                    <div class="font-medium">{{ $address->from_date->format('m/Y') }}</div>
+                                    <div class="font-medium">{{ $address->from_date->format('m/d/Y') }}</div>
                                 </div>
                                 <div>
                                     <div class="text-sm text-slate-500">Time living at the address</div>
@@ -362,7 +362,7 @@
                                     <div class="text-sm text-slate-500">Card TWIC</div>
                                     <div class="font-medium">
                                         @if ($details->has_twic_card)
-                                            Yes, expires: {{ $details->twic_expiration_date->format('d/m/Y') }}
+                                            Yes, expires: {{ $details->twic_expiration_date->format('m/d/Y') }}
                                         @else
                                             No
                                         @endif
@@ -413,7 +413,7 @@
                                             <div class="text-sm text-slate-500">Expiration</div>
                                             <div
                                                 class="font-medium {{ $license->expiration_date < now() ? 'text-danger' : '' }}">
-                                                {{ $license->expiration_date->format('d/m/Y') }}
+                                                {{ $license->expiration_date->format('m/d/Y') }}
                                             </div>
                                         </div>
                                         <div>
@@ -443,33 +443,65 @@
                                     <div class="mt-3 pt-3 border-t border-slate-200">
                                         <div class="text-sm text-slate-500 mb-2">License Images</div>
                                         <div class="flex gap-4">
-                                            @if ($license->getFirstMediaUrl('license_front'))
-                                                <div>
-                                                    <div class="text-xs text-slate-500 mb-1">Front</div>
-                                                    <a href="{{ $license->getFirstMediaUrl('license_front') }}"
-                                                        target="_blank" class="block">
-                                                        <img src="{{ $license->getFirstMediaUrl('license_front') }}"
-                                                            alt="Frente de licencia"
-                                                            class="h-32 border rounded object-contain bg-white">
-                                                    </a>
-                                                </div>
-                                            @else
-                                                <div class="text-danger text-sm">Front image not available</div>
-                                            @endif
+                                            <div>
+                                                <div class="text-xs text-slate-500 mb-1">Front</div>
+                                                @if ($license->getFirstMediaUrl('license_front'))
+                                                    <div class="relative group">
+                                                        <a href="{{ $license->getFirstMediaUrl('license_front') }}" target="_blank" class="block">
+                                                            <img src="{{ $license->getFirstMediaUrl('license_front') }}"
+                                                                alt="Frente de licencia"
+                                                                class="h-32 border rounded object-contain bg-white">
+                                                        </a>
+                                                        <button wire:click="editLicenseFrontImage({{ $license->id }})" 
+                                                                class="absolute bottom-2 right-2 bg-primary text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                                                                title="Update front license image">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21h-9.5A2.25 2.25 0 014 18.75V8.25A2.25 2.25 0 016.25 6H8" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                @else
+                                                    <div class="flex flex-col items-center border border-dashed border-slate-300 rounded p-4 bg-slate-50">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-slate-400 mb-2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                                                        </svg>
+                                                        <button wire:click="editLicenseFrontImage({{ $license->id }})" 
+                                                                class="text-sm text-primary hover:underline">
+                                                            Upload Front Image
+                                                        </button>
+                                                    </div>
+                                                @endif
+                                            </div>
 
-                                            @if ($license->getFirstMediaUrl('license_back'))
-                                                <div>
-                                                    <div class="text-xs text-slate-500 mb-1">Reverse</div>
-                                                    <a href="{{ $license->getFirstMediaUrl('license_back') }}"
-                                                        target="_blank" class="block">
-                                                        <img src="{{ $license->getFirstMediaUrl('license_back') }}"
-                                                            alt="Reverso de licencia"
-                                                            class="h-32 border rounded object-contain bg-white">
-                                                    </a>
-                                                </div>
-                                            @else
-                                                <div class="text-danger text-sm">Reverse side image not available</div>
-                                            @endif
+                                            <div>
+                                                <div class="text-xs text-slate-500 mb-1">Reverse</div>
+                                                @if ($license->getFirstMediaUrl('license_back'))
+                                                    <div class="relative group">
+                                                        <a href="{{ $license->getFirstMediaUrl('license_back') }}" target="_blank" class="block">
+                                                            <img src="{{ $license->getFirstMediaUrl('license_back') }}"
+                                                                alt="Reverso de licencia"
+                                                                class="h-32 border rounded object-contain bg-white">
+                                                        </a>
+                                                        <button wire:click="editLicenseBackImage({{ $license->id }})" 
+                                                                class="absolute bottom-2 right-2 bg-primary text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                                                                title="Update back license image">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21h-9.5A2.25 2.25 0 014 18.75V8.25A2.25 2.25 0 016.25 6H8" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                @else
+                                                    <div class="flex flex-col items-center border border-dashed border-slate-300 rounded p-4 bg-slate-50">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-slate-400 mb-2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                                                        </svg>
+                                                        <button wire:click="editLicenseBackImage({{ $license->id }})" 
+                                                                class="text-sm text-primary hover:underline">
+                                                            Upload Back Image
+                                                        </button>
+                                                    </div>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -529,7 +561,7 @@
                                     <div class="text-sm text-slate-500">Medical Card Expiration Date</div>
                                     <div
                                         class="font-medium {{ $medical->medical_card_expiration_date < now() ? 'text-danger' : '' }}">
-                                        {{ $medical->medical_card_expiration_date->format('d/m/Y') }}
+                                        {{ $medical->medical_card_expiration_date->format('m/d/Y') }}
                                     </div>
                                 </div>
                                 <div>
@@ -549,7 +581,7 @@
                                 @if ($medical->is_suspended)
                                     <div class="bg-warning/20 p-3 rounded border border-warning/20">
                                         <div class="text-sm font-medium text-warning">Driver is Suspended</div>
-                                        <div class="text-sm">From: {{ $medical->suspension_date->format('d/m/Y') }}
+                                        <div class="text-sm">From: {{ $medical->suspension_date->format('m/d/Y') }}
                                         </div>
                                     </div>
                                 @endif
@@ -557,7 +589,7 @@
                                 @if ($medical->is_terminated)
                                     <div class="bg-danger/20 p-3 rounded border border-danger/20">
                                         <div class="text-sm font-medium text-danger">Driver is Terminated</div>
-                                        <div class="text-sm">From: {{ $medical->termination_date->format('d/m/Y') }}
+                                        <div class="text-sm">From: {{ $medical->termination_date->format('m/d/Y') }}
                                         </div>
                                     </div>
                                 @endif
@@ -567,13 +599,30 @@
                             <div class="mt-4 pt-4 border-t border-slate-200">
                                 <div class="text-sm text-slate-500 mb-2">Medical Card</div>
                                 @if ($medical->getFirstMediaUrl('medical_card'))
-                                    <a href="{{ $medical->getFirstMediaUrl('medical_card') }}" target="_blank"
-                                        class="block w-64">
-                                        <img src="{{ $medical->getFirstMediaUrl('medical_card') }}"
-                                            alt="Tarjeta médica" class="border rounded object-contain bg-white">
-                                    </a>
+                                    <div class="relative group">
+                                        <a href="{{ $medical->getFirstMediaUrl('medical_card') }}" target="_blank" class="block">
+                                            <img src="{{ $medical->getFirstMediaUrl('medical_card') }}"
+                                                alt="Tarjeta médica"
+                                                class="h-32 border rounded object-contain bg-white">
+                                        </a>
+                                        <button wire:click="editMedicalImage()" 
+                                                class="absolute bottom-2 right-2 bg-primary text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                                                title="Update medical card image">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21h-9.5A2.25 2.25 0 014 18.75V8.25A2.25 2.25 0 016.25 6H8" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 @else
-                                    <div class="text-danger text-sm">Medical card not uploaded</div>
+                                    <div class="flex flex-col items-center border border-dashed border-slate-300 rounded p-4 bg-slate-50">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-slate-400 mb-2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                                        </svg>
+                                        <button wire:click="editMedicalImage()" 
+                                                class="text-sm text-primary hover:underline">
+                                            Upload Medical Card
+                                        </button>
+                                    </div>
                                 @endif
                             </div>
                         @else
@@ -734,11 +783,11 @@
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Certification Date</div>
-                                                <div class="font-medium">{{ $course->certification_date ? $course->certification_date->format('d/m/Y') : 'N/A' }}</div>
+                                                <div class="font-medium">{{ $course->certification_date ? $course->certification_date->format('m/d/Y') : 'N/A' }}</div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Expiration Date</div>
-                                                <div class="font-medium">{{ $course->expiration_date ? $course->expiration_date->format('d/m/Y') : 'N/A' }}</div>
+                                                <div class="font-medium">{{ $course->expiration_date ? $course->expiration_date->format('m/d/Y') : 'N/A' }}</div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Experience</div>
@@ -791,7 +840,7 @@
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Test Date</div>
-                                                <div class="font-medium">{{ $test->test_date ? $test->test_date->format('d/m/Y') : 'N/A' }}</div>
+                                                <div class="font-medium">{{ $test->test_date ? $test->test_date->format('m/d/Y') : 'N/A' }}</div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Test Result</div>
@@ -815,11 +864,11 @@
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Scheduled Time</div>
-                                                <div class="font-medium">{{ $test->scheduled_time ? $test->scheduled_time->format('d/m/Y H:i') : 'N/A' }}</div>
+                                                <div class="font-medium">{{ $test->scheduled_time ? $test->scheduled_time->format('m/d/Y H:i') : 'N/A' }}</div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Next Test Due</div>
-                                                <div class="font-medium">{{ $test->next_test_due ? $test->next_test_due->format('d/m/Y') : 'N/A' }}</div>
+                                                <div class="font-medium">{{ $test->next_test_due ? $test->next_test_due->format('m/d/Y') : 'N/A' }}</div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Bill To</div>
@@ -914,7 +963,7 @@
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
                                                 <div class="text-sm text-slate-500">Inspection Date</div>
-                                                <div class="font-medium">{{ $inspection->inspection_date ? $inspection->inspection_date->format('d/m/Y') : 'N/A' }}</div>
+                                                <div class="font-medium">{{ $inspection->inspection_date ? $inspection->inspection_date->format('m/d/Y') : 'N/A' }}</div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Inspection Type</div>
@@ -957,7 +1006,7 @@
                                             @if ($inspection->is_defects_corrected && $inspection->defects_corrected_date)
                                             <div>
                                                 <div class="text-sm text-slate-500">Correction Date</div>
-                                                <div class="font-medium">{{ $inspection->defects_corrected_date->format('d/m/Y') }}</div>
+                                                <div class="font-medium">{{ $inspection->defects_corrected_date->format('m/d/Y') }}</div>
                                             </div>
                                             @endif
                                             @if ($inspection->corrected_by)
@@ -1340,8 +1389,8 @@
                                         <div class="bg-slate-50 p-4 rounded-lg">
                                             <!-- Periodo -->
                                             <div class="mb-2 text-sm text-slate-500">
-                                                {{ $item['start_date']->format('d/m/Y') }} -
-                                                {{ $item['end_date']->format('d/m/Y') }}
+                                                {{ $item['start_date']->format('m/d/Y') }} -
+                                                {{ $item['end_date']->format('m/d/Y') }}
                                                 <span class="ml-2">
                                                     ({{ $item['start_date']->diffForHumans($item['end_date'], ['parts' => 2]) }})
                                                 </span>
@@ -1817,861 +1866,7 @@
 
                     </div>
                 @endif
-
-
-                {{-- <!-- Sección de documentos por categoría -->
-                <div class="mt-8">
-                    <h3 class="text-lg font-medium mb-4">Documentos Subidos por Categoría</h3>
-
-                    <!-- Licencia -->
-                    <div class="mb-6">
-                        <div class="flex justify-between items-center mb-2">
-                            <h4 class="font-medium text-slate-700">Licencia</h4>
-                            <button type="button" wire:click="openUploadModal('license')"
-                                class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v16m8-8H4"></path>
-                                </svg>
-                                Subir Documento
-                            </button>
-                        </div>
-                        @if (count($licenseDocuments) > 0)
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                @foreach ($licenseDocuments as $document)
-                                    <div
-                                        class="border rounded p-3 flex items-center bg-white hover:bg-slate-50 transition-colors">
-                                        <div class="mr-3 text-slate-400">
-                                            <svg class="h-5 w-5" fill="#000000" viewBox="0 0 487.89 487.89">
-                                                <path
-                                                    d="M409.046,453.807c0,2.762-2.239,5-5,5H69.414c-2.761,0-5-2.238-5-5s2.239-5,5-5h334.632 C406.808,448.807,409.046,451.045,409.046,453.807z">
-                                                </path>
-                                            </svg>
-                                        </div>
-                                        <div class="flex-1">
-                                            <div class="font-medium">{{ $document['name'] }}</div>
-                                            <div class="text-xs text-slate-500">{{ $document['size'] }} - Subido:
-                                                {{ $document['date'] }}</div>
-                                        </div>
-                                        <div class="flex items-center space-x-2">
-                                            <a href="{{ $document['url'] }}" target="_blank"
-                                                class="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-sm flex items-center">
-                                                <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none">
-                                                    <circle cx="12" cy="12" r="2.5" stroke="#222222">
-                                                    </circle>
-                                                    <path
-                                                        d="M18.22 11.38c.13.25.2.38.2.62s-.07.36-.2.62C17.6 13.85 15.81 16.5 12 16.5s-5.6-2.65-6.22-3.88c-.13-.26-.2-.38-.2-.62s.07-.37.2-.62C6.4 10.15 8.19 7.5 12 7.5s5.6 2.65 6.22 3.88z"
-                                                        stroke="#222222"></path>
-                                                </svg>
-                                                Ver
-                                            </a>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="text-slate-500 italic p-3 bg-slate-50 rounded">
-                                No hay documentos de licencia subidos.
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- Médico -->
-                    <div class="mb-6">
-                        <div class="flex justify-between items-center mb-2">
-                            <h4 class="font-medium text-slate-700">Médico</h4>
-                            <button type="button" wire:click="openUploadModal('medical')"
-                                class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v16m8-8H4"></path>
-                                </svg>
-                                Subir Documento
-                            </button>
-                        </div>
-                        @if (count($medicalDocuments) > 0)
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                @foreach ($medicalDocuments as $document)
-                                    <div
-                                        class="border rounded p-3 flex items-center bg-white hover:bg-slate-50 transition-colors">
-                                        <div class="mr-3 text-slate-400">
-                                            <svg class="h-5 w-5" fill="#000000" viewBox="0 0 487.89 487.89">
-                                                <path
-                                                    d="M409.046,453.807c0,2.762-2.239,5-5,5H69.414c-2.761,0-5-2.238-5-5s2.239-5,5-5h334.632 C406.808,448.807,409.046,451.045,409.046,453.807z">
-                                                </path>
-                                            </svg>
-                                        </div>
-                                        <div class="flex-1">
-                                            <div class="font-medium">{{ $document['name'] }}</div>
-                                            <div class="text-xs text-slate-500">{{ $document['size'] }} - Subido:
-                                                {{ $document['date'] }}</div>
-                                        </div>
-                                        <div class="flex items-center space-x-2">
-                                            <a href="{{ $document['url'] }}" target="_blank"
-                                                class="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-sm flex items-center">
-                                                <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none">
-                                                    <circle cx="12" cy="12" r="2.5" stroke="#222222">
-                                                    </circle>
-                                                    <path
-                                                        d="M18.22 11.38c.13.25.2.38.2.62s-.07.36-.2.62C17.6 13.85 15.81 16.5 12 16.5s-5.6-2.65-6.22-3.88c-.13-.26-.2-.38-.2-.62s.07-.37.2-.62C6.4 10.15 8.19 7.5 12 7.5s5.6 2.65 6.22 3.88z"
-                                                        stroke="#222222"></path>
-                                                </svg>
-                                                Ver
-                                            </a>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="text-slate-500 italic p-3 bg-slate-50 rounded">
-                                No hay documentos médicos subidos.
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- Récord -->
-                    <div class="mb-6">
-                        <div class="flex justify-between items-center mb-2">
-                            <h4 class="font-medium text-slate-700">Récord</h4>
-                            <button type="button" wire:click="openUploadModal('record')"
-                                class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v16m8-8H4"></path>
-                                </svg>
-                                Subir Documento
-                            </button>
-                        </div>
-                        @if (count($recordDocuments) > 0)
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                @foreach ($recordDocuments as $document)
-                                    <div
-                                        class="border rounded p-3 flex items-center bg-white hover:bg-slate-50 transition-colors">
-                                        <div class="mr-3 text-slate-400">
-                                            <svg class="h-5 w-5" fill="#000000" viewBox="0 0 487.89 487.89">
-                                                <path
-                                                    d="M409.046,453.807c0,2.762-2.239,5-5,5H69.414c-2.761,0-5-2.238-5-5s2.239-5,5-5h334.632 C406.808,448.807,409.046,451.045,409.046,453.807z">
-                                                </path>
-                                            </svg>
-                                        </div>
-                                        <div class="flex-1">
-                                            <div class="font-medium">{{ $document['name'] }}</div>
-                                            <div class="text-xs text-slate-500">{{ $document['size'] }} - Subido:
-                                                {{ $document['date'] }}</div>
-                                        </div>
-                                        <div class="flex items-center space-x-2">
-                                            <a href="{{ $document['url'] }}" target="_blank"
-                                                class="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-sm flex items-center">
-                                                <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none">
-                                                    <circle cx="12" cy="12" r="2.5" stroke="#222222">
-                                                    </circle>
-                                                    <path
-                                                        d="M18.22 11.38c.13.25.2.38.2.62s-.07.36-.2.62C17.6 13.85 15.81 16.5 12 16.5s-5.6-2.65-6.22-3.88c-.13-.26-.2-.38-.2-.62s.07-.37.2-.62C6.4 10.15 8.19 7.5 12 7.5s5.6 2.65 6.22 3.88z"
-                                                        stroke="#222222"></path>
-                                                </svg>
-                                                Ver
-                                            </a>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="text-slate-500 italic p-3 bg-slate-50 rounded">
-                                No hay documentos de récord subidos.
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- Otros -->
-                    <div class="mb-6">
-                        <div class="flex justify-between items-center mb-2">
-                            <h4 class="font-medium text-slate-700">Otros Documentos</h4>
-                            <button type="button" wire:click="openUploadModal('other')"
-                                class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v16m8-8H4"></path>
-                                </svg>
-                                Subir Documento
-                            </button>
-                        </div>
-                        @if (count($otherDocuments) > 0)
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                @foreach ($otherDocuments as $document)
-                                    <div
-                                        class="border rounded p-3 flex items-center bg-white hover:bg-slate-50 transition-colors">
-                                        <div class="mr-3 text-slate-400">
-                                            <svg class="h-5 w-5" fill="#000000" viewBox="0 0 487.89 487.89">
-                                                <path
-                                                    d="M409.046,453.807c0,2.762-2.239,5-5,5H69.414c-2.761,0-5-2.238-5-5s2.239-5,5-5h334.632 C406.808,448.807,409.046,451.045,409.046,453.807z">
-                                                </path>
-                                            </svg>
-                                        </div>
-                                        <div class="flex-1">
-                                            <div class="font-medium">{{ $document['name'] }}</div>
-                                            <div class="text-xs text-slate-500">{{ $document['size'] }} - Subido:
-                                                {{ $document['date'] }}</div>
-                                        </div>
-                                        <div class="flex items-center space-x-2">
-                                            <a href="{{ $document['url'] }}" target="_blank"
-                                                class="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-sm flex items-center">
-                                                <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none">
-                                                    <circle cx="12" cy="12" r="2.5" stroke="#222222">
-                                                    </circle>
-                                                    <path
-                                                        d="M18.22 11.38c.13.25.2.38.2.62s-.07.36-.2.62C17.6 13.85 15.81 16.5 12 16.5s-5.6-2.65-6.22-3.88c-.13-.26-.2-.38-.2-.62s.07-.37.2-.62C6.4 10.15 8.19 7.5 12 7.5s5.6 2.65 6.22 3.88z"
-                                                        stroke="#222222"></path>
-                                                </svg>
-                                                Ver
-                                            </a>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="text-slate-500 italic p-3 bg-slate-50 rounded">
-                                No hay otros documentos subidos.
-                            </div>
-                        @endif
-                    </div>
-                </div> --}}
-
-                <!-- Modal para subir documentos -->
-                <div class="modal" id="uploadModal" tabindex="-1" role="dialog"
-                    aria-labelledby="uploadModalLabel" aria-hidden="true" x-data="{ open: @entangle('showUploadModal') }" x-show="open"
-                    x-cloak>
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="uploadModalLabel">Subir Documento</h5>
-                                <button type="button" class="close" wire:click="closeUploadModal">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="mb-4">
-                                    <label for="document-category"
-                                        class="block font-medium text-sm text-gray-700">Categoría</label>
-                                    <select id="document-category" wire:model="documentCategory"
-                                        class="w-full border-gray-300 rounded-md shadow-sm">
-                                        <option value="license">Licencia</option>
-                                        <option value="medical">Médico</option>
-                                        <option value="record">Récord</option>
-                                        <option value="other">Otro</option>
-                                    </select>
-                                </div>
-
-                                <div class="mb-4">
-                                    <label for="documentDescription"
-                                        class="block font-medium text-sm text-gray-700">Descripción</label>
-                                    <input id="documentDescription" type="text"
-                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                                        wire:model="documentDescription"
-                                        placeholder="Ingrese una descripción para el documento">
-                                    @error('documentDescription')
-                                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-
-                                <!-- Paso 1: Seleccionar el registro específico -->
-                                @if ($documentCategory == 'license')
-                                    <div class="mb-4">
-                                        <label for="selectedRecordId"
-                                            class="block font-medium text-sm text-gray-700">Seleccione la
-                                            Licencia</label>
-                                        <select id="selectedRecordId" wire:model="selectedRecordId"
-                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                            <option value="">-- Seleccionar Licencia --</option>
-                                            @foreach ($this->driverLicenses ?? [] as $license)
-                                                <option value="{{ $license->id }}">{{ $license->license_number }}
-                                                    - {{ $license->license_class }} (Exp.
-                                                    {{ $license->expiration_date }})</option>
-                                            @endforeach
-                                        </select>
-                                        @error('selectedRecordId')
-                                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                @endif
-
-                                @if ($documentCategory == 'medical')
-                                    <div class="mb-4">
-                                        <label for="selectedRecordId"
-                                            class="block font-medium text-sm text-gray-700">Seleccione la Tarjeta
-                                            Médica</label>
-                                        <select id="selectedRecordId" wire:model="selectedRecordId"
-                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                            <option value="">-- Seleccionar Tarjeta Médica --</option>
-                                            @foreach ($this->medicalCards ?? [] as $card)
-                                                <option value="{{ $card->id }}">Tarjeta Médica (Exp.
-                                                    {{ $card->expiration_date }})</option>
-                                            @endforeach
-                                        </select>
-                                        @error('selectedRecordId')
-                                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                @endif
-
-                                @if ($documentCategory == 'record')
-                                    <div class="mb-4">
-                                        <label for="selectedRecordType"
-                                            class="block font-medium text-sm text-gray-700">Tipo de Registro</label>
-                                        <select id="selectedRecordType" wire:model="selectedRecordType"
-                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                            <option value="">-- Seleccionar Tipo de Registro --</option>
-                                            <option value="accident">Accidente</option>
-                                            <option value="violation">Violación/Infracción</option>
-                                            <option value="training">Entrenamiento</option>
-                                            <option value="course">Curso</option>
-                                            <option value="inspection">Inspección</option>
-                                            <option value="drug_test">Prueba de Drogas</option>
-                                            <option value="testing_drugs">Prueba de Drogas (Laboratorio)</option>
-                                        </select>
-                                        @error('selectedRecordType')
-                                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-
-                                    <!-- Selector para elegir un registro específico dentro del tipo seleccionado -->
-                                    <div class="mb-4" x-data="{}" x-show="$wire.selectedRecordType">
-                                        <label for="selectedRecordId"
-                                            class="block font-medium text-sm text-gray-700">
-                                            Registro Específico
-                                        </label>
-                                        <select id="selectedRecordId" wire:model="selectedRecordId"
-                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                            <option value="">-- Seleccionar Registro --</option>
-                                            @if ($selectedRecordType == 'accident')
-                                                @foreach ($this->accidents ?? [] as $accident)
-                                                    <option value="{{ $accident->id }}">{{ $accident->date }} -
-                                                        {{ $accident->description }}</option>
-                                                @endforeach
-                                            @endif
-                                            @if ($selectedRecordType == 'violation')
-                                                @foreach ($this->violations ?? [] as $violation)
-                                                    <option value="{{ $violation->id }}">{{ $violation->date }} -
-                                                        {{ $violation->description }}</option>
-                                                @endforeach
-                                            @endif
-                                            @if ($selectedRecordType == 'training')
-                                                @foreach ($this->trainings ?? [] as $training)
-                                                    <option value="{{ $training->id }}">{{ $training->date }} -
-                                                        {{ $training->description }}</option>
-                                                @endforeach
-                                            @endif
-                                            @if ($selectedRecordType == 'course')
-                                                @foreach ($this->courses ?? [] as $course)
-                                                    <option value="{{ $course->id }}">{{ $course->date }} -
-                                                        {{ $course->description }}</option>
-                                                @endforeach
-                                            @endif
-                                            @if ($selectedRecordType == 'drug_test' || $selectedRecordType == 'testing_drugs')
-                                                @foreach ($this->drugTests ?? [] as $test)
-                                                    <option value="{{ $test->id }}">{{ $test->date }} -
-                                                        {{ $test->test_type }}</option>
-                                                @endforeach
-                                            @endif
-                                            @if ($selectedRecordType == 'inspection')
-                                                @foreach ($this->inspections ?? [] as $inspection)
-                                                    <option value="{{ $inspection->id }}">{{ $inspection->date }}
-                                                        - {{ $inspection->description }}</option>
-                                                @endforeach
-                                            @endif
-                                        </select>
-                                        @error('selectedRecordId')
-                                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                @endif
-
-                                <!-- Paso 2: Una vez seleccionado un registro, elegir el tipo de documento -->
-                                <div class="mb-4" x-data="{}" x-show="$wire.selectedRecordId">
-                                    <label for="documentType" class="block font-medium text-sm text-gray-700">Tipo
-                                        de Documento</label>
-                                    <select id="documentType" wire:model="documentType"
-                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                        <option value="">-- Seleccionar Tipo de Documento --</option>
-                                        @if ($documentCategory == 'license')
-                                            <option value="license_front">Licencia - Frente</option>
-                                            <option value="license_back">Licencia - Reverso</option>
-                                            <option value="license_complete">Licencia - Completa</option>
-                                        @endif
-                                        @if ($documentCategory == 'medical')
-                                            <option value="medical_card_front">Tarjeta Médica - Frente</option>
-                                            <option value="medical_card_back">Tarjeta Médica - Reverso</option>
-                                            <option value="medical_card_complete">Tarjeta Médica - Completa</option>
-                                        @endif
-                                        @if ($documentCategory == 'record')
-                                            <option value="report">Reporte</option>
-                                            <option value="certificate">Certificado</option>
-                                            <option value="form">Formulario</option>
-                                            <option value="evidence">Evidencia</option>
-                                            <option value="image">Imagen</option>
-                                            <option value="other">Otro</option>
-                                        @endif
-                                    </select>
-                                    @error('documentType')
-                                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-
-                                <div class="mb-4">
-                                    <label for="documentFile"
-                                        class="block font-medium text-sm text-gray-700">Archivo (PDF, JPG,
-                                        PNG)</label>
-                                    <div
-                                        class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                                        <div class="space-y-1 text-center">
-                                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor"
-                                                fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                                                <path
-                                                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                                                    stroke-width="2" stroke-linecap="round"
-                                                    stroke-linejoin="round" />
-                                            </svg>
-                                            <div class="flex text-sm text-gray-600">
-                                                <label for="documentFile"
-                                                    class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary-focus">
-                                                    <span>Sube un archivo</span>
-                                                    <input id="documentFile" type="file" class="sr-only"
-                                                        wire:model="documentFile" accept=".pdf,.jpg,.jpeg,.png">
-                                                </label>
-                                                <p class="pl-1">o arrastra y suelta</p>
-                                            </div>
-                                            <p class="text-xs text-gray-500">
-                                                PDF, JPG o PNG hasta 10MB
-                                            </p>
-                                        </div>
-                                    </div>
-                                    @error('documentFile')
-                                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-
-                                <!-- Vista previa del archivo si está cargado -->
-                                @if ($documentFile)
-                                    <div class="mt-4 p-3 bg-gray-50 rounded-md">
-                                        <div class="flex items-center">
-                                            <svg class="h-6 w-6 text-gray-400 mr-2" fill="currentColor"
-                                                viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd"
-                                                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
-                                                    clip-rule="evenodd" />
-                                            </svg>
-                                            <div class="text-sm">
-                                                <p class="font-medium text-gray-900">
-                                                    {{ $documentFile->getClientOriginalName() }}</p>
-                                                <p class="text-gray-500">
-                                                    {{ $this->formatFileSize($documentFile->getSize()) }}</p>
-                                            </div>
-                                        </div>
-                                        <!-- Vista previa para imágenes -->
-                                        @if (in_array(strtolower($documentFile->getClientOriginalExtension()), ['jpg', 'jpeg', 'png']))
-                                            <div class="mt-2">
-                                                <img src="{{ $documentFile->temporaryUrl() }}" alt="Vista previa"
-                                                    class="max-w-full h-auto max-h-48 mx-auto">
-                                            </div>
-                                        @endif
-                                    </div>
-                                @endif
-
-                                <!-- Barra de progreso de carga -->
-                                <div class="mt-4 relative pt-1" wire:loading wire:target="documentFile">
-                                    <div class="flex mb-2 items-center justify-between">
-                                        <div>
-                                            <span
-                                                class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-primary bg-primary-50">
-                                                Cargando archivo
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-primary-200">
-                                        <div style="width: 100%"
-                                            class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary animate-pulse">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" wire:click="closeUploadModal"
-                                    wire:loading.attr="disabled">
-                                    Cancelar
-                                </button>
-                                <button type="button" class="btn btn-primary ml-2" wire:click="saveDocument"
-                                    wire:loading.attr="disabled">
-                                    <span wire:loading.remove wire:target="saveDocument">Guardar Documento</span>
-                                    <span wire:loading wire:target="saveDocument">Guardando...</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-{{-- 
-                <!-- Categorías de documentos (Sección independiente) -->
-                <div class="box box--stacked mt-5 p-5">
-                    <h3 class="text-lg font-medium mb-4">Document Categories</h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Licencias -->
-                        <div class="border rounded-lg p-4 bg-white shadow-sm">
-                            <div class="flex justify-between items-center mb-3">
-                                <h4 class="font-medium text-primary">License Documents</h4>
-                                <button type="button" wire:click="openUploadModal('license')"
-                                    class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                    <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    Upload
-                                </button>
-                            </div>
-                            <div class="text-sm">
-                                @php
-                                    $licenseDocuments = collect($generatedPdfs)->filter(function($pdf) {
-                                        return isset($pdf['category']) && $pdf['category'] === 'license';
-                                    })->all();
-                                @endphp
-                                
-                                @if(count($licenseDocuments) > 0)
-                                    <ul class="divide-y">
-                                        @foreach($licenseDocuments as $key => $pdf)
-                                            <li class="py-2 flex justify-between items-center">
-                                                <span class="truncate">{{ $pdf['name'] }}</span>
-                                                <a href="{{ $pdf['url'] }}" target="_blank" class="text-blue-600 hover:underline ml-2">View</a>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                @else
-                                    <p class="text-slate-500 italic">No license documents uploaded</p>
-                                @endif
-                            </div>
-                        </div>
-                        
-                        <!-- Documentos médicos -->
-                        <div class="border rounded-lg p-4 bg-white shadow-sm">
-                            <div class="flex justify-between items-center mb-3">
-                                <h4 class="font-medium text-primary">Medical Documents</h4>
-                                <button type="button" wire:click="openUploadModal('medical')"
-                                    class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                    <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    Upload
-                                </button>
-                            </div>
-                            <div class="text-sm">
-                                @php
-                                    $medicalDocuments = collect($generatedPdfs)->filter(function($pdf) {
-                                        return isset($pdf['category']) && $pdf['category'] === 'medical';
-                                    })->all();
-                                @endphp
-                                
-                                @if(count($medicalDocuments) > 0)
-                                    <ul class="divide-y">
-                                        @foreach($medicalDocuments as $key => $pdf)
-                                            <li class="py-2 flex justify-between items-center">
-                                                <span class="truncate">{{ $pdf['name'] }}</span>
-                                                <a href="{{ $pdf['url'] }}" target="_blank" class="text-blue-600 hover:underline ml-2">View</a>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                @else
-                                    <p class="text-slate-500 italic">No medical documents uploaded</p>
-                                @endif
-                            </div>
-                        </div>
-                        
-                        <!-- Records -->
-                        <div class="border rounded-lg p-4 bg-white shadow-sm mb-4">
-                            <div class="flex justify-between items-center mb-3">
-                                <h4 class="font-medium text-primary">Record Documents</h4>
-                                <button type="button" wire:click="openUploadModal('record')"
-                                    class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                    <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    Upload
-                                </button>
-                            </div>
-                            
-                            <!-- Accidents & Violations Records -->
-                            <div class="text-sm">
-                                <h5 class="font-medium mb-2 text-slate-600">Accidents & Violations</h5>
-                                
-                                @php
-                                    $accidentViolationDocs = collect($generatedPdfs)->filter(function($pdf) {
-                                        return isset($pdf['category']) && $pdf['category'] === 'record' && 
-                                               in_array($pdf['record_type'] ?? '', ['accident', 'violation']);
-                                    })->all();
-                                @endphp
-                                
-                                @if(count($accidentViolationDocs) > 0)
-                                    <ul class="divide-y">
-                                        @foreach($accidentViolationDocs as $key => $pdf)
-                                            <li class="py-2 flex justify-between items-center">
-                                                <div>
-                                                    <span class="truncate">{{ $pdf['name'] }}</span>
-                                                    <span class="text-xs text-slate-500 ml-2">({{ ucfirst($pdf['record_type'] ?? 'Record') }})</span>
-                                                </div>
-                                                <a href="{{ $pdf['url'] }}" target="_blank" class="text-blue-600 hover:underline ml-2">View</a>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                @else
-                                    <p class="text-slate-500 italic mb-3">No accident or violation documents uploaded</p>
-                                @endif
-                            </div>
-                        </div>
-                        
-                        <!-- Courses & Training Documents -->
-                        <div class="border rounded-lg p-4 bg-white shadow-sm mb-4">
-                            <div class="flex justify-between items-center mb-3">
-                                <h4 class="font-medium text-primary">Courses & Training Documents</h4>
-                                <button type="button" wire:click="openUploadModal('record')"
-                                    class="px-3 py-1 bg-primary text-white rounded hover:bg-primary-focus text-sm flex items-center">
-                                    <svg class="h-4 w-4 mr-1" fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M12 4V20M4 12H20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    Upload
-                                </button>
-                            </div>
-                            <div class="text-sm">
-                                @php
-                                    $trainingDocs = collect($generatedPdfs)->filter(function($pdf) {
-                                        return isset($pdf['category']) && $pdf['category'] === 'record' && 
-                                               in_array($pdf['record_type'] ?? '', ['training', 'course']);
-                                    })->all();
-                                @endphp
-                                
-                                @if(count($trainingDocs) > 0)
-                                    <ul class="divide-y">
-                                        @foreach($trainingDocs as $key => $pdf)
-                                            <li class="py-2 flex justify-between items-center">
-                                                <div>
-                                                    <span class="truncate">{{ $pdf['name'] }}</span>
-                                                    <span class="text-xs text-slate-500 ml-2">({{ ucfirst($pdf['record_type'] ?? 'Record') }})</span>
-                                                </div>
-                                                <a href="{{ $pdf['url'] }}" target="_blank" class="text-blue-600 hover:underline ml-2">View</a>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                @else
-                                    <p class="text-slate-500 italic mb-3">No training or course documents uploaded</p>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Modal para subir documentos -->
-                    <div class="modal" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true" x-data="{open: @entangle('showUploadModal')}" x-show="open" x-cloak>
-                        <div class="modal-dialog" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="uploadModalLabel">Subir Documento</h5>
-                                    <button type="button" class="close" wire:click="closeUploadModal">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="mb-4">
-                                        <label for="document-category" class="block font-medium text-sm text-gray-700">Categoría</label>
-                                        <select id="document-category" wire:model="documentCategory" class="w-full border-gray-300 rounded-md shadow-sm">
-                                            <option value="license">Licencia</option>
-                                            <option value="medical">Médico</option>
-                                            <option value="record">Récord</option>
-                                            <option value="other">Otro</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <label for="documentDescription" class="block font-medium text-sm text-gray-700">Descripción</label>
-                                        <input id="documentDescription" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" wire:model="documentDescription" placeholder="Ingrese una descripción para el documento">
-                                        @error('documentDescription') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                    </div>
-                                    
-                                    <!-- Paso 1: Seleccionar el registro específico -->
-                                    @if ($documentCategory == 'license')
-                                    <div class="mb-4">
-                                        <label for="selectedRecordId" class="block font-medium text-sm text-gray-700">Seleccione la Licencia</label>
-                                        <select id="selectedRecordId" wire:model="selectedRecordId" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                            <option value="">-- Seleccionar Licencia --</option>
-                                            @foreach ($this->driverLicenses ?? [] as $license)
-                                            <option value="{{ $license->id }}">{{ $license->license_number }} - {{ $license->license_class }} (Exp. {{ $license->expiration_date }})</option>
-                                            @endforeach
-                                        </select>
-                                        @error('selectedRecordId') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                    </div>
-                                    @endif
-                                    
-                                    @if ($documentCategory == 'medical')
-                                    <div class="mb-4">
-                                        <label for="selectedRecordId" class="block font-medium text-sm text-gray-700">Seleccione la Tarjeta Médica</label>
-                                        <select id="selectedRecordId" wire:model="selectedRecordId" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                            <option value="">-- Seleccionar Tarjeta Médica --</option>
-                                            @foreach ($this->medicalCards ?? [] as $card)
-                                            <option value="{{ $card->id }}">Tarjeta Médica (Exp. {{ $card->expiration_date }})</option>
-                                            @endforeach
-                                        </select>
-                                        @error('selectedRecordId') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                    </div>
-                                    @endif
-                                    
-                                    @if ($documentCategory == 'record')
-                                    <div class="mb-4">
-                                        <label for="selectedRecordType" class="block font-medium text-sm text-gray-700">Tipo de Registro</label>
-                                        <select id="selectedRecordType" wire:model="selectedRecordType" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                            <option value="">-- Seleccionar Tipo de Registro --</option>
-                                            <option value="accident">Accidente</option>
-                                            <option value="violation">Violación/Infracción</option>
-                                            <option value="training">Entrenamiento</option>
-                                            <option value="course">Curso</option>
-                                            <option value="inspection">Inspección</option>
-                                            <option value="drug_test">Prueba de Drogas</option>
-                                            <option value="testing_drugs">Prueba de Drogas (Laboratorio)</option>
-                                        </select>
-                                        @error('selectedRecordType') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                    </div>
-                                    
-                                    <!-- Selector para elegir un registro específico dentro del tipo seleccionado -->
-                                    <div class="mb-4" x-data="{}" x-show="$wire.selectedRecordType">
-                                        <label for="selectedRecordId" class="block font-medium text-sm text-gray-700">
-                                            Registro Específico
-                                        </label>
-                                        <select id="selectedRecordId" wire:model="selectedRecordId" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                            <option value="">-- Seleccionar Registro --</option>
-                                            @if ($selectedRecordType == 'accident')
-                                                @foreach ($this->accidents ?? [] as $accident)
-                                                <option value="{{ $accident->id }}">{{ $accident->date }} - {{ $accident->description }}</option>
-                                                @endforeach
-                                            @endif
-                                            @if ($selectedRecordType == 'violation')
-                                                @foreach ($this->violations ?? [] as $violation)
-                                                <option value="{{ $violation->id }}">{{ $violation->date }} - {{ $violation->description }}</option>
-                                                @endforeach
-                                            @endif
-                                            @if ($selectedRecordType == 'training')
-                                                @foreach ($this->trainings ?? [] as $training)
-                                                <option value="{{ $training->id }}">{{ $training->date }} - {{ $training->description }}</option>
-                                                @endforeach
-                                            @endif
-                                            @if ($selectedRecordType == 'course')
-                                                @foreach ($this->courses ?? [] as $course)
-                                                <option value="{{ $course->id }}">{{ $course->date }} - {{ $course->description }}</option>
-                                                @endforeach
-                                            @endif
-                                            @if ($selectedRecordType == 'drug_test' || $selectedRecordType == 'testing_drugs')
-                                                @foreach ($this->drugTests ?? [] as $test)
-                                                <option value="{{ $test->id }}">{{ $test->date }} - {{ $test->test_type }}</option>
-                                                @endforeach
-                                            @endif
-                                            @if ($selectedRecordType == 'inspection')
-                                                @foreach ($this->inspections ?? [] as $inspection)
-                                                <option value="{{ $inspection->id }}">{{ $inspection->date }} - {{ $inspection->description }}</option>
-                                                @endforeach
-                                            @endif
-                                        </select>
-                                        @error('selectedRecordId') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                    </div>
-                                    @endif
-                                    
-                                    <!-- Paso 2: Una vez seleccionado un registro, elegir el tipo de documento -->
-                                    <div class="mb-4" x-data="{}" x-show="$wire.selectedRecordId">
-                                        <label for="documentType" class="block font-medium text-sm text-gray-700">Tipo de Documento</label>
-                                        <select id="documentType" wire:model="documentType" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
-                                            <option value="">-- Seleccionar Tipo de Documento --</option>
-                                            @if ($documentCategory == 'license')
-                                                <option value="license_front">Licencia - Frente</option>
-                                                <option value="license_back">Licencia - Reverso</option>
-                                                <option value="license_complete">Licencia - Completa</option>
-                                            @endif
-                                            @if ($documentCategory == 'medical')
-                                                <option value="medical_card_front">Tarjeta Médica - Frente</option>
-                                                <option value="medical_card_back">Tarjeta Médica - Reverso</option>
-                                                <option value="medical_card_complete">Tarjeta Médica - Completa</option>
-                                            @endif
-                                            @if ($documentCategory == 'record')
-                                                <option value="report">Reporte</option>
-                                                <option value="certificate">Certificado</option>
-                                                <option value="form">Formulario</option>
-                                                <option value="evidence">Evidencia</option>
-                                                <option value="image">Imagen</option>
-                                                <option value="other">Otro</option>
-                                            @endif
-                                        </select>
-                                        @error('documentType') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <label for="documentFile" class="block font-medium text-sm text-gray-700">Archivo (PDF, JPG, PNG)</label>
-                                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                                            <div class="space-y-1 text-center">
-                                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                                </svg>
-                                                <div class="flex text-sm text-gray-600">
-                                                    <label for="documentFile" class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary-focus">
-                                                        <span>Sube un archivo</span>
-                                                        <input id="documentFile" type="file" class="sr-only" wire:model="documentFile" accept=".pdf,.jpg,.jpeg,.png">
-                                                    </label>
-                                                    <p class="pl-1">o arrastra y suelta</p>
-                                                </div>
-                                                <p class="text-xs text-gray-500">
-                                                    PDF, JPG o PNG hasta 10MB
-                                                </p>
-                                            </div>
-                                        </div>
-                                        @error('documentFile') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                    </div>
-
-                                    <!-- Vista previa del archivo si está cargado -->
-                                    @if ($documentFile)
-                                        <div class="mt-4 p-3 bg-gray-50 rounded-md">
-                                            <div class="flex items-center">
-                                                <svg class="h-6 w-6 text-gray-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
-                                                </svg>
-                                                <div class="text-sm">
-                                                    <p class="font-medium text-gray-900">{{ $documentFile->getClientOriginalName() }}</p>
-                                                    <p class="text-gray-500">{{ $this->formatFileSize($documentFile->getSize()) }}</p>
-                                                </div>
-                                            </div>
-                                            <!-- Vista previa para imágenes -->
-                                            @if (in_array(strtolower($documentFile->getClientOriginalExtension()), ['jpg', 'jpeg', 'png']))
-                                                <div class="mt-2">
-                                                    <img src="{{ $documentFile->temporaryUrl() }}" alt="Vista previa" class="max-w-full h-auto max-h-48 mx-auto">
-                                                </div>
-                                            @endif
-                                        </div>
-                                    @endif
-
-                                    <!-- Barra de progreso de carga -->
-                                    <div class="mt-4 relative pt-1" wire:loading wire:target="documentFile">
-                                        <div class="flex mb-2 items-center justify-between">
-                                            <div>
-                                                <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-primary bg-primary-50">
-                                                    Cargando archivo
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-primary-200">
-                                            <div style="width: 100%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary animate-pulse"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" wire:click="closeUploadModal" wire:loading.attr="disabled">
-                                        Cancelar
-                                    </button>
-                                    <button type="button" class="btn btn-primary ml-2" wire:click="saveDocument" wire:loading.attr="disabled">
-                                        <span wire:loading.remove wire:target="saveDocument">Guardar Documento</span>
-                                        <span wire:loading wire:target="saveDocument">Guardando...</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div> --}}
+                
 
                 <div class="box box--stacked mt-5 p-5">
                     <h3 class="text-lg font-medium mb-4">Recruiter Notes</h3>
@@ -2689,7 +1884,7 @@
                     @if ($savedVerification)
                         <div class="mt-4 p-3 bg-slate-50 rounded border border-slate-200 text-sm">
                             <div class="font-medium mb-1">Last verification:</div>
-                            <div class="text-slate-600">{{ $savedVerification->verified_at->format('d/m/Y H:i') }}
+                            <div class="text-slate-600">{{ $savedVerification->verified_at->format('m/d/Y H:i') }}
                             </div>
                             <div class="text-slate-600">By: {{ $savedVerification->verifier->name }}</div>
                             @if ($savedVerification->notes)
@@ -2902,8 +2097,8 @@
                                     <div class="font-medium text-danger">Esta solicitud ha sido rechazada</div>
                                     <div class="text-sm text-slate-600 mt-1">Fecha de rechazo:
                                         {{ is_string($application->completed_at)
-                                            ? \Carbon\Carbon::parse($application->completed_at)->format('d/m/Y')
-                                            : $application->completed_at->format('d/m/Y') }}
+                                            ? \Carbon\Carbon::parse($application->completed_at)->format('m/d/Y')
+                                            : $application->completed_at->format('m/d/Y') }}
                                     </div>
 
                                     @if ($application->rejection_reason)
@@ -2965,6 +2160,8 @@
 
     </div>
 
+
+
     <!-- Modal de rechazo -->
     <x-base.dialog id="reject-modal" size="md">
         <x-base.dialog.panel>
@@ -3002,7 +2199,77 @@
             </form>
         </x-base.dialog.panel>
     </x-base.dialog>
+    
+    <!-- Modal para subir imágenes de licencia (frontal/trasera) -->
+    <div x-data="{ open: false }" 
+         x-init="$wire.on('open-license-image-modal', () => { open = true });
+                 $wire.on('closeUploadModal', () => { open = false });" 
+         x-show="open"
+         x-transition:enter="transition ease-out duration-200" 
+         x-transition:enter-start="opacity-0 scale-90"
+         x-transition:enter-end="opacity-100 scale-100" 
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 scale-100" 
+         x-transition:leave-end="opacity-0 scale-90"
+         style="display: none; z-index: 9999;"
+         class="modal group bg-gradient-to-b from-theme-1/50 via-theme-2/50 to-black/50 transition-[visibility,opacity] w-screen h-screen fixed left-0 top-0 [&:not(.show)]:duration-[0s,0.2s] [&:not(.show)]:delay-[0.2s,0s] [&:not(.show)]:invisible [&:not(.show)]:opacity-0 [&.show]:visible [&.show]:opacity-100 [&.show]:duration-[0s,0.4s] overflow-y-auto show">
 
+        <div class="w-[70%] mx-auto bg-white relative rounded-sm shadow-md transition-[margin-top,transform] duration-[0.4s,0.3s] -mt-4 group-[.show]:mt-40 group-[.modal-static]:scale-[1.05] sm:w-[500px] p-4">
+            <!-- Header -->
+            <div class="px-4 py-3 bg-slate-50 border-b border-slate-200">
+                <h3 class="text-lg font-medium">{{ $licenseImageType === 'license_front' ? 'Upload Front License Image' : ($licenseImageType === 'license_back' ? 'Upload Back License Image' : 'Upload Medical Card Image') }}</h3>
+            </div>
+
+            <!-- Body -->
+            <div class="p-4">
+                <!-- Uploader Component -->
+                <div class="mb-4">
+                    <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 transition-colors cursor-pointer"
+                        x-data="licenseUploader()">
+                        
+                        <input type="file" accept="image/*" class="hidden" id="license-image-upload" 
+                                @change="handleFileUpload($event)">
+                        
+                        <div x-show="!isUploading" @click="document.getElementById('license-image-upload').click()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" 
+                                stroke="currentColor" class="w-12 h-12 text-slate-400 mx-auto mb-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                            </svg>
+                            <p class="text-slate-600">Click to select or drag image here</p>
+                            <p class="text-sm text-slate-500 mt-1">JPG, PNG or GIF (max 5MB)</p>
+                        </div>
+                        
+                        <div x-show="isUploading" class="text-center">
+                            <div class="w-full bg-slate-200 rounded-full h-2.5 mb-4">
+                                <div class="bg-primary h-2.5 rounded-full" :style="{ width: progress + '%' }"></div>
+                            </div>
+                            <p class="text-slate-600">Uploading... <span x-text="progress + '%'"></span></p>
+                        </div>                    </div>
+                </div>
+
+                <!-- Información -->
+                <div class="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-600 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" 
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
+                         stroke-linejoin="round" class="h-4 w-4 inline-block mr-1">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    {{ $licenseImageType === 'license_front' ? 'Please upload a clear image of the front of the driver license.' : 'Please upload a clear image of the back of the driver license.' }}
+                </div>
+
+                <!-- Botones -->
+                <div class="flex justify-end space-x-3">
+                    <button type="button" @click="open = false"
+                        class="px-4 py-2 bg-slate-200 text-slate-700 rounded hover:bg-slate-300 transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Modal para ingresar motivo de documento solicitado -->
     <!-- Modal simple con Alpine.js -->
     <div x-data="{ open: false }" x-init="$wire.on('open-document-reason-modal', () => { open = true });
@@ -3082,3 +2349,81 @@
         </div>
     </div>
 </div>
+
+
+
+<script>
+    function licenseUploader() {
+        return {
+            open: false,
+            isUploading: false,
+            progress: 0,
+            init() {
+                this.$watch('open', value => {
+                    if (!value) this.isUploading = false;
+                });
+                window.addEventListener('open-license-image-modal', event => {
+                    this.open = true;
+                });
+                window.addEventListener('closeUploadModal', () => {
+                    this.open = false;
+                });
+            },
+            closeUploadModal() {
+                if (!this.isUploading) {
+                    this.open = false;
+                }
+            },
+            handleFileUpload(e) {
+                const self = this;
+                self.isUploading = true;
+                const file = e.target.files[0];
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                // AJAX Upload with progress tracking
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/admin/upload-temp', true);
+                xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+                
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        self.progress = Math.round((e.loaded * 100) / e.total);
+                    }
+                });
+                
+                xhr.onload = () => {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.success) {
+                            // Emit event to Livewire component with file details
+                            if (@this.documentCategory === 'medical') {
+                                @this.call('handleMedicalImageUploaded', {
+                                    tempPath: response.path,
+                                    originalName: file.name,
+                                    size: file.size
+                                });
+                            } else {
+                                @this.call('handleLicenseImageUploaded', {
+                                    tempPath: response.path,
+                                    originalName: file.name,
+                                    size: file.size
+                                });
+                            }
+                        } else {
+                            alert('Error uploading file: ' + response.message);
+                        }
+                    } else {
+                        alert('Error uploading file. Please try again.');
+                    }
+                    self.isUploading = false;
+                    self.progress = 0;
+                };
+                
+                xhr.send(formData);
+            }
+        };
+    }
+    
+    // Solo se usa licenseUploader() para todo tipo de imágenes (licencia y médica)
+</script>

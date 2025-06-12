@@ -88,15 +88,50 @@ class TrafficConvictionsController extends Controller
 
         // Aplicar filtros si existen
         if ($request->filled('search_term')) {
-            $query->where('charge', 'like', '%' . $request->search_term . '%')
-                ->orWhere('location', 'like', '%' . $request->search_term . '%')
-                ->orWhere('penalty', 'like', '%' . $request->search_term . '%');
+            $query->where(function($q) use ($request) {
+                $q->where('charge', 'like', '%' . $request->search_term . '%')
+                  ->orWhere('location', 'like', '%' . $request->search_term . '%')
+                  ->orWhere('penalty', 'like', '%' . $request->search_term . '%');
+            });
+        }
+        
+        // Filtros de fecha
+        if ($request->has('date_from') && $request->date_from != '') {
+            try {
+                $formattedDateFrom = Carbon::createFromFormat('m/d/Y', $request->date_from)->format('Y-m-d');
+                $query->whereDate('conviction_date', '>=', $formattedDateFrom);
+            } catch (\Exception $e) {
+                // Log error pero no interrumpir el flujo
+                Log::error('Error parsing date_from: ' . $e->getMessage(), [
+                    'input' => $request->date_from
+                ]);
+            }
+        }
+        
+        if ($request->has('date_to') && $request->date_to != '') {
+            try {
+                $formattedDateTo = Carbon::createFromFormat('m/d/Y', $request->date_to)->format('Y-m-d');
+                $query->whereDate('conviction_date', '<=', $formattedDateTo);
+            } catch (\Exception $e) {
+                // Log error pero no interrumpir el flujo
+                Log::error('Error parsing date_to: ' . $e->getMessage(), [
+                    'input' => $request->date_to
+                ]);
+            }
         }
 
         // Ordenar resultados
         $sortField = $request->get('sort_field', 'conviction_date');
         $sortDirection = $request->get('sort_direction', 'desc');
         $query->orderBy($sortField, $sortDirection);
+        
+        // Log para depuración
+        Log::info('Traffic Convictions Filter Parameters', [
+            'date_from' => $request->date_from,
+            'date_to' => $request->date_to,
+            'search_term' => $request->search_term,
+            'total_results' => $query->count()
+        ]);
 
         $convictions = $query->paginate(10);
 
@@ -897,7 +932,5 @@ class TrafficConvictionsController extends Controller
             
             return redirect()->back()->with('error', 'Error al eliminar documento: ' . $e->getMessage());
         }
-    }
-    
-
+    }    
 }

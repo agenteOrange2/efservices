@@ -64,7 +64,21 @@ Route::delete('traffic/documents/{document}', [TrafficConvictionsController::cla
 // Ruta para eliminar documentos de training schools (usada por el formulario)
 Route::delete('training-schools/documents/{document}', [TrainingSchoolsController::class, 'destroyDocument'])->name('training-schools.documents.delete');
 
-
+// Ruta para cargas temporales de archivos
+Route::post('/upload-temp', function(\Illuminate\Http\Request $request) {
+    if ($request->hasFile('file')) {
+        $file = $request->file('file');
+        $path = $file->store('temp', 'public');
+        return response()->json([
+            'success' => true,
+            'path' => $path
+        ]);
+    }
+    return response()->json([
+        'success' => false,
+        'message' => 'No file uploaded'
+    ]);
+});
 
 
 // Rutas para gestión de documentos de accidentes

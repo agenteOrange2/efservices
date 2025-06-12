@@ -33,7 +33,7 @@
             </h2>
             <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
 
-                <x-base.button as="a" href="{{ route('admin.traffic.index') }}" class="w-full sm:w-auto"
+                <x-base.button as="a" href="{{ route('admin.traffic.index') }}" class="w-full sm:w-auto mr-2"
                     variant="outline-primary">
                     <x-base.lucide class="mr-2 h-4 w-4" icon="FileText" />
                     Back to Traffic Convictions

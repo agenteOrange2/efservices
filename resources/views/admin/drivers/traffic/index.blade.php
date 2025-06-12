@@ -40,11 +40,8 @@
         </div>
 
         <!-- Filtros -->
-        <div class="box box--stacked mt-5">
-            <div class="box-header">
-                <h3 class="box-title p-3">Filters</h3>
-            </div>
-            <div class="box-body p-5">
+        <div class="box box--stacked mt-5 p-3">
+            <div class="box-body">
                 <form action="{{ route('admin.traffic.index') }}" method="GET">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
@@ -103,8 +100,8 @@
         </div>
 
         <!-- Tabla de Infracciones de Tráfico -->
-        <div class="box box--stacked mt-5">
-            <div class="box-body p-5">
+        <div class="box box--stacked mt-5 p-3">
+            <div class="box-body">
                 <div class="overflow-x-auto">
                     <x-base.table class="border-separate border-spacing-y-[10px]">
                         <x-base.table.thead>

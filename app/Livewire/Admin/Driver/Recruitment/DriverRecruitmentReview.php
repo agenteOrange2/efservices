@@ -28,6 +28,7 @@ class DriverRecruitmentReview extends Component
     protected $listeners = [
         'training-school-updated' => 'handleTrainingSchoolUpdated',
         'fileUploaded' => 'handleFileUploaded',
+        'licenseImageUploaded' => 'handleLicenseImageUploaded',
     ];
     public $driverId;
     public $driver;
@@ -60,6 +61,10 @@ class DriverRecruitmentReview extends Component
     public $tempDocumentName = null;
     public $tempDocumentSize = null;
     public $showUploadModal = false;
+    
+    // Propiedades específicas para licencias
+    public $licenseImageType = ''; // license_front, license_back
+    public $selectedLicenseId = null;
     
     // Propiedades para asociar documentos a registros existentes
     public $selectedRecordType = ''; // license, medical_card, accident, violation, training, course, drug_test
@@ -841,6 +846,13 @@ class DriverRecruitmentReview extends Component
     {
         $this->resetDocumentUpload();
         $this->showUploadModal = false;
+        
+        // Reset license image properties
+        $this->selectedLicenseId = null;
+        $this->licenseImageType = '';
+        
+        // Emitir evento para cerrar el modal desde Alpine.js
+        $this->dispatch('closeUploadModal');
     }
     
     /**
@@ -2786,6 +2798,40 @@ private function loadModelMedia($model, $category, $recordType = null)
     }
     
     /**
+     * Abre el modal para subir o actualizar la imagen frontal de una licencia específica
+     * 
+     * @param int $licenseId ID de la licencia
+     * @return void
+     */
+    public function editLicenseFrontImage($licenseId)
+    {
+        $this->selectedLicenseId = $licenseId;
+        $this->licenseImageType = 'license_front';
+        $this->documentCategory = 'license';
+        $this->documentDescription = 'Imagen Frontal de Licencia';
+        
+        $this->showUploadModal = true;
+        $this->dispatch('open-license-image-modal');
+    }
+    
+    /**
+     * Abre el modal para subir o actualizar la imagen trasera de una licencia específica
+     * 
+     * @param int $licenseId ID de la licencia
+     * @return void
+     */
+    public function editLicenseBackImage($licenseId)
+    {
+        $this->selectedLicenseId = $licenseId;
+        $this->licenseImageType = 'license_back';
+        $this->documentCategory = 'license';
+        $this->documentDescription = 'Imagen Trasera de Licencia';
+        
+        $this->showUploadModal = true;
+        $this->dispatch('open-license-image-modal');
+    }
+    
+    /**
      * Maneja el evento cuando se sube un archivo
      * 
      * @param array $data Los datos del archivo subido
@@ -2846,8 +2892,138 @@ private function loadModelMedia($model, $category, $recordType = null)
         }
     }
     
+    /**
+     * Maneja el evento cuando se sube una imagen de licencia (frontal o trasera)
+     * 
+     * @param array $data Los datos del archivo subido
+     * @return void
+     */
+    public function handleLicenseImageUploaded($data)
+    {
+        // Guardar información del archivo temporal
+        $this->tempDocumentPath = $data['tempPath'] ?? null;
+        $this->tempDocumentName = $data['originalName'] ?? null;
+        $this->tempDocumentSize = $data['size'] ?? null;
+        
+        if ($this->tempDocumentPath && $this->selectedLicenseId) {
+            try {
+                // Buscar la licencia por ID
+                $license = \App\Models\Admin\Driver\DriverLicense::find($this->selectedLicenseId);
+                
+                if ($license) {
+                    // Verificar si el archivo temporal existe
+                    if (Storage::exists('public/' . $this->tempDocumentPath)) {
+                        // Obtener el contenido del archivo
+                        $fileContents = Storage::get('public/' . $this->tempDocumentPath);
+                        
+                        // Usar Spatie Media Library para guardar la imagen en la colección correspondiente
+                        $license->addMediaFromString($fileContents)
+                               ->usingFileName($this->tempDocumentName)
+                               ->toMediaCollection($this->licenseImageType);
+                        
+                        // Eliminar el archivo temporal
+                        Storage::delete('public/' . $this->tempDocumentPath);
+                        
+                        // Cerrar el modal y mostrar mensaje de éxito
+                        $this->closeUploadModal();
+                        
+                        $imageTypeText = $this->licenseImageType === 'license_front' ? 'frontal' : 'trasera';
+                        session()->flash('message', "La imagen {$imageTypeText} de la licencia ha sido actualizada correctamente.");
+                        
+                        // Recargar los datos del conductor
+                        $this->loadDriverData();
+                    } else {
+                        session()->flash('error', 'No se encontró el archivo temporal.');
+                    }
+                } else {
+                    session()->flash('error', 'No se encontró la licencia seleccionada.');
+                }
+            } catch (\Exception $e) {
+                Log::error('Error al actualizar la imagen de la licencia', [
+                    'driver_id' => $this->driverId,
+                    'license_id' => $this->selectedLicenseId,
+                    'image_type' => $this->licenseImageType,
+                    'error' => $e->getMessage()
+                ]);
+                session()->flash('error', 'Error al actualizar la imagen de la licencia: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Maneja el evento cuando se sube una imagen de tarjeta médica
+     * 
+     * @param array $data Los datos del archivo subido
+     * @return void
+     */
+    public function handleMedicalImageUploaded($data)
+    {
+        // Guardar información del archivo temporal
+        $this->tempDocumentPath = $data['tempPath'] ?? null;
+        $this->tempDocumentName = $data['originalName'] ?? null;
+        $this->tempDocumentSize = $data['size'] ?? null;
+        
+        if ($this->tempDocumentPath && $this->driverId) {
+            try {
+                // Obtener la calificación médica del conductor
+                $medical = $this->driver->medicalQualification;
+                
+                if ($medical) {
+                    // Verificar si el archivo temporal existe
+                    if (Storage::exists('public/' . $this->tempDocumentPath)) {
+                        // Obtener el contenido del archivo
+                        $fileContents = Storage::get('public/' . $this->tempDocumentPath);
+                        
+                        // Usar Spatie Media Library para guardar la imagen en la colección 'medical_card'
+                        $medical->addMediaFromString($fileContents)
+                               ->usingFileName($this->tempDocumentName)
+                               ->toMediaCollection('medical_card');
+                        
+                        // Eliminar el archivo temporal
+                        Storage::delete('public/' . $this->tempDocumentPath);
+                        
+                        // Cerrar el modal y mostrar mensaje de éxito
+                        $this->closeUploadModal();
+                        
+                        session()->flash('message', "La imagen de la tarjeta médica ha sido actualizada correctamente.");
+                        
+                        // Recargar los datos del conductor
+                        $this->loadDriverData();
+                    } else {
+                        session()->flash('error', 'No se encontró el archivo temporal.');
+                    }
+                } else {
+                    session()->flash('error', 'El conductor no tiene una calificación médica registrada.');
+                }
+            } catch (\Exception $e) {
+                Log::error('Error al actualizar la imagen de la tarjeta médica', [
+                    'driver_id' => $this->driverId,
+                    'error' => $e->getMessage()
+                ]);
+                session()->flash('error', 'Error al actualizar la imagen de la tarjeta médica: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Abre el modal para subir o actualizar la imagen de la tarjeta médica
+     * 
+     * @return void
+     */
+    public function editMedicalImage()
+    {
+        $this->licenseImageType = 'medical_card';
+        $this->documentCategory = 'medical';
+        $this->documentDescription = 'Imagen de Tarjeta Médica';
+        
+        $this->showUploadModal = true;
+        $this->dispatch('open-license-image-modal');
+    }
+
+    // Este componente ya tiene definido el listener para licenseImageUploaded al inicio del archivo
+    
     public function render()
     {
-        return view('livewire.admin.driver.recruitment.driver-recruitment-review');
+        return view('livewire.admin.driver.recruitment.driver-recruitment-review');        
     }
 }

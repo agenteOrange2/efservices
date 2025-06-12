@@ -31,10 +31,11 @@
                 Traffic Convictions History for {{ $driver->user->name }} {{ $driver->user->last_name }}
             </h2>
             <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
-                <a href="{{ route('admin.drivers.show', $driver->id) }}" class="btn btn-outline-secondary mr-2">
-                    <x-base.lucide class="w-4 h-4 mr-2" icon="arrow-left" />
+                <x-base.button as="a" href="{{ route('admin.drivers.show', $driver->id) }}"
+                    class="w-full sm:w-auto mr-2" variant="outline-primary">
+                    <x-base.lucide class="mr-2 h-4 w-4" icon="arrow-left" />
                     Back to Driver
-                </a>
+                </x-base.button>
                 <x-base.button as="a" href="{{ route('admin.traffic.create') }}" class="w-full sm:w-auto"
                     variant="primary">
                     <x-base.lucide class="mr-2 h-4 w-4" icon="PlusCircle" />
@@ -45,9 +46,6 @@
 
         <!-- Filtros -->
         <div class="box box--stacked mt-5">
-            <div class="box-header">
-                <h3 class="box-title">Filters</h3>
-            </div>
             <div class="box-body p-5">
                 <form action="{{ route('admin.drivers.traffic-history', $driver->id) }}" method="GET">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -86,53 +84,61 @@
         <div class="box box--stacked mt-5">
             <div class="box-body p-5">
                 <div class="overflow-x-auto">
-                    <table class="table w-full">
-                        <thead>
-                            <tr>
-                                <th class="border-b-2 dark:border-darkmode-300 whitespace-nowrap">Date</th>
-                                <th class="border-b-2 dark:border-darkmode-300 whitespace-nowrap">Location</th>
-                                <th class="border-b-2 dark:border-darkmode-300 whitespace-nowrap">Charge</th>
-                                <th class="border-b-2 dark:border-darkmode-300 whitespace-nowrap">Penalty</th>
-                                <th class="border-b-2 dark:border-darkmode-300 whitespace-nowrap">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                    <x-base.table class="border-separate border-spacing-y-[10px]">
+                        <x-base.table.thead>
+                            <x-base.table.tr>
+                                <x-base.table.th class="whitespace-nowrap">Registration Date</x-base.table.th>
+                                <x-base.table.th class="whitespace-nowrap">Location</x-base.table.th>
+                                <x-base.table.th class="whitespace-nowrap">Charge</x-base.table.th>
+                                <x-base.table.th class="whitespace-nowrap">Penalty</x-base.table.th>                                
+                                <x-base.table.th class="whitespace-nowrap">Actions</x-base.table.th>
+                            </x-base.table.tr>
+                        </x-base.table.thead>
+                        <x-base.table.tbody>
                             @forelse ($convictions as $conviction)
-                                <tr>
-                                    <td>{{ $conviction->conviction_date->format('m/d/Y') }}</td>
-                                    <td>{{ $conviction->location }}</td>
-                                    <td>{{ $conviction->charge }}</td>
-                                    <td>{{ $conviction->penalty }}</td>
-                                    <td>
-                                        <div class="flex items-center gap-2">
-                                            <a href="{{ route('admin.traffic.edit', $conviction->id) }}"
+                                <x-base.table.tr>                                    
+                                    <x-base.table.td>
+                                        {{ $conviction->conviction_date->format('m/d/Y') }}
+                                    </x-base.table.td>
+                                    <x-base.table.td>
+                                        {{ $conviction->location }}
+                                    </x-base.table.td>
+                                    <x-base.table.td>
+                                        {{ $conviction->charge }}
+                                    </x-base.table.td>
+                                    <x-base.table.td>
+                                        {{ $conviction->penalty }}
+                                    </x-base.table.td>  
+                                    <x-base.table.td class="flex items-center gap-2">
+                                        <a href="{{ route('admin.traffic.edit', $conviction->id) }}"
                                                 class="btn btn-sm btn-rounded-primary mr-1">
                                                 <x-base.lucide class="w-4 h-4" icon="edit" />
+                                            </a>
+                                            <a href="{{ route('admin.traffic.documents', $conviction->id) }}"
+                                                class="btn-sm btn-danger p-1 flex mr-2" title="View Documents">
+                                                <x-base.lucide class="w-4 h-4" icon="file-text" />
                                             </a>
                                             <x-base.button data-tw-toggle="modal" data-tw-target="#delete-conviction-modal"
                                                 variant="danger" class="mr-2 p-1 delete-conviction"
                                                 data-conviction-id="{{ $conviction->id }}" title="Delete Conviction">
                                                 <x-base.lucide class="w-4 h-4" icon="trash" />
                                             </x-base.button>
-                                            <a href="{{ route('admin.traffic.documents', $conviction->id) }}"
-                                                class="btn-sm btn-danger p-1 flex mr-2" title="View Documents">
-                                                <x-base.lucide class="w-4 h-4" icon="file-text" />
-                                                <span class="ml-1">
-                                                    {{ \App\Models\DocumentAttachment::where('documentable_type', \App\Models\Admin\Driver\DriverTrafficConviction::class)->where('documentable_id', $conviction->id)->count() }}
-                                                </span>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
+                                    </x-base.table.td> 
+                                </x-base.table.tr>
                             @empty
-                                <tr>
-                                    <td colspan="5" class="text-center py-4">
-                                        No traffic convictions found for this driver
-                                    </td>
-                                </tr>
+                                <x-base.table.tr>
+                                    <x-base.table.td colspan="6" class="text-center">
+                                        <div class="flex flex-col items-center justify-center py-16">
+                                            <x-base.lucide class="h-8 w-8 text-slate-400" icon="Users" />
+                                            No traffic convictions found for this driver.
+                                        </div>
+                                    </x-base.table.td>
+                                </x-base.table.tr>
                             @endforelse
-                        </tbody>
-                    </table>
+                        </x-base.table.tbody>
+                    </x-base.table>
+
+                    
                 </div>
                 <div class="mt-5">
                     {{ $convictions->links() }}
