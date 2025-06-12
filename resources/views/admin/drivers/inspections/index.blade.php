@@ -95,14 +95,14 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Date From</label>
-                        <input name="date_from" type="date" value="{{ request('date_from') }}"
-                            class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
+                        <x-base.litepicker id="date_from" name="date_from" class="w-full"
+                            value="{{ request('date_from') }}" data-format="MM-DD-YYYY" placeholder="MM-DD-YYYY" />
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
-                        <input name="date_to" type="date" value="{{ request('date_to') }}"
-                            class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
+                        <x-base.litepicker id="date_to" name="date_to" class="w-full" 
+                            value="{{ request('date_to') }}" data-format="MM-DD-YYYY" placeholder="MM-DD-YYYY" />
                     </div>
 
                     <div>
@@ -159,6 +159,12 @@
                     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                         <thead>
                             <tr>
+                                <th scope="col" class="px-6 py-3">Created At</th>
+                                <th scope="col" class="px-6 py-3">Carrier</th>
+                                <th scope="col" class="px-6 py-3">Driver</th>
+                                <th scope="col" class="px-6 py-3">Vehicle</th>
+                                <th scope="col" class="px-6 py-3">Inspection Type</th>                                
+                                <th scope="col" class="px-6 py-3">Status</th>                                
                                 <th class="whitespace-nowrap">
                                     <a href="{{ route(
                                         'admin.inspections.index',
@@ -173,19 +179,13 @@
                                         @endif
                                     </a>
                                 </th>
-                                <th scope="col" class="px-6 py-3">Carrier</th>
-                                <th scope="col" class="px-6 py-3">Driver</th>
-                                <th scope="col" class="px-6 py-3">Vehicle</th>
-                                <th scope="col" class="px-6 py-3">Inspection Type</th>                                
-                                <th scope="col" class="px-6 py-3">Status</th>                                
-                                <th scope="col" class="px-6 py-3">Created At</th>
                                 <th scope="col" class="px-6 py-3 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($inspections as $inspection)
                                 <tr class="bg-white border-b hover:bg-gray-50">
-                                    <td class="px-6 py-4">{{ $inspection->inspection_date->format('M d, Y') }}</td>
+                                    <td class="px-6 py-4">{{ $inspection->created_at->format('m/d/Y') }}</td>
                                     <td class="px-6 py-4">
                                         @php
                                             $carrier = null;
@@ -201,10 +201,6 @@
                                         @if ($inspection->userDriverDetail)
                                             <div class="flex items-center">
                                                 <span>{{ $inspection->userDriverDetail->user->name }} {{ $inspection->userDriverDetail->last_name }}</span>
-                                                <a href="{{ route('admin.inspections.driver.documents', $inspection->userDriverDetail) }}" 
-                                                   class="ml-2 text-blue-600 hover:text-blue-800" title="View driver documents">
-                                                    <x-base.lucide class="w-4 h-4" icon="file-text" />
-                                                </a>
                                             </div>
                                         @else
                                             <span class="text-gray-400">N/A</span>
@@ -237,10 +233,14 @@
                                                 {{ $inspection->status }}
                                             </span>
                                         @endif
-                                    </td>
-                                    <td class="px-6 py-4">{{ $inspection->created_at->format('m-d-Y') }}</td>
+                                    </td>                                    
+                                    <td class="px-6 py-4">{{ $inspection->inspection_date->format('m/d/Y') }}</td>
                                     <td class="px-6 py-4 text-center">
                                         <div class="flex justify-center items-center">
+                                            <a href="{{ route('admin.inspections.driver.documents', $inspection->userDriverDetail) }}" 
+                                                class="btn btn-primary mr-2 p-1 text-blue-600 hover:text-blue-800" title="View driver documents">
+                                                 <x-base.lucide class="w-4 h-4" icon="file-text" />
+                                             </a>
                                             <a href="{{ route('admin.inspections.edit', $inspection) }}"
                                                 class="btn btn-primary mr-2 p-1">
                                                 <x-base.lucide class="w-4 h-4" icon="edit" />

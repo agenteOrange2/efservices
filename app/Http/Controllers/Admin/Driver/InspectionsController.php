@@ -63,11 +63,15 @@ class InspectionsController extends Controller
         }
 
         if ($request->filled('date_from') && $request->date_from != '') {
-            $query->whereDate('inspection_date', '>=', $request->date_from);
+            // Convertir de MM/DD/YYYY a YYYY-MM-DD
+            $dateFrom = \Carbon\Carbon::createFromFormat('m/d/Y', $request->date_from)->format('Y-m-d');
+            $query->whereDate('inspection_date', '>=', $dateFrom);
         }
 
         if ($request->filled('date_to') && $request->date_to != '') {
-            $query->whereDate('inspection_date', '<=', $request->date_to);
+            // Convertir de MM/DD/YYYY a YYYY-MM-DD
+            $dateTo = \Carbon\Carbon::createFromFormat('m/d/Y', $request->date_to)->format('Y-m-d');
+            $query->whereDate('inspection_date', '<=', $dateTo);
         }
 
         if ($request->filled('inspection_type') && $request->inspection_type != '') {

@@ -17,8 +17,7 @@ class DriverCourse extends Model implements HasMedia
 
     protected $fillable = [
         'user_driver_detail_id',
-        'organization_name',
-        'phone',
+        'organization_name',        
         'city',
         'state',
         'certification_date',

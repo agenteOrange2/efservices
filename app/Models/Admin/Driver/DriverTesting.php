@@ -24,6 +24,7 @@ class DriverTesting extends Model implements HasMedia
         'test_result',
         'status',
         'administered_by',
+        'mro',
         'requester_name',
         'location',
         'scheduled_time',
@@ -105,7 +106,7 @@ class DriverTesting extends Model implements HasMedia
             'midland' => 'Midland Office – 606 Kent St., Midland, TX, 79701',
             'abilene' => 'Abilene Office – 317 N Willis, Abilene, TX 79603',
             'seminole' => 'Seminole Office – 1305 Hobbs Hwy, Seminole, TX 79360',
-            'kermit' => 'Ef Service Truck Office – 801 Magnolia St, Kermit, TX 79745',
+            'kermit' => 'EFCTS Office – 801 Magnolia St, Kermit, TX 79745',
         ];
     }
 
@@ -120,6 +121,7 @@ class DriverTesting extends Model implements HasMedia
             'dot_alcohol_test' => 'DOT Alcohol test',
             'non_dot_alcohol_test' => 'NON-DOT Alcohol test',
             'panel_instant_test' => '10 Panel Instant test',
+            'dot_drug_alcohol_test' => 'DOT Drug & Alcohol test',            
         ];
     }
 
@@ -171,6 +173,19 @@ class DriverTesting extends Model implements HasMedia
             'refusal' => 'Refusal to Test',
             'canceled' => 'Canceled',
             'pending' => 'Pending'
+        ];
+    }
+    
+    /**
+     * Get the list of administrators for drug tests
+     */
+    public static function getAdministrators(): array
+    {
+        return [
+            'Permian Basin Drug & Alcohol' => 'Permian Basin Drug & Alcohol',
+            'A-Dependable' => 'A-Dependable',
+            'Norton' => 'Norton',
+            'other' => 'Other'
         ];
     }
     

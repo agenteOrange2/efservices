@@ -29,7 +29,7 @@
         <div class="flex flex-col sm:flex-row items-center mt-8">
             <h2 class="text-lg font-medium mr-auto">
                 Documents for Traffic Conviction: {{ $conviction->charge }}
-                ({{ $conviction->conviction_date->format('M d, Y') }})
+                ({{ $conviction->conviction_date->format('m/d/Y') }})
             </h2>
             <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
 
@@ -47,7 +47,7 @@
         </div>
 
         <!-- Información de la Infracción de Tráfico -->
-        <div class="box box--stacked mt-5">
+        <div class="box box--stacked mt-5 p-3">
             <div class="box-header">
                 <h3 class="box-title">Traffic Conviction Details</h3>
             </div>
@@ -79,7 +79,7 @@
         </div>
 
         <!-- Lista de Documentos -->
-        <div class="box box--stacked mt-5">
+        <div class="box box--stacked mt-5 p-3">
             <div class="box-header">
                 <h3 class="box-title">Documents</h3>
             </div>
@@ -246,52 +246,6 @@
                             <x-base.lucide class="w-4 h-4 mr-2" icon="plus" />
                             Add First Document
                         </button>
-                    </div>
-                @endif
-
-                @if (isset($debugInfo))
-                    <div class="mt-6 bg-gray-100 p-4 rounded-md">
-                        <h3 class="text-lg font-semibold mb-2">Información de depuración</h3>
-                        <ul class="space-y-1 text-sm">
-                            <li><strong>ID de infracción:</strong> {{ $debugInfo['conviction_id'] }}</li>
-                            <li><strong>ID de conductor:</strong> {{ $debugInfo['user_driver_detail_id'] }}</li>
-                            <li><strong>Documentos en Media Library (traffic_images):</strong> {{ $debugInfo['media_items_count'] }}</li>
-                            <li><strong>Documentos legacy (DocumentAttachment):</strong> {{ $debugInfo['legacy_documents_count'] }}</li>
-                        </ul>
-
-                        @if(count($debugInfo['media_items']) > 0)
-                            <div class="mt-3">
-                                <p class="text-sm font-medium">Detalles de Media Items:</p>
-                                <div class="mt-1 text-xs text-gray-600 max-h-40 overflow-y-auto">
-                                    <table class="w-full text-left">
-                                        <thead>
-                                            <tr>
-                                                <th class="p-1">ID</th>
-                                                <th class="p-1">Nombre</th>
-                                                <th class="p-1">Colección</th>
-                                                <th class="p-1">Tipo</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($debugInfo['media_items'] as $item)
-                                                <tr>
-                                                    <td class="p-1">{{ $item['id'] }}</td>
-                                                    <td class="p-1 truncate max-w-[150px]" title="{{ $item['file_name'] }}">{{ $item['file_name'] }}</td>
-                                                    <td class="p-1">{{ $item['collection_name'] }}</td>
-                                                    <td class="p-1">{{ $item['mime_type'] }}</td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        @endif
-
-                        <div class="mt-3">
-                            <p class="text-xs text-gray-500">Ruta esperada de documentos Media Library:
-                                storage/app/public/{{ $conviction->id }}/traffic_images/
-                            </p>
-                        </div>
                     </div>
                 @endif
             </div>

@@ -257,7 +257,8 @@ class TrainingAssignmentsController extends Controller
             $query->where('carrier_id', $carrier);
         }
         
-        $drivers = $query->with('user')
+        // Incluir información del carrier para mostrar en el selector
+        $drivers = $query->with(['user', 'carrier'])
             ->get();
         
         // Devolver directamente los conductores como array JSON

@@ -58,12 +58,12 @@
                         </div>
                         <div>
                             <x-base.form-label for="date_from">From Date</x-base.form-label>
-                            <x-base.form-input id="date_from" name="date_from" type="date"
+                            <x-base.litepicker id="date_from" name="date_from" class="w-full"
                                 value="{{ request('date_from') }}" />
                         </div>
                         <div>
                             <x-base.form-label for="date_to">To Date</x-base.form-label>
-                            <x-base.form-input id="date_to" name="date_to" type="date"
+                            <x-base.litepicker id="date_to" name="date_to" class="w-full"
                                 value="{{ request('date_to') }}" />
                         </div>
                         <div class="flex items-end">
@@ -99,7 +99,7 @@
                         <tbody>
                             @forelse ($convictions as $conviction)
                                 <tr>
-                                    <td>{{ $conviction->conviction_date->format('M d, Y') }}</td>
+                                    <td>{{ $conviction->conviction_date->format('m/d/Y') }}</td>
                                     <td>{{ $conviction->location }}</td>
                                     <td>{{ $conviction->charge }}</td>
                                     <td>{{ $conviction->penalty }}</td>
@@ -156,7 +156,8 @@
                     <!-- Fecha de la infracción -->
                     <div class="col-span-12 sm:col-span-6">
                         <x-base.form-label for="conviction_date">Conviction Date</x-base.form-label>
-                        <x-base.form-input id="conviction_date" name="conviction_date" type="date" required />
+                        <x-base.litepicker id="conviction_date" name="conviction_date" class="w-full"
+                            value="{{ old('conviction_date') }}" />
                     </div>
 
                     <!-- Ubicación -->

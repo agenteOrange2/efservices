@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers\Admin\Driver;
 
-use App\Http\Controllers\Controller;
-use App\Models\UserDriverDetail;
-use App\Models\Admin\Driver\DriverTrafficConviction;
+use Carbon\Carbon;
 use App\Models\Carrier;
-use App\Models\DocumentAttachment;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Models\UserDriverDetail;
+use App\Models\DocumentAttachment;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Str;
+use App\Models\Admin\Driver\DriverTrafficConviction;
 
 class TrafficConvictionsController extends Controller
 {
@@ -44,12 +45,29 @@ class TrafficConvictionsController extends Controller
         }
 
         if ($request->filled('date_from')) {
-            $query->whereDate('conviction_date', '>=', $request->date_from);
+            // Parse date from MM/DD/YYYY format to Y-m-d for database query
+            try {
+                $dateFrom = Carbon::createFromFormat('m/d/Y', $request->date_from)->format('Y-m-d');
+                $query->whereDate('conviction_date', '>=', $dateFrom);
+            } catch (\Exception $e) {
+                // If date parsing fails, try the original format as fallback
+                $query->whereDate('conviction_date', '>=', $request->date_from);
+                Log::warning('Date format parsing failed for date_from: ' . $request->date_from);
+            }
         }
-
+        
         if ($request->filled('date_to')) {
-            $query->whereDate('conviction_date', '<=', $request->date_to);
+            // Parse date from MM/DD/YYYY format to Y-m-d for database query
+            try {
+                $dateTo = Carbon::createFromFormat('m/d/Y', $request->date_to)->format('Y-m-d');
+                $query->whereDate('conviction_date', '<=', $dateTo);
+            } catch (\Exception $e) {
+                // If date parsing fails, try the original format as fallback
+                $query->whereDate('conviction_date', '<=', $request->date_to);
+                Log::warning('Date format parsing failed for date_to: ' . $request->date_to);
+            }
         }
+        
 
         // Ordenar resultados
         $sortField = $request->get('sort_field', 'conviction_date');

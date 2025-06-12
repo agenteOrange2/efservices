@@ -77,14 +77,14 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Date From</label>
-                        <input name="date_from" type="date" value="{{ request('date_from') }}"
-                            class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
+                        <x-base.litepicker id="date_from" name="date_from" class="w-full" 
+                            value="{{ request('date_from') }}" data-format="MM-DD-YYYY" placeholder="MM-DD-YYYY" />
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
-                        <input name="date_to" type="date" value="{{ request('date_to') }}"
-                            class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
+                        <x-base.litepicker id="date_to" name="date_to" class="w-full" 
+                            value="{{ request('date_to') }}" data-format="MM-DD-YYYY" placeholder="MM-DD-YYYY" />
                     </div>
 
                     <div class="flex items-end">

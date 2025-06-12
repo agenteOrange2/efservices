@@ -359,21 +359,30 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Organization Name <span
-                                    class="text-red-500">*</span></label>
-                            <input type="text" wire:model="courses.{{ $index }}.organization_name"
-                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
-                                placeholder="Name of organization">
+                        <div x-data="{ showOtherField: {{ in_array($course['organization_name'] ?? '', ['H2S', 'PEC', 'SANDTRAX', 'OSHA10', 'OSHA30']) ? 'false' : 'true' }} }">
+                            <label class="block text-sm font-medium mb-1">Organization Name <span class="text-red-500">*</span></label>
+                            <select wire:model="courses.{{ $index }}.organization_name"
+                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8"
+                                x-on:change="showOtherField = ($event.target.value === 'Other')">
+                                <option value="">Select Organization</option>
+                                <option value="H2S">H2S</option>
+                                <option value="PEC">PEC</option>
+                                <option value="SANDTRAX">SANDTRAX</option>
+                                <option value="OSHA10">OSHA10</option>
+                                <option value="OSHA30">OSHA30</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            
+                            <!-- Campo para "Other" que se muestra condicionalmente -->
+                            <div x-show="showOtherField" class="mt-2">
+                                <input type="text" wire:model="courses.{{ $index }}.organization_name_other"
+                                    class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
+                                    placeholder="Specify organization name">
+                            </div>
+                            
                             @error("courses.{$index}.organization_name")
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Phone Number</label>
-                            <input type="text" wire:model="courses.{{ $index }}.phone"
-                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
-                                placeholder="(555) 555-5555">
                         </div>
                     </div>
 

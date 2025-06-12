@@ -69,13 +69,13 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <x-base.form-label for="carrier_id">Carrier</x-base.form-label>
-                                <x-base.form-select name="carrier_id" id="carrier_id" @change="loadDrivers()">
+                                <x-base.form-select name="carrier_id" id="carrier_id" @change="loadDrivers($event.target.value)">
                                     <option value="">All carriers</option>
                                     @foreach ($carriers as $carrier)
                                         <option value="{{ $carrier->id }}">{{ $carrier->name }}</option>
                                     @endforeach
                                 </x-base.form-select>
-                                <p class="mt-1 text-xs text-gray-500">Optional: Filter drivers by carrier</p>
+                                <p class="mt-1 text-xs text-gray-500">Seleccione un carrier para filtrar conductores activos</p>
                             </div>
 
                             <div>
@@ -219,14 +219,14 @@
                 isLoading: false,
                 selectedCarrier: '',
                 init() {
-                    // Cargar todos los conductores activos inicialmente
-                    this.loadDrivers(0);
+                    // No cargar conductores inicialmente, esperar a que se seleccione un carrier
+                    // Esto mejora la experiencia de usuario y evita cargar datos innecesarios
                 },
                 loadDrivers(carrierId) {
                     this.isLoading = true;
 
                     // Si no hay carrierId, usar 0 para obtener todos
-                    const carrier = carrierId || 0;
+                    const carrier = carrierId || document.getElementById('carrier_id').value || 0;
                     // Usar la ruta API correcta del controlador TrainingAssignmentsController
                     const url = '/admin/training-assignments/get-drivers/' + carrier;
 
@@ -240,9 +240,12 @@
                         .then(data => {
                             // El controlador devuelve directamente un array de conductores
                             this.drivers = data.map(driver => {
+                                // Incluir información adicional para mostrar en el selector
+                                let carrierInfo = driver.carrier ? ` (${driver.carrier.name})` : '';
                                 return {
                                     id: driver.id,
-                                    name: `${driver.user.name} ${driver.last_name || ''}`
+                                    name: `${driver.user.name} ${driver.last_name || ''}${carrierInfo}`,
+                                    carrier_id: driver.carrier_id
                                 };
                             });
 
@@ -265,7 +268,16 @@
                         })
                         .catch(error => {
                             console.error('Error:', error);
-                            alert('Error al cargar conductores. Por favor, intente de nuevo.');
+                            // Usar Toastify para mostrar errores de manera más elegante
+                            Toastify({
+                                text: "Error al cargar conductores. Por favor, intente de nuevo.",
+                                duration: 3000,
+                                close: true,
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#f44336",
+                                className: "error",
+                            }).showToast();
                         })
                         .finally(() => {
                             this.isLoading = false;
@@ -288,21 +300,28 @@
             // Configuración de TomSelect
             if (driverSelect) {
                 window.tomSelectDrivers = new TomSelect(driverSelect, {
-                    plugins: ['remove_button'],
-                    maxItems: null,
+                    plugins: ['remove_button', 'clear_button'],
+                    maxItems: null, // Permitir selección múltiple sin límite
                     valueField: 'id',
                     labelField: 'name',
-                    searchField: 'name',
-                    placeholder: 'Seleccione conductores',
+                    searchField: ['name'], // Buscar por nombre
+                    placeholder: 'Seleccione uno o más conductores',
                     // Permitir crear nuevas opciones: false
                     create: false,
-                    // Mensaje cuando no hay resultados
+                    // Personalizar mensajes y apariencia
                     render: {
                         no_results: function() {
-                            return '<div class="py-2 px-3">No se encontraron conductores</div>';
+                            return '<div class="py-2 px-3 text-red-500">No se encontraron conductores activos. Seleccione otro carrier o verifique que haya conductores activos.</div>';
                         },
                         option: function(data, escape) {
-                            return '<div class="py-2 px-3">' + escape(data.name) + '</div>';
+                            return '<div class="py-2 px-3 flex items-center justify-between">' + 
+                                   '<span>' + escape(data.name) + '</span>' + 
+                                   '</div>';
+                        },
+                        item: function(data, escape) {
+                            return '<div class="item py-1 px-2 bg-blue-100 rounded flex items-center">' + 
+                                   escape(data.name) + 
+                                   '</div>';
                         }
                     }
                 });

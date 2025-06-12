@@ -34,38 +34,7 @@
                                     </div>
                                 </div>
                                 <div class="mt-3 w-full flex-1 xl:mt-0">
-                                    <div class="flex items-center">
-                                        {{-- <div x-data="imagePreview()" class="flex items-center">
-                                            <div
-                                                class="relative flex h-24 w-24 items-center justify-center rounded-full border border-primary/10 bg-primary/5">
-                                                <!-- Preview de imagen -->
-                                                <template x-if="photoPreview">
-                                                    <img :src="photoPreview" alt="Preview"
-                                                        class="h-full w-full rounded-full object-cover">
-                                                </template>
-                                                <!-- Placeholder si no hay imagen -->
-                                                <template x-if="!photoPreview">
-                                                    <x-base.lucide
-                                                        class="-mt-1.5 h-[65%] w-[65%] fill-slate-300/70 stroke-slate-400/50 stroke-[0.5]"
-                                                        icon="User" />
-                                                </template>
-                                                <!-- Botón para cargar imagen -->
-                                                <label for="profile_photo_input"
-                                                    class="box absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full cursor-pointer">
-                                                    <x-base.lucide class="h-3.5 w-3.5 stroke-[1.3] text-slate-500"
-                                                        icon="Pencil" />
-                                                </label>
-                                            </div>
-                                            <!-- Campo de carga de imagen -->
-                                            <input type="file" name="profile_photo" id="profile_photo_input"
-                                                class="hidden" accept="image/*" @change="updatePhotoPreview">
-                                            <!-- Botón para eliminar la imagen -->
-                                            <x-base.button class="ml-8 mr-2 h-8 pl-3.5 pr-4" variant="outline-secondary"
-                                                size="sm" @click.prevent="clearPhoto">
-                                                <x-base.lucide class="mr-1.5 h-3.5 w-3.5 stroke-[1.3]" icon="Trash2" />
-                                                Remove
-                                            </x-base.button>
-                                        </div> --}}
+                                    <div class="flex items-center">                                        
                                         <x-image-preview name="profile_photo" id="profile_photo_input"
                                             currentPhotoUrl="{{ null }}"
                                             defaultPhotoUrl="{{ asset('build/default_profile.png') }}"

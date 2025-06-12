@@ -19,7 +19,7 @@ class DriverTrainingStep extends Component
     // Training Schools
     public $has_attended_training_school = false;
     public $training_schools = [];
-    
+
     // Courses
     public $has_completed_courses = false;
     public $courses = [];
@@ -49,10 +49,16 @@ class DriverTrainingStep extends Component
                     "required|date|after_or_equal:training_schools.{$index}.date_start";
             }
         }
-        
+
         if ($this->has_completed_courses) {
             foreach (range(0, count($this->courses) - 1) as $index) {
                 $rules["courses.{$index}.organization_name"] = 'required|string|max:255';
+                $rules["courses.{$index}.organization_name_other"] = 'nullable|string|max:255';
+
+                // Hacer organization_name_other obligatorio cuando organization_name es 'Other'
+                if (isset($this->courses[$index]['organization_name']) && $this->courses[$index]['organization_name'] === 'Other') {
+                    $rules["courses.{$index}.organization_name_other"] = 'required|string|max:255';
+                }
                 $rules["courses.{$index}.city"] = 'required|string|max:255';
                 $rules["courses.{$index}.state"] = 'required|string|max:255';
                 $rules["courses.{$index}.certification_date"] = 'required|date';
@@ -84,7 +90,7 @@ class DriverTrainingStep extends Component
         if ($this->has_attended_training_school && empty($this->training_schools)) {
             $this->training_schools = [$this->getEmptyTrainingSchool()];
         }
-        
+
         // Initialize with empty course
         if ($this->has_completed_courses && empty($this->courses)) {
             $this->courses = [$this->getEmptyCourse()];
@@ -134,7 +140,6 @@ class DriverTrainingStep extends Component
                     'school_name' => $school->school_name ?? '',
                     'city' => $school->city ?? '',
                     'state' => $school->state ?? '',
-                    'phone_number' => $school->phone_number ?? '',
                     'date_start' => $school->date_start ? $school->date_start->format('Y-m-d') : null,
                     'date_end' => $school->date_end ? $school->date_end->format('Y-m-d') : null,
                     'graduated' => (bool)($school->graduated ?? false),
@@ -146,7 +151,7 @@ class DriverTrainingStep extends Component
                 ];
             }
         }
-        
+
         // Load courses
         $courses = $userDriverDetail->courses;
         if ($courses->count() > 0) {
@@ -168,7 +173,6 @@ class DriverTrainingStep extends Component
                 $this->courses[] = [
                     'id' => $course->id,
                     'organization_name' => $course->organization_name ?? '',
-                    'phone' => $course->phone ?? '',
                     'city' => $course->city ?? '',
                     'state' => $course->state ?? '',
                     'certification_date' => $course->certification_date ? $course->certification_date->format('Y-m-d') : null,
@@ -219,7 +223,6 @@ class DriverTrainingStep extends Component
                                 'school_name' => $schoolData['school_name'] ?? null,
                                 'city' => $schoolData['city'] ?? null,
                                 'state' => $schoolData['state'] ?? null,
-                                'phone_number' => $schoolData['phone_number'] ?? null,
                                 'date_start' => $schoolData['date_start'] ?? null,
                                 'date_end' => $schoolData['date_end'] ?? null,
                                 'graduated' => $schoolData['graduated'] ?? false,
@@ -235,7 +238,6 @@ class DriverTrainingStep extends Component
                             'school_name' => $schoolData['school_name'] ?? null,
                             'city' => $schoolData['city'] ?? null,
                             'state' => $schoolData['state'] ?? null,
-                            'phone_number' => $schoolData['phone_number'] ?? null,
                             'date_start' => $schoolData['date_start'] ?? null,
                             'date_end' => $schoolData['date_end'] ?? null,
                             'graduated' => $schoolData['graduated'] ?? false,
@@ -272,13 +274,13 @@ class DriverTrainingStep extends Component
                 }
                 $userDriverDetail->trainingSchools()->delete();
             }
-            
+
             // Handle courses - sync
             if ($this->has_completed_courses) {
                 // Get existing courses
                 $existingCourses = $userDriverDetail->courses->pluck('id')->toArray();
                 $currentCourses = [];
-                
+
                 // Log para depuración
                 Log::info('Saving courses', [
                     'total_courses' => count($this->courses),
@@ -292,15 +294,20 @@ class DriverTrainingStep extends Component
                         'course_data' => $courseData,
                         'has_id' => !empty($courseData['id'])
                     ]);
-                    
+
                     // Use existing course ID if available, otherwise create new
                     if (!empty($courseData['id'])) {
                         $course = $userDriverDetail->courses()->find($courseData['id']);
                         if ($course) {
                             Log::info('Updating existing course', ['course_id' => $course->id]);
+                            // Determinar el valor correcto para organization_name
+                            $organizationName = $courseData['organization_name'] ?? null;
+                            if ($organizationName === 'Other' && !empty($courseData['organization_name_other'])) {
+                                $organizationName = $courseData['organization_name_other'];
+                            }
+
                             $course->update([
-                                'organization_name' => $courseData['organization_name'] ?? null,
-                                'phone' => $courseData['phone'] ?? null,
+                                'organization_name' => $organizationName,
                                 'city' => $courseData['city'] ?? null,
                                 'state' => $courseData['state'] ?? null,
                                 'certification_date' => $courseData['certification_date'] ?? null,
@@ -315,7 +322,6 @@ class DriverTrainingStep extends Component
                         Log::info('Creating new course', [
                             'data' => [
                                 'organization_name' => $courseData['organization_name'] ?? null,
-                                'phone' => $courseData['phone'] ?? null,
                                 'city' => $courseData['city'] ?? null,
                                 'state' => $courseData['state'] ?? null,
                                 'certification_date' => $courseData['certification_date'] ?? null,
@@ -323,10 +329,15 @@ class DriverTrainingStep extends Component
                                 'expiration_date' => $courseData['expiration_date'] ?? null,
                             ]
                         ]);
-                        
+
+                        // Determinar el valor correcto para organization_name
+                        $organizationName = $courseData['organization_name'] ?? null;
+                        if ($organizationName === 'Other' && !empty($courseData['organization_name_other'])) {
+                            $organizationName = $courseData['organization_name_other'];
+                        }
+
                         $course = $userDriverDetail->courses()->create([
-                            'organization_name' => $courseData['organization_name'] ?? null,
-                            'phone' => $courseData['phone'] ?? null,
+                            'organization_name' => $organizationName,
                             'city' => $courseData['city'] ?? null,
                             'state' => $courseData['state'] ?? null,
                             'certification_date' => $courseData['certification_date'] ?? null,
@@ -391,7 +402,7 @@ class DriverTrainingStep extends Component
         if (!empty($schoolData['temp_certificate_tokens'])) {
             foreach ($schoolData['temp_certificate_tokens'] as $certData) {
                 if (empty($certData['token'])) continue;
-                
+
                 // Log para depuración
                 Log::info('Processing school certificate', [
                     'school_id' => $school->id,
@@ -402,20 +413,20 @@ class DriverTrainingStep extends Component
 
                 // Intenta obtener el archivo de la sesión
                 $tempPath = $tempUploadService->moveToPermanent($certData['token']);
-                
+
                 // Si no se encuentra en la sesión, intenta buscarlo directamente en el almacenamiento
                 if (!$tempPath || !file_exists($tempPath)) {
                     // Buscar en el almacenamiento por un patrón que coincida con el token
                     $tempFiles = session('temp_files', []);
                     Log::info('Buscando archivo en temp_files', ['temp_files' => $tempFiles]);
-                    
+
                     // Si no podemos encontrarlo en la sesión, intentamos buscarlo directamente en el storage
                     $possiblePaths = [
                         storage_path('app/public/temp/school_certificates'),
                         storage_path('app/public/temp/school_certificate'),
                         storage_path('app/public/temp')
                     ];
-                    
+
                     // Primero intentamos buscar por nombre de archivo si lo tenemos
                     if (!empty($certData['filename'])) {
                         foreach ($possiblePaths as $dir) {
@@ -423,11 +434,13 @@ class DriverTrainingStep extends Component
                                 $files = scandir($dir);
                                 foreach ($files as $file) {
                                     // Buscar coincidencias parciales con el nombre del archivo
-                                    if ($file != '.' && $file != '..' && 
-                                        is_file($dir . '/' . $file) && 
+                                    if (
+                                        $file != '.' && $file != '..' &&
+                                        is_file($dir . '/' . $file) &&
                                         (strpos($file, pathinfo($certData['filename'], PATHINFO_FILENAME)) !== false ||
-                                         strpos($certData['filename'], pathinfo($file, PATHINFO_FILENAME)) !== false)) {
-                                        
+                                            strpos($certData['filename'], pathinfo($file, PATHINFO_FILENAME)) !== false)
+                                    ) {
+
                                         $tempPath = $dir . '/' . $file;
                                         Log::info('Encontrado archivo por coincidencia de nombre', [
                                             'path' => $tempPath,
@@ -440,14 +453,14 @@ class DriverTrainingStep extends Component
                             }
                         }
                     }
-                    
+
                     // Si no encontramos por nombre, buscamos archivos recientes
                     if (!$tempPath || !file_exists($tempPath)) {
                         foreach ($possiblePaths as $dir) {
                             if (is_dir($dir)) {
                                 $files = scandir($dir);
                                 Log::info('Archivos en directorio', ['dir' => $dir, 'files' => $files]);
-                                
+
                                 // Ordenar archivos por fecha de modificación (más recientes primero)
                                 $recentFiles = [];
                                 foreach ($files as $file) {
@@ -456,7 +469,7 @@ class DriverTrainingStep extends Component
                                     }
                                 }
                                 arsort($recentFiles); // Ordenar por tiempo de modificación (más reciente primero)
-                                
+
                                 // Tomar el archivo más reciente
                                 foreach ($recentFiles as $file => $mtime) {
                                     // Si el archivo fue creado en las últimas 24 horas, lo usamos
@@ -470,7 +483,7 @@ class DriverTrainingStep extends Component
                         }
                     }
                 }
-                
+
                 if ($tempPath && file_exists($tempPath)) {
                     $school->addMedia($tempPath)
                         ->toMediaCollection('school_certificates');
@@ -499,7 +512,7 @@ class DriverTrainingStep extends Component
         if (!empty($courseData['temp_certificate_tokens'])) {
             foreach ($courseData['temp_certificate_tokens'] as $certData) {
                 if (empty($certData['token'])) continue;
-                
+
                 // Log para depuración
                 Log::info('Processing course certificate', [
                     'course_id' => $course->id,
@@ -510,20 +523,20 @@ class DriverTrainingStep extends Component
 
                 // Intenta obtener el archivo de la sesión
                 $tempPath = $tempUploadService->moveToPermanent($certData['token']);
-                
+
                 // Si no se encuentra en la sesión, intenta buscarlo directamente en el almacenamiento
                 if (!$tempPath || !file_exists($tempPath)) {
                     // Buscar en el almacenamiento por un patrón que coincida con el token
                     $tempFiles = session('temp_files', []);
                     Log::info('Buscando archivo en temp_files', ['temp_files' => $tempFiles]);
-                    
+
                     // Si no podemos encontrarlo en la sesión, intentamos buscarlo directamente en el storage
                     $possiblePaths = [
                         storage_path('app/public/temp/course_certificates'),
                         storage_path('app/public/temp/certificates'),
                         storage_path('app/public/temp')
                     ];
-                    
+
                     // Primero intentamos buscar por nombre de archivo si lo tenemos
                     if (!empty($certData['filename'])) {
                         foreach ($possiblePaths as $dir) {
@@ -531,11 +544,13 @@ class DriverTrainingStep extends Component
                                 $files = scandir($dir);
                                 foreach ($files as $file) {
                                     // Buscar coincidencias parciales con el nombre del archivo
-                                    if ($file != '.' && $file != '..' && 
-                                        is_file($dir . '/' . $file) && 
+                                    if (
+                                        $file != '.' && $file != '..' &&
+                                        is_file($dir . '/' . $file) &&
                                         (strpos($file, pathinfo($certData['filename'], PATHINFO_FILENAME)) !== false ||
-                                         strpos($certData['filename'], pathinfo($file, PATHINFO_FILENAME)) !== false)) {
-                                        
+                                            strpos($certData['filename'], pathinfo($file, PATHINFO_FILENAME)) !== false)
+                                    ) {
+
                                         $tempPath = $dir . '/' . $file;
                                         Log::info('Encontrado archivo por coincidencia de nombre', [
                                             'path' => $tempPath,
@@ -548,14 +563,14 @@ class DriverTrainingStep extends Component
                             }
                         }
                     }
-                    
+
                     // Si no encontramos por nombre, buscamos archivos recientes
                     if (!$tempPath || !file_exists($tempPath)) {
                         foreach ($possiblePaths as $dir) {
                             if (is_dir($dir)) {
                                 $files = scandir($dir);
                                 Log::info('Archivos en directorio', ['dir' => $dir, 'files' => $files]);
-                                
+
                                 // Ordenar archivos por fecha de modificación (más recientes primero)
                                 $recentFiles = [];
                                 foreach ($files as $file) {
@@ -564,7 +579,7 @@ class DriverTrainingStep extends Component
                                     }
                                 }
                                 arsort($recentFiles); // Ordenar por tiempo de modificación (más reciente primero)
-                                
+
                                 // Tomar el archivo más reciente
                                 foreach ($recentFiles as $file => $mtime) {
                                     // Si el archivo fue creado en las últimas 24 horas, lo usamos
@@ -578,17 +593,17 @@ class DriverTrainingStep extends Component
                         }
                     }
                 }
-                
+
                 if ($tempPath && file_exists($tempPath)) {
                     // Obtener el nombre del archivo original
                     $originalFileName = basename($tempPath);
                     $fileName = $certData['filename'] ?? $originalFileName;
-                    
+
                     $course->addMedia($tempPath)
                         ->usingName(pathinfo($fileName, PATHINFO_FILENAME))
                         ->usingFileName($fileName)
                         ->toMediaCollection('certificates');
-                    
+
                     Log::info('Certificate added to course', [
                         'course_id' => $course->id,
                         'path' => $tempPath,
@@ -598,7 +613,7 @@ class DriverTrainingStep extends Component
                 }
             }
         }
-        
+
         return true;
     }
 
@@ -607,13 +622,13 @@ class DriverTrainingStep extends Component
     {
         $this->training_schools[] = $this->getEmptyTrainingSchool();
     }
-    
+
     // Add course
     public function addCourse()
     {
         $this->courses[] = $this->getEmptyCourse();
     }
-    
+
     // Remove training school
     public function removeTrainingSchool($index)
     {
@@ -623,7 +638,7 @@ class DriverTrainingStep extends Component
             $this->training_schools = array_values($this->training_schools);
         }
     }
-    
+
     // Remove course
     public function removeCourse($index)
     {
@@ -661,19 +676,19 @@ class DriverTrainingStep extends Component
 
         $this->training_schools[$schoolIndex]['training_skills'] = $skills;
     }
-    
+
     // Add certificate to course
     public function addCourseCertificate($courseIndex, $token, $filename, $previewUrl = null, $fileType = null)
     {
         if (!isset($this->courses[$courseIndex])) {
             return;
         }
-        
+
         // Initialize if not exists
         if (!isset($this->courses[$courseIndex]['temp_certificate_tokens'])) {
             $this->courses[$courseIndex]['temp_certificate_tokens'] = [];
         }
-        
+
         // Add certificate token
         $this->courses[$courseIndex]['temp_certificate_tokens'][] = [
             'token' => $token,
@@ -681,28 +696,30 @@ class DriverTrainingStep extends Component
             'preview_url' => $previewUrl,
             'file_type' => $fileType
         ];
-        
+
         // Force refresh
         $this->dispatch('certificates-updated');
     }
-    
+
     // Remove course certificate
     public function removeCourseCertificate($courseIndex, $tokenIndex)
     {
-        if (!isset($this->courses[$courseIndex]) || 
-            !isset($this->courses[$courseIndex]['temp_certificate_tokens'][$tokenIndex])) {
+        if (
+            !isset($this->courses[$courseIndex]) ||
+            !isset($this->courses[$courseIndex]['temp_certificate_tokens'][$tokenIndex])
+        ) {
             return;
         }
-        
+
         // Remove the certificate token
         unset($this->courses[$courseIndex]['temp_certificate_tokens'][$tokenIndex]);
-        $this->courses[$courseIndex]['temp_certificate_tokens'] = 
+        $this->courses[$courseIndex]['temp_certificate_tokens'] =
             array_values($this->courses[$courseIndex]['temp_certificate_tokens']);
-        
+
         // Force refresh
         $this->dispatch('certificates-updated');
     }
-    
+
     // Remove course certificate by ID (for existing certificates)
     public function removeCertificateByIdFromCourse($courseIndex, $certificateId)
     {
@@ -710,36 +727,36 @@ class DriverTrainingStep extends Component
             if (!$this->driverId || !isset($this->courses[$courseIndex])) {
                 return false;
             }
-            
+
             $courseData = $this->courses[$courseIndex];
             if (empty($courseData['id'])) {
                 return false;
             }
-            
+
             $userDriverDetail = UserDriverDetail::find($this->driverId);
             if (!$userDriverDetail) {
                 return false;
             }
-            
+
             $course = $userDriverDetail->courses()->find($courseData['id']);
             if (!$course) {
                 return false;
             }
-            
+
             // Buscar y eliminar el certificado específico
             $media = $course->getMedia('certificates')->find($certificateId);
             if ($media) {
                 $media->delete();
-                
+
                 // Recargar los certificados
                 $this->refreshCourseCertificates($courseIndex, $course);
-                
+
                 // Forzar actualización
                 $this->dispatch('certificates-updated');
-                
+
                 return true;
             }
-            
+
             return false;
         } catch (\Exception $e) {
             Log::error('Error eliminando certificado de curso', [
@@ -750,13 +767,13 @@ class DriverTrainingStep extends Component
             return false;
         }
     }
-    
+
     // Refresh course certificates
     public function refreshCourseCertificates($courseIndex, $course)
     {
         // Asegúrate que el curso esté recargado con sus relaciones
         $course->refresh();
-        
+
         // Actualiza los certificados
         $certificates = [];
         if ($course->hasMedia('certificates')) {
@@ -769,35 +786,35 @@ class DriverTrainingStep extends Component
                 ];
             }
         }
-        
+
         // Actualiza el curso completo en el array
         $this->courses[$courseIndex]['certificates'] = $certificates;
     }
-    
+
     // Clear all course certificates
     public function clearAllCourseCertificates($courseIndex)
     {
         try {
             if (!$this->driverId) return false;
-            
+
             $courseData = $this->courses[$courseIndex] ?? null;
             if (!$courseData || empty($courseData['id'])) return false;
-            
+
             $userDriverDetail = UserDriverDetail::find($this->driverId);
             if (!$userDriverDetail) return false;
-            
+
             $course = $userDriverDetail->courses()->find($courseData['id']);
             if (!$course) return false;
-            
+
             // Eliminar todos los certificados
             $course->clearMediaCollection('certificates');
-            
+
             // Actualizar el componente
             $this->refreshCourseCertificates($courseIndex, $course);
-            
+
             // Forzar actualización completa
             $this->dispatch('certificates-updated');
-            
+
             return true;
         } catch (\Exception $e) {
             Log::error('Error eliminando todos los certificados del curso', [
@@ -817,7 +834,7 @@ class DriverTrainingStep extends Component
 
         // Guardar el token en la sesión para asegurar que esté disponible cuando se procese
         $tempFiles = session('temp_files', []);
-        
+
         // Verificar si el token ya existe en la sesión
         if (!isset($tempFiles[$token])) {
             // Si no existe, intentar recrearlo con la información disponible
@@ -829,10 +846,10 @@ class DriverTrainingStep extends Component
                 'size' => 0, // No tenemos el tamaño exacto
                 'created_at' => now()->toDateTimeString(),
             ];
-            
+
             // Guardar en la sesión
             session(['temp_files' => $tempFiles]);
-            
+
             // Registrar en el log
             Log::info('Token recreado en la sesión', [
                 'token' => $token,
@@ -840,7 +857,7 @@ class DriverTrainingStep extends Component
                 'session_id' => session()->getId()
             ]);
         }
-        
+
         // Guardar en el componente Livewire
         $this->training_schools[$schoolIndex]['temp_certificate_tokens'][] = [
             'token' => $token,
@@ -848,7 +865,7 @@ class DriverTrainingStep extends Component
             'preview_url' => $previewUrl,
             'file_type' => $fileType
         ];
-        
+
         // Registrar en el log
         Log::info('Certificado añadido al componente', [
             'school_index' => $schoolIndex,
@@ -857,11 +874,11 @@ class DriverTrainingStep extends Component
             'session_id' => session()->getId(),
             'temp_files' => array_keys(session('temp_files', []))
         ]);
-        
+
         // Forzar actualización completa
         $this->dispatch('certificates-updated');
     }
-    
+
     // Remove certificate
     public function removeCertificate($schoolIndex, $tokenIndex)
     {
@@ -869,7 +886,7 @@ class DriverTrainingStep extends Component
         $this->training_schools[$schoolIndex]['temp_certificate_tokens'] = array_values(
             $this->training_schools[$schoolIndex]['temp_certificate_tokens']
         );
-        
+
         // Forzar actualización completa
         $this->dispatch('certificates-updated');
     }
@@ -973,27 +990,27 @@ class DriverTrainingStep extends Component
         }
     }
 
-    private function refreshSchoolData($schoolIndex, $school) 
-{
-    // Asegúrate que la escuela esté recargada con sus relaciones
-    $school->refresh();
-    
-    // Actualiza los certificados
-    $certificates = [];
-    if ($school->hasMedia('school_certificates')) {
-        foreach ($school->getMedia('school_certificates') as $certificate) {
-            $certificates[] = [
-                'id' => $certificate->id,
-                'filename' => $certificate->file_name,
-                'url' => $certificate->getUrl(),
-                'is_image' => Str::startsWith($certificate->mime_type, 'image/'),
-            ];
+    private function refreshSchoolData($schoolIndex, $school)
+    {
+        // Asegúrate que la escuela esté recargada con sus relaciones
+        $school->refresh();
+
+        // Actualiza los certificados
+        $certificates = [];
+        if ($school->hasMedia('school_certificates')) {
+            foreach ($school->getMedia('school_certificates') as $certificate) {
+                $certificates[] = [
+                    'id' => $certificate->id,
+                    'filename' => $certificate->file_name,
+                    'url' => $certificate->getUrl(),
+                    'is_image' => Str::startsWith($certificate->mime_type, 'image/'),
+                ];
+            }
         }
+
+        // Actualiza la escuela completa en el array
+        $this->training_schools[$schoolIndex]['certificates'] = $certificates;
     }
-    
-    // Actualiza la escuela completa en el array
-    $this->training_schools[$schoolIndex]['certificates'] = $certificates;
-}
     // Get empty training school structure
     protected function getEmptyTrainingSchool()
     {
@@ -1001,7 +1018,6 @@ class DriverTrainingStep extends Component
             'school_name' => '',
             'city' => '',
             'state' => '',
-            'phone_number' => '',
             'date_start' => '',
             'date_end' => '',
             'graduated' => false,
@@ -1011,13 +1027,13 @@ class DriverTrainingStep extends Component
             'temp_certificate_tokens' => []
         ];
     }
-    
+
     // Get empty course structure
     protected function getEmptyCourse()
     {
         return [
             'organization_name' => '',
-            'phone' => '',
+            'organization_name_other' => '',
             'city' => '',
             'state' => '',
             'certification_date' => '',
@@ -1068,6 +1084,7 @@ class DriverTrainingStep extends Component
 
         $this->dispatch('saveAndExit');
     }
+    
     // Render
     public function render()
     {

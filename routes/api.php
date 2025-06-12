@@ -41,7 +41,9 @@ Route::get('/active-drivers-by-carrier/{carrierId}', function ($carrierId) {
         ->whereHas('user', function($query) {
             $query->where('status', 1);
         })
-        ->with('user')
+        ->with(['user', 'licenses' => function($query) {
+            $query->where('status', 'active')->orderBy('created_at', 'desc');
+        }])
         ->get();
     return response()->json($drivers);
 });

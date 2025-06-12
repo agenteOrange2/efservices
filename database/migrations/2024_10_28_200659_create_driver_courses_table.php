@@ -14,8 +14,7 @@ return new class extends Migration
         Schema::create('driver_courses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_driver_detail_id')->constrained()->onDelete('cascade');
-            $table->string('organization_name');
-            $table->string('phone')->nullable();
+            $table->string('organization_name');            
             $table->string('city')->nullable();
             $table->string('state')->nullable();
             $table->date('certification_date')->nullable();

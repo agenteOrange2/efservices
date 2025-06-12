@@ -57,8 +57,14 @@ $breadcrumbLinks = [
             </div>
             <div class="text-center md:text-left md:mr-auto">
                 <div class="text-lg font-medium">{{ $driver->user->name }} {{ $driver->last_name }}</div>
-                <div class="text-gray-500">{{ $driver->phone }}</div>
-                <div class="text-gray-500">{{ $driver->carrier->name }}</div>
+                <div class="text-gray-500 flex items-center">
+                    <x-base.lucide class="w-4 h-4 mr-2" icon="phone" />
+                    {{ $driver->phone }}
+                </div>
+                <div class="text-gray-500 flex items-center">
+                    <x-base.lucide class="w-4 h-4 mr-2" icon="building" />
+                    {{ $driver->carrier->name }}
+                </div>
             </div>
             <div class="mt-4 md:mt-0">
                 <div class="flex items-center">

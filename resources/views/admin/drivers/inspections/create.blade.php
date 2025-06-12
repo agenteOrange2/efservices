@@ -101,7 +101,7 @@
                         <div>
                             <x-base.form-label for="inspection_date">Inspection Date</x-base.form-label>
                             <x-base.litepicker id="inspection_date" name="inspection_date" 
-                                value="{{ old('inspection_date') }}" data-format="MM-DD-YYYY" class="block w-full @error('inspection_date') border-danger @enderror" placeholder="YYYY-MM-DD" />
+                                value="{{ old('inspection_date') }}" data-format="MM-DD-YYYY" class="block w-full @error('inspection_date') border-danger @enderror" placeholder="MM-DD-YYYY" />
                             @error('inspection_date')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror

@@ -175,7 +175,7 @@ class CoursesController extends Controller
         $request->validate([
             'user_driver_detail_id' => 'required|exists:user_driver_details,id',
             'organization_name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:255',
+            'organization_name_other' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'state' => 'nullable|string|max:255',
             'certification_date' => 'nullable|date',
@@ -187,11 +187,16 @@ class CoursesController extends Controller
         DB::beginTransaction();
         
         try {
+            // Determinar el valor correcto para organization_name
+            $organizationName = $request->organization_name;
+            if ($organizationName === 'Other' && $request->filled('organization_name_other')) {
+                $organizationName = $request->organization_name_other;
+            }
+            
             // Crear registro de curso
             $course = DriverCourse::create([
                 'user_driver_detail_id' => $request->user_driver_detail_id,
-                'organization_name' => $request->organization_name,
-                'phone' => $request->phone,
+                'organization_name' => $organizationName,                
                 'city' => $request->city,
                 'state' => $request->state,
                 'certification_date' => $request->certification_date,
@@ -238,7 +243,6 @@ class CoursesController extends Controller
     // Método para actualizar un curso existente
     public function update(DriverCourse $course, Request $request)
     {
-        //dd($request->all());
         // Loguear los datos recibidos para depuración
         Log::info('Datos recibidos en CoursesController.update', [
             'certificate_files' => $request->certificate_files,
@@ -249,7 +253,7 @@ class CoursesController extends Controller
         $request->validate([
             'user_driver_detail_id' => 'required|exists:user_driver_details,id',
             'organization_name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:255',
+            'organization_name_other' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'state' => 'nullable|string|max:255',
             'certification_date' => 'nullable|date',
@@ -261,18 +265,25 @@ class CoursesController extends Controller
         try {
             DB::beginTransaction();
             
-            // Actualizar los datos del curso
-            $course->update($request->only([
+            // Determinar el valor correcto para organization_name
+            $data = $request->only([
                 'user_driver_detail_id',
-                'organization_name',
-                'phone',
                 'city',
                 'state',
                 'certification_date',
                 'experience',
                 'expiration_date',
                 'status',
-            ]));
+            ]);
+            
+            if ($request->organization_name === 'Other' && $request->filled('organization_name_other')) {
+                $data['organization_name'] = $request->organization_name_other;
+            } else {
+                $data['organization_name'] = $request->organization_name;
+            }
+            
+            // Actualizar los datos del curso
+            $course->update($data);
             
             // Buscar archivos temporales que pudieran haber sido subidos por Livewire
             // Usamos Storage directamente ya que los archivos no llegan en el request

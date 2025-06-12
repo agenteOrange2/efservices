@@ -92,8 +92,10 @@
                         </div>
                         <div>
                             <x-base.form-label for="conviction_date">Conviction Date</x-base.form-label>
-                            <x-base.form-input id="conviction_date" name="conviction_date" type="date"
-                                value="{{ old('conviction_date', $conviction->conviction_date->format('Y-m-d')) }}" />
+                            <x-base.litepicker id="conviction_date" name="conviction_date"
+                                value="{{ old('conviction_date', $conviction->conviction_date ? $conviction->conviction_date->format('m/d/Y') : '') }}"
+                                class="@error('conviction_date') border-danger @enderror" placeholder="MM/DD/YYYY"
+                                required />
                             @error('conviction_date')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -126,47 +128,45 @@
                             <x-base.form-label>Traffic Conviction Images</x-base.form-label>
                             <div class="border border-dashed rounded-md p-4 mt-2">
                                 @php
-                                // Prepara los archivos existentes para el componente Livewire desde Spatie Media Library
-                                $existingFiles = [];
-                                
-                                // Obtener todos los archivos de media para esta infracción
-                                $mediaItems = $conviction->media->where('collection_name', 'traffic_convictions');
-                                
-                                // Si no hay archivos en la colección específica, buscar en todas las colecciones
-                                // Esto es útil cuando los archivos se suben desde diferentes partes del sistema
-                                if ($mediaItems->isEmpty()) {
-                                    $mediaItems = $conviction->media;
-                                }
-                                
-                                foreach ($mediaItems as $media) {
-                                    $existingFiles[] = [
-                                        'id' => $media->id,
-                                        'name' => $media->file_name,
-                                        'size' => $media->size,
-                                        'mime_type' => $media->mime_type,
-                                        'original_name' => $media->file_name,
-                                        'url' => $media->getUrl(),
-                                        'is_temp' => false,
-                                        'created_at' => $media->created_at->toDateTimeString()
-                                    ];
-                                }
+                                    // Prepara los archivos existentes para el componente Livewire desde Spatie Media Library
+                                    $existingFiles = [];
+
+                                    // Obtener todos los archivos de media para esta infracción
+                                    $mediaItems = $conviction->media->where('collection_name', 'traffic_convictions');
+
+                                    // Si no hay archivos en la colección específica, buscar en todas las colecciones
+                                    // Esto es útil cuando los archivos se suben desde diferentes partes del sistema
+                                    if ($mediaItems->isEmpty()) {
+                                        $mediaItems = $conviction->media;
+                                    }
+
+                                    foreach ($mediaItems as $media) {
+                                        $existingFiles[] = [
+                                            'id' => $media->id,
+                                            'name' => $media->file_name,
+                                            'size' => $media->size,
+                                            'mime_type' => $media->mime_type,
+                                            'original_name' => $media->file_name,
+                                            'url' => $media->getUrl(),
+                                            'is_temp' => false,
+                                            'created_at' => $media->created_at->toDateTimeString(),
+                                        ];
+                                    }
                                 @endphp
 
-                                <livewire:components.file-uploader
-                                    model-name="traffic_images"
-                                    :model-index="0"
+                                <livewire:components.file-uploader model-name="traffic_images" :model-index="0"
                                     :auto-upload="true"
                                     class="border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer"
-                                    :existing-files="$existingFiles"
-                                />
+                                    :existing-files="$existingFiles" />
                                 <!-- Campo oculto para almacenar los archivos subidos - valor inicial vacío pero no null -->
-                                <input type="hidden" name="traffic_image_files" id="traffic_image_files_input" value="">
-                        </div>
+                                <input type="hidden" name="traffic_image_files" id="traffic_image_files_input"
+                                    value="">
+                            </div>
+                        </div>                        
                     </div>
-
                     <div class="flex justify-end mt-5">
-                        <x-base.button as="a" href="{{ route('admin.traffic.index') }}" variant="outline-secondary"
-                            class="mr-2">
+                        <x-base.button as="a" href="{{ route('admin.traffic.index') }}"
+                            variant="outline-secondary" class="mr-2">
                             Cancel
                         </x-base.button>
                         <x-base.button type="submit" variant="primary">
@@ -187,22 +187,22 @@
                     document.getElementById('carrier').value = carrierId;
                     updateDrivers(carrierId);
                 }
-                
+
                 // Inicializar el array para almacenar los archivos
                 let uploadedFiles = [];
                 const trafficImagesInput = document.getElementById('traffic_image_files_input');
                 console.log('Campo oculto encontrado:', trafficImagesInput ? 'Sí' : 'No');
-                
+
                 // Escuchar eventos del componente Livewire
                 window.addEventListener('livewire:initialized', () => {
                     console.log('Livewire inicializado, preparando escucha de eventos');
-                    
+
                     // Escuchar el evento fileUploaded del componente Livewire
                     Livewire.on('fileUploaded', (eventData) => {
                         console.log('Archivo subido evento recibido:', eventData);
                         // Extraer los datos del evento
                         const data = eventData[0]; // Los datos vienen como primer elemento del array
-                        
+
                         if (data.modelName === 'traffic_images') {
                             console.log('Archivo subido para traffic_images');
                             // Añadir el archivo al array de archivos
@@ -215,7 +215,7 @@
                                 tempPath: data.tempPath,
                                 is_temp: true
                             });
-                            
+
                             // Asegurarnos que el campo oculto sigue existiendo
                             if (trafficImagesInput) {
                                 trafficImagesInput.value = JSON.stringify(uploadedFiles);
@@ -223,51 +223,53 @@
                             } else {
                                 console.error('Campo oculto no encontrado en el DOM');
                             }
-                        }    
+                        }
                     });
-                    
+
                     // Escuchar el evento fileRemoved del componente Livewire
                     Livewire.on('fileRemoved', (eventData) => {
                         console.log('Archivo eliminado evento recibido:', eventData);
                         // Extraer los datos del evento
                         const data = eventData[0]; // Los datos vienen como primer elemento del array
-                        
+
                         if (data.modelName === 'traffic_images') {
                             console.log('Eliminando archivo de traffic_images');
-                            
+
                             // Si no es un archivo temporal, eliminarlo mediante AJAX
                             if (!data.isTemp && data.fileId) {
                                 console.log('Eliminando archivo permanente con ID:', data.fileId);
                                 const mediaId = data.fileId;
-                                
+
                                 // Llamada AJAX para eliminar el archivo usando la nueva ruta ajaxDestroyDocument
-                                fetch('{{ route("admin.traffic.ajax-destroy-document", "") }}/' + mediaId, {
-                                    method: 'DELETE',
-                                    headers: {
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                        'Content-Type': 'application/json',
-                                        'Accept': 'application/json',
-                                    },
-                                })
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.success) {
-                                        console.log('Documento eliminado con éxito');
-                                    } else {
-                                        console.error('Error al eliminar documento:', data.message);
-                                        // Mostrar algún mensaje de error si es necesario
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('Error en la petición AJAX:', error);
-                                });
+                                fetch('{{ route('admin.traffic.ajax-destroy-document', '') }}/' +
+                                        mediaId, {
+                                            method: 'DELETE',
+                                            headers: {
+                                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                'Content-Type': 'application/json',
+                                                'Accept': 'application/json',
+                                            },
+                                        })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            console.log('Documento eliminado con éxito');
+                                        } else {
+                                            console.error('Error al eliminar documento:', data
+                                                .message);
+                                            // Mostrar algún mensaje de error si es necesario
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Error en la petición AJAX:', error);
+                                    });
                             }
-                            
+
                             // Eliminar archivo del array por nombre o índice (para temporales)
-                            const fileIndex = uploadedFiles.findIndex(file => 
-                                file.name === data.originalName || 
+                            const fileIndex = uploadedFiles.findIndex(file =>
+                                file.name === data.originalName ||
                                 file.original_name === data.originalName);
-                            
+
                             if (fileIndex > -1) {
                                 uploadedFiles.splice(fileIndex, 1);
                                 console.log('Archivo encontrado y eliminado del arreglo');
@@ -276,19 +278,21 @@
                                 console.log('Archivo no encontrado por nombre, eliminando el último');
                                 uploadedFiles.pop();
                             }
-                            
+
                             // Actualizar el campo oculto
                             if (trafficImagesInput) {
                                 trafficImagesInput.value = JSON.stringify(uploadedFiles);
-                                console.log('Campo actualizado después de eliminar:', trafficImagesInput.value);
+                                console.log('Campo actualizado después de eliminar:', trafficImagesInput
+                                    .value);
                             } else {
-                                console.error('Campo oculto no encontrado en el DOM después de eliminar');
+                                console.error(
+                                    'Campo oculto no encontrado en el DOM después de eliminar');
                             }
                         }
                     });
                 });
             });
-            
+
             // Función para cargar conductores cuando cambia el carrier
             function updateDrivers(carrierId) {
                 const driverSelect = document.getElementById('user_driver_detail_id');
@@ -380,15 +384,19 @@
                                     let fileIcon;
 
                                     if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
-                                        fileIcon = `<img src="${e.target.result}" class="w-8 h-8 object-cover rounded" alt="${fileName}">`;
+                                        fileIcon =
+                                            `<img src="${e.target.result}" class="w-8 h-8 object-cover rounded" alt="${fileName}">`;
                                     } else if (['pdf'].includes(fileExtension)) {
-                                        fileIcon = `<x-base.lucide class="w-8 h-8 text-red-500" icon="FileText" />`;
+                                        fileIcon =
+                                            `<x-base.lucide class="w-8 h-8 text-red-500" icon="FileText" />`;
                                     } else if (['doc', 'docx'].includes(fileExtension)) {
-                                        fileIcon = `<x-base.lucide class="w-8 h-8 text-blue-500" icon="File" />`;
+                                        fileIcon =
+                                            `<x-base.lucide class="w-8 h-8 text-blue-500" icon="File" />`;
                                     } else {
-                                        fileIcon = `<x-base.lucide class="w-8 h-8 text-gray-500" icon="File" />`;
+                                        fileIcon =
+                                            `<x-base.lucide class="w-8 h-8 text-gray-500" icon="File" />`;
                                     }
-                                    
+
                                     // Crear la tarjeta de vista previa
                                     const previewCardHTML = `
                                         <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
@@ -407,16 +415,16 @@
                                             </div>
                                         </div>
                                     `;
-                                    
+
                                     // Crear un div temporal para convertir el HTML en un elemento DOM
                                     const tempDiv = document.createElement('div');
                                     tempDiv.innerHTML = previewCardHTML;
                                     const previewCard = tempDiv.firstElementChild;
-                                    
+
                                     // Añadir la tarjeta al contenedor de vista previa
                                     filePreview.appendChild(previewCard);
                                 };
-                                
+
                                 reader.readAsDataURL(file);
                             });
                         } else {

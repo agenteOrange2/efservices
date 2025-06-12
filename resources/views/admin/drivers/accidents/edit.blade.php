@@ -40,12 +40,12 @@
         </div>
 
         <!-- Formulario de Edición -->
-        <div class="box box--stacked mt-5">
+        <div class="box box--stacked mt-5 p-3">
             <div class="box-header">
                 <h3 class="box-title">Accident Details</h3>
             </div>
 
-            <div class="box-body p-5">
+            <div class="box-body">
 
                 <form action="{{ route('admin.accidents.update', $accident->id) }}" method="POST"
                     enctype="multipart/form-data">
@@ -82,8 +82,8 @@
                         <!-- Accident Date -->
                         <div>
                             <x-base.form-label for="accident_date">Accident Date</x-base.form-label>
-                            <x-base.form-input id="accident_date" name="accident_date" type="date" class="w-full"
-                                value="{{ $accident->accident_date ? $accident->accident_date->format('Y-m-d') : '' }}" required />
+                            <x-base.litepicker id="accident_date" name="accident_date" class="w-full"
+                                value="{{ $accident->accident_date }}" required />
                             @error('accident_date')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -111,15 +111,15 @@
                         <!-- Had Injuries -->
                         <div>
                             <div class="flex items-center">
-                                <input type="checkbox" id="had_injuries" name="had_injuries" class="form-check-input" value="1" 
+                                <input type="checkbox" id="had_injuries" name="had_injuries" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2" value="1" 
                                     {{ $accident->had_injuries ? 'checked' : '' }}>
                                 <label for="had_injuries" class="ml-2 form-label">Had Injuries?</label>
                             </div>
                             
                             <div id="injuries_container" class="mt-3 {{ $accident->had_injuries ? '' : 'hidden' }}">
                                 <label for="number_of_injuries" class="form-label">Number of Injuries</label>
-                                <input type="number" id="number_of_injuries" name="number_of_injuries" class="form-control w-full"
-                                    min="0" value="{{ $accident->number_of_injuries }}">
+                                <x-base.form-input id="number_of_injuries" name="number_of_injuries" type="number"
+                                    class="w-full" min="0" value="{{ $accident->number_of_injuries }}" />
                                 @error('number_of_injuries')
                                     <div class="text-danger mt-1">{{ $message }}</div>
                                 @enderror
@@ -129,15 +129,15 @@
                         <!-- Had Fatalities -->
                         <div>
                             <div class="flex items-center">
-                                <input type="checkbox" id="had_fatalities" name="had_fatalities" class="form-check-input" value="1" 
+                                <input type="checkbox" id="had_fatalities" name="had_fatalities" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2" value="1" 
                                     {{ $accident->had_fatalities ? 'checked' : '' }}>
                                 <label for="had_fatalities" class="ml-2 form-label">Had Fatalities?</label>
                             </div>
                             
                             <div id="fatalities_container" class="mt-3 {{ $accident->had_fatalities ? '' : 'hidden' }}">
                                 <label for="number_of_fatalities" class="form-label">Number of Fatalities</label>
-                                <input type="number" id="number_of_fatalities" name="number_of_fatalities" class="form-control w-full"
-                                    min="0" value="{{ $accident->number_of_fatalities }}">
+                                <x-base.form-input id="number_of_fatalities" name="number_of_fatalities" type="number"
+                                    class="w-full" min="0" value="{{ $accident->number_of_fatalities }}" />
                                 @error('number_of_fatalities')
                                     <div class="text-danger mt-1">{{ $message }}</div>
                                 @enderror
@@ -147,8 +147,10 @@
 
                     <!-- Comments -->
                     <div class="mt-6">
-                        <label for="comments" class="form-label">Comments</label>
-                        <textarea id="comments" name="comments" class="form-control w-full" rows="4">{{ $accident->comments }}</textarea>
+                        <x-base.form-label for="comments">Comments</x-base.form-label>                        
+                        <x-base.form-textarea id="comments" name="comments" class="w-full"
+                            rows="4">{{ $accident->comments }}</x-base.form-textarea>
+                            
                         @error('comments')
                             <div class="text-danger mt-1">{{ $message }}</div>
                         @enderror

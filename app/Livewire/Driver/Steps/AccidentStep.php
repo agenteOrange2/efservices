@@ -104,7 +104,7 @@ class AccidentStep extends Component
                 $this->accidents[] = [
                     'id' => $accident->id,
                     'accident_date' => $accident->accident_date ? 
-                        $accident->accident_date->format('Y-m-d') : null,
+                        (is_string($accident->accident_date) ? $accident->accident_date : $accident->accident_date->format('Y-m-d')) : null,
                     'nature_of_accident' => $accident->nature_of_accident,
                     'had_injuries' => $accident->had_injuries,
                     'number_of_injuries' => $accident->number_of_injuries,
@@ -371,11 +371,11 @@ class AccidentStep extends Component
                     throw new \Exception("El archivo temporal no existe: {$fullPath}");
                 }
                 
-                // Subir el archivo al accidente usando fromFile con la colección correcta 'accidents'
+                // Subir el archivo al accidente usando fromFile con la colección correcta 'accident-images'
                 $media = $accident->addMediaFromDisk($tempPath, 'local')
                     ->usingName($originalName)
                     ->usingFileName($originalName)
-                    ->toMediaCollection('accidents');
+                    ->toMediaCollection('accident-images');
                 
                 Log::info('Archivo guardado permanentemente', [
                     'media_id' => $media->id,
@@ -585,7 +585,8 @@ class AccidentStep extends Component
                 $driverAccident = $userDriverDetail->accidents()->find($accidentId);
                 if ($driverAccident) {
                     // Obtener documentos asociados a este accidente específico usando la colección correcta
-                    $accidentMedia = $driverAccident->getMedia('accidents');
+                    // Buscar archivos tanto en la colección nueva 'accident-images' como en la antigua 'accidents' para compatibilidad
+                    $accidentMedia = $driverAccident->getMedia('accident-images');
                     
                     // Almacenar información de documentos en el array de accidents
                     $this->accidents[$index]['documents'] = [];
@@ -643,8 +644,8 @@ class AccidentStep extends Component
                             'mime_type' => $file->getMimeType()
                         ]);
                         
-                        // Add file to media library usando la colección correcta 'accidents'
-                        // para que coincida con lo esperado en CustomPathGenerator
+                        // Add file to media library usando la colección correcta 'accident-images'
+                        // para que coincida con lo definido en el modelo DriverAccident
                         $driverAccident->addMedia($file->getRealPath())
                             ->usingName(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
                             ->usingFileName($file->getClientOriginalName())
@@ -653,7 +654,7 @@ class AccidentStep extends Component
                                 'mime_type' => $file->getMimeType(),
                                 'accident_id' => $accidentId
                             ])
-                            ->toMediaCollection('accidents');
+                            ->toMediaCollection('accident-images');
                     }
                 }
             }
@@ -676,20 +677,51 @@ class AccidentStep extends Component
     public function deleteAccidentDoc($mediaId, $accidentIndex)
     {
         try {
-            $media = Media::find($mediaId);
-            if ($media) {
-                $media->delete();
-                
-                // Reload existing accident documents
-                $userDriverDetail = UserDriverDetail::find($this->driverId);
-                if ($userDriverDetail) {
-                    $this->loadExistingAccidentDocs($userDriverDetail);
-                }
-                
-                session()->flash('message', 'Accident document deleted successfully.');
+            // Obtener información del accidente para ese índice
+            $accidentData = $this->accidents[$accidentIndex] ?? null;
+            if (!$accidentData || empty($accidentData['id'])) {
+                session()->flash('error', 'No se encontró el accidente asociado al documento.');
+                return;
+            }
+            
+            $accidentId = $accidentData['id'];
+            Log::info('Eliminando documento de accidente', [
+                'media_id' => $mediaId,
+                'accident_id' => $accidentId,
+                'accident_index' => $accidentIndex
+            ]);
+            
+            // Obtener el accidente desde la base de datos
+            $userDriverDetail = UserDriverDetail::find($this->driverId);
+            if (!$userDriverDetail) {
+                session()->flash('error', 'No se encontró el conductor.');
+                return;
+            }
+            
+            $accident = $userDriverDetail->accidents()->find($accidentId);
+            if (!$accident) {
+                session()->flash('error', 'No se encontró el accidente en la base de datos.');
+                return;
+            }
+            
+            // Usar el método safeDeleteMedia para evitar la eliminación en cascada
+            $result = $accident->safeDeleteMedia($mediaId);
+            
+            if ($result) {
+                // Actualizar la vista
+                $this->loadExistingAccidentDocs($userDriverDetail);
+                session()->flash('message', 'Documento de accidente eliminado correctamente.');
+            } else {
+                session()->flash('error', 'No se pudo eliminar el documento.');
             }
         } catch (\Exception $e) {
-            session()->flash('error', 'Error deleting accident document: ' . $e->getMessage());
+            Log::error('Error eliminando documento de accidente', [
+                'media_id' => $mediaId,
+                'accident_index' => $accidentIndex,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            session()->flash('error', 'Error al eliminar documento de accidente: ' . $e->getMessage());
         }
     }
     
@@ -706,6 +738,7 @@ class AccidentStep extends Component
         
         $this->dispatch('saveAndExit');
     }
+    
     
     // Render
     public function render()

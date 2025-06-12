@@ -50,11 +50,27 @@ class AccidentsController extends Controller
         }
 
         if ($request->filled('date_from')) {
-            $query->whereDate('accident_date', '>=', $request->date_from);
+            // Parse date from MM/DD/YYYY format to Y-m-d for database query
+            try {
+                $dateFrom = Carbon::createFromFormat('m/d/Y', $request->date_from)->format('Y-m-d');
+                $query->whereDate('accident_date', '>=', $dateFrom);
+            } catch (\Exception $e) {
+                // If date parsing fails, try the original format as fallback
+                $query->whereDate('accident_date', '>=', $request->date_from);
+                Log::warning('Date format parsing failed for date_from: ' . $request->date_from);
+            }
         }
 
         if ($request->filled('date_to')) {
-            $query->whereDate('accident_date', '<=', $request->date_to);
+            // Parse date from MM/DD/YYYY format to Y-m-d for database query
+            try {
+                $dateTo = Carbon::createFromFormat('m/d/Y', $request->date_to)->format('Y-m-d');
+                $query->whereDate('accident_date', '<=', $dateTo);
+            } catch (\Exception $e) {
+                // If date parsing fails, try the original format as fallback
+                $query->whereDate('accident_date', '<=', $request->date_to);
+                Log::warning('Date format parsing failed for date_to: ' . $request->date_to);
+            }
         }
 
         // Ordenar resultados
@@ -492,11 +508,21 @@ class AccidentsController extends Controller
             
             // Filtro por rango de fechas de accidente
             if ($startDate) {
-                $mediaQuery->where('driver_accidents.accident_date', '>=', $startDate);
+                try {
+                    $formattedStartDate = Carbon::createFromFormat('m-d-Y', $startDate)->startOfDay()->format('Y-m-d');
+                    $mediaQuery->where('driver_accidents.accident_date', '>=', $formattedStartDate);
+                } catch (\Exception $e) {
+                    Log::warning('Error al formatear fecha de inicio', ['error' => $e->getMessage(), 'date' => $startDate]);
+                }
             }
             
             if ($endDate) {
-                $mediaQuery->where('driver_accidents.accident_date', '<=', $endDate);
+                try {
+                    $formattedEndDate = Carbon::createFromFormat('m-d-Y', $endDate)->endOfDay()->format('Y-m-d');
+                    $mediaQuery->where('driver_accidents.accident_date', '<=', $formattedEndDate);
+                } catch (\Exception $e) {
+                    Log::warning('Error al formatear fecha de fin', ['error' => $e->getMessage(), 'date' => $endDate]);
+                }
             }
             
             // Filtro por tipo de archivo
@@ -505,7 +531,7 @@ class AccidentsController extends Controller
                     case 'image':
                         $mediaQuery->where('media.mime_type', 'like', 'image/%');
                         break;
-                    case 'pdf':
+                    case 'pdf':                        
                         $mediaQuery->where('media.mime_type', '=', 'application/pdf');
                         break;
                     case 'document':

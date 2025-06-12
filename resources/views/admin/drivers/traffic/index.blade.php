@@ -80,13 +80,12 @@
                         </div>
                         <div>
                             <x-base.form-label for="date_from">From Date</x-base.form-label>
-                            <x-base.form-input id="date_from" name="date_from" type="date"
+                            <x-base.litepicker id="date_from" name="date_from" class="w-full"
                                 value="{{ request('date_from') }}" />
                         </div>
                         <div>
                             <x-base.form-label for="date_to">To Date</x-base.form-label>
-                            <x-base.form-input id="date_to" name="date_to" type="date"
-                                value="{{ request('date_to') }}" />
+                            <x-base.litepicker id="date_to" name="date_to" class="w-full" value="{{ request('date_to') }}" />
                         </div>
                         <div class="flex items-end">
                             <button type="submit" class="btn btn-primary mr-2">
@@ -110,18 +109,21 @@
                     <x-base.table class="border-separate border-spacing-y-[10px]">
                         <x-base.table.thead>
                             <x-base.table.tr>
+                                <x-base.table.th class="whitespace-nowrap">Registration Date</x-base.table.th>
                                 <x-base.table.th class="whitespace-nowrap">Driver</x-base.table.th>
                                 <x-base.table.th class="whitespace-nowrap">Carrier</x-base.table.th>
                                 <x-base.table.th class="whitespace-nowrap">Date</x-base.table.th>
                                 <x-base.table.th class="whitespace-nowrap">Location</x-base.table.th>
-                                <x-base.table.th class="whitespace-nowrap">Charge</x-base.table.th>
-                                <x-base.table.th class="whitespace-nowrap">Penalty</x-base.table.th>
+                                <x-base.table.th class="whitespace-nowrap">Charge</x-base.table.th>                                
                                 <x-base.table.th class="whitespace-nowrap">Actions</x-base.table.th>
                             </x-base.table.tr>
                         </x-base.table.thead>
                         <x-base.table.tbody>
                             @forelse ($convictions as $conviction)
-                                <x-base.table.tr>
+                                <x-base.table.tr>                                    
+                                    <x-base.table.td>
+                                        {{ $conviction->created_at->format('m/d/Y') }}
+                                    </x-base.table.td>
                                     <x-base.table.td>
                                         {{ $conviction->userDriverDetail->user->name }}
                                         {{ $conviction->userDriverDetail->user->last_name }}
@@ -130,32 +132,26 @@
                                         {{ $conviction->userDriverDetail->carrier->name ?? 'N/A' }}
                                     </x-base.table.td>
                                     <x-base.table.td>
-                                        {{ $conviction->conviction_date->format('M d, Y') }}
+                                        {{ $conviction->conviction_date->format('m/d/Y') }}
                                     </x-base.table.td>
                                     <x-base.table.td>
                                         {{ $conviction->location }}
                                     </x-base.table.td>
                                     <x-base.table.td>
                                         {{ $conviction->charge }}
-                                    </x-base.table.td>
-                                    <x-base.table.td>
-                                        {{ $conviction->penalty }}
-                                    </x-base.table.td>
+                                    </x-base.table.td>                                    
                                     <x-base.table.td class="flex">
                                         <div class="flex items-center">
                                             <a href="{{ route('admin.traffic.documents', $conviction->id) }}"
                                                 class="btn-sm btn-danger  p-1 mr-2 flex" title="View Documents">
-                                                <x-base.lucide class="w-4 h-4" icon="file-text" />
-                                                <span class="ml-1">
-                                                    {{ \App\Models\DocumentAttachment::where('documentable_type', \App\Models\Admin\Driver\DriverTrafficConviction::class)->where('documentable_id', $conviction->id)->count() }}
-                                                </span>
+                                                <x-base.lucide class="w-4 h-4" icon="file-text" />                                                
                                             </a>
                                         </div>
                                         <x-base.menu class="h-5">
                                             <x-base.menu.button class="h-5 w-5 text-slate-500">
                                                 <x-base.lucide class="h-5 w-5 fill-slate-400/70 stroke-slate-400/70"
                                                     icon="MoreVertical" />
-                                            </x-base.menu.button>
+                                            </x-base.menu.button>                                            
                                             <x-base.menu.items class="w-40">
                                                 <a href="{{ route('admin.traffic.edit', $conviction->id) }}"
                                                     class="btn btn-sm btn-rounded-primary mr-1 flex gap-2 items-center text-primary p-3">

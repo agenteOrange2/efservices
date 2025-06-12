@@ -544,22 +544,40 @@ class DriverTestingController extends Controller
      */
     public function getDriverDetails(UserDriverDetail $driverDetail)
     {
-        $driverDetail->load('user', 'carrier');
+        $driverDetail->load(['user', 'carrier', 'licenses' => function($query) {
+            $query->where('status', 'active')->orderBy('created_at', 'desc');
+        }]);
+        
+        // Obtener la licencia activa (la primera en la colección, ya que están ordenadas por created_at desc)
+        $license = $driverDetail->licenses->first();
         
         $driver = [
             'id' => $driverDetail->id,
-            'name' => $driverDetail->user->name,
+            'first_name' => $driverDetail->user->name,
+            'middle_name' => $driverDetail->middle_name ?? '',
+            'last_name' => $driverDetail->last_name ?? '',
+            'name' => trim($driverDetail->user->name . ' ' . $driverDetail->middle_name . ' ' . $driverDetail->last_name),
             'email' => $driverDetail->user->email,
             'phone' => $driverDetail->phone ?? 'N/A',
-            'license' => $driverDetail->license_number ?? 'N/A',
-            'license_state' => $driverDetail->license_state ?? 'N/A',
-            'license_expiration' => $driverDetail->license_exp_date ? date('m/d/Y', strtotime($driverDetail->license_exp_date)) : 'N/A',
+            'license' => $license ? $license->license_number : ($driverDetail->license_number ?? 'N/A'),
+            'license_class' => $license ? $license->license_class : ($driverDetail->license_class ?? ''),
+            'license_state' => $license ? $license->license_state : ($driverDetail->license_state ?? 'N/A'),
+            'license_expiration' => $license && $license->expiration_date 
+                ? date('m/d/Y', strtotime($license->expiration_date)) 
+                : ($driverDetail->license_exp_date ? date('m/d/Y', strtotime($driverDetail->license_exp_date)) : 'N/A'),
             'carrier' => [
                 'id' => $driverDetail->carrier->id,
                 'name' => $driverDetail->carrier->name,
                 'usdot' => $driverDetail->carrier->usdot,
             ],
         ];
+        
+        // Registrar en el log para depuración
+        \Illuminate\Support\Facades\Log::debug('Driver details requested', [
+            'driver_id' => $driverDetail->id,
+            'driver_data' => $driver,
+            'has_license' => $license ? true : false
+        ]);
         
         return response()->json([
             'status' => 'success',

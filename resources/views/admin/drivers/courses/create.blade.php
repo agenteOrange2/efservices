@@ -87,23 +87,31 @@
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div>
+                        <div x-data="{ showOtherField: false }">
                             <x-base.form-label for="organization_name">Organization Name</x-base.form-label>
-                            <x-base.form-input id="organization_name" name="organization_name" type="text" 
-                                value="{{ old('organization_name') }}" class="block w-full" />
+                            <select id="organization_name_select" name="organization_name" 
+                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8"
+                                x-on:change="showOtherField = ($event.target.value === 'Other')">
+                                <option value="">Select Organization</option>
+                                <option value="H2S" {{ old('organization_name') == 'H2S' ? 'selected' : '' }}>H2S</option>
+                                <option value="PEC" {{ old('organization_name') == 'PEC' ? 'selected' : '' }}>PEC</option>
+                                <option value="SANDTRAX" {{ old('organization_name') == 'SANDTRAX' ? 'selected' : '' }}>SANDTRAX</option>
+                                <option value="OSHA10" {{ old('organization_name') == 'OSHA10' ? 'selected' : '' }}>OSHA10</option>
+                                <option value="OSHA30" {{ old('organization_name') == 'OSHA30' ? 'selected' : '' }}>OSHA30</option>
+                                <option value="Other" {{ old('organization_name') != 'H2S' && old('organization_name') != 'PEC' && old('organization_name') != 'SANDTRAX' && old('organization_name') != 'OSHA10' && old('organization_name') != 'OSHA30' && old('organization_name') ? 'selected' : '' }}>Other</option>
+                            </select>
+                            
+                            <!-- Campo para "Other" que se muestra condicionalmente -->
+                            <div x-show="showOtherField" class="mt-2">
+                                <x-base.form-input id="organization_name_other" name="organization_name_other" type="text" 
+                                    value="{{ old('organization_name_other') }}" class="block w-full" 
+                                    placeholder="Specify organization name" />
+                            </div>
+                            
                             @error('organization_name')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
-                        </div>
-                        
-                        <div>
-                            <x-base.form-label for="phone">Phone</x-base.form-label>
-                            <x-base.form-input id="phone" name="phone" type="text" 
-                                value="{{ old('phone') }}" class="block w-full" />
-                            @error('phone')
-                                <div class="text-danger mt-1">{{ $message }}</div>
-                            @enderror
-                        </div>
+                        </div>                                                
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
@@ -118,8 +126,13 @@
                         
                         <div>
                             <x-base.form-label for="state">State</x-base.form-label>
-                            <x-base.form-input id="state" name="state" type="text" 
-                                value="{{ old('state') }}" class="block w-full" />
+                            <select id="state" name="state" 
+                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
+                                <option value="">Select State</option>
+                                @foreach(\App\Helpers\Constants::usStates() as $code => $name)
+                                    <option value="{{ $code }}" {{ old('state') == $code ? 'selected' : '' }}>{{ $name }}</option>
+                                @endforeach
+                            </select>
                             @error('state')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
