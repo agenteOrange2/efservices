@@ -23,6 +23,7 @@ use App\Models\Admin\Driver\DriverTrafficConviction;
 use App\Models\Admin\Driver\DriverUnemploymentPeriod;
 use App\Models\Admin\Driver\DriverTesting;
 use App\Models\Admin\Driver\DriverInspection;
+use App\Models\Admin\Driver\DriverTraining;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Models\Admin\Driver\DriverMedicalQualification;
@@ -237,5 +238,13 @@ class UserDriverDetail extends Model implements HasMedia
     public function courses()
     {
         return $this->hasMany(\App\Models\Admin\Driver\DriverCourse::class, 'user_driver_detail_id');
+    }
+    
+    /**
+     * Relación con los entrenamientos asignados al conductor
+     */
+    public function driverTrainings()
+    {
+        return $this->hasMany(DriverTraining::class, 'user_driver_detail_id');
     }
 }

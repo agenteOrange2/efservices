@@ -2,6 +2,7 @@
 
 namespace App\MediaLibrary;
 
+use App\Models\Admin\Driver\DriverDetail;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\MediaLibrary\Support\PathGenerator\PathGenerator;
 
@@ -73,6 +74,24 @@ class CustomPathGenerator implements PathGenerator
             return "driver/{$driverId}/training_schools/{$schoolId}/";
         }
 
+        // Ruta personalizada para documentos de verificación de datos
+        if ($model instanceof \App\Models\UserDriverDetail) {
+            $driverId = $model->id ?? 'unknown';
+            $collection = $media->collection_name;
+            
+            if ($collection === 'driving_records') {
+                return "verification_documents/license/{$driverId}/";
+            }
+            
+            if ($collection === 'criminal_records') {
+                return "verification_documents/criminal/{$driverId}/";
+            }
+            
+            if ($collection === 'medical_records') {
+                return "verification_documents/medical/{$driverId}/";
+            }
+        }
+        
         if ($model instanceof \App\Models\Admin\Driver\DriverCourse) {
             $driverId = $model->driverDetail->id ?? 'unknown';
             $courseId = $model->id;

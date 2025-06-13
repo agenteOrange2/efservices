@@ -18,6 +18,8 @@ use App\Services\Admin\DriverStepService;
 use App\Models\Admin\Driver\DriverApplication;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Models\Admin\Driver\DriverRecruitmentVerification;
+use App\Models\Admin\Driver\Training;
+use App\Models\Admin\Driver\DriverTraining;
 use Livewire\WithFileUploads;
 
 class DriverRecruitmentReview extends Component
@@ -29,6 +31,7 @@ class DriverRecruitmentReview extends Component
         'training-school-updated' => 'handleTrainingSchoolUpdated',
         'fileUploaded' => 'handleFileUploaded',
         'licenseImageUploaded' => 'handleLicenseImageUploaded',
+        'refreshTrainings' => '$refresh',
     ];
     public $driverId;
     public $driver;
@@ -48,6 +51,12 @@ class DriverRecruitmentReview extends Component
     public $verificationNotes = '';
     public $savedVerification = null;
     public $totalExperienceYears = 0;
+    
+    // Propiedades para entrenamientos
+    public $availableTrainings = [];
+    public $selectedTrainingId = null;
+    public $trainingDueDate = null;
+    public $showTrainingModal = false;
 
     // Nueva propiedad para PDFs generados
     public $generatedPdfs = [];
@@ -61,6 +70,10 @@ class DriverRecruitmentReview extends Component
     public $tempDocumentName = null;
     public $tempDocumentSize = null;
     public $showUploadModal = false;
+    
+    // Propiedades para registros de manejo y criminal
+    public $drivingRecordFiles = [];
+    public $criminalRecordFiles = [];
     
     // Propiedades específicas para licencias
     public $licenseImageType = ''; // license_front, license_back
@@ -84,6 +97,7 @@ class DriverRecruitmentReview extends Component
         $this->loadLastVerification(); // Luego carga los valores guardados en el checklist
         $this->loadDriverData(); // Finalmente carga los datos y actualiza los estados usando el checklist
         $this->loadGeneratedPdfs();
+        $this->loadAvailableTrainings();
     }
 
     public function toggleChecklistItem($item)
@@ -143,6 +157,15 @@ class DriverRecruitmentReview extends Component
             'accident_verified' => [
                 'checked' => false,
                 'label' => 'Accident record verified (or N/A)'
+            ],
+            // Nuevos elementos para records de manejo y criminal
+            'driving_record' => [
+                'checked' => false,
+                'label' => 'Driving record uploaded and verified'
+            ],
+            'criminal_record' => [
+                'checked' => false,
+                'label' => 'Criminal record uploaded and verified'
             ],
             'history_info' => [
                 'checked' => false,
@@ -2620,7 +2643,7 @@ private function loadModelMedia($model, $category, $recordType = null)
     public function approveApplication()
     {
         if (!$this->isChecklistComplete()) {
-            $this->addError('checklist', 'Debe completar toda la lista de verificación antes de aprobar.');
+            $this->addError('checklist', ' You must complete the entire checklist prior to approval.');
             return;
         }
 
@@ -2661,8 +2684,8 @@ private function loadModelMedia($model, $category, $recordType = null)
         $this->validate([
             'rejectionReason' => 'required|min:10'
         ], [
-            'rejectionReason.required' => 'Debe proporcionar una razón para el rechazo.',
-            'rejectionReason.min' => 'La razón debe tener al menos 10 caracteres.'
+            'rejectionReason.required' => 'You must provide a reason for rejection.',
+            'rejectionReason.min' => 'The reason must have at least 10 characters.'
         ]);
 
         // Actualizar estado de la aplicación a rechazado
@@ -3022,8 +3045,339 @@ private function loadModelMedia($model, $category, $recordType = null)
 
     // Este componente ya tiene definido el listener para licenseImageUploaded al inicio del archivo
     
-    public function render()
+    /**
+     * Carga los entrenamientos disponibles para asignar al conductor
+     */
+    public function loadAvailableTrainings()
     {
-        return view('livewire.admin.driver.recruitment.driver-recruitment-review');        
+        $this->availableTrainings = Training::where('status', 'active')->get();
     }
+
+    /**
+     * Abre el modal para asignar un nuevo entrenamiento
+     */
+    public function openTrainingModal()
+    {
+        $this->selectedTrainingId = null;
+        $this->trainingDueDate = null;
+        $this->showTrainingModal = true;
+        $this->dispatch('open-training-modal');
+    }
+
+    /**
+     * Cierra el modal de asignación de entrenamiento
+     */
+    public function closeTrainingModal()
+    {
+        $this->showTrainingModal = false;
+        $this->dispatch('close-training-modal');
+    }
+
+    /**
+     * Asigna un entrenamiento al conductor
+     */
+    public function assignTraining()
+    {
+        $this->validate([
+            'selectedTrainingId' => 'required|exists:trainings,id',
+            'trainingDueDate' => 'required|date|after:today',
+        ]);
+
+        try {
+            // Verificar si el entrenamiento ya está asignado al conductor
+            $existingAssignment = DriverTraining::where('user_driver_detail_id', $this->driverId)
+                ->where('training_id', $this->selectedTrainingId)
+                ->where('status', '!=', 'completed')
+                ->first();
+
+            if ($existingAssignment) {
+                session()->flash('error', 'Este entrenamiento ya está asignado al conductor.');
+                return;
+            }
+
+            // Crear la asignación de entrenamiento
+            DriverTraining::create([
+                'user_driver_detail_id' => $this->driverId,
+                'training_id' => $this->selectedTrainingId,
+                'assigned_date' => now(),
+                'due_date' => $this->trainingDueDate,
+                'status' => 'assigned',
+                // Usar el ID del usuario actual o 1 como fallback para el administrador
+                'assigned_by' => 1,
+            ]);
+
+            // Cerrar el modal y mostrar mensaje de éxito
+            $this->closeTrainingModal();
+            session()->flash('message', 'Entrenamiento asignado correctamente.');
+            
+            // Recargar los datos del conductor
+            $this->loadDriverData();
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al asignar el entrenamiento: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Marca un entrenamiento como completado
+     */
+    public function completeTraining($trainingAssignmentId)
+    {
+        try {
+            $trainingAssignment = DriverTraining::findOrFail($trainingAssignmentId);
+            
+            if ($trainingAssignment->user_driver_detail_id != $this->driverId) {
+                session()->flash('error', 'No tienes permiso para modificar este entrenamiento.');
+                return;
+            }
+            
+            $trainingAssignment->markAsCompleted('Completado desde revisión de reclutamiento');
+            
+            session()->flash('message', 'Entrenamiento marcado como completado.');
+            
+            // Recargar los datos del conductor
+            $this->loadDriverData();
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al completar el entrenamiento: ' . $e->getMessage());
+        }
+    }
+
+    public function render()
+{
+    return view('livewire.admin.driver.recruitment.driver-recruitment-review');        
+}
+
+/**
+ * Abre el modal para subir un Record de Manejo
+ */
+public function editDrivingRecord()
+{
+    $this->resetErrorBag();
+    $this->resetValidation();
+    $this->documentFile = null;
+    $this->documentDescription = '';
+    $this->documentCategory = 'driving_record';
+    $this->dispatch('open-driving-record-modal');
+}
+
+/**
+ * Abre el modal para subir un Record Médico
+ */
+public function openMedicalRecordModal()
+{
+    $this->resetErrorBag();
+    $this->resetValidation();
+    $this->documentFile = null;
+    $this->documentDescription = '';
+    $this->documentCategory = 'medical_record';
+    $this->dispatch('open-medical-record-modal');
+}
+
+/**
+ * Sube un nuevo Record de Manejo
+ */
+public function uploadDrivingRecord()
+{
+    if (!$this->documentFile) {
+        session()->flash('error', 'Por favor selecciona un archivo para subir');
+        return;
+    }
+
+    try {
+        // Obtener la extensión original del archivo
+        $extension = $this->documentFile->getClientOriginalExtension();
+        $customFileName = 'driving_records.' . $extension;
+        
+        // Guardar el documento con el nombre personalizado
+        $media = $this->driver->addMedia($this->documentFile->path())
+            ->usingFileName($customFileName) // Especifica el nombre completo del archivo
+            ->withCustomProperties([
+                'description' => $this->documentDescription,
+                'upload_date' => now()->toDateTimeString(),
+                'original_name' => $this->documentFile->getClientOriginalName() // Guardamos el nombre original como referencia
+            ])
+            ->toMediaCollection('driving_records');
+        
+        // Actualizar checklist
+        if (isset($this->checklistItems['driving_record'])) {
+            $this->checklistItems['driving_record']['checked'] = true;
+        }
+
+        // Limpiar
+        $this->documentFile = null;
+        $this->documentDescription = '';
+        $this->loadDriverData();
+
+        $this->dispatch('close-driving-record-modal');
+        session()->flash('message', 'Record de manejo subido exitosamente.');
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('Error al subir el record de manejo', ['error' => $e->getMessage()]);
+        session()->flash('error', 'Error al subir el record de manejo: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Elimina un Record de Manejo
+ */
+public function deleteDrivingRecord($mediaId)
+{
+    try {
+        $media = \Spatie\MediaLibrary\MediaCollections\Models\Media::find($mediaId);
+        if ($media) {
+            $media->delete();
+            $this->loadDriverData();
+            
+            // Si no quedan documentos, actualizar checklist
+            if ($this->driver->getMedia('driving_records')->isEmpty()) {
+                $this->checklistItems['driving_record']['checked'] = false;
+            }
+            
+            session()->flash('message', 'Record de manejo eliminado exitosamente.');
+        }
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('Error al eliminar el record de manejo', ['error' => $e->getMessage()]);
+        session()->flash('error', 'Error al eliminar el record de manejo: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Abre el modal para subir un Record Criminal
+ */
+public function editCriminalRecord()
+{
+    $this->resetErrorBag();
+    $this->resetValidation();
+    $this->documentFile = null;
+    $this->documentDescription = '';
+    $this->documentCategory = 'criminal_record';
+    $this->dispatch('open-criminal-record-modal');
+}
+
+/**
+ * Sube un nuevo Record Criminal
+ */
+public function uploadCriminalRecord()
+{
+    if (!$this->documentFile) {
+        session()->flash('error', 'Por favor selecciona un archivo para subir');
+        return;
+    }
+
+    try {
+        // Obtener la extensión original del archivo
+        $extension = $this->documentFile->getClientOriginalExtension();
+        $customFileName = 'criminal_records.' . $extension;
+        
+        // Guardar el documento con el nombre personalizado
+        $media = $this->driver->addMedia($this->documentFile->path())
+            ->usingFileName($customFileName) // Especifica el nombre completo del archivo
+            ->withCustomProperties([
+                'description' => $this->documentDescription,
+                'upload_date' => now()->toDateTimeString(),
+                'original_name' => $this->documentFile->getClientOriginalName() // Guardamos el nombre original como referencia
+            ])
+            ->toMediaCollection('criminal_records');
+        
+        // Actualizar checklist
+        if (isset($this->checklistItems['criminal_record'])) {
+            $this->checklistItems['criminal_record']['checked'] = true;
+        }
+
+        // Limpiar
+        $this->documentFile = null;
+        $this->documentDescription = '';
+        $this->loadDriverData();
+        
+        $this->dispatch('close-criminal-record-modal');
+        session()->flash('message', 'Record criminal subido exitosamente.');
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('Error al subir el record criminal', ['error' => $e->getMessage()]);
+        session()->flash('error', 'Error al subir el record criminal: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Sube un nuevo Record Médico
+ */
+public function uploadMedicalRecord()
+{
+    if (!$this->documentFile) {
+        session()->flash('error', 'Por favor selecciona un archivo para subir');
+        return;
+    }
+
+    try {
+        // Obtener la extensión original del archivo
+        $extension = $this->documentFile->getClientOriginalExtension();
+        $customFileName = 'medical_records.' . $extension;
+        
+        // Guardar el documento con el nombre personalizado
+        $media = $this->driver->addMedia($this->documentFile->path())
+            ->usingFileName($customFileName) // Especifica el nombre completo del archivo
+            ->withCustomProperties([
+                'description' => $this->documentDescription,
+                'upload_date' => now()->toDateTimeString(),
+                'original_name' => $this->documentFile->getClientOriginalName() // Guardamos el nombre original como referencia
+            ])
+            ->toMediaCollection('medical_records');
+        
+        // Actualizar checklist
+        if (isset($this->checklistItems['medical_record'])) {
+            $this->checklistItems['medical_record']['checked'] = true;
+        }
+
+        // Limpiar
+        $this->documentFile = null;
+        $this->documentDescription = '';
+        $this->loadDriverData();
+        
+        $this->dispatch('close-medical-record-modal');
+        session()->flash('message', 'Record médico subido exitosamente.');
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('Error al subir el record médico', ['error' => $e->getMessage()]);
+        session()->flash('error', 'Error al subir el record médico: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Elimina un Record Criminal
+ */
+public function deleteCriminalRecord($mediaId)
+{
+    try {
+        DB::table('media')->where('id', $mediaId)->delete();
+        
+        // Actualizar checklist
+        if (isset($this->checklistItems['criminal_record'])) {
+            $this->checklistItems['criminal_record']['checked'] = false;
+        }
+
+        $this->loadDriverData();
+        session()->flash('message', 'Record criminal eliminado exitosamente.');
+    } catch (\Exception $e) {
+        Log::error('Error al eliminar el record criminal', ['error' => $e->getMessage()]);
+        session()->flash('error', 'Error al eliminar el record criminal: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Elimina un Record Médico
+ */
+public function deleteMedicalRecord($mediaId)
+{
+    try {
+        DB::table('media')->where('id', $mediaId)->delete();
+        
+        // Actualizar checklist
+        if (isset($this->checklistItems['medical_record'])) {
+            $this->checklistItems['medical_record']['checked'] = false;
+        }
+
+        $this->loadDriverData();
+        session()->flash('message', 'Record médico eliminado exitosamente.');
+    } catch (\Exception $e) {
+        Log::error('Error al eliminar el record médico', ['error' => $e->getMessage()]);
+        session()->flash('error', 'Error al eliminar el record médico: ' . $e->getMessage());
+    }
+}
+
 }

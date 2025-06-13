@@ -143,6 +143,11 @@
                         Records
                     </button>
                     <button type="button"
+                        class="px-4 py-3 text-sm font-medium {{ $currentTab === 'training' ? 'bg-primary text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100' }}"
+                        wire:click="changeTab('training')">
+                        Training
+                    </button>
+                    <button type="button"
                         class="px-4 py-3 text-sm font-medium {{ $currentTab === 'history' ? 'bg-primary text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100' }}"
                         wire:click="changeTab('history')">
                         History
@@ -153,59 +158,6 @@
                         Documents
                     </button>
                 </div>
-                {{-- <x-base.tab.list
-                    class="box mr-auto w-full flex-col rounded-[0.6rem] border-slate-200 bg-white sm:flex-row 2xl:w-auto">
-                    <x-base.tab
-                        class="bg-slate-50 first:rounded-l-[0.6rem] last:rounded-r-[0.6rem] [&[aria-selected='true']_button]:text-current">
-                        <x-base.tab.button
-                            class="flex w-full items-center justify-center whitespace-nowrap rounded-[0.6rem] py-2.5 text-[0.94rem] text-slate-500 xl:w-40 {{ $currentTab === 'general' ? 'active' : '' }}"
-                            wire:click="changeTab('general')" as="button">
-                            Profile
-                        </x-base.tab.button>
-
-                    </x-base.tab>
-                    <x-base.tab
-                        class="bg-slate-50 first:rounded-l-[0.6rem] last:rounded-r-[0.6rem] [&[aria-selected='true']_button]:text-current">
-                        <x-base.tab.button
-                            class="flex w-full items-center justify-center whitespace-nowrap rounded-[0.6rem] py-2.5 text-[0.94rem] text-slate-500 xl:w-40 {{ $currentTab === 'licenses' ? 'active' : '' }}"
-                            wire:click="changeTab('licenses')" as="button">
-                            Licenses
-                        </x-base.tab.button>
-                    </x-base.tab>
-                    <x-base.tab
-                        class="bg-slate-50 first:rounded-l-[0.6rem] last:rounded-r-[0.6rem] [&[aria-selected='true']_button]:text-current">
-                        <x-base.tab.button
-                            class="flex w-full items-center justify-center whitespace-nowrap rounded-[0.6rem] py-2.5 text-[0.94rem] text-slate-500 xl:w-40 {{ $currentTab === 'medical' ? 'active' : '' }}"
-                            wire:click="changeTab('medical')" as="button">
-                            Medical
-                        </x-base.tab.button>
-                    </x-base.tab>
-                    <x-base.tab
-                        class="bg-slate-50 first:rounded-l-[0.6rem] last:rounded-r-[0.6rem] [&[aria-selected='true']_button]:text-current">
-                        <x-base.tab.button
-                            class="flex w-full items-center justify-center whitespace-nowrap rounded-[0.6rem] py-2.5 text-[0.94rem] text-slate-500 xl:w-40 {{ $currentTab === 'records' ? 'active' : '' }}"
-                            wire:click="changeTab('records')" as="button">
-                            Records
-                        </x-base.tab.button>
-                    </x-base.tab>
-                    <x-base.tab
-                        class="bg-slate-50 first:rounded-l-[0.6rem] last:rounded-r-[0.6rem] [&[aria-selected='true']_button]:text-current">
-                        <x-base.tab.button
-                            class="flex w-full items-center justify-center whitespace-nowrap rounded-[0.6rem] py-2.5 text-[0.94rem] text-slate-500 xl:w-40 
-                        {{ $currentTab === 'history' ? 'active' : '' }}"
-                            wire:click="changeTab('history')" as="button">
-                            History
-                        </x-base.tab.button>
-                    </x-base.tab>
-                    <x-base.tab
-                        class="bg-slate-50 first:rounded-l-[0.6rem] last:rounded-r-[0.6rem] [&[aria-selected='true']_button]:text-current">
-                        <x-base.tab.button
-                            class="flex w-full items-center justify-center whitespace-nowrap rounded-[0.6rem] py-2.5 text-[0.94rem] text-slate-500 xl:w-40 {{ $currentTab === 'documents' ? 'active' : '' }}"
-                            wire:click="changeTab('documents')" as="button">
-                            Documents
-                        </x-base.tab.button>
-                    </x-base.tab>
-                </x-base.tab.list> --}}
             </div>
 
             <!-- Contenido de la pestaña seleccionada -->
@@ -447,26 +399,36 @@
                                                 <div class="text-xs text-slate-500 mb-1">Front</div>
                                                 @if ($license->getFirstMediaUrl('license_front'))
                                                     <div class="relative group">
-                                                        <a href="{{ $license->getFirstMediaUrl('license_front') }}" target="_blank" class="block">
+                                                        <a href="{{ $license->getFirstMediaUrl('license_front') }}"
+                                                            target="_blank" class="block">
                                                             <img src="{{ $license->getFirstMediaUrl('license_front') }}"
                                                                 alt="Frente de licencia"
                                                                 class="h-32 border rounded object-contain bg-white">
                                                         </a>
-                                                        <button wire:click="editLicenseFrontImage({{ $license->id }})" 
-                                                                class="absolute bottom-2 right-2 bg-primary text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
-                                                                title="Update front license image">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21h-9.5A2.25 2.25 0 014 18.75V8.25A2.25 2.25 0 016.25 6H8" />
+                                                        <button
+                                                            wire:click="editLicenseFrontImage({{ $license->id }})"
+                                                            class="absolute bottom-2 right-2 bg-primary text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                                                            title="Update front license image">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                viewBox="0 0 24 24" stroke-width="1.5"
+                                                                stroke="currentColor" class="w-4 h-4">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21h-9.5A2.25 2.25 0 014 18.75V8.25A2.25 2.25 0 016.25 6H8" />
                                                             </svg>
                                                         </button>
                                                     </div>
                                                 @else
-                                                    <div class="flex flex-col items-center border border-dashed border-slate-300 rounded p-4 bg-slate-50">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-slate-400 mb-2">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                                                    <div
+                                                        class="flex flex-col items-center border border-dashed border-slate-300 rounded p-4 bg-slate-50">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                            viewBox="0 0 24 24" stroke-width="1.5"
+                                                            stroke="currentColor" class="w-8 h-8 text-slate-400 mb-2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                                                         </svg>
-                                                        <button wire:click="editLicenseFrontImage({{ $license->id }})" 
-                                                                class="text-sm text-primary hover:underline">
+                                                        <button
+                                                            wire:click="editLicenseFrontImage({{ $license->id }})"
+                                                            class="text-sm text-primary hover:underline">
                                                             Upload Front Image
                                                         </button>
                                                     </div>
@@ -477,26 +439,34 @@
                                                 <div class="text-xs text-slate-500 mb-1">Reverse</div>
                                                 @if ($license->getFirstMediaUrl('license_back'))
                                                     <div class="relative group">
-                                                        <a href="{{ $license->getFirstMediaUrl('license_back') }}" target="_blank" class="block">
+                                                        <a href="{{ $license->getFirstMediaUrl('license_back') }}"
+                                                            target="_blank" class="block">
                                                             <img src="{{ $license->getFirstMediaUrl('license_back') }}"
                                                                 alt="Reverso de licencia"
                                                                 class="h-32 border rounded object-contain bg-white">
                                                         </a>
-                                                        <button wire:click="editLicenseBackImage({{ $license->id }})" 
-                                                                class="absolute bottom-2 right-2 bg-primary text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
-                                                                title="Update back license image">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21h-9.5A2.25 2.25 0 014 18.75V8.25A2.25 2.25 0 016.25 6H8" />
+                                                        <button wire:click="editLicenseBackImage({{ $license->id }})"
+                                                            class="absolute bottom-2 right-2 bg-primary text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                                                            title="Update back license image">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                viewBox="0 0 24 24" stroke-width="1.5"
+                                                                stroke="currentColor" class="w-4 h-4">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21h-9.5A2.25 2.25 0 014 18.75V8.25A2.25 2.25 0 016.25 6H8" />
                                                             </svg>
                                                         </button>
                                                     </div>
                                                 @else
-                                                    <div class="flex flex-col items-center border border-dashed border-slate-300 rounded p-4 bg-slate-50">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-slate-400 mb-2">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                                                    <div
+                                                        class="flex flex-col items-center border border-dashed border-slate-300 rounded p-4 bg-slate-50">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                            viewBox="0 0 24 24" stroke-width="1.5"
+                                                            stroke="currentColor" class="w-8 h-8 text-slate-400 mb-2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                                                         </svg>
-                                                        <button wire:click="editLicenseBackImage({{ $license->id }})" 
-                                                                class="text-sm text-primary hover:underline">
+                                                        <button wire:click="editLicenseBackImage({{ $license->id }})"
+                                                            class="text-sm text-primary hover:underline">
                                                             Upload Back Image
                                                         </button>
                                                     </div>
@@ -538,6 +508,193 @@
                                 </table>
                             </div>
                         @endif
+
+                        <!-- Record de Manejo -->
+                        <h3 class="text-lg font-medium mt-6 mb-4">Driving Record</h3>
+                        <div class="bg-slate-50 p-4 rounded-lg mb-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <div class="text-sm font-medium">Driving Record Files (English)</div>
+                                <button type="button" wire:click="editDrivingRecord" class="btn btn-sm btn-primary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    Upload Driving Record
+                                </button>
+                            </div>
+
+                            
+
+                            <!-- Lista de archivos subidos -->
+                            @if ($driver->getMedia('driving_records')->isNotEmpty())
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+                                    @foreach ($driver->getMedia('driving_records') as $media)
+                                        <div class="relative group border rounded p-2 bg-white">
+                                            <div class="flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                    class="w-5 h-5 text-slate-500 mr-2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                                </svg>
+                                                <a href="{{ $media->getUrl() }}" target="_blank"
+                                                    class="text-sm text-primary hover:underline truncate">
+                                                    {{ $media->file_name }}
+                                                </a>
+                                            </div>
+                                            <div
+                                                class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button type="button"
+                                                    wire:click="deleteDrivingRecord({{ $media->id }})"
+                                                    wire:confirm="Are you sure you want to delete this document?"
+                                                    class="text-red-500 hover:text-red-700">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                        class="w-4 h-4">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="text-slate-500 italic">No driving record files uploaded.</div>
+                            @endif
+                        </div
+                        
+                            @if ($driver->getMedia('driving_records')->isNotEmpty())
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+                                    @foreach ($driver->getMedia('driving_records') as $media)
+                                        <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
+                                            <div class="p-3 border-b bg-slate-50 flex justify-between items-center">
+                                                <div class="font-medium truncate" title="{{ $media->file_name }}">
+                                                    {{ $media->file_name }}
+                                                </div>
+                                                <button wire:click="deleteDrivingRecord({{ $media->id }})"
+                                                    wire:confirm="Are you sure you want to delete this document?"
+                                                    class="text-red-500 hover:text-red-600">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                        class="w-4 h-4">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <div class="p-3">                                                                                                
+                                                <div class="text-xs text-slate-500 mb-1">Uploaded:</div>
+                                                <div class="text-sm mb-3">
+                                                    {{ Carbon\Carbon::parse($media->getCustomProperty('upload_date'))->format('M d, Y') }}
+                                                </div>
+                                                <a href="{{ $media->getUrl() }}" target="_blank"
+                                                    class="block text-center text-sm px-3 py-1.5 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 transition-colors">
+                                                    View Document
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="text-slate-500 italic">No driving record documents have been uploaded.</div>
+                            @endif
+                        
+
+                        <!-- Criminal Record -->
+                        <h3 class="text-lg font-medium mt-6 mb-4">Criminal Record</h3>
+                        <div class="bg-slate-50 p-4 rounded-lg mb-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <div class="text-sm font-medium">Criminal Record Files</div>
+                                <button type="button" wire:click="editCriminalRecord"
+                                    class="btn btn-sm btn-primary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    Upload Criminal Record
+                                </button>
+                            </div>
+
+                            <!-- Lista de archivos subidos -->
+                            @if ($driver->getMedia('criminal_records')->isNotEmpty())
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+                                    @foreach ($driver->getMedia('criminal_records') as $media)
+                                        <div class="relative group border rounded p-2 bg-white">
+                                            <div class="flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                    class="w-5 h-5 text-slate-500 mr-2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                                </svg>
+                                                <a href="{{ $media->getUrl() }}" target="_blank"
+                                                    class="text-sm text-primary hover:underline truncate">
+                                                    {{ $media->file_name }}
+                                                </a>
+                                            </div>
+                                            <div
+                                                class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button type="button"
+                                                    wire:click="deleteCriminalRecord({{ $media->id }})"
+                                                    wire:confirm="Are you sure you want to delete this document?"
+                                                    class="text-red-500 hover:text-red-700">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                        class="w-4 h-4">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="text-slate-500 italic">No criminal record files uploaded.</div>
+                            @endif
+                        </div>
+
+                        <div class="mb-6">
+                            @if ($driver->getMedia('criminal_records')->isNotEmpty())
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+                                    @foreach ($driver->getMedia('criminal_records') as $media)
+                                        <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
+                                            <div class="p-3 border-b bg-slate-50 flex justify-between items-center">
+                                                <div class="font-medium truncate" title="{{ $media->file_name }}">
+                                                    {{ $media->file_name }}
+                                                </div>
+                                                <button wire:click="deleteCriminalRecord({{ $media->id }})"
+                                                    wire:confirm="Are you sure you want to delete this document?"
+                                                    class="text-red-500 hover:text-red-600">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                        class="w-4 h-4">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <div class="p-3">                                                                                                
+                                                <div class="text-xs text-slate-500 mb-1">Uploaded:</div>
+                                                <div class="text-sm mb-3">
+                                                    {{ Carbon\Carbon::parse($media->getCustomProperty('upload_date'))->format('M d, Y') }}
+                                                </div>
+                                                <a href="{{ $media->getUrl() }}" target="_blank"
+                                                    class="block text-center text-sm px-3 py-1.5 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 transition-colors">
+                                                    View Document
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="text-slate-500 italic">No driving record documents have been uploaded.
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 @endif
 
@@ -600,26 +757,34 @@
                                 <div class="text-sm text-slate-500 mb-2">Medical Card</div>
                                 @if ($medical->getFirstMediaUrl('medical_card'))
                                     <div class="relative group">
-                                        <a href="{{ $medical->getFirstMediaUrl('medical_card') }}" target="_blank" class="block">
+                                        <a href="{{ $medical->getFirstMediaUrl('medical_card') }}" target="_blank"
+                                            class="block">
                                             <img src="{{ $medical->getFirstMediaUrl('medical_card') }}"
                                                 alt="Tarjeta médica"
                                                 class="h-32 border rounded object-contain bg-white">
                                         </a>
-                                        <button wire:click="editMedicalImage()" 
-                                                class="absolute bottom-2 right-2 bg-primary text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
-                                                title="Update medical card image">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21h-9.5A2.25 2.25 0 014 18.75V8.25A2.25 2.25 0 016.25 6H8" />
+                                        <button wire:click="editMedicalImage()"
+                                            class="absolute bottom-2 right-2 bg-primary text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                                            title="Update medical card image">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                class="w-4 h-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21h-9.5A2.25 2.25 0 014 18.75V8.25A2.25 2.25 0 016.25 6H8" />
                                             </svg>
                                         </button>
                                     </div>
                                 @else
-                                    <div class="flex flex-col items-center border border-dashed border-slate-300 rounded p-4 bg-slate-50">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-slate-400 mb-2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                                    <div
+                                        class="flex flex-col items-center border border-dashed border-slate-300 rounded p-4 bg-slate-50">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor"
+                                            class="w-8 h-8 text-slate-400 mb-2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                                         </svg>
-                                        <button wire:click="editMedicalImage()" 
-                                                class="text-sm text-primary hover:underline">
+                                        <button wire:click="editMedicalImage()"
+                                            class="text-sm text-primary hover:underline">
                                             Upload Medical Card
                                         </button>
                                     </div>
@@ -628,6 +793,64 @@
                         @else
                             <div class="text-slate-500 italic">No medical information has been recorded.</div>
                         @endif
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-slate-200">
+                        <!-- Medical Record -->
+                        <h3 class="text-lg font-medium mt-6 mb-4">Medical Record</h3>
+                        <div class="bg-slate-50 p-4 rounded-lg mb-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <div class="text-sm font-medium">Medical Record Files</div>
+                                <button type="button" wire:click="openMedicalRecordModal"
+                                    class="btn btn-sm btn-primary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    Upload Medical Record
+                                </button>
+                            </div>
+
+                            <!-- Lista de archivos subidos -->
+                            @if ($driver->getMedia('medical_records')->isNotEmpty())
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+                                    @foreach ($driver->getMedia('medical_records') as $media)
+                                        <div class="relative group border rounded p-2 bg-white">
+                                            <div class="flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                    class="w-5 h-5 text-slate-500 mr-2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                                </svg>
+                                                <a href="{{ $media->getUrl() }}" target="_blank"
+                                                    class="text-sm text-primary hover:underline truncate">
+                                                    {{ $media->file_name }}
+                                                </a>
+                                            </div>
+                                            <div
+                                                class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button type="button"
+                                                    wire:click="deleteMedicalRecord({{ $media->id }})"
+                                                    wire:confirm="Are you sure you want to delete this document?"
+                                                    class="text-red-500 hover:text-red-700">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                        class="w-4 h-4">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="text-slate-500 italic">No medical record files uploaded.</div>
+                            @endif
+                        </div>
+
                     </div>
                 @endif
 
@@ -638,30 +861,34 @@
                         <!-- Training Schools Section -->
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-medium">Commercial Driver Training Schools</h3>
-                            
-                                <button type="button" 
-                                    wire:click="$dispatch('openTrainingModal', { driverId: {{ $driver->id }} })" 
-                                    class="bg-primary hover:bg-primary-dark text-white py-1 px-3 rounded text-sm flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                    </svg>
-                                    Add Training
-                                </button>                            
+
+                            <button type="button"
+                                wire:click="$dispatch('openTrainingModal', { driverId: {{ $driver->id }} })"
+                                class="bg-primary hover:bg-primary-dark text-white py-1 px-3 rounded text-sm flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Add Training
+                            </button>
                         </div>
 
                         @if (isset($driver->trainingSchools) && $driver->trainingSchools->isNotEmpty())
                             @foreach ($driver->trainingSchools as $school)
                                 <div class="bg-slate-50 p-4 rounded-lg mb-4 relative">
-                                    <div class="absolute bottom-4 right-4 flex space-x-2">                                        
-                                            <a href="#" 
-                                                wire:click.prevent="$dispatch('openTrainingModal', { driverId: {{ $driver->id }}, trainingSchoolId: {{ $school->id }} })" 
-                                                class="text-slate-500 hover:text-primary">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-                                                </svg>
-                                            </a>                                                   
+                                    <div class="absolute bottom-4 right-4 flex space-x-2">
+                                        <a href="#"
+                                            wire:click.prevent="$dispatch('openTrainingModal', { driverId: {{ $driver->id }}, trainingSchoolId: {{ $school->id }} })"
+                                            class="text-slate-500 hover:text-primary">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z">
+                                                </path>
+                                            </svg>
+                                        </a>
                                     </div>
-                                    
+
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
                                             <div class="text-sm text-slate-500">School Name</div>
@@ -674,7 +901,8 @@
                                         <div>
                                             <div class="text-sm text-slate-500">Period</div>
                                             <div class="font-medium">
-                                                {{ $school->date_start ? $school->date_start->format('m/Y') : 'N/A' }} -
+                                                {{ $school->date_start ? $school->date_start->format('m/Y') : 'N/A' }}
+                                                -
                                                 {{ $school->date_end ? $school->date_end->format('m/Y') : 'N/A' }}
                                             </div>
                                         </div>
@@ -709,13 +937,21 @@
                                             <div class="text-sm text-slate-500 mb-2">School Certificates</div>
                                             <div class="flex flex-wrap gap-2">
                                                 @foreach ($school->getMedia('school_certificates') as $certificate)
-                                                    <a href="{{ $certificate->getUrl() }}" target="_blank" class="block">
+                                                    <a href="{{ $certificate->getUrl() }}" target="_blank"
+                                                        class="block">
                                                         @if (strpos($certificate->mime_type, 'image/') === 0)
-                                                            <img src="{{ $certificate->getUrl() }}" alt="Certificado"
-                                                                 class="h-24 border rounded object-contain bg-white">
+                                                            <img src="{{ $certificate->getUrl() }}"
+                                                                alt="Certificado"
+                                                                class="h-24 border rounded object-contain bg-white">
                                                         @else
-                                                            <div class="h-24 w-24 border rounded flex items-center justify-center bg-white">
-                                                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20M13 13V17H10V13H13Z"></path></svg>
+                                                            <div
+                                                                class="h-24 w-24 border rounded flex items-center justify-center bg-white">
+                                                                <svg class="h-5 w-5" viewBox="0 0 24 24"
+                                                                    fill="currentColor">
+                                                                    <path
+                                                                        d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20M13 13V17H10V13H13Z">
+                                                                    </path>
+                                                                </svg>
                                                             </div>
                                                         @endif
                                                     </a>
@@ -732,7 +968,7 @@
                         @else
                             <div class="text-slate-500 italic">No training schools are registered.</div>
                         @endif
-                        
+
                         <!-- Componente Modal para Agregar/Editar Escuelas de Capacitación -->
                         @livewire('admin.driver.driver-training-modal')
 
@@ -742,10 +978,12 @@
                         <!-- Courses Section -->
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-medium">Courses</h3>
-                            <button type="button" 
-                                wire:click="$dispatch('openDriverCourseModal', { driverId: {{ $driver->id }} })" 
+                            <button type="button"
+                                wire:click="$dispatch('openDriverCourseModal', { driverId: {{ $driver->id }} })"
                                 class="bg-primary hover:bg-primary-dark text-white py-1 px-3 rounded text-sm flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" class="mr-1">
                                     <line x1="12" y1="5" x2="12" y2="19"></line>
                                     <line x1="5" y1="12" x2="19" y2="12"></line>
                                 </svg>
@@ -759,15 +997,18 @@
                                     <div class="bg-slate-50 p-4 rounded-lg">
                                         <!-- Botones de acción -->
                                         <div class="flex justify-end mb-2">
-                                            <button type="button" 
-                                                wire:click="$dispatch('openDriverCourseModal', { driverId: {{ $driver->id }}, courseId: {{ $course->id }} })" 
+                                            <button type="button"
+                                                wire:click="$dispatch('openDriverCourseModal', { driverId: {{ $driver->id }}, courseId: {{ $course->id }} })"
                                                 class="text-slate-500 hover:text-primary">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z">
+                                                    </path>
                                                 </svg>
                                             </button>
                                         </div>
-                                        
+
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
                                                 <div class="text-sm text-slate-500">Organization Name</div>
@@ -779,38 +1020,51 @@
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Location</div>
-                                                <div class="font-medium">{{ $course->city }}, {{ $course->state }}</div>
+                                                <div class="font-medium">{{ $course->city }}, {{ $course->state }}
+                                                </div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Certification Date</div>
-                                                <div class="font-medium">{{ $course->certification_date ? $course->certification_date->format('m/d/Y') : 'N/A' }}</div>
+                                                <div class="font-medium">
+                                                    {{ $course->certification_date ? $course->certification_date->format('m/d/Y') : 'N/A' }}
+                                                </div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Expiration Date</div>
-                                                <div class="font-medium">{{ $course->expiration_date ? $course->expiration_date->format('m/d/Y') : 'N/A' }}</div>
+                                                <div class="font-medium">
+                                                    {{ $course->expiration_date ? $course->expiration_date->format('m/d/Y') : 'N/A' }}
+                                                </div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Experience</div>
                                                 <div class="font-medium">{{ $course->experience }}</div>
-                                            </div>                                            
-                                            @if ($course->hasMedia('course_certificates'))
-                                            <div class="col-span-2">
-                                                <div class="text-sm text-slate-500 mb-2">Certificates</div>
-                                                <div class="flex flex-wrap gap-2">
-                                                    @foreach ($course->getMedia('course_certificates') as $certificate)
-                                                        <a href="{{ $certificate->getUrl() }}" target="_blank" class="block">
-                                                            @if (strpos($certificate->mime_type, 'image/') === 0)
-                                                                <img src="{{ $certificate->getUrl() }}" alt="Certificado"
-                                                                     class="h-24 border rounded object-contain bg-white">
-                                                            @else
-                                                                <div class="h-24 w-24 border rounded flex items-center justify-center bg-white">
-                                                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20M13 13V17H10V13H13Z"></path></svg>
-                                                                </div>
-                                                            @endif
-                                                        </a>
-                                                    @endforeach
-                                                </div>
                                             </div>
+                                            @if ($course->hasMedia('course_certificates'))
+                                                <div class="col-span-2">
+                                                    <div class="text-sm text-slate-500 mb-2">Certificates</div>
+                                                    <div class="flex flex-wrap gap-2">
+                                                        @foreach ($course->getMedia('course_certificates') as $certificate)
+                                                            <a href="{{ $certificate->getUrl() }}" target="_blank"
+                                                                class="block">
+                                                                @if (strpos($certificate->mime_type, 'image/') === 0)
+                                                                    <img src="{{ $certificate->getUrl() }}"
+                                                                        alt="Certificado"
+                                                                        class="h-24 border rounded object-contain bg-white">
+                                                                @else
+                                                                    <div
+                                                                        class="h-24 w-24 border rounded flex items-center justify-center bg-white">
+                                                                        <svg class="h-5 w-5" viewBox="0 0 24 24"
+                                                                            fill="currentColor">
+                                                                            <path
+                                                                                d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20M13 13V17H10V13H13Z">
+                                                                            </path>
+                                                                        </svg>
+                                                                    </div>
+                                                                @endif
+                                                            </a>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
                                             @endif
                                         </div>
                                     </div>
@@ -819,7 +1073,7 @@
                         @else
                             <div class="text-slate-500 italic mb-4">No courses have been recorded.</div>
                         @endif
-                        
+
                         <!-- Componente Modal para Agregar/Editar Cursos -->
                         @livewire('admin.driver.recruitment.modal.driver-course-modal')
 
@@ -840,7 +1094,9 @@
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Test Date</div>
-                                                <div class="font-medium">{{ $test->test_date ? $test->test_date->format('m/d/Y') : 'N/A' }}</div>
+                                                <div class="font-medium">
+                                                    {{ $test->test_date ? $test->test_date->format('m/d/Y') : 'N/A' }}
+                                                </div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Test Result</div>
@@ -864,83 +1120,134 @@
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Scheduled Time</div>
-                                                <div class="font-medium">{{ $test->scheduled_time ? $test->scheduled_time->format('m/d/Y H:i') : 'N/A' }}</div>
+                                                <div class="font-medium">
+                                                    {{ $test->scheduled_time ? $test->scheduled_time->format('m/d/Y H:i') : 'N/A' }}
+                                                </div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Next Test Due</div>
-                                                <div class="font-medium">{{ $test->next_test_due ? $test->next_test_due->format('m/d/Y') : 'N/A' }}</div>
+                                                <div class="font-medium">
+                                                    {{ $test->next_test_due ? $test->next_test_due->format('m/d/Y') : 'N/A' }}
+                                                </div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Bill To</div>
                                                 <div class="font-medium">{{ $test->bill_to }}</div>
                                             </div>
                                             @if ($test->notes)
-                                            <div class="col-span-2">
-                                                <div class="text-sm text-slate-500">Notes</div>
-                                                <div class="font-medium">{{ $test->notes }}</div>
-                                            </div>
-                                            @endif
-                                            
-                                            @if ($test->is_random_test || $test->is_post_accident_test || $test->is_reasonable_suspicion_test || $test->is_pre_employment_test || $test->is_follow_up_test || $test->is_return_to_duty_test || $test->is_other_reason_test)
-                                            <div class="col-span-2 mt-2">
-                                                <div class="text-sm text-slate-500 mb-2">Test Reasons</div>
-                                                <div class="flex flex-wrap gap-2">
-                                                    @if ($test->is_random_test)
-                                                        <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Random Test</span>
-                                                    @endif
-                                                    @if ($test->is_post_accident_test)
-                                                        <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Post Accident</span>
-                                                    @endif
-                                                    @if ($test->is_reasonable_suspicion_test)
-                                                        <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Reasonable Suspicion</span>
-                                                    @endif
-                                                    @if ($test->is_pre_employment_test)
-                                                        <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Pre-Employment</span>
-                                                    @endif
-                                                    @if ($test->is_follow_up_test)
-                                                        <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Follow-up</span>
-                                                    @endif
-                                                    @if ($test->is_return_to_duty_test)
-                                                        <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Return to Duty</span>
-                                                    @endif
-                                                    @if ($test->is_other_reason_test)
-                                                        <span class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Other: {{ $test->other_reason_description }}</span>
-                                                    @endif
+                                                <div class="col-span-2">
+                                                    <div class="text-sm text-slate-500">Notes</div>
+                                                    <div class="font-medium">{{ $test->notes }}</div>
                                                 </div>
-                                            </div>
                                             @endif
-                                            
+
+                                            @if (
+                                                $test->is_random_test ||
+                                                    $test->is_post_accident_test ||
+                                                    $test->is_reasonable_suspicion_test ||
+                                                    $test->is_pre_employment_test ||
+                                                    $test->is_follow_up_test ||
+                                                    $test->is_return_to_duty_test ||
+                                                    $test->is_other_reason_test)
+                                                <div class="col-span-2 mt-2">
+                                                    <div class="text-sm text-slate-500 mb-2">Test Reasons</div>
+                                                    <div class="flex flex-wrap gap-2">
+                                                        @if ($test->is_random_test)
+                                                            <span
+                                                                class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Random
+                                                                Test</span>
+                                                        @endif
+                                                        @if ($test->is_post_accident_test)
+                                                            <span
+                                                                class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Post
+                                                                Accident</span>
+                                                        @endif
+                                                        @if ($test->is_reasonable_suspicion_test)
+                                                            <span
+                                                                class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Reasonable
+                                                                Suspicion</span>
+                                                        @endif
+                                                        @if ($test->is_pre_employment_test)
+                                                            <span
+                                                                class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Pre-Employment</span>
+                                                        @endif
+                                                        @if ($test->is_follow_up_test)
+                                                            <span
+                                                                class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Follow-up</span>
+                                                        @endif
+                                                        @if ($test->is_return_to_duty_test)
+                                                            <span
+                                                                class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Return
+                                                                to Duty</span>
+                                                        @endif
+                                                        @if ($test->is_other_reason_test)
+                                                            <span
+                                                                class="px-2 py-1 bg-primary/10 text-primary rounded text-xs">Other:
+                                                                {{ $test->other_reason_description }}</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            @endif
+
                                             <!-- Documentos relacionados con el test -->
                                             @if ($test->hasMedia())
-                                            <div class="col-span-2 mt-2">
-                                                <div class="text-sm text-slate-500 mb-2">Test Documents</div>
-                                                <div class="flex flex-wrap gap-3">
-                                                    @if ($test->hasMedia('drug_test_pdf'))
-                                                        <a href="{{ $test->getFirstMedia('drug_test_pdf')->getUrl() }}" target="_blank" class="flex items-center px-3 py-2 bg-slate-100 rounded hover:bg-slate-200">
-                                                            <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20Z"></path></svg>
-                                                            Drug Test Report
-                                                        </a>
-                                                    @endif
-                                                    @if ($test->hasMedia('test_results'))
-                                                        <a href="{{ $test->getFirstMedia('test_results')->getUrl() }}" target="_blank" class="flex items-center px-3 py-2 bg-slate-100 rounded hover:bg-slate-200">
-                                                            <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20Z"></path></svg>
-                                                            Test Results
-                                                        </a>
-                                                    @endif
-                                                    @if ($test->hasMedia('test_certificates'))
-                                                        <a href="{{ $test->getFirstMedia('test_certificates')->getUrl() }}" target="_blank" class="flex items-center px-3 py-2 bg-slate-100 rounded hover:bg-slate-200">
-                                                            <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20Z"></path></svg>
-                                                            Certificate
-                                                        </a>
-                                                    @endif
-                                                    @if ($test->hasMedia('test_authorization'))
-                                                        <a href="{{ $test->getFirstMedia('test_authorization')->getUrl() }}" target="_blank" class="flex items-center px-3 py-2 bg-slate-100 rounded hover:bg-slate-200">
-                                                            <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20Z"></path></svg>
-                                                            Authorization
-                                                        </a>
-                                                    @endif
+                                                <div class="col-span-2 mt-2">
+                                                    <div class="text-sm text-slate-500 mb-2">Test Documents</div>
+                                                    <div class="flex flex-wrap gap-3">
+                                                        @if ($test->hasMedia('drug_test_pdf'))
+                                                            <a href="{{ $test->getFirstMedia('drug_test_pdf')->getUrl() }}"
+                                                                target="_blank"
+                                                                class="flex items-center px-3 py-2 bg-slate-100 rounded hover:bg-slate-200">
+                                                                <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24"
+                                                                    fill="currentColor">
+                                                                    <path
+                                                                        d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20Z">
+                                                                    </path>
+                                                                </svg>
+                                                                Drug Test Report
+                                                            </a>
+                                                        @endif
+                                                        @if ($test->hasMedia('test_results'))
+                                                            <a href="{{ $test->getFirstMedia('test_results')->getUrl() }}"
+                                                                target="_blank"
+                                                                class="flex items-center px-3 py-2 bg-slate-100 rounded hover:bg-slate-200">
+                                                                <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24"
+                                                                    fill="currentColor">
+                                                                    <path
+                                                                        d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20Z">
+                                                                    </path>
+                                                                </svg>
+                                                                Test Results
+                                                            </a>
+                                                        @endif
+                                                        @if ($test->hasMedia('test_certificates'))
+                                                            <a href="{{ $test->getFirstMedia('test_certificates')->getUrl() }}"
+                                                                target="_blank"
+                                                                class="flex items-center px-3 py-2 bg-slate-100 rounded hover:bg-slate-200">
+                                                                <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24"
+                                                                    fill="currentColor">
+                                                                    <path
+                                                                        d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20Z">
+                                                                    </path>
+                                                                </svg>
+                                                                Certificate
+                                                            </a>
+                                                        @endif
+                                                        @if ($test->hasMedia('test_authorization'))
+                                                            <a href="{{ $test->getFirstMedia('test_authorization')->getUrl() }}"
+                                                                target="_blank"
+                                                                class="flex items-center px-3 py-2 bg-slate-100 rounded hover:bg-slate-200">
+                                                                <svg class="h-4 w-4 mr-1" viewBox="0 0 24 24"
+                                                                    fill="currentColor">
+                                                                    <path
+                                                                        d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20Z">
+                                                                    </path>
+                                                                </svg>
+                                                                Authorization
+                                                            </a>
+                                                        @endif
+                                                    </div>
                                                 </div>
-                                            </div>
                                             @endif
                                         </div>
                                     </div>
@@ -963,7 +1270,9 @@
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
                                                 <div class="text-sm text-slate-500">Inspection Date</div>
-                                                <div class="font-medium">{{ $inspection->inspection_date ? $inspection->inspection_date->format('m/d/Y') : 'N/A' }}</div>
+                                                <div class="font-medium">
+                                                    {{ $inspection->inspection_date ? $inspection->inspection_date->format('m/d/Y') : 'N/A' }}
+                                                </div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Inspection Type</div>
@@ -982,50 +1291,57 @@
                                                 <div class="font-medium">{{ $inspection->status }}</div>
                                             </div>
                                             @if ($inspection->vehicle)
-                                            <div>
-                                                <div class="text-sm text-slate-500">Vehicle</div>
-                                                <div class="font-medium">{{ $inspection->vehicle->name ?? ($inspection->vehicle->make . ' ' . $inspection->vehicle->model) }}</div>
-                                            </div>
+                                                <div>
+                                                    <div class="text-sm text-slate-500">Vehicle</div>
+                                                    <div class="font-medium">
+                                                        {{ $inspection->vehicle->name ?? $inspection->vehicle->make . ' ' . $inspection->vehicle->model }}
+                                                    </div>
+                                                </div>
                                             @endif
                                             @if ($inspection->defects_found)
-                                            <div class="col-span-2">
-                                                <div class="text-sm text-slate-500">Defects Found</div>
-                                                <div class="font-medium">{{ $inspection->defects_found }}</div>
-                                            </div>
+                                                <div class="col-span-2">
+                                                    <div class="text-sm text-slate-500">Defects Found</div>
+                                                    <div class="font-medium">{{ $inspection->defects_found }}</div>
+                                                </div>
                                             @endif
                                             @if ($inspection->corrective_actions)
-                                            <div class="col-span-2">
-                                                <div class="text-sm text-slate-500">Corrective Actions</div>
-                                                <div class="font-medium">{{ $inspection->corrective_actions }}</div>
-                                            </div>
+                                                <div class="col-span-2">
+                                                    <div class="text-sm text-slate-500">Corrective Actions</div>
+                                                    <div class="font-medium">{{ $inspection->corrective_actions }}
+                                                    </div>
+                                                </div>
                                             @endif
                                             <div>
                                                 <div class="text-sm text-slate-500">Defects Corrected</div>
-                                                <div class="font-medium">{{ $inspection->is_defects_corrected ? 'Yes' : 'No' }}</div>
+                                                <div class="font-medium">
+                                                    {{ $inspection->is_defects_corrected ? 'Yes' : 'No' }}</div>
                                             </div>
                                             @if ($inspection->is_defects_corrected && $inspection->defects_corrected_date)
-                                            <div>
-                                                <div class="text-sm text-slate-500">Correction Date</div>
-                                                <div class="font-medium">{{ $inspection->defects_corrected_date->format('m/d/Y') }}</div>
-                                            </div>
+                                                <div>
+                                                    <div class="text-sm text-slate-500">Correction Date</div>
+                                                    <div class="font-medium">
+                                                        {{ $inspection->defects_corrected_date->format('m/d/Y') }}
+                                                    </div>
+                                                </div>
                                             @endif
                                             @if ($inspection->corrected_by)
-                                            <div>
-                                                <div class="text-sm text-slate-500">Corrected By</div>
-                                                <div class="font-medium">{{ $inspection->corrected_by }}</div>
-                                            </div>
+                                                <div>
+                                                    <div class="text-sm text-slate-500">Corrected By</div>
+                                                    <div class="font-medium">{{ $inspection->corrected_by }}</div>
+                                                </div>
                                             @endif
                                             <div>
                                                 <div class="text-sm text-slate-500">Safe to Operate</div>
-                                                <div class="font-medium {{ $inspection->is_vehicle_safe_to_operate ? 'text-green-600' : 'text-red-600' }}">
+                                                <div
+                                                    class="font-medium {{ $inspection->is_vehicle_safe_to_operate ? 'text-green-600' : 'text-red-600' }}">
                                                     {{ $inspection->is_vehicle_safe_to_operate ? 'Yes' : 'No' }}
                                                 </div>
                                             </div>
                                             @if ($inspection->notes)
-                                            <div class="col-span-2">
-                                                <div class="text-sm text-slate-500">Notes</div>
-                                                <div class="font-medium">{{ $inspection->notes }}</div>
-                                            </div>
+                                                <div class="col-span-2">
+                                                    <div class="text-sm text-slate-500">Notes</div>
+                                                    <div class="font-medium">{{ $inspection->notes }}</div>
+                                                </div>
                                             @endif
                                         </div>
                                     </div>
@@ -1038,14 +1354,19 @@
                         <!-- Divider -->
                         <div class="border-t my-5"></div>
 
-                        
+
                         <!-- Traffic Convictions Section -->
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-medium">Traffic Convictions</h3>
-                            <button type="button" 
+                            <button type="button"
                                 class="px-3 py-1.5 bg-primary text-white rounded-md text-sm flex items-center hover:bg-primary-focus"
                                 wire:click="$dispatch('openTrafficModal', { driverId: {{ $driver->id }} })">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
                                 Add Traffic Conviction
                             </button>
                         </div>
@@ -1055,18 +1376,26 @@
                                 @foreach ($driver->trafficConvictions as $traffic)
                                     <div class="bg-slate-50 p-4 rounded-lg">
                                         <div class="flex justify-between items-start mb-3">
-                                            <div class="font-medium">{{ $traffic->conviction_date ? (is_string($traffic->conviction_date) ? $traffic->conviction_date : $traffic->conviction_date->format('m-d-Y')) : 'N/A' }} - {{ $traffic->location }}</div>
-                                            <button type="button" 
-                                                class="text-slate-500 hover:text-primary"
+                                            <div class="font-medium">
+                                                {{ $traffic->conviction_date ? (is_string($traffic->conviction_date) ? $traffic->conviction_date : $traffic->conviction_date->format('m-d-Y')) : 'N/A' }}
+                                                - {{ $traffic->location }}</div>
+                                            <button type="button" class="text-slate-500 hover:text-primary"
                                                 wire:click="$dispatch('openTrafficModal', { driverId: {{ $driver->id }}, trafficId: {{ $traffic->id }} })">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z">
+                                                    </path>
+                                                </svg>
                                             </button>
                                         </div>
-                                        
+
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
                                                 <div class="text-sm text-slate-500">Conviction Date</div>
-                                                <div class="font-medium">{{ $traffic->conviction_date ? $traffic->conviction_date->format('m/d/Y') : 'N/A' }}</div>
+                                                <div class="font-medium">
+                                                    {{ $traffic->conviction_date ? $traffic->conviction_date->format('m/d/Y') : 'N/A' }}
+                                                </div>
                                             </div>
                                             <div>
                                                 <div class="text-sm text-slate-500">Location</div>
@@ -1088,16 +1417,24 @@
                                                 <div class="text-sm text-slate-500 mb-2">Documents</div>
                                                 <div class="flex flex-wrap gap-2">
                                                     @foreach ($traffic->getMedia('traffic_images') as $document)
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="block">
+                                                        <a href="{{ $document->getUrl() }}" target="_blank"
+                                                            class="block">
                                                             @if (Str::startsWith($document->mime_type, 'image/'))
-                                                                <img src="{{ $document->getUrl() }}" 
-                                                                    alt="{{ $document->name }}" 
+                                                                <img src="{{ $document->getUrl() }}"
+                                                                    alt="{{ $document->name }}"
                                                                     class="h-24 w-24 border rounded flex items-center justify-center bg-white">
-                                                            @else                                                            
-                                                                <div class="h-24 w-24 border rounded flex items-center justify-center bg-white" title="{{ $document->name }}">
+                                                            @else
+                                                                <div class="h-24 w-24 border rounded flex items-center justify-center bg-white"
+                                                                    title="{{ $document->name }}">
                                                                     <div>
-                                                                        <div class="h-24 w-24 border rounded flex items-center justify-center bg-white">
-                                                                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20M13 13V17H10V13H13Z"></path></svg>
+                                                                        <div
+                                                                            class="h-24 w-24 border rounded flex items-center justify-center bg-white">
+                                                                            <svg class="h-5 w-5" viewBox="0 0 24 24"
+                                                                                fill="currentColor">
+                                                                                <path
+                                                                                    d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20M13 13V17H10V13H13Z">
+                                                                                </path>
+                                                                            </svg>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -1120,10 +1457,15 @@
                         <!-- Accidents Section -->
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-medium">Accident Record</h3>
-                            <button type="button" 
+                            <button type="button"
                                 class="px-3 py-1.5 bg-primary text-white rounded-md text-sm flex items-center hover:bg-primary-focus"
                                 wire:click="$dispatch('openAccidentModal', { driverId: {{ $driver->id }} })">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" class="mr-1">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
                                 Add Accident
                             </button>
                         </div>
@@ -1133,35 +1475,43 @@
                                 @foreach ($driver->accidents as $accident)
                                     <div class="bg-slate-50 p-4 rounded-lg">
                                         <div class="flex justify-between items-start mb-3">
-                                            <div class="font-medium">{{ $accident->accident_date ? (is_string($accident->accident_date) ? $accident->accident_date : $accident->accident_date->format('m-d-Y')) : 'N/A' }} - {{ $accident->location }}</div>
-                                            <button type="button" 
-                                                class="text-slate-500 hover:text-primary"
+                                            <div class="font-medium">
+                                                {{ $accident->accident_date ? (is_string($accident->accident_date) ? $accident->accident_date : $accident->accident_date->format('m-d-Y')) : 'N/A' }}
+                                                - {{ $accident->location }}</div>
+                                            <button type="button" class="text-slate-500 hover:text-primary"
                                                 wire:click="$dispatch('openAccidentModal', { driverId: {{ $driver->id }}, accidentId: {{ $accident->id }} })">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z">
+                                                    </path>
+                                                </svg>
                                             </button>
                                         </div>
-                                        
+
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
                                                 <div class="text-sm text-slate-500">Nature of Accident</div>
                                                 <div class="font-medium">{{ $accident->nature_of_accident }}</div>
-                                            </div>                                            
+                                            </div>
                                         </div>
 
                                         <div class="grid grid-cols-3 gap-4 mt-2">
                                             @if ($accident->had_fatalities)
                                                 <div>
                                                     <div class="text-sm text-slate-500">Fatalities</div>
-                                                    <div class="font-medium text-danger">Yes, {{ $accident->number_of_fatalities }} person(s)</div>
+                                                    <div class="font-medium text-danger">Yes,
+                                                        {{ $accident->number_of_fatalities }} person(s)</div>
                                                 </div>
                                             @endif
 
                                             @if ($accident->had_injuries)
                                                 <div>
                                                     <div class="text-sm text-slate-500">Injuries</div>
-                                                    <div class="font-medium text-warning">Yes, {{ $accident->number_of_injuries }} person(s)</div>
+                                                    <div class="font-medium text-warning">Yes,
+                                                        {{ $accident->number_of_injuries }} person(s)</div>
                                                 </div>
-                                            @endif                                            
+                                            @endif
                                         </div>
 
                                         @if ($accident->comments)
@@ -1176,16 +1526,24 @@
                                                 <div class="text-sm text-slate-500 mb-2">Documents</div>
                                                 <div class="flex flex-wrap gap-2">
                                                     @foreach ($accident->getMedia('accident-images') as $document)
-                                                        <a href="{{ $document->getUrl() }}" target="_blank" class="block">
+                                                        <a href="{{ $document->getUrl() }}" target="_blank"
+                                                            class="block">
                                                             @if (Str::startsWith($document->mime_type, 'image/'))
-                                                                <img src="{{ $document->getUrl() }}" 
-                                                                    alt="{{ $document->name }}" 
+                                                                <img src="{{ $document->getUrl() }}"
+                                                                    alt="{{ $document->name }}"
                                                                     class="h-24 w-24 border rounded flex items-center justify-center bg-white">
-                                                            @else                                                            
-                                                                <div class="h-24 w-24 border rounded flex items-center justify-center bg-white" title="{{ $document->name }}">
+                                                            @else
+                                                                <div class="h-24 w-24 border rounded flex items-center justify-center bg-white"
+                                                                    title="{{ $document->name }}">
                                                                     <div>
-                                                                        <div class="h-24 w-24 border rounded flex items-center justify-center bg-white">
-                                                                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20M13 13V17H10V13H13Z"></path></svg>
+                                                                        <div
+                                                                            class="h-24 w-24 border rounded flex items-center justify-center bg-white">
+                                                                            <svg class="h-5 w-5" viewBox="0 0 24 24"
+                                                                                fill="currentColor">
+                                                                                <path
+                                                                                    d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M18 20H6V4H13V9H18V20M13 13V17H10V13H13Z">
+                                                                                </path>
+                                                                            </svg>
                                                                         </div>
                                                                         {{-- <span>{{ Str::limit($document->name, 10) }}</span> --}}
                                                                     </div>
@@ -1262,6 +1620,107 @@
                                         @endif
                                     </div>
                                 </div>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+                @if ($currentTab === 'training')
+                    <div class="mb-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium">Training</h3>
+                            <button type="button" wire:click="openTrainingModal"
+                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4" />
+                                </svg>
+                                Assign Training
+                            </button>
+                        </div>
+
+                        @if ($driver->driverTrainings && $driver->driverTrainings->isNotEmpty())
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col"
+                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Training</th>
+                                            <th scope="col"
+                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Assigned Date</th>
+                                            <th scope="col"
+                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Due Date</th>
+                                            <th scope="col"
+                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Status</th>
+                                            <th scope="col"
+                                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        @foreach ($driver->driverTrainings as $trainingAssignment)
+                                            <tr>
+                                                <td
+                                                    class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                    {{ $trainingAssignment->training->title ?? 'N/A' }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {{ $trainingAssignment->assigned_date ? $trainingAssignment->assigned_date->format('M d, Y') : 'N/A' }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {{ $trainingAssignment->due_date ? $trainingAssignment->due_date->format('M d, Y') : 'N/A' }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span
+                                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                        {{ $trainingAssignment->status === 'completed'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : ($trainingAssignment->isOverdue()
+                                                                ? 'bg-red-100 text-red-800'
+                                                                : 'bg-yellow-100 text-yellow-800') }}">
+                                                        {{ ucfirst($trainingAssignment->status) }}
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <div class="flex space-x-2">
+                                                        @if ($trainingAssignment->status !== 'completed')
+                                                            <button type="button"
+                                                                wire:click="completeTraining({{ $trainingAssignment->id }})"
+                                                                class="text-primary hover:text-primary-dark">
+                                                                Mark Complete
+                                                            </button>
+                                                        @endif
+                                                        <a href="{{ url('/admin/trainings/' . $trainingAssignment->training_id) }}"
+                                                            target="_blank" class="text-blue-600 hover:text-blue-900">
+                                                            View Details
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-4 text-right">
+                                <a href="{{ url('/admin/trainings') }}" target="_blank"
+                                    class="text-primary hover:text-primary-dark text-sm font-medium">
+                                    Manage All Trainings
+                                </a>
+                            </div>
+                        @else
+                            <div class="bg-white rounded-lg border border-gray-200 p-6 text-center">
+                                <div class="text-slate-500 italic mb-4">No training assignments have been recorded for
+                                    this driver.</div>
+                                <p class="text-sm text-gray-500 mb-4">Assign a training from the available options or
+                                    create new trainings in the training management section.</p>
+                                <a href="{{ url('/admin/trainings') }}" target="_blank"
+                                    class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                                    Go to Training Management
+                                </a>
                             </div>
                         @endif
                     </div>
@@ -1866,7 +2325,7 @@
 
                     </div>
                 @endif
-                
+
 
                 <div class="box box--stacked mt-5 p-5">
                     <h3 class="text-lg font-medium mb-4">Recruiter Notes</h3>
@@ -1899,8 +2358,6 @@
             </div>
 
         </div>
-
-
         <!-- Panel derecho: Checklist y acciones -->
         <div class="w-2/5">
             <div class="box box--stacked p-5">
@@ -2156,10 +2613,7 @@
                 </div>
             </div>
         </div>
-
-
     </div>
-
 
 
     <!-- Modal de rechazo -->
@@ -2199,68 +2653,68 @@
             </form>
         </x-base.dialog.panel>
     </x-base.dialog>
-    
-    <!-- Modal para subir imágenes de licencia (frontal/trasera) -->
-    <div x-data="{ open: false }" 
-         x-init="$wire.on('open-license-image-modal', () => { open = true });
-                 $wire.on('closeUploadModal', () => { open = false });" 
-         x-show="open"
-         x-transition:enter="transition ease-out duration-200" 
-         x-transition:enter-start="opacity-0 scale-90"
-         x-transition:enter-end="opacity-100 scale-100" 
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100 scale-100" 
-         x-transition:leave-end="opacity-0 scale-90"
-         style="display: none; z-index: 9999;"
-         class="modal group bg-gradient-to-b from-theme-1/50 via-theme-2/50 to-black/50 transition-[visibility,opacity] w-screen h-screen fixed left-0 top-0 [&:not(.show)]:duration-[0s,0.2s] [&:not(.show)]:delay-[0.2s,0s] [&:not(.show)]:invisible [&:not(.show)]:opacity-0 [&.show]:visible [&.show]:opacity-100 [&.show]:duration-[0s,0.4s] overflow-y-auto show">
 
-        <div class="w-[70%] mx-auto bg-white relative rounded-sm shadow-md transition-[margin-top,transform] duration-[0.4s,0.3s] -mt-4 group-[.show]:mt-40 group-[.modal-static]:scale-[1.05] sm:w-[500px] p-4">
+    <!-- Modal para subir imágenes de licencia (frontal/trasera) -->
+    <div x-data="{ open: false }" x-init="$wire.on('open-license-image-modal', () => { open = true });
+    $wire.on('closeUploadModal', () => { open = false });" x-show="open"
+        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90"
+        x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-90"
+        style="display: none;"
+        class="modal group bg-gradient-to-b from-theme-1/50 via-theme-2/50 to-black/50 fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto p-4">
+
+        <div class="w-full max-w-md bg-white rounded-md shadow-lg">
             <!-- Header -->
-            <div class="px-4 py-3 bg-slate-50 border-b border-slate-200">
-                <h3 class="text-lg font-medium">{{ $licenseImageType === 'license_front' ? 'Upload Front License Image' : ($licenseImageType === 'license_back' ? 'Upload Back License Image' : 'Upload Medical Card Image') }}</h3>
+            <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 rounded-t-md">
+                <h3 class="text-lg font-medium">
+                    {{ $licenseImageType === 'license_front' ? 'Upload Front License Image' : ($licenseImageType === 'license_back' ? 'Upload Back License Image' : 'Upload Medical Card Image') }}
+                </h3>
             </div>
 
             <!-- Body -->
-            <div class="p-4">
+            <div class="p-5">
                 <!-- Uploader Component -->
-                <div class="mb-4">
-                    <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 transition-colors cursor-pointer"
+                <div class="mb-5">
+                    <div class="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:bg-slate-50 transition-colors cursor-pointer"
                         x-data="licenseUploader()">
-                        
-                        <input type="file" accept="image/*" class="hidden" id="license-image-upload" 
-                                @change="handleFileUpload($event)">
-                        
+
+                        <input type="file" accept="image/*" class="hidden" id="license-image-upload"
+                            @change="handleFileUpload($event)">
+
                         <div x-show="!isUploading" @click="document.getElementById('license-image-upload').click()">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" 
-                                stroke="currentColor" class="w-12 h-12 text-slate-400 mx-auto mb-4">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor"
+                                class="w-16 h-16 text-slate-400 mx-auto mb-4">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                             </svg>
-                            <p class="text-slate-600">Click to select or drag image here</p>
+                            <p class="text-slate-600 font-medium">Click to select or drag image here</p>
                             <p class="text-sm text-slate-500 mt-1">JPG, PNG or GIF (max 5MB)</p>
                         </div>
-                        
+
                         <div x-show="isUploading" class="text-center">
                             <div class="w-full bg-slate-200 rounded-full h-2.5 mb-4">
                                 <div class="bg-primary h-2.5 rounded-full" :style="{ width: progress + '%' }"></div>
                             </div>
                             <p class="text-slate-600">Uploading... <span x-text="progress + '%'"></span></p>
-                        </div>                    </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Información -->
-                <div class="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-600 mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" 
-                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" 
-                         stroke-linejoin="round" class="h-4 w-4 inline-block mr-1">
+                <div class="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-600 mb-5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" class="h-4 w-4 inline-block mr-1">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="16" x2="12" y2="12"></line>
                         <line x1="12" y1="8" x2="12.01" y2="8"></line>
                     </svg>
-                    {{ $licenseImageType === 'license_front' ? 'Please upload a clear image of the front of the driver license.' : 'Please upload a clear image of the back of the driver license.' }}
+                    {{ $licenseImageType === 'license_front' ? 'Please upload a clear image of the front of the driver license.' : ($licenseImageType === 'license_back' ? 'Please upload a clear image of the back of the driver license.' : 'Please upload a clear image of the medical card.') }}
                 </div>
 
                 <!-- Botones -->
-                <div class="flex justify-end space-x-3">
+                <div class="flex justify-end">
                     <button type="button" @click="open = false"
                         class="px-4 py-2 bg-slate-200 text-slate-700 rounded hover:bg-slate-300 transition-colors">
                         Cancel
@@ -2269,9 +2723,88 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Modal para asignar entrenamiento (Alpine.js) -->
+    <div x-data="{ open: false }" x-on:open-training-modal.window="open = true"
+        x-on:close-training-modal.window="open = false" x-show="open" x-cloak
+        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90"
+        x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-90"
+        style="display: none;"
+        class="modal group bg-gradient-to-b from-theme-1/50 via-theme-2/50 to-black/50 fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto p-4">
+
+        <!-- Contenedor del modal -->
+        <div class="w-full max-w-md bg-white rounded-md shadow-lg p-5">
+
+            <!-- Encabezado del modal -->
+            <div class="mb-4">
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Assign Training</h3>
+            </div>
+
+            <!-- Contenido del modal -->
+            <div class="mb-4">
+                <label for="training" class="block text-sm font-medium text-gray-700 mb-1">Select Training</label>
+                <select id="training" wire:model="selectedTrainingId"
+                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                    <option value="">-- Select Training --</option>
+                    @foreach ($availableTrainings as $training)
+                        <option value="{{ $training->id }}">{{ $training->title }}</option>
+                    @endforeach
+                </select>
+                @error('selectedTrainingId')
+                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                @enderror
+            </div>
+
+            <div class="mb-4">
+                <label for="dueDate" class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                <input type="date" id="dueDate" wire:model="trainingDueDate"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
+                @error('trainingDueDate')
+                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                @enderror
+            </div>
+
+            <div class="mb-4">
+                <label for="initialStatus" class="block text-sm font-medium text-gray-700 mb-1">Initial
+                    Status</label>
+                <select id="initialStatus" wire:model="trainingStatus"
+                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                    <option value="assigned">Assigned</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                </select>
+                @error('trainingStatus')
+                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                @enderror
+            </div>
+
+            <div class="mb-4">
+                <label for="trainingNotes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea id="trainingNotes" wire:model="trainingNotes" rows="3"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
+                    placeholder="Add any notes about this training assignment..."></textarea>
+            </div>
+
+            <!-- Pie del modal con botones -->
+            <div class="mt-5 flex justify-end">
+                <button type="button" wire:click="assignTraining"
+                    class="inline-flex w-full justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:col-start-2">
+                    Assign Training
+                </button>
+                <button type="button" wire:click="closeTrainingModal"
+                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0">
+                    Cancel
+                </button>
+            </div>
+
+        </div>
+    </div>
+
     <!-- Modal para ingresar motivo de documento solicitado -->
     <!-- Modal simple con Alpine.js -->
+
+
     <div x-data="{ open: false }" x-init="$wire.on('open-document-reason-modal', () => { open = true });
     $wire.on('close-document-reason-modal', () => { open = false });" x-show="open"
         x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90"
@@ -2348,6 +2881,15 @@
 
         </div>
     </div>
+
+    <!-- Modal Record de Manejo -->
+    @include('livewire.admin.driver.recruitment.modal.driver-driving-record-modal')
+
+    <!-- Modal Record Criminal -->
+    @include('livewire.admin.driver.recruitment.modal.driver-criminal-record-modal')
+
+    <!-- Modal Record Médico -->
+    @include('livewire.admin.driver.recruitment.modal.driver-medical-record-modal')
 </div>
 
 
@@ -2380,18 +2922,19 @@
                 const file = e.target.files[0];
                 const formData = new FormData();
                 formData.append('file', file);
-                
+
                 // AJAX Upload with progress tracking
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', '/admin/upload-temp', true);
-                xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-                
+                xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').getAttribute(
+                    'content'));
+
                 xhr.upload.addEventListener('progress', (e) => {
                     if (e.lengthComputable) {
                         self.progress = Math.round((e.loaded * 100) / e.total);
                     }
                 });
-                
+
                 xhr.onload = () => {
                     if (xhr.status === 200) {
                         const response = JSON.parse(xhr.responseText);
@@ -2419,11 +2962,11 @@
                     self.isUploading = false;
                     self.progress = 0;
                 };
-                
+
                 xhr.send(formData);
             }
         };
     }
-    
+
     // Solo se usa licenseUploader() para todo tipo de imágenes (licencia y médica)
 </script>
