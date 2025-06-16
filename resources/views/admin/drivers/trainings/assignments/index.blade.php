@@ -25,6 +25,18 @@
             </div>
         </div>
 
+        @if(session('success'))
+            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+                <p>{{ session('success') }}</p>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+                <p>{{ session('error') }}</p>
+            </div>
+        @endif
+
         <!-- Filtros -->
         <div class="box box--stacked mt-5 p-3">
             <h3 class="box-title">Filter Assignments</h3>
@@ -155,9 +167,17 @@
                                                     <button type="button" onclick="markComplete('{{ $assignment->id }}')" class="text-green-600 hover:text-green-900" title="Marcar como completado">
                                                         <x-base.lucide class="w-5 h-5" icon="check" />
                                                     </button>
+                                                @else
+                                                    <form action="{{ url('admin/training-assignments/' . $assignment->id . '/mark-complete') }}" method="POST" class="inline-block">
+                                                        @csrf
+                                                        <input type="hidden" name="revert" value="1">
+                                                        <button type="submit" class="text-orange-600 hover:text-orange-900" title="Revertir estado">
+                                                            <x-base.lucide class="w-5 h-5" icon="rotate-ccw" />
+                                                        </button>
+                                                    </form>
                                                 @endif
                                                 
-                                                <form action="{{ route('admin.training-assignments.destroy', $assignment->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta asignación?')" class="inline-block">
+                                                <form action="{{ url('admin/training-assignments/' . $assignment->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta asignación?')" class="inline-block">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="text-red-600 hover:text-red-900" title="Eliminar asignación">
@@ -193,107 +213,112 @@
     </div>
     
     <!-- Modal de detalles -->
-    <div id="detailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full" x-data="{ open: false, assignment: null }">
-        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center pb-3">
-                <h3 class="text-xl font-semibold text-gray-900">Assignment Details</h3>
-                <button onclick="closeDetailsModal()" class="text-gray-400 hover:text-gray-500">
-                    <x-base.lucide class="w-6 h-6" icon="x" />
-                </button>
-            </div>
-            
+    <x-base.dialog id="detailsModal">
+        <x-base.dialog.panel>
+            <x-base.dialog.title>
+                <h2 class="mr-auto text-base font-medium">Assignment Details</h2>
+            </x-base.dialog.title>
             <div id="assignmentDetails" class="mt-4">
                 <!-- Aquí se cargarán los detalles mediante AJAX -->
             </div>
-            
-            <div class="mt-6 flex justify-end">
-                <x-base.button type="button" variant="outline" onclick="closeDetailsModal()">
+            <x-base.dialog.footer>
+                <x-base.button type="button" variant="outline" data-tw-dismiss="modal" onclick="closeDetailsModal()">
                     Close
                 </x-base.button>
-            </div>
-        </div>
-    </div>
+            </x-base.dialog.footer>
+        </x-base.dialog.panel>
+    </x-base.dialog>
     
     <!-- Modal de completar -->
-    <div id="completeModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
-        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/3 shadow-lg rounded-md bg-white">
-            <div class="flex justify-between items-center pb-3">
-                <h3 class="text-xl font-semibold text-gray-900">Mark as Completed</h3>
-                <button onclick="closeCompleteModal()" class="text-gray-400 hover:text-gray-500">
-                    <x-base.lucide class="w-6 h-6" icon="x" />
-                </button>
-            </div>
-            
+    <x-base.dialog id="completeModal">
+        <x-base.dialog.panel>
+            <x-base.dialog.title>
+                <h2 class="mr-auto text-base font-medium">Mark as Completed</h2>
+            </x-base.dialog.title>
             <form id="completeForm" action="" method="POST">
                 @csrf
-                @method('POST')
                 
-                <div class="mt-4">
-                    <x-base.form-label for="completion_notes">Completion Notes</x-base.form-label>
-                    <x-base.form-textarea name="completion_notes" id="completion_notes" rows="4" placeholder="Optional notes about the completion of the training"></x-base.form-textarea>
-                </div>
+                <x-base.dialog.description>
+                    <div class="mt-4">
+                        <x-base.form-label for="completion_notes">Completion Notes</x-base.form-label>
+                        <x-base.form-textarea name="completion_notes" id="completion_notes" rows="4" placeholder="Optional notes about the completion of the training"></x-base.form-textarea>
+                    </div>
+                </x-base.dialog.description>
                 
-                <div class="mt-6 flex justify-end space-x-3">
-                    <x-base.button type="button" variant="outline" onclick="closeCompleteModal()">
+                <x-base.dialog.footer>
+                    <x-base.button type="button" variant="outline" data-tw-dismiss="modal" onclick="closeCompleteModal()">
                         Cancel
                     </x-base.button>
-                    <x-base.button type="submit">
+                    <x-base.button type="submit" variant="primary">
                         <x-base.lucide class="w-5 h-5 mr-2" icon="check" />
                         Mark as Completed
                     </x-base.button>
-                </div>
+                </x-base.dialog.footer>
             </form>
-        </div>
-    </div>
+        </x-base.dialog.panel>
+    </x-base.dialog>
 @endsection
 
 @push('scripts')
 <script>
     function showDetails(id) {
-        const modal = document.getElementById('detailsModal');
         const detailsContainer = document.getElementById('assignmentDetails');
         
         // Mostrar modal y spinner de carga
-        modal.classList.remove('hidden');
+        const modal = tailwind.Modal.getOrCreateInstance(document.querySelector('#detailsModal'));
+        modal.show();
+        
         detailsContainer.innerHTML = '<div class="flex justify-center"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div></div>';
         
         // Cargar detalles mediante AJAX
-        fetch(`{{ route('admin.training-assignments.show', '') }}/${id}`)
-            .then(response => response.json())
+        fetch(`{{ url('admin/training-assignments') }}/${id}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('Datos recibidos:', data);
+                
+                if (!data || typeof data !== 'object') {
+                    throw new Error('Datos inválidos recibidos del servidor');
+                }
+                
+                // Mostrar datos estructurados
                 let html = `
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-3">
                         <div>
-                            <h4 class="font-semibold">Conductor:</h4>
-                            <p>${data.driver ? data.driver.user.name : 'N/A'}</p>
+                            <h4 class="font-semibold">Driver:</h4>
+                            <p>${data.driver && data.driver.user ? data.driver.user.name : 'N/A'}</p>
                         </div>
                         <div>
-                            <h4 class="font-semibold">Transportista:</h4>
+                            <h4 class="font-semibold">Carrier:</h4>
                             <p>${data.driver && data.driver.carrier ? data.driver.carrier.name : 'N/A'}</p>
                         </div>
                         <div>
-                            <h4 class="font-semibold">Entrenamiento:</h4>
+                            <h4 class="font-semibold">Training:</h4>
                             <p>${data.training ? data.training.title : 'N/A'}</p>
                         </div>
                         <div>
-                            <h4 class="font-semibold">Estado:</h4>
-                            <p>${data.status_label}</p>
+                            <h4 class="font-semibold">Status:</h4>
+                            <p>${data.status_label || data.status || 'Desconocido'}</p>
                         </div>
                         <div>
-                            <h4 class="font-semibold">Fecha de Asignación:</h4>
-                            <p>${data.created_at_formatted}</p>
+                            <h4 class="font-semibold">Assigned Date:</h4>
+                            <p>${data.created_at_formatted || 'No disponible'}</p>
                         </div>
                         <div>
-                            <h4 class="font-semibold">Fecha Límite:</h4>
+                            <h4 class="font-semibold">Due Date:</h4>
                             <p>${data.due_date_formatted || 'No establecida'}</p>
                         </div>
                         <div>
-                            <h4 class="font-semibold">Fecha de Finalización:</h4>
+                            <h4 class="font-semibold">Completed Date:</h4>
                             <p>${data.completed_at_formatted || 'No completado'}</p>
                         </div>
                         <div>
-                            <h4 class="font-semibold">Notas:</h4>
-                            <p>${data.notes || 'Sin notas'}</p>
+                            <h4 class="font-semibold">Notes:</h4>
+                            <p>${data.notes || 'No notes'}</p>
                         </div>
                     </div>
                 `;
@@ -305,38 +330,26 @@
     }
     
     function closeDetailsModal() {
-        const modal = document.getElementById('detailsModal');
-        modal.classList.add('hidden');
+        const modal = tailwind.Modal.getOrCreateInstance(document.querySelector('#detailsModal'));
+        modal.hide();
     }
     
     function markComplete(id) {
-        const modal = document.getElementById('completeModal');
         const form = document.getElementById('completeForm');
         
         // Configurar el formulario con la URL correcta
-        form.action = `{{ route('admin.training-assignments.mark-complete', '') }}/${id}`;
+        form.action = `{{ url('admin/training-assignments') }}/${id}/mark-complete`;
         
         // Mostrar modal
-        modal.classList.remove('hidden');
+        const modal = tailwind.Modal.getOrCreateInstance(document.querySelector('#completeModal'));
+        modal.show();
     }
     
     function closeCompleteModal() {
-        const modal = document.getElementById('completeModal');
-        modal.classList.add('hidden');
+        const modal = tailwind.Modal.getOrCreateInstance(document.querySelector('#completeModal'));
+        modal.hide();
     }
     
-    // Cerrar modales al hacer clic fuera de ellos
-    window.onclick = function(event) {
-        const detailsModal = document.getElementById('detailsModal');
-        const completeModal = document.getElementById('completeModal');
-        
-        if (event.target === detailsModal) {
-            closeDetailsModal();
-        }
-        
-        if (event.target === completeModal) {
-            closeCompleteModal();
-        }
-    }
+    // Los modales de x-base.dialog ya manejan el cierre al hacer clic fuera de ellos
 </script>
 @endpush

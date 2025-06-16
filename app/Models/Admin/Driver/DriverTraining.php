@@ -20,6 +20,7 @@ class DriverTraining extends Model
         'completed_date',
         'status', // 'assigned', 'in_progress', 'completed', 'overdue'
         'assigned_by',
+        // 'completed_by', // Este campo no existe en la tabla
         'completion_notes',
     ];
 
@@ -54,6 +55,17 @@ class DriverTraining extends Model
     {
         return $this->belongsTo(User::class, 'assigned_by');
     }
+    
+    /**
+     * Obtener el usuario que completó el entrenamiento
+     * NOTA: Esta relación está comentada porque el campo 'completed_by' no existe en la tabla
+     */
+    /*
+    public function completedBy()
+    {
+        return $this->belongsTo(User::class, 'completed_by');
+    }
+    */
 
     /**
      * Verificar si el entrenamiento está vencido
@@ -74,7 +86,7 @@ class DriverTraining extends Model
     /**
      * Marcar el entrenamiento como completado
      */
-    public function markAsCompleted($notes = null)
+    public function markAsCompleted($notes = null, $userId = null)
     {
         $this->status = 'completed';
         $this->completed_date = now();
@@ -82,6 +94,11 @@ class DriverTraining extends Model
         if ($notes) {
             $this->completion_notes = $notes;
         }
+        
+        // No usamos completed_by porque no existe en la tabla
+        // if ($userId) {
+        //     $this->completed_by = $userId;
+        // }
         
         return $this->save();
     }

@@ -514,7 +514,7 @@
                         <div class="bg-slate-50 p-4 rounded-lg mb-4">
                             <div class="flex justify-between items-center mb-3">
                                 <div class="text-sm font-medium">Driving Record Files (English)</div>
-                                <button type="button" wire:click="editDrivingRecord" class="btn btn-sm btn-primary">
+                                <button type="button" wire:click="editDrivingRecord" class="bg-primary hover:bg-primary-dark text-white py-1 px-3 rounded text-sm flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                         stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -522,15 +522,12 @@
                                     </svg>
                                     Upload Driving Record
                                 </button>
-                            </div>
-
-                            
-
+                            </div>                            
                             <!-- Lista de archivos subidos -->
                             @if ($driver->getMedia('driving_records')->isNotEmpty())
                                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
                                     @foreach ($driver->getMedia('driving_records') as $media)
-                                        <div class="relative group border rounded p-2 bg-white">
+                                        <div class="flex justify-between group border rounded p-2 bg-white">
                                             <div class="flex items-center">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                     viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
@@ -543,8 +540,7 @@
                                                     {{ $media->file_name }}
                                                 </a>
                                             </div>
-                                            <div
-                                                class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div class=" opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button type="button"
                                                     wire:click="deleteDrivingRecord({{ $media->id }})"
                                                     wire:confirm="Are you sure you want to delete this document?"
@@ -608,7 +604,7 @@
                             <div class="flex justify-between items-center mb-3">
                                 <div class="text-sm font-medium">Criminal Record Files</div>
                                 <button type="button" wire:click="editCriminalRecord"
-                                    class="btn btn-sm btn-primary">
+                                    class="bg-primary hover:bg-primary-dark text-white py-1 px-3 rounded text-sm flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                         stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -622,7 +618,7 @@
                             @if ($driver->getMedia('criminal_records')->isNotEmpty())
                                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
                                     @foreach ($driver->getMedia('criminal_records') as $media)
-                                        <div class="relative group border rounded p-2 bg-white">
+                                        <div class="flex justify-between group border rounded p-2 bg-white">
                                             <div class="flex items-center">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                     viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
@@ -636,7 +632,7 @@
                                                 </a>
                                             </div>
                                             <div
-                                                class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                class="opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button type="button"
                                                     wire:click="deleteCriminalRecord({{ $media->id }})"
                                                     wire:confirm="Are you sure you want to delete this document?"
@@ -802,7 +798,7 @@
                             <div class="flex justify-between items-center mb-3">
                                 <div class="text-sm font-medium">Medical Record Files</div>
                                 <button type="button" wire:click="openMedicalRecordModal"
-                                    class="btn btn-sm btn-primary">
+                                    class="bg-primary hover:bg-primary-dark text-white py-1 px-3 rounded text-sm flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                         stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -816,7 +812,7 @@
                             @if ($driver->getMedia('medical_records')->isNotEmpty())
                                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
                                     @foreach ($driver->getMedia('medical_records') as $media)
-                                        <div class="relative group border rounded p-2 bg-white">
+                                        <div class="flex justify-between group border rounded p-2 bg-white">
                                             <div class="flex items-center">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                     viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
@@ -829,8 +825,7 @@
                                                     {{ $media->file_name }}
                                                 </a>
                                             </div>
-                                            <div
-                                                class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div class="opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button type="button"
                                                     wire:click="deleteMedicalRecord({{ $media->id }})"
                                                     wire:confirm="Are you sure you want to delete this document?"
@@ -1086,7 +1081,15 @@
                         @if (isset($driver->testings) && $driver->testings->isNotEmpty())
                             <div class="space-y-4">
                                 @foreach ($driver->testings as $test)
-                                    <div class="bg-slate-50 p-4 rounded-lg">
+                                    <div class="bg-slate-50 p-4 rounded-lg relative">
+                                        <!-- Botón de Edición -->
+                                        <a href="{{ url('admin/driver-testings/' . $test->id . '/edit/') }}" 
+                                           class="absolute top-4 right-4 bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded-md text-sm flex items-center">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                            Edit
+                                        </a>
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
                                                 <div class="text-sm text-slate-500">Test Type</div>
@@ -1265,8 +1268,16 @@
 
                         @if (isset($driver->inspections) && $driver->inspections->isNotEmpty())
                             <div class="space-y-4">
-                                @foreach ($driver->inspections as $inspection)
-                                    <div class="bg-slate-50 p-4 rounded-lg">
+                                @foreach ($driver->inspections as $inspection)                                    
+                                    <div class="bg-slate-50 p-4 rounded-lg relative">
+                                        <!-- Botón de Edición -->
+                                        <a href="{{ url('admin/inspections/' . $inspection->id . '/edit/') }}" 
+                                            class="absolute top-4 right-4 bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded-md text-sm flex items-center">
+                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                             </svg>
+                                             Edit
+                                         </a>
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
                                                 <div class="text-sm text-slate-500">Inspection Date</div>

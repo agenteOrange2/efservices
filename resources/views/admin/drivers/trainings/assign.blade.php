@@ -25,6 +25,7 @@
             </div>
         </div>
 
+        @if(!isset($selectedTraining))
         <div class="box box--stacked mt-5 p-3">
             <div class="box-header">
                 <h3 class="box-title">Select Training</h3>
@@ -54,6 +55,7 @@
                 </form>
             </div>
         </div>
+        @endif
 
         @if (isset($selectedTraining))
             <div class="box box--stacked mt-5 p-3">
