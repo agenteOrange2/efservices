@@ -257,6 +257,20 @@ class DriverStepService
      */
     private function checkTrainingStep(UserDriverDetail $userDriverDetail): string
     {
+        // Verificar si el paso ha sido verificado manualmente en el checklist
+        if ($userDriverDetail->application) {
+            $verification = DriverRecruitmentVerification::where('driver_application_id', $userDriverDetail->application->id)
+                ->latest('verified_at')
+                ->first();
+                
+            $checklistItems = $verification ? $verification->verification_items : [];
+            
+            // Si ha sido verificado manualmente en el checklist, retornar completado
+            if ($this->isStepVerifiedInChecklist(self::STEP_TRAINING, $checklistItems)) {
+                return self::STATUS_COMPLETED;
+            }
+        }
+        
         // Primero verificar si hay datos directamente
         if ($userDriverDetail->trainingSchools()->exists()) {
             return self::STATUS_COMPLETED;
@@ -286,6 +300,20 @@ class DriverStepService
      */
     private function checkTrafficStep(UserDriverDetail $userDriverDetail): string
     {
+        // Verificar si el paso ha sido verificado manualmente en el checklist
+        if ($userDriverDetail->application) {
+            $verification = DriverRecruitmentVerification::where('driver_application_id', $userDriverDetail->application->id)
+                ->latest('verified_at')
+                ->first();
+                
+            $checklistItems = $verification ? $verification->verification_items : [];
+            
+            // Si ha sido verificado manualmente en el checklist, retornar completado
+            if ($this->isStepVerifiedInChecklist(self::STEP_TRAFFIC, $checklistItems)) {
+                return self::STATUS_COMPLETED;
+            }
+        }
+        
         // Primero verificar si hay datos directamente
         if ($userDriverDetail->trafficConvictions()->exists()) {
             return self::STATUS_COMPLETED;
@@ -315,6 +343,20 @@ class DriverStepService
      */
     private function checkAccidentStep(UserDriverDetail $userDriverDetail): string
     {
+        // Verificar si el paso ha sido verificado manualmente en el checklist
+        if ($userDriverDetail->application) {
+            $verification = DriverRecruitmentVerification::where('driver_application_id', $userDriverDetail->application->id)
+                ->latest('verified_at')
+                ->first();
+                
+            $checklistItems = $verification ? $verification->verification_items : [];
+            
+            // Si ha sido verificado manualmente en el checklist, retornar completado
+            if ($this->isStepVerifiedInChecklist(self::STEP_ACCIDENT, $checklistItems)) {
+                return self::STATUS_COMPLETED;
+            }
+        }
+        
         // Primero verificar si hay datos directamente
         if ($userDriverDetail->accidents()->exists()) {
             return self::STATUS_COMPLETED;

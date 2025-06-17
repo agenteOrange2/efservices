@@ -33,9 +33,9 @@
 
         <!-- Instrucciones de asignación -->
         <div class="box box--stacked mt-5 p-3 bg-blue-50">
-            <h3 class="box-title text-blue-700">Instrucciones para asignar entrenamientos</h3>
+            <h3 class="box-title text-primary">Instructions for assigning trainings</h3>
             <div class="p-3">
-                <p class="text-blue-600"><strong>Para asignar un entrenamiento:</strong> Haz clic en el botón "Ver detalles" de cualquier entrenamiento activo y luego usa el botón "Asignar a conductores" en la página de detalles.</p>
+                <p class="text-primary"><strong>To assign a training:</strong> Click on the "View details" button of any active training and then use the "Assign to drivers" button on the details page.</p>
             </div>
         </div>
         
@@ -93,19 +93,8 @@
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead>
-                                <tr>
-                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        <a href="{{ route('admin.trainings.index', array_merge(request()->except(['sort', 'direction']), ['sort' => 'id', 'direction' => request('sort') == 'id' && request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center">
-                                            ID
-                                            @if(request('sort') == 'id')
-                                                @if(request('direction') == 'asc')
-                                                    <x-base.lucide class="w-4 h-4 ml-1" icon="arrow-up" />
-                                                @else
-                                                    <x-base.lucide class="w-4 h-4 ml-1" icon="arrow-down" />
-                                                @endif
-                                            @endif
-                                        </a>
-                                    </th>
+                                <tr>                                    
+                                    <th>Date</th>
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         <a href="{{ route('admin.trainings.index', array_merge(request()->except(['sort', 'direction']), ['sort' => 'title', 'direction' => request('sort') == 'title' && request('direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center">
                                             Title
@@ -153,8 +142,8 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @foreach($trainings as $training)
                                     <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $training->id }}
+                                        <td>
+                                            {{ $training->created_at->format('m/d/Y') }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                             {{ $training->title }}
@@ -194,7 +183,7 @@
                                             @endphp
                                             
                                             <span class="text-blue-600">
-                                                {{ $filesCount }} {{ $filesCount === 1 ? 'archivo' : 'archivos' }}
+                                                {{ $filesCount }} {{ $filesCount === 1 ? 'File' : 'Files' }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">

@@ -3,6 +3,7 @@
 namespace App\Models\Admin\Driver;
 
 use App\Models\UserDriverDetail;
+use App\Traits\HasDocuments;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,7 @@ use Spatie\MediaLibrary\MediaCollections\File;
 
 class DriverTrainingSchool extends Model implements HasMedia
 {
-    use HasFactory, InteractsWithMedia;
+    use HasFactory, InteractsWithMedia, HasDocuments;
 
     protected $fillable = [
         'user_driver_detail_id',

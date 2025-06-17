@@ -4,10 +4,8 @@ namespace App\Livewire\Admin\Driver\Recruitment;
 
 use ZipArchive;
 use Carbon\Carbon;
-use App\Models\User;
 use Livewire\Component;
 use Illuminate\Support\Str;
-use App\Models\Admin\Vehicle\Vehicle;
 use App\Models\UserDriverDetail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -210,6 +208,43 @@ class DriverRecruitmentReview extends Component
             }
         }
         return true;
+    }
+    
+    /**
+     * Actualiza el estado de la aplicación basado en el checklist
+     */
+    public function updateApplicationStatus()
+    {
+        if (!$this->application) {
+            session()->flash('error', 'No application found for this driver');
+            return;
+        }
+        
+        // Si todos los elementos del checklist están completos, mostrar botón de aprobación
+        if ($this->isChecklistComplete() && ($this->application->status === 'pending' || $this->application->status === 'draft')) {
+            // Actualizar el estado de la aplicación a 'approved'
+            $this->application->status = 'approved';
+            $this->application->save();
+            
+            // Registrar la verificación
+            DriverRecruitmentVerification::updateOrCreate(
+                ['driver_application_id' => $this->application->id],
+                [
+                    'verified_by_user_id' => auth()->id(),
+                    'verification_items' => $this->checklistItems,
+                    'notes' => $this->verificationNotes
+                ]
+            );
+            
+        
+            // Mostrar mensaje de éxito
+            session()->flash('message', 'La solicitud ha sido aprobada exitosamente.');
+            
+            // Redireccionar a la lista de conductores
+            return redirect()->route('admin.driver-recruitment.index');
+        } else {
+            session()->flash('error', 'Please complete all checklist items before approving');
+        }
     }
 
     public function loadDriverData()
