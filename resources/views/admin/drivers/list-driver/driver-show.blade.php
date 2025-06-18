@@ -164,7 +164,7 @@
 @endphp
 
 @section('subcontent')
-    <div class="container mx-auto grid">
+    <div class="container">
         <!-- Page Header -->
         <div class="flex justify-between items-center py-4 mb-4 border-b">
             <div class="flex items-center">
@@ -756,21 +756,64 @@
                                                     <h5 class="font-medium text-base">{{ $school->school_name }}</h5>
                                                     <p class="text-slate-500">
                                                         {{ $school->city }}, {{ $school->state }}
-                                                        @if ($school->start_date && $school->end_date)
+                                                        @if ($school->date_start && $school->date_end)
                                                             <span class="mx-1">|</span>
-                                                            {{ $school->start_date->format('M d, Y') }} -
-                                                            {{ $school->end_date->format('M d, Y') }}
+                                                            {{ $school->date_start->format('M d, Y') }} -
+                                                            {{ $school->date_end->format('M d, Y') }}
                                                         @endif
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    @if ($school->completed)
+                                                    @if (isset($school->completed) && $school->completed)
                                                         <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Completed</span>
                                                     @else
                                                         <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">In Progress</span>
                                                     @endif
                                                 </div>
                                             </div>
+
+                                            <!-- Información de graduación y regulaciones de seguridad -->
+                                            <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <h6 class="text-xs font-medium text-gray-500 uppercase">Graduation Status</h6>
+                                                    <p class="text-sm mt-1">
+                                                        <span class="font-medium">Did you graduate from this program?</span>
+                                                        <span class="ml-2 {{ $school->graduated ? 'text-green-600' : 'text-red-600' }}">
+                                                            {{ $school->graduated ? 'Yes' : 'No' }}
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                                
+                                                <div>
+                                                    <h6 class="text-xs font-medium text-gray-500 uppercase">Safety Regulations</h6>
+                                                    <p class="text-sm mt-1">
+                                                        <span class="font-medium">Subject to FMCSR?</span>
+                                                        <span class="ml-2 {{ $school->subject_to_safety_regulations ? 'text-green-600' : 'text-red-600' }}">
+                                                            {{ $school->subject_to_safety_regulations ? 'Yes' : 'No' }}
+                                                        </span>
+                                                    </p>
+                                                    <p class="text-sm mt-1">
+                                                        <span class="font-medium">Performed safety-sensitive functions?</span>
+                                                        <span class="ml-2 {{ $school->performed_safety_functions ? 'text-green-600' : 'text-red-600' }}">
+                                                            {{ $school->performed_safety_functions ? 'Yes' : 'No' }}
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <!-- Habilidades entrenadas -->
+                                            @if (isset($school->training_skills) && is_array($school->training_skills) && count($school->training_skills) > 0)
+                                                <div class="mt-3">
+                                                    <h6 class="text-xs font-medium text-gray-500 uppercase">Skills Trained</h6>
+                                                    <div class="flex flex-wrap gap-2 mt-2">
+                                                        @foreach ($school->training_skills as $skill)
+                                                            <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">
+                                                                {{ $skill }}
+                                                            </span>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @endif
 
                                             @if ($school->description)
                                                 <div class="mt-3">
@@ -814,21 +857,42 @@
                                         <div class="bg-gray-50 p-4 rounded-lg mb-4">
                                             <div class="flex justify-between items-start mb-2">
                                                 <div>
-                                                    <h5 class="font-medium text-base">{{ $course->course_name }}</h5>
+                                                    <h5 class="font-medium text-base">{{ $course->organization_name }}</h5>
                                                     <p class="text-slate-500">
-                                                        {{ $course->provider ?? 'No provider specified' }}
-                                                        @if ($course->start_date && $course->end_date)
-                                                            <span class="mx-1">|</span>
-                                                            {{ $course->start_date->format('M d, Y') }} -
-                                                            {{ $course->end_date->format('M d, Y') }}
-                                                        @endif
+                                                        {{ $course->city }}, {{ $course->state }}
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    @if ($course->completed)
+                                                    @if (isset($course->completed) && $course->completed)
                                                         <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Completed</span>
                                                     @else
                                                         <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">In Progress</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            <!-- Información detallada del curso -->
+                                            <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <h6 class="text-xs font-medium text-gray-500 uppercase">Certification Details</h6>
+                                                    @if ($course->certification_date)
+                                                        <p class="text-sm mt-1">
+                                                            <span class="font-medium">Certification Date:</span>
+                                                            <span class="ml-2">{{ $course->certification_date->format('M d, Y') }}</span>
+                                                        </p>
+                                                    @endif
+                                                    @if ($course->expiration_date)
+                                                        <p class="text-sm mt-1">
+                                                            <span class="font-medium">Expiration Date:</span>
+                                                            <span class="ml-2">{{ $course->expiration_date->format('M d, Y') }}</span>
+                                                        </p>
+                                                    @endif
+                                                </div>
+                                                
+                                                <div>
+                                                    @if (isset($course->experience))
+                                                        <h6 class="text-xs font-medium text-gray-500 uppercase">Experience</h6>
+                                                        <p class="text-sm mt-1">{{ $course->experience }}</p>
                                                     @endif
                                                 </div>
                                             </div>
@@ -896,7 +960,7 @@
 
                         @if ($driver->testings && $driver->testings->count() > 0)
                             <div class="overflow-x-auto">
-                                <table class="table table-striped">
+                                <table class="w-full text-sm text-left">
                                     <thead>
                                         <tr>
                                             <th class="whitespace-nowrap">Date</th>
