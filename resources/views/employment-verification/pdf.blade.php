@@ -83,7 +83,7 @@
         </div>
         <div class="info-group">
             <span class="info-label">SSN:</span>
-            {{ $driver->ssn }}
+            {{ $ssn ?? 'Not available' }}
         </div>
     </div>
 
@@ -161,7 +161,7 @@
     <div class="signature-container">
         <div class="info-group">
             <span class="info-label">Verified By:</span>
-            {{ $verification->company_name }}
+            {{ $verification_by ?? $verification->verification_by ?? 'Not specified' }}
         </div>
         <div class="info-group">
             <span class="info-label">Signature:</span><br>

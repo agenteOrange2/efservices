@@ -24,7 +24,7 @@
         
         <div class="p-6">
             <div class="mb-8">
-                <h2 class="text-xl font-semibold mb-4">Dear {{ $verification->company_name }},</h2>
+                <h2 class="text-xl font-semibold mb-4">Dear {{ $masterCompany ? $masterCompany->company_name : $employmentCompany->company_name ?? $verification->company_name }},</h2>
                 
                 <p class="mb-4">
                     {{ $driver->user->name }} {{ $driver->last_name }} has listed your company as a previous employer in their employment history.
@@ -41,7 +41,7 @@
                             <p><span class="font-medium">Applicant Name:</span><br>{{ $driver->user->name }} {{ $driver->last_name }}</p>
                         </div>
                         <div>
-                            <p><span class="font-medium">SSN:</span><br>{{ $driver->ssn }}</p>
+                            <p><span class="font-medium">SSN:</span><br>{{ $ssn ?? 'Not available' }}</p>
                         </div>
                     </div>
                     
@@ -255,6 +255,12 @@
                         <label for="verification_notes" class="block font-medium">Comments:</label>
                         <textarea name="verification_notes" id="verification_notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
                     </div>
+                    
+                    <!-- Verificado por -->
+                    <div class="space-y-2">
+                        <label for="verification_by" class="block font-medium">Verified By (Full Name):</label>
+                        <input type="text" name="verification_by" id="verification_by" class="w-full px-3 py-2 border border-gray-300 rounded-md" required placeholder="Enter your full name">
+                    </div>
                 </div>
                 
                 <div class="space-y-2">
@@ -290,146 +296,158 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Verificar que la biblioteca SignaturePad esté cargada
-        if (typeof SignaturePad === 'undefined') {
-            console.error('SignaturePad library not loaded');
-            return;
+document.addEventListener('DOMContentLoaded', function() {
+    // Función de ayuda para verificar si un elemento existe
+    function elementExists(id) {
+        const element = document.getElementById(id);
+        if (!element) {
+            console.warn(`Elemento con ID '${id}' no encontrado en el DOM`);
+            return false;
         }
+        return element;
+    }
+    
+    // Verificar que la biblioteca SignaturePad esté cargada
+    if (typeof SignaturePad === 'undefined') {
+        console.error('SignaturePad library not loaded');
+        return;
+    }
         
-        // Inicializar SignaturePad
-        const canvas = document.getElementById('signature-pad');
-        let signaturePad = null;
-        
-        if (canvas) {
-            try {
-                signaturePad = new SignaturePad(canvas, {
-                    backgroundColor: 'rgb(255, 255, 255)',
-                    penColor: 'rgb(0, 0, 0)'
-                });
-                console.log('SignaturePad initialized successfully');
-            } catch (error) {
-                console.error('Error initializing SignaturePad:', error);
-            }
-        } else {
-            console.error('Canvas element not found');
+    // Inicializar SignaturePad
+    let signaturePad = null;
+    const canvas = elementExists('signature-pad');
+    
+    if (canvas) {
+        try {
+            signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgb(255, 255, 255)',
+                penColor: 'rgb(0, 0, 0)'
+            });
+            console.log('SignaturePad initialized successfully');
+        } catch (error) {
+            console.error('Error initializing SignaturePad:', error);
         }
-        
-        const loadingOverlay = document.getElementById('loading-overlay');
-        
-        // Función para redimensionar el canvas
-        function resizeCanvas() {
-            try {
-                if (canvas && signaturePad) {
-                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                    const oldData = signaturePad.isEmpty() ? null : signaturePad.toDataURL();
-                    
-                    // Redimensionar el canvas
-                    canvas.width = canvas.offsetWidth * ratio;
-                    canvas.height = canvas.offsetHeight * ratio;
-                    const ctx = canvas.getContext('2d');
-                    ctx.scale(ratio, ratio);
-                    
-                    // Si había una firma, restaurarla
-                    if (oldData) {
-                        const img = new Image();
-                        img.onload = function() {
-                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        };
-                        img.src = oldData;
-                    }
-                    
-                    console.log('Canvas redimensionado correctamente');
+    } else {
+        console.error('Canvas element not found');
+    }
+    
+    const loadingOverlay = elementExists('loading-overlay');
+    
+    // Función para redimensionar el canvas
+    function resizeCanvas() {
+        try {
+            if (canvas && signaturePad) {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                const rect = canvas.getBoundingClientRect();
+                const oldData = signaturePad.isEmpty() ? null : signaturePad.toDataURL();
+                
+                // Redimensionar el canvas
+                canvas.width = rect.width * ratio;
+                canvas.height = rect.height * ratio;
+                canvas.style.width = rect.width + 'px';
+                canvas.style.height = rect.height + 'px';
+                
+                const ctx = canvas.getContext('2d');
+                ctx.scale(ratio, ratio);
+                
+                // Limpiar el signaturePad y configurar de nuevo
+                signaturePad.clear();
+                
+                // Si había una firma, restaurarla
+                if (oldData) {
+                    signaturePad.fromDataURL(oldData);
                 }
-            } catch (error) {
-                console.error('Error al redimensionar el canvas:', error);
+                
+                console.log('Canvas redimensionado correctamente');
             }
+        } catch (error) {
+            console.error('Error al redimensionar el canvas:', error);
         }
+    }
+    
+    // Redimensionar el canvas al cargar
+    if (canvas && signaturePad) {
+        resizeCanvas();
         
-        // Redimensionar el canvas al cargar
-        if (canvas && signaturePad) {
-            resizeCanvas();
-            
-            // Verificar que window exista antes de agregar el event listener
-            if (typeof window !== 'undefined') {
-                window.addEventListener('resize', resizeCanvas);
-                console.log('Event listener de resize agregado correctamente');
-            }
+        // Verificar que window exista antes de agregar el event listener
+        if (typeof window !== 'undefined') {
+            window.addEventListener('resize', resizeCanvas);
+            console.log('Event listener de resize agregado correctamente');
         }
-        
-        // Botón para limpiar firma
-        const clearButton = document.getElementById('clear-signature');
-        if (clearButton) {
-            try {
-                clearButton.addEventListener('click', function() {
-                    if (signaturePad) {
-                        signaturePad.clear();
-                        console.log('Firma limpiada correctamente');
-                    }
-                });
-            } catch (error) {
-                console.error('Error al agregar evento al botón de limpiar firma:', error);
-            }
-        }
-        
-        // Manejar campos condicionales - verificar si los elementos existen antes de agregar event listeners
-        const datesConfirmedNo = document.getElementById('dates_confirmed_no');
-        const datesConfirmedYes = document.getElementById('dates_confirmed_yes');
-        const reasonConfirmedNo = document.getElementById('reason_confirmed_no');
-        const reasonConfirmedYes = document.getElementById('reason_confirmed_yes');
-        const correctDatesContainer = document.getElementById('correct_dates_container');
-        const differentReasonContainer = document.getElementById('different_reason_container');
-        
-        // Inicializar los contenedores como ocultos
-        if (correctDatesContainer) correctDatesContainer.style.display = 'none';
-        if (differentReasonContainer) differentReasonContainer.style.display = 'none';
-        
-        // Agregar event listeners solo si los elementos existen
-        if (datesConfirmedNo && correctDatesContainer) {
-            datesConfirmedNo.addEventListener('change', function() {
-                correctDatesContainer.style.display = this.checked ? 'block' : 'none';
+    }
+    
+    // Botón para limpiar firma
+    const clearButton = elementExists('clear-signature');
+    if (clearButton) {
+        try {
+            clearButton.addEventListener('click', function() {
+                if (signaturePad) {
+                    signaturePad.clear();
+                    console.log('Firma limpiada correctamente');
+                }
             });
+        } catch (error) {
+            console.error('Error al agregar evento al botón de limpiar firma:', error);
         }
-        
-        if (datesConfirmedYes && correctDatesContainer) {
-            datesConfirmedYes.addEventListener('change', function() {
+    }
+    
+    // Manejar campos condicionales
+    const datesConfirmedNo = elementExists('dates_confirmed_no');
+    const datesConfirmedYes = elementExists('dates_confirmed_yes');
+    const reasonConfirmedNo = elementExists('reason_confirmed_no');
+    const reasonConfirmedYes = elementExists('reason_confirmed_yes');
+    const correctDatesContainer = elementExists('correct_dates_container');
+    const differentReasonContainer = elementExists('different_reason_container');
+    
+    // Inicializar los contenedores como ocultos
+    if (correctDatesContainer) correctDatesContainer.style.display = 'none';
+    if (differentReasonContainer) differentReasonContainer.style.display = 'none';
+    
+    // Agregar event listeners solo si los elementos existen
+    if (datesConfirmedNo && correctDatesContainer) {
+        datesConfirmedNo.addEventListener('change', function() {
+            correctDatesContainer.style.display = this.checked ? 'block' : 'none';
+        });
+    }
+    
+    if (datesConfirmedYes && correctDatesContainer) {
+        datesConfirmedYes.addEventListener('change', function() {
+            if (this.checked) {
                 correctDatesContainer.style.display = 'none';
-            });
-        }
-        
-        if (reasonConfirmedNo && differentReasonContainer) {
-            reasonConfirmedNo.addEventListener('change', function() {
-                differentReasonContainer.style.display = this.checked ? 'block' : 'none';
-            });
-        }
-        
-        if (reasonConfirmedYes && differentReasonContainer) {
-            reasonConfirmedYes.addEventListener('change', function() {
+            }
+        });
+    }
+    
+    if (reasonConfirmedNo && differentReasonContainer) {
+        reasonConfirmedNo.addEventListener('change', function() {
+            differentReasonContainer.style.display = this.checked ? 'block' : 'none';
+        });
+    }
+    
+    if (reasonConfirmedYes && differentReasonContainer) {
+        reasonConfirmedYes.addEventListener('change', function() {
+            if (this.checked) {
                 differentReasonContainer.style.display = 'none';
-            });
-        }
-        
-        // Submit form
-        const submitButton = document.getElementById('submit-verification');
-        if (submitButton) {
+            }
+        });
+    }
+    
+    // Submit form
+    const submitButton = elementExists('submit-verification');
+    if (submitButton) {
+        submitButton.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevenir envío múltiple
+            
             try {
-                submitButton.addEventListener('click', function() {
-                    try {
-                        // Validar campos requeridos
-                        const employmentConfirmed = document.getElementById('employment_confirmed');
-                        if (employmentConfirmed && !employmentConfirmed.checked) {
-                            alert('Please confirm employment');
-                            return;
-                        }
-                    } catch (error) {
-                        console.error('Error en la validación de campos:', error);
-                        alert('Error validando el formulario. Por favor, intente nuevamente.');
-                        return;
-                    }
-                    
-                    // Validar radio buttons requeridos
-                    try {
-                        const requiredRadioGroups = [
+                // Validar campos requeridos
+                const employmentConfirmed = elementExists('employment_confirmed');
+                if (employmentConfirmed && !employmentConfirmed.checked) {
+                    alert('Please confirm employment');
+                    return;
+                }
+                
+                // Validar radio buttons requeridos
+                const requiredRadioGroups = [
                     'dates_confirmed',
                     'drove_commercial',
                     'safe_driver',
@@ -440,121 +458,106 @@
                     'refused_test',
                     'completed_rehab',
                     'other_violations'
-                        ];
-                        
-                        let missingFields = [];
-                        
-                        requiredRadioGroups.forEach(function(groupName) {
-                            if (!document.querySelector(`input[name="${groupName}"]:checked`)) {
-                                missingFields.push(groupName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
-                            }
-                        });
-                        
-                        if (missingFields.length > 0) {
-                            alert('Please answer all required questions: ' + missingFields.join(', '));
-                            return;
-                        }
-                    } catch (error) {
-                        console.error('Error validando campos requeridos:', error);
-                        alert('Error validando campos requeridos. Por favor, intente nuevamente.');
-                        return;
+                ];
+                
+                let missingFields = [];
+                
+                requiredRadioGroups.forEach(function(groupName) {
+                    if (!document.querySelector(`input[name="${groupName}"]:checked`)) {
+                        missingFields.push(groupName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
                     }
-            
-                    // Verificar firma
-                    try {
-                        if (signaturePad && signaturePad.isEmpty()) {
-                            alert('Please provide a signature');
-                            return;
-                        }
-                    } catch (error) {
-                        console.error('Error verificando la firma:', error);
-                        alert('Error verificando la firma. Por favor, intente nuevamente.');
-                        return;
-                    }
-                    
-                    try {
-                        // Mostrar overlay de carga
-                        if (loadingOverlay) loadingOverlay.style.display = 'flex';
-                        
-                        // Get signature data as PNG image
-                        let signatureData = '';
-                        try {
-                            signatureData = signaturePad ? signaturePad.toDataURL('image/png') : '';
-                        } catch (signatureError) {
-                            console.error('Error obteniendo datos de firma:', signatureError);
-                            alert('Error obteniendo datos de firma. Por favor, intente nuevamente.');
-                            if (loadingOverlay) loadingOverlay.style.display = 'none';
-                            return;
-                        }
-                        
-                        // Guardar la firma en el campo oculto
-                        const signatureField = document.getElementById('signature-data');
-                        if (signatureField) signatureField.value = signatureData;
-                        
-                        // Crear el objeto FormData con el formulario actual
-                        const form = document.querySelector('form');
-                        if (!form) {
-                            alert('Error: Form not found');
-                            if (loadingOverlay) loadingOverlay.style.display = 'none';
-                            return;
-                        }
-                    
-                        const formData = new FormData(form);
-                        
-                        // Asegurarse de que la firma esté incluida
-                        if (signatureData) formData.set('signature', signatureData);
-
-                        // Submit form via AJAX
-                        const url = form.getAttribute('action');
-                        console.log('Enviando formulario a:', url);
-                        
-                        fetch(url, {
-                            method: 'POST',
-                            body: formData,
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Accept': 'application/json'
-                            }
-                        })
-                        .then(response => {
-                            console.log('Respuesta recibida:', response.status);
-                            if (!response.ok) {
-                                if (response.status === 422) {
-                                    return response.json().then(data => {
-                                        throw new Error(data.message || 'Validation error');
-                                    });
-                                }
-                                throw new Error('Network response was not ok');
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            console.log('Datos recibidos:', data);
-                            if (data.success) {
-                                console.log('Redirigiendo a página de agradecimiento');
-                                window.location.href = '{{ route("employment-verification.thank-you") }}';
-                            } else {
-                                alert(data.message || 'Ha ocurrido un error. Por favor, intente nuevamente.');
-                                if (loadingOverlay) loadingOverlay.style.display = 'none';
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error en la petición:', error);
-                            alert('Ha ocurrido un error al procesar la verificación: ' + error.message);
-                            if (loadingOverlay) loadingOverlay.style.display = 'none';
-                        });
-                    } catch (formError) {
-                        console.error('Error en el envío del formulario:', formError);
-                        alert('Ha ocurrido un error al enviar el formulario: ' + formError.message);
-                        if (loadingOverlay) loadingOverlay.style.display = 'none';
-                    }
-                } catch (error) {
-                    console.error('Error en el proceso de envío:', error);
-                    alert('Ha ocurrido un error al preparar el formulario: ' + error.message);
-                    if (loadingOverlay) loadingOverlay.style.display = 'none';
+                });
+                
+                if (missingFields.length > 0) {
+                    alert('Please answer all required questions: ' + missingFields.join(', '));
+                    return;
                 }
-            });
-        }
-    });
+                
+                // Verificar firma
+                if (signaturePad && signaturePad.isEmpty()) {
+                    alert('Please provide a signature');
+                    return;
+                }
+                
+                // Mostrar overlay de carga
+                if (loadingOverlay) loadingOverlay.style.display = 'flex';
+                
+                // Deshabilitar botón de envío
+                submitButton.disabled = true;
+                
+                // Get signature data as PNG image
+                let signatureData = '';
+                if (signaturePad) {
+                    signatureData = signaturePad.toDataURL('image/png');
+                }
+                
+                // Guardar la firma en el campo oculto
+                const signatureField = elementExists('signature-data');
+                if (signatureField) signatureField.value = signatureData;
+                
+                // Crear el objeto FormData con el formulario actual
+                const form = document.querySelector('form');
+                if (!form) {
+                    throw new Error('Form not found');
+                }
+            
+                const formData = new FormData(form);
+                
+                // Asegurarse de que la firma esté incluida
+                if (signatureData) formData.set('signature', signatureData);
+
+                // Submit form via AJAX
+                const url = form.getAttribute('action');
+                console.log('Enviando formulario a:', url);
+                
+                fetch(url, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    console.log('Respuesta recibida:', response.status);
+                    if (!response.ok) {
+                        if (response.status === 422) {
+                            return response.json().then(data => {
+                                throw new Error(data.message || 'Validation error');
+                            });
+                        }
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Datos recibidos:', data);
+                    if (data.success) {
+                        console.log('Redirigiendo a página de agradecimiento');
+                        // Usar una URL absoluta o relativa válida
+                        window.location.href = data.redirect_url || '/employment-verification/thank-you';
+                    } else {
+                        throw new Error(data.message || 'Unknown error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error en la petición:', error);
+                    alert('Ha ocurrido un error al procesar la verificación: ' + error.message);
+                })
+                .finally(() => {
+                    // Ocultar overlay y rehabilitar botón
+                    if (loadingOverlay) loadingOverlay.style.display = 'none';
+                    submitButton.disabled = false;
+                });
+                
+            } catch (error) {
+                console.error('Error en el proceso de envío:', error);
+                alert('Ha ocurrido un error al preparar el formulario: ' + error.message);
+                if (loadingOverlay) loadingOverlay.style.display = 'none';
+                submitButton.disabled = false;
+            }
+        });
+    }
+});
 </script>
 </x-guest-layout>

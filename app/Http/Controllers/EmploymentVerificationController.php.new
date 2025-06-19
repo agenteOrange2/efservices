@@ -70,6 +70,25 @@ class EmploymentVerificationController extends Controller
     public function processVerification(Request $request, $token)
     {
         try {
+            // Buscar el token de verificación
+            $verification = EmploymentVerificationToken::where('token', $token)->first();
+            
+            if (!$verification) {
+                Log::error('Token de verificación no encontrado', ['token' => $token]);
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['error' => 'Token de verificación no encontrado'], 404);
+                }
+                return redirect()->route('employment-verification.error');
+            }
+            
+            if ($verification->expires_at < now()) {
+                Log::error('El token de verificación ha expirado', ['token' => $token]);
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['error' => 'El token de verificación ha expirado'], 400);
+                }
+                return redirect()->route('employment-verification.expired');
+            }
+            
             // Validar la solicitud
             $validator = validator($request->all(), [
                 'verification_status' => 'required|in:verified,rejected',
@@ -89,54 +108,48 @@ class EmploymentVerificationController extends Controller
                 'refused_test' => 'required',
                 'completed_rehab' => 'required',
                 'other_violations' => 'required',
+                'violation_details' => 'nullable|string',
             ]);
             
             if ($validator->fails()) {
+                Log::error('Validación fallida en verificación de empleo', [
+                    'token' => $token,
+                    'errors' => $validator->errors()->toArray()
+                ]);
+                
                 if ($request->ajax() || $request->wantsJson()) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Validation error',
                         'errors' => $validator->errors()
                     ], 422);
                 }
                 
-                return redirect()->back()
-                    ->withErrors($validator)
-                    ->withInput();
-            }
-
-            // Si el token ya fue verificado, simplemente redirigir a la página de agradecimiento
-            if ($verification->verified_at !== null) {
-                if ($request->ajax() || $request->wantsJson()) {
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Verification already processed',
-                        'redirect' => route('employment-verification.thank-you')
-                    ]);
-                }
-                return redirect()->route('employment-verification.thank-you');
+                return redirect()->back()->withErrors($validator)->withInput();
             }
             
-            try {
-                DB::beginTransaction();
-
-                // Actualizar el token de verificación
-                $verification->update([
-                    'verified_at' => now(),
-                    'verification_status' => $request->verification_status,
-                    'verification_notes' => $request->verification_notes,
-                ]);
-
-            // Actualizar el registro de empleo
+            // Iniciar transacción
+            DB::beginTransaction();
+            
+            // Actualizar el token de verificación
+            $verification->update([
+                'verified' => true,
+                'verified_at' => now(),
+                'verification_status' => $request->verification_status,
+                'verification_notes' => $request->verification_notes,
+                'verification_by' => $request->verification_by ?? 'online_form'
+            ]);
+            
+            // Obtener el registro de empleo
             $employmentCompany = DriverEmploymentCompany::find($verification->employment_company_id);
+            
             if ($employmentCompany) {
-                // Datos básicos de verificación
+                // Actualizar el estado de verificación
                 $employmentCompany->update([
                     'verification_status' => $request->verification_status,
-                    'verification_notes' => $request->verification_notes,
+                    'employment_confirmed' => $request->employment_confirmed
                 ]);
                 
-                // Guardar datos adicionales de verificación en JSON
+                // Preparar datos de rendimiento de seguridad
                 $safetyPerformanceData = [
                     'dates_confirmed' => $request->dates_confirmed,
                     'correct_dates' => $request->correct_dates,
@@ -150,6 +163,7 @@ class EmploymentVerificationController extends Controller
                     'refused_test' => $request->refused_test,
                     'completed_rehab' => $request->completed_rehab,
                     'other_violations' => $request->other_violations,
+                    'violation_details' => $request->violation_details,
                     'verified_at' => now()->toDateTimeString(),
                 ];
                 
@@ -165,93 +179,109 @@ class EmploymentVerificationController extends Controller
                         $employmentCompany->update(['metadata' => json_encode($metadata)]);
                     }
                 }
-
-                // Guardar la firma como documento
+                
+                // Guardar la firma y el PDF
                 if ($request->has('signature') && !empty($request->signature)) {
-                    // Decodificar la imagen base64
-                    $image = $request->signature;
-                    $image = str_replace('data:image/png;base64,', '', $image);
-                    $image = str_replace(' ', '+', $image);
+                    // Obtener el driver relacionado
+                    $driver = $employmentCompany->userDriverDetail ?? $employmentCompany->driver;
                     
-                    // Asegurarse de que el directorio temporal exista
-                    $tempDir = storage_path('app/temp');
-                    if (!file_exists($tempDir)) {
-                        mkdir($tempDir, 0755, true);
-                    }
-                    
-                    // Verificar que el directorio se haya creado correctamente
-                    if (!is_dir($tempDir) || !is_writable($tempDir)) {
-                        throw new \Exception("No se puede crear o escribir en el directorio temporal: {$tempDir}");
-                    }
-                    
-                    // Crear un archivo temporal
-                    $imageName = 'employment_verification_' . time() . '.png';
-                    $tempPath = $tempDir . '/' . $imageName;
-                    
-                    // Guardar la imagen en el directorio temporal
-                    file_put_contents($tempPath, base64_decode($image));
-                    
-                    // Añadir el archivo como media al registro de empleo
-                    $employmentCompany->addMedia($tempPath)
-                        ->usingName('Employment Verification Signature')
-                        ->usingFileName($imageName)
-                        ->toMediaCollection('signature');
-                    
-                    // Obtener el driver asociado para guardar también el documento en sus archivos
-                    $driver = $employmentCompany->userDriverDetail;
                     if ($driver) {
-                        // Crear un PDF con la información de verificación
                         try {
-                            $pdf = PDF::loadView('employment-verification.pdf', [
+                            // Procesar la firma (base64 a imagen)
+                            $image_parts = explode(";", $request->signature);
+                            $image_type_aux = explode("image/", $image_parts[0]);
+                            $image_type = $image_type_aux[1];
+                            $image_base64 = explode(",", $image_parts[1]);
+                            $image = base64_decode($image_base64[0]);
+                            
+                            // Generar nombre de archivo para la firma
+                            $signatureName = 'employment_verification_signature_' . time() . '.png';
+                            
+                            // Crear directorio para la firma - EXACTAMENTE driver/{id}/certification/
+                            $signaturePath = 'driver/' . $driver->id . '/certification/';
+                            $fullSignaturePath = storage_path('app/public/' . $signaturePath);
+                            
+                            // Asegurarse de que el directorio exista
+                            if (!file_exists($fullSignaturePath)) {
+                                mkdir($fullSignaturePath, 0755, true);
+                            }
+                            
+                            // Guardar la firma directamente en el directorio del conductor
+                            $signatureFilePath = $fullSignaturePath . $signatureName;
+                            file_put_contents($signatureFilePath, $image);
+                            
+                            // Verificar que la firma se guardó correctamente
+                            if (!file_exists($signatureFilePath) || filesize($signatureFilePath) === 0) {
+                                throw new \Exception("Error al guardar la firma del conductor");
+                            }
+                            
+                            // Guardar la ruta relativa para uso posterior
+                            $relativeSignaturePath = $signaturePath . $signatureName;
+                            
+                            // Generar el PDF
+                            $data = [
                                 'verification' => $verification,
                                 'employmentCompany' => $employmentCompany,
                                 'driver' => $driver,
                                 'signature' => $request->signature,
                                 'safetyPerformanceData' => $safetyPerformanceData
-                            ]);
-                            
-                            // Usar un nombre de compañía seguro, o un valor predeterminado si no está disponible
-                            $companyName = 'company';
+                            ];
+                            $pdf = PDF::loadView('employment-verification.pdf', $data);
+
+                            // Determinar el nombre de la empresa para el nombre del archivo
+                            $companyName = 'unknown';
                             if (isset($employmentCompany->company) && !empty($employmentCompany->company->name)) {
                                 $companyName = preg_replace('/[^a-zA-Z0-9]/', '_', $employmentCompany->company->name);
                             } elseif (!empty($employmentCompany->company_name)) {
                                 $companyName = preg_replace('/[^a-zA-Z0-9]/', '_', $employmentCompany->company_name);
                             }
                             
-                            // Guardar el PDF temporalmente (usando el mismo directorio temporal que ya verificamos)
+                            // Nombre del archivo PDF
                             $pdfName = 'employment_verification_' . $companyName . '_' . time() . '.pdf';
-                            $pdfPath = $tempDir . '/' . $pdfName;
-                            $pdf->save($pdfPath);
                             
-                            // Verificar que el archivo se haya creado correctamente
-                            if (!file_exists($pdfPath)) {
-                                throw new \Exception("No se pudo crear el archivo PDF: {$pdfPath}");
+                            // Crear directorio para el PDF - EXACTAMENTE driver/{id}/
+                            $pdfPath = 'driver/' . $driver->id . '/';
+                            $fullPdfPath = storage_path('app/public/' . $pdfPath);
+                            
+                            // Asegurarse de que el directorio exista
+                            if (!file_exists($fullPdfPath)) {
+                                mkdir($fullPdfPath, 0755, true);
                             }
-                        } catch (\Exception $pdfError) {
-                            Log::error('Error al generar el PDF de verificación', [
-                                'error' => $pdfError->getMessage(),
+                            
+                            // Guardar el PDF directamente en el directorio del conductor
+                            $pdfFilePath = $fullPdfPath . $pdfName;
+                            $pdf->save($pdfFilePath);
+                            
+                            // Verificar que el PDF se guardó correctamente
+                            if (!file_exists($pdfFilePath) || filesize($pdfFilePath) === 0) {
+                                throw new \Exception("Error al guardar el PDF del conductor");
+                            }
+                            
+                            // Guardar la ruta relativa para uso posterior
+                            $relativePdfPath = $pdfPath . $pdfName;
+                            
+                            // Actualizar el token de verificación con las rutas de los archivos
+                            $verification->update([
+                                'signature_path' => $relativeSignaturePath,
+                                'document_path' => $relativePdfPath
+                            ]);
+                            
+                            // Registrar éxito en logs
+                            Log::info('Archivos guardados correctamente en las rutas específicas', [
+                                'signature_path' => $relativeSignaturePath,
+                                'pdf_path' => $relativePdfPath,
+                                'driver_id' => $driver->id,
                                 'token' => $token
                             ]);
-                            throw $pdfError; // Re-lanzar para que sea capturado por el try-catch principal
-                        }
-                        
-                        // Añadir el PDF a los documentos del conductor
-                        $documentName = 'Employment Verification - ' . $companyName;
-                        $driver->addMedia($pdfPath)
-                            ->usingName($documentName)
-                            ->usingFileName($pdfName)
-                            ->toMediaCollection('employment_verification_documents');
                             
-                        // Guardar una copia en el almacenamiento público
-                        $publicPath = 'driver/' . $driver->user_id . '/employment_verifications/';
-                        
-                        // Asegurarse de que el directorio público exista
-                        $publicDir = storage_path('app/public/' . $publicPath);
-                        if (!file_exists($publicDir)) {
-                            mkdir($publicDir, 0755, true);
+                        } catch (\Exception $e) {
+                            Log::error('Error al generar o guardar los archivos', [
+                                'error' => $e->getMessage(),
+                                'token' => $token,
+                                'trace' => $e->getTraceAsString()
+                            ]);
+                            throw new \Exception("Error al generar o guardar los archivos: {$e->getMessage()}");
                         }
-                        
-                        Storage::disk('public')->put($publicPath . $pdfName, file_get_contents($pdfPath));
                     }
                 }
             }
@@ -288,7 +318,6 @@ class EmploymentVerificationController extends Controller
             return redirect()->back()->with('error', 'Error processing verification. Please try again.');
         }
     }
-    
 
     /**
      * Muestra la página de agradecimiento después de la verificación

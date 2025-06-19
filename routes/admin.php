@@ -201,7 +201,7 @@ Route::prefix('training-schools')->name('training-schools.')->group(function () 
 */
 
 // Rutas para la verificación de empleo
-Route::prefix('driver/employment-verification')->name('driver.employment-verification.')->group(function () {
+Route::prefix('drivers/employment-verification')->name('drivers.employment-verification.')->group(function () {
     Route::get('/', [EmploymentVerificationAdminController::class, 'index'])->name('index');
     Route::get('/{id}', [EmploymentVerificationAdminController::class, 'show'])->name('show');
     Route::post('/{id}/resend', [EmploymentVerificationAdminController::class, 'resendVerification'])->name('resend');

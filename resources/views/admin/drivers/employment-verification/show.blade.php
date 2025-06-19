@@ -5,7 +5,7 @@
 <div class="intro-y flex flex-col sm:flex-row items-center mt-8">
     <h2 class="text-lg font-medium mr-auto">Detalles de Verificación de Empleo</h2>
     <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
-        <a href="{{ route('admin.driver.employment-verification.index') }}" class="btn btn-secondary shadow-md mr-2">
+        <a href="{{ route('admin.drivers.employment-verification.index') }}" class="btn btn-secondary shadow-md mr-2">
             <i class="w-4 h-4 mr-2" data-lucide="arrow-left"></i> Volver a Verificaciones
         </a>
     </div>
@@ -50,7 +50,7 @@
                     <div class="ml-auto">{{ $employmentCompany->userDriverDetail->phone }}</div>
                 </div>
                 <div class="flex items-center">
-                    <a href="{{ route('admin.driver.show', $employmentCompany->userDriverDetail->id) }}" class="btn btn-outline-primary w-full">Ver perfil completo</a>
+                    <a href="{{ route('admin.drivers.show', $employmentCompany->userDriverDetail->id) }}" class="btn btn-outline-primary w-full">Ver perfil completo</a>
                 </div>
             </div>
         </div>
@@ -135,6 +135,13 @@
                     </div>
                     @endif
                     
+                    @if($employmentCompany->verification_by)
+                    <div class="mb-3">
+                        <div class="font-medium">Verificado por:</div>
+                        <div>{{ $employmentCompany->verification_by }}</div>
+                    </div>
+                    @endif
+                    
                     @if($employmentCompany->verification_notes)
                     <div class="mb-3">
                         <div class="font-medium">Notas de verificación:</div>
@@ -142,12 +149,44 @@
                     </div>
                     @endif
                     
-                    @if($employmentCompany->hasMedia('signature'))
-                    <div class="mb-3">
-                        <div class="font-medium mb-2">Firma:</div>
-                        <img src="{{ $employmentCompany->getFirstMediaUrl('signature') }}" alt="Firma" class="border p-2 max-w-full h-auto">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                        @php
+                            // Buscar el token verificado más reciente
+                            $verifiedToken = $employmentCompany->verificationTokens
+                                ->where('verified_at', '!=', null)
+                                ->sortByDesc('verified_at')
+                                ->first();
+                            
+                            $signaturePath = $verifiedToken && $verifiedToken->signature_path ? 
+                                asset('storage/' . $verifiedToken->signature_path) : null;
+                                
+                            $pdfPath = $verifiedToken && $verifiedToken->document_path ? 
+                                asset('storage/' . $verifiedToken->document_path) : null;
+                        @endphp
+                        
+                        @if($signaturePath)
+                        <div>
+                            <div class="font-medium mb-2">Firma:</div>
+                            <div class="border rounded-lg p-3 bg-gray-50">
+                                <img src="{{ $signaturePath }}" alt="Firma" class="max-w-full h-auto">
+                            </div>
+                        </div>
+                        @endif
+                        
+                        @if($pdfPath)
+                        <div>
+                            <div class="font-medium mb-2">Documento PDF:</div>
+                            <div class="flex flex-col space-y-2">
+                                <a href="{{ $pdfPath }}" target="_blank" class="btn btn-outline-primary flex items-center">
+                                    <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Ver PDF
+                                </a>
+                                <a href="{{ $pdfPath }}" download class="btn btn-outline-secondary flex items-center">
+                                    <i data-lucide="download" class="w-4 h-4 mr-2"></i> Descargar
+                                </a>
+                            </div>
+                        </div>
+                        @endif
                     </div>
-                    @endif
                 </div>
                 
                 <div class="col-span-12 xl:col-span-6">
@@ -165,8 +204,8 @@
                                 <tbody>
                                     @forelse($employmentCompany->verificationTokens as $token)
                                         <tr>
-                                            <td>{{ $token->created_at->format('d/m/Y H:i') }}</td>
-                                            <td>{{ $token->expires_at->format('d/m/Y H:i') }}</td>
+                                            <td>{{ $token->created_at->format('m/d/Y H:i') }}</td>
+                                            <td>{{ $token->expires_at->format('m/d/Y H:i') }}</td>
                                             <td>
                                                 @if($token->verified_at)
                                                     <span class="text-success">Verificado</span>
@@ -188,7 +227,7 @@
                     </div>
                     
                     <div class="flex flex-col space-y-2 mt-5">
-                        <form action="{{ route('admin.driver.employment-verification.resend', $employmentCompany->id) }}" method="POST">
+                        <form action="{{ route('admin.drivers.employment-verification.resend', $employmentCompany->id) }}" method="POST">
                             @csrf
                             <button type="submit" class="btn btn-outline-primary w-full">
                                 <i data-lucide="mail" class="w-4 h-4 mr-2"></i> Reenviar correo de verificación
@@ -213,60 +252,64 @@
 </div>
 
 <!-- Modal para marcar como verificado -->
-<div id="mark-verified-modal" class="modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="font-medium text-base mr-auto">Marcar como verificado</h2>
-            </div>
-            <form action="{{ route('admin.driver.employment-verification.mark-verified', $employmentCompany->id) }}" method="POST">
-                @csrf
-                <div class="modal-body p-5">
-                    <div class="mb-3">
-                        <label for="notes" class="form-label">Notas adicionales</label>
-                        <textarea id="notes" name="notes" class="form-control" rows="3" placeholder="Ingrese notas adicionales sobre esta verificación..."></textarea>
-                    </div>
-                    <div class="text-slate-500 mt-2">
-                        <i data-lucide="info" class="w-4 h-4 mr-1 inline"></i>
-                        Esta acción marcará manualmente el historial de empleo como verificado.
-                    </div>
+<x-base.dialog id="mark-verified-modal" size="md">
+    <x-base.dialog.panel>
+        <x-base.dialog.title>
+            <h2 class="font-medium text-base mr-auto">Marcar como verificado</h2>
+        </x-base.dialog.title>
+        <form action="{{ route('admin.drivers.employment-verification.mark-verified', $employmentCompany->id) }}" method="POST">
+            @csrf
+            <x-base.dialog.description>
+                <div class="mb-3">
+                    <x-base.form-label for="notes">Notas adicionales</x-base.form-label>
+                    <x-base.form-textarea id="notes" name="notes" rows="3" placeholder="Ingrese notas adicionales sobre esta verificación..."></x-base.form-textarea>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-20 mr-1">Cancelar</button>
-                    <button type="submit" class="btn btn-success w-20">Confirmar</button>
+                <div class="text-slate-500 mt-2 flex items-center">
+                    <i data-lucide="info" class="w-4 h-4 mr-1"></i>
+                    Esta acción marcará manualmente el historial de empleo como verificado.
                 </div>
-            </form>
-        </div>
-    </div>
-</div>
+            </x-base.dialog.description>
+            <x-base.dialog.footer>
+                <x-base.button data-tw-dismiss="modal" type="button" variant="outline-secondary" class="mr-1 w-20">
+                    Cancelar
+                </x-base.button>
+                <x-base.button type="submit" variant="success" class="w-20">
+                    Confirmar
+                </x-base.button>
+            </x-base.dialog.footer>
+        </form>
+    </x-base.dialog.panel>
+</x-base.dialog>
 
 <!-- Modal para marcar como rechazado -->
-<div id="mark-rejected-modal" class="modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="font-medium text-base mr-auto">Marcar como rechazado</h2>
-            </div>
-            <form action="{{ route('admin.driver.employment-verification.mark-rejected', $employmentCompany->id) }}" method="POST">
-                @csrf
-                <div class="modal-body p-5">
-                    <div class="mb-3">
-                        <label for="notes" class="form-label">Motivo del rechazo</label>
-                        <textarea id="notes" name="notes" class="form-control" rows="3" placeholder="Ingrese el motivo del rechazo..." required></textarea>
-                    </div>
-                    <div class="text-slate-500 mt-2">
-                        <i data-lucide="alert-triangle" class="w-4 h-4 mr-1 inline"></i>
-                        Esta acción marcará manualmente el historial de empleo como rechazado.
-                    </div>
+<x-base.dialog id="mark-rejected-modal" size="md">
+    <x-base.dialog.panel>
+        <x-base.dialog.title>
+            <h2 class="font-medium text-base mr-auto">Marcar como rechazado</h2>
+        </x-base.dialog.title>
+        <form action="{{ route('admin.drivers.employment-verification.mark-rejected', $employmentCompany->id) }}" method="POST">
+            @csrf
+            <x-base.dialog.description>
+                <div class="mb-3">
+                    <x-base.form-label for="reject-notes">Motivo del rechazo</x-base.form-label>
+                    <x-base.form-textarea id="reject-notes" name="notes" rows="3" placeholder="Ingrese el motivo del rechazo..." required></x-base.form-textarea>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" data-tw-dismiss="modal" class="btn btn-outline-secondary w-20 mr-1">Cancelar</button>
-                    <button type="submit" class="btn btn-danger w-20">Confirmar</button>
+                <div class="text-slate-500 mt-2 flex items-center">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 mr-1"></i>
+                    Esta acción marcará manualmente el historial de empleo como rechazado.
                 </div>
-            </form>
-        </div>
-    </div>
-</div>
+            </x-base.dialog.description>
+            <x-base.dialog.footer>
+                <x-base.button data-tw-dismiss="modal" type="button" variant="outline-secondary" class="mr-1 w-20">
+                    Cancelar
+                </x-base.button>
+                <x-base.button type="submit" variant="danger" class="w-20">
+                    Confirmar
+                </x-base.button>
+            </x-base.dialog.footer>
+        </form>
+    </x-base.dialog.panel>
+</x-base.dialog>
 @endsection
 
 @push('scripts')

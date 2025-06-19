@@ -51,7 +51,7 @@ class EmploymentVerificationAdminController extends Controller
             })
             ->get();
         
-        return view('admin.driver.employment-verification.index', [
+        return view('admin.drivers.employment-verification.index', [
             'employmentVerifications' => $employmentVerifications,
             'drivers' => $drivers
         ]);
@@ -69,7 +69,7 @@ class EmploymentVerificationAdminController extends Controller
             'media'
         ])->findOrFail($id);
         
-        return view('admin.driver.employment-verification.show', [
+        return view('admin.drivers.employment-verification.show', [
             'employmentCompany' => $employmentCompany
         ]);
     }
@@ -124,7 +124,7 @@ class EmploymentVerificationAdminController extends Controller
                     $employmentCompany->id
                 ));
             
-            return redirect()->route('admin.driver.employment-verification.index')
+            return redirect()->route('admin.drivers.employment-verification.index')
                 ->with('success', 'El correo de verificación ha sido reenviado correctamente.');
         } catch (\Exception $e) {
             Log::error('Error al reenviar correo de verificación de empleo', [
@@ -132,7 +132,7 @@ class EmploymentVerificationAdminController extends Controller
                 'employment_company_id' => $employmentCompany->id
             ]);
             
-            return redirect()->route('admin.driver.employment-verification.index')
+            return redirect()->route('admin.drivers.employment-verification.index')
                 ->with('error', 'Error al reenviar el correo de verificación: ' . $e->getMessage());
         }
     }
@@ -147,9 +147,10 @@ class EmploymentVerificationAdminController extends Controller
         $employmentCompany->verification_status = 'verified';
         $employmentCompany->verification_date = now();
         $employmentCompany->verification_notes = $request->notes ?? 'Verificado manualmente por administrador';
+        $employmentCompany->verification_by = auth()->user()->name . ' (Admin)';
         $employmentCompany->save();
         
-        return redirect()->route('admin.driver.employment-verification.show', $id)
+        return redirect()->route('admin.drivers.employment-verification.show', $id)
             ->with('success', 'La verificación de empleo ha sido marcada como verificada correctamente.');
     }
     
@@ -163,9 +164,10 @@ class EmploymentVerificationAdminController extends Controller
         $employmentCompany->verification_status = 'rejected';
         $employmentCompany->verification_date = now();
         $employmentCompany->verification_notes = $request->notes ?? 'Rechazado manualmente por administrador';
+        $employmentCompany->verification_by = auth()->user()->name . ' (Admin)';
         $employmentCompany->save();
         
-        return redirect()->route('admin.driver.employment-verification.show', $id)
+        return redirect()->route('admin.drivers.employment-verification.show', $id)
             ->with('success', 'La verificación de empleo ha sido marcada como rechazada correctamente.');
     }
 }

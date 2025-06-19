@@ -71,6 +71,12 @@ class SideMenu
                     ],
                     [
                         'icon' => "file-warning",
+                        'route_name' => "admin.drivers.employment-verification.index",
+                        'params' => [],
+                        'title' => "Employment Verification",
+                    ],
+                    [
+                        'icon' => "file-warning",
                         'route_name' => "admin.accidents.index",
                         'params' => [],
                         'title' => "Accidents",
