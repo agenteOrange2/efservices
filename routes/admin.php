@@ -37,6 +37,7 @@ use App\Http\Controllers\Admin\Vehicles\VehicleDocumentController;
 use App\Http\Controllers\Admin\Driver\TrafficConvictionsController;
 use App\Http\Controllers\Admin\Vehicles\VehicleServiceItemController;
 use App\Http\Controllers\Admin\Vehicles\MaintenanceNotificationController;
+use App\Http\Controllers\Admin\Driver\EmploymentVerificationAdminController;
 
 
 Route::get('theme-switcher/{activeTheme}', [ThemeController::class, 'switch'])->name('theme-switcher');
@@ -191,6 +192,21 @@ Route::prefix('training-schools')->name('training-schools.')->group(function () 
     // Rutas originales
     Route::delete('document/{id}', [TrainingSchoolsController::class, 'destroyDocument'])->name('destroy.document');
     Route::delete('document/{id}/ajax', [TrainingSchoolsController::class, 'ajaxDestroyDocument'])->name('ajax-destroy.document');
+});
+
+/*
+    |--------------------------------------------------------------------------
+    | RUTAS PARA VERIFICACIÓN DE EMPLEO
+    |--------------------------------------------------------------------------    
+*/
+
+// Rutas para la verificación de empleo
+Route::prefix('driver/employment-verification')->name('driver.employment-verification.')->group(function () {
+    Route::get('/', [EmploymentVerificationAdminController::class, 'index'])->name('index');
+    Route::get('/{id}', [EmploymentVerificationAdminController::class, 'show'])->name('show');
+    Route::post('/{id}/resend', [EmploymentVerificationAdminController::class, 'resendVerification'])->name('resend');
+    Route::post('/{id}/mark-verified', [EmploymentVerificationAdminController::class, 'markAsVerified'])->name('mark-verified');
+    Route::post('/{id}/mark-rejected', [EmploymentVerificationAdminController::class, 'markAsRejected'])->name('mark-rejected');
 });
 
 /*
@@ -525,6 +541,7 @@ Route::prefix('drivers')->name('drivers.')->group(function () {
     Route::put('/{driver}/activate', [DriverListController::class, 'activate'])->name('activate');
     Route::put('/{driver}/deactivate', [DriverListController::class, 'deactivate'])->name('deactivate');
     Route::get('/{id}/documents/download', [DriverListController::class, 'downloadDocuments'])->name('documents.download');
+    Route::get('/{id}/regenerate-application-forms', [DriverListController::class, 'regenerateApplicationForms'])->name('regenerate-application-forms');
     Route::get('/export', [DriverListController::class, 'export'])->name('export');
 });
 

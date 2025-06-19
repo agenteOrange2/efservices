@@ -25,8 +25,11 @@
 
 <body>
     <div class="font-sans text-gray-900 antialiased">
-        {{ $slot }}
-
+        @hasSection('content')
+            @yield('content')
+        @else
+            {{ $slot ?? '' }}
+        @endif
     </div>
 
     @livewireScripts

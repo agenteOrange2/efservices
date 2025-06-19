@@ -532,7 +532,22 @@
                                 @else
                                     <p class="text-slate-500">No medical card uploaded</p>
                                 @endif
+                            </div>                                                        
+                            @if ($driver->getMedia('medical_records')->count() > 0)
+                            <div class="mt-4 pt-4 border-t">
+                                <h5 class="font-medium">Medical Records</h5>
+                                <div class="flex flex-wrap gap-3 mt-2">
+                                    @foreach ($driver->getMedia('medical_records') as $record)
+                                        <a href="{{ $record->getUrl() }}" target="_blank" class="text-blue-600 hover:underline flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                            {{ $record->file_name }}
+                                        </a>
+                                    @endforeach
+                                </div>
                             </div>
+                        @endif
+
+                            
                         @else
                             <p class="text-slate-500">No medical qualification information provided</p>
                         @endif
@@ -823,11 +838,11 @@
                                             @endif
 
                                             <!-- Certificados -->
-                                            @if ($school->getDocuments('school_certificates') && $school->getDocuments('school_certificates')->count() > 0)
+                                            @if ($school->getMedia('school_certificates') && $school->getMedia('school_certificates')->count() > 0)
                                                 <div class="mt-3">
                                                     <h6 class="text-xs font-medium text-gray-500 uppercase">Certificates</h6>
                                                     <div class="flex flex-wrap gap-2 mt-2">
-                                                        @foreach ($school->getDocuments('school_certificates') as $certificate)
+                                                        @foreach ($school->getMedia('school_certificates') as $certificate)
                                                             <a href="{{ $certificate->getUrl() }}" target="_blank"
                                                                 class="flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded hover:bg-blue-100">
                                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
@@ -953,7 +968,7 @@
 
                 <!-- Testing Tab -->
                 <div class="hidden p-6" id="testing" role="tabpanel" aria-labelledby="testing-tab">
-                    <div class="border rounded-lg p-4 mb-6">
+                    <div class="border rounded-lg md:p-2 p-0  mb-6">
                         <div class="flex justify-between items-center mb-4">
                             <h4 class="font-medium text-lg pb-2">Drug & Alcohol Testing</h4>
                         </div>
@@ -963,27 +978,27 @@
                                 <table class="w-full text-sm text-left">
                                     <thead>
                                         <tr>
-                                            <th class="whitespace-nowrap">Date</th>
-                                            <th class="whitespace-nowrap">Type</th>
-                                            <th class="whitespace-nowrap">Result</th>
-                                            <th class="whitespace-nowrap">Status</th>
-                                            <th class="whitespace-nowrap">Administrator</th>
-                                            <th class="whitespace-nowrap">Documents</th>
+                                            <th class="px-4 py-2 whitespace-nowrap">Date</th>
+                                            <th class="px-4 py-2 whitespace-nowrap">Type</th>
+                                            <th class="px-4 py-2 whitespace-nowrap">Result</th>
+                                            <th class="px-4 py-2 whitespace-nowrap">Status</th>
+                                            <th class="px-4 py-2 whitespace-nowrap">Administrator</th>
+                                            <th class="px-4 py-2 whitespace-nowrap">Documents</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($driver->testings as $test)
                                             <tr>
-                                                <td>{{ $test->test_date ? $test->test_date->format('M d, Y') : 'N/A' }}
+                                                <td class="px-4 py-2" >{{ $test->test_date ? $test->test_date->format('M d, Y') : 'N/A' }}
                                                 </td>
-                                                <td>
+                                                <td class="px-4 py-2" >
                                                     @if (isset(\App\Models\Admin\Driver\DriverTesting::getTestTypes()[$test->test_type]))
                                                         {{ \App\Models\Admin\Driver\DriverTesting::getTestTypes()[$test->test_type] }}
                                                     @else
                                                         {{ $test->test_type }}
                                                     @endif
                                                 </td>
-                                                <td>
+                                                <td class="px-4 py-2" >
                                                     @if ($test->test_result)
                                                         @if (isset(\App\Models\Admin\Driver\DriverTesting::getTestResults()[$test->test_result]))
                                                             <span
@@ -997,7 +1012,7 @@
                                                         Pending
                                                     @endif
                                                 </td>
-                                                <td>
+                                                <td class="px-4 py-2" >
                                                     @if (isset(\App\Models\Admin\Driver\DriverTesting::getStatuses()[$test->status]))
                                                         <span
                                                             class="px-2 py-0.5 rounded-full text-xs font-medium
@@ -1010,8 +1025,8 @@
                                                         {{ $test->status }}
                                                     @endif
                                                 </td>
-                                                <td>{{ $test->administered_by }}</td>
-                                                <td>
+                                                <td class="px-4 py-2" >{{ $test->administered_by }}</td>
+                                                <td class="px-4 py-2" >
                                                     <div class="flex space-x-2">
                                                         @if ($test->getMedia('drug_test_pdf')->count() > 0)
                                                             <a href="{{ $test->getMedia('drug_test_pdf')->first()->getUrl() }}"
@@ -1048,24 +1063,24 @@
 
                         @if ($driver->inspections && $driver->inspections->count() > 0)
                             <div class="overflow-x-auto">
-                                <table class="table table-striped">
+                                <table class="w-full text-sm text-left">
                                     <thead>
                                         <tr>
-                                            <th class="whitespace-nowrap">Date</th>
-                                            <th class="whitespace-nowrap">Vehicle</th>
-                                            <th class="whitespace-nowrap">Type</th>
-                                            <th class="whitespace-nowrap">Inspector</th>
-                                            <th class="whitespace-nowrap">Status</th>
-                                            <th class="whitespace-nowrap">Safe to Operate</th>
-                                            <th class="whitespace-nowrap">Documents</th>
+                                            <th class="px-4 py-2 whitespace-nowrap">Date</th>
+                                            <th class="px-4 py-2 whitespace-nowrap">Vehicle</th>
+                                            <th class="px-4 py-2 whitespace-nowrap">Type</th>
+                                            <th class="px-4 py-2 whitespace-nowrap">Inspector</th>
+                                            <th class="px-4 py-2 whitespace-nowrap">Status</th>
+                                            <th class="px-4 py-2 whitespace-nowrap">Safe to Operate</th>
+                                            <th class="px-4 py-2 whitespace-nowrap">Documents</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($driver->inspections as $inspection)
                                             <tr>
-                                                <td>{{ $inspection->inspection_date ? $inspection->inspection_date->format('M d, Y') : 'N/A' }}
+                                                <td class="px-4 py-2" >{{ $inspection->inspection_date ? $inspection->inspection_date->format('M d, Y') : 'N/A' }}
                                                 </td>
-                                                <td>
+                                                <td class="px-4 py-2" >
                                                     @if ($inspection->vehicle)
                                                         {{ $inspection->vehicle->unit_number }} -
                                                         {{ $inspection->vehicle->make }} {{ $inspection->vehicle->model }}
@@ -1073,9 +1088,9 @@
                                                         N/A
                                                     @endif
                                                 </td>
-                                                <td>{{ $inspection->inspection_type }}</td>
-                                                <td>{{ $inspection->inspector_name }}</td>
-                                                <td>
+                                                <td class="px-4 py-2" >{{ $inspection->inspection_type }}</td>
+                                                <td class="px-4 py-2" >{{ $inspection->inspector_name }}</td>
+                                                <td class="px-4 py-2" >
                                                     <span
                                                         class="px-2 py-0.5 rounded-full text-xs font-medium
                                                     @if ($inspection->status == 'passed') bg-green-100 text-green-800
@@ -1084,21 +1099,21 @@
                                                         {{ ucfirst($inspection->status) }}
                                                     </span>
                                                 </td>
-                                                <td>
+                                                <td class="px-4 py-2" >
                                                     @if ($inspection->is_vehicle_safe_to_operate)
                                                         <span class="text-green-600">Yes</span>
                                                     @else
                                                         <span class="text-red-600">No</span>
                                                     @endif
                                                 </td>
-                                                <td>
+                                                <td class="px-4 py-2" >
                                                     <div class="flex space-x-2">
                                                         @if ($inspection->getMedia('inspection_documents')->count() > 0)
                                                             @foreach ($inspection->getMedia('inspection_documents') as $document)
                                                                 <a href="{{ $document->getUrl() }}" target="_blank"
-                                                                    class="btn btn-sm btn-secondary">
+                                                                    class="flex btn btn-sm btn-secondary">
                                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                                                                    {{ $loop->index + 1 }}
+                                                                    {{ $loop->index + 1 }}                                                                    
                                                                 </a>
                                                             @endforeach
                                                         @else
@@ -1288,6 +1303,23 @@
                                         </a>
                                     </div>
                                 @endif
+                                
+                                <!-- Employment Verification Documents -->
+                                @if ($driver->hasMedia('employment_verification_documents'))
+                                    <div class="pb-3 mb-3 border-b bg-blue-50 p-3 rounded-md">
+                                        <p class="font-medium text-blue-800 mb-2">Employment Verification Documents</p>
+                                        <div class="space-y-2">
+                                            @foreach($driver->getMedia('employment_verification_documents') as $document)
+                                                <a href="{{ $document->getUrl() }}" target="_blank" 
+                                                    class="flex items-center text-blue-600 hover:text-blue-800 bg-white p-2 rounded border border-blue-200 hover:bg-blue-100 transition-colors">
+                                                    <i data-lucide="File-text" class="w-4 h-4 mr-2"></i>
+                                                    <span>{{ $document->name }}</span>
+                                                    <span class="ml-auto text-xs text-gray-500">{{ $document->created_at->format('m/d/Y') }}</span>
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
 
                                 <!-- Lease Agreement Documents -->
                                 @php
@@ -1386,11 +1418,20 @@
                         <div class="border rounded-lg p-4 mt-4">
                             <div class="flex justify-between items-center mb-2">
                                 <h5 class="font-medium">Categorized Documents</h5>
-                                <a href="{{ route('admin.drivers.documents.download', $driver->id) }}"
-                                    class="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                    Download All Documents
-                                </a>
+                                <div class="flex space-x-2">
+                                    @if(isset($hasCertification) && $hasCertification)
+                                    <a href="{{ route('admin.drivers.regenerate-application-forms', $driver->id) }}" 
+                                       class="flex items-center px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/></svg>
+                                        Regenerar Application Forms
+                                    </a>
+                                    @endif
+                                    <a href="{{ route('admin.drivers.documents.download', $driver->id) }}"
+                                       class="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                        Download All Documents
+                                    </a>
+                                </div>
                             </div>
 
                             <!-- Vanilla JS Tabs - Sin dependencias ni frameworks -->
@@ -1709,6 +1750,15 @@
 
                                 <!-- Application Forms Documents (Certification) -->
                                 <div class="ef-tab-content" data-tab-content="certification-docs" role="tabpanel">
+                                    @if(isset($hasCertification) && $hasCertification)
+                                        <div class="mb-4">
+                                            <a href="{{ route('admin.drivers.regenerate-application-forms', $driver->id) }}" 
+                                               class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/></svg>
+                                                Regenerar documentos
+                                            </a>
+                                        </div>
+                                    @endif
                                     @if (count($documentsByCategory['certification'] ?? []) > 0)
                                         <ul class="space-y-2">
                                             @foreach ($documentsByCategory['certification'] as $doc)

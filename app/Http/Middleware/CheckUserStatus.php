@@ -30,7 +30,7 @@ class CheckUserStatus
         }
 
         // Rutas públicas que siempre son accesibles
-        $publicRoutes = ['/', 'login', 'carrier/register', 'carrier/confirm/*', 'driver/register', 'driver/confirm/*', 'vehicle-verification/*', 'logout'];
+        $publicRoutes = ['/', 'login', 'carrier/register', 'carrier/confirm/*', 'driver/register', 'driver/confirm/*', 'vehicle-verification/*',  'logout', 'employment-verification/*'];
         if (!$user && !$this->isPublicRoute($request, $publicRoutes)) {
             return redirect()->route('login')
                 ->with('warning', 'Please login to continue.');
@@ -210,6 +210,7 @@ class CheckUserStatus
             'driver/registration/success',
             'livewire/*',
             'vehicle-verification/*',
+            'employment-verification/*',
 
         ];
 

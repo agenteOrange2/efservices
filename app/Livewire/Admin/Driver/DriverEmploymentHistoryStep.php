@@ -7,11 +7,14 @@ use Livewire\Component;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use App\Models\UserDriverDetail;
 use App\Models\Admin\Driver\MasterCompany;
 use App\Models\Admin\Driver\DriverEmploymentCompany;
 use App\Models\Admin\Driver\DriverUnemploymentPeriod;
 use App\Models\Admin\Driver\DriverRelatedEmployment;
+use App\Models\Admin\Driver\EmploymentVerificationToken;
+use App\Mail\EmploymentVerification;
 
 class DriverEmploymentHistoryStep extends Component
 {
@@ -70,7 +73,8 @@ class DriverEmploymentHistoryStep extends Component
         'reason_for_leaving' => '',
         'other_reason_description' => '',
         'explanation' => '',
-        'is_from_master' => false
+        'is_from_master' => false,
+        'email_sent' => false
     ];
 
     // Search Company Modal
@@ -589,6 +593,7 @@ class DriverEmploymentHistoryStep extends Component
             'zip' => '',
             'contact' => '',
             'phone' => '',
+            'email' => '', // Añadimos el campo email
             'fax' => '',
             'employed_from' => '',
             'employed_to' => '',
@@ -598,7 +603,8 @@ class DriverEmploymentHistoryStep extends Component
             'reason_for_leaving' => '',
             'other_reason_description' => '',
             'explanation' => '',
-            'is_from_master' => false
+            'is_from_master' => false,
+            'email_sent' => false // Inicializamos email_sent
         ];
         $this->editing_company_index = null;
     }
@@ -606,36 +612,46 @@ class DriverEmploymentHistoryStep extends Component
     // Save company form
     public function saveCompany()
     {
-        // Validate the company form
+        // Validar el formulario
         $this->validate([
             'company_form.company_name' => 'required|string|max:255',
             'company_form.employed_from' => 'required|date',
             'company_form.employed_to' => 'required|date|after_or_equal:company_form.employed_from',
             'company_form.positions_held' => 'required|string|max:255',
             'company_form.reason_for_leaving' => 'required|string|max:255',
-            'company_form.other_reason_description' =>
-            'required_if:company_form.reason_for_leaving,other|max:255',
+            'company_form.other_reason_description' => 'required_if:company_form.reason_for_leaving,other|max:255',
+            'company_form.email' => 'nullable|email|max:255',
         ]);
-
-        $isFromMaster = isset($this->company_form['is_from_master']) && $this->company_form['is_from_master'];
-
-        // Update or add company to list
+        
+        // Si estamos editando, actualizamos el registro existente
         if ($this->editing_company_index !== null) {
-            $this->employment_companies[$this->editing_company_index] = array_merge(
-                $this->company_form,
-                ['status' => 'ACTIVE']
-            );
+            $this->employment_companies[$this->editing_company_index] = $this->company_form;
         } else {
-            $this->employment_companies[] = array_merge(
-                $this->company_form,
-                ['status' => 'ACTIVE']
-            );
+            // Si es nuevo, lo agregamos al array
+            $this->employment_companies[] = $this->company_form;
         }
-
-        // Close the form and recalculate history
-        $this->showCompanyForm = false;
-        $this->resetCompanyForm();
+        
+        // Recalcular años de historial
         $this->calculateYearsOfHistory();
+        
+        // Si hay un correo electrónico, preguntar al usuario si desea enviar un correo de verificación
+        if (!empty($this->company_form['email']) && empty($this->company_form['email_sent'])) {
+            // Guardar primero para tener un ID de empresa
+            $this->saveEmploymentHistoryData();
+            
+            // Enviar correo de verificación
+            $this->sendEmploymentVerificationEmail();
+        }
+        
+        // Cerrar formulario y limpiar
+        $this->closeCompanyForm();
+        $this->resetCompanyForm();
+        
+        // Notificar al usuario
+        $this->dispatch('notify', [
+            'type' => 'success',
+            'message' => 'Company saved successfully!'
+        ]);
     }
 
     // Open search company modal
@@ -694,6 +710,7 @@ class DriverEmploymentHistoryStep extends Component
                 'zip' => $masterCompany->zip,
                 'contact' => $masterCompany->contact,
                 'phone' => $masterCompany->phone,
+                'email' => $masterCompany->email ?? '', // Añadimos el campo email
                 'fax' => $masterCompany->fax,
                 // Campos editables para el periodo de empleo
                 'employed_from' => '',
@@ -704,7 +721,9 @@ class DriverEmploymentHistoryStep extends Component
                 'reason_for_leaving' => '',
                 'other_reason_description' => '',
                 'explanation' => '',
-                'is_from_master' => true // Indicar que viene de MasterCompany
+                'is_from_master' => true, // Indicar que viene de MasterCompany
+                'email_sent' => false, // Inicializamos email_sent
+                'id' => null // Inicializamos id
             ];
             $this->closeSearchCompanyModal();
             $this->showCompanyForm = true;
@@ -1061,6 +1080,127 @@ class DriverEmploymentHistoryStep extends Component
         }
 
         $this->dispatch('saveAndExit');
+    }
+
+    /**
+     * Envía un correo electrónico a la empresa para verificación de empleo
+     */
+    public function sendEmploymentVerificationEmail()
+    {
+        Log::info('Iniciando envío de correo de verificación de empleo', [
+            'company_email' => $this->company_form['email'],
+            'driver_id' => $this->driverId
+        ]);
+        
+        // Validar que tengamos un correo electrónico
+        if (empty($this->company_form['email'])) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Email address is required to send verification email'
+            ]);
+            return;
+        }
+        
+        // Validar que tengamos un ID de empresa (debe haberse guardado previamente)
+        if (empty($this->company_form['id'])) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Company must be saved before sending verification email'
+            ]);
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+            
+            // Obtener el usuario y detalles del conductor
+            $userDriverDetail = UserDriverDetail::find($this->driverId);
+            if (!$userDriverDetail) {
+                throw new \Exception('Driver not found');
+            }
+            
+            // Preparar los datos de empleo para el correo
+            $employmentData = [
+                'positions_held' => $this->company_form['positions_held'],
+                'employed_from' => $this->company_form['employed_from'],
+                'employed_to' => $this->company_form['employed_to'],
+                'reason_for_leaving' => $this->company_form['reason_for_leaving'],
+                'subject_to_fmcsr' => $this->company_form['subject_to_fmcsr'],
+                'safety_sensitive_function' => $this->company_form['safety_sensitive_function'],
+            ];
+            
+            // Generar token de verificación
+            $token = \Illuminate\Support\Str::random(64);
+            $expiresAt = now()->addDays(7);
+            
+            // Guardar el token de verificación
+            $verification = EmploymentVerificationToken::create([
+                'token' => $token,
+                'driver_id' => $this->driverId,
+                'employment_company_id' => $this->company_form['id'],
+                'email' => $this->company_form['email'],
+                'expires_at' => $expiresAt,
+            ]);
+            
+            // Enviar correo electrónico
+            Mail::to($this->company_form['email'])
+                ->send(new EmploymentVerification(
+                    $this->company_form['company_name'],
+                    $userDriverDetail->user->name . ' ' . $userDriverDetail->last_name,
+                    $employmentData,
+                    $token,
+                    $this->driverId,
+                    $this->company_form['id']
+                ));
+            
+            // Actualizar el estado de envío de correo en el formulario
+            if ($this->editing_company_index !== null) {
+                $this->employment_companies[$this->editing_company_index]['email_sent'] = true;
+            } else {
+                // Buscar la empresa recién agregada por su ID
+                foreach ($this->employment_companies as $index => $company) {
+                    if ($company['id'] == $this->company_form['id']) {
+                        $this->employment_companies[$index]['email_sent'] = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Actualizar el registro en la base de datos
+            $employmentCompany = DriverEmploymentCompany::find($this->company_form['id']);
+            if ($employmentCompany) {
+                $employmentCompany->update([
+                    'email_sent' => true
+                ]);
+            }
+            
+            DB::commit();
+            
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => 'Employment verification email sent successfully to ' . $this->company_form['email']
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error al enviar correo de verificación de empleo', [
+                'error' => $e->getMessage(),
+                'email' => $this->company_form['email'],
+                'driver_id' => $this->driverId,
+                'company_id' => $this->company_form['id'],
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Mostrar mensaje de error más detallado para facilitar la depuración
+            $errorMessage = 'Error sending email: ' . $e->getMessage();
+            if (app()->environment('local', 'development', 'staging')) {
+                $errorMessage .= ' (Check logs for more details)';
+            }
+            
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => $errorMessage
+            ]);
+        }
     }
 
     // Render

@@ -7,6 +7,11 @@ use App\Models\UserDriverDetail;
 use App\Models\Admin\Driver\DriverApplication;
 use App\Models\Carrier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Storage;
+use ZipArchive;
 
 class DriverListController extends Controller
 {
@@ -146,19 +151,17 @@ class DriverListController extends Controller
      */
     protected function addMediaToZip($zip, $mediaOrModel, $collectionOrFolder, $zipPath = null)
     {
-        // Caso 1: El segundo parámetro es un objeto Media
-        if ($mediaOrModel instanceof \Spatie\MediaLibrary\MediaCollections\Models\Media) {
-            $media = $mediaOrModel;
-            $folder = $collectionOrFolder; // En este caso, el tercer parámetro es el nombre de la carpeta
-            
-            $mediaPath = $media->getPath();
-            if (file_exists($mediaPath)) {
-                $destination = $zipPath ? $zipPath : $folder . '/' . $media->file_name;
-                $zip->addFile($mediaPath, $destination);
+        // If it's a model with media collection
+        if (method_exists($mediaOrModel, 'getMedia')) {
+            $media = $mediaOrModel->getMedia($collectionOrFolder);
+            foreach ($media as $index => $item) {
+                $extension = $item->extension ?: pathinfo($item->file_name, PATHINFO_EXTENSION);
+                $destination = $zipPath ? $zipPath . '_' . ($index + 1) . '.' . $extension : $collectionOrFolder . '/' . $item->file_name;
+                $zip->addFile($item->getPath(), $destination);
             }
         }
-        // Caso 2: El segundo parámetro es un modelo con media
-        else if ($mediaOrModel->hasMedia($collectionOrFolder)) {
+        // If it's a single media item
+        else if (method_exists($mediaOrModel, 'getFirstMedia')) {
             $media = $mediaOrModel->getFirstMedia($collectionOrFolder);
             if ($media) {
                 $extension = $media->extension ?: pathinfo($media->file_name, PATHINFO_EXTENSION);
@@ -168,6 +171,12 @@ class DriverListController extends Controller
         }
     }
 
+    /**
+     * Show the details for a specific driver.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
     public function show($id)
     {
         $driver = UserDriverDetail::with([
@@ -199,273 +208,320 @@ class DriverListController extends Controller
             'inspections',
             'inspections.vehicle',
             'inspections.media',
-        ])->findOrFail($id);
+            ])->findOrFail($id);
         
         // Verificar si existen los records específicos
         $drivingRecord = $driver->getMedia('driving_records')->first();
         $medicalRecord = $driver->getMedia('medical_records')->first();
         $criminalRecord = $driver->getMedia('criminal_records')->first();
         
-        // Cargar documentos por categoría
-        $driverPath = 'driver/' . $driver->id;
+        // Cargar documentos por categoría usando Spatie Media Library
         $documentsByCategory = [
             'license' => [],
             'medical' => [],
-            'training' => [],
+            'training_schools' => [],
             'courses' => [],
             'accidents' => [],
             'traffic' => [],
             'inspections' => [],
             'testing' => [],
             'records' => [],
-            'certification' => [], // Añadir categoría para documentos de certificación
+            'certification' => [],
             'other' => []
         ];
         
-        // Verificar y cargar documentos de cada categoría
-        $categoryDirs = [
-            'license' => $driverPath . '/licenses',
-            'medical' => $driverPath . '/medical',
-            'training' => $driverPath . '/training',
-            'courses' => $driverPath . '/courses',
-            'accidents' => $driverPath . '/accidents',
-            'traffic' => $driverPath . '/traffic',
-            'inspections' => $driverPath . '/inspections',
-            'testing' => $driverPath . '/testing',
-            'records' => $driverPath . '/records',
-            'certification' => $driverPath . '/driver_applications', // Añadir directorio de documentos de certificación
-            'other' => $driverPath . '/documents'
-        ];
-        
-        foreach ($categoryDirs as $category => $dir) {
-            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($dir)) {
-                $files = \Illuminate\Support\Facades\Storage::disk('public')->files($dir);
+        // Cargar documentos de licencias
+        if ($driver->licenses) {
+            foreach ($driver->licenses as $license) {
+                // Documentos de licencia (license_documents)
+                if ($license->getMedia('license_documents')->count() > 0) {
+                    foreach ($license->getMedia('license_documents') as $media) {
+                        $documentsByCategory['license'][] = [
+                            'name' => $media->file_name,
+                            'path' => $media->getPath(),
+                            'url' => $media->getUrl(),
+                            'size' => $this->formatFileSize($media->size),
+                            'date' => $media->created_at->format('Y-m-d H:i:s'),
+                            'media_id' => $media->id,
+                            'related_info' => 'License ' . $license->license_number
+                        ];
+                    }
+                }
                 
-                foreach ($files as $file) {
-                    $fileName = basename($file);
-                    // Añadir información adicional para documentos de certificación
-                    $docInfo = [
-                        'name' => $fileName,
+                // Frente de licencia (license_front)
+                if ($license->getMedia('license_front')->count() > 0) {
+                    foreach ($license->getMedia('license_front') as $media) {
+                        $documentsByCategory['license'][] = [
+                            'name' => $media->file_name,
+                            'path' => $media->getPath(),
+                            'url' => $media->getUrl(),
+                            'size' => $this->formatFileSize($media->size),
+                            'date' => $media->created_at->format('Y-m-d H:i:s'),
+                            'media_id' => $media->id,
+                            'related_info' => 'License Front - ' . $license->license_number
+                        ];
+                    }
+                }
+                
+                // Reverso de licencia (license_back)
+                if ($license->getMedia('license_back')->count() > 0) {
+                    foreach ($license->getMedia('license_back') as $media) {
+                        $documentsByCategory['license'][] = [
+                            'name' => $media->file_name,
+                            'path' => $media->getPath(),
+                            'url' => $media->getUrl(),
+                            'size' => $this->formatFileSize($media->size),
+                            'date' => $media->created_at->format('Y-m-d H:i:s'),
+                            'media_id' => $media->id,
+                            'related_info' => 'License Back - ' . $license->license_number
+                        ];
+                    }
+                }
+            }
+        }
+        
+        // Cargar documentos médicos
+        if ($driver->medicalQualification) {
+            if ($driver->medicalQualification->getMedia('medical_card')->count() > 0) {
+                foreach ($driver->medicalQualification->getMedia('medical_card') as $media) {
+                    $documentsByCategory['medical'][] = [
+                        'name' => $media->file_name,
+                        'path' => $media->getPath(),
+                        'url' => $media->getUrl(),
+                        'size' => $this->formatFileSize($media->size),
+                        'date' => $media->created_at->format('Y-m-d H:i:s'),
+                        'media_id' => $media->id,
+                        'related_info' => 'Medical Card'
+                    ];
+                }
+            }
+        }
+        
+        // Cargar documentos de medical records
+        if ($driver->getMedia('medical_records')->count() > 0) {
+            foreach ($driver->getMedia('medical_records') as $media) {
+                $documentsByCategory['medical'][] = [
+                    'name' => $media->file_name,
+                    'path' => $media->getPath(),
+                    'url' => $media->getUrl(),
+                    'size' => $this->formatFileSize($media->size),
+                    'date' => $media->created_at->format('Y-m-d H:i:s'),
+                    'media_id' => $media->id,
+                    'related_info' => 'Medical Record'
+                ];
+            }
+        }
+        
+        // Cargar documentos de training schools
+        if ($driver->trainingSchools) {
+            foreach ($driver->trainingSchools as $school) {
+                if ($school->getMedia('school_certificates')->count() > 0) {
+                    foreach ($school->getMedia('school_certificates') as $media) {
+                        $documentsByCategory['training_schools'][] = [
+                            'name' => $media->file_name,
+                            'path' => $media->getPath(),
+                            'url' => $media->getUrl(),
+                            'size' => $this->formatFileSize($media->size),
+                            'date' => $media->created_at->format('Y-m-d H:i:s'),
+                            'media_id' => $media->id,
+                            'related_info' => $school->name ?? 'Training School Certificate'
+                        ];
+                    }
+                }
+            }
+        }
+        
+        // Cargar documentos de courses
+        if ($driver->courses) {
+            foreach ($driver->courses as $course) {
+                if ($course->getMedia('course_certificates')->count() > 0) {
+                    foreach ($course->getMedia('course_certificates') as $media) {
+                        $documentsByCategory['courses'][] = [
+                            'name' => $media->file_name,
+                            'path' => $media->getPath(),
+                            'url' => $media->getUrl(),
+                            'size' => $this->formatFileSize($media->size),
+                            'date' => $media->created_at->format('Y-m-d H:i:s'),
+                            'media_id' => $media->id,
+                            'related_info' => $course->organization_name ?? 'Course Certificate'
+                        ];
+                    }
+                }
+            }
+        }
+        
+        // Cargar documentos de accidents
+        if ($driver->accidents) {
+            foreach ($driver->accidents as $accident) {
+                if ($accident->getMedia('accident-images')->count() > 0) {
+                    foreach ($accident->getMedia('accident-images') as $media) {
+                        $documentsByCategory['accidents'][] = [
+                            'name' => $media->file_name,
+                            'path' => $media->getPath(),
+                            'url' => $media->getUrl(),
+                            'size' => $this->formatFileSize($media->size),
+                            'date' => $media->created_at->format('Y-m-d H:i:s'),
+                            'media_id' => $media->id,
+                            'related_info' => 'Accident on ' . ($accident->accident_date ? $accident->accident_date->format('Y-m-d') : 'N/A')
+                        ];
+                    }
+                }
+            }
+        }
+        
+        // Cargar documentos de traffic convictions
+        if ($driver->trafficConvictions) {
+            foreach ($driver->trafficConvictions as $conviction) {
+                // Intentar con traffic-documents
+                if ($conviction->getMedia('traffic-tickets')->count() > 0) {
+                    foreach ($conviction->getMedia('traffic-tickets') as $media) {
+                        $documentsByCategory['traffic'][] = [
+                            'name' => $media->file_name,
+                            'path' => $media->getPath(),
+                            'url' => $media->getUrl(),
+                            'size' => $this->formatFileSize($media->size),
+                            'date' => $media->created_at->format('Y-m-d H:i:s'),
+                            'media_id' => $media->id,
+                            'related_info' => 'Traffic Violation on ' . ($conviction->conviction_date ? $conviction->conviction_date->format('Y-m-d') : 'N/A')
+                        ];
+                    }
+                }                                
+            }
+        }
+        
+        // Cargar documentos de inspecciones
+        if ($driver->inspections) {
+            foreach ($driver->inspections as $inspection) {                
+                // Intentar con inspection_documents (sin guión)
+                if ($inspection->getMedia('inspection_documents')->count() > 0) {
+                    foreach ($inspection->getMedia('inspection_documents') as $media) {
+                        $documentsByCategory['inspections'][] = [
+                            'name' => $media->file_name,
+                            'path' => $media->getPath(),
+                            'url' => $media->getUrl(),
+                            'size' => $this->formatFileSize($media->size),
+                            'date' => $media->created_at->format('Y-m-d H:i:s'),
+                            'media_id' => $media->id,
+                            'related_info' => 'Inspection on ' . ($inspection->inspection_date ? $inspection->inspection_date->format('Y-m-d') : 'N/A') . 
+                                     ($inspection->vehicle ? ' - ' . $inspection->vehicle->make . ' ' . $inspection->vehicle->model : '')
+                        ];
+                    }
+                }                                
+            }
+        }
+        
+        // Cargar documentos de drug testing
+        if ($driver->testings) {
+            foreach ($driver->testings as $test) {
+                // Documentos de drug test PDF
+                if ($test->getMedia('drug_test_pdf')->count() > 0) {
+                    foreach ($test->getMedia('drug_test_pdf') as $media) {
+                        $documentsByCategory['testing'][] = [
+                            'name' => $media->file_name,
+                            'path' => $media->getPath(),
+                            'url' => $media->getUrl(),
+                            'size' => $this->formatFileSize($media->size),
+                            'date' => $media->created_at->format('Y-m-d H:i:s'),
+                            'media_id' => $media->id,
+                            'related_info' => 'Drug Test Report on ' . ($test->test_date ? $test->test_date->format('Y-m-d') : 'N/A')
+                        ];
+                    }
+                }
+                
+                // Documentos de resultados de pruebas
+                if ($test->getMedia('test_results')->count() > 0) {
+                    foreach ($test->getMedia('test_results') as $media) {
+                        $documentsByCategory['testing'][] = [
+                            'name' => $media->file_name,
+                            'path' => $media->getPath(),
+                            'url' => $media->getUrl(),
+                            'size' => $this->formatFileSize($media->size),
+                            'date' => $media->created_at->format('Y-m-d H:i:s'),
+                            'media_id' => $media->id,
+                            'related_info' => 'Test Results on ' . ($test->test_date ? $test->test_date->format('Y-m-d') : 'N/A')
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Verificar si existen documentos de certificación generados por DriverCertificationStep
+        $driverAppPath = 'driver/' . $driver->id . '/driver_applications';
+        $hasApplicationForms = Storage::disk('public')->exists($driverAppPath);
+        $applicationFormExists = false;
+        $hasCertification = false; // Inicializar la variable para usarla en la vista
+        
+        // Verificar si el conductor tiene certificación con firma
+        if ($driver->certification && $driver->certification->signature) {
+            $hasCertification = true;
+        }
+        
+        if ($hasApplicationForms) {
+            // Buscar archivos PDF en el directorio de aplicaciones
+            $applicationFiles = Storage::disk('public')->files($driverAppPath);
+            
+            foreach ($applicationFiles as $file) {
+                if (pathinfo($file, PATHINFO_EXTENSION) === 'pdf') {
+                    $fileName = pathinfo($file, PATHINFO_FILENAME);
+                    $fileBaseName = pathinfo($file, PATHINFO_BASENAME);
+                    $fileSize = Storage::disk('public')->size($file);
+                    $fileDate = Storage::disk('public')->lastModified($file);
+                    
+                    // Formatear el nombre del archivo para mostrar
+                    $displayName = str_replace('_', ' ', $fileName);
+                    $displayName = ucwords($displayName);
+                    
+                    $documentsByCategory['certification'][] = [
+                        'name' => $displayName . '.pdf',
                         'path' => $file,
                         'url' => asset('storage/' . $file),
-                        'size' => $this->formatFileSize(\Illuminate\Support\Facades\Storage::disk('public')->size($file)),
-                        'date' => date('Y-m-d H:i:s', \Illuminate\Support\Facades\Storage::disk('public')->lastModified($file))
+                        'size' => $this->formatFileSize($fileSize),
+                        'date' => date('Y-m-d H:i:s', $fileDate),
+                        'related_info' => 'Generated Application Form'
                     ];
                     
-                    // Añadir información descriptiva para documentos de certificación
-                    if ($category === 'certification') {
-                        switch ($fileName) {
-                            case 'general_information.pdf':
-                                $docInfo['related_info'] = 'Información General';
-                                break;
-                            case 'address_information.pdf':
-                                $docInfo['related_info'] = 'Información de Dirección';
-                                break;
-                            case 'application_details.pdf':
-                                $docInfo['related_info'] = 'Detalles de Aplicación';
-                                break;
-                            case 'drivers_licenses.pdf':
-                                $docInfo['related_info'] = 'Licencias de Conducir';
-                                break;
-                            case 'calificacion_medica.pdf':
-                                $docInfo['related_info'] = 'Calificación Médica';
-                                break;
-                            case 'training_schools.pdf':
-                                $docInfo['related_info'] = 'Escuelas de Entrenamiento';
-                                break;
-                            case 'traffic_violations.pdf':
-                                $docInfo['related_info'] = 'Violaciones de Tráfico';
-                                break;
-                            case 'accident_record.pdf':
-                                $docInfo['related_info'] = 'Registro de Accidentes';
-                                break;
-                            case 'fmcsr_requirements.pdf':
-                                $docInfo['related_info'] = 'Requisitos FMCSR';
-                                break;
-                            case 'employment_history.pdf':
-                                $docInfo['related_info'] = 'Historial de Empleo';
-                                break;
-                            case 'certification.pdf':
-                                $docInfo['related_info'] = 'Certificación';
-                                break;
-                            case 'complete_application.pdf':
-                            case 'solicitud.pdf':
-                                $docInfo['related_info'] = 'Aplicación Completa';
-                                break;
-                            case 'lease_agreement.pdf':
-                                $docInfo['related_info'] = 'Contrato de Arrendamiento';
-                                break;
-                        }
-                    }
-                    
-                    $documentsByCategory[$category][] = $docInfo;
+                    $applicationFormExists = true;
                 }
             }
         }
         
-        // Organizar los documentos de las relaciones
-        $trainingSchoolDocuments = [];
-        foreach ($driver->trainingSchools as $school) {
-            if ($school->getDocuments('school_certificates') && $school->getDocuments('school_certificates')->count() > 0) {
-                foreach ($school->getDocuments('school_certificates') as $certificate) {
-                    $doc = [
-                        'name' => $certificate->file_name,
-                        'url' => $certificate->getUrl(),
-                        'size' => $this->formatFileSize($certificate->size),
-                        'date' => $certificate->created_at->format('Y-m-d H:i:s'),
-                        'school' => $school->school_name
-                    ];
-                    $trainingSchoolDocuments[] = $doc;
-                    $documentsByCategory['training'][] = $doc;
-                }
-            }
-        }
+        // Guardar estado para la vista
+        $data['applicationFormExists'] = $applicationFormExists;
+        $data['hasCertification'] = $driver->certification && $driver->certification->signature ? true : false;
         
-        $courseDocuments = [];
-        foreach ($driver->courses as $course) {
-            if ($course->getMedia('course_certificates') && $course->getMedia('course_certificates')->count() > 0) {
-                foreach ($course->getMedia('course_certificates') as $certificate) {
-                    $doc = [
-                        'name' => $certificate->file_name,
-                        'url' => $certificate->getUrl(),
-                        'size' => $this->formatFileSize($certificate->size),
-                        'date' => $certificate->created_at->format('Y-m-d H:i:s'),
-                        'course' => $course->course_name
+        // Cargar documentos de aplicación (certification/application forms)
+        if ($driver->application) {
+            // PDF de la aplicación
+            if ($driver->application->getMedia('application_pdf')->count() > 0) {
+                foreach ($driver->application->getMedia('application_pdf') as $media) {
+                    $documentsByCategory['certification'][] = [
+                        'name' => $media->file_name,
+                        'path' => $media->getPath(),
+                        'url' => $media->getUrl(),
+                        'size' => $this->formatFileSize($media->size),
+                        'date' => $media->created_at->format('Y-m-d H:i:s'),
+                        'media_id' => $media->id,
+                        'related_info' => 'Application PDF'
                     ];
-                    $courseDocuments[] = $doc;
-                    $documentsByCategory['courses'][] = $doc;
-                }
-            }
-        }
-        
-        $accidentDocuments = [];
-        foreach ($driver->accidents as $accident) {
-            if ($accident->getMedia('accident_report') && $accident->getMedia('accident_report')->count() > 0) {
-                foreach ($accident->getMedia('accident_report') as $report) {
-                    $doc = [
-                        'name' => $report->file_name,
-                        'url' => $report->getUrl(),
-                        'size' => $this->formatFileSize($report->size),
-                        'date' => $report->created_at->format('Y-m-d H:i:s'),
-                        'accident_date' => $accident->accident_date->format('Y-m-d')
-                    ];
-                    $accidentDocuments[] = $doc;
-                    $documentsByCategory['accidents'][] = $doc;
-                }
-            }
-        }
-        
-        $trafficDocuments = [];
-        foreach ($driver->trafficConvictions as $traffic) {
-            if ($traffic->getMedia('traffic_report') && $traffic->getMedia('traffic_report')->count() > 0) {
-                foreach ($traffic->getMedia('traffic_report') as $report) {
-                    $doc = [
-                        'name' => $report->file_name,
-                        'url' => $report->getUrl(),
-                        'size' => $this->formatFileSize($report->size),
-                        'date' => $report->created_at->format('Y-m-d H:i:s'),
-                        'conviction_date' => $traffic->conviction_date->format('Y-m-d')
-                    ];
-                    $trafficDocuments[] = $doc;
-                    $documentsByCategory['traffic'][] = $doc;
-                }
-            }
-        }
-        
-        $inspectionDocuments = [];
-        foreach ($driver->inspections as $inspection) {
-            if ($inspection->getMedia('inspection_report') && $inspection->getMedia('inspection_report')->count() > 0) {
-                foreach ($inspection->getMedia('inspection_report') as $report) {
-                    $doc = [
-                        'name' => $report->file_name,
-                        'url' => $report->getUrl(),
-                        'size' => $this->formatFileSize($report->size),
-                        'date' => $report->created_at->format('Y-m-d H:i:s'),
-                        'inspection_date' => $inspection->inspection_date->format('Y-m-d'),
-                        'vehicle' => $inspection->vehicle ? $inspection->vehicle->make . ' ' . $inspection->vehicle->model : 'N/A'
-                    ];
-                    $inspectionDocuments[] = $doc;
-                    $documentsByCategory['inspections'][] = $doc;
-                }
-            }
-        }
-        
-        $testingDocuments = [];
-        foreach ($driver->testings as $testing) {
-            // Drug test PDF
-            if ($testing->getMedia('drug_test_pdf') && $testing->getMedia('drug_test_pdf')->count() > 0) {
-                foreach ($testing->getMedia('drug_test_pdf') as $pdf) {
-                    $doc = [
-                        'name' => $pdf->file_name,
-                        'url' => $pdf->getUrl(),
-                        'size' => $this->formatFileSize($pdf->size),
-                        'date' => $pdf->created_at->format('Y-m-d H:i:s'),
-                        'test_date' => $testing->test_date ? $testing->test_date->format('Y-m-d') : 'N/A',
-                        'type' => 'Drug Test PDF'
-                    ];
-                    $testingDocuments[] = $doc;
-                    $documentsByCategory['testing'][] = $doc;
                 }
             }
             
-            // Test results
-            if ($testing->getMedia('test_results') && $testing->getMedia('test_results')->count() > 0) {
-                foreach ($testing->getMedia('test_results') as $result) {
-                    $doc = [
-                        'name' => $result->file_name,
-                        'url' => $result->getUrl(),
-                        'size' => $this->formatFileSize($result->size),
-                        'date' => $result->created_at->format('Y-m-d H:i:s'),
-                        'test_date' => $testing->test_date ? $testing->test_date->format('Y-m-d') : 'N/A',
-                        'type' => 'Test Results'
-                    ];
-                    $testingDocuments[] = $doc;
-                    $documentsByCategory['testing'][] = $doc;
-                }
-            }
-        }
-
-        // Agregar documentos de licencias
-        foreach ($driver->licenses as $license) {
-            if ($license->getMedia('license_front') && $license->getMedia('license_front')->count() > 0) {
-                foreach ($license->getMedia('license_front') as $doc) {
-                    $documentsByCategory['license'][] = [
-                        'name' => $doc->file_name,
-                        'url' => $doc->getUrl(),
-                        'size' => $this->formatFileSize($doc->size),
-                        'date' => $doc->created_at->format('Y-m-d H:i:s'),
-                        'type' => 'License Front'
-                    ];
-                }
-            }
-            if ($license->getMedia('license_back') && $license->getMedia('license_back')->count() > 0) {
-                foreach ($license->getMedia('license_back') as $doc) {
-                    $documentsByCategory['license'][] = [
-                        'name' => $doc->file_name,
-                        'url' => $doc->getUrl(),
-                        'size' => $this->formatFileSize($doc->size),
-                        'date' => $doc->created_at->format('Y-m-d H:i:s'),
-                        'type' => 'License Back'
+            // Otros documentos de aplicación
+            if ($driver->application->getMedia('application_documents')->count() > 0) {
+                foreach ($driver->application->getMedia('application_documents') as $media) {
+                    $documentsByCategory['certification'][] = [
+                        'name' => $media->file_name,
+                        'path' => $media->getPath(),
+                        'url' => $media->getUrl(),
+                        'size' => $this->formatFileSize($media->size),
+                        'date' => $media->created_at->format('Y-m-d H:i:s'),
+                        'media_id' => $media->id,
+                        'related_info' => 'Application Document'
                     ];
                 }
             }
         }
-
-        // Agregar documentos médicos
-        if ($driver->medicalQualification) {
-            if ($driver->medicalQualification->getMedia('medical_card') && $driver->medicalQualification->getMedia('medical_card')->count() > 0) {
-                foreach ($driver->medicalQualification->getMedia('medical_card') as $doc) {
-                    $documentsByCategory['medical'][] = [
-                        'name' => $doc->file_name,
-                        'url' => $doc->getUrl(),
-                        'size' => $this->formatFileSize($doc->size),
-                        'date' => $doc->created_at->format('Y-m-d H:i:s'),
-                        'type' => 'Medical Card'
-                    ];
-                }
-            }
-        }
-
+        
         // Agregar records específicos
         if ($drivingRecord) {
             $documentsByCategory['records'][] = [
@@ -473,7 +529,7 @@ class DriverListController extends Controller
                 'url' => $drivingRecord->getUrl(),
                 'size' => $this->formatFileSize($drivingRecord->size),
                 'date' => $drivingRecord->created_at->format('Y-m-d H:i:s'),
-                'type' => 'Driving Record'
+                'related_info' => 'Driving Record'
             ];
         }
         if ($medicalRecord) {
@@ -482,7 +538,7 @@ class DriverListController extends Controller
                 'url' => $medicalRecord->getUrl(),
                 'size' => $this->formatFileSize($medicalRecord->size),
                 'date' => $medicalRecord->created_at->format('Y-m-d H:i:s'),
-                'type' => 'Medical Record'
+                'related_info' => 'Medical Record'
             ];
         }
         if ($criminalRecord) {
@@ -491,7 +547,7 @@ class DriverListController extends Controller
                 'url' => $criminalRecord->getUrl(),
                 'size' => $this->formatFileSize($criminalRecord->size),
                 'date' => $criminalRecord->created_at->format('Y-m-d H:i:s'),
-                'type' => 'Criminal Record'
+                'related_info' => 'Criminal Record'
             ];
         }
 
@@ -501,12 +557,8 @@ class DriverListController extends Controller
             'medicalRecord' => $medicalRecord,
             'criminalRecord' => $criminalRecord,
             'documentsByCategory' => $documentsByCategory,
-            'trainingSchoolDocuments' => $trainingSchoolDocuments,
-            'courseDocuments' => $courseDocuments,
-            'accidentDocuments' => $accidentDocuments,
-            'trafficDocuments' => $trafficDocuments,
-            'inspectionDocuments' => $inspectionDocuments,
-            'testingDocuments' => $testingDocuments
+            'hasCertification' => $hasCertification,
+            'applicationFormExists' => $applicationFormExists
         ]);
     }
 
@@ -548,65 +600,112 @@ class DriverListController extends Controller
      */
     public function downloadDocuments($id)
     {
-        $driver = UserDriverDetail::findOrFail($id);
-        $zipFileName = 'driver_' . $id . '_documents_' . date('Y-m-d') . '.zip';
-        $zipPath = storage_path('app/temp/' . $zipFileName);
-        
-        // Ensure temp directory exists
-        if (!file_exists(storage_path('app/temp'))) {
-            mkdir(storage_path('app/temp'), 0755, true);
-        }
-        
-        $zip = new \ZipArchive();
-        
-        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
-            // Add license documents
-            if ($driver->licenses && $driver->licenses->count() > 0) {
-                foreach ($driver->licenses as $license) {
-                    $this->addMediaToZip($zip, $license, 'license_front', 'Licenses/License_' . $license->license_number . '_Front');
-                    $this->addMediaToZip($zip, $license, 'license_back', 'Licenses/License_' . $license->license_number . '_Back');
+        try {
+            $driver = UserDriverDetail::findOrFail($id);
+            $zipFileName = 'driver_' . $id . '_documents_' . date('Y-m-d') . '.zip';
+            $zipPath = storage_path('app/temp/' . $zipFileName);
+            
+            // Ensure temp directory exists
+            if (!file_exists(storage_path('app/temp'))) {
+                mkdir(storage_path('app/temp'), 0755, true);
+            }
+            
+            $zip = new \ZipArchive();
+            
+            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+                // Add license documents
+                if ($driver->licenses && $driver->licenses->count() > 0) {
+                    foreach ($driver->licenses as $license) {
+                        $this->addMediaToZip($zip, $license, 'license_front', 'Licenses/License_' . $license->license_number . '_Front');
+                        $this->addMediaToZip($zip, $license, 'license_back', 'Licenses/License_' . $license->license_number . '_Back');
+                    }
                 }
-            }
-            
-            // Add medical card
-            if ($driver->medicalQualification) {
-                $this->addMediaToZip($zip, $driver->medicalQualification, 'medical_card', 'Medical/Medical_Card');
-            }
-            
-            // Add training certificates
-            foreach ($driver->trainingSchools as $school) {
-                $certificates = $school->getMedia('school_certificates');
-                foreach ($certificates as $index => $certificate) {
-                    $localName = 'Training/' . $school->school_name . '/Certificate_' . ($index + 1) . '.' . $certificate->extension;
-                    $zip->addFile($certificate->getPath(), $localName);
+                
+                // Add medical card
+                if ($driver->medicalQualification) {
+                    $this->addMediaToZip($zip, $driver->medicalQualification, 'medical_card', 'Medical/Medical_Card');
                 }
+                
+                // Add training certificates
+                foreach ($driver->trainingSchools as $school) {
+                    $certificates = $school->getMedia('school_certificates');
+                    foreach ($certificates as $index => $certificate) {
+                        $localName = 'Training/' . $school->school_name . '/Certificate_' . ($index + 1) . '.' . $certificate->extension;
+                        $zip->addFile($certificate->getPath(), $localName);
+                    }
+                }
+                
+                // Add application PDF
+                if ($driver->application && $driver->application->hasMedia('application_pdf')) {
+                    $applicationPdf = $driver->application->getFirstMedia('application_pdf');
+                    $zip->addFile($applicationPdf->getPath(), 'Application/Complete_Application.pdf');
+                }
+                
+                // Add lease agreement documents
+                $basePath = storage_path('app/public/driver/' . $driver->id . '/vehicle_verifications/');
+                $leaseAgreementThirdPartyPath = $basePath . 'lease_agreement_third_party.pdf';
+                $leaseAgreementOwnerPath = $basePath . 'lease_agreement_owner_operator.pdf';
+                
+                if (file_exists($leaseAgreementThirdPartyPath)) {
+                    $zip->addFile($leaseAgreementThirdPartyPath, 'Lease_Agreements/Third_Party_Lease_Agreement.pdf');
+                }
+                
+                if (file_exists($leaseAgreementOwnerPath)) {
+                    $zip->addFile($leaseAgreementOwnerPath, 'Lease_Agreements/Owner_Operator_Lease_Agreement.pdf');
+                }
+                
+                $zip->close();
+                
+                return response()->download($zipPath)->deleteFileAfterSend(true);
             }
             
-            // Add application PDF
-            if ($driver->application && $driver->application->hasMedia('application_pdf')) {
-                $applicationPdf = $driver->application->getFirstMedia('application_pdf');
-                $zip->addFile($applicationPdf->getPath(), 'Application/Complete_Application.pdf');
-            }
+            return back()->with('error', 'Could not create ZIP file');
+        } catch (\Exception $e) {
+            Log::error('Error downloading documents', [
+                'driver_id' => $id,
+                'error' => $e->getMessage()
+            ]);
             
-            // Add lease agreement documents
-            $basePath = storage_path('app/public/driver/' . $driver->id . '/vehicle_verifications/');
-            $leaseAgreementThirdPartyPath = $basePath . 'lease_agreement_third_party.pdf';
-            $leaseAgreementOwnerPath = $basePath . 'lease_agreement_owner_operator.pdf';
-            
-            if (file_exists($leaseAgreementThirdPartyPath)) {
-                $zip->addFile($leaseAgreementThirdPartyPath, 'Lease_Agreements/Third_Party_Lease_Agreement.pdf');
-            }
-            
-            if (file_exists($leaseAgreementOwnerPath)) {
-                $zip->addFile($leaseAgreementOwnerPath, 'Lease_Agreements/Owner_Operator_Lease_Agreement.pdf');
-            }
-            
-            $zip->close();
-            
-            return response()->download($zipPath)->deleteFileAfterSend(true);
+            return back()->with('error', 'Error downloading documents: ' . $e->getMessage());
         }
-        
-        return back()->with('error', 'Could not create ZIP file');
+    }
+    
+    /**
+     * Regenera los documentos de certificación para un conductor
+     * 
+     * @param int $id ID del conductor
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function regenerateApplicationForms($id)
+    {
+        try {
+            $driver = UserDriverDetail::findOrFail($id);
+            
+            // Verificar si el conductor tiene certificación
+            if (!$driver->certification || !$driver->certification->signature) {
+                return back()->with('error', 'El conductor no tiene una certificación con firma para generar documentos.');
+            }
+            
+            // Crear instancia del componente Livewire
+            $certificationStep = new \App\Livewire\Admin\Driver\DriverCertificationStep();
+            $certificationStep->mount($id);
+            $certificationStep->signature = $driver->certification->signature;
+            $certificationStep->certificationAccepted = true;
+            
+            // Simular el proceso de completar la certificación
+            $certificationStep->complete();
+            
+            return back()->with('success', 'Los documentos de certificación han sido regenerados correctamente.');
+            
+        } catch (\Exception $e) {
+            Log::error('Error regenerando documentos de certificación', [
+                'driver_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->with('error', 'Error regenerando documentos: ' . $e->getMessage());
+        }
     }
     
 

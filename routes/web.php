@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\CustomLoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\VehicleVerificationController;
+use App\Http\Controllers\EmploymentVerificationController;
 
 // Rutas públicas (sin autenticación)
 /*
@@ -36,6 +37,31 @@ Route::prefix('vehicle-verification')->name('vehicle.verification.')->group(func
     // Página de agradecimiento
     Route::get('/{token}/thank-you', [VehicleVerificationController::class, 'showThankYou'])
         ->name('thank-you');
+});
+
+// Rutas para verificación de empleo (sin autenticación)
+Route::prefix('employment-verification')->name('employment-verification.')->group(function () {
+    // IMPORTANTE: Las rutas específicas deben ir ANTES de las rutas con parámetros
+    
+    // Página de agradecimiento
+    Route::get('/thank-you', [EmploymentVerificationController::class, 'thankYou'])
+        ->name('thank-you');
+    
+    // Página de token expirado
+    Route::get('/expired', [EmploymentVerificationController::class, 'expired'])
+        ->name('expired');
+    
+    // Página de error
+    Route::get('/error', [EmploymentVerificationController::class, 'error'])
+        ->name('error');
+    
+    // Mostrar formulario de verificación (debe ir después de las rutas específicas)
+    Route::get('/{token}', [EmploymentVerificationController::class, 'showVerificationForm'])
+        ->name('form');
+    
+    // Procesar la verificación
+    Route::post('/{token}/process', [EmploymentVerificationController::class, 'processVerification'])
+        ->name('process');
 });
 
 Route::get('/', function () {

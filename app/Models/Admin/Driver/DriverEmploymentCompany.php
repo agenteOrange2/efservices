@@ -5,10 +5,13 @@ namespace App\Models\Admin\Driver;
 use App\Models\UserDriverDetail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Admin\Driver\EmploymentVerificationToken;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class DriverEmploymentCompany extends Model
+class DriverEmploymentCompany extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
     protected $fillable = [
         'user_driver_detail_id',
@@ -21,7 +24,11 @@ class DriverEmploymentCompany extends Model
         'reason_for_leaving',
         'other_reason_description',
         'email',
-        'explanation'
+        'explanation',
+        'email_sent',
+        'verification_status',
+        'verification_date',
+        'verification_notes'
     ];
 
     protected $casts = [
@@ -29,6 +36,8 @@ class DriverEmploymentCompany extends Model
         'employed_to' => 'date',
         'subject_to_fmcsr' => 'boolean',
         'safety_sensitive_function' => 'boolean',
+        'email_sent' => 'boolean',
+        'verification_date' => 'datetime',
     ];
 
 
@@ -46,5 +55,22 @@ class DriverEmploymentCompany extends Model
     public function masterCompany()
     {
         return $this->belongsTo(MasterCompany::class);
+    }
+    
+    /**
+     * Relación con los tokens de verificación de empleo
+     */
+    public function verificationTokens()
+    {
+        return $this->hasMany(EmploymentVerificationToken::class, 'employment_company_id');
+    }
+    
+    /**
+     * Registra los tipos de media que puede tener este modelo
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('signature')
+            ->singleFile();
     }
 }

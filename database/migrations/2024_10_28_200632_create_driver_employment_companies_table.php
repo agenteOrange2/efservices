@@ -24,6 +24,10 @@ return new class extends Migration
             $table->string('email')->nullable();
             $table->string('other_reason_description')->nullable();
             $table->text('explanation')->nullable();            
+            $table->boolean('email_sent')->default(false);
+            $table->string('verification_status')->nullable();
+            $table->timestamp('verification_date')->nullable();
+            $table->text('verification_notes')->nullable();
             $table->timestamps();
         });
     }
