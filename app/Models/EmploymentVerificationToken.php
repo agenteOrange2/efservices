@@ -20,7 +20,9 @@ class EmploymentVerificationToken extends Model
         'expires_at',
         'verified_at',
         'verification_notes',
-        'verification_status'
+        'verification_status',
+        'signature_path',
+        'document_path'
     ];
 
     protected $casts = [

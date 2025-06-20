@@ -2,9 +2,10 @@
 
 namespace App\Models\Admin\Driver;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Models\UserDriverDetail;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class EmploymentVerificationToken extends Model
 {
@@ -22,6 +23,8 @@ class EmploymentVerificationToken extends Model
         'email',
         'expires_at',
         'verified_at',
+        'signature_path',
+        'document_path',
     ];
 
     /**

@@ -3,10 +3,10 @@
 
 @section('subcontent')
 <div class="intro-y flex flex-col sm:flex-row items-center mt-8">
-    <h2 class="text-lg font-medium mr-auto">Detalles de Verificación de Empleo</h2>
+    <h2 class="text-lg font-medium mr-auto">Employment Verification Details</h2>
     <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
         <a href="{{ route('admin.drivers.employment-verification.index') }}" class="btn btn-secondary shadow-md mr-2">
-            <i class="w-4 h-4 mr-2" data-lucide="arrow-left"></i> Volver a Verificaciones
+            <i class="w-4 h-4 mr-2" data-lucide="arrow-left"></i> Back to Verifications
         </a>
     </div>
 </div>
@@ -34,11 +34,11 @@
     <div class="col-span-12 xl:col-span-4">
         <div class="box p-5">
             <div class="flex items-center border-b border-slate-200/60 dark:border-darkmode-400 pb-5 mb-5">
-                <div class="font-medium text-base truncate">Información del Conductor</div>
+                <div class="font-medium text-base truncate">Driver Information</div>
             </div>
             <div class="flex flex-col">
                 <div class="flex items-center mb-3">
-                    <div class="font-medium">Nombre:</div>
+                    <div class="font-medium">Name:</div>
                     <div class="ml-auto">{{ $employmentCompany->userDriverDetail->user->name }} {{ $employmentCompany->userDriverDetail->last_name }}</div>
                 </div>
                 <div class="flex items-center mb-3">
@@ -46,11 +46,11 @@
                     <div class="ml-auto">{{ $employmentCompany->userDriverDetail->user->email }}</div>
                 </div>
                 <div class="flex items-center mb-3">
-                    <div class="font-medium">Teléfono:</div>
+                    <div class="font-medium">Phone:</div>
                     <div class="ml-auto">{{ $employmentCompany->userDriverDetail->phone }}</div>
                 </div>
                 <div class="flex items-center">
-                    <a href="{{ route('admin.drivers.show', $employmentCompany->userDriverDetail->id) }}" class="btn btn-outline-primary w-full">Ver perfil completo</a>
+                    <a href="{{ route('admin.drivers.show', $employmentCompany->userDriverDetail->id) }}" class="btn btn-outline-primary w-full">View full profile</a>
                 </div>
             </div>
         </div>
@@ -60,43 +60,43 @@
     <div class="col-span-12 xl:col-span-8">
         <div class="box p-5">
             <div class="flex items-center border-b border-slate-200/60 dark:border-darkmode-400 pb-5 mb-5">
-                <div class="font-medium text-base truncate">Información de la Empresa</div>
+                <div class="font-medium text-base truncate">Company Information</div>
             </div>
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12 sm:col-span-6">
                     <div class="mb-3">
-                        <div class="font-medium">Nombre de la empresa:</div>
+                        <div class="font-medium">Company name:</div>
                         <div>{{ $employmentCompany->masterCompany ? $employmentCompany->masterCompany->name : 'Empresa personalizada' }}</div>
                     </div>
                     <div class="mb-3">
-                        <div class="font-medium">Email de contacto:</div>
+                        <div class="font-medium">Contact email:</div>
                         <div>{{ $employmentCompany->email }}</div>
                     </div>
                     <div class="mb-3">
-                        <div class="font-medium">Posición ocupada:</div>
+                        <div class="font-medium">Position held:</div>
                         <div>{{ $employmentCompany->positions_held }}</div>
                     </div>
                 </div>
                 <div class="col-span-12 sm:col-span-6">
                     <div class="mb-3">
-                        <div class="font-medium">Período de empleo:</div>
-                        <div>{{ $employmentCompany->employed_from->format('d/m/Y') }} - {{ $employmentCompany->employed_to->format('d/m/Y') }}</div>
+                        <div class="font-medium">Employment period:</div>
+                        <div>{{ $employmentCompany->employed_from->format('m/d/Y') }} - {{ $employmentCompany->employed_to->format('m/d/Y') }}</div>
                     </div>
                     <div class="mb-3">
-                        <div class="font-medium">Razón de salida:</div>
+                        <div class="font-medium">Reason for leaving:</div>
                         <div>{{ $employmentCompany->reason_for_leaving }}</div>
-                        @if($employmentCompany->reason_for_leaving == 'Otro' && $employmentCompany->other_reason_description)
+                        @if($employmentCompany->reason_for_leaving == 'Other' && $employmentCompany->other_reason_description)
                             <div class="text-slate-500">{{ $employmentCompany->other_reason_description }}</div>
                         @endif
                     </div>
                     <div class="mb-3">
-                        <div class="font-medium">Regulaciones:</div>
+                        <div class="font-medium">Regulations:</div>
                         <div>
                             @if($employmentCompany->subject_to_fmcsr)
-                                <span class="text-success"><i data-lucide="check" class="w-4 h-4 inline"></i> Sujeto a FMCSR</span><br>
+                                <span class="text-success"><i data-lucide="check" class="w-4 h-4 inline"></i> Subject to FMCSR</span><br>
                             @endif
                             @if($employmentCompany->safety_sensitive_function)
-                                <span class="text-success"><i data-lucide="check" class="w-4 h-4 inline"></i> Función sensible a la seguridad</span>
+                                <span class="text-success"><i data-lucide="check" class="w-4 h-4 inline"></i> Safety sensitive function</span>
                             @endif
                         </div>
                     </div>
@@ -109,14 +109,14 @@
     <div class="col-span-12">
         <div class="box p-5">
             <div class="flex items-center border-b border-slate-200/60 dark:border-darkmode-400 pb-5 mb-5">
-                <div class="font-medium text-base truncate">Estado de Verificación</div>
+                <div class="font-medium text-base truncate">Verification Status</div>
                 <div class="ml-auto">
                     @if($employmentCompany->verification_status == 'verified')
-                        <span class="bg-success/20 text-success rounded px-2 py-1">Verificado</span>
+                        <span class="bg-success/20 text-success rounded px-2 py-1">Verified</span>
                     @elseif($employmentCompany->verification_status == 'rejected')
-                        <span class="bg-danger/20 text-danger rounded px-2 py-1">Rechazado</span>
+                        <span class="bg-danger/20 text-danger rounded px-2 py-1">Rejected</span>
                     @else
-                        <span class="bg-warning/20 text-warning rounded px-2 py-1">Pendiente</span>
+                        <span class="bg-warning/20 text-warning rounded px-2 py-1">Pending</span>
                     @endif
                 </div>
             </div>
@@ -124,27 +124,27 @@
             <div class="grid grid-cols-12 gap-4">
                 <div class="col-span-12 xl:col-span-6">
                     <div class="mb-3">
-                        <div class="font-medium">Email enviado:</div>
-                        <div>{{ $employmentCompany->email_sent ? 'Sí' : 'No' }}</div>
+                        <div class="font-medium">Email sent:</div>
+                        <div>{{ $employmentCompany->email_sent ? 'Yes' : 'No' }}</div>
                     </div>
                     
                     @if($employmentCompany->verification_date)
                     <div class="mb-3">
-                        <div class="font-medium">Fecha de verificación:</div>
-                        <div>{{ $employmentCompany->verification_date->format('d/m/Y H:i') }}</div>
+                        <div class="font-medium">Verification date:</div>
+                        <div>{{ $employmentCompany->verification_date->format('m/d/Y H:i') }}</div>
                     </div>
                     @endif
                     
                     @if($employmentCompany->verification_by)
                     <div class="mb-3">
-                        <div class="font-medium">Verificado por:</div>
+                        <div class="font-medium">Verified by:</div>
                         <div>{{ $employmentCompany->verification_by }}</div>
                     </div>
                     @endif
                     
                     @if($employmentCompany->verification_notes)
                     <div class="mb-3">
-                        <div class="font-medium">Notas de verificación:</div>
+                        <div class="font-medium">Verification notes:</div>
                         <div>{{ $employmentCompany->verification_notes }}</div>
                     </div>
                     @endif
@@ -166,19 +166,19 @@
                         
                         @if($signaturePath)
                         <div>
-                            <div class="font-medium mb-2">Firma:</div>
+                            <div class="font-medium mb-2">Signature:</div>
                             <div class="border rounded-lg p-3 bg-gray-50">
-                                <img src="{{ $signaturePath }}" alt="Firma" class="max-w-full h-auto">
+                                <img src="{{ $signaturePath }}" alt="Signature" class="max-w-full h-auto">
                             </div>
                         </div>
                         @endif
                         
                         @if($pdfPath)
                         <div>
-                            <div class="font-medium mb-2">Documento PDF:</div>
+                            <div class="font-medium mb-2">PDF Document:</div>
                             <div class="flex flex-col space-y-2">
                                 <a href="{{ $pdfPath }}" target="_blank" class="btn btn-outline-primary flex items-center">
-                                    <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Ver PDF
+                                    <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> View PDF
                                 </a>
                                 <a href="{{ $pdfPath }}" download class="btn btn-outline-secondary flex items-center">
                                     <i data-lucide="download" class="w-4 h-4 mr-2"></i> Descargar
@@ -191,14 +191,14 @@
                 
                 <div class="col-span-12 xl:col-span-6">
                     <div class="mb-3">
-                        <div class="font-medium">Historial de tokens:</div>
+                        <div class="font-medium">History of tokens:</div>
                         <div class="overflow-auto max-h-40">
                             <table class="table table-sm">
                                 <thead>
                                     <tr>
-                                        <th>Fecha de creación</th>
-                                        <th>Expiración</th>
-                                        <th>Estado</th>
+                                        <th>Creation date</th>
+                                        <th>Expiration</th>
+                                        <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -208,17 +208,17 @@
                                             <td>{{ $token->expires_at->format('m/d/Y H:i') }}</td>
                                             <td>
                                                 @if($token->verified_at)
-                                                    <span class="text-success">Verificado</span>
+                                                    <span class="text-success">Verified</span>
                                                 @elseif($token->expires_at < now())
-                                                    <span class="text-danger">Expirado</span>
+                                                    <span class="text-danger">Expired</span>
                                                 @else
-                                                    <span class="text-warning">Pendiente</span>
+                                                    <span class="text-warning">Pending</span>
                                                 @endif
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="3" class="text-center">No hay tokens registrados</td>
+                                            <td colspan="3" class="text-center">No tokens registered</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -230,17 +230,17 @@
                         <form action="{{ route('admin.drivers.employment-verification.resend', $employmentCompany->id) }}" method="POST">
                             @csrf
                             <button type="submit" class="btn btn-outline-primary w-full">
-                                <i data-lucide="mail" class="w-4 h-4 mr-2"></i> Reenviar correo de verificación
+                                <i data-lucide="mail" class="w-4 h-4 mr-2"></i> Resend verification email
                             </button>
                         </form>
                         
                         @if(!$employmentCompany->verification_status)
                             <div class="grid grid-cols-2 gap-2">
                                 <button type="button" class="btn btn-success" data-tw-toggle="modal" data-tw-target="#mark-verified-modal">
-                                    <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i> Marcar como verificado
+                                    <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i>Mark as verified
                                 </button>
                                 <button type="button" class="btn btn-danger" data-tw-toggle="modal" data-tw-target="#mark-rejected-modal">
-                                    <i data-lucide="x-circle" class="w-4 h-4 mr-2"></i> Marcar como rechazado
+                                    <i data-lucide="x-circle" class="w-4 h-4 mr-2"></i> Mark as rejected
                                 </button>
                             </div>
                         @endif
