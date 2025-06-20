@@ -38,6 +38,7 @@ use App\Http\Controllers\Admin\Driver\TrafficConvictionsController;
 use App\Http\Controllers\Admin\Vehicles\VehicleServiceItemController;
 use App\Http\Controllers\Admin\Vehicles\MaintenanceNotificationController;
 use App\Http\Controllers\Admin\Driver\EmploymentVerificationAdminController;
+use App\Http\Controllers\Admin\MasterCompanyController;
 
 
 Route::get('theme-switcher/{activeTheme}', [ThemeController::class, 'switch'])->name('theme-switcher');
@@ -49,6 +50,14 @@ Route::post('/dashboard/ajax-update', [DashboardController::class, 'ajaxUpdate']
 // Dashboard principal
 // Aquí solo mantenemos las rutas del dashboard principal
 
+
+/*
+    |--------------------------------------------------------------------------
+    | MASTER COMPANIES MANAGEMENT
+    |--------------------------------------------------------------------------    
+*/
+
+Route::resource('companies', MasterCompanyController::class);
 
 /*
     |--------------------------------------------------------------------------
