@@ -258,6 +258,7 @@ Route::middleware('auth')->group(function() {
         Route::get('users', [UserController::class, 'index'])->name('users.index');
         Route::get('users/export-excel', [UserController::class, 'exportToExcel'])->name('users.export.excel');
         Route::get('users/export-pdf', [UserController::class, 'exportToPdf'])->name('users.export.pdf');
+        Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
     });
     
     // Rutas que requieren permiso para crear usuarios

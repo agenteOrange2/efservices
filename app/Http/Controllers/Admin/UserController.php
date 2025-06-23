@@ -111,6 +111,20 @@ class UserController extends Controller
             ]);
     }
     /**
+     * Display the specified resource.
+     */
+    public function show(User $user)
+    {
+        // Obtener la URL de la foto de perfil
+        $profilePhotoUrl = $user->getFirstMediaUrl('profile_photos', 'webp');
+        
+        // Obtener los roles del usuario
+        $roles = $user->roles()->get();
+        
+        return view('admin.users.show', compact('user', 'profilePhotoUrl', 'roles'));
+    }
+    
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(User $user)
@@ -196,5 +210,162 @@ class UserController extends Controller
             'type' => 'error',
             'message' => 'User deleted successfully!',
         ]);
+    }
+    
+    /**
+     * Export users to Excel
+     */
+    public function exportToExcel(Request $request)
+    {
+        logger()->info('Iniciando exportación a Excel con parámetros:', [
+            'filters' => $request->input('filters'),
+            'search' => $request->input('search')
+        ]);
+
+        $query = User::query();
+        
+        // Aplicar filtros si existen
+        if ($request->has('filters')) {
+            $filters = json_decode($request->input('filters'), true);
+            logger()->info('Filtros decodificados para Excel:', $filters);
+            
+            // Filtro de fecha
+            if (isset($filters['date_range']) && !empty($filters['date_range']['start']) && !empty($filters['date_range']['end'])) {
+                $startDate = $filters['date_range']['start'];
+                $endDate = $filters['date_range']['end'] . ' 23:59:59';
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+                logger()->info('Aplicando filtro de fechas:', ['start' => $startDate, 'end' => $endDate]);
+            }
+            
+            // Filtro de estado
+            if (isset($filters['status'])) {
+                if ($filters['status'] === 'active') {
+                    $query->where('status', 1);
+                } elseif ($filters['status'] === 'inactive') {
+                    $query->where('status', 0);
+                }
+            }
+        }
+        
+        // Aplicar búsqueda si existe
+        if ($request->has('search') && !empty($request->input('search'))) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+        
+        // Obtener datos
+        $users = $query->get(['id', 'name', 'email', 'status', 'created_at']);
+        
+        // Formatear datos para exportación
+        $exportData = $users->map(function($user) {
+            return [
+                'ID' => $user->id,
+                'Name' => $user->name,
+                'Email' => $user->email,
+                'Status' => $user->status ? 'Active' : 'Inactive',
+                'Created At' => $user->created_at->format('Y-m-d H:i:s'),
+                'Roles' => $user->roles->pluck('name')->implode(', ')
+            ];
+        });
+        
+        return Excel::download(new class($exportData) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\WithStyles {
+            protected $data;
+            
+            public function __construct($data)
+            {
+                $this->data = $data;
+            }
+            
+            public function collection()
+            {
+                return $this->data;
+            }
+            
+            public function headings(): array
+            {
+                return array_keys($this->data->first()->toArray());
+            }
+            
+            public function styles(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet)
+            {
+                return [
+                    1 => ['font' => ['bold' => true]],
+                ];
+            }
+        }, 'users_export_' . date('Y-m-d') . '.xlsx');
+    }
+    
+    /**
+     * Export users to PDF
+     */
+    public function exportToPdf(Request $request)
+    {
+        try {
+            logger()->info('Iniciando exportación a PDF con parámetros:', [
+                'filters' => $request->input('filters'),
+                'search' => $request->input('search')
+            ]);
+        
+            $query = User::query();
+            
+            // Aplicar filtros si existen
+            if ($request->has('filters')) {
+                $filters = json_decode($request->input('filters'), true);
+                logger()->info('Filtros decodificados para PDF:', $filters);
+                
+                // Filtro de fecha
+                if (isset($filters['date_range']) && !empty($filters['date_range']['start']) && !empty($filters['date_range']['end'])) {
+                    $startDate = $filters['date_range']['start'];
+                    $endDate = $filters['date_range']['end'] . ' 23:59:59';
+                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                    logger()->info('Aplicando filtro de fechas para PDF:', ['start' => $startDate, 'end' => $endDate]);
+                }
+                
+                // Filtro de estado
+                if (isset($filters['status'])) {
+                    if ($filters['status'] === 'active') {
+                        $query->where('status', 1);
+                    } elseif ($filters['status'] === 'inactive') {
+                        $query->where('status', 0);
+                    }
+                }
+            }
+            
+            // Aplicar búsqueda si existe
+            if ($request->has('search') && !empty($request->input('search'))) {
+                $search = $request->input('search');
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%");
+                });
+            }
+            
+            // Obtener datos
+            $users = $query->get(['id', 'name', 'email', 'status', 'created_at']);
+            
+            // Formatear datos para exportación
+            $users->transform(function($user) {
+                $user->status_text = $user->status ? 'Active' : 'Inactive';
+                $user->roles_text = $user->roles->pluck('name')->implode(', ');
+                return $user;
+            });
+            
+            $pdf = Pdf::loadView('admin.exports.export', [
+                'data' => $users,
+                'columns' => ['ID', 'Name', 'Email', 'Status', 'Created At', 'Roles'],
+                'title' => 'Users Export'
+            ]);
+            
+            return response()->streamDownload(
+                fn() => print($pdf->output()),
+                'users_export_' . date('Y-m-d') . '.pdf'
+            );
+        } catch (\Exception $e) {
+            logger()->error('Error en exportación a PDF: ' . $e->getMessage());
+            return back()->with('error', 'Error al generar el PDF: ' . $e->getMessage());
+        }
     }
 }

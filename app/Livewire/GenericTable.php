@@ -26,9 +26,15 @@ class GenericTable extends Component
     public $selectAll = false;
     public $openMenu = [];
     public $editRoute; // Ruta para edición
+    public $showRoute; // Ruta para visualización de detalles
+    public $deleteRoute; // Ruta para eliminación
     public $deleteMethod = 'delete'; // Método de eliminación
     public $exportExcelRoute;
     public $exportPdfRoute;
+    
+    // Variables para confirmación de eliminación
+    public $showDeleteConfirmation = false;
+    public $recordToDelete = null;
 
     protected $listeners = [
         'resetPage',
@@ -36,15 +42,25 @@ class GenericTable extends Component
         'clearFilters' => 'clearFilters',
         'exportToExcel',
         'exportToPdf',
-        'search-updated' => 'updateSearch'
+        'search-updated' => 'updateSearch',
+        'confirmDeleteSingle' => 'confirmDeleteSingle',
+        'confirmDeleteSelected' => 'confirmDeleteSelected',
+        'updateDateRange' => 'updateDateRange'
     ];
 
-    public function mount($model, $columns, $searchableFields = [], $customFilters = [])
+    public function mount($model, $columns, $searchableFields = [], $customFilters = [], $showRoute = null, $editRoute = null, $deleteRoute = null, $exportExcelRoute = null, $exportPdfRoute = null)
     {
         $this->model = $model;
         $this->columns = $columns;
         $this->searchableFields = $searchableFields;
         $this->customFilters = $customFilters;
+        
+        // Inicializar rutas
+        $this->showRoute = $showRoute;
+        $this->editRoute = $editRoute;
+        $this->deleteRoute = $deleteRoute;
+        $this->exportExcelRoute = $exportExcelRoute;
+        $this->exportPdfRoute = $exportPdfRoute;
 
         $modelInstance = new $this->model;
 
@@ -61,12 +77,24 @@ class GenericTable extends Component
         if ($modelInstance->getConnection()->getSchemaBuilder()->hasColumn($modelInstance->getTable(), 'created_at')) {
             $this->filters['date_range'] = ['start' => null, 'end' => null];
         }
+        
+        // Enviar los filtros iniciales al componente MenuExport
+        $this->dispatch('updateExportFilters', [
+            'filters' => $this->filters,
+            'search' => $this->search
+        ]);
     }
 
     public function updateSearch($search)
     {
         $this->search = $search;
         $this->resetPage();
+        
+        // Enviar los filtros actualizados al componente MenuExport
+        $this->dispatch('updateExportFilters', [
+            'filters' => $this->filters,
+            'search' => $this->search
+        ]);
     }
 
     public function updatingPerPage($value)
@@ -76,6 +104,8 @@ class GenericTable extends Component
 
     public function clearFilters()
     {
+        logger()->info('Limpiando todos los filtros');
+        
         // Reiniciar filtros dinámicos personalizados
         foreach ($this->customFilters as $key => $filter) {
             $this->filters[$key] = $filter['default'] ?? null;
@@ -85,20 +115,81 @@ class GenericTable extends Component
         if (isset($this->filters['date_range'])) {
             $this->filters['date_range'] = ['start' => null, 'end' => null];
         }
-
-        // Emitir evento al hijo para reiniciar filtros
-        $this->dispatch('filtersUpdated', $this->filters);
+        
+        // Reiniciar filtro de status
+        if (isset($this->filters['status'])) {
+            $this->filters['status'] = null;
+        }
+        
+        // Emitir evento para reiniciar filtros en componentes hijos
+        $this->dispatch('resetFilters', $this->filters);
+        
+        // Notificar al usuario
+        $this->dispatch('notify', [
+            'type' => 'info',
+            'message' => 'Filters cleared',
+            'details' => 'All filters have been reset to their default values.'
+        ]);
+        
+        // Enviar los filtros actualizados al componente MenuExport
+        $this->dispatch('updateExportFilters', [
+            'filters' => $this->filters,
+            'search' => $this->search
+        ]);
 
         $this->resetPage();
     }
 
 
+    public function updateDateRange($dates)
+    {
+        logger()->info('Actualizando rango de fechas:', $dates);
+        
+        if (isset($dates['dates']['start'], $dates['dates']['end'])) {
+            $this->filters['date_range'] = [
+                'start' => $dates['dates']['start'],
+                'end' => $dates['dates']['end']
+            ];
+            
+            logger()->debug('Filtros actualizados con nuevo rango de fechas:', $this->filters);
+            $this->resetPage();
+            
+            // Notificar al usuario que el filtro se ha aplicado
+            $this->dispatch('notify', [
+                'type' => 'info',
+                'message' => 'Date filter applied',
+                'details' => 'Showing records from ' . $dates['dates']['start'] . ' to ' . $dates['dates']['end'],
+            ]);
+        } else {
+            logger()->warning('Formato de fecha incorrecto recibido:', $dates);
+        }
+    }
+    
     public function applyFilters($filters)
     {
         logger()->info('Filtros aplicados:', $filters);
-
-        $this->filters = $filters;
+        
+        // Manejar filtro de status
+        if (isset($filters['status']) && !is_null($filters['status'])) {
+            $this->filters['status'] = $filters['status'];
+        }
+        
+        // Manejar otros filtros personalizados
+        if (isset($filters['filters']) && is_array($filters['filters'])) {
+            foreach ($filters['filters'] as $key => $value) {
+                if (!is_null($value)) {
+                    $this->filters[$key] = $value;
+                }
+            }
+        }
+        
         $this->resetPage(); // Reiniciar paginación
+        
+        // Enviar los filtros actualizados al componente MenuExport
+        $this->dispatch('updateExportFilters', [
+            'filters' => $this->filters,
+            'search' => $this->search
+        ]);
     }
 
 
@@ -106,6 +197,73 @@ class GenericTable extends Component
     {
         $this->sortField = $field;
         $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+    }
+
+    public function showRecord($id)
+    {
+        if ($this->showRoute) {
+            return redirect()->route($this->showRoute, $id);
+        } else {
+            // Si no hay ruta definida, mostrar el registro en un modal
+            $record = $this->model::find($id);
+            
+            if ($record) {
+                $recordData = $record->toArray();
+                
+                // Si es un usuario, incluir información adicional como roles
+                if (class_basename($this->model) === 'User' && method_exists($record, 'roles')) {
+                    try {
+                        // Obtener roles del usuario
+                        $roles = $record->roles()->pluck('name')->toArray();
+                        $recordData['roles'] = implode(', ', $roles);
+                        
+                        // Agregar roles a las columnas si no existe
+                        if (!in_array('roles', $this->columns)) {
+                            $columns = $this->columns;
+                            $columns[] = 'roles';
+                        } else {
+                            $columns = $this->columns;
+                        }
+                        
+                        // Formatear fechas para mejor legibilidad
+                        if (isset($recordData['created_at'])) {
+                            $recordData['created_at'] = date('Y-m-d H:i:s', strtotime($recordData['created_at']));
+                        }
+                        if (isset($recordData['updated_at'])) {
+                            $recordData['updated_at'] = date('Y-m-d H:i:s', strtotime($recordData['updated_at']));
+                        }
+                        
+                        // Formatear estado si existe
+                        if (isset($recordData['status'])) {
+                            $recordData['status'] = $recordData['status'] ? 'Active' : 'Inactive';
+                        }
+                    } catch (\Exception $e) {
+                        logger()->error('Error obteniendo roles del usuario: ' . $e->getMessage());
+                        $columns = $this->columns;
+                    }
+                } else {
+                    $columns = $this->columns;
+                }
+                
+                $this->dispatch('showRecordDetail', [
+                    'record' => $recordData,
+                    'columns' => $columns,
+                    'modelName' => class_basename($this->model)
+                ]);
+            } else {
+                $this->dispatch('notify', [
+                    'type' => 'warning',
+                    'message' => 'Record not found',
+                    'details' => 'The requested record could not be found.',
+                ]);
+            }
+        }
+    }
+
+    public function confirmDeleteSingle($id)
+    {
+        $this->recordToDelete = $id;
+        $this->dispatch('opendeleteconfirmation');
     }
 
     public function deleteSingle($id)
@@ -125,7 +283,7 @@ class GenericTable extends Component
             'message' => 'Record deleted successfully!',
             'details' => "The record with ID $id has been removed.",
         ]);
-        
+    
         logger()->info('Notify event dispatched for single delete'); // Log después del dispatch
     }
 
@@ -133,7 +291,7 @@ class GenericTable extends Component
     {
         $this->openMenu = [];
     }
-
+    
     public function exportToExcel()
     {
         $data = $this->model::all($this->columns);
@@ -159,7 +317,7 @@ class GenericTable extends Component
             }
         }, 'export.xlsx');
     }
-
+    
     public function exportToPdf()
     {
         $data = $this->model::all($this->columns);
@@ -175,6 +333,19 @@ class GenericTable extends Component
             fn() => print($pdf->output()),
             strtolower(class_basename($this->model)) . '.pdf'
         );
+    }
+
+    public function confirmDeleteSelected()
+    {
+        if (count($this->selected) > 0) {
+            $this->dispatch('opendeleteconfirmationmultiple');
+        } else {
+            $this->dispatch('notify', [
+                'type' => 'warning',
+                'message' => 'No records selected!',
+                'details' => 'Please select at least one record to delete.',
+            ]);
+        }
     }
 
     public function deleteSelected()
@@ -232,33 +403,74 @@ class GenericTable extends Component
             });
         }
 
+        $modelInstance = new $this->model;
+        $table = $modelInstance->getTable();
+        $schema = $modelInstance->getConnection()->getSchemaBuilder();
+        
+        // Depurar filtros actuales
+        logger()->debug('Filtros actuales en render:', $this->filters);
+        
         // Aplicar filtros de rango de fechas
-        if (!empty($this->filters['date_range']['start']) && !empty($this->filters['date_range']['end'])) {
-            $query->whereBetween('created_at', [
-                $this->filters['date_range']['start'],
-                $this->filters['date_range']['end'],
-            ]);
-        }
-
-        // Aplicar otros filtros personalizados
-        foreach ($this->filters as $key => $value) {
-            if ($key !== 'date_range' && !is_null($value)) {
-                $query->where($key, $value);
+        if (isset($this->filters['date_range']) && 
+            !empty($this->filters['date_range']['start']) && 
+            !empty($this->filters['date_range']['end'])) {
+            
+            // Verificar que la columna created_at existe
+            $dateColumn = 'created_at';
+            if ($schema->hasColumn($table, $dateColumn)) {
+                $startDate = $this->filters['date_range']['start'];
+                $endDate = $this->filters['date_range']['end'];
+                
+                // Asegurar que las fechas están en formato correcto
+                if (!$startDate instanceof \DateTime) {
+                    $startDate = date('Y-m-d', strtotime($startDate));
+                }
+                
+                if (!$endDate instanceof \DateTime) {
+                    // Añadir 23:59:59 al final del día para incluir todo el día final
+                    $endDate = date('Y-m-d', strtotime($endDate)) . ' 23:59:59';
+                }
+                
+                logger()->debug('Aplicando filtro de fecha:', [
+                    'start' => $startDate,
+                    'end' => $endDate
+                ]);
+                
+                $query->whereBetween($dateColumn, [$startDate, $endDate]);
+            } else {
+                logger()->warning('La columna created_at no existe en la tabla ' . $table);
             }
         }
 
-        // Aplicar filtros personalizados si existen
-        foreach ($this->customFilters as $key => $filter) {
-            if (
-                !is_null($this->filters[$key]) &&
-                $modelInstance->getConnection()->getSchemaBuilder()->hasColumn($modelInstance->getTable(), $key)
-            ) {
-                // Si es el filtro de `status`, convertir a 0 o 1
-                if ($key === 'status' && in_array($this->filters[$key], [0, 1, 3], true)) {
-                    $query->where($key, $this->filters[$key]);
+        // Aplicar filtros personalizados
+        foreach ($this->filters as $key => $value) {
+            // Saltarse el filtro de rango de fechas que ya se procesó
+            if ($key === 'date_range' || is_null($value)) {
+                continue;
+            }
+            
+            // Verificar que la columna existe en la tabla
+            if ($schema->hasColumn($table, $key)) {
+                logger()->debug('Aplicando filtro:', ['campo' => $key, 'valor' => $value]);
+                
+                // Si es el filtro de `status`, manejar valores específicos
+                if ($key === 'status') {
+                    // Convertir texto a valores numéricos si es necesario
+                    if ($value === 'active') {
+                        $query->where($key, 1);
+                    } elseif ($value === 'inactive') {
+                        $query->where($key, 0);
+                    } else {
+                        $query->where($key, $value);
+                    }
                 } else {
-                    $query->where($key, $this->filters[$key]);
+                    $query->where($key, $value);
                 }
+            } else {
+                logger()->warning('Columna no encontrada en la tabla:', [
+                    'tabla' => $table,
+                    'columna' => $key
+                ]);
             }
         }
 
