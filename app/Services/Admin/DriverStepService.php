@@ -3,7 +3,6 @@
 namespace App\Services\Admin;
 
 use App\Models\UserDriverDetail;
-use Illuminate\Support\Facades\Log;
 use App\Models\Admin\Driver\DriverApplication;
 use App\Models\Admin\Driver\DriverRecruitmentVerification;
 
@@ -560,9 +559,147 @@ class DriverStepService
         }
         return self::STEP_GENERAL_INFO; // Si todo está completo, volvemos al principio
     }
+    
+    /**
+     * Inicializa y devuelve el checklist con sus estados actuales
+     * Implementa la misma lógica que utiliza el componente DriverRecruitmentReview
+     */
+    public function initializeChecklist(UserDriverDetail $userDriverDetail): array
+    {
+        // Definir los elementos base del checklist (como en DriverRecruitmentReview)
+        $checklistItems = [
+            'general_info' => [
+                'checked' => false,
+                'label' => 'Complete and valid general information'
+            ],
+            'contact_info' => [
+                'checked' => false,
+                'label' => 'Verified contact information'
+            ],
+            'address_info' => [
+                'checked' => false,
+                'label' => 'Validated current address and history'
+            ],
+            'license_info' => [
+                'checked' => false,
+                'label' => 'Valid and current drivers license'
+            ],
+            'license_image' => [
+                'checked' => false,
+                'label' => 'Attached, legible license images'
+            ],
+            'medical_info' => [
+                'checked' => false,
+                'label' => 'Complete medical information'
+            ],
+            'medical_image' => [
+                'checked' => false,
+                'label' => 'Medical card attached and current'
+            ],
+            'experience_info' => [
+                'checked' => false,
+                'label' => 'Verified driving experience'
+            ],
+            'training_verified' => [
+                'checked' => false,
+                'label' => 'Training information verified (or N/A)'
+            ],
+            'traffic_verified' => [
+                'checked' => false,
+                'label' => 'Traffic violations verified (or N/A)'
+            ],
+            'accident_verified' => [
+                'checked' => false,
+                'label' => 'Accident record verified (or N/A)'
+            ],
+            'driving_record' => [
+                'checked' => false,
+                'label' => 'Driving record uploaded and verified'
+            ],
+            'criminal_record' => [
+                'checked' => false,
+                'label' => 'Criminal record uploaded and verified'
+            ],
+            'history_info' => [
+                'checked' => false,
+                'label' => 'Complete work history (10 years)'
+            ],
+            'criminal_check' => [
+                'checked' => false,
+                'label' => 'Criminal background check'
+            ],
+            'drug_test' => [
+                'checked' => false,
+                'label' => 'Drug test verification'
+            ],
+            'mvr_check' => [
+                'checked' => false,
+                'label' => 'MVR check completed'
+            ],
+            'policy_agreed' => [
+                'checked' => false,
+                'label' => 'Company policies agreed'
+            ],
+            'application_certification' => [
+                'checked' => false,
+                'label' => 'Application Certification'
+            ],
+            'documents_checked' => [
+                'checked' => false,
+                'label' => 'All documents reviewed and validated'
+            ],
+            'vehicle_info' => [
+                'checked' => false,
+                'label' => 'Vehicle information verified (if applicable)'
+            ]
+        ];
+        
+        // Si el driver tiene una aplicación, obtener la verificación más reciente
+        if ($userDriverDetail->application) {
+            $verification = null;
+            
+            // Verificar si la relación verifications ya está cargada
+            if ($userDriverDetail->application->relationLoaded('verifications') && 
+                $userDriverDetail->application->verifications->isNotEmpty()) {
+                // Ya tenemos las verificaciones cargadas, usar la más reciente
+                $verification = $userDriverDetail->application->verifications->sortByDesc('verified_at')->first();
+            } else {
+                // Si no están cargadas, hacer la consulta a la DB
+                $verification = DriverRecruitmentVerification::where('driver_application_id', $userDriverDetail->application->id)
+                    ->latest('verified_at')
+                    ->first();
+            }
+            
+            if ($verification && !empty($verification->verification_items)) {
+                // Actualizar el estado de cada item con los datos guardados
+                foreach ($verification->verification_items as $key => $value) {
+                    if (isset($checklistItems[$key])) {
+                        $checklistItems[$key]['checked'] = $value['checked'] ?? false;
+                    }
+                }
+            } else {
+                // Si no hay verificaciones, usar la lógica de los pasos para inferir estados
+                $steps = $this->getStepsStatus($userDriverDetail);
+                
+                // Actualizar checklist según estados de pasos
+                foreach ($this->stepToChecklistMapping as $step => $checklistKeys) {
+                    $status = $steps[$step] ?? self::STATUS_MISSING;
+                    $isCompleted = ($status === self::STATUS_COMPLETED);
+                    
+                    foreach ($checklistKeys as $checklistKey) {
+                        if (isset($checklistItems[$checklistKey])) {
+                            $checklistItems[$checklistKey]['checked'] = $isCompleted;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return $checklistItems;
+    }
 
     /**
-     * Calcular el porcentaje de completitud general
+     * Calcular el porcentaje de completitud general - Acceso directo a DB
      */
     public function calculateCompletionPercentage(UserDriverDetail $userDriverDetail): int
     {
@@ -571,18 +708,31 @@ class DriverStepService
             return 100;
         }
         
-        $steps = $this->getStepsStatus($userDriverDetail);
-        $completedSteps = 0;
-    
-        foreach ($steps as $status) {
-            if ($status === self::STATUS_COMPLETED) {
-                $completedSteps++;
-            } else if ($status === self::STATUS_PENDING) {
-                $completedSteps += 0.5; // Pasos pendientes cuentan la mitad
+        if (!$userDriverDetail->application) {
+            return 0;
+        }
+        
+        // Obtener la verificación más reciente DIRECTAMENTE de la base de datos
+        $verification = DriverRecruitmentVerification::where('driver_application_id', $userDriverDetail->application->id)
+            ->latest('verified_at')
+            ->first();
+            
+        if (!$verification || empty($verification->verification_items)) {
+            return 0;
+        }
+        
+        // Contar items marcados
+        $checkedItems = 0;
+        $totalItems = count($verification->verification_items);
+        
+        foreach ($verification->verification_items as $key => $value) {
+            if (isset($value['checked']) && $value['checked'] === true) {
+                $checkedItems++;
             }
         }
-    
-        return round(($completedSteps / count($steps)) * 100);
+        
+        // Calcular porcentaje
+        return $totalItems > 0 ? round(($checkedItems / $totalItems) * 100) : 0;
     }
 
     /**
@@ -590,10 +740,6 @@ class DriverStepService
      */
     public function updateCurrentStep(UserDriverDetail $userDriverDetail, int $step): void
     {
-        $userDriverDetail->update(['current_step' => $step]);
-        Log::info('Paso actual actualizado para el driver', [
-            'driver_id' => $userDriverDetail->id,
-            'current_step' => $step
-        ]);
+        $userDriverDetail->update(['current_step' => $step]);        
     }
 }

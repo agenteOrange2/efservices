@@ -89,4 +89,12 @@ class DriverApplication extends Model implements HasMedia
         $this->addMediaCollection('application_pdf')
             ->singleFile();
     }
+    
+    /**
+     * Relación con las verificaciones de reclutamiento
+     */
+    public function verifications()
+    {
+        return $this->hasMany(DriverRecruitmentVerification::class, 'driver_application_id');
+    }
 }

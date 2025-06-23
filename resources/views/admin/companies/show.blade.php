@@ -140,7 +140,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @if($history->userDriverDetail)
-                            <a href="{{ url('admin/drivers/' . $history->userDriverDetail->id . '/view') }}" class="text-blue-600 hover:text-blue-900">
+                            <a href="{{ url('admin/drivers/' . $history->userDriverDetail->id) }}" class="text-blue-600 hover:text-blue-900">
                                 View Driver
                             </a>
                             @endif

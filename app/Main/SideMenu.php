@@ -76,6 +76,12 @@ class SideMenu
                         'title' => "Employment Verification",
                     ],
                     [
+                        'icon' => "building",
+                        'route_name' => "admin.companies.index",
+                        'params' => [],
+                        'title' => "Companies",
+                    ],
+                    [
                         'icon' => "file-warning",
                         'route_name' => "admin.accidents.index",
                         'params' => [],

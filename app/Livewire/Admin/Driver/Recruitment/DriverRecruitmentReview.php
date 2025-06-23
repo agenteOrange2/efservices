@@ -2516,6 +2516,11 @@ private function loadModelMedia($model, $category, $recordType = null)
         $this->completionPercentage = $stepService->calculateCompletionPercentage($this->driver);
     
         session()->flash('message', 'Verificación guardada correctamente.');
+    
+    // Emitir evento para que otros componentes se actualicen
+    // Emitir tanto local como al componente específico
+    $this->dispatch('verification_updated', driverApplicationId: $this->driver->application->id);
+    $this->dispatch('verification_updated')->to('admin.driver.recruitment.driver-recruitment-list');
     }
 
     /**

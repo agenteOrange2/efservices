@@ -1907,7 +1907,427 @@
                     @endif
                 </div>
             @endif
+            <!-- Infracciones y Accidentes -->
+            <!-- Contenido para la pestaña de documentos -->
+            {{-- @if ($currentTab === 'documents')
 
+                <div class="mb-5">
+                    {{-- <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium">Documents</h3>
+
+                        <!-- Botón para regenerar documentos -->
+                        <button type="button" wire:click="regenerateDocuments" wire:loading.attr="disabled"
+                            class="flex items-center px-3 py-1 bg-amber-500 text-white rounded hover:bg-amber-600 text-sm">
+                            <svg fill="#ffffff" class="h-4 w-4 mr-2" version="1.1" id="Layer_1"
+                                xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                viewBox="0 0 512 512" xml:space="preserve">
+                                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                                <g id="SVGRepo_iconCarrier">
+                                    <g>
+                                        <g>
+                                            <path
+                                                d="M416.563,324.702c-4.497-1.493-9.31,0.93-10.795,5.393l-2.432,7.279C389.658,318.259,369.178,307.2,345.6,307.2 c-35.055,0-65.638,23.689-74.385,57.6c-1.178,4.565,1.579,9.216,6.144,10.394c0.708,0.188,1.425,0.273,2.133,0.273 c3.797,0,7.27-2.551,8.26-6.4c6.793-26.377,30.583-44.8,57.847-44.8c16.239,0,30.234,6.724,40.542,18.739l-3.712-1.237 c-4.514-1.51-9.301,0.93-10.795,5.393c-1.493,4.471,0.922,9.301,5.393,10.795l25.6,8.533c0.905,0.307,1.818,0.444,2.705,0.444 c3.575,0,6.903-2.261,8.09-5.837l8.533-25.6C423.45,331.025,421.035,326.195,416.563,324.702z">
+                                            </path>
+                                        </g>
+                                    </g>
+                                    <g>
+                                        <g>
+                                            <path
+                                                d="M414.404,384.06c-4.685-0.614-8.943,2.731-9.523,7.415c-3.72,29.79-29.21,52.258-59.281,52.258 c-21.282,0-41.387-11.494-52.548-28.433l7.177,2.389c4.506,1.502,9.301-0.93,10.795-5.393c1.493-4.471-0.922-9.301-5.393-10.795 l-25.6-8.533c-4.506-1.51-9.301,0.93-10.795,5.393l-8.533,25.6c-1.493,4.471,0.922,9.301,5.393,10.795 c0.905,0.307,1.818,0.444,2.705,0.444c3.576,0,6.904-2.261,8.09-5.837l1.621-4.872c14.165,21.888,39.543,36.309,67.089,36.309 c38.664,0,71.433-28.894,76.211-67.217C422.391,388.907,419.072,384.649,414.404,384.06z">
+                                            </path>
+                                        </g>
+                                    </g>
+                                    <g>
+                                        <g>
+                                            <path
+                                                d="M345.6,256c-70.579,0-128,57.421-128,128s57.421,128,128,128s128-57.421,128-128S416.179,256,345.6,256z M345.6,494.933 c-61.167,0-110.933-49.766-110.933-110.933S284.433,273.067,345.6,273.067S456.533,322.833,456.533,384 S406.767,494.933,345.6,494.933z">
+                                            </path>
+                                        </g>
+                                    </g>
+                                    <g>
+                                        <g>
+                                            <path
+                                                d="M226.133,469.333H55.467V409.6c0-4.71-3.823-8.533-8.533-8.533c-4.71,0-8.533,3.823-8.533,8.533v68.267 c0,4.71,3.823,8.533,8.533,8.533h179.2c4.71,0,8.533-3.823,8.533-8.533S230.844,469.333,226.133,469.333z">
+                                            </path>
+                                        </g>
+                                    </g>
+                                    <g>
+                                        <g>
+                                            <path
+                                                d="M46.933,366.933c-4.71,0-8.533,3.823-8.533,8.533S42.223,384,46.933,384h0.085c4.71,0,8.491-3.823,8.491-8.533 S51.644,366.933,46.933,366.933z">
+                                            </path>
+                                        </g>
+                                    </g>
+                                    <g>
+                                        <g>
+                                            <path
+                                                d="M394.3,139.034L257.766,2.5c-1.596-1.604-3.772-2.5-6.033-2.5h-204.8C42.223,0,38.4,3.823,38.4,8.533v332.8 c0,4.71,3.823,8.533,8.533,8.533c4.71,0,8.533-3.823,8.533-8.533V17.067H243.2v128c0,4.71,3.823,8.533,8.533,8.533h128v76.8 c0,4.71,3.823,8.533,8.533,8.533s8.533-3.823,8.533-8.533v-85.333C396.8,142.805,395.904,140.629,394.3,139.034z M260.267,136.533 V29.133l107.401,107.401H260.267z">
+                                            </path>
+                                        </g>
+                                    </g>
+                                </g>
+                            </svg>
+                            <span wire:loading.remove wire:target="regenerateDocuments">Regenerate Documents</span>
+                            <span wire:loading wire:target="regenerateDocuments">Regenerating...</span>
+                        </button>
+                    </div> --}}
+
+                    @if (count($generatedPdfs) > 0)
+                        <!-- Botón para descargar todos los documentos -->
+                        {{-- <div class="mt-4 flex justify-center mb-4">
+                            <button type="button" wire:click="downloadAllDocuments"
+                                class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-focus flex items-center">
+                                <svg fill="#ffffff" class="h-4 w-4 mr-2" version="1.1" id="Layer_1"
+                                    xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                    viewBox="0 0 512 512" xml:space="preserve" stroke="#ffffff">
+                                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round">
+                                    </g>
+                                    <g id="SVGRepo_iconCarrier">
+                                        <g>
+                                            <g>
+                                                <path
+                                                    d="M385.766,403.567c-3.337-3.337-8.73-3.337-12.066,0l-19.567,19.567v-98.867c0-4.71-3.823-8.533-8.533-8.533 c-4.71,0-8.533,3.823-8.533,8.533v98.867L317.5,403.567c-3.337-3.337-8.73-3.337-12.066,0c-3.336,3.336-3.336,8.73,0,12.066 l34.133,34.133c1.664,1.664,3.849,2.5,6.033,2.5c2.185,0,4.369-0.836,6.033-2.5l34.133-34.133 C389.103,412.297,389.103,406.904,385.766,403.567z">
+                                                </path>
+                                            </g>
+                                        </g>
+                                        <g>
+                                            <g>
+                                                <path
+                                                    d="M345.6,256c-70.579,0-128,57.421-128,128s57.421,128,128,128s128-57.421,128-128S416.179,256,345.6,256z M345.6,494.933 c-61.167,0-110.933-49.766-110.933-110.933S284.433,273.067,345.6,273.067S456.533,322.833,456.533,384 S406.767,494.933,345.6,494.933z">
+                                                </path>
+                                            </g>
+                                        </g>
+                                        <g>
+                                            <g>
+                                                <path
+                                                    d="M226.133,469.333H55.467V409.6c0-4.71-3.823-8.533-8.533-8.533c-4.71,0-8.533,3.823-8.533,8.533v68.267 c0,4.71,3.823,8.533,8.533,8.533h179.2c4.71,0,8.533-3.823,8.533-8.533S230.844,469.333,226.133,469.333z">
+                                                </path>
+                                            </g>
+                                        </g>
+                                        <g>
+                                            <g>
+                                                <path
+                                                    d="M46.933,366.933c-4.71,0-8.533,3.823-8.533,8.533S42.223,384,46.933,384h0.085c4.71,0,8.491-3.823,8.491-8.533 S51.644,366.933,46.933,366.933z">
+                                                </path>
+                                            </g>
+                                        </g>
+                                        <g>
+                                            <g>
+                                                <path
+                                                    d="M394.3,139.034L257.766,2.5c-1.596-1.604-3.772-2.5-6.033-2.5h-204.8C42.223,0,38.4,3.823,38.4,8.533v332.8 c0,4.71,3.823,8.533,8.533,8.533c4.71,0,8.533-3.823,8.533-8.533V17.067H243.2v128c0,4.71,3.823,8.533,8.533,8.533h128v76.8 c0,4.71,3.823,8.533,8.533,8.533s8.533-3.823,8.533-8.533v-85.333C396.8,142.805,395.904,140.629,394.3,139.034z M260.267,136.533 V29.133l107.401,107.401H260.267z">
+                                                </path>
+                                            </g>
+                                        </g>
+                                    </g>
+                                </svg>
+                                <span wire:loading.remove wire:target="downloadAllDocuments">Descargar Todos los
+                                    Documentos</span>
+                                <span wire:loading wire:target="downloadAllDocuments">Generando ZIP...</span>
+                            </button>
+                        </div> --}}
+
+                        <!-- Lista de documentos -->
+                        {{-- <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            @foreach ($generatedPdfs as $key => $pdf)
+                                <div
+                                    class="border rounded p-3 flex items-center bg-white hover:bg-slate-50 transition-colors">
+                                    <div class="mr-3 text-slate-400">
+                                        <svg class="h-5 w-5 mr-1" fill="#000000" version="1.1" id="Capa_1"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 487.89 487.89"
+                                            xml:space="preserve" stroke="#000000" stroke-width="0.00487887">
+                                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                            <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                                stroke-linejoin="round"></g>
+                                            <g id="SVGRepo_iconCarrier">
+                                                <path
+                                                    d="M409.046,453.807c0,2.762-2.239,5-5,5H69.414c-2.761,0-5-2.238-5-5s2.239-5,5-5h334.632 C406.808,448.807,409.046,451.045,409.046,453.807z M404.046,462.643H69.414c-2.761,0-5,2.238-5,5s2.239,5,5,5h334.632 c2.761,0,5-2.238,5-5S406.808,462.643,404.046,462.643z M124.073,17.067c-2.761,0-5,2.238-5,5v342.819c0,2.762,2.239,5,5,5 s5-2.238,5-5V22.067C129.073,19.306,126.834,17.067,124.073,17.067z M124.073,394.021c-2.761,0-5,2.238-5,5v15.588 c0,2.762,2.239,5,5,5s5-2.238,5-5v-15.588C129.073,396.259,126.834,394.021,124.073,394.021z M261.382,343.332v-36.878 c0-0.009,0-0.018,0-0.026V269.98c0-2.762,2.239-5,5-5h18.398c12.838,0,23.283,10.444,23.283,23.282 c0,6.244-2.438,12.108-6.867,16.511c-4.396,4.37-10.219,6.771-16.412,6.771c-0.046,0-0.092,0-0.138,0l-13.265-0.076v31.863 c0,2.762-2.239,5-5,5S261.382,346.094,261.382,343.332z M271.382,301.469l13.322,0.076c0.026,0,0.053,0,0.079,0 c3.533,0,6.855-1.37,9.363-3.862c2.526-2.512,3.917-5.857,3.917-9.42c0-7.324-5.958-13.282-13.283-13.282h-13.398V301.469z M316.404,343.332V269.97c0-2.762,2.239-5,5-5c22.983,0,41.681,18.698,41.681,41.681c0,22.983-18.698,41.682-41.681,41.682 C318.643,348.332,316.404,346.094,316.404,343.332z M326.404,337.938c15.102-2.403,26.681-15.518,26.681-31.286 s-11.579-28.884-26.681-31.287V337.938z M376.425,348.332c2.761,0,5-2.238,5-5v-31.67h22.511c2.761,0,5-2.238,5-5s-2.239-5-5-5 h-22.511V274.98h31.681c2.761,0,5-2.238,5-5s-2.239-5-5-5h-36.681c-2.761,0-5,2.238-5,5v73.352 C371.425,346.094,373.664,348.332,376.425,348.332z M449.271,244.319v124.675c0,2.762-2.239,5-5,5h-17.3v42.674v21.273v44.945 c0,2.762-2.239,5-5,5H43.616c-2.761,0-5-2.238-5-5v-44.933v-0.013V5c0-2.762,2.239-5,5-5h54.075h324.28c2.761,0,5,2.238,5,5v234.319 h17.3C447.032,239.319,449.271,241.558,449.271,244.319z M48.616,432.941h44.075V10H48.616V432.941z M416.971,477.887v-34.945 H97.817c-0.043,0.001-0.083,0.013-0.126,0.013H48.616v34.933H416.971z M416.971,373.994H226.115c-2.761,0-5-2.238-5-5V244.319 c0-2.762,2.239-5,5-5h190.855V10h-314.28v422.941h314.28v-16.273V373.994z M439.271,249.319H231.115v114.675h208.156V249.319z">
+                                                </path>
+                                            </g>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="font-medium">{{ $pdf['name'] }}</div>
+                                        <div class="text-xs text-slate-500">{{ $pdf['size'] }} - Generated:
+                                            {{ $pdf['date'] }}</div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <a href="{{ $pdf['url'] }}" target="_blank"
+                                            class="px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 text-sm flex items-center">
+                                            <svg class="h-5 w-5 mr-1" viewBox="0 0 24 24" fill="none"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                                <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                                    stroke-linejoin="round"></g>
+                                                <g id="SVGRepo_iconCarrier">
+                                                    <circle cx="12" cy="12" r="2.5"
+                                                        stroke="#222222"></circle>
+                                                    <path
+                                                        d="M18.2265 11.3805C18.3552 11.634 18.4195 11.7607 18.4195 12C18.4195 12.2393 18.3552 12.366 18.2265 12.6195C17.6001 13.8533 15.812 16.5 12 16.5C8.18799 16.5 6.39992 13.8533 5.77348 12.6195C5.64481 12.366 5.58048 12.2393 5.58048 12C5.58048 11.7607 5.64481 11.634 5.77348 11.3805C6.39992 10.1467 8.18799 7.5 12 7.5C15.812 7.5 17.6001 10.1467 18.2265 11.3805Z"
+                                                        stroke="#222222"></path>
+                                                    <path
+                                                        d="M17.5 3.5H17.7C19.4913 3.5 20.387 3.5 20.9435 4.0565C21.5 4.61299 21.5 5.50866 21.5 7.3V7.5M17.5 20.5H17.7C19.4913 20.5 20.387 20.5 20.9435 19.9435C21.5 19.387 21.5 18.4913 21.5 16.7V16.5M6.5 3.5H6.3C4.50866 3.5 3.61299 3.5 3.0565 4.0565C2.5 4.61299 2.5 5.50866 2.5 7.3V7.5M6.5 20.5H6.3C4.50866 20.5 3.61299 20.5 3.0565 19.9435C2.5 19.387 2.5 18.4913 2.5 16.7V16.5"
+                                                        stroke="#2A4157" stroke-opacity="0.24"
+                                                        stroke-linecap="round"></path>
+                                                </g>
+                                            </svg>
+                                            Ver
+                                        </a>
+                                        <!-- Botón para descargar el documento -->
+                                        <a href="{{ $pdf['url'] }}" download
+                                            class="p-1 text-slate-500 hover:text-primary">
+                                            <svg fill="#000000" class="h-5 w-5 mr-1" version="1.1"
+                                                id="Layer_1" xmlns="http://www.w3.org/2000/svg"
+                                                xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512"
+                                                xml:space="preserve">
+                                                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                                <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                                    stroke-linejoin="round"></g>
+                                                <g id="SVGRepo_iconCarrier">
+                                                    <g>
+                                                        <g>
+                                                            <path
+                                                                d="M385.766,403.567c-3.337-3.337-8.73-3.337-12.066,0l-19.567,19.567v-98.867c0-4.71-3.823-8.533-8.533-8.533 c-4.71,0-8.533,3.823-8.533,8.533v98.867L317.5,403.567c-3.337-3.337-8.73-3.337-12.066,0c-3.336,3.336-3.336,8.73,0,12.066 l34.133,34.133c1.664,1.664,3.849,2.5,6.033,2.5c2.185,0,4.369-0.836,6.033-2.5l34.133-34.133 C389.103,412.297,389.103,406.904,385.766,403.567z">
+                                                            </path>
+                                                        </g>
+                                                    </g>
+                                                    <g>
+                                                        <g>
+                                                            <path
+                                                                d="M345.6,256c-70.579,0-128,57.421-128,128s57.421,128,128,128s128-57.421,128-128S416.179,256,345.6,256z M345.6,494.933 c-61.167,0-110.933-49.766-110.933-110.933S284.433,273.067,345.6,273.067S456.533,322.833,456.533,384 S406.767,494.933,345.6,494.933z">
+                                                            </path>
+                                                        </g>
+                                                    </g>
+                                                    <g>
+                                                        <g>
+                                                            <path
+                                                                d="M226.133,469.333H55.467V409.6c0-4.71-3.823-8.533-8.533-8.533c-4.71,0-8.533,3.823-8.533,8.533v68.267 c0,4.71,3.823,8.533,8.533,8.533h179.2c4.71,0,8.533-3.823,8.533-8.533S230.844,469.333,226.133,469.333z">
+                                                            </path>
+                                                        </g>
+                                                    </g>
+                                                    <g>
+                                                        <g>
+                                                            <path
+                                                                d="M46.933,366.933c-4.71,0-8.533,3.823-8.533,8.533S42.223,384,46.933,384h0.085c4.71,0,8.491-3.823,8.491-8.533 S51.644,366.933,46.933,366.933z">
+                                                            </path>
+                                                        </g>
+                                                    </g>
+                                                    <g>
+                                                        <g>
+                                                            <path
+                                                                d="M394.3,139.034L257.766,2.5c-1.596-1.604-3.772-2.5-6.033-2.5h-204.8C42.223,0,38.4,3.823,38.4,8.533v332.8 c0,4.71,3.823,8.533,8.533,8.533c4.71,0,8.533-3.823,8.533-8.533V17.067H243.2v128c0,4.71,3.823,8.533,8.533,8.533h128v76.8 c0,4.71,3.823,8.533,8.533,8.533s8.533-3.823,8.533-8.533v-85.333C396.8,142.805,395.904,140.629,394.3,139.034z M260.267,136.533 V29.133l107.401,107.401H260.267z">
+                                                            </path>
+                                                        </g>
+                                                    </g>
+                                                </g>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div> --}}
+
+                        <!-- Sección para solicitar documentos adicionales -->
+                        {{-- <div class="mt-8 mb-5 bg-white p-4 rounded-lg shadow-sm border">
+                            <h4 class="font-medium mb-3">Solicitar Documentos Adicionales</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                                <!-- Botones para seleccionar documentos -->
+                                <button type="button" wire:click="selectDocument('ssn_card')"
+                                    class="flex items-center p-2 border rounded hover:bg-slate-50 transition-colors
+                                            {{ in_array('ssn_card', $requestedDocuments) ? 'bg-primary-50 border-primary' : '' }}">
+                                    <svg class="h-5 w-5 mr-2 {{ in_array('ssn_card', $requestedDocuments) ? 'text-primary' : 'text-slate-400' }}"
+                                        viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                            stroke-linejoin="round"></g>
+                                        <g id="SVGRepo_iconCarrier">
+                                            <path
+                                                d="M22 11.0857V12.0057C21.9988 14.1621 21.3005 16.2604 20.0093 17.9875C18.7182 19.7147 16.9033 20.9782 14.8354 21.5896C12.7674 22.201 10.5573 22.1276 8.53447 21.3803C6.51168 20.633 4.78465 19.2518 3.61096 17.4428C2.43727 15.6338 1.87979 13.4938 2.02168 11.342C2.16356 9.19029 2.99721 7.14205 4.39828 5.5028C5.79935 3.86354 7.69279 2.72111 9.79619 2.24587C11.8996 1.77063 14.1003 1.98806 16.07 2.86572M22 4L12 14.01L9 11.01"
+                                                stroke="#03045E" stroke-width="1.44" stroke-linecap="round"
+                                                stroke-linejoin="round"></path>
+                                        </g>
+                                    </svg>
+                                    <span>Tarjeta de Seguro Social</span>
+                                </button>
+
+                                <button type="button" wire:click="selectDocument('license')"
+                                    class="flex items-center p-2 border rounded hover:bg-slate-50 transition-colors
+                                            {{ in_array('license', $requestedDocuments) ? 'bg-primary-50 border-primary' : '' }}">
+                                    <svg class="h-5 w-5 mr-2 {{ in_array('license', $requestedDocuments) ? 'text-primary' : 'text-slate-400' }}"
+                                        viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                            stroke-linejoin="round"></g>
+                                        <g id="SVGRepo_iconCarrier">
+                                            <path
+                                                d="M22 11.0857V12.0057C21.9988 14.1621 21.3005 16.2604 20.0093 17.9875C18.7182 19.7147 16.9033 20.9782 14.8354 21.5896C12.7674 22.201 10.5573 22.1276 8.53447 21.3803C6.51168 20.633 4.78465 19.2518 3.61096 17.4428C2.43727 15.6338 1.87979 13.4938 2.02168 11.342C2.16356 9.19029 2.99721 7.14205 4.39828 5.5028C5.79935 3.86354 7.69279 2.72111 9.79619 2.24587C11.8996 1.77063 14.1003 1.98806 16.07 2.86572M22 4L12 14.01L9 11.01"
+                                                stroke="#03045E" stroke-width="1.44" stroke-linecap="round"
+                                                stroke-linejoin="round"></path>
+                                        </g>
+                                    </svg>
+                                    <span>Licencia de Conducir</span>
+                                </button>
+
+                                <button type="button" wire:click="selectDocument('medical_card')"
+                                    class="flex items-center p-2 border rounded hover:bg-slate-50 transition-colors
+                                            {{ in_array('medical_card', $requestedDocuments) ? 'bg-primary-50 border-primary' : '' }}">
+                                    <svg class="h-5 w-5 mr-2 {{ in_array('medical_card', $requestedDocuments) ? 'text-primary' : 'text-slate-400' }}"
+                                        viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                            stroke-linejoin="round"></g>
+                                        <g id="SVGRepo_iconCarrier">
+                                            <path
+                                                d="M22 11.0857V12.0057C21.9988 14.1621 21.3005 16.2604 20.0093 17.9875C18.7182 19.7147 16.9033 20.9782 14.8354 21.5896C12.7674 22.201 10.5573 22.1276 8.53447 21.3803C6.51168 20.633 4.78465 19.2518 3.61096 17.4428C2.43727 15.6338 1.87979 13.4938 2.02168 11.342C2.16356 9.19029 2.99721 7.14205 4.39828 5.5028C5.79935 3.86354 7.69279 2.72111 9.79619 2.24587C11.8996 1.77063 14.1003 1.98806 16.07 2.86572M22 4L12 14.01L9 11.01"
+                                                stroke="#03045E" stroke-width="1.44" stroke-linecap="round"
+                                                stroke-linejoin="round"></path>
+                                        </g>
+                                    </svg>
+                                    <span>Tarjeta Médica</span>
+                                </button>
+
+                                <button type="button" wire:click="selectDocument('proof_address')"
+                                    class="flex items-center p-2 border rounded hover:bg-slate-50 transition-colors
+                                            {{ in_array('proof_address', $requestedDocuments) ? 'bg-primary-50 border-primary' : '' }}">
+                                    <svg class="h-5 w-5 mr-2 {{ in_array('proof_address', $requestedDocuments) ? 'text-primary' : 'text-slate-400' }}"
+                                        viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                            stroke-linejoin="round"></g>
+                                        <g id="SVGRepo_iconCarrier">
+                                            <path
+                                                d="M22 11.0857V12.0057C21.9988 14.1621 21.3005 16.2604 20.0093 17.9875C18.7182 19.7147 16.9033 20.9782 14.8354 21.5896C12.7674 22.201 10.5573 22.1276 8.53447 21.3803C6.51168 20.633 4.78465 19.2518 3.61096 17.4428C2.43727 15.6338 1.87979 13.4938 2.02168 11.342C2.16356 9.19029 2.99721 7.14205 4.39828 5.5028C5.79935 3.86354 7.69279 2.72111 9.79619 2.24587C11.8996 1.77063 14.1003 1.98806 16.07 2.86572M22 4L12 14.01L9 11.01"
+                                                stroke="#03045E" stroke-width="1.44" stroke-linecap="round"
+                                                stroke-linejoin="round"></path>
+                                        </g>
+                                    </svg>
+                                    <span>Comprobante de Domicilio</span>
+                                </button>
+
+                                <button type="button" wire:click="selectDocument('employment_verification')"
+                                    class="flex items-center p-2 border rounded hover:bg-slate-50 transition-colors
+                                            {{ in_array('employment_verification', $requestedDocuments) ? 'bg-primary-50 border-primary' : '' }}">
+                                    <svg class="h-5 w-5 mr-2 {{ in_array('employment_verification', $requestedDocuments) ? 'text-primary' : 'text-slate-400' }}"
+                                        viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                            stroke-linejoin="round"></g>
+                                        <g id="SVGRepo_iconCarrier">
+                                            <path
+                                                d="M22 11.0857V12.0057C21.9988 14.1621 21.3005 16.2604 20.0093 17.9875C18.7182 19.7147 16.9033 20.9782 14.8354 21.5896C12.7674 22.201 10.5573 22.1276 8.53447 21.3803C6.51168 20.633 4.78465 19.2518 3.61096 17.4428C2.43727 15.6338 1.87979 13.4938 2.02168 11.342C2.16356 9.19029 2.99721 7.14205 4.39828 5.5028C5.79935 3.86354 7.69279 2.72111 9.79619 2.24587C11.8996 1.77063 14.1003 1.98806 16.07 2.86572M22 4L12 14.01L9 11.01"
+                                                stroke="#03045E" stroke-width="1.44" stroke-linecap="round"
+                                                stroke-linejoin="round"></path>
+                                        </g>
+                                    </svg>
+                                    <span>Verificación de Empleo Anterior</span>
+                                </button>
+                            </div>
+
+                            <!-- Lista de documentos seleccionados -->
+                            @if (count($requestedDocuments) > 0)
+                                <div class="mb-4">
+                                    <h5 class="text-sm font-medium mb-2">Documentos solicitados:</h5>
+                                    <div class="flex flex-wrap gap-2">
+                                        @php
+                                            $documentLabels = [
+                                                'ssn_card' => 'Tarjeta de Seguro Social',
+                                                'license' => 'Licencia de Conducir',
+                                                'medical_card' => 'Tarjeta Médica',
+                                                'proof_address' => 'Comprobante de Domicilio',
+                                                'employment_verification' => 'Verificación de Empleo Anterior',
+                                            ];
+                                        @endphp
+
+                                        @foreach ($requestedDocuments as $doc)
+                                            <div
+                                                class="inline-flex items-center bg-slate-100 px-2 py-1 rounded text-sm">
+                                                <span>{{ $documentLabels[$doc] ?? $doc }}</span>
+                                                <button type="button"
+                                                    wire:click="removeRequestedDocument('{{ $doc }}')"
+                                                    class="ml-1 text-slate-500 hover:text-red-500">
+                                                    <x-base.lucide class="h-4 w-4" icon="X" />
+                                                </button>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Requisitos adicionales -->
+                            <div class="mb-4">
+                                <label for="additionalRequirements"
+                                    class="block text-sm font-medium mb-1">Requisitos adicionales
+                                    (opcional):</label>
+                                <textarea id="additionalRequirements" wire:model.live="additionalRequirements" rows="3"
+                                    class="w-full border rounded px-3 py-2 text-sm"
+                                    placeholder="Ingrese cualquier requisito adicional o instrucciones para el conductor..."></textarea>
+                            </div>
+
+                            <!-- Botón para enviar la solicitud -->
+                            <div class="flex justify-end">
+                                <button type="button" wire:click="requestAdditionalDocuments"
+                                    class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-focus flex items-center"
+                                    {{ count($requestedDocuments) === 0 ? 'disabled' : '' }}
+                                    {{ count($requestedDocuments) === 0 ? 'opacity-50 cursor-not-allowed' : '' }}>                                    
+                                    <svg class="h-8 w-8 mr-2" viewBox="0 0 24 24" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg" stroke="#ffffff">
+                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
+                                            stroke-linejoin="round"></g>
+                                        <g id="SVGRepo_iconCarrier">
+                                            <path d="M20 4L13 21L10 14M20 4L12 7.29412M20 4L10 14M10 14L3 11L7 9.35294"
+                                                stroke="#fafafa" stroke-width="0.4800000000000001"
+                                                stroke-linecap="round" stroke-linejoin="round"></path>
+                                        </g>
+                                    </svg>
+                                    <span wire:loading.remove wire:target="requestAdditionalDocuments">Enviar
+                                        Solicitud</span>
+                                    <span wire:loading wire:target="requestAdditionalDocuments">Enviando...</span>
+                                </button>
+                            </div>
+                        </div> --}}
+                    @else
+                        {{-- <div class="bg-slate-50 border border-slate-200 rounded-lg p-8 text-center">
+                            <div class="text-slate-400 mb-3">
+                                <x-base.lucide class="h-12 w-12 mx-auto" icon="FileX" />
+                            </div>
+                            <div class="text-slate-700 font-medium mb-2">No hay documentos generados</div>
+                            <div class="text-slate-500 text-sm mb-4">No se han generado documentos PDF para esta
+                                aplicación.</div>
+                            <button type="button" wire:click="regenerateDocuments"
+                                class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-focus inline-flex items-center">
+                                <x-base.lucide class="h-4 w-4 mr-2" icon="FileText" />
+                                <span wire:loading.remove wire:target="regenerateDocuments">Generar
+                                    Documentos</span>
+                                <span wire:loading wire:target="regenerateDocuments">Procesando...</span>
+                            </button>
+                        </div>
+
+                        <script>
+                            document.addEventListener('livewire:initialized', function() {
+                                // Manejar el evento fileUploaded desde el componente Livewire
+                                @this.on('fileUploaded', (data) => {
+                                    // Actualizar la vista previa del archivo usando los campos correctos
+                                    // Usar los mismos nombres de campo que el componente Livewire emite
+                                    if (data.tempPath) {
+                                        // Crear URL para la vista previa del archivo
+                                        const fileUrl = '/storage/' + data.tempPath;
+
+                                        // Aquí podrías actualizar una vista previa del PDF si es necesario
+                                        console.log('Archivo cargado temporalmente:', {
+                                            tempPath: data.tempPath,
+                                            originalName: data.originalName,
+                                            size: data.size
+                                        });
+                                    }
+                                });
+                            });
+                        </script> --}}
+                    @endif
+                </div>
+            @endif 
 
 
             <div class="box box--stacked mt-5 p-5">
@@ -2003,8 +2423,9 @@
                 <div class="border border-slate-200 rounded-lg overflow-hidden">
                     <div class="bg-slate-50 px-4 py-2 font-medium text-sm border-b border-slate-200">Experience and
                         Records</div>
-                    <div class="p-3 space-y-2">
+                    <div class="p-3 space-y-2">                        
                         @foreach (['experience_info', 'training_verified', 'traffic_verified', 'accident_verified', 'driving_record', 'criminal_record', 'history_info'] as $key)
+
                             @if (isset($checklistItems[$key]))
                                 <div class="flex items-center hover:bg-slate-50 p-1 rounded">
                                     <input type="checkbox" id="checklist-{{ $key }}"
@@ -2069,14 +2490,14 @@
             @enderror
 
             <!-- Información de ayuda -->
-            <div class="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-600 mb-4">                
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info-icon lucide-info h-4 w-4 inline-block mr-1"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <div class="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-600 mb-4">
+                <x-base.lucide class="h-4 w-4 inline-block mr-1" icon="Info" />
                 Complete all verification items before approving the application. This ensures that all
                 driver information has been reviewed and validated.
             </div>
-
+            
             <!-- Debug info -->
-            {{-- <div class="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-600 mb-4">
+            <div class="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-600 mb-4">
                 <strong>Debug:</strong> isChecklistComplete: {{ $this->isChecklistComplete() ? 'true' : 'false' }}<br>
                 <strong>Items sin marcar:</strong>
                 @php
@@ -2090,7 +2511,7 @@
                 {{ implode(', ', $uncheckedItems) }}<br>
                 <strong>Estado de la aplicación:</strong> {{ $application->status }}<br>
                 <strong>Condición del botón:</strong> {{ $this->isChecklistComplete() && ($application->status === 'pending' || $application->status === 'draft') ? 'Debería mostrarse' : 'No se mostrará' }}
-            </div> --}}
+            </div>
 
             <!-- Actions based on application status -->
             @if ($application->status === 'pending' || $application->status === 'draft')
@@ -2106,25 +2527,12 @@
                             <button type="button" wire:click="updateApplicationStatus"
                                 class="px-4 py-3 bg-success text-white rounded-lg hover:bg-success-focus flex items-center justify-center transition-colors"
                                 {{ $this->isChecklistComplete() ? '' : 'disabled' }}>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    class="lucide lucide-circle-check-big-icon lucide-circle-check-big h-5 w-5 mr-2">
-                                    <path d="M21.801 10A10 10 0 1 1 17 3.335" />
-                                    <path d="m9 11 3 3L22 4" />
-                                </svg>
+                                <x-base.lucide class="h-5 w-5 mr-2" icon="CheckCircle" />
                                 Approve Application
                             </button>
                             <button type="button" data-tw-toggle="modal" data-tw-target="#reject-modal"
                                 class="px-4 py-3 bg-danger text-white rounded-lg hover:bg-danger-focus flex items-center justify-center transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round"
-                                    class="lucide lucide-circle-x-icon lucide-circle-x w-5 h-5 mr-2">
-                                    <circle cx="12" cy="12" r="10" />
-                                    <path d="m15 9-6 6" />
-                                    <path d="m9 9 6 6" />
-                                </svg>
+                                <x-base.lucide class="h-5 w-5 mr-2" icon="XCircle" />
                                 Reject Application
                             </button>
                         </div>
@@ -2154,14 +2562,7 @@
                         Application Rejected</div>
                     <div class="p-4 bg-danger/5">
                         <div class="flex items-start">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round"
-                                class="lucide lucide-circle-x-icon lucide-circle-x w-5 h-5 mr-2">
-                                <circle cx="12" cy="12" r="10" />
-                                <path d="m15 9-6 6" />
-                                <path d="m9 9 6 6" />
-                            </svg>
+                            <x-base.lucide class="h-5 w-5 text-danger mr-2 mt-0.5" icon="XCircle" />
                             <div>
                                 <div class="font-medium text-danger">This application has been rejected</div>
                                 <div class="text-sm text-slate-600 mt-1">Rejection Date:
@@ -2208,34 +2609,15 @@
                                 'missing' => 'bg-danger/10 text-danger border-danger/10',
                             ];
 
-                            // $statusIcons = [
-                            //     'completed' => 'CheckCircle',
-                            //     'pending' => 'AlertCircle',
-                            //     'missing' => 'XCircle',
-                            // ];
-                            $statusIconMap = [                                
-                                'pending' => 'Clock',
+                            $statusIcons = [
                                 'completed' => 'CheckCircle',
+                                'pending' => 'AlertCircle',
                                 'missing' => 'XCircle',
                             ];
-
-                            $iconPaths = [
-                                'Clock' =>
-                                    '<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>',
-                                'CheckCircle' =>
-                                    '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>',
-                                'XCircle' =>
-                                    '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>',
-                            ];
-
-                            $currentIcon = $statusIconMap[$status] ?? 'Clock';
-                            $iconPath = $iconPaths[$currentIcon] ?? '';
                         @endphp
 
                         <div class="flex items-center p-2 rounded border {{ $statusColors[$status] }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 stroke-[1.7] mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                {!! $iconPath !!}
-                            </svg>
+                            <x-base.lucide class="h-4 w-4 mr-2" icon="{{ $statusIcons[$status] }}" />
                             <div class="text-sm">{{ $stepNames[$step] ?? "Step {$step}" }}</div>
                             <div class="ml-auto text-xs capitalize">{{ $status }}</div>
                         </div>
@@ -2521,7 +2903,7 @@ $wire.on('close-document-reason-modal', () => { open = false });" x-show="open"
 <!-- Modal Record Médico -->
 @include('livewire.admin.driver.recruitment.modal.driver-medical-record-modal')
 
-
+    
 </div>
 
 <script>
