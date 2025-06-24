@@ -76,7 +76,8 @@ return [
     /*
      * The class that contains the strategy for determining a media file's path.
      */
-    'path_generator' => App\MediaLibrary\DriverMediaPathGenerator::class,
+    'path_generator' => App\MediaLibrary\CustomPathGenerator::class,
+    //'path_generator' => App\MediaLibrary\DriverMediaPathGenerator::class,
     //'path_generator' => Spatie\MediaLibrary\Support\PathGenerator\DefaultPathGenerator::class,
 
     /*

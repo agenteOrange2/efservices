@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Driver\Recruitment;
 
+
 use ZipArchive;
 use Carbon\Carbon;
 use Livewire\Component;
@@ -26,6 +27,9 @@ class DriverRecruitmentReview extends Component
     
     // Define los eventos a escuchar
     protected $listeners = [
+        'documentUploaded' => 'loadDriverData',
+        'refreshDriverData' => 'loadDriverData',
+        'reject-application' => 'rejectApplication',
         'training-school-updated' => 'handleTrainingSchoolUpdated',
         'fileUploaded' => 'handleFileUploaded',
         'licenseImageUploaded' => 'handleLicenseImageUploaded',
@@ -269,7 +273,8 @@ class DriverRecruitmentReview extends Component
             'relatedEmployments', // Cargar empleos relacionados
             'courses',            // Cursos de capacitación
             'testings',           // Pruebas de drogas
-            'inspections'         // Inspecciones
+            'inspections',        // Inspecciones
+            'media'               // Precargar medios (importante para las imágenes)
         ])->findOrFail($this->driverId);
     
         // Procesar fechas
@@ -2720,35 +2725,49 @@ private function loadModelMedia($model, $category, $recordType = null)
 
     public function rejectApplication()
     {
-        // Validar razón de rechazo
-        $this->validate([
-            'rejectionReason' => 'required|min:10'
-        ], [
-            'rejectionReason.required' => 'You must provide a reason for rejection.',
-            'rejectionReason.min' => 'The reason must have at least 10 characters.'
-        ]);
+        return $this->processRejection();
+    }
 
-        // Actualizar estado de la aplicación a rechazado
-        $this->application->update([
-            'status' => DriverApplication::STATUS_REJECTED,
-            'rejection_reason' => $this->rejectionReason,
-            'completed_at' => now()
-        ]);
+    public function processRejection()
+    {
+        try {
+            // Validar razón de rechazo
+            $this->validate([
+                'rejectionReason' => 'required|min:10'
+            ], [
+                'rejectionReason.required' => 'You must provide a reason for rejection.',
+                'rejectionReason.min' => 'The reason must have at least 10 characters.'
+            ]);
 
-        // Opcional: Enviar notificación al conductor
-        // Notification::send($this->driver->user, new DriverApplicationRejectedNotification($this->driver, $this->rejectionReason));
+            // Log para depuración
+            Log::info('Procesando rechazo con razón: ' . $this->rejectionReason);
 
-        // Actualizar datos locales
-        $this->loadDriverData();
+            // Actualizar estado de la aplicación a rechazado
+            $this->application->update([
+                'status' => DriverApplication::STATUS_REJECTED,
+                'rejection_reason' => $this->rejectionReason,
+                'completed_at' => now()
+            ]);
 
-        // Notificar a otros componentes
-        $this->dispatch('applicationStatusUpdated');
+            // Actualizar datos locales
+            $this->loadDriverData();
 
-        // Limpiar el campo de razón
-        $this->rejectionReason = '';
+            // Notificar a otros componentes
+            $this->dispatch('applicationStatusUpdated');
+            
+            // Limpiar el campo de razón
+            $this->rejectionReason = '';
 
-        // Mostrar mensaje
-        session()->flash('message', 'La solicitud ha sido rechazada.');
+            // Mostrar mensaje
+            session()->flash('message', 'La solicitud ha sido rechazada correctamente.');
+
+            Log::info('Rechazo procesado correctamente');
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Error al procesar el rechazo: ' . $e->getMessage());
+            session()->flash('error', 'Ocurrió un error al procesar el rechazo: ' . $e->getMessage());
+            return false;
+        }
     }
 
     public function downloadAllDocuments()
@@ -3118,6 +3137,15 @@ private function loadModelMedia($model, $category, $recordType = null)
      */
     public function assignTraining()
     {
+        // Log al inicio - solo para diagnóstico 
+        Log::info('DriverRecruitmentReview::assignTraining - Inicio', [
+            'driver_id' => $this->driverId,
+            'training_id' => $this->selectedTrainingId,
+            'domain' => request()->getHost(),
+            'app_url' => config('app.url'),
+            'session_domain' => config('session.domain')
+        ]);
+
         $this->validate([
             'selectedTrainingId' => 'required|exists:trainings,id',
             'trainingDueDate' => 'required|date|after:today',
@@ -3131,19 +3159,36 @@ private function loadModelMedia($model, $category, $recordType = null)
                 ->first();
 
             if ($existingAssignment) {
+                Log::info('DriverRecruitmentReview::assignTraining - Entrenamiento ya asignado', [
+                    'driver_id' => $this->driverId,
+                    'training_id' => $this->selectedTrainingId
+                ]);
                 session()->flash('error', 'Este entrenamiento ya está asignado al conductor.');
                 return;
             }
 
             // Crear la asignación de entrenamiento
+            Log::info('DriverRecruitmentReview::assignTraining - Creando asignación', [
+                'driver_id' => $this->driverId,
+                'training_id' => $this->selectedTrainingId,
+                'due_date' => $this->trainingDueDate,
+                'user_id' => Auth::id() // Registro del ID del usuario autenticado actual
+            ]);
+            
             DriverTraining::create([
                 'user_driver_detail_id' => $this->driverId,
                 'training_id' => $this->selectedTrainingId,
                 'assigned_date' => now(),
                 'due_date' => $this->trainingDueDate,
                 'status' => 'assigned',
-                // Usar el ID del usuario actual o 1 como fallback para el administrador
-                'assigned_by' => 1,
+                // Usar el ID del usuario autenticado actual
+                'assigned_by' => Auth::id(),
+            ]);
+
+            // Log de éxito
+            Log::info('DriverRecruitmentReview::assignTraining - Asignación creada exitosamente', [
+                'driver_id' => $this->driverId,
+                'training_id' => $this->selectedTrainingId
             ]);
 
             // Cerrar el modal y mostrar mensaje de éxito
@@ -3153,6 +3198,12 @@ private function loadModelMedia($model, $category, $recordType = null)
             // Recargar los datos del conductor
             $this->loadDriverData();
         } catch (\Exception $e) {
+            Log::error('DriverRecruitmentReview::assignTraining - Error', [
+                'driver_id' => $this->driverId,
+                'training_id' => $this->selectedTrainingId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             session()->flash('error', 'Error al asignar el entrenamiento: ' . $e->getMessage());
         }
     }
@@ -3182,9 +3233,9 @@ private function loadModelMedia($model, $category, $recordType = null)
     }
 
     public function render()
-{
-    return view('livewire.admin.driver.recruitment.driver-recruitment-review');        
-}
+    {
+        return view('livewire.admin.driver.recruitment.driver-recruitment-review');        
+    }
 
 /**
  * Abre el modal para subir un Record de Manejo

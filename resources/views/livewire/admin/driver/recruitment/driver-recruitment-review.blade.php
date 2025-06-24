@@ -10,14 +10,22 @@
     <div class="box box--stacked mb-5">
         <div class="box-header flex justify-between items-center p-5 border-b border-slate-200/60 bg-slate-50">
             <div class="flex items-center">
-                <div class="w-12 h-12 rounded-full overflow-hidden mr-3 bg-slate-100 flex items-center justify-center">
-                    @if ($driver->getFirstMediaUrl('profile_photo_driver'))
-                        <img src="{{ $driver->getFirstMediaUrl('profile_photo_driver') }}" alt="Foto de perfil"
-                            class="w-full h-full object-cover">
-                    @else
-                        <x-base.lucide class="h-6 w-6 text-slate-500" icon="User" />
-                    @endif
-                </div>
+                <div
+                class="w-12 h-12 rounded-full overflow-hidden mr-3 bg-slate-100 flex items-center justify-center">
+                @if ($driver->getFirstMediaUrl('profile_photo_driver'))
+                    <img src="{{ $driver->getFirstMediaUrl('profile_photo_driver') }}"
+                        alt="Foto de perfil" class="w-full h-full object-cover">
+                @else
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        data-lucide="user"
+                        class="lucide lucide-user stroke-[1] h-5 w-5 text-slate-500">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                @endif
+            </div>
                 <div>
                     <div class="text-lg font-medium">{{ $driver->user->name }} {{ $driver->last_name }}</div>
                     <div class="flex items-center text-slate-500 text-sm">
@@ -892,9 +900,9 @@
                                     <div>
                                         <div class="text-sm text-slate-500">Period</div>
                                         <div class="font-medium">
-                                            {{ $school->date_start ? $school->date_start->format('m/Y') : 'N/A' }}
+                                            {{ $school->date_start ? $school->date_start->format('m/d/Y') : 'N/A' }}
                                             -
-                                            {{ $school->date_end ? $school->date_end->format('m/Y') : 'N/A' }}
+                                            {{ $school->date_end ? $school->date_end->format('m/d/Y') : 'N/A' }}
                                         </div>
                                     </div>
                                     <div>
@@ -1131,6 +1139,7 @@
                                                 {{ $test->next_test_due ? $test->next_test_due->format('m/d/Y') : 'N/A' }}
                                             </div>
                                         </div>
+                                        <div>
                                         <div>
                                             <div class="text-sm text-slate-500">Bill To</div>
                                             <div class="font-medium">{{ $test->bill_to }}</div>
@@ -2115,7 +2124,7 @@
                                 </svg>
                                 Approve Application
                             </button>
-                            <button type="button" data-tw-toggle="modal" data-tw-target="#reject-modal"
+                            <button type="button" wire:click="$dispatch('open-reject-modal')"
                                 class="px-4 py-3 bg-danger text-white rounded-lg hover:bg-danger-focus flex items-center justify-center transition-colors">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -2246,44 +2255,72 @@
     </div>
 </div>
 
-
-<!-- Modal de rechazo -->
-<x-base.dialog id="reject-modal" size="md">
-    <x-base.dialog.panel>
-        <x-base.dialog.title>
-            <h2 class="mr-auto text-base font-medium">
-                Reject Driver Application
-            </h2>
-        </x-base.dialog.title>
-        <form wire:submit.prevent="rejectApplication">
-            <x-base.dialog.description>
-                <div class="mt-2 mb-4">
-                    <x-base.form-label for="rejectionReason">Reason for Rejection</x-base.form-label>
-                    <x-base.form-textarea id="rejectionReason" wire:model="rejectionReason" rows="4"
-                        placeholder="Explain the reason why this application is being rejected..."></x-base.form-textarea>
-                    @error('rejectionReason')
-                        <div class="text-danger text-sm mt-1">{{ $message }}</div>
-                    @enderror
+<!-- Modal para rechazar la aplicación usando Alpine.js -->
+<div x-data="{ open: false }" x-init="$wire.on('open-reject-modal', () => { open = true });" 
+    x-show="open" 
+         class="modal modal-slide-over" 
+         tabindex="-1" 
+         aria-hidden="true"
+         data-tw-backdrop="static"
+         x-transition:enter="transition ease-in-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in-out duration-300"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">    
+        <div class="modal group bg-gradient-to-b from-theme-1/50 via-theme-2/50 to-black/50 fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto p-4">
+            <div class="w-full max-w-md bg-white rounded-md shadow-lg">
+                <!-- Modal Header -->
+                <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 rounded-t-md">
+                    <h2 class="font-medium text-base mr-auto">Rejection Application</h2>
                 </div>
-                <div class="bg-amber-50 border border-amber-200 rounded p-3 text-sm text-amber-600">
-                    <x-base.lucide class="h-4 w-4 inline-block mr-1" icon="AlertTriangle" />
-                    This action will send a notification to the driver informing them that their application has
-                    been
-                    rejected.
+                
+                <!-- Modal Body -->
+                <div class="modal-body p-3">
+                    <div class="p-5">
+                        <div class="mb-4">
+                            <label for="rejectionReason" class="form-label">Rejection Reason</label>
+                            <textarea wire:model="rejectionReason" id="rejectionReason" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm" rows="4" 
+                                placeholder="Explain the reason for rejecting this application..."></textarea>
+                            @error('rejectionReason') 
+                                <div class="text-danger mt-1 text-sm">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="text-warning flex items-center mt-3">
+                            <i data-lucide="alert-triangle" class="w-6 h-6 mr-2"></i>
+                            <span>This action will notify the driver about the rejection of their application.</span>
+                        </div>
+                    </div>
                 </div>
-            </x-base.dialog.description>
-            <x-base.dialog.footer>
-                <x-base.button class="mr-1 w-20" data-tw-dismiss="modal" type="button"
-                    variant="outline-secondary">
-                    Cancel
-                </x-base.button>
-                <x-base.button class="w-20" type="submit" variant="danger">
-                    Reject
-                </x-base.button>
-            </x-base.dialog.footer>
-        </form>
-    </x-base.dialog.panel>
-</x-base.dialog>
+                                
+                <!-- Modal Footer -->
+                <div class="modal-footer text-right p-3">
+                    <button type="button" @click="open = false" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                        Cancel
+                    </button>
+                    <button 
+                        type="button" 
+                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-danger hover:bg-danger-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-danger"
+                        @click="$wire.rejectApplication().then(() => { open = false })" 
+                        wire:loading.attr="disabled" 
+                        wire:target="rejectApplication"
+                    >
+                        <span wire:loading.remove wire:target="rejectApplication">
+                            Reject
+                        </span>
+                        <span wire:loading wire:target="rejectApplication" class="flex items-center">
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Processing...
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    
+</div>
 
 <!-- Modal para subir imágenes de licencia (frontal/trasera) -->
 <div x-data="{ open: false }" x-init="$wire.on('open-license-image-modal', () => { open = true });
@@ -2435,7 +2472,6 @@ $wire.on('closeUploadModal', () => { open = false });" x-show="open"
 <!-- Modal para ingresar motivo de documento solicitado -->
 <!-- Modal simple con Alpine.js -->
 
-
 <div x-data="{ open: false }" x-init="$wire.on('open-document-reason-modal', () => { open = true });
 $wire.on('close-document-reason-modal', () => { open = false });" x-show="open"
     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90"
@@ -2525,6 +2561,24 @@ $wire.on('close-document-reason-modal', () => { open = false });" x-show="open"
 </div>
 
 <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Script para el manejo del cierre del modal
+            window.addEventListener('livewire:initialized', () => {
+                Livewire.on('applicationStatusUpdated', () => {
+                    // Cerrar el modal de rechazo
+                    const modal = document.getElementById('reject-modal');
+                    if (modal) {
+                        const twModal = window.Tw?.modal?.getInstance(modal);
+                        if (twModal) {
+                            twModal.hide();
+                        }
+                    }
+                });
+            });
+        
+    });
+
+    // Logica para subir Licencias en Modal
     function licenseUploader() {
         return {
             open: false,
@@ -2597,6 +2651,5 @@ $wire.on('close-document-reason-modal', () => { open = false });" x-show="open"
             }
         };
     }
-
-    // Solo se usa licenseUploader() para todo tipo de imágenes (licencia y médica)
+    
 </script>

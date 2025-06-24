@@ -19,7 +19,8 @@ class DriverApplication extends Model implements HasMedia
         'user_id',
         'status',        
         'pdf_path',
-        'completed_at'
+        'completed_at',
+        'rejection_reason'
     ];
     
     protected $casts = [

@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use App\Models\DocumentType;
 use Illuminate\Http\Request;
 use App\Models\CarrierDocument;
+use App\Models\UserDriverDetail;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Services\CarrierDocumentService;
@@ -156,6 +157,50 @@ class CarrierController extends Controller
         $documentTypes = DocumentType::all(); // Aquí cargamos los tipos de documentos
 
         return view('admin.carrier.documents', compact('carrier', 'documents', 'documentTypes'));
+    }
+    
+    /**
+     * Mostrar información detallada de un carrier específico
+     * Incluye datos principales, usuarios, conductores y documentos
+     */
+    public function show(Carrier $carrier)
+    {
+        // Cargar relaciones necesarias
+        $carrier->load([
+            'membership',
+            'userCarriers.user',
+            'documents.documentType',
+            'documents.media'
+        ]);
+        
+        // Obtener usuarios del carrier
+        $userCarriers = $carrier->userCarriers;
+        
+        // Obtener conductores asociados al carrier
+        $drivers = UserDriverDetail::where('carrier_id', $carrier->id)
+            ->with(['user', 'licenses'])
+            ->get();
+        
+        // Documentos clasificados por estado
+        $documents = $carrier->documents;
+        $pendingDocuments = $documents->where('status', 0); // STATUS_PENDING = 0
+        $approvedDocuments = $documents->where('status', 1); // STATUS_APPROVED = 1
+        $rejectedDocuments = $documents->where('status', 2); // STATUS_REJECTED = 2
+        
+        // Tipos de documentos que faltan
+        $existingDocTypeIds = $documents->pluck('document_type_id')->toArray();
+        $missingDocumentTypes = DocumentType::whereNotIn('id', $existingDocTypeIds)->get();
+        
+        return view('admin.carrier.show', compact(
+            'carrier', 
+            'userCarriers', 
+            'drivers', 
+            'documents',
+            'pendingDocuments',
+            'approvedDocuments',
+            'rejectedDocuments',
+            'missingDocumentTypes'
+        ));
     }
     
     /**

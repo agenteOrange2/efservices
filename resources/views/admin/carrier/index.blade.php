@@ -62,7 +62,7 @@
                 {{-- <livewire:carrier-manager /> --}}
 
                 <livewire:generic-table class="p-0" model="App\Models\Carrier" :columns="['name', 'address', 'status', 'created_at']" :searchableFields="['name', 'address', 'status', 'created_at']"
-                    editRoute="admin.carrier.edit" exportExcelRoute="admin.carrier.export.excel"
+                    editRoute="admin.carrier.edit" showSlugRoute="admin.carrier.show" exportExcelRoute="admin.carrier.export.excel"
                     exportPdfRoute="admin.carrier.export.pdf" :customFilters="[
                         'status' => [
                             'type' => 'select',

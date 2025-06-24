@@ -26,15 +26,7 @@
                                             <input type="text" id="organization_name" wire:model="organization_name" 
                                                 class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm">
                                             @error('organization_name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                                        </div>
-
-                                        <!-- Teléfono -->
-                                        <div>
-                                            <label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
-                                            <input type="text" id="phone" wire:model="phone" 
-                                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm">
-                                            @error('phone') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                                        </div>
+                                        </div>                                        
 
                                         <!-- Ciudad -->
                                         <div>

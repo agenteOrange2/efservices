@@ -21,6 +21,11 @@ class CarrierDocument extends Model implements HasMedia
         'status',
     ];
 
+    // Definir los campos que deben ser convertidos a instancias Carbon
+    protected $casts = [
+        'date' => 'date',
+    ];
+
     public const STATUS_PENDING = 0;
     public const STATUS_APPROVED = 1;
     public const STATUS_REJECTED = 2;

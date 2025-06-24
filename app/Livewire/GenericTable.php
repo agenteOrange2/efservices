@@ -26,7 +26,8 @@ class GenericTable extends Component
     public $selectAll = false;
     public $openMenu = [];
     public $editRoute; // Ruta para edición
-    public $showRoute; // Ruta para visualización de detalles
+    public $showRoute; // Ruta para visualización de detalles (usando ID)
+    public $showSlugRoute; // Ruta para visualización de detalles (usando slug)
     public $deleteRoute; // Ruta para eliminación
     public $deleteMethod = 'delete'; // Método de eliminación
     public $exportExcelRoute;
@@ -257,6 +258,20 @@ class GenericTable extends Component
                     'details' => 'The requested record could not be found.',
                 ]);
             }
+        }
+    }
+
+    public function showSlugRecord($slug)
+    {
+        if ($this->showSlugRoute) {
+            return redirect()->route($this->showSlugRoute, $slug);
+        } else {
+            // Si no hay ruta definida, mostrar una notificación
+            $this->dispatch('notify', [
+                'type' => 'warning',
+                'message' => 'Navigation Error',
+                'details' => 'Show route with slug is not defined.',
+            ]);
         }
     }
 
