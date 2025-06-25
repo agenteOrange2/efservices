@@ -11,90 +11,101 @@
 
 @section('subcontent')
 
-<div class="intro   -y flex flex-col sm:flex-row items-center mt-8">
-    <h2 class="text-lg font-medium mr-auto">
-        <i data-lucide="truck" class="w-5 h-5 mr-2 text-primary inline"></i>
-        Carrier Details: {{ $carrier->name }}
-    </h2>
-    <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
-        <a href="{{ route('admin.carrier.index') }}" class="btn btn-secondary shadow-md mr-2">
-            <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Back to list
-        </a>
-        <a href="{{ route('admin.carrier.edit', $carrier) }}" class="btn btn-primary shadow-md">
-            <i data-lucide="edit" class="w-4 h-4 mr-2"></i> Edit Carrier
-        </a>
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+    <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-blue-100 rounded-lg">
+                <i data-lucide="truck" class="w-6 h-6 text-blue-600"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Carrier Details</h1>
+                <p class="text-gray-600">{{ $carrier->name }}</p>
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <a href="{{ route('admin.carrier.index') }}" class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                Back to list
+            </a>
+            <a href="{{ route('admin.carrier.edit', $carrier) }}" class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                <i data-lucide="edit" class="w-4 h-4"></i>
+                Edit Carrier
+            </a>
+        </div>
     </div>
 </div>
 
 <div class="grid grid-cols-12 gap-6 mt-5">
-    <!-- Información Principal -->
+    <!-- Columna Izquierda - Información Principal -->
     <div class="col-span-12 lg:col-span-4">
-        <div class="box p-5">
-            <div class="flex items-center border-b pb-5 mb-5">
-                <div class="font-medium text-base truncate">Main Information</div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-fit">
+            <div class="flex items-center gap-2 mb-6">
+                <i data-lucide="info" class="w-5 h-5 text-blue-600"></i>
+                <h2 class="text-lg font-semibold text-gray-900">Main Information</h2>
             </div>
-            <div class="flex flex-col">
-                <!-- Logo -->
-                <div class="flex justify-center mb-5">
-                    @if($carrier->hasMedia('logo_carrier'))
-                        <img src="{{ $carrier->getFirstMediaUrl('logo_carrier') }}" alt="Logo" class="w-32 h-32 object-contain border rounded-md">
-                    @else
-                        <div class="w-32 h-32 flex items-center justify-center bg-gray-100 border rounded-md">
-                            <i data-lucide="image" class="w-12 h-12 text-gray-400"></i>
-                        </div>
-                    @endif
-                </div>
+            
+            <!-- Logo Section -->
+            <div class="flex justify-center mb-6">
+                @if($carrier->hasMedia('logo_carrier'))
+                    <img src="{{ $carrier->getFirstMediaUrl('logo_carrier') }}" alt="Logo" class="w-full h-32 object-contain border-2 border-dashed border-blue-200 rounded-xl p-2">
+                @else
+                    <div class="w-32 h-32 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center border-2 border-dashed border-blue-200">
+                        <i data-lucide="image" class="w-12 h-12 text-blue-400"></i>
+                    </div>
+                @endif
+            </div>
 
-                <!-- Datos -->
-                <div class="grid grid-cols-1 gap-3">
-                    <div class="flex flex-col">
-                        <span class="text-gray-600 text-xs">Nombre:</span>
-                        <span class="font-medium">{{ $carrier->name }}</span>
+            <!-- Information Grid -->
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Name</label>
+                        <p class="text-sm font-semibold text-gray-900 mt-1">{{ $carrier->name }}</p>
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-gray-600 text-xs">Dirección:</span>
-                        <span class="font-medium">{{ $carrier->address }}</span>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Address</label>
+                        <p class="text-sm font-semibold text-gray-900 mt-1">{{ $carrier->address }}</p>
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-gray-600 text-xs">Estado:</span>
-                        <span class="font-medium">{{ $carrier->state }}</span>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">State</label>
+                        <p class="text-sm font-semibold text-gray-900 mt-1">{{ $carrier->state }}</p>
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-gray-600 text-xs">Código Postal:</span>
-                        <span class="font-medium">{{ $carrier->zipcode }}</span>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Zipcode</label>
+                        <p class="text-sm font-semibold text-gray-900 mt-1">{{ $carrier->zipcode }}</p>
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-gray-600 text-xs">Número EIN:</span>
-                        <span class="font-medium">{{ $carrier->ein_number }}</span>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">EIN Number</label>
+                        <p class="text-sm font-semibold text-gray-900 mt-1">{{ $carrier->ein_number }}</p>
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-gray-600 text-xs">Número DOT:</span>
-                        <span class="font-medium">{{ $carrier->dot_number ?? 'N/A' }}</span>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">DOT Number</label>
+                        <p class="text-sm font-semibold text-gray-900 mt-1">{{ $carrier->dot_number ?? 'N/A' }}</p>
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-gray-600 text-xs">Número MC:</span>
-                        <span class="font-medium">{{ $carrier->mc_number ?? 'N/A' }}</span>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">MC Number</label>
+                        <p class="text-sm font-semibold text-gray-900 mt-1">{{ $carrier->mc_number ?? 'N/A' }}</p>
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-gray-600 text-xs">DOT Estatal:</span>
-                        <span class="font-medium">{{ $carrier->state_dot ?? 'N/A' }}</span>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">DOT State</label>
+                        <p class="text-sm font-semibold text-gray-900 mt-1">{{ $carrier->state_dot ?? 'N/A' }}</p>
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-gray-600 text-xs">Cuenta IFTA:</span>
-                        <span class="font-medium">{{ $carrier->ifta_account ?? 'N/A' }}</span>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Plan</label>
+                        <p class="text-sm font-semibold text-gray-900 mt-1">{{ $carrier->membership->name ?? 'No Plan' }}</p>
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-gray-600 text-xs">Plan:</span>
-                        <span class="font-medium">{{ $carrier->membership->name ?? 'Sin plan' }}</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-gray-600 text-xs">Estado:</span>
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</label>
                         @if($carrier->status == 1)
-                            <span class="py-1 px-2 rounded-full text-xs bg-success text-white font-medium">Activo</span>
-                        @elseif($carrier->status == 0)
-                            <span class="py-1 px-2 rounded-full text-xs bg-danger text-white font-medium">Inactivo</span>
+                            <p class="flex items-center gap-1.5 text-sm font-semibold text-green-600 mt-1">
+                                <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+                                Active
+                            </p>
                         @else
-                            <span class="py-1 px-2 rounded-full text-xs bg-warning text-white font-medium">Pendiente</span>
+                            <p class="flex items-center gap-1.5 text-sm font-semibold text-yellow-600 mt-1">
+                                <span class="w-1.5 h-1.5 bg-yellow-400 rounded-full"></span>
+                                Pending
+                            </p>
                         @endif
                     </div>
                 </div>
@@ -102,317 +113,413 @@
         </div>
     </div>
 
-    <!-- Estadísticas Rápidas -->
-    <div class="col-span-12 lg:col-span-8">
-        <div class="grid grid-cols-12 gap-6">
+    <!-- Columna Central - Estadísticas y Pestañas -->
+    <div class="col-span-12 lg:col-span-8 space-y-6">
+        <!-- Estadísticas Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Total de usuarios -->
-            <div class="col-span-12 sm:col-span-4">
-                <div class="report-box zoom-in">
-                    <div class="box p-5">
-                        <div class="flex">
-                            <i data-lucide="users" class="report-box__icon text-primary"></i>
-                        </div>
-                        <div class="text-3xl font-medium leading-8 mt-6">{{ $userCarriers->count() }}</div>
-                        <div class="text-base text-gray-600 mt-1">Usuarios</div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Total Users</p>
+                        <h3 class="text-2xl font-bold text-gray-900 mt-1">{{ $userCarriers->count() }}</h3>
+                    </div>
+                    <div class="p-3 bg-blue-100 rounded-lg">
+                        <i data-lucide="users" class="w-6 h-6 text-blue-600"></i>
                     </div>
                 </div>
             </div>
+            
             <!-- Total de conductores -->
-            <div class="col-span-12 sm:col-span-4">
-                <div class="report-box zoom-in">
-                    <div class="box p-5">
-                        <div class="flex">
-                            <i data-lucide="user-check" class="report-box__icon text-pending"></i>
-                        </div>
-                        <div class="text-3xl font-medium leading-8 mt-6">{{ $drivers->count() }}</div>
-                        <div class="text-base text-gray-600 mt-1">Conductores</div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Total Drivers</p>
+                        <h3 class="text-2xl font-bold text-gray-900 mt-1">{{ $drivers->count() }}</h3>
+                    </div>
+                    <div class="p-3 bg-orange-100 rounded-lg">
+                        <i data-lucide="user-check" class="w-6 h-6 text-orange-600"></i>
                     </div>
                 </div>
             </div>
+            
             <!-- Total de documentos -->
-            <div class="col-span-12 sm:col-span-4">
-                <div class="report-box zoom-in">
-                    <div class="box p-5">
-                        <div class="flex">
-                            <i data-lucide="file-text" class="report-box__icon text-warning"></i>
-                        </div>
-                        <div class="text-3xl font-medium leading-8 mt-6">{{ $documents->count() }}</div>
-                        <div class="text-base text-gray-600 mt-1">Documentos</div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Total Documents</p>
+                        <h3 class="text-2xl font-bold text-gray-900 mt-1">{{ $documents->count() }}</h3>
                     </div>
-                </div>
-            </div>
-            <!-- Progreso de documentación -->
-            <div class="col-span-12">
-                <div class="box p-5">
-                    <div class="flex items-center border-b pb-3 mb-3">
-                        <div class="font-medium text-base truncate">Estado de Documentación</div>
-                    </div>
-                    <div class="flex flex-col">
-                        <div class="flex items-center">
-                            <div class="w-2/3">Documentos Aprobados</div>
-                            <div class="w-1/3 text-right">{{ $approvedDocuments->count() }} de {{ $documents->count() }}</div>
-                        </div>
-                        <div class="progress h-4 mt-2">
-                            <div class="progress-bar bg-success" role="progressbar" 
-                                 style="width: {{ $documents->count() > 0 ? ($approvedDocuments->count() / $documents->count()) * 100 : 0 }}%" 
-                                 aria-valuenow="{{ $approvedDocuments->count() }}" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="{{ $documents->count() }}"></div>
-                        </div>
-                        
-                        <div class="flex items-center mt-4">
-                            <div class="w-2/3">Documentos Pendientes</div>
-                            <div class="w-1/3 text-right">{{ $pendingDocuments->count() }} de {{ $documents->count() }}</div>
-                        </div>
-                        <div class="progress h-4 mt-2">
-                            <div class="progress-bar bg-warning" role="progressbar" 
-                                 style="width: {{ $documents->count() > 0 ? ($pendingDocuments->count() / $documents->count()) * 100 : 0 }}%" 
-                                 aria-valuenow="{{ $pendingDocuments->count() }}" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="{{ $documents->count() }}"></div>
-                        </div>
-                        
-                        <div class="flex items-center mt-4">
-                            <div class="w-2/3">Documentos Rechazados</div>
-                            <div class="w-1/3 text-right">{{ $rejectedDocuments->count() }} de {{ $documents->count() }}</div>
-                        </div>
-                        <div class="progress h-4 mt-2">
-                            <div class="progress-bar bg-danger" role="progressbar" 
-                                 style="width: {{ $documents->count() > 0 ? ($rejectedDocuments->count() / $documents->count()) * 100 : 0 }}%" 
-                                 aria-valuenow="{{ $rejectedDocuments->count() }}" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="{{ $documents->count() }}"></div>
-                        </div>
+                    <div class="p-3 bg-yellow-100 rounded-lg">
+                        <i data-lucide="file-text" class="w-6 h-6 text-yellow-600"></i>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- Pestañas -->
-<div class="box p-5 mt-5">
-    <ul class="nav nav-tabs" role="tablist">
-        <li class="nav-item flex-1" role="presentation">
-            <button class="nav-link w-full py-2 active" data-tw-toggle="tab" data-tw-target="#users-tab" type="button" role="tab" aria-controls="users-tab" aria-selected="true">Usuarios</button>
-        </li>
-        <li class="nav-item flex-1" role="presentation">
-            <button class="nav-link w-full py-2" data-tw-toggle="tab" data-tw-target="#drivers-tab" type="button" role="tab" aria-controls="drivers-tab" aria-selected="false">Conductores</button>
-        </li>
-        <li class="nav-item flex-1" role="presentation">
-            <button class="nav-link w-full py-2" data-tw-toggle="tab" data-tw-target="#documents-tab" type="button" role="tab" aria-controls="documents-tab" aria-selected="false">Documentos</button>
-        </li>
-    </ul>
-    <div class="tab-content mt-5">
+        
+        <!-- Estado de Documentación -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center gap-2 mb-6">
+                <i data-lucide="bar-chart-2" class="w-5 h-5 text-blue-600"></i>
+                <h2 class="text-lg font-semibold text-gray-900">Document Status</h2>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- Documentos Aprobados -->
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <p class="text-sm font-medium text-gray-700"> Approved Documents</p>
+                        <p class="text-sm font-medium text-gray-700">{{ $approvedDocuments->count() }} de {{ $documents->count() }}</p>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-green-500 h-2.5 rounded-full" style="width: {{ $documents->count() > 0 ? ($approvedDocuments->count() / $documents->count()) * 100 : 0 }}%"></div>
+                    </div>
+                </div>
+                
+                <!-- Documentos Pendientes -->
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <p class="text-sm font-medium text-gray-700">Pending Documents</p>
+                        <p class="text-sm font-medium text-gray-700">{{ $pendingDocuments->count() }} de {{ $documents->count() }}</p>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-yellow-500 h-2.5 rounded-full" style="width: {{ $documents->count() > 0 ? ($pendingDocuments->count() / $documents->count()) * 100 : 0 }}%"></div>
+                    </div>
+                </div>
+                
+                <!-- Documentos Rechazados -->
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <p class="text-sm font-medium text-gray-700">Rejected Documents</p>
+                        <p class="text-sm font-medium text-gray-700">{{ $rejectedDocuments->count() }} de {{ $documents->count() }}</p>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-red-500 h-2.5 rounded-full" style="width: {{ $documents->count() > 0 ? ($rejectedDocuments->count() / $documents->count()) * 100 : 0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pestañas -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
+            <div class="flex items-center gap-2 mb-6">
+                <i data-lucide="layout-grid" class="w-5 h-5 text-blue-600"></i>
+                <h2 class="text-lg font-semibold text-gray-900">Detailed Information</h2>
+            </div>
+            
+            <!-- Tab Navigation -->
+            <div class="border-b border-gray-200">
+                <nav class="flex space-x-4 overflow-x-auto" aria-label="Tabs">
+            <button id="tab-users" class="tab-button px-4 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600 hover:text-blue-800 hover:border-blue-800 whitespace-nowrap flex items-center gap-2 active" data-tw-toggle="tab" data-target="#tab-content-users" aria-controls="tab-content-users" aria-selected="true">
+                <i data-lucide="users" class="w-4 h-4"></i>
+                <span>Users</span>
+            </button>
+            <button id="tab-drivers" class="tab-button px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600 whitespace-nowrap flex items-center gap-2" data-tw-toggle="tab" data-target="#tab-content-drivers" aria-controls="tab-content-drivers" aria-selected="false">
+                <i data-lucide="user-check" class="w-4 h-4"></i>
+                <span>Drivers</span>
+            </button>
+            <button id="tab-documents" class="tab-button px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600 whitespace-nowrap flex items-center gap-2" data-tw-toggle="tab" data-target="#tab-content-documents" aria-controls="tab-content-documents" aria-selected="false">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                <span>Documents</span>
+            </button>
+                </nav>
+            </div>
+    
+            <!-- Tab Content -->
+            <div class="tab-content mt-6">
         <!-- Tab Usuarios -->
-        <div class="tab-pane active" id="users-tab" role="tabpanel" aria-labelledby="users-tab">
-            <div class="overflow-x-auto">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th class="whitespace-nowrap">#</th>
-                            <th class="whitespace-nowrap">Nombre</th>
-                            <th class="whitespace-nowrap">Email</th>
-                            <th class="whitespace-nowrap">Teléfono</th>
-                            <th class="whitespace-nowrap">Rol</th>
-                            <th class="whitespace-nowrap">Estado</th>
-                            <th class="whitespace-nowrap text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($userCarriers as $index => $userCarrier)
+        <div id="tab-content-users" class="tab-pane active" role="tabpanel" aria-labelledby="tab-users">
+            <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+                <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
                             <tr>
-                                <td>{{ $index + 1 }}</td>
-                                <td>{{ $userCarrier->user->name }}</td>
-                                <td>{{ $userCarrier->user->email }}</td>
-                                <td>{{ $userCarrier->user->phone_number ?? 'N/A' }}</td>
-                                <td>{{ $userCarrier->user->getRoleNames()->first() ?? 'Sin rol' }}</td>
-                                <td>
-                                    @if($userCarrier->status == 1)
-                                        <span class="py-1 px-2 rounded-full text-xs bg-success text-white font-medium">Activo</span>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach($userCarriers as $user)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $loop->iteration }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $user->user->name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $user->user->email }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $user->user->getRoleNames()->first() ?? 'Sin rol' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @if($user->status == 1)
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></span>
+                                            Active
+                                        </span>
                                     @else
-                                        <span class="py-1 px-2 rounded-full text-xs bg-danger text-white font-medium">Inactivo</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            <span class="w-1.5 h-1.5 bg-yellow-400 rounded-full mr-1.5"></span>
+                                            Pending
+                                        </span>
                                     @endif
                                 </td>
-                                <td class="table-report__action">
-                                    <div class="flex justify-center">
-                                        <a href="{{ route('admin.carrier.user_carriers.edit', ['carrier' => $carrier, 'userCarrierDetails' => $userCarrier]) }}" class="btn btn-sm btn-primary mr-2">
-                                            <i data-lucide="edit" class="w-4 h-4"></i>
-                                        </a>
-                                        {{-- No hay una ruta show definida para user_carriers, así que podemos omitir este botón por ahora --}}
-                                    </div>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <a href="{{ route('admin.carrier.user_carriers.edit', ['carrier' => $carrier, 'userCarrierDetails' => $user]) }}" class="text-blue-600 hover:text-blue-900 flex items-center gap-1">
+                                        <i data-lucide="edit" class="w-4 h-4"></i> Edit
+                                    </a>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center">No hay usuarios registrados</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
+                            @endforeach
+                        </tbody>
                 </table>
             </div>
         </div>
         
         <!-- Tab Conductores -->
-        <div class="tab-pane" id="drivers-tab" role="tabpanel" aria-labelledby="drivers-tab">
-            <div class="overflow-x-auto">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th class="whitespace-nowrap">#</th>
-                            <th class="whitespace-nowrap">Nombre</th>
-                            <th class="whitespace-nowrap">Email</th>
-                            <th class="whitespace-nowrap">Teléfono</th>
-                            <th class="whitespace-nowrap">Licencia</th>
-                            <th class="whitespace-nowrap">Estado</th>
-                            <th class="whitespace-nowrap text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($drivers as $index => $driver)
+        <div id="tab-content-drivers" class="tab-pane hidden" role="tabpanel" aria-labelledby="tab-drivers">
+            <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+                <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
                             <tr>
-                                <td>{{ $index + 1 }}</td>
-                                <td>{{ $driver->user->name }}</td>
-                                <td>{{ $driver->user->email }}</td>
-                                <td>{{ $driver->phone ?? $driver->user->phone_number ?? 'N/A' }}</td>
-                                <td>{{ $driver->licenses->first()->license_number ?? 'Sin licencia' }}</td>
-                                <td>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach($drivers as $driver)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $loop->iteration }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $driver->user->name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $driver->licenses->first()->license_number ?? 'Sin license' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
                                     @if($driver->status == 1)
-                                        <span class="py-1 px-2 rounded-full text-xs bg-success text-white font-medium">Activo</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></span>
+                                            Active
+                                        </span>
                                     @else
-                                        <span class="py-1 px-2 rounded-full text-xs bg-danger text-white font-medium">Inactivo</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            <span class="w-1.5 h-1.5 bg-yellow-400 rounded-full mr-1.5"></span>
+                                            Pending
+                                        </span>
                                     @endif
                                 </td>
-                                <td class="table-report__action">
-                                    <div class="flex justify-center">
-                                        <a href="{{ route('admin.carrier.user_drivers.edit', ['carrier' => $carrier, 'userDriverDetail' => $driver]) }}" class="btn btn-sm btn-primary mr-2">
-                                            <i data-lucide="edit" class="w-4 h-4"></i>
-                                        </a>
-                                    </div>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <a href="{{ route('admin.carrier.user_drivers.edit', ['carrier' => $carrier, 'userDriverDetail' => $driver]) }}" class="text-blue-600 hover:text-blue-900 flex items-center gap-1">
+                                        <i data-lucide="edit" class="w-4 h-4"></i> Edit
+                                    </a>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center">No hay conductores registrados</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
+                            @endforeach
+                        </tbody>
                 </table>
             </div>
         </div>
         
         <!-- Tab Documentos -->
-        <div class="tab-pane" id="documents-tab" role="tabpanel" aria-labelledby="documents-tab">
-            <div class="grid grid-cols-12 gap-6">
-                <!-- Documentos Subidos -->
-                <div class="col-span-12 lg:col-span-8">
-                    <div class="box p-5">
-                        <div class="flex items-center border-b pb-3 mb-3">
-                            <div class="font-medium text-base truncate">Documentos Subidos</div>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th class="whitespace-nowrap">Tipo</th>
-                                        <th class="whitespace-nowrap">Fecha</th>
-                                        <th class="whitespace-nowrap">Estado</th>
-                                        <th class="whitespace-nowrap">Archivo</th>
-                                        <th class="whitespace-nowrap">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($documents as $document)
-                                        <tr>
-                                            <td>{{ $document->documentType->name }}</td>
-                                            <td>{{ $document->date ? (is_string($document->date) ? $document->date : $document->date->format('d/m/Y')) : 'N/A' }}</td>
-                                            <td>
-                                                @if($document->status == 0)
-                                                    <span class="py-1 px-2 rounded-full text-xs bg-warning text-white font-medium">Pendiente</span>
-                                                @elseif($document->status == 1)
-                                                    <span class="py-1 px-2 rounded-full text-xs bg-success text-white font-medium">Aprobado</span>
-                                                @else
-                                                    <span class="py-1 px-2 rounded-full text-xs bg-danger text-white font-medium">Rechazado</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                @if($document->hasMedia('carrier_documents'))
-                                                    <a href="{{ $document->getFirstMediaUrl('carrier_documents') }}" target="_blank" class="btn btn-sm btn-outline-secondary">
-                                                        <i data-lucide="file" class="w-4 h-4 mr-1"></i> Ver archivo
-                                                    </a>
-                                                @else
-                                                    <span class="text-gray-500">Sin archivo</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <div class="flex">
-                                                    <a href="{{ route('admin.carriers.documents.edit', ['carrier' => $carrier, 'document' => $document]) }}" class="btn btn-sm btn-primary mr-2">
-                                                        <i data-lucide="edit" class="w-4 h-4"></i>
-                                                    </a>
-                                                    <form action="{{ route('admin.carriers.documents.destroy', ['carrier' => $carrier, 'document' => $document]) }}" method="POST" class="inline">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('\u00bfEst\u00e1 seguro de eliminar este documento?')">
-                                                            <i data-lucide="trash" class="w-4 h-4"></i>
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="5" class="text-center">No hay documentos registrados</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Documentos Faltantes -->
-                <div class="col-span-12 lg:col-span-4">
-                    <div class="box p-5 h-full">
-                        <div class="flex items-center border-b pb-3 mb-3">
-                            <div class="font-medium text-base truncate">Documentos Faltantes</div>
-                        </div>
-                        
-                        @if($missingDocumentTypes->count() > 0)
-                            <div class="grid gap-3">
+        <div id="tab-content-documents" class="tab-pane hidden" role="tabpanel" aria-labelledby="tab-documents">
+            <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+                <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiration Date</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach($documents as $document)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $loop->iteration }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $document->documentType->name ?? 'Sin tipo' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $document->expiration_date ? date('m/d/Y', strtotime($document->expiration_date)) : 'N/A' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @if($document->status == 'approved')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></span>
+                                            Approved
+                                        </span>
+                                    @elseif($document->status == 'rejected')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-1.5"></span>
+                                            Rejected
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            <span class="w-1.5 h-1.5 bg-yellow-400 rounded-full mr-1.5"></span>
+                                            Pending
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex space-x-2">
+                                        @if($document->hasMedia('carrier_documents'))
+                                            <a href="{{ $document->getFirstMediaUrl('carrier_documents') }}" class="text-blue-600 hover:text-blue-900" target="_blank">
+                                                <i data-lucide="eye" class="w-5 h-5"></i>
+                                            </a>
+                                            <a href="{{ $document->getFirstMediaUrl('carrier_documents') }}" class="text-green-600 hover:text-green-900" download>
+                                                <i data-lucide="download" class="w-5 h-5"></i>
+                                            </a>
+                                        @endif
+                                        <a href="{{ route('admin.carriers.documents.index', ['carrier' => $carrier->id]) }}" class="text-indigo-600 hover:text-indigo-900">
+                                            <i data-lucide="edit" class="w-5 h-5"></i>
+                                        </a>
+                                        <button type="button" class="text-red-600 hover:text-red-900 delete-document-btn" data-document-id="{{ $document->id }}">
+                                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                </table>
+            </div>
+        </div>
+            </div>
+        </div>
+    
+    {{-- <!-- Columna Derecha - Documentos Faltantes -->
+    <div class="col-span-12 lg:col-span-3">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-fit">
+            <div class="flex items-center gap-2 mb-6">
+                <i data-lucide="file-plus" class="w-5 h-5 text-blue-600"></i>
+                <h2 class="text-lg font-semibold text-gray-900">Missing Documents</h2>
+            </div>
+            
+            @if($missingDocumentTypes->count() > 0)
+                <div class="grid gap-3">
                                 @foreach($missingDocumentTypes as $documentType)
                                     <div class="flex items-center p-3 border rounded-md">
                                         <div class="mr-auto">
                                             <div class="font-medium">{{ $documentType->name }}</div>
-                                            <div class="text-xs text-gray-500 mt-0.5">Requerido: {{ $documentType->is_required ? 'Sí' : 'No' }}</div>
+                                            <div class="text-xs text-gray-500 mt-0.5">Required: {{ $documentType->is_required ? 'Yes' : 'No' }}</div>
                                         </div>
-                                        <a href="{{ route('admin.carriers.documents.create', ['carrier' => $carrier, 'document_type' => $documentType->id]) }}" class="btn btn-sm btn-primary">
-                                            <i data-lucide="upload" class="w-4 h-4 mr-1"></i> Subir
+                                        <a href="{{ route('admin.carriers.documents.index', ['carrier' => $carrier->id]) }}" class="btn btn-sm btn-primary">
+                                            <i data-lucide="upload" class="w-4 h-4 mr-1"></i> Upload
                                         </a>
                                     </div>
                                 @endforeach
                             </div>
                         @else
                             <div class="text-center py-8">
-                                <div class="text-success font-medium">¡Todos los tipos de documentos han sido registrados!</div>
+                                <div class="text-success font-medium">¡All document types have been registered!</div>
                             </div>
                         @endif
                         
-                        <div class="mt-5">
-                            <a href="{{ route('admin.carriers.documents.index', ['carrier' => $carrier]) }}" class="btn btn-outline-primary w-full">
-                                <i data-lucide="file-plus" class="w-4 h-4 mr-2"></i> Gestionar documentos
+                        <div class="mt-4">
+                            <a href="{{ route('admin.carriers.documents.index', ['carrier' => $carrier->id]) }}" class="btn btn-outline-primary w-full">
+                                <i data-lucide="file-plus" class="w-4 h-4 mr-2"></i> Manage Documents
                             </a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
 </div>
+
+
 
 @push('scripts')
 <script>
-    // Inicializar los íconos de Lucide después de que el DOM esté listo
+    // Inicializar los íconos de Lucide, las pestañas y el modal después de que el DOM esté listo
     document.addEventListener("DOMContentLoaded", function() {
+        // Inicializar los íconos de Lucide
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+        
+        // Inicializar las pestañas
+        const tabButtons = document.querySelectorAll('.tab-button');
+        
+        if (tabButtons.length > 0) {
+            // Función para activar una pestaña
+            function activateTab(tabButton) {
+                // Desactivar todas las pestañas
+                tabButtons.forEach(function(btn) {
+                    btn.classList.remove('active');
+                    btn.classList.remove('border-blue-600');
+                    btn.classList.remove('text-blue-600');
+                    btn.classList.add('border-transparent');
+                    btn.classList.add('text-gray-500');
+                    btn.setAttribute('aria-selected', 'false');
+                });
+                
+                // Activar la pestaña seleccionada
+                tabButton.classList.add('active');
+                tabButton.classList.add('border-blue-600');
+                tabButton.classList.add('text-blue-600');
+                tabButton.classList.remove('border-transparent');
+                tabButton.classList.remove('text-gray-500');
+                tabButton.setAttribute('aria-selected', 'true');
+                
+                // Obtener el target del tab
+                const target = tabButton.getAttribute('data-target');
+                
+                // Ocultar todos los contenidos de las pestañas
+                document.querySelectorAll('.tab-pane').forEach(function(tabPane) {
+                    tabPane.classList.remove('active');
+                    tabPane.classList.add('hidden');
+                });
+                
+                // Mostrar el contenido de la pestaña seleccionada
+                const targetPane = document.querySelector(target);
+                if (targetPane) {
+                    targetPane.classList.add('active');
+                    targetPane.classList.remove('hidden');
+                }
+            }
+            
+            // Agregar evento click a cada pestaña
+            tabButtons.forEach(function(tabButton) {
+                tabButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    activateTab(this);
+                });
+            });
+            
+            // Activar la primera pestaña por defecto (Usuarios)
+            const firstTab = document.querySelector('#tab-users');
+            if (firstTab) {
+                activateTab(firstTab);
+            }
+        }
+        
+        const deleteDocumentBtns = document.querySelectorAll('.delete-document-btn');
+        
+        // Eliminar documento
+        deleteDocumentBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const documentId = this.getAttribute('data-document-id');
+                if (confirm('Are you sure you want to delete this document?')) {
+                    // Crear un formulario para enviar la solicitud DELETE
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route("admin.carriers.documents.index", ["carrier" => $carrier->id]) }}/' + documentId;
+                    form.style.display = 'none';
+                    
+                    const csrfToken = document.createElement('input');
+                    csrfToken.type = 'hidden';
+                    csrfToken.name = '_token';
+                    csrfToken.value = '{{ csrf_token() }}';
+                    
+                    const methodField = document.createElement('input');
+                    methodField.type = 'hidden';
+                    methodField.name = '_method';
+                    methodField.value = 'DELETE';
+                    
+                    form.appendChild(csrfToken);
+                    form.appendChild(methodField);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        });
+        
+        // Inicializar los iconos de Lucide
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
         }

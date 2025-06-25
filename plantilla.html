@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrier Details Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#6b7280',
+                        success: '#10b981',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Header Section -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <i data-lucide="truck" class="w-6 h-6 text-blue-600"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Carrier Details</h1>
+                        <p class="text-gray-600">TransLogistics Express</p>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        Back to list
+                    </button>
+                    <button class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                        <i data-lucide="edit" class="w-4 h-4"></i>
+                        Edit Carrier
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+            <!-- Main Information Card -->
+            <div class="xl:col-span-4">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-fit">
+                    <div class="flex items-center gap-2 mb-6">
+                        <i data-lucide="info" class="w-5 h-5 text-blue-600"></i>
+                        <h2 class="text-lg font-semibold text-gray-900">Main Information</h2>
+                    </div>
+                    
+                    <!-- Logo Section -->
+                    <div class="flex justify-center mb-6">
+                        <div class="w-32 h-32 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center border-2 border-dashed border-blue-200">
+                            <i data-lucide="image" class="w-12 h-12 text-blue-400"></i>
+                        </div>
+                    </div>
+
+                    <!-- Information Grid -->
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 gap-4">
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Nombre</label>
+                                <p class="text-sm font-semibold text-gray-900 mt-1">TransLogistics Express</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Dirección</label>
+                                <p class="text-sm font-semibold text-gray-900 mt-1">1234 Main Street, Suite 100</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-gray-50 rounded-lg p-3">
+                                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Estado</label>
+                                    <p class="text-sm font-semibold text-gray-900 mt-1">California</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-3">
+                                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Código Postal</label>
+                                    <p class="text-sm font-semibold text-gray-900 mt-1">90210</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Número EIN</label>
+                                <p class="text-sm font-semibold text-gray-900 mt-1">12-3456789</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-gray-50 rounded-lg p-3">
+                                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">DOT</label>
+                                    <p class="text-sm font-semibold text-gray-900 mt-1">123456</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-3">
+                                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">MC</label>
+                                    <p class="text-sm font-semibold text-gray-900 mt-1">654321</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Plan</label>
+                                <p class="text-sm font-semibold text-gray-900 mt-1">Premium Plan</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Estado</label>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-1">
+                                    <div class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></div>
+                                    Activo
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics and Content -->
+            <div class="xl:col-span-8 space-y-8">
+                <!-- Statistics Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Total Usuarios</p>
+                                <p class="text-3xl font-bold text-gray-900 mt-2">24</p>
+                                <p class="text-sm text-green-600 mt-1">+2 este mes</p>
+                            </div>
+                            <div class="p-3 bg-blue-100 rounded-lg">
+                                <i data-lucide="users" class="w-6 h-6 text-blue-600"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Conductores</p>
+                                <p class="text-3xl font-bold text-gray-900 mt-2">18</p>
+                                <p class="text-sm text-green-600 mt-1">+1 este mes</p>
+                            </div>
+                            <div class="p-3 bg-orange-100 rounded-lg">
+                                <i data-lucide="user-check" class="w-6 h-6 text-orange-600"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Documentos</p>
+                                <p class="text-3xl font-bold text-gray-900 mt-2">156</p>
+                                <p class="text-sm text-yellow-600 mt-1">12 pendientes</p>
+                            </div>
+                            <div class="p-3 bg-yellow-100 rounded-lg">
+                                <i data-lucide="file-text" class="w-6 h-6 text-yellow-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documentation Progress -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center gap-2 mb-6">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5 text-blue-600"></i>
+                        <h3 class="text-lg font-semibold text-gray-900">Estado de Documentación</h3>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium text-gray-700">Documentos Aprobados</span>
+                                <span class="text-sm font-semibold text-green-600">120 de 156</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                <div class="bg-green-500 h-3 rounded-full transition-all duration-500" style="width: 77%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium text-gray-700">Documentos Pendientes</span>
+                                <span class="text-sm font-semibold text-yellow-600">24 de 156</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                <div class="bg-yellow-500 h-3 rounded-full transition-all duration-500" style="width: 15%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium text-gray-700">Documentos Rechazados</span>
+                                <span class="text-sm font-semibold text-red-600">12 de 156</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                <div class="bg-red-500 h-3 rounded-full transition-all duration-500" style="width: 8%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs Section -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                    <!-- Tab Navigation -->
+                    <div class="border-b border-gray-200">
+                        <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                            <button class="tab-button active flex items-center gap-2 py-4 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600" data-tab="users">
+                                <i data-lucide="users" class="w-4 h-4"></i>
+                                Usuarios
+                            </button>
+                            <button class="tab-button flex items-center gap-2 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="drivers">
+                                <i data-lucide="truck" class="w-4 h-4"></i>
+                                Conductores
+                            </button>
+                            <button class="tab-button flex items-center gap-2 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="documents">
+                                <i data-lucide="file-text" class="w-4 h-4"></i>
+                                Documentos
+                            </button>
+                        </nav>
+                    </div>
+
+                    <!-- Tab Content -->
+                    <div class="p-6">
+                        <!-- Users Tab -->
+                        <div id="users-tab" class="tab-content">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teléfono</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                                        <span class="text-sm font-medium text-blue-600">JD</span>
+                                                    </div>
+                                                    <div class="ml-3">
+                                                        <div class="text-sm font-medium text-gray-900">John Doe</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">john@example.com</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">+1 234 567 8900</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Admin</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    Activo
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                                <button class="text-blue-600 hover:text-blue-900 mr-3">
+                                                    <i data-lucide="edit" class="w-4 h-4"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <!-- More rows... -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Drivers Tab -->
+                        <div id="drivers-tab" class="tab-content hidden">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teléfono</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Licencia</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
+                                                        <span class="text-sm font-medium text-orange-600">MS</span>
+                                                    </div>
+                                                    <div class="ml-3">
+                                                        <div class="text-sm font-medium text-gray-900">Mike Smith</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">mike@example.com</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">+1 234 567 8901</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">CDL-A-123456</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    Activo
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                                <button class="text-blue-600 hover:text-blue-900 mr-3">
+                                                    <i data-lucide="edit" class="w-4 h-4"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <!-- More rows... -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Documents Tab -->
+                        <div id="documents-tab" class="tab-content hidden">
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <!-- Documents List -->
+                                <div class="lg:col-span-2">
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Documentos Subidos</h4>
+                                    <div class="space-y-3">
+                                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="p-2 bg-green-100 rounded-lg">
+                                                        <i data-lucide="file-check" class="w-4 h-4 text-green-600"></i>
+                                                    </div>
+                                                    <div>
+                                                        <p class="font-medium text-gray-900">Insurance Certificate</p>
+                                                        <p class="text-sm text-gray-500">Subido el 15/12/2024</p>
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        Aprobado
+                                                    </span>
+                                                    <button class="text-blue-600 hover:text-blue-900">
+                                                        <i data-lucide="eye" class="w-4 h-4"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="p-2 bg-yellow-100 rounded-lg">
+                                                        <i data-lucide="file-clock" class="w-4 h-4 text-yellow-600"></i>
+                                                    </div>
+                                                    <div>
+                                                        <p class="font-medium text-gray-900">DOT Registration</p>
+                                                        <p class="text-sm text-gray-500">Subido el 14/12/2024</p>
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                        Pendiente
+                                                    </span>
+                                                    <button class="text-blue-600 hover:text-blue-900">
+                                                        <i data-lucide="eye" class="w-4 h-4"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Missing Documents -->
+                                <div>
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Documentos Faltantes</h4>
+                                    <div class="space-y-3">
+                                        <div class="border border-red-200 rounded-lg p-4 bg-red-50">
+                                            <div class="flex items-center justify-between">
+                                                <div>
+                                                    <p class="font-medium text-gray-900">MC Authority</p>
+                                                    <p class="text-sm text-red-600">Requerido</p>
+                                                </div>
+                                                <button class="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
+                                                    Subir
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="border border-gray-200 rounded-lg p-4">
+                                            <div class="flex items-center justify-between">
+                                                <div>
+                                                    <p class="font-medium text-gray-900">Safety Rating</p>
+                                                    <p class="text-sm text-gray-500">Opcional</p>
+                                                </div>
+                                                <button class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 transition-colors">
+                                                    Subir
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button class="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                                        <i data-lucide="file-plus" class="w-4 h-4"></i>
+                                        Gestionar documentos
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Tab functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetTab = this.getAttribute('data-tab');
+
+                    // Remove active class from all buttons
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('active', 'border-blue-500', 'text-blue-600');
+                        btn.classList.add('border-transparent', 'text-gray-500');
+                    });
+
+                    // Add active class to clicked button
+                    this.classList.add('active', 'border-blue-500', 'text-blue-600');
+                    this.classList.remove('border-transparent', 'text-gray-500');
+
+                    // Hide all tab contents
+                    tabContents.forEach(content => {
+                        content.classList.add('hidden');
+                    });
+
+                    // Show target tab content
+                    document.getElementById(targetTab + '-tab').classList.remove('hidden');
+                });
+            });
+
+            // Animate progress bars on load
+            setTimeout(() => {
+                const progressBars = document.querySelectorAll('.bg-green-500, .bg-yellow-500, .bg-red-500');
+                progressBars.forEach(bar => {
+                    bar.style.width = bar.style.width;
+                });
+            }, 500);
+        });
+    </script>
+</body>
+</html>
