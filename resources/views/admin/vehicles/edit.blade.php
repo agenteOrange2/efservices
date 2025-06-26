@@ -41,20 +41,20 @@
                                 // Propiedad
                                 ownershipType: '{{ old('ownership_type', $vehicle->ownership_type) }}',
                                 // Información del propietario
-                                ownerName: '{{ old('owner_name', $vehicle->driverApplicationDetail->owner_name ?? '') }}',
-                                ownerPhone: '{{ old('owner_phone', $vehicle->driverApplicationDetail->owner_phone ?? '') }}',
-                                ownerEmail: '{{ old('owner_email', $vehicle->driverApplicationDetail->owner_email ?? '') }}',
+                                ownerName: '{{ old('owner_name', $ownerDetails ? $ownerDetails->owner_name : '') }}',
+                                ownerPhone: '{{ old('owner_phone', $ownerDetails ? $ownerDetails->owner_phone : '') }}',
+                                ownerEmail: '{{ old('owner_email', $ownerDetails ? $ownerDetails->owner_email : '') }}',
                                 // Información del tercero
-                                thirdPartyName: '{{ old('third_party_name', $vehicle->driverApplicationDetail->third_party_name ?? '') }}',
-                                thirdPartyPhone: '{{ old('third_party_phone', $vehicle->driverApplicationDetail->third_party_phone ?? '') }}',
-                                thirdPartyEmail: '{{ old('third_party_email', $vehicle->driverApplicationDetail->third_party_email ?? '') }}',
-                                thirdPartyDba: '{{ old('third_party_dba', $vehicle->driverApplicationDetail->third_party_dba ?? '') }}',
-                                thirdPartyAddress: '{{ old('third_party_address', $vehicle->driverApplicationDetail->third_party_address ?? '') }}',
-                                thirdPartyContact: '{{ old('third_party_contact', $vehicle->driverApplicationDetail->third_party_contact ?? '') }}',
-                                thirdPartyFein: '{{ old('third_party_fein', $vehicle->driverApplicationDetail->third_party_fein ?? '') }}',
-                                emailSent: {{ $vehicle->driverApplicationDetail && $vehicle->driverApplicationDetail->email_sent ? 'true' : 'false' }},
-                                selectedDriverId: '{{ $vehicle->user_driver_detail_id }}',
-                                
+                                thirdPartyName: '{{ old('third_party_name', $thirdPartyDetails ? $thirdPartyDetails->third_party_name : '') }}',
+                                thirdPartyPhone: '{{ old('third_party_phone', $thirdPartyDetails ? $thirdPartyDetails->third_party_phone : '') }}',
+                                thirdPartyEmail: '{{ old('third_party_email', $thirdPartyDetails ? $thirdPartyDetails->third_party_email : '') }}',
+                                thirdPartyDba: '{{ old('third_party_dba', $thirdPartyDetails ? $thirdPartyDetails->third_party_dba : '') }}',
+                                thirdPartyAddress: '{{ old('third_party_address', $thirdPartyDetails ? $thirdPartyDetails->third_party_address : '') }}',
+                                thirdPartyContact: '{{ old('third_party_contact', $thirdPartyDetails ? $thirdPartyDetails->third_party_contact : '') }}',
+                                thirdPartyFein: '{{ old('third_party_fein', $thirdPartyDetails ? $thirdPartyDetails->third_party_fein : '') }}',
+                                emailSent: {{ old('email_sent', $thirdPartyDetails && $thirdPartyDetails->email_sent ? 'true' : 'false') }},
+                                selectedDriverId: '{{ old('user_driver_detail_id', $vehicle->user_driver_detail_id) }}',
+
                                 // Método para autocompletar datos del Owner Operator desde el driver seleccionado
                                 updateOwnerFromDriver() {
                                     if (this.ownershipType === 'owned' && this.selectedDriverId) {
@@ -72,7 +72,18 @@
                                     }
                                 },
                                 // Service Items 
-                                serviceItems: [],
+                                serviceItems: [{!! $vehicle->service_items ? json_encode($vehicle->service_items) : '[]' !!}][0].length > 0 
+                                    ? [{!! $vehicle->service_items ? json_encode($vehicle->service_items) : '[]' !!}][0] 
+                                    : [{
+                                        unit: '',
+                                        service_date: '',
+                                        next_service_date: '',
+                                        service_tasks: '',
+                                        vendor_mechanic: '',
+                                        description: '',
+                                        cost: '',
+                                        odometer: ''
+                                    }],
                                 // Métodos
                                 addServiceItem() {
                                     this.serviceItems.push({
@@ -478,11 +489,11 @@
                                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         {{-- Ownership Type --}}
                                                         <div>
-                                                            <label class="block text-sm mb-1">Tipo de Propiedad</label>
+                                                            <label class="block text-sm mb-1">Ownership Type</label>
                                                             <select name="ownership_type" x-model="ownershipType"
                                                                 @change="updateOwnerFromDriver()"
                                                                 class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
-                                                                <option value="unassigned" {{ $vehicle->ownership_type == 'unassigned' ? 'selected' : '' }}>Sin Asignar</option>
+                                                                <option value="unassigned" {{ $vehicle->ownership_type == 'unassigned' ? 'selected' : '' }}>Unassigned</option>
                                                                 <option value="owned" {{ $vehicle->ownership_type == 'owned' ? 'selected' : '' }}>Owner Operator</option>
                                                                 <option value="leased" {{ $vehicle->ownership_type == 'leased' ? 'selected' : '' }}>Company Driver</option>
                                                                 <option value="third-party" {{ $vehicle->ownership_type == 'third-party' ? 'selected' : '' }}>Third Party Company Driver</option>
@@ -493,11 +504,11 @@
                                                         </div>
                                                         {{-- Location --}}
                                                         <div>
-                                                            <label class="block text-sm mb-1">Ubicación</label>
+                                                            <label class="block text-sm mb-1">Location</label>
                                                             <input type="text" name="location"
                                                                 value="{{ old('location', $vehicle->location) }}"
                                                                 class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                placeholder="Ej. Terminal Principal">
+                                                                placeholder="E.g. Main Terminal">
                                                             @error('location')
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                                                             @enderror

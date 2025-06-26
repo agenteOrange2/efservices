@@ -68,7 +68,7 @@ class Vehicle extends Model
 
     public function serviceItems(): HasMany
     {
-        return $this->hasMany(VehicleMaintenance::class);
+        return $this->hasMany(VehicleServiceItem::class);
     }
     
     /**

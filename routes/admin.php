@@ -673,9 +673,9 @@ Route::prefix('vehicles')->name('vehicles.')->group(function () {
     Route::post('/{vehicle}/delete-photo', [VehicleController::class, 'deletePhoto'])->name('delete-photo');
 
     // API para obtener conductores por carrier
-    Route::get('/driver-details/{userDriverDetail}', [VehicleController::class, 'getDriverDetails'])
-        ->name('driver-details');
-
+    Route::get('/driver-details/{userDriverDetail}', [VehicleController::class, 'getDriverDetails'])->name('driver-details');
+    Route::get('/drivers-by-carrier/{carrierId}', [VehicleController::class, 'getDriversByCarrier'])->name('drivers-by-carrier');
+    
     // Rutas para documentos de vehículos
     Route::get('/{vehicle}/documents', [VehicleDocumentController::class, 'index'])->name('documents.index');
     Route::get('/{vehicle}/documents/create', [VehicleDocumentController::class, 'create'])->name('documents.create');
@@ -694,6 +694,9 @@ Route::prefix('vehicles')->name('vehicles.')->group(function () {
         Route::post('/', [VehicleServiceItemController::class, 'store'])->name('store');
         Route::get('/{serviceItem}', [VehicleServiceItemController::class, 'show'])->name('show');
         Route::get('/{serviceItem}/edit', [VehicleServiceItemController::class, 'edit'])->name('edit');
+        Route::put('/{serviceItem}', [VehicleServiceItemController::class, 'update'])->name('update');
+        Route::delete('/{serviceItem}', [VehicleServiceItemController::class, 'destroy'])->name('destroy');
+        Route::put('/{serviceItem}/toggle-status', [VehicleServiceItemController::class, 'toggleStatus'])->name('toggle-status');
     });
 });
 

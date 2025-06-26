@@ -88,6 +88,40 @@
                                     this.emailSent = false;
                                 },
                                 
+                                // Service Items
+                                serviceItems: [{
+                                    unit: '',
+                                    service_date: '',
+                                    next_service_date: '',
+                                    service_tasks: '',
+                                    vendor_mechanic: '',
+                                    description: '',
+                                    cost: '',
+                                    odometer: ''
+                                }],
+                                
+                                // Método para agregar un nuevo service item
+                                addServiceItem() {
+                                    this.serviceItems.push({
+                                        unit: '',
+                                        service_date: '',
+                                        next_service_date: '',
+                                        service_tasks: '',
+                                        vendor_mechanic: '',
+                                        description: '',
+                                        cost: '',
+                                        odometer: ''
+                                    });
+                                },
+                                
+                                // Método para eliminar un service item
+                                removeServiceItem(index) {
+                                    this.serviceItems.splice(index, 1);
+                                    if (this.serviceItems.length === 0) {
+                                        this.addServiceItem(); // Siempre mantener al menos un elemento
+                                    }
+                                },
+                                
                                 // Method to validate ownership data before form submission
                                 validateOwnershipData() {
                                     if (this.ownershipType === 'owned') {
@@ -439,11 +473,11 @@
                                                         </div>
                                                         {{-- Location --}}
                                                         <div>
-                                                            <label class="block text-sm mb-1">Ubicación</label>
+                                                            <label class="block text-sm mb-1">Location</label>
                                                             <input type="text" name="location"
                                                                 value="{{ old('location') }}"
                                                                 class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                placeholder="Ej. Terminal Principal">
+                                                                placeholder="Ex. Main Terminal">
                                                             @error('location')
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                                                             @enderror
@@ -549,11 +583,11 @@
                                                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                                 <!-- Nombre del propietario -->
                                                                 <div>
-                                                                    <label class="block text-sm mb-1">Nombre</label>
+                                                                    <label class="block text-sm mb-1">Name</label>
                                                                     <input type="text" name="owner_name"
                                                                         x-model="ownerName"
                                                                         class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Nombre del propietario">
+                                                                        placeholder="Owner's name">
                                                                     @error('owner_name')
                                                                         <span
                                                                             class="text-red-500 text-sm">{{ $message }}</span>
@@ -561,11 +595,11 @@
                                                                 </div>
                                                                 <!-- Teléfono del propietario -->
                                                                 <div>
-                                                                    <label class="block text-sm mb-1">Teléfono</label>
+                                                                    <label class="block text-sm mb-1">Phone</label>
                                                                     <input type="text" name="owner_phone"
                                                                         x-model="ownerPhone"
                                                                         class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Teléfono del propietario">
+                                                                        placeholder="Owner's phone number">
                                                                     @error('owner_phone')
                                                                         <span
                                                                             class="text-red-500 text-sm">{{ $message }}</span>
@@ -577,7 +611,7 @@
                                                                     <input type="email" name="owner_email"
                                                                         x-model="ownerEmail"
                                                                         class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Email del propietario">
+                                                                        placeholder="Owner's email">
                                                                     @error('owner_email')
                                                                         <span
                                                                             class="text-red-500 text-sm">{{ $message }}</span>
@@ -599,11 +633,11 @@
                                                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                                                 <!-- Nombre del tercero -->
                                                                 <div>
-                                                                    <label class="block text-sm mb-1">Nombre</label>
+                                                                    <label class="block text-sm mb-1">Name</label>
                                                                     <input type="text" name="third_party_name"
                                                                         x-model="thirdPartyName"
                                                                         class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Nombre del tercero">
+                                                                        placeholder="Third party name">
                                                                     @error('third_party_name')
                                                                         <span
                                                                             class="text-red-500 text-sm">{{ $message }}</span>
@@ -611,11 +645,11 @@
                                                                 </div>
                                                                 <!-- Teléfono del tercero -->
                                                                 <div>
-                                                                    <label class="block text-sm mb-1">Teléfono</label>
+                                                                    <label class="block text-sm mb-1">Phone</label>
                                                                     <input type="text" name="third_party_phone"
                                                                         x-model="thirdPartyPhone"
                                                                         class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Teléfono del tercero">
+                                                                        placeholder="Third party phone number">
                                                                     @error('third_party_phone')
                                                                         <span
                                                                             class="text-red-500 text-sm">{{ $message }}</span>
@@ -627,7 +661,7 @@
                                                                     <input type="email" name="third_party_email"
                                                                         x-model="thirdPartyEmail"
                                                                         class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Email del tercero">
+                                                                        placeholder="Third party email">
                                                                     @error('third_party_email')
                                                                         <span
                                                                             class="text-red-500 text-sm">{{ $message }}</span>
@@ -667,11 +701,11 @@
                                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                                                 <!-- Dirección -->
                                                                 <div>
-                                                                    <label class="block text-sm mb-1">Dirección</label>
+                                                                    <label class="block text-sm mb-1">Address</label>
                                                                     <input type="text" name="third_party_address"
                                                                         x-model="thirdPartyAddress"
                                                                         class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Dirección completa">
+                                                                        placeholder="Complete address">
                                                                     @error('third_party_address')
                                                                         <span
                                                                             class="text-red-500 text-sm">{{ $message }}</span>
@@ -679,11 +713,11 @@
                                                                 </div>
                                                                 <!-- Contacto -->
                                                                 <div>
-                                                                    <label class="block text-sm mb-1">Contacto</label>
+                                                                    <label class="block text-sm mb-1">Contact</label>
                                                                     <input type="text" name="third_party_contact"
                                                                         x-model="thirdPartyContact"
                                                                         class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Nombre de contacto">
+                                                                        placeholder="Contact name">
                                                                     @error('third_party_contact')
                                                                         <span
                                                                             class="text-red-500 text-sm">{{ $message }}</span>
