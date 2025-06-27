@@ -1,4 +1,5 @@
-<div>        
+<div>            
+    <!-- Filtros y tabla de mantenimientos -->
     <div class="intro-y box p-5 mt-5">
         <!-- Filtros -->
         <div class="flex flex-col sm:flex-row sm:items-end xl:items-start">
@@ -157,14 +158,21 @@
                             </td>
                             <td class="table-report__action">
                                 <div class="flex justify-center items-center">
-                                    <a class="flex items-center mr-3" href="#" wire:click="edit({{ $maintenance->id }})" data-tw-toggle="modal" data-tw-target="#edit-modal">
+                                    <a class="flex items-center mr-3" href="{{ route('admin.maintenance.edit', $maintenance->id) }}">
                                         <i class="fas fa-pencil-alt w-4 h-4 mr-1"></i> Edit
                                     </a>
                                     <a class="flex items-center text-danger" href="#"
-                                        onclick="confirm('¿Está seguro de eliminar este registro?') || event.stopImmediatePropagation()"
-                                        wire:click="delete({{ $maintenance->id }})">
+                                        onclick="if(confirm('¿Está seguro de eliminar este registro?')) { 
+                                            document.getElementById('delete-form-{{ $maintenance->id }}').submit(); 
+                                        }">
                                         <i class="fas fa-trash-alt w-4 h-4 mr-1"></i> Delete
                                     </a>
+                                    <form id="delete-form-{{ $maintenance->id }}" 
+                                          action="{{ route('admin.maintenance.destroy', $maintenance->id) }}" 
+                                          method="POST" style="display: none;">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -181,58 +189,5 @@
         <div class="mt-5">
             {{ $maintenances->links() }}
         </div>
-    </div>
-
-    <!-- Modal de Edición -->
-    <div id="edit-modal" class="modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 class="font-medium text-base mr-auto">Edit Maintenance Record</h2>
-                </div>
-                <form wire:submit.prevent="update">
-                    <div class="modal-body">
-                        <div class="grid grid-cols-12 gap-4 gap-y-3">
-                            <div class="col-span-12">
-                                <label for="service_tasks" class="form-label">Type</label>
-                                <input id="service_tasks" type="text" class="form-control" wire:model="editing.service_tasks">
-                                @error('editing.service_tasks') <span class="text-danger">{{ $message }}</span> @enderror
-                            </div>
-                            <div class="col-span-12">
-                                <label for="service_date" class="form-label">Date</label>
-                                <input id="service_date" type="date" class="form-control" wire:model="editing.service_date">
-                                @error('editing.service_date') <span class="text-danger">{{ $message }}</span> @enderror
-                            </div>
-                            <div class="col-span-12">
-                                <label for="next_service_date" class="form-label">Next Service Date</label>
-                                <input id="next_service_date" type="date" class="form-control" wire:model="editing.next_service_date">
-                                @error('editing.next_service_date') <span class="text-danger">{{ $message }}</span> @enderror
-                            </div>
-                            <div class="col-span-12">
-                                <label for="vendor_mechanic" class="form-label">Supplier</label>
-                                <input id="vendor_mechanic" type="text" class="form-control" wire:model="editing.vendor_mechanic">
-                                @error('editing.vendor_mechanic') <span class="text-danger">{{ $message }}</span> @enderror
-                            </div>
-                            <div class="col-span-12">
-                                <label for="cost" class="form-label">Cost</label>
-                                <input id="cost" type="number" step="0.01" class="form-control" wire:model="editing.cost">
-                                @error('editing.cost') <span class="text-danger">{{ $message }}</span> @enderror
-                            </div>
-                            <div class="col-span-12">
-                                <label class="form-label">Status</label>
-                                <div class="form-check">
-                                    <input id="status" class="form-check-input" type="checkbox" wire:model="editing.status">
-                                    <label class="form-check-label" for="status">Completed</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary w-20 mr-1" data-tw-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary w-20">Save</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    </div>    
 </div>

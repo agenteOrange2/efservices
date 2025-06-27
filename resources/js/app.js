@@ -51,6 +51,10 @@ try {
   import("./vendors/lucide");
   import("./vendors/calendar/calendar");
   import("./vendors/select2");
+  import("./vendors/calendar/plugins/interaction.js");
+  import("./vendors/calendar/plugins/day-grid.js");
+  import("./vendors/calendar/plugins/time-grid.js");
+  import("./vendors/calendar/plugins/list.js");
 } catch (error) {
   console.warn("Error al cargar librerías opcionales:", error);
 }

@@ -35,25 +35,7 @@ $breadcrumbLinks = [
                 </x-base.button>
             </div>
         </div>
-        
-        <div class="intro-y box p-5 mt-5">
-            <div class="flex flex-col xl:flex-row xl:items-center">
-                <div class="flex">
-                    <div>
-                        <h2 class="text-lg font-medium truncate mr-5">Mantenimientos Recientes</h2>
-                    </div>
-                    <div class="ml-auto flex items-center truncate">
-                        <a href="javascript:;" class="flex items-center text-primary">
-                            <x-base.lucide class="w-4 h-4 mr-1" icon="RefreshCw" /> Actualizar
-                        </a>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Renderizar el componente Livewire -->
-            <livewire:admin.vehicle.maintenance-list />
-        </div>
-        
+
         <div class="intro-y box p-5 mt-5">
             <div class="flex items-center">
                 <h2 class="text-lg font-medium truncate mr-5">Próximos Mantenimientos</h2>
@@ -108,6 +90,25 @@ $breadcrumbLinks = [
                 </div>
             </div>
         </div>
+        
+        <div class="intro-y box p-5 mt-5">
+            <div class="flex flex-col xl:flex-row xl:items-center">
+                <div class="flex">
+                    <div>
+                        <h2 class="text-lg font-medium truncate mr-5">Mantenimientos Recientes</h2>
+                    </div>
+                    <div class="ml-auto flex items-center truncate">
+                        <a href="javascript:;" class="flex items-center text-primary">
+                            <x-base.lucide class="w-4 h-4 mr-1" icon="RefreshCw" /> Actualizar
+                        </a>
+                    </div>
+                </div>
+            </div>            
+            <!-- Renderizar el componente Livewire -->
+            <livewire:admin.vehicle.maintenance-list />
+        </div>
+        
+
     </div>
 </div>
 @endsection

@@ -2,76 +2,167 @@
 
 @section('title', 'Reportes de Mantenimiento')
 
-@section('breadcrumb')
-    <x-base.breadcrumb>
-        <x-base.breadcrumb.item href="{{ route('admin.dashboard') }}">Dashboard</x-base.breadcrumb.item>
-        <x-base.breadcrumb.item href="{{ route('admin.maintenance.index') }}">Mantenimientos</x-base.breadcrumb.item>
-        <x-base.breadcrumb.item active>Reportes</x-base.breadcrumb.item>
-    </x-base.breadcrumb>
-@endsection
+@php
+$breadcrumbLinks = [
+    ['label' => 'Dashboard', 'url' => route('admin.dashboard')],
+    ['label' => 'Vehículos', 'url' => route('admin.vehicles.index')],
+    ['label' => 'Mantenimiento', 'url' => route('admin.maintenance.index')],
+    ['label' => 'Reportes', 'active' => true],
+];
+@endphp
 
-@section('content')
-    <div class="intro-y flex flex-col sm:flex-row items-center mt-8">
-        <h2 class="text-lg font-medium mr-auto">
-            Reportes de Mantenimiento
-        </h2>
-        <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
-            <a href="{{ route('admin.maintenance.index') }}" class="btn btn-secondary shadow-md">
-                <i class="w-4 h-4 mr-2" data-lucide="arrow-left"></i> Volver
-            </a>
+@section('subcontent')
+<div class="grid grid-cols-12 gap-x-6 gap-y-10">
+    <div class="col-span-12">
+        <div class="flex flex-col gap-y-3 md:h-10 md:flex-row md:items-center">
+            <div class="text-base font-medium group-[.mode--light]:text-white">
+                Reportes de Mantenimiento
+            </div>
+            <div class="flex flex-col gap-x-3 gap-y-2 sm:flex-row md:ml-auto">
+                <x-base.button as="a" href="{{ route('admin.maintenance.index') }}"
+                    class="group-[.mode--light]:!border-transparent group-[.mode--light]:!bg-white/[0.12] group-[.mode--light]:!text-slate-200"
+                    variant="outline-secondary">
+                    <x-base.lucide class="mr-2 h-4 w-4 stroke-[1.3]" icon="ArrowLeft" />
+                    Volver
+                </x-base.button>
+                <form action="{{ route('admin.maintenance.export-pdf') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="period" value="{{ $period ?? 'monthly' }}">
+                    <input type="hidden" name="vehicle_id" value="{{ $vehicleId ?? '' }}">
+                    <input type="hidden" name="start_date" value="{{ $startDate ?? \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d') }}">
+                    <input type="hidden" name="end_date" value="{{ $endDate ?? \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d') }}">
+                    <x-base.button type="submit" variant="primary">
+                        <x-base.lucide class="mr-2 h-4 w-4 stroke-[1.3]" icon="FileText" />
+                        Exportar PDF
+                    </x-base.button>
+                </form>
+            </div>
         </div>
     </div>
     
-    <div class="intro-y box p-5 mt-5">
-        <div class="grid grid-cols-12 gap-6">
+    <div class="col-span-12">
+        <div class="intro-y box p-5">
             <!-- Filtros -->
-            <div class="col-span-12 lg:col-span-4">
-                <div class="box p-5">
-                    <h2 class="font-medium text-base mb-5">Filtros</h2>
-                    <form action="{{ route('admin.maintenance.reports') }}" method="GET">
-                        <div class="mb-4">
-                            <label class="form-label">Período</label>
-                            <select class="form-select w-full" name="period">
-                                <option value="all">Todos</option>
-                                <option value="month">Último mes</option>
-                                <option value="quarter">Último trimestre</option>
-                                <option value="year">Último año</option>
-                            </select>
-                        </div>
-                        <div class="mb-4">
-                            <label class="form-label">Tipo de servicio</label>
-                            <select class="form-select w-full" name="service_type">
-                                <option value="">Todos</option>
-                                <option value="oil_change">Cambio de aceite</option>
-                                <option value="tire_rotation">Rotación de neumáticos</option>
-                                <option value="brake_service">Servicio de frenos</option>
-                                <option value="inspection">Inspección</option>
-                                <option value="repair">Reparación</option>
-                                <option value="other">Otro</option>
-                            </select>
-                        </div>
-                        <div class="mb-4">
-                            <label class="form-label">Estado</label>
-                            <select class="form-select w-full" name="status">
-                                <option value="">Todos</option>
-                                <option value="1">Completado</option>
-                                <option value="0">Pendiente</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-full">Aplicar filtros</button>
-                    </form>
-                </div>
-            </div>
-            
-            <!-- Gráficos y Estadísticas -->
-            <div class="col-span-12 lg:col-span-8">
-                <div class="box p-5 mb-5">
-                    <h2 class="font-medium text-base mb-5">Costos de mantenimiento por mes</h2>
-                    <div class="h-[400px]">
-                        <canvas id="maintenance-costs-chart"></canvas>
+            <form action="{{ route('admin.maintenance.reports') }}" method="GET" class="mb-5">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-1">
+                        <label class="form-label">Período</label>
+                        <select class="form-select w-full" name="period" id="period-select">
+                            @php $selectedPeriod = $period ?? 'monthly'; @endphp
+                            <option value="daily" {{ $selectedPeriod == 'daily' ? 'selected' : '' }}>Diario</option>
+                            <option value="weekly" {{ $selectedPeriod == 'weekly' ? 'selected' : '' }}>Semanal</option>
+                            <option value="monthly" {{ $selectedPeriod == 'monthly' ? 'selected' : '' }}>Mensual</option>
+                            <option value="yearly" {{ $selectedPeriod == 'yearly' ? 'selected' : '' }}>Anual</option>
+                            <option value="custom" {{ $selectedPeriod == 'custom' ? 'selected' : '' }}>Personalizado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex-1">
+                        <label class="form-label">Vehículo</label>
+                        <select class="form-select w-full" name="vehicle_id">
+                            <option value="">Todos los vehículos</option>
+                            @php
+                                $availableVehicles = isset($vehicles) ? $vehicles : collect();
+                                $selectedVehicleId = $vehicleId ?? '';
+                            @endphp
+                            @foreach($availableVehicles as $vehicle)
+                                <option value="{{ $vehicle->id }}" {{ $selectedVehicleId == $vehicle->id ? 'selected' : '' }}>
+                                    {{ $vehicle->make }} {{ $vehicle->model }} ({{ $vehicle->company_unit_number ?? $vehicle->vin }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    
+                    <div class="flex-1">
+                        <label class="form-label">Estado</label>
+                        <select class="form-select w-full" name="status">
+                            @php $selectedStatus = $status ?? ''; @endphp
+                        <option value="">Todos</option>
+                            <option value="1" {{ $selectedStatus == '1' ? 'selected' : '' }}>Completados</option>
+                            <option value="0" {{ $selectedStatus == '0' ? 'selected' : '' }}>Pendientes</option>
+                        </select>
                     </div>
                 </div>
                 
+                <!-- Fechas personalizadas (mostrar/ocultar con Alpine.js) -->
+                <div id="custom-date-range" class="mt-4" x-data="{ showDateRange: '{{ $period ?? 'monthly' }}' === 'custom' }" x-show="showDateRange">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex-1">
+                            <label class="form-label">Fecha inicial</label>
+                            <input type="date" class="form-control" name="start_date" value="{{ $startDate ?? \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d') }}">
+                        </div>
+                        <div class="flex-1">
+                            <label class="form-label">Fecha final</label>
+                            <input type="date" class="form-control" name="end_date" value="{{ $endDate ?? \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d') }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 text-center">
+                    <button type="submit" class="btn btn-primary w-24 mr-2">Filtrar</button>
+                    <a href="{{ route('admin.maintenance.reports') }}" class="btn btn-outline-secondary w-24">Restablecer</a>
+                </div>
+            </form>
+
+            <!-- Estadísticas -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mt-5">
+                <div class="intro-y box p-5">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 flex-none image-fit">
+                            <x-base.lucide class="w-10 h-10 text-primary" icon="WrenchIcon" />
+                        </div>
+                        <div class="ml-4 mr-auto">
+                            <div class="font-medium text-base">{{ $totalMaintenances }}</div>
+                            <div class="text-slate-500">Total Mantenimientos</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="intro-y box p-5">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 flex-none image-fit">
+                            <x-base.lucide class="w-10 h-10 text-success" icon="TruckIcon" />
+                        </div>
+                        <div class="ml-4 mr-auto">
+                            <div class="font-medium text-base">{{ $totalVehiclesServiced }}</div>
+                            <div class="text-slate-500">Vehículos Servidos</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="intro-y box p-5">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 flex-none image-fit">
+                            <x-base.lucide class="w-10 h-10 text-warning" icon="DollarSignIcon" />
+                        </div>
+                        <div class="ml-4 mr-auto">
+                            <div class="font-medium text-base">${{ number_format($totalCost, 2) }}</div>
+                            <div class="text-slate-500">Costo Total</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="intro-y box p-5">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 flex-none image-fit">
+                            <x-base.lucide class="w-10 h-10 text-danger" icon="TrendingUpIcon" />
+                        </div>
+                        <div class="ml-4 mr-auto">
+                            <div class="font-medium text-base">${{ number_format($avgCostPerVehicle, 2) }}</div>
+                            <div class="text-slate-500">Costo Promedio/Vehículo</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gráfico de costos por mes -->
+            <div class="box p-5 mt-5">
+                <h2 class="font-medium text-base mb-5">Costos de mantenimiento por mes</h2>
+                <div class="h-[400px]">
+                    <canvas id="maintenance-costs-chart"></canvas>
+                </div>
+            </div>
+            
                 <div class="box p-5">
                     <h2 class="font-medium text-base mb-5">Distribución por tipo de servicio</h2>
                     <div class="grid grid-cols-12 gap-6">
@@ -184,8 +275,73 @@
                                 </div>
                             </td>
                         </tr>
-                    </tbody>
-                </table>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Mantenimientos -->
+            <div class="intro-y box p-5 mt-5">
+                <h2 class="font-medium text-base mb-5">Lista de Mantenimientos</h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th class="whitespace-nowrap">Vehículo</th>
+                                <th class="whitespace-nowrap">Tipo</th>
+                                <th class="whitespace-nowrap">Fecha</th>
+                                <th class="whitespace-nowrap">Próximo</th>
+                                <th class="whitespace-nowrap">Proveedor</th>
+                                <th class="whitespace-nowrap">Costo</th>
+                                <th class="whitespace-nowrap">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($maintenances as $maintenance)
+                            <tr>
+                                <td>
+                                    {{ $maintenance->vehicle->make }} {{ $maintenance->vehicle->model }}
+                                    <div class="text-slate-500 text-xs">{{ $maintenance->vehicle->company_unit_number ?? $maintenance->vehicle->vin }}</div>
+                                </td>
+                                <td>{{ $maintenance->service_tasks }}</td>
+                                <td>{{ $maintenance->service_date->format('d/m/Y') }}</td>
+                                <td>
+                                    @if($maintenance->next_service_date)
+                                        {{ $maintenance->next_service_date->format('d/m/Y') }}
+                                    @else
+                                        <span class="text-slate-400">-</span>
+                                    @endif
+                                </td>
+                                <td>{{ $maintenance->vendor_mechanic }}</td>
+                                <td>${{ number_format($maintenance->cost, 2) }}</td>
+                                <td>
+                                    @if($maintenance->status)
+                                        <span class="text-success flex items-center">
+                                            <x-base.lucide class="w-4 h-4 mr-1" icon="CheckCircle" /> Completado
+                                        </span>
+                                    @else
+                                        <span class="text-warning flex items-center">
+                                            <x-base.lucide class="w-4 h-4 mr-1" icon="Clock" /> Pendiente
+                                        </span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="7" class="text-center py-4">No se encontraron registros de mantenimiento</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-5">
+                    {{ $maintenances->links() }}
+                </div>
             </div>
         </div>
     </div>

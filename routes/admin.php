@@ -31,6 +31,8 @@ use App\Http\Controllers\Admin\Driver\DriverTestingController;
 use App\Http\Controllers\Admin\Vehicles\MaintenanceController;
 use App\Http\Controllers\Admin\Vehicles\VehicleMakeController;
 use App\Http\Controllers\Admin\Vehicles\VehicleTypeController;
+use App\Http\Controllers\Admin\Vehicles\MaintenanceReportController;
+use App\Http\Controllers\Admin\Vehicles\MaintenanceCalendarController;
 use App\Http\Controllers\Admin\Driver\TrainingSchoolsController;
 use App\Http\Controllers\Admin\Driver\DriverRecruitmentController;
 use App\Http\Controllers\Admin\Vehicles\VehicleDocumentController;
@@ -49,6 +51,38 @@ Route::post('/dashboard/ajax-update', [DashboardController::class, 'ajaxUpdate']
 
 // Dashboard principal
 // Aquí solo mantenemos las rutas del dashboard principal
+
+/*
+    |--------------------------------------------------------------------------
+    | RUTAS PARA GESTIÓN DE VEHÍCULOS Y MANTENIMIENTO
+    |--------------------------------------------------------------------------    
+*/
+
+// Rutas para vehículos
+Route::resource('vehicles', VehicleController::class);
+
+// Rutas para tipos y marcas de vehículos
+Route::resource('vehicle-types', VehicleTypeController::class);
+Route::resource('vehicle-makes', VehicleMakeController::class);
+
+// Rutas para mantenimiento de vehículos
+Route::prefix('maintenance')->name('maintenance.')->group(function () {
+    // Rutas principales CRUD
+    Route::get('/', [MaintenanceController::class, 'index'])->name('index');
+    Route::get('/create', [MaintenanceController::class, 'create'])->name('create');
+    Route::post('/', [MaintenanceController::class, 'store'])->name('store');
+    Route::get('/{maintenance}/edit', [MaintenanceController::class, 'edit'])->name('edit');
+    Route::put('/{maintenance}', [MaintenanceController::class, 'update'])->name('update');
+    Route::delete('/{maintenance}', [MaintenanceController::class, 'destroy'])->name('destroy');
+    
+    // Reportes
+    Route::get('/reports', [MaintenanceReportController::class, 'index'])->name('reports');
+    Route::post('/export-pdf', [MaintenanceReportController::class, 'exportPdf'])->name('export-pdf');
+    
+    // Calendario
+    Route::get('/calendar', [MaintenanceCalendarController::class, 'index'])->name('calendar');
+    Route::get('/calendar/events', [MaintenanceCalendarController::class, 'getEvents'])->name('calendar.events');
+});
 
 
 /*
@@ -719,7 +753,9 @@ Route::get('vehicles-documents', [App\Http\Controllers\Admin\Vehicles\VehicleDoc
 Route::prefix('maintenance')->name('maintenance.')->group(function () {
     Route::get('/', [MaintenanceController::class, 'index'])->name('index');
     Route::get('/create', [MaintenanceController::class, 'create'])->name('create');
+    Route::post('/', [MaintenanceController::class, 'store'])->name('store');
     Route::get('/{id}/edit', [MaintenanceController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [MaintenanceController::class, 'update'])->name('update');
     Route::get('/{id}', [MaintenanceController::class, 'show'])->name('show');
     Route::put('/{id}/toggle-status', [MaintenanceController::class, 'toggleStatus'])->name('toggle-status');
     Route::delete('/{id}', [MaintenanceController::class, 'destroy'])->name('destroy');
@@ -729,6 +765,7 @@ Route::prefix('maintenance')->name('maintenance.')->group(function () {
     Route::get('/reports', [MaintenanceController::class, 'reports'])->name('reports');
     Route::get('/calendar', [MaintenanceController::class, 'calendar'])->name('calendar');
 });
+
 
 /*
 |--------------------------------------------------------------------------

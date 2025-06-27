@@ -90,7 +90,7 @@
                                                 <div
                                                     class="image-fit h-[4.5rem] w-[4.5rem] overflow-hidden rounded-2xl border-[3px] border-slate-200/70">
                                                     <img
-                                                        src="{{ Vite::asset($faker['image']) }}"
+                                                        src="#"
                                                         alt="Tailwise - Admin Dashboard Template"
                                                     >
                                                 </div>

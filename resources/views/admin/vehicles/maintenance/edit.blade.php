@@ -56,8 +56,97 @@ $breadcrumbLinks = [
                 </div>
             </div>
             
-            <!-- Renderizar el componente Livewire para editar mantenimiento -->
-            <livewire:admin.vehicle.maintenance-form :id="$id" />
+            <form action="{{ route('admin.maintenance.update', $maintenance->id) }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
+                <div class="mt-3">
+                    <label for="vehicle_id" class="form-label">Vehículo</label>
+                    <select id="vehicle_id" name="vehicle_id" class="form-select w-full @error('vehicle_id') border-danger @enderror">
+                        <option value="">Seleccionar vehículo</option>
+                        @foreach($vehicles as $vehicle)
+                            <option value="{{ $vehicle->id }}" {{ $maintenance->vehicle_id == $vehicle->id ? 'selected' : '' }}>
+                                {{ $vehicle->make }} {{ $vehicle->model }} ({{ $vehicle->company_unit_number ?? $vehicle->vin }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('vehicle_id') <div class="text-danger mt-2">{{ $message }}</div> @enderror
+                </div>
+
+                <div class="mt-3">
+                    <label for="service_tasks" class="form-label">Tipo de Mantenimiento</label>
+                    <select id="service_tasks" name="service_tasks" class="form-select w-full @error('service_tasks') border-danger @enderror">
+                        <option value="">Seleccionar tipo de mantenimiento</option>
+                        @foreach($maintenanceTypes as $type)
+                            <option value="{{ $type }}" {{ $maintenance->service_tasks == $type ? 'selected' : '' }}>{{ $type }}</option>
+                        @endforeach
+                    </select>
+                    @error('service_tasks') <div class="text-danger mt-2">{{ $message }}</div> @enderror
+                </div>
+
+                <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="service_date" class="form-label">Fecha de Mantenimiento</label>
+                        <input id="service_date" type="datetime-local" name="service_date" value="{{ old('service_date', $maintenance->service_date->format('Y-m-d\\TH:i')) }}" class="form-control w-full @error('service_date') border-danger @enderror">
+                        @error('service_date') <div class="text-danger mt-2">{{ $message }}</div> @enderror
+                    </div>
+                    
+                    <div>
+                        <label for="next_service_date" class="form-label">Fecha Próximo Mantenimiento</label>
+                        <input id="next_service_date" type="datetime-local" name="next_service_date" value="{{ old('next_service_date', $maintenance->next_service_date ? $maintenance->next_service_date->format('Y-m-d\\TH:i') : '') }}" class="form-control w-full @error('next_service_date') border-danger @enderror">
+                        @error('next_service_date') <div class="text-danger mt-2">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+
+                <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="unit" class="form-label">Unidad</label>
+                        <input id="unit" type="text" name="unit" value="{{ old('unit', $maintenance->unit) }}" class="form-control w-full @error('unit') border-danger @enderror" placeholder="Número de unidad o identificador">
+                        @error('unit') <div class="text-danger mt-2">{{ $message }}</div> @enderror
+                    </div>
+                    
+                    <div>
+                        <label for="vendor_mechanic" class="form-label">Proveedor/Mecánico</label>
+                        <input id="vendor_mechanic" type="text" name="vendor_mechanic" value="{{ old('vendor_mechanic', $maintenance->vendor_mechanic) }}" class="form-control w-full @error('vendor_mechanic') border-danger @enderror" placeholder="Ej: Taller Automotriz XYZ">
+                        @error('vendor_mechanic') <div class="text-danger mt-2">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+
+                <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="cost" class="form-label">Costo</label>
+                        <div class="input-group">
+                            <div class="input-group-text">$</div>
+                            <input id="cost" type="number" step="0.01" min="0" name="cost" value="{{ old('cost', $maintenance->cost) }}" class="form-control @error('cost') border-danger @enderror" placeholder="0.00">
+                        </div>
+                        @error('cost') <div class="text-danger mt-2">{{ $message }}</div> @enderror
+                    </div>
+                    
+                    <div>
+                        <label for="odometer" class="form-label">Lectura de Odómetro</label>
+                        <input id="odometer" type="number" min="0" name="odometer" value="{{ old('odometer', $maintenance->odometer) }}" class="form-control w-full @error('odometer') border-danger @enderror" placeholder="Ej: 50000">
+                        @error('odometer') <div class="text-danger mt-2">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <label for="description" class="form-label">Descripción</label>
+                    <textarea id="description" name="description" class="form-control w-full @error('description') border-danger @enderror" rows="4" placeholder="Detalles adicionales del mantenimiento">{{ old('description', $maintenance->description) }}</textarea>
+                    @error('description') <div class="text-danger mt-2">{{ $message }}</div> @enderror
+                </div>
+
+                <div class="mt-3">
+                    <div class="form-check">
+                        <input id="status" type="checkbox" name="status" value="1" {{ old('status', $maintenance->status) ? 'checked' : '' }} class="form-check-input">
+                        <label for="status" class="form-check-label">Marcar como Completado</label>
+                    </div>
+                    @error('status') <div class="text-danger mt-2">{{ $message }}</div> @enderror
+                </div>
+
+                <div class="text-right mt-5">
+                    <a href="{{ route('admin.maintenance.index') }}" class="btn btn-outline-secondary w-24 mr-1">Cancelar</a>
+                    <button type="submit" class="btn btn-primary w-24">Actualizar</button>
+                </div>
+            </form>
             
             <!-- Sección de documentos adjuntos -->
             <div class="mt-8 pt-5 border-t border-slate-200/60 dark:border-darkmode-400">
@@ -139,4 +228,42 @@ $breadcrumbLinks = [
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Obtener referencias a los elementos del DOM
+        const vehicleSelect = document.getElementById('vehicle_id');
+        const unitInput = document.getElementById('unit');
+        
+        // Datos de vehículos para autocompletar el campo de unidad
+        const vehiclesData = @json($vehicles->map(function($vehicle) {
+            return [
+                'id' => $vehicle->id,
+                'unit' => $vehicle->company_unit_number ?? ''
+            ];
+        }));
+        
+        // Función para actualizar el campo de unidad cuando se selecciona un vehículo
+        vehicleSelect.addEventListener('change', function() {
+            const selectedVehicleId = parseInt(this.value);
+            if (!selectedVehicleId) return;
+            
+            // Si el campo de unidad está vacío o no ha sido modificado manualmente
+            if (!unitInput.value || unitInput.dataset.autoFilled === 'true') {
+                const selectedVehicle = vehiclesData.find(v => v.id === selectedVehicleId);
+                if (selectedVehicle && selectedVehicle.unit) {
+                    unitInput.value = selectedVehicle.unit;
+                    unitInput.dataset.autoFilled = 'true';
+                }
+            }
+        });
+        
+        // Marcar cuando el usuario modifica manualmente el campo de unidad
+        unitInput.addEventListener('input', function() {
+            this.dataset.autoFilled = 'false';
+        });
+    });
+</script>
+@endpush
 @endsection

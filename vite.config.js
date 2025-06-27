@@ -67,6 +67,7 @@ export default defineConfig({
                 'resources/js/components/report-bar-chart-6.js',                
                 'resources/js/components/base/calendar/draggable.js',
                 'resources/js/components/base/calendar/calendar.js',
+                'resources/js/components/maintenance-calendar.js',
                 'resources/js/components/quick-search.js',
                 'resources/js/components/base/preview-component.js',
                 'resources/js/components/vertical-bar-chart.js',
