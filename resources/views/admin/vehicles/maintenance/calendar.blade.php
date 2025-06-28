@@ -447,15 +447,9 @@ $breadcrumbLinks = [
 </script>
 
 <script>
-    // Inicializamos maintenanceApp inmediatamente
-    window.maintenanceApp = (function() {
-        // Cola de actualizaciones pendientes en caso de que Alpine no esté listo
-        let pendingUpdates = [];
-        // Flag para saber si Alpine está inicializado
-        let alpineInitialized = false;
-        
-        // Valores por defecto para el modal
-        const defaultModalData = {
+    // Definir variables iniciales para Alpine.js
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('modalData', () => ({
             title: 'Maintenance Details',
             vehicle: 'No vehicle selected',
             serviceType: 'No service selected',
@@ -466,138 +460,18 @@ $breadcrumbLinks = [
             viewLink: '#',
             showCost: false,
             showDescription: false
-        };
-        
-        // Copia inicial de los datos
-        let currentModalData = {...defaultModalData};
-        
-        // Función para actualizar el componente Alpine si está disponible
-        function syncWithAlpine() {
-            const wrapper = document.getElementById('maintenance-modal-wrapper');
-            if (!wrapper) {
-                console.error('No se encontró el wrapper del modal');
-                return false;
-            }
-            
-            if (wrapper.__x) {
-                const alpineData = wrapper.__x.$data;
-                for (const key in currentModalData) {
-                    if (currentModalData.hasOwnProperty(key)) {
-                        alpineData[key] = currentModalData[key];
-                    }
-                }
-                console.log('Componente Alpine actualizado correctamente');
-                return true;
-            } 
-            return false;
-        }
-        
-        // Función para abrir el modal con Tailwind
-        function openModalWithTailwind() {
-            setTimeout(() => {
-                const modal = document.getElementById('maintenance-modal');
-                if (modal && typeof tailwind !== 'undefined') {
-                    console.log('Abriendo modal con Tailwind...');
-                    tailwind.Modal.getOrCreateInstance(modal).show();
-                } else {
-                    console.error('Error al abrir el modal: tailwind o el elemento no están disponibles');
-                }
-            }, 50); // Pequeño retraso para asegurar que todo esté listo
-        }
-        
-        // Procesar actualizaciones pendientes
-        function processPendingUpdates() {
-            if (pendingUpdates.length > 0) {
-                console.log(`Procesando ${pendingUpdates.length} actualizaciones pendientes`);
-                const success = syncWithAlpine();
-                
-                if (success) {
-                    // Si la última actualización incluía abrir el modal, lo abrimos
-                    if (pendingUpdates.some(update => update.openModal)) {
-                        openModalWithTailwind();
-                    }
-                    pendingUpdates = [];
-                }
-            }
-        }
-        
-        // Configurar Alpine cuando esté disponible
-        document.addEventListener('alpine:init', () => {
-            console.log('Alpine:init detectado, configurando componente modalData');
-            Alpine.data('modalData', () => currentModalData);
-        });
-        
-        // Detectar cuando Alpine está completamente inicializado
-        document.addEventListener('alpine:initialized', () => {
-            console.log('Alpine completamente inicializado');
-            alpineInitialized = true;
-            processPendingUpdates();
-        });
-        
-        // Asegurarse de que todo está listo cuando el DOM se carga
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM cargado, verificando inicialización de Alpine');
-            setTimeout(() => {
-                if (!alpineInitialized) {
-                    console.log('Alpine aún no está inicializado después de DOM ready, verificando componente...');
-                    const success = syncWithAlpine();
-                    if (success) {
-                        alpineInitialized = true;
-                        processPendingUpdates();
-                    }
-                }
-            }, 200);
-        });
-        
-        // API pública
-        return {
-            // Método para actualizar los datos del modal
-            updateModalData: function(data, openModal = true) {
-                console.log('Actualizando datos del modal:', data);
-                
-                // Actualizar nuestra copia local
-                for (const key in data) {
-                    if (data.hasOwnProperty(key)) {
-                        currentModalData[key] = data[key];
-                    }
-                }
-                
-                // Intentar sincronizar con Alpine
-                const success = syncWithAlpine();
-                
-                if (success) {
-                    console.log('Datos actualizados directamente en Alpine');
-                    if (openModal) {
-                        openModalWithTailwind();
-                    }
-                } else {
-                    // Si Alpine no está listo, guardar para después
-                    console.log('Alpine no está listo, guardando actualización para más tarde');
-                    pendingUpdates.push({ data, openModal });
-                }
-            },
-            
-            // Método para abrir el modal
-            openModal: function() {
-                openModalWithTailwind();
-            },
-            
-            // Acceso a los datos actuales
-            getModalData: function() {
-                return {...currentModalData};
-            },
-            
-            // Método para reiniciar datos
-            resetModalData: function() {
-                currentModalData = {...defaultModalData};
-                syncWithAlpine();
-            }
-        };
-    })();
+        }));
+    });
     
-    // Función global para abrir el modal
+    // Función global para abrir el modal usando la API de Tailwind
     window.openMaintenanceModal = function() {
-        window.maintenanceApp.openModal();
+        // Utilizamos setTimeout para evitar reflow forzado
+        setTimeout(() => {
+            const modal = document.getElementById('maintenance-modal');
+            if (modal && window.tailwind) {
+                window.tailwind.Modal.getOrCreateInstance(modal).show();
+            }
+        }, 10);
     };
 
 </script>
