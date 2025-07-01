@@ -759,6 +759,7 @@ Route::prefix('maintenance')->name('maintenance.')->group(function () {
     Route::get('/{id}', [MaintenanceController::class, 'show'])->name('show');
     Route::put('/{id}/toggle-status', [MaintenanceController::class, 'toggleStatus'])->name('toggle-status');
     Route::delete('/{id}', [MaintenanceController::class, 'destroy'])->name('destroy');
+    Route::post('/{id}/reschedule', [MaintenanceController::class, 'reschedule'])->name('reschedule');
 
     // Rutas adicionales para funcionalidades extendidas (opcionales)
     Route::get('/export', [MaintenanceController::class, 'export'])->name('export');

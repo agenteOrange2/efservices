@@ -125,6 +125,7 @@ export default defineConfig({
                 'resources/js/vendors/litepicker.js',
                 'resources/js/vendors/tippy.js',
                 'resources/js/date-picker.js', // Nuestro componente de date-picker personalizado
+                'resources/js/ckeditor-classic.js', // CKEditor para formularios de texto enriquecido
               ],
             refresh: true,
         }),

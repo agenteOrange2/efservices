@@ -15,9 +15,11 @@ class MaintenanceList extends Component
     // Propiedades para filtros y ordenamiento
     public $search = '';
     public $status = '';
-    public $maintenanceType = '';
-    public $vehicleId = '';
+    public $carrierId = '';
     public $dateRange = '';
+    
+    // Propiedad para rastrear cuando se actualiza un filtro
+    // Aseguramos que los filtros se mantengan en la URL
     public $perPage = 10;
     public $sortField = 'service_date';
     public $sortDirection = 'desc';
@@ -40,8 +42,7 @@ class MaintenanceList extends Component
     protected $queryString = [
         'search' => ['except' => ''],
         'status' => ['except' => ''],
-        'maintenanceType' => ['except' => ''],
-        'vehicleId' => ['except' => ''],
+        'carrierId' => ['except' => ''],
         'dateRange' => ['except' => ''],
         'sortField' => ['except' => 'service_date'],
         'sortDirection' => ['except' => 'desc'],
@@ -58,8 +59,18 @@ class MaintenanceList extends Component
         'editing.status' => 'boolean'
     ];
 
-    // Resetear la paginación cuando se actualiza la búsqueda
+    // Resetear la paginación cuando se actualiza cualquier filtro
     public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+    
+    public function updatingStatus()
+    {
+        $this->resetPage();
+    }
+    
+    public function updatingCarrierId()
     {
         $this->resetPage();
     }
@@ -166,13 +177,12 @@ class MaintenanceList extends Component
                 });
             })
             ->when($this->status !== '', function ($query) {
-                $query->where('status', $this->status === '1');
+                return $query->where('status', $this->status == '1' ? 1 : 0);
             })
-            ->when($this->maintenanceType, function ($query) {
-                $query->where('service_tasks', 'like', '%' . $this->maintenanceType . '%');
-            })
-            ->when($this->vehicleId, function ($query) {
-                $query->where('vehicle_id', $this->vehicleId);
+            ->when($this->carrierId, function ($query) {
+                return $query->whereHas('vehicle', function($q) {
+                    $q->where('carrier_id', $this->carrierId);
+                });
             })
             ->when($this->startDate && $this->endDate, function ($query) {
                 $query->whereBetween('service_date', [$this->startDate, $this->endDate]);
@@ -181,24 +191,14 @@ class MaintenanceList extends Component
 
         $maintenances = $query->paginate($this->perPage);
         
-        // Obtener vehículos para el filtro
-        $vehicles = Vehicle::orderBy('make')->orderBy('model')->get();
-        
-        // Obtener tipos de mantenimiento únicos para el filtro
-        $maintenanceTypes = VehicleMaintenance::select('service_tasks')
-            ->distinct()
-            ->pluck('service_tasks')
-            ->map(function($task) {
-                // Extraer la primera palabra como tipo principal
-                return explode(' ', trim($task))[0];
-            })
-            ->unique()
-            ->values();
+        // Obtener carriers activos para el filtro
+        $carriers = \App\Models\Carrier::where('status', \App\Models\Carrier::STATUS_ACTIVE)
+            ->orderBy('name')
+            ->get();
 
         return view('livewire.admin.vehicle.maintenance-list', [
             'maintenances' => $maintenances,
-            'vehicles' => $vehicles,
-            'maintenanceTypes' => $maintenanceTypes,
+            'carriers' => $carriers,
         ]);
     }
 }

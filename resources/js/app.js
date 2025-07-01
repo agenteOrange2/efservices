@@ -55,6 +55,7 @@ try {
   import("./vendors/calendar/plugins/day-grid.js");
   import("./vendors/calendar/plugins/time-grid.js");
   import("./vendors/calendar/plugins/list.js");
+  import("./ckeditor-classic");
 } catch (error) {
   console.warn("Error al cargar librerías opcionales:", error);
 }
