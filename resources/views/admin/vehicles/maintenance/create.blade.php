@@ -66,7 +66,7 @@
                     <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <x-base.form-label for="service_date">Service Date</x-base.form-label>
-                            <x-base.litepicker id="service_date" name="service_date" value="{{ old('service_date') }}"
+                            <x-base.litepicker id="service_date" name="service_date" value="{{ old('service_date', request('date')) }}"
                                 class="@error('service_date') border-danger @enderror" placeholder="MM/DD/YYYY"
                                 required />
                             @error('service_date')
@@ -175,11 +175,39 @@
 
     @push('scripts')
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Obtener referencias a los elementos del DOM
+            document.addEventListener('DOMContentLoaded', function () {
                 const vehicleSelect = document.getElementById('vehicle_id');
                 const unitInput = document.getElementById('unit');
                 const uploadedFilesInput = document.getElementById('livewire_files');
+                
+                // Script para obtener la fecha de la URL con manejo de zona horaria
+                const urlParams = new URLSearchParams(window.location.search);
+                const dateParam = urlParams.get('date');
+                
+                if (dateParam) {
+                    // Encuentra el campo de fecha
+                    const serviceDateInput = document.getElementById('service_date');
+                    
+                    // Crear la fecha a partir del parámetro, pero asegurando que sea la misma fecha
+                    // independientemente de la zona horaria
+                    const dateParts = dateParam.split('-');
+                    if (dateParts.length === 3) {
+                        const year = parseInt(dateParts[0]);
+                        const month = parseInt(dateParts[1]) - 1; // JS months are 0-indexed
+                        const day = parseInt(dateParts[2]);
+                        
+                        // Crear un objeto de fecha con hora 12:00 para evitar problemas de zona horaria
+                        const dateObj = new Date(year, month, day, 12, 0, 0);
+                        
+                        // Esperar a que Litepicker se inicialice
+                        setTimeout(function() {
+                            if (serviceDateInput && serviceDateInput._litepicker) {
+                                serviceDateInput._litepicker.setDate(dateObj);
+                                console.log('Fecha establecida con zona horaria ajustada:', dateObj);
+                            }
+                        }, 500);
+                    }
+                }
 
                 // Datos de vehículos para autocompletar el campo de unidad
                 const vehiclesData = @json(

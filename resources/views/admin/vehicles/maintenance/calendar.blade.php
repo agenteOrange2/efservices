@@ -282,8 +282,8 @@ $breadcrumbLinks = [
                         
                         // Formatear la fecha correctamente para la URL y para la visualización
                         const formattedDate = info.date.toLocaleDateString();
-                        // Formato ISO para la URL (YYYY-MM-DD)
-                        const dateForUrl = info.dateStr; // ya viene en formato YYYY-MM-DD
+                        // Formato ISO para la URL (YYYY-MM-DD) - Extraer solo la fecha sin timestamp
+                        const dateForUrl = info.dateStr.split('T')[0]; // Obtener solo la parte YYYY-MM-DD
                         
                         // Establecer atributos directamente en elementos del DOM sin depender de Alpine
                         document.querySelector('#maintenance-modal-wrapper h2').textContent = 'New Maintenance';

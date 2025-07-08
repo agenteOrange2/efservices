@@ -169,6 +169,10 @@ class DriverRecruitmentReview extends Component
                 'checked' => false,
                 'label' => 'Criminal record uploaded and verified'
             ],
+            'clearing_house' => [
+                'checked' => false,
+                'label' => 'Clearing House uploaded and verified'
+            ],
             'history_info' => [
                 'checked' => false,
                 'label' => 'Complete work history (10 years)'
@@ -234,7 +238,7 @@ class DriverRecruitmentReview extends Component
             DriverRecruitmentVerification::updateOrCreate(
                 ['driver_application_id' => $this->application->id],
                 [
-                    'verified_by_user_id' => auth()->id(),
+                    'verified_by_user_id' => \Illuminate\Support\Facades\Auth::id(),
                     'verification_items' => $this->checklistItems,
                     'notes' => $this->verificationNotes
                 ]
@@ -3469,6 +3473,80 @@ public function deleteMedicalRecord($mediaId)
         Log::error('Error al eliminar el record médico', ['error' => $e->getMessage()]);
         session()->flash('error', 'Error al eliminar el record médico: ' . $e->getMessage());
     }
+}
+
+/**
+ * Sube un nuevo Clearing House
+ */
+public function uploadClearingHouse()
+{
+    if (!$this->documentFile) {
+        session()->flash('error', 'Por favor selecciona un archivo para subir');
+        return;
+    }
+
+    try {
+        // Obtener la extensión original del archivo
+        $extension = $this->documentFile->getClientOriginalExtension();
+        $customFileName = 'clearing_house.' . $extension;
+        
+        // Guardar el documento con el nombre personalizado
+        $media = $this->driver->addMedia($this->documentFile->path())
+            ->usingFileName($customFileName) // Especifica el nombre completo del archivo
+            ->withCustomProperties([
+                'description' => $this->documentDescription,
+                'upload_date' => now()->toDateTimeString(),
+                'original_name' => $this->documentFile->getClientOriginalName() // Guardamos el nombre original como referencia
+            ])
+            ->toMediaCollection('clearing_house');
+        
+        // Actualizar checklist
+        if (isset($this->checklistItems['clearing_house'])) {
+            $this->checklistItems['clearing_house']['checked'] = true;
+        }
+
+        // Limpiar
+        $this->documentFile = null;
+        $this->documentDescription = '';
+        $this->loadDriverData();
+        
+        $this->dispatch('close-clearing-house-modal');
+        session()->flash('message', 'Clearing House subido exitosamente.');
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('Error al subir el Clearing House', ['error' => $e->getMessage()]);
+        session()->flash('error', 'Error al subir el Clearing House: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Elimina un Clearing House
+ */
+public function deleteClearingHouse($mediaId)
+{
+    try {
+        DB::table('media')->where('id', $mediaId)->delete();
+        
+        // Actualizar checklist
+        if (isset($this->checklistItems['clearing_house'])) {
+            $this->checklistItems['clearing_house']['checked'] = false;
+        }
+
+        $this->loadDriverData();
+        session()->flash('message', 'Clearing House eliminado exitosamente.');
+    } catch (\Exception $e) {
+        Log::error('Error al eliminar el Clearing House', ['error' => $e->getMessage()]);
+        session()->flash('error', 'Error al eliminar el Clearing House: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Abre el modal para subir Clearing House
+ */
+public function openClearingHouseModal()
+{
+    $this->documentFile = null;
+    $this->documentDescription = '';
+    $this->dispatch('open-clearing-house-modal');
 }
 
 }

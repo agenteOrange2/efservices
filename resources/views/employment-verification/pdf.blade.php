@@ -83,7 +83,34 @@
         </div>
         <div class="info-group">
             <span class="info-label">SSN:</span>
-            {{ $ssn ?? 'Not available' }}
+            @if(isset($ssn))
+                @php
+                    // Mostrar solo los últimos 4 dígitos del SSN
+                    $length = strlen($ssn);
+                    $visibleChars = 4; // Cantidad de caracteres a mostrar
+                    $maskedLength = $length - $visibleChars;
+                    $maskedSSN = '';
+                    
+                    // Si el formato tiene guiones (como 123-45-6789), mantenerlos
+                    if (strpos($ssn, '-') !== false) {
+                        $parts = explode('-', $ssn);
+                        if(count($parts) === 3) {
+                            // Formato típico xxx-xx-xxxx
+                            $maskedSSN = 'XXX-XX-' . $parts[2];
+                        } else {
+                            // Otro formato con guiones, enmascarar todo excepto los últimos 4
+                            $lastPart = end($parts);
+                            $maskedSSN = str_repeat('*', $maskedLength) . substr($ssn, -$visibleChars);
+                        }
+                    } else {
+                        // Sin guiones, simplemente enmascarar todo excepto los últimos 4
+                        $maskedSSN = str_repeat('*', $maskedLength) . substr($ssn, -$visibleChars);
+                    }
+                @endphp
+                {{ $maskedSSN }}
+            @else
+                Not available
+            @endif
         </div>
     </div>
 

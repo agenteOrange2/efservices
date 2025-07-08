@@ -27,13 +27,29 @@ class DriverListController extends Controller
         $search = $request->input('search', '');
         $carrierFilter = $request->input('carrier', '');
         $perPage = $request->input('per_page', 10);
-
-        // Base query for approved drivers
+        $tab = $request->input('tab', 'all'); // Added tab parameter
+        
+        // Base query for all approved drivers
         $query = UserDriverDetail::with(['user', 'carrier', 'application'])
             ->whereHas('application', function($q) {
                 $q->where('status', DriverApplication::STATUS_APPROVED);
-            })
-            ->orderBy('created_at', 'desc');
+            });
+        
+        // Apply tab filters
+        switch ($tab) {
+            case 'active':
+                $query->where('status', UserDriverDetail::STATUS_ACTIVE);
+                break;
+            case 'inactive':
+                $query->where('status', UserDriverDetail::STATUS_INACTIVE);
+                break;
+            case 'new':
+                $query->whereDate('created_at', '>=', now()->subDays(30));
+                break;
+            // Default 'all' tab doesn't need additional filtering
+        }
+            
+        $query->orderBy('created_at', 'desc');
 
         // Apply search filter if provided
         if (!empty($search)) {
@@ -62,13 +78,47 @@ class DriverListController extends Controller
         foreach ($drivers as $driver) {
             $driver->completion_percentage = $this->calculateProfileCompleteness($driver);
         }
+        
+        // Get counts for tabs - using debug logging to verify counts
+        $totalDriversCount = UserDriverDetail::whereHas('application', function($q) {
+            $q->where('status', DriverApplication::STATUS_APPROVED);
+        })->count();
+        
+        $activeDriversCount = UserDriverDetail::whereHas('application', function($q) {
+            $q->where('status', DriverApplication::STATUS_APPROVED);
+        })->where('status', UserDriverDetail::STATUS_ACTIVE)->count();
+        
+        // Corrige el conteo de conductores inactivos asegurándose que la condición sea exacta
+        $inactiveQuery = UserDriverDetail::whereHas('application', function($q) {
+            $q->where('status', DriverApplication::STATUS_APPROVED);
+        })->where('status', UserDriverDetail::STATUS_INACTIVE);
+        
+        // Registra la consulta SQL para debug
+        \Illuminate\Support\Facades\Log::debug('SQL inactivos: ' . $inactiveQuery->toSql());
+        $inactiveDriversCount = $inactiveQuery->count();
+        \Illuminate\Support\Facades\Log::debug('Contador de conductores inactivos: ' . $inactiveDriversCount);
+        
+        // Corrige el conteo de conductores nuevos asegurándose que la condición de fecha sea correcta
+        $newQuery = UserDriverDetail::whereHas('application', function($q) {
+            $q->where('status', DriverApplication::STATUS_APPROVED);
+        })->whereDate('created_at', '>=', now()->subDays(30));
+        
+        // Registra la consulta SQL para debug
+        \Illuminate\Support\Facades\Log::debug('SQL nuevos: ' . $newQuery->toSql());
+        $newDriversCount = $newQuery->count();
+        \Illuminate\Support\Facades\Log::debug('Contador de conductores nuevos: ' . $newDriversCount);
 
         return view('admin.drivers.list-driver.index', [
             'drivers' => $drivers,
             'carriers' => $carriers,
             'search' => $search,
             'carrierFilter' => $carrierFilter,
-            'perPage' => $perPage
+            'perPage' => $perPage,
+            'currentTab' => $tab,
+            'totalDriversCount' => $totalDriversCount,
+            'activeDriversCount' => $activeDriversCount,
+            'inactiveDriversCount' => $inactiveDriversCount,
+            'newDriversCount' => $newDriversCount
         ]);
     }
 
@@ -214,6 +264,7 @@ class DriverListController extends Controller
         $drivingRecord = $driver->getMedia('driving_records')->first();
         $medicalRecord = $driver->getMedia('medical_records')->first();
         $criminalRecord = $driver->getMedia('criminal_records')->first();
+        $clearingHouseRecord = $driver->getMedia('clearing_house')->first();
         
         // Cargar documentos por categoría usando Spatie Media Library
         $documentsByCategory = [
@@ -550,12 +601,25 @@ class DriverListController extends Controller
                 'related_info' => 'Criminal Record'
             ];
         }
+        
+        // Agregar Clearing House record
+        $clearingHouse = $driver->getMedia('clearing_house')->first();
+        if ($clearingHouse) {
+            $documentsByCategory['records'][] = [
+                'name' => $clearingHouse->file_name,
+                'url' => $clearingHouse->getUrl(),
+                'size' => $this->formatFileSize($clearingHouse->size),
+                'date' => $clearingHouse->created_at->format('Y-m-d H:i:s'),
+                'related_info' => 'Clearing House'
+            ];
+        }
 
         return view('admin.drivers.list-driver.driver-show', [
             'driver' => $driver,
             'drivingRecord' => $drivingRecord,
             'medicalRecord' => $medicalRecord,
             'criminalRecord' => $criminalRecord,
+            'clearingHouseRecord' => $clearingHouseRecord,
             'documentsByCategory' => $documentsByCategory,
             'hasCertification' => $hasCertification,
             'applicationFormExists' => $applicationFormExists

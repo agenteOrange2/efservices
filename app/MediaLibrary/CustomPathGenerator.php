@@ -104,6 +104,13 @@ class CustomPathGenerator implements PathGenerator
             return "driver/{$driverId}/certification/{$certificationId}/";
         }
         
+        // Ruta personalizada para documentos de verificación de empleo
+        if ($model instanceof \App\Models\Admin\Driver\DriverEmploymentCompany) {
+            // Obtener el ID del conductor a través de la relación
+            $driverId = $model->user_driver_detail_id ?? 'unknown';
+            return "driver/{$driverId}/employment_verification/{$model->id}/";
+        }
+        
         if ($model instanceof \App\Models\Admin\Driver\DriverTrafficConviction) {
             $driverId = $model->userDriverDetail->id ?? 'unknown';
             $convictionId = $model->id;

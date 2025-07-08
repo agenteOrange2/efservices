@@ -248,8 +248,12 @@ Route::prefix('drivers/employment-verification')->name('drivers.employment-verif
     Route::get('/', [EmploymentVerificationAdminController::class, 'index'])->name('index');
     Route::get('/{id}', [EmploymentVerificationAdminController::class, 'show'])->name('show');
     Route::post('/{id}/resend', [EmploymentVerificationAdminController::class, 'resendVerification'])->name('resend');
+    Route::post('/{id}/verify', [EmploymentVerificationAdminController::class, 'verify'])->name('verify');
+    Route::post('/{id}/reject', [EmploymentVerificationAdminController::class, 'reject'])->name('reject');
     Route::post('/{id}/mark-verified', [EmploymentVerificationAdminController::class, 'markAsVerified'])->name('mark-verified');
     Route::post('/{id}/mark-rejected', [EmploymentVerificationAdminController::class, 'markAsRejected'])->name('mark-rejected');
+    Route::post('/{id}/upload-document', [EmploymentVerificationAdminController::class, 'uploadDocument'])->name('upload-document');
+    Route::post('/{id}/upload-manual-verification', [EmploymentVerificationAdminController::class, 'uploadManualVerification'])->name('upload-manual-verification');
 });
 
 /*

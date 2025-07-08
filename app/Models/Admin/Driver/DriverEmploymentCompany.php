@@ -72,5 +72,9 @@ class DriverEmploymentCompany extends Model implements HasMedia
     {
         $this->addMediaCollection('signature')
             ->singleFile();
+            
+        $this->addMediaCollection('employment_verification_documents')
+            ->acceptsMimeTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'])
+            ->useDisk('public');
     }
 }

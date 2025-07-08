@@ -25,57 +25,58 @@
             <div class="mt-3.5 flex flex-col gap-8">
                 <div class="box box--stacked flex flex-col p-5">
                     <div class="grid grid-cols-4 gap-5">
-                        <div
-                            class="box col-span-4 rounded-[0.6rem] border border-dashed border-slate-300/80 p-5 shadow-sm md:col-span-2 xl:col-span-1">
-                            <div class="text-base text-slate-500">Total Approved Drivers</div>
-                            <div class="mt-1.5 text-2xl font-medium">{{ $drivers->total() }}</div>
+                        <!-- Clickable tab cards -->
+                        <a href="{{ route('admin.drivers.index', ['tab' => 'all'] + request()->except('tab', 'page')) }}"
+                            class="box col-span-4 rounded-[0.6rem] border border-dashed {{ $currentTab == 'all' ? 'border-primary/80 bg-primary/5' : 'border-slate-300/80' }} p-5 shadow-sm md:col-span-2 xl:col-span-1 hover:border-primary/60 hover:bg-primary/5 transition-all duration-150 ease-in-out cursor-pointer">
+                            <div class="text-base {{ $currentTab == 'all' ? 'text-primary' : 'text-slate-500' }}">Total Approved Drivers</div>
+                            <div class="mt-1.5 text-2xl font-medium">{{ $totalDriversCount }}</div>
                             <div class="absolute inset-y-0 right-0 mr-5 flex flex-col justify-center">
                                 <div
                                     class="flex items-center rounded-full border border-success/10 bg-success/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-success">
-                                    3%
-                                    <i data-lucide="ChevronUp" class="ml-px h-4 w-4 stroke-[1.5]"></i>
+                                    <i data-lucide="Users" class="ml-px h-4 w-4 stroke-[1.5] mr-1"></i>
+                                    All
                                 </div>
                             </div>
-                        </div>
-                        <div
-                            class="box col-span-4 rounded-[0.6rem] border border-dashed border-slate-300/80 p-5 shadow-sm md:col-span-2 xl:col-span-1">
-                            <div class="text-base text-slate-500">Active Drivers</div>
-                            <div class="mt-1.5 text-2xl font-medium">
-                                {{ $drivers->where('status', App\Models\UserDriverDetail::STATUS_ACTIVE)->count() }}</div>
+                        </a>
+                        
+                        <a href="{{ route('admin.drivers.index', ['tab' => 'active'] + request()->except('tab', 'page')) }}"
+                            class="box col-span-4 rounded-[0.6rem] border border-dashed {{ $currentTab == 'active' ? 'border-primary/80 bg-primary/5' : 'border-slate-300/80' }} p-5 shadow-sm md:col-span-2 xl:col-span-1 hover:border-primary/60 hover:bg-primary/5 transition-all duration-150 ease-in-out cursor-pointer">
+                            <div class="text-base {{ $currentTab == 'active' ? 'text-primary' : 'text-slate-500' }}">Active Drivers</div>
+                            <div class="mt-1.5 text-2xl font-medium">{{ $activeDriversCount }}</div>
                             <div class="absolute inset-y-0 right-0 mr-5 flex flex-col justify-center">
                                 <div
                                     class="flex items-center rounded-full border border-success/10 bg-success/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-success">
-                                    2%
-                                    <i data-lucide="ChevronUp" class="ml-px h-4 w-4 stroke-[1.5]"></i>
+                                    <i data-lucide="UserCheck" class="ml-px h-4 w-4 stroke-[1.5] mr-1"></i>
+                                    Active
                                 </div>
                             </div>
-                        </div>
-                        <div
-                            class="box col-span-4 rounded-[0.6rem] border border-dashed border-slate-300/80 p-5 shadow-sm md:col-span-2 xl:col-span-1">
-                            <div class="text-base text-slate-500">Inactive Drivers</div>
-                            <div class="mt-1.5 text-2xl font-medium">
-                                {{ $drivers->where('status', App\Models\UserDriverDetail::STATUS_INACTIVE)->count() }}</div>
+                        </a>
+                        
+                        <a href="{{ route('admin.drivers.index', ['tab' => 'inactive'] + request()->except('tab', 'page')) }}"
+                            class="box col-span-4 rounded-[0.6rem] border border-dashed {{ $currentTab == 'inactive' ? 'border-primary/80 bg-primary/5' : 'border-slate-300/80' }} p-5 shadow-sm md:col-span-2 xl:col-span-1 hover:border-primary/60 hover:bg-primary/5 transition-all duration-150 ease-in-out cursor-pointer">
+                            <div class="text-base {{ $currentTab == 'inactive' ? 'text-primary' : 'text-slate-500' }}">Inactive Drivers</div>
+                            <div class="mt-1.5 text-2xl font-medium">{{ $inactiveDriversCount }}</div>
                             <div class="absolute inset-y-0 right-0 mr-5 flex flex-col justify-center">
                                 <div
                                     class="flex items-center rounded-full border border-danger/10 bg-danger/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-danger">
-                                    1%
-                                    <i data-lucide="ChevronDown" class="ml-px h-4 w-4 stroke-[1.5]"></i>
+                                    <i data-lucide="UserMinus" class="ml-px h-4 w-4 stroke-[1.5] mr-1"></i>
+                                    Inactive
                                 </div>
                             </div>
-                        </div>
-                        <div
-                            class="box col-span-4 rounded-[0.6rem] border border-dashed border-slate-300/80 p-5 shadow-sm md:col-span-2 xl:col-span-1">
-                            <div class="text-base text-slate-500">New Drivers (Last 30 Days)</div>
-                            <div class="font-mediumm mt-1.5 text-2xl">
-                                {{ $drivers->where('created_at', '>=', now()->subDays(30))->count() }}</div>
+                        </a>
+                        
+                        <a href="{{ route('admin.drivers.index', ['tab' => 'new'] + request()->except('tab', 'page')) }}"
+                            class="box col-span-4 rounded-[0.6rem] border border-dashed {{ $currentTab == 'new' ? 'border-primary/80 bg-primary/5' : 'border-slate-300/80' }} p-5 shadow-sm md:col-span-2 xl:col-span-1 hover:border-primary/60 hover:bg-primary/5 transition-all duration-150 ease-in-out cursor-pointer">
+                            <div class="text-base {{ $currentTab == 'new' ? 'text-primary' : 'text-slate-500' }}">New Drivers (Last 30 Days)</div>
+                            <div class="mt-1.5 text-2xl font-medium">{{ $newDriversCount }}</div>
                             <div class="absolute inset-y-0 right-0 mr-5 flex flex-col justify-center">
                                 <div
-                                    class="flex items-center rounded-full border border-success/10 bg-success/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-success">
-                                    8%
-                                    <i data-lucide="ChevronUp" class="ml-px h-4 w-4 stroke-[1.5]"></i>
+                                    class="flex items-center rounded-full border border-info/10 bg-info/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-info">
+                                    <i data-lucide="UserPlus" class="ml-px h-4 w-4 stroke-[1.5] mr-1"></i>
+                                    New
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
 
@@ -154,11 +155,7 @@
                     <div class="overflow-auto xl:overflow-visible">
                         <x-base.table class="border-b border-slate-200/60">
                             <x-base.table.thead>
-                                <x-base.table.tr>
-                                    <x-base.table.td
-                                        class="w-5 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                                        <x-base.form-check.input type="checkbox" />
-                                    </x-base.table.td>
+                                <x-base.table.tr>                                    
                                     <x-base.table.td
                                         class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
                                         Name
@@ -187,18 +184,28 @@
                             </x-base.table.thead>
                             <x-base.table.tbody>
                                 @forelse($drivers as $driver)
-                                    <x-base.table.tr class="[&_td]:last:border-b-0">
-                                        <x-base.table.td class="border-dashed py-4">
-                                            <x-base.form-check.input type="checkbox" />
-                                        </x-base.table.td>
+                                    <x-base.table.tr class="[&_td]:last:border-b-0">                                        
                                         <x-base.table.td class="w-80 border-dashed py-4">
-                                            <div class="flex items-center">
+                                             <div class="flex items-center">
                                                 <div class="image-fit zoom-in h-9 w-9">
+                                                    @if ($driver->getFirstMediaUrl('profile_photo_driver'))
                                                     <x-base.tippy
                                                         class="rounded-full shadow-[0px_0px_0px_2px_#fff,_1px_1px_5px_rgba(0,0,0,0.32)]"
-                                                        src="{{ $driver->getProfilePhotoUrlAttribute() }}"
+                                                        src="{{ $driver->getFirstMediaUrl('profile_photo_driver') }}"
                                                         alt="{{ $driver->user->name ?? 'Unknown' }}" as="img"
                                                         content="{{ $driver->user->name ?? 'Unknown' }} {{ $driver->last_name }}" />
+                                                    @else
+                                                    <div class="w-10 h-10 rounded-full overflow-hidden mr-3 bg-slate-100 flex items-center justify-center">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                            data-lucide="user"
+                                                            class="lucide lucide-user stroke-[1] h-5 w-5 text-slate-500">
+                                                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                                                            <circle cx="12" cy="7" r="4"></circle>
+                                                        </svg>
+                                                    </div>
+                                                    @endif
                                                 </div>
                                                 <div class="ml-3.5">
                                                     <a class="whitespace-nowrap font-medium"

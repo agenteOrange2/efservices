@@ -96,19 +96,19 @@ class UserDriverDetail extends Model implements HasMedia
 
     public function getProfilePhotoUrlAttribute()
     {
-        $media = $this->getFirstMedia('profile_photos');
+        $media = $this->getFirstMedia('profile_photo_driver');
         Log::info('Recuperando foto del Driver', [
             'user_driver_id' => $this->id,
             'media_exists' => $media ? true : false,
             'media_url' => $media ? $media->getUrl() : null,
         ]);
-        return $media ? $media->getUrl() : asset('build/default_profile.png');
+        return $media ? $media->getUrl() : asset('build/assets/images/default_profile.png');
     }
 
     //Media library
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('profile_photos')
+        $this->addMediaCollection('profile_photo_driver')
             ->useDisk('public')
             ->singleFile();
     }
