@@ -439,4 +439,15 @@ class EmploymentVerificationAdminController extends Controller
             ->with('error', 'No se encontró el documento a subir.')
             ->withInput();
     }
+    
+    
+    /**
+     * Muestra el formulario wizard de verificación de empleo en una página independiente
+     *
+     * @return \Illuminate\View\View
+     */
+    public function createNew()
+    {
+        return view('admin.drivers.employment-verification.new');
+    }
 }

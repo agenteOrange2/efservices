@@ -5,7 +5,7 @@
         ['label' => 'App', 'url' => route('admin.dashboard')],
         ['label' => 'Vehículos', 'url' => route('admin.vehicles.index')],
         ['label' => $vehicle->make . ' ' . $vehicle->model, 'url' => route('admin.vehicles.show', $vehicle->id)],
-        ['label' => 'Mantenimientos', 'url' => route('admin.vehicles.service-items.index', $vehicle->id)],
+        ['label' => 'Mantenimientos', 'url' => route('admin.vehicles.maintenances.index', $vehicle->id)],
         ['label' => 'Nuevo Mantenimiento', 'active' => true],
     ];
 @endphp
@@ -17,7 +17,7 @@
                 Nuevo Registro de Mantenimiento: {{ $vehicle->make }} {{ $vehicle->model }} ({{ $vehicle->year }})
             </div>
             <div class="flex flex-col gap-x-3 gap-y-2 sm:flex-row md:ml-auto">
-                <x-base.button as="a" href="{{ route('admin.vehicles.service-items.index', $vehicle->id) }}"
+                <x-base.button as="a" href="{{ route('admin.vehicles.maintenances.index', $vehicle->id) }}"
                     class="w-full sm:w-auto" variant="outline-secondary">
                     <x-base.lucide class="mr-2 h-4 w-4" icon="ArrowLeft" />
                     Volver a Mantenimientos
@@ -42,7 +42,7 @@
                     </div>
                 @endif
 
-                <form action="{{ route('admin.vehicles.service-items.store', $vehicle->id) }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('admin.vehicles.maintenances.store', $vehicle->id) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">

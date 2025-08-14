@@ -89,7 +89,7 @@
         <div class="center bold" style="font-size: 14px;">
             Authorization Sheet
         </div>
-        <div class="center blue">drugesting@efcts.com</div>
+        <div class="center blue">drugtesting@efcts.com</div>
     </div>
 
     <p><strong>Company:</strong>

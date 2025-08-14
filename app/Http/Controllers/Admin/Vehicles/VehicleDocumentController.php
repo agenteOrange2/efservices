@@ -88,7 +88,8 @@ class VehicleDocumentController extends Controller
         // Manejar la carga de archivos con Spatie Media Library
         if ($request->hasFile('document_file')) {
             $document->addMediaFromRequest('document_file')
-                ->toMediaCollection('document_files');
+                ->withCustomProperties(['vehicle_id' => $vehicle->id])
+                ->toMediaCollection('document_files', 'public');
         }
 
         return redirect()->route('admin.vehicles.documents.index', $vehicle->id)
@@ -98,11 +99,20 @@ class VehicleDocumentController extends Controller
     /**
      * Display the specified vehicle document.
      */
-    public function show(Vehicle $vehicle, VehicleDocument $document)
+    public function show($vehicleId, $documentId)
     {
-        if ($document->vehicle_id !== $vehicle->id) {
-            abort(404);
-        }
+        // Buscamos directamente el documento por ID sin verificación adicional
+        $document = VehicleDocument::findOrFail($documentId);
+        
+        // Registrar información para debug
+        \Illuminate\Support\Facades\Log::info('Mostrando documento', [
+            'document_id' => $document->id,
+            'document_vehicle_id' => $document->vehicle_id,
+            'requested_vehicle_id' => $vehicleId
+        ]);
+        
+        // Obtener el vehículo para la vista
+        $vehicle = Vehicle::findOrFail($vehicleId);
         
         return view('admin.vehicles.documents.show', compact('vehicle', 'document'));
     }
@@ -110,11 +120,20 @@ class VehicleDocumentController extends Controller
     /**
      * Show the form for editing the specified vehicle document.
      */
-    public function edit(Vehicle $vehicle, VehicleDocument $document)
+    public function edit($vehicleId, $documentId)
     {
-        if ($document->vehicle_id !== $vehicle->id) {
-            abort(404);
-        }
+        // Buscamos directamente el documento por ID sin verificación adicional
+        $document = VehicleDocument::findOrFail($documentId);
+        
+        // Registrar información para debug
+        \Illuminate\Support\Facades\Log::info('Editando documento', [
+            'document_id' => $document->id,
+            'document_vehicle_id' => $document->vehicle_id,
+            'requested_vehicle_id' => $vehicleId
+        ]);
+        
+        // Obtener el vehículo para la vista
+        $vehicle = Vehicle::findOrFail($vehicleId);
         
         $documentTypes = $this->getDocumentTypes();
         
@@ -124,11 +143,20 @@ class VehicleDocumentController extends Controller
     /**
      * Update the specified vehicle document in storage.
      */
-    public function update(Request $request, Vehicle $vehicle, VehicleDocument $document)
+    public function update(Request $request, $vehicleId, $documentId)
     {
-        if ($document->vehicle_id !== $vehicle->id) {
-            abort(404);
-        }
+        // Buscamos directamente el documento por ID sin verificación adicional
+        $document = VehicleDocument::findOrFail($documentId);
+        
+        // Registrar información para debug
+        \Illuminate\Support\Facades\Log::info('Actualizando documento', [
+            'document_id' => $document->id,
+            'document_vehicle_id' => $document->vehicle_id,
+            'requested_vehicle_id' => $vehicleId
+        ]);
+        
+        // Obtener el vehículo para la redirección
+        $vehicle = Vehicle::findOrFail($vehicleId);
 
         $validator = Validator::make($request->all(), [
             'document_type' => 'required|string',
@@ -168,7 +196,8 @@ class VehicleDocumentController extends Controller
             
             // Subir nuevo archivo
             $document->addMediaFromRequest('document_file')
-                ->toMediaCollection('document_files');
+                ->withCustomProperties(['vehicle_id' => $vehicle->id])
+                ->toMediaCollection('document_files', 'public');
         }
 
         return redirect()->route('admin.vehicles.documents.index', $vehicle->id)
@@ -178,11 +207,20 @@ class VehicleDocumentController extends Controller
     /**
      * Remove the specified vehicle document from storage.
      */
-    public function destroy(Vehicle $vehicle, VehicleDocument $document)
+    public function destroy($vehicleId, $documentId)
     {
-        if ($document->vehicle_id !== $vehicle->id) {
-            abort(404);
-        }
+        // Buscamos directamente el documento por ID sin verificación adicional
+        $document = VehicleDocument::findOrFail($documentId);
+        
+        // Registrar información para debug
+        \Illuminate\Support\Facades\Log::info('Eliminando documento', [
+            'document_id' => $document->id,
+            'document_vehicle_id' => $document->vehicle_id,
+            'requested_vehicle_id' => $vehicleId
+        ]);
+        
+        // Obtener el vehículo para la redirección
+        $vehicle = Vehicle::findOrFail($vehicleId);
 
         try {
             // Eliminar archivos asociados
@@ -202,12 +240,18 @@ class VehicleDocumentController extends Controller
     /**
      * Download the document file.
      */
-    public function download(Vehicle $vehicle, VehicleDocument $document)
+    public function download($vehicleId, $documentId)
     {
-        if ($document->vehicle_id !== $vehicle->id) {
-            abort(404);
-        }
-
+        // Buscamos directamente el documento por ID sin verificación adicional
+        $document = VehicleDocument::findOrFail($documentId);
+        
+        // Registrar información para debug
+        \Illuminate\Support\Facades\Log::info('Descargando documento', [
+            'document_id' => $document->id,
+            'document_vehicle_id' => $document->vehicle_id,
+            'requested_vehicle_id' => $vehicleId
+        ]);
+        
         $media = $document->getFirstMedia('document_files');
         
         if (!$media) {
@@ -220,36 +264,94 @@ class VehicleDocumentController extends Controller
     /**
      * Preview the document file.
      */
-    public function preview(Vehicle $vehicle, VehicleDocument $document)
+    public function preview($vehicleId, $documentId)
     {
-        if ($document->vehicle_id !== $vehicle->id) {
-            abort(404);
-        }
+        // Buscamos directamente el documento por ID sin verificación adicional
+        $document = VehicleDocument::findOrFail($documentId);
+        
+        // Registrar información para debug
+        \Illuminate\Support\Facades\Log::info('Previsualizando documento', [
+            'document_id' => $document->id,
+            'document_vehicle_id' => $document->vehicle_id,
+            'requested_vehicle_id' => $vehicleId
+        ]);
 
         $media = $document->getFirstMedia('document_files');
         
         if (!$media) {
             return redirect()->back()->with('error', 'El archivo no existe');
         }
+
+        // Intentar obtener la ruta del archivo
+        $path = $media->getPath();
+        
+        // Si el archivo no existe en la ruta principal, intentar buscar en rutas alternativas
+        if (!file_exists($path)) {
+            // Log para depuración
+            \Illuminate\Support\Facades\Log::warning('File not found at primary path', [
+                'path' => $path,
+                'vehicle_id' => $vehicleId,
+                'document_id' => $document->id
+            ]);
+            
+            // Intentar encontrar el archivo en storage/app/public/others
+            $alternativePath = storage_path('app/public/others/' . $document->id . '/' . basename($path));
+            if (file_exists($alternativePath)) {
+                $path = $alternativePath;
+            } else {
+                // Si no se encuentra en ninguna ubicación, buscar el archivo por nombre
+                $fileName = basename($path);
+                $potentialLocations = [
+                    storage_path('app/public/vehicle/' . $vehicleId . '/' . $fileName),
+                    storage_path('app/public/vehicle/' . $vehicleId . '/documents/' . $fileName),
+                    storage_path('app/public/' . $fileName),
+                    storage_path('app/public/others/' . $fileName)
+                ];
+                
+                foreach ($potentialLocations as $potentialPath) {
+                    if (file_exists($potentialPath)) {
+                        $path = $potentialPath;
+                        break;
+                    }
+                }
+                
+                // Si aún no se encuentra, buscar por glob
+                if (!file_exists($path)) {
+                    $globPattern = storage_path('app/public/*/') . $fileName;
+                    $matches = glob($globPattern);
+                    if (!empty($matches) && file_exists($matches[0])) {
+                        $path = $matches[0];
+                    }
+                }
+            }
+            
+            // Si aún así no se encuentra
+            if (!file_exists($path)) {
+                return redirect()->back()->with('error', 'No se pudo encontrar el archivo en ninguna ubicación');
+            }
+        }
+        
+        // Determinar el tipo MIME del archivo
+        $mimeType = $media->mime_type;
         
         // Si es un PDF, mostrarlo en el navegador
-        if ($media->mime_type === 'application/pdf') {
-            return response()->file($media->getPath(), [
+        if ($mimeType === 'application/pdf' || strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'pdf') {
+            return response()->file($path, [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . $media->file_name . '"'
+                'Content-Disposition' => 'inline; filename="' . basename($path) . '"'
             ]);
         }
         
         // Si es una imagen, mostrar vista previa
-        if (strpos($media->mime_type, 'image/') === 0) {
-            return response()->file($media->getPath(), [
-                'Content-Type' => $media->mime_type,
-                'Content-Disposition' => 'inline; filename="' . $media->file_name . '"'
+        if (strpos($mimeType, 'image/') === 0 || in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif'])) {
+            return response()->file($path, [
+                'Content-Type' => $mimeType ?: 'image/' . strtolower(pathinfo($path, PATHINFO_EXTENSION)),
+                'Content-Disposition' => 'inline; filename="' . basename($path) . '"'
             ]);
         }
         
         // Para otros tipos, descargar
-        return response()->download($media->getPath(), $media->file_name);
+        return response()->download($path, basename($path));
     }
 
     /**

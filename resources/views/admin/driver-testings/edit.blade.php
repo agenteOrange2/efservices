@@ -316,6 +316,23 @@
                                     @enderror
                                 </div>
 
+                                <!-- Status -->
+                                <div>
+                                    <label for="status" class="form-label">Status</label>
+                                    <select id="status" name="status"
+                                        class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 @error('status') is-invalid @enderror">
+                                        @foreach (\App\Models\Admin\Driver\DriverTesting::getStatuses() as $key => $value)
+                                            <option value="{{ $key }}"
+                                                {{ old('status', 'active') == $key ? 'selected' : '' }}>
+                                                {{ $value }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('status')
+                                        <div class="text-danger mt-1 text-sm">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
                                 <!-- Siguiente fecha de prueba -->
                                 <div>
                                     <label for="next_test_due" class="form-label">Next Test Due</label>

@@ -230,8 +230,9 @@ class DriverRecruitmentReview extends Component
         
         // Si todos los elementos del checklist están completos, mostrar botón de aprobación
         if ($this->isChecklistComplete() && ($this->application->status === 'pending' || $this->application->status === 'draft')) {
-            // Actualizar el estado de la aplicación a 'approved'
+            // Actualizar el estado de la aplicación a 'approved' y establecer la fecha de completado
             $this->application->status = 'approved';
+            $this->application->completed_at = now();
             $this->application->save();
             
             // Registrar la verificación

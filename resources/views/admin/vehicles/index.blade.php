@@ -250,7 +250,7 @@
                                                             Documents
                                                         </x-base.menu.item>
                                                         <x-base.menu.item
-                                                            href="{{ route('admin.vehicles.service-items.index', $vehicle->id) }}">
+                                                            href="{{ route('admin.vehicles.maintenances.index', $vehicle->id) }}">
                                                             <x-base.lucide class="mr-2 h-4 w-4" icon="Tool" />
                                                             Services
                                                         </x-base.menu.item>

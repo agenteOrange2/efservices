@@ -12,9 +12,9 @@
 <div class="intro-y flex flex-col sm:flex-row items-center mt-8">
     <h2 class="text-lg font-medium mr-auto">Employment Verification Details</h2>
     <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
-        <a href="{{ route('admin.drivers.employment-verification.index') }}" class="btn btn-secondary shadow-md mr-2">
+        <x-base.button as="a" variation="primary" href="{{ route('admin.drivers.employment-verification.index') }}" class="btn btn-secondary shadow-md mr-2">
             <i class="w-4 h-4 mr-2" data-lucide="arrow-left"></i> Back to Verifications
-        </a>
+        </x-base.button>
     </div>
 </div>
 
@@ -115,7 +115,7 @@
     <div class="col-span-12">
         <div class="box box--stacked flex flex-col">
             <!-- Card Header -->
-            <div class="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-gray-600 border-b border-slate-200/60 dark:border-darkmode-400">
+            <div class="bg-gradient-to-r  p-6 text-gray-600 border-b border-slate-200/60 dark:border-darkmode-400">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center ">
                         <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-4">

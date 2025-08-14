@@ -45,12 +45,20 @@ class CarrierDocument extends Model implements HasMedia
     
     public function getStatusNameAttribute(): string
     {
-        return match ($this->status) {
+        // Si el status es null o no válido, asumimos que está pendiente
+        if ($this->status === null) {
+            return 'Pending';
+        }
+        
+        // Convertir a entero para asegurar la comparación correcta
+        $status = (int) $this->status;
+        
+        return match ($status) {
             self::STATUS_APPROVED => 'Approved',
             self::STATUS_REJECTED => 'Rejected',
             self::STATUS_PENDING => 'Pending',
             self::STATUS_IN_PROCCESS => 'In Process',
-            default => 'Unknown',
+            default => 'Pending', // Por defecto, asumimos que está pendiente en lugar de Unknown
         };
     }
 

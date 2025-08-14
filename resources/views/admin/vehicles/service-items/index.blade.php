@@ -17,7 +17,7 @@
             <a href="{{ route('admin.vehicles.show', $vehicle->id) }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver al Vehículo
             </a>
-            <a href="{{ route('admin.vehicles.service-items.create', $vehicle->id) }}" class="btn btn-primary">
+            <a href="{{ route('admin.vehicles.maintenances.create', $vehicle->id) }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Añadir Mantenimiento
             </a>
         </div>
@@ -37,7 +37,7 @@
                 </div>
             @endif
 
-            @if($serviceItems->count() > 0)
+            @if($maintenances->count() > 0)
                 <div class="relative overflow-x-auto">
                     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -52,7 +52,7 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
-                            @foreach($serviceItems as $item)
+                            @foreach($maintenances as $item)
                                 <tr>
                                     <td class="px-6 py-4">{{ $item->unit }}</td>
                                     <td class="px-6 py-4">{{ $item->service_date->format('d/m/Y') }}</td>
@@ -70,13 +70,13 @@
                                     <td class="px-6 py-4">
                                         
                                         <div class="btn-group flex gap-3" role="group">
-                                            <a href="{{ route('admin.vehicles.service-items.show', [$vehicle->id, $item->id]) }}" class="btn btn-info btn-sm">
+                                            <a href="{{ route('admin.vehicles.maintenances.show', [$vehicle->id, $item->id]) }}" class="btn btn-info btn-sm">
                                                 <x-base.lucide class="h-4 w-4" icon="Eye" />
                                             </a>
-                                            <a href="{{ route('admin.vehicles.service-items.edit', [$vehicle->id, $item->id]) }}" class="btn btn-primary btn-sm">
+                                            <a href="{{ route('admin.vehicles.maintenances.edit', [$vehicle->id, $item->id]) }}" class="btn btn-primary btn-sm">
                                                 <x-base.lucide class="h-4 w-4" icon="Edit" />
                                             </a>
-                                            <form action="{{ route('admin.vehicles.service-items.destroy', [$vehicle->id, $item->id]) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('admin.vehicles.maintenances.destroy', [$vehicle->id, $item->id]) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de eliminar este registro?')">
@@ -92,12 +92,12 @@
                 </div>
                 
                 <div class="mt-3">
-                    {{ $serviceItems->links() }}
+                    {{ $maintenances->links() }}
                 </div>
             @else
                 <div class="alert alert-info">
                     No hay registros de mantenimiento para este vehículo. 
-                    <a href="{{ route('admin.vehicles.service-items.create', $vehicle->id) }}">Agregar el primer registro</a>.
+                    <a href="{{ route('admin.vehicles.maintenances.create', $vehicle->id) }}">Agregar el primer registro</a>.
                 </div>
             @endif
         </div>

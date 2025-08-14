@@ -290,7 +290,7 @@ class VehicleController extends Controller
         $vehicle->load([
             'carrier', 
             'driver', 
-            'serviceItems',
+            'maintenances',
             'driverApplicationDetail.application.ownerOperatorDetail',
             'driverApplicationDetail.application.thirdPartyDetail'
         ]);

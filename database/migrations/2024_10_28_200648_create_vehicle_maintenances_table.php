@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('unit');
             $table->timestamp('service_date');
             $table->timestamp('next_service_date')->nullable();
+            $table->text('notes')->nullable();
             $table->string('service_tasks');
             $table->string('vendor_mechanic');
             $table->text('description')->nullable();

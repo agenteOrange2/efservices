@@ -254,9 +254,8 @@
                                 <div>
                                     <label for="test_date" class="form-label">Test Date <span
                                             class="text-danger">*</span></label>
-                                    {{-- <input type="date" id="test_date" name="test_date" class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 @error('test_date') is-invalid @enderror" value="{{ old('test_date', date('Y-m-d')) }}" required> --}}
-                                    <x-base.litepicker id="date_to" name="date_to" class="w-full"
-                                        value="{{ request('date_to') }}" />
+                                    <x-base.litepicker id="test_date" name="test_date" class="w-full"
+                                        value="{{ old('test_date', date('m/d/Y')) }}" required />
 
                                     @error('test_date')
                                         <div class="text-danger mt-1 text-sm">{{ $message }}</div>

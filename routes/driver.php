@@ -23,8 +23,8 @@ Route::middleware('auth')->prefix('trainings')->name('driver.trainings.')->group
 // Rutas públicas (no requieren autenticación)
 Route::middleware('guest')->group(function () {
     // Registro por referencia de carrier
-    Route::get('register/{carrier:slug}', [DriverRegistrationController::class, 'showRegistrationForm'])
-        ->name('register')
+    Route::get('driver-register/{carrier:slug}', [DriverRegistrationController::class, 'showRegistrationForm'])
+        ->name('driver.register')
         ->where('carrier', '[a-z0-9-]+')
         ->whereUuid('token'); // Add token validation
 
@@ -38,8 +38,8 @@ Route::middleware('guest')->group(function () {
     Route::get('/complete-registration', [DriverRegistrationController::class, 'showCompleteRegistration'])
         ->name('complete_registration');
 
-    Route::post('register/{carrier:slug}', [DriverRegistrationController::class, 'register'])
-        ->name('register.submit');
+    Route::post('driver-register/{carrier:slug}', [DriverRegistrationController::class, 'register'])
+        ->name('driver.register.submit');
 
     // Rutas de error y estado (necesitan ser públicas)
     Route::get('error', function () {

@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Carrier;
-use App\Models\DocumentType;
-use App\Models\Notification;
-use Illuminate\Http\Request;
-use App\Models\CarrierDocument;
 use App\Http\Controllers\Controller;
+use App\Models\Carrier;
+use App\Models\CarrierDocument;
+use App\Models\DocumentType;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Http\Request;
 use App\Services\CarrierDocumentService;
 use App\Traits\SendsCustomNotifications;
 use App\Repositories\CarrierDocumentRepository;
@@ -58,11 +58,15 @@ class CarrierDocumentController extends Controller
 
         $document->status = $request->approved ? CarrierDocument::STATUS_APPROVED : CarrierDocument::STATUS_PENDING;
         $document->save();
+        
+        // Refrescar el documento para obtener el status_name actualizado
+        $document->refresh();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Document status updated successfully.',
             'newStatus' => $document->status,
+            'statusName' => $document->status_name,
         ]);
     }
 

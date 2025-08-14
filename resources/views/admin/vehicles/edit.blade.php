@@ -770,12 +770,12 @@
 
                                 {{-- TAB: SERVICE ITEMS --}}
                                 <div x-show="activeTab === 'service'">
-                                    <div class="bg-white p-4 rounded-lg shadow">
+                                    {{-- Service Items with Alpine Loop --}}
+                                    {{-- <div class="bg-white p-4 rounded-lg shadow">
                                         <h3 class="text-lg font-semibold mb-4">Service History</h3>
                                         <p class="text-sm text-gray-600 mb-6">Add any maintenance or service records for
                                             this vehicle.</p>
 
-                                        {{-- Service Items with Alpine Loop --}}
                                         <template x-for="(item, index) in serviceItems" :key="index">
                                             <div class="border p-4 rounded-lg mb-6">
                                                 <div class="flex justify-between items-center mb-4">
@@ -792,7 +792,7 @@
                                                     </button>
                                                 </div>
 
-                                                {{-- Service Dates --}}
+                                                
                                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                                     <div>
                                                         <label class="block text-sm mb-1">Service Date</label>
@@ -815,7 +815,7 @@
                                                     </div>
                                                 </div>
 
-                                                {{-- Unit and Tasks --}}
+                                                
                                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                                     <div>
                                                         <label class="block text-sm mb-1">Unit</label>
@@ -834,7 +834,7 @@
                                                     </div>
                                                 </div>
 
-                                                {{-- Vendor and Cost --}}
+                                                
                                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                                     <div>
                                                         <label class="block text-sm mb-1">Vendor/Mechanic</label>
@@ -853,7 +853,7 @@
                                                     </div>
                                                 </div>
 
-                                                {{-- Odometer and Description --}}
+                                                
                                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                                     <div>
                                                         <label class="block text-sm mb-1">Odometer Reading</label>
@@ -871,8 +871,7 @@
                                                 </div>
                                             </div>
                                         </template>
-
-                                        {{-- Add Service Item Button --}}
+                                        
                                         <div class="flex justify-center mt-4">
                                             <button type="button" @click="addServiceItem"
                                                 class="py-2 px-4 border border-primary text-primary hover:bg-primary hover:text-white transition rounded">
@@ -885,7 +884,7 @@
                                                 Add Service Item
                                             </button>
                                         </div>
-                                    </div>
+                                    </div> --}}
                                 </div>
 
                             </div>

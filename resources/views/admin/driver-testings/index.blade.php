@@ -213,7 +213,7 @@
                                                 <!-- Eliminar -->
                                                 <button type="button" data-tw-toggle="modal"
                                                     data-tw-target="#delete-confirmation-modal"
-                                                    class="btn-sm btn-danger mr-2 flex gap-2 items-center text-danger p-3"
+                                                    class="btn-sm btn-danger mr-2 flex gap-2 items-center text-danger p-3 delete-testing"
                                                     data-testing-id="{{ $test->id }}">
                                                     <x-base.lucide class="mr-2 h-4 w-4" icon="Trash" />
                                                     Delete
@@ -280,8 +280,8 @@
             deleteButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const testingId = this.getAttribute('data-testing-id');
-                    document.getElementById('delete_testing_form').action =
-                        `{{ url('/admin/driver-testings') }}/${testingId}`;
+                    document.getElementById('delete_testing_form').action = 
+                        '{{ url("admin/driver-testings") }}/' + testingId;
                 });
             });
         });

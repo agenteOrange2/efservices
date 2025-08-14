@@ -40,10 +40,10 @@ class UserDriverDetail extends Model implements HasMedia
         'phone',
         'date_of_birth',
         'status',
-        'terms_accepted',        
+        'terms_accepted',
         'confirmation_token',
         'application_completed',
-        'current_step',   
+        'current_step',
     ];
 
     protected $casts = [
@@ -64,6 +64,36 @@ class UserDriverDetail extends Model implements HasMedia
     public const STATUS_INACTIVE = 0;
     public const STATUS_ACTIVE = 1;
     public const STATUS_PENDING = 2;
+    
+    public function getFormattedPhoneAttribute()
+    {
+        if (!$this->phone) return 'No phone available';
+
+        // Limpiar el número (solo dígitos)
+        $phone = preg_replace('/\D/', '', $this->phone);
+
+        // Formatear según la longitud
+        if (strlen($phone) === 10) {
+            // Formato: (XXX) XXX-XXXX
+            return sprintf(
+                '(%s) %s-%s',
+                substr($phone, 0, 3),
+                substr($phone, 3, 3),
+                substr($phone, 6, 4)
+            );
+        } elseif (strlen($phone) === 11 && substr($phone, 0, 1) === '1') {
+            // Formato: +1 (XXX) XXX-XXXX
+            return sprintf(
+                '+1 (%s) %s-%s',
+                substr($phone, 1, 3),
+                substr($phone, 4, 3),
+                substr($phone, 7, 4)
+            );
+        }
+
+        // Si no coincide con formatos estándar, devolver original
+        return $this->phone;
+    }
 
     public function user()
     {
@@ -200,7 +230,7 @@ class UserDriverDetail extends Model implements HasMedia
     {
         return $this->hasMany(DriverEmploymentCompany::class);
     }
-    
+
     /**
      * Relación con empleos relacionados
      */
@@ -226,12 +256,17 @@ class UserDriverDetail extends Model implements HasMedia
         return $this->hasOne(DriverCertification::class, 'user_driver_detail_id');
     }
 
+    // Relación con la tabla de historial de empleos del conductor
+    public function driverEmploymentCompanies()
+    {
+        return $this->hasMany(\App\Models\Admin\Driver\DriverEmploymentCompany::class, 'user_driver_detail_id');
+    }
 
     public function vehicles()
     {
         return $this->hasMany(Vehicle::class, 'user_driver_detail_id');
     }
-    
+
     /**
      * Relación con los cursos de capacitación del conductor
      */
@@ -239,7 +274,7 @@ class UserDriverDetail extends Model implements HasMedia
     {
         return $this->hasMany(\App\Models\Admin\Driver\DriverCourse::class, 'user_driver_detail_id');
     }
-    
+
     /**
      * Relación con los entrenamientos asignados al conductor
      */

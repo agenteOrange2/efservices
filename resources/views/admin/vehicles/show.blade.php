@@ -33,7 +33,7 @@
                         <x-base.lucide class="mr-2 h-4 w-4 stroke-[1.3]" icon="PenLine" />
                         Editar Vehículo
                     </a> --}}
-                    {{-- <a href="{{ route('admin.vehicles.service-items.index', $vehicle->id) }}"
+                    {{-- <a href="{{ route('admin.vehicles.maintenances.index', $vehicle->id) }}"
                         class="btn btn-outline-secondary">
                         <x-base.lucide class="mr-2 h-4 w-4 stroke-[1.3]" icon="Tool" />
                         Historial de Servicio
@@ -50,7 +50,7 @@
                         Documents
                     </x-base.button>
 
-                    <x-base.button as="a" href="{{ route('admin.vehicles.service-items.index', $vehicle->id) }}"
+                    <x-base.button as="a" href="{{ route('admin.vehicles.maintenances.index', $vehicle->id) }}"
                         class="w-54" variant="primary">
                         <x-base.lucide class="mr-2 h-4 w-4" icon="Activity" />
                         Service History
@@ -547,7 +547,7 @@
                                 <span>Maintenance History</span>
                                 <div>
                                     <x-base.button as="a"
-                                        href="{{ route('admin.vehicles.service-items.index', $vehicle->id) }}"
+                                        href="{{ route('admin.vehicles.maintenances.index', $vehicle->id) }}"
                                         class="w-full sm:w-auto" size="sm" variant="outline-primary">
                                         <x-base.lucide class="mr-1 h-3 w-3" icon="ListFilter" />
                                         View Complete History
@@ -622,7 +622,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($vehicle->serviceItems as $item)
+                                    @forelse($vehicle->maintenances as $item)
                                         <tr
                                             class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 maintenance-row {{ !$item->status && $item->isOverdue() ? 'overdue' : '' }} {{ !$item->status && !$item->isOverdue() ? 'pending' : '' }} {{ $item->status ? 'completed' : '' }}">
                                             <td>{{ $item->service_date->format('m/d/Y') }}</td>
@@ -672,13 +672,13 @@
                                             </td>
                                             <td class="px-6 py-4">
                                                 <div class="flex items-center justify-center gap-1">
-                                                    <a href="{{ route('admin.vehicles.service-items.show', [$vehicle->id, $item->id]) }}"
+                                                    <a href="{{ route('admin.vehicles.maintenances.show', [$vehicle->id, $item->id]) }}"
                                                         class="btn btn-sm btn-primary p-1" title="View details">
                                                         <x-base.lucide class="h-4 w-4" icon="Eye" />
                                                     </a>
 
                                                     <form
-                                                        action="{{ route('admin.service-items.toggle-status', [$vehicle->id, $item->id]) }}"
+                                                        action="{{ route('admin.vehicles.vehicle-maintenances.toggle-status', [$vehicle->id, $item->id]) }}"
                                                         method="POST" class="inline-block">
                                                         @csrf
                                                         @method('PUT')
@@ -738,33 +738,33 @@
                         </div>
 
                         <!-- Maintenance statistics section -->
-                        @if ($vehicle->serviceItems->count() > 0)
+                        @if ($vehicle->maintenances->count() > 0)
                             <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-5">
                                 <div class="box bg-slate-50 p-4 rounded">
                                     <div class="text-xl font-medium flex items-center">
                                         <svg class="mr-2 h-8 w-8 stroke-[1.3]" fill="#03045E"  version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 340.28 340.28" xml:space="preserve" stroke="#03045E" stroke-width="0.00340279"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <path d="M329.922,196.825l-19.937-11.511c0.538-4.986,0.821-10.048,0.821-15.175s-0.283-10.189-0.821-15.175l19.937-11.511 c4.261-2.46,7.308-6.433,8.582-11.187c1.272-4.754,0.618-9.719-1.842-13.979l-38.354-66.436c-3.283-5.685-9.402-9.216-15.974-9.216 c-3.216,0-6.393,0.855-9.192,2.472l-19.994,11.543c-8.126-5.959-16.912-11.068-26.227-15.195V18.423 C226.92,8.265,218.653,0,208.497,0h-76.715c-10.158,0-18.422,8.265-18.422,18.423v23.033c-9.316,4.127-18.102,9.235-26.229,15.196 L67.137,45.108c-2.799-1.616-5.977-2.471-9.191-2.471c-6.572,0-12.691,3.53-15.975,9.215L3.618,118.288 c-2.461,4.26-3.115,9.226-1.842,13.979c1.274,4.754,4.321,8.727,8.582,11.187l19.937,11.511 c-0.538,4.986-0.821,10.048-0.821,15.175s0.283,10.188,0.821,15.175l-19.937,11.511c-4.261,2.46-7.308,6.433-8.582,11.187 c-1.273,4.754-0.619,9.72,1.842,13.979l38.353,66.436c3.283,5.685,9.402,9.215,15.975,9.215c3.215,0,6.393-0.854,9.191-2.471 l19.994-11.543c8.127,5.96,16.913,11.069,26.229,15.196v23.034c0,4.92,1.916,9.546,5.396,13.025 c3.481,3.479,8.106,5.396,13.025,5.396h76.715c10.156,0,18.423-8.265,18.423-18.422v-23.035 c9.315-4.126,18.102-9.235,26.227-15.195l19.994,11.543c2.799,1.617,5.977,2.471,9.192,2.471c6.571,0,12.69-3.53,15.974-9.215 l38.354-66.436c2.46-4.26,3.114-9.226,1.842-13.979C337.229,203.258,334.182,199.285,329.922,196.825z M170.139,270.14 c-55.229,0-100-44.773-100-100s44.771-100,100-100c55.23,0,100,44.773,100,100S225.37,270.14,170.139,270.14z"></path> <path d="M239.083,117.796c-0.591-0.15-1.218,0.022-1.649,0.454l-18.058,18.114c-1.083-0.44-3.814-1.939-8.868-6.976 c-5.053-5.037-6.56-7.763-7.003-8.845l18.056-18.113c0.431-0.432,0.602-1.06,0.45-1.65c-0.152-0.591-0.605-1.058-1.191-1.228 c-2.604-0.756-5.302-1.139-8.02-1.139c-7.674,0-14.885,2.993-20.302,8.427c-5.408,5.425-8.38,12.63-8.37,20.289 c0.006,3.947,0.81,7.768,2.324,11.288l-21.887,21.888l-22.416-22.416c-0.02-0.038-0.034-0.079-0.056-0.117l-10.251-17.567 c-0.177-0.303-0.417-0.563-0.706-0.764l-17.285-11.994c-0.955-0.663-2.249-0.546-3.07,0.275l-7.703,7.702 c-0.822,0.822-0.938,2.115-0.275,3.071l11.993,17.285c0.2,0.288,0.461,0.529,0.764,0.706l17.571,10.248 c0.034,0.02,0.071,0.026,0.105,0.044l22.428,22.427l-16.868,16.868c-3.532-1.518-7.367-2.322-11.325-2.322 c-7.676,0-14.887,2.993-20.305,8.428c-7.398,7.418-10.158,18.279-7.202,28.343c0.172,0.585,0.64,1.037,1.232,1.187 c0.591,0.151,1.218-0.021,1.649-0.455l18.056-18.112c1.083,0.439,3.814,1.939,8.868,6.975c5.053,5.038,6.559,7.763,7,8.845 l-18.056,18.114c-0.431,0.432-0.602,1.06-0.449,1.65c0.152,0.591,0.605,1.058,1.191,1.228c2.603,0.755,5.301,1.138,8.018,1.138 c7.675,0,14.886-2.993,20.305-8.428c5.408-5.424,8.379-12.629,8.368-20.288c-0.006-3.947-0.81-7.769-2.324-11.288l16.863-16.863 l7.146,7.145l-4.872,4.872c-1.062,1.06-1.647,2.468-1.647,3.966c-0.001,1.499,0.584,2.908,1.645,3.967l34.413,34.412 c1.057,1.06,2.464,1.643,3.963,1.643c1.498,0,2.909-0.583,3.97-1.643l18.641-18.645c1.06-1.059,1.644-2.468,1.645-3.967 c0-1.499-0.584-2.907-1.644-3.966L199.535,177.6c-1.059-1.059-2.467-1.643-3.966-1.643c-1.499,0-2.908,0.584-3.967,1.645 l-4.869,4.869l-7.146-7.145l21.891-21.892c3.532,1.519,7.366,2.322,11.325,2.323c0.001,0,0.001,0,0.002,0 c7.674,0,14.885-2.994,20.302-8.43c7.397-7.415,10.158-18.275,7.206-28.342C240.143,118.398,239.675,117.946,239.083,117.796z M195.188,189.842c1.226-1.228,3.215-1.228,4.443,0l22.074,22.076c1.228,1.226,1.228,3.214,0,4.441 c-1.228,1.225-3.213,1.225-4.439,0l-22.078-22.076C193.967,193.055,193.967,191.067,195.188,189.842z M185.195,199.829 c1.23-1.224,3.221-1.224,4.448,0.002l22.075,22.077c1.225,1.225,1.226,3.214,0,4.439c-1.23,1.227-3.219,1.227-4.442,0 l-22.081-22.077C183.972,203.046,183.972,201.058,185.195,199.829z"></path> </g> </g></svg>
-                                        {{ $vehicle->serviceItems->count() }}
+                                        {{ $vehicle->maintenances->count() }}
                                     </div>
                                     <div class="text-slate-500 text-sm">Total Maintenances</div>
                                 </div>
                                 <div class="box bg-slate-50 p-4 rounded">
                                     <div class="text-xl font-medium text-success flex items-center">
                                         <svg class="mr-2 h-8 w-8 stroke-[1.3]" fill="#0d9488" viewBox="0 0 1920 1920" xmlns="http://www.w3.org/2000/svg" stroke="#228000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M960 1807.059c-467.125 0-847.059-379.934-847.059-847.059 0-467.125 379.934-847.059 847.059-847.059 467.125 0 847.059 379.934 847.059 847.059 0 467.125-379.934 847.059-847.059 847.059M960 0C430.645 0 0 430.645 0 960s430.645 960 960 960 960-430.645 960-960S1489.355 0 960 0M854.344 1157.975 583.059 886.69l-79.85 79.85 351.135 351.133L1454.4 717.617l-79.85-79.85-520.206 520.208Z" fill-rule="evenodd"></path> </g></svg>
-                                        {{ $vehicle->serviceItems->where('status', true)->count() }}
+                                        {{ $vehicle->maintenances->where('status', true)->count() }}
                                     </div>
                                     <div class="text-slate-500 text-sm">Completed</div>
                                 </div>
                                 <div class="box bg-slate-50 p-4 rounded">
                                     <div class="text-xl font-medium text-warning flex items-center">
                                         <svg class="mr-2 h-8 w-8 stroke-[1.3]" viewBox="0 0 30 30" id="Layer_1" version="1.1" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" fill="#0d9488"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path class="st8" d="M15,4C8.9,4,4,8.9,4,15s4.9,11,11,11s11-4.9,11-11S21.1,4,15,4z M21.7,16.8c-0.1,0.4-0.5,0.6-0.9,0.5l-5.6-1.1 c-0.2,0-0.4-0.2-0.6-0.3C14.2,15.7,14,15.4,14,15c0,0,0,0,0,0l0.2-8c0-0.5,0.4-0.8,0.8-0.8c0.4,0,0.8,0.4,0.8,0.8l0.1,6.9l5.2,1.8 C21.6,15.8,21.8,16.3,21.7,16.8z"></path></g></svg>
-                                        {{ $vehicle->serviceItems->where('status', false)->count() }}
+                                        {{ $vehicle->maintenances->where('status', false)->count() }}
                                     </div>
                                     <div class="text-slate-500 text-sm">Pending</div>
                                 </div>
                                 <div class="box bg-slate-50 p-4 rounded">
                                     <div class="text-xl font-medium flex items-center">
                                         <svg class="mr-2 h-8 w-8 stroke-[1.3]" viewBox="0 0 24 24" role="img" xmlns="http://www.w3.org/2000/svg" aria-labelledby="dolarIconTitle" stroke="#03045E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" color="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title id="dolarIconTitle">Dolar</title> <path d="M12 4L12 6M12 18L12 20M15.5 8C15.1666667 6.66666667 14 6 12 6 9 6 8.5 7.95652174 8.5 9 8.5 13.140327 15.5 10.9649412 15.5 15 15.5 16.0434783 15 18 12 18 10 18 8.83333333 17.3333333 8.5 16"></path> </g></svg>
-                                        ${{ number_format($vehicle->serviceItems->sum('cost'), 2) }}
+                                        ${{ number_format($vehicle->maintenances->sum('cost'), 2) }}
                                     </div>
                                     <div class="text-slate-500 text-sm">Total Expense</div>
                                 </div>
@@ -812,7 +812,7 @@
                     Add New Maintenance Service
                 </h2>
             </x-base.dialog.title>
-            <form action="{{ route('admin.vehicles.service-items.store', $vehicle->id) }}" method="POST"
+            <form action="{{ route('admin.vehicles.maintenances.store', $vehicle->id) }}" method="POST"
                 enctype="multipart/form-data" x-data="{ serviceStatus: false }">
                 @csrf
                 <x-base.dialog.description class="grid grid-cols-12 gap-4 gap-y-3">
@@ -1282,7 +1282,7 @@
                     button.addEventListener('click', function() {
                         const serviceId = this.getAttribute('data-service-id');
                         const vehicleId = this.getAttribute('data-vehicle-id');
-                        const deleteUrl = `/admin/vehicles/${vehicleId}/service-items/${serviceId}`;
+                        const deleteUrl = `/admin/vehicles/${vehicleId}/maintenances/${serviceId}`;
 
                         console.log('Configurando eliminación:', deleteUrl);
                         deleteForm.action = deleteUrl;

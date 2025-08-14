@@ -231,12 +231,21 @@ class CheckUserStatus
         }
         return false;
     }
-
+    
+    // Rutas relacionadas con el proceso de registro y configuración del carrier que deben ser accesibles
     private function isCarrierSetupRoute(Request $request): bool
     {
         // Si viene de complete-registration o va hacia confirmation, permitir sin restricciones
         if ($request->is('carrier/complete-registration') || $request->is('carrier/confirmation')) {
             Log::info('Ruta permitida sin restricciones: ' . $request->path());
+            return true;
+        }
+        
+        // Importante: Permitir siempre acceso a documentos del carrier, independientemente del estado
+        if (preg_match('#^carrier/[^/]+/documents#', $request->path())) {
+            Log::info('Ruta de documentos explícitamente permitida: ' . $request->path(), [
+                'permitido' => true
+            ]);
             return true;
         }
         

@@ -70,7 +70,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('drivers', CarrierDriverController::class);
     
     // Nuevas rutas para gestión de conductores
-    Route::prefix('driver-management')->name('drivers.')->group(function () {
+    Route::prefix('carrier-driver-management')->name('driver-management.')->group(function () {
         Route::get('/', [CarrierDriverManagementController::class, 'index'])->name('index');
         Route::get('/create', [CarrierDriverManagementController::class, 'create'])->name('create');
         Route::post('/', [CarrierDriverManagementController::class, 'store'])->name('store');
@@ -82,7 +82,7 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // Rutas para accidentes de conductores
-    Route::prefix('driver-accidents')->name('drivers.accidents.')->group(function () {
+    Route::prefix('carrier-driver-accidents')->name('drivers.accidents.')->group(function () {
         Route::get('/', [CarrierDriverAccidentsController::class, 'index'])->name('index');
         Route::get('/create', [CarrierDriverAccidentsController::class, 'create'])->name('create');
         Route::post('/', [CarrierDriverAccidentsController::class, 'store'])->name('store');
@@ -93,7 +93,7 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // Rutas para pruebas de conductores
-    Route::prefix('driver-testings')->name('drivers.testings.')->group(function () {
+    Route::prefix('carrier-driver-testings')->name('drivers.testings.')->group(function () {
         Route::get('/', [CarrierDriverTestingsController::class, 'index'])->name('index');
         Route::get('/create', [CarrierDriverTestingsController::class, 'create'])->name('create');
         Route::post('/', [CarrierDriverTestingsController::class, 'store'])->name('store');
@@ -104,7 +104,7 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // Rutas para inspecciones de conductores
-    Route::prefix('driver-inspections')->name('drivers.inspections.')->group(function () {
+    Route::prefix('carrier-driver-inspections')->name('drivers.inspections.')->group(function () {
         Route::get('/', [CarrierDriverInspectionsController::class, 'index'])->name('index');
         Route::get('/create', [CarrierDriverInspectionsController::class, 'create'])->name('create');
         Route::post('/', [CarrierDriverInspectionsController::class, 'store'])->name('store');

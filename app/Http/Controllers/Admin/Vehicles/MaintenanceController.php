@@ -245,10 +245,17 @@ class MaintenanceController extends Controller
             $maintenance->next_service_date = $request->next_service_date;
             
             // Agregar nota sobre reprogramación
-            $maintenance->notes = $maintenance->notes . "\n\n[" . now()->format('Y-m-d H:i:s') . "] Reprogramado del " . 
+            $noteText = "[" . now()->format('Y-m-d H:i:s') . "] Reprogramado del " . 
                 Carbon::parse($previousDate)->format('d/m/Y') . " al " . 
                 Carbon::parse($request->next_service_date)->format('d/m/Y') . ". \nMotivo: " . 
                 $request->reschedule_reason;
+            
+            // Manejar el caso cuando notes es null (para registros antiguos)
+            if (empty($maintenance->notes)) {
+                $maintenance->notes = $noteText;
+            } else {
+                $maintenance->notes = $maintenance->notes . "\n\n" . $noteText;
+            }
             
             $maintenance->save();
             

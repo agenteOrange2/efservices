@@ -435,6 +435,10 @@
             window.toggleApproval = async (url, checkbox) => {
                 // Determina si el documento está aprobado o pendiente
                 const approved = checkbox.checked ? 1 : 0;
+                
+                // Obtener el contenedor de estado del documento (elemento padre del checkbox)
+                const statusContainer = checkbox.closest('tr').querySelector('div[class*="text-orange-500"], div[class*="text-green-500"], div[class*="text-blue-500"], div[class*="text-red-500"]');
+                
                 try {
                     const response = await fetch(url, {
                         method: "POST",
@@ -450,8 +454,81 @@
 
                     if (response.ok) {
                         const result = await response.json();
-                        location.reload();
-                        console.log(result.message); // Puedes añadir un mensaje de éxito aquí
+                        console.log(result); // Log para depuración
+                        
+                        // Actualizar el estado visualmente sin recargar la página
+                        if (statusContainer) {
+                            // Eliminar todas las clases de color existentes
+                            statusContainer.classList.remove(
+                                'text-orange-500', 
+                                'text-green-500', 
+                                'text-blue-500', 
+                                'text-red-500'
+                            );
+                            
+                            // Añadir la clase de color correcta según el nuevo estado
+                            if (result.statusName === 'Approved') {
+                                statusContainer.classList.add('text-green-500');
+                            } else if (result.statusName === 'Pending') {
+                                statusContainer.classList.add('text-orange-500');
+                            } else if (result.statusName === 'In Process') {
+                                statusContainer.classList.add('text-blue-500');
+                            } else {
+                                statusContainer.classList.add('text-red-500');
+                            }
+                            
+                            // Actualizar el icono
+                            const icon = statusContainer.querySelector('svg');
+                            if (icon) {
+                                // Eliminar la clase actual del icono
+                                while (icon.firstChild) {
+                                    icon.removeChild(icon.firstChild);
+                                }
+                                
+                                // Actualizar con el nuevo icono según el estado
+                                if (result.statusName === 'Approved') {
+                                    icon.setAttribute('data-lucide', 'CheckCircle');
+                                } else if (result.statusName === 'Pending') {
+                                    icon.setAttribute('data-lucide', 'AlertCircle');
+                                } else if (result.statusName === 'In Process') {
+                                    icon.setAttribute('data-lucide', 'RefreshCw');
+                                } else {
+                                    icon.setAttribute('data-lucide', 'XCircle');
+                                }
+                                
+                                // Volver a dibujar el icono si es necesario
+                                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                                    window.lucide.createIcons();
+                                }
+                            }
+                            
+                            // Actualizar el texto del estado
+                            const statusText = statusContainer.querySelector('div.ml-1\.5') || 
+                                               statusContainer.querySelector('div.whitespace-nowrap');
+                            if (statusText) {
+                                statusText.textContent = result.statusName;
+                            }
+                            
+                            // Mostrar notificación de éxito
+                            const successContent = document
+                                .getElementById("success-notification-content")
+                                .cloneNode(true);
+                            successContent.classList.remove("hidden");
+                            successContent.querySelector('.font-medium').textContent = 'Estado actualizado';
+                            successContent.querySelector('.text-slate-500').textContent = 
+                                'El estado del documento ha sido actualizado a ' + result.statusName;
+
+                            Toastify({
+                                node: successContent,
+                                duration: 3000,
+                                gravity: "top",
+                                position: "right",
+                                stopOnFocus: true,
+                            }).showToast();
+                        } else {
+                            // Si no podemos actualizar dinámicamente, recargamos la página
+                            location.reload();
+                        }
                     } else {
                         throw new Error("Failed to update document status.");
                     }

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\Admin\Vehicle\VehicleMaintenance;
 
 class Vehicle extends Model
 {
@@ -65,11 +66,7 @@ class Vehicle extends Model
     {
         return $this->belongsTo(UserDriverDetail::class, 'user_driver_detail_id');
     }
-
-    public function serviceItems(): HasMany
-    {
-        return $this->hasMany(VehicleServiceItem::class);
-    }
+    
     
     /**
      * Relación con los mantenimientos del vehículo.

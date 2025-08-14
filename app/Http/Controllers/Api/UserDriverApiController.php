@@ -261,10 +261,24 @@ class UserDriverApiController extends Controller
                 ]);
                 
                 // Crear aplicación
-                $application = DriverApplication::create([
-                    'user_id' => $user->id,
-                    'status' => 'draft'
-                ]);
+                // Verificar si el usuario ya tiene una solicitud existente
+                $application = DriverApplication::where('user_id', $user->id)->first();
+                
+                if (!$application) {
+                    // Crear nueva solicitud si no existe
+                    $application = DriverApplication::create([
+                        'user_id' => $user->id,
+                        'status' => 'draft'
+                    ]);
+                } else {
+                    // Actualizar la solicitud existente
+                    $application->update([
+                        'status' => 'draft' // Mantener o actualizar el estado según necesidad
+                    ]);
+                    
+                    // Limpiar relaciones existentes si es necesario antes de recrearlas
+                    $application->addresses()->where('primary', true)->delete();
+                }
                 
                 // Crear dirección principal
                 $application->addresses()->create([
@@ -1799,11 +1813,26 @@ class UserDriverApiController extends Controller
                         'current_step' => $this->driverStepService::STEP_GENERAL
                     ]);
                     
-                    // Crear aplicación básica
-                    $application = DriverApplication::create([
-                        'user_id' => $user->id,
-                        'status' => 'draft'
-                    ]);
+                    // Verificar si el usuario ya tiene una solicitud existente
+                    $application = DriverApplication::where('user_id', $user->id)->first();
+                    
+                    if (!$application) {
+                        // Crear nueva solicitud si no existe
+                        $application = DriverApplication::create([
+                            'user_id' => $user->id,
+                            'status' => 'draft'
+                        ]);
+                    } else {
+                        // Actualizar la solicitud existente
+                        $application->update([
+                            'status' => 'draft' // Mantener o actualizar el estado según necesidad
+                        ]);
+                        
+                        // Limpiar relaciones existentes si corresponde a la pestaña que estamos guardando
+                        if ($tab === 'general') {
+                            $application->addresses()->where('primary', true)->delete();
+                        }
+                    }
                     
                     // Si estamos en la pestaña general y tenemos dirección, la guardamos
                     if ($tab === 'general' && $request->filled('address_line1')) {

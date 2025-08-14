@@ -200,6 +200,12 @@ class CustomPathGenerator implements PathGenerator
             // Default para otras colecciones de mantenimiento
             return "vehicle/{$vehicleId}/";
         }
+        
+        // Gestionar documentos de vehículos
+        if ($model instanceof \App\Models\Admin\Vehicle\VehicleDocument) {
+            $vehicleId = $model->vehicle_id ?? 'unknown';
+            return "vehicle/{$vehicleId}/documents/";
+        }
 
         // Gestionar archivos de pruebas (testing)
         if ($model instanceof \App\Models\Admin\Driver\DriverTesting) {

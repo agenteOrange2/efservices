@@ -180,9 +180,47 @@ class SideMenu
             "REPORT GENERATOR",
             [
                 'icon' => "file-text",
-                'route_name' => "admin.users",
+                'route_name' => "#",
                 'params' => [],
-                'title' => "Report Generator",
+                'title' => "Reports",
+                'sub_menu' => [
+                    [
+                        'icon' => "layout-dashboard",
+                        'route_name' => "admin.reports.index",
+                        'params' => [],
+                        'title' => "All Reports",
+                    ],
+                    [
+                        'icon' => "user-check",
+                        'route_name' => "admin.reports.active-drivers",
+                        'params' => [],
+                        'title' => "Active Drivers List",
+                    ],
+                    [
+                        'icon' => "user-check",
+                        'route_name' => "admin.reports.driver-prospects",
+                        'params' => [],
+                        'title' => "Prospect Drivers List",
+                    ],
+                    [
+                        'icon' => "truck",
+                        'route_name' => "admin.reports.equipment-list",
+                        'params' => [],
+                        'title' => "Equipment List",
+                    ],
+                    [
+                        'icon' => "file-archive",
+                        'route_name' => "admin.reports.carrier-documents",
+                        'params' => [],
+                        'title' => "Carrier Documents",
+                    ],
+                    [
+                        'icon' => "alert-triangle",
+                        'route_name' => "admin.reports.accidents",
+                        'params' => [],
+                        'title' => "Accidents Manager",
+                    ],
+                ],
             ],
 
             "MEMBERSHIPS",

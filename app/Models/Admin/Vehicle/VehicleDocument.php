@@ -119,6 +119,14 @@ class VehicleDocument extends Model implements HasMedia
             ->useDisk('public')
             ->singleFile();
     }
+    
+    /**
+     * Define la ruta personalizada para almacenar los archivos
+     */
+    public function getMediaFolderName(): string
+    {
+        return 'vehicle/' . $this->vehicle_id;
+    }
 
     /**
      * Register media conversions

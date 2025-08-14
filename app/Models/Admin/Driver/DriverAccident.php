@@ -2,6 +2,7 @@
 
 namespace App\Models\Admin\Driver;
 
+use App\Models\Carrier;
 use App\Models\UserDriverDetail;
 use App\Traits\HasDocuments;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -55,6 +56,16 @@ class DriverAccident extends Model implements HasMedia
     public function userDriverDetail()
     {
         return $this->belongsTo(UserDriverDetail::class);
+    }
+    
+    /**
+     * Obtener el carrier asociado al accidente del conductor.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function carrier()
+    {
+        return $this->belongsTo(Carrier::class);
     }
     
     /**

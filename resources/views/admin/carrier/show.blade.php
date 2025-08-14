@@ -379,6 +379,13 @@
                     <!-- Tab Documentos -->
                     <div id="tab-content-documents" class="tab-pane hidden" role="tabpanel"
                         aria-labelledby="tab-documents">
+                        <!-- Upload Documents Button -->
+                        <div class="mb-4 flex justify-end">
+                            <a href="{{ route('admin.carrier.documents', $carrier->slug) }}" class="btn btn-primary">
+                                <i data-lucide="upload" class="w-4 h-4 mr-1"></i>
+                                Upload Documents
+                            </a>
+                        </div>
                         <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
@@ -442,16 +449,10 @@
                                                             class="text-green-600 hover:text-green-900" download>
                                                             <i data-lucide="download" class="w-5 h-5"></i>
                                                         </a>
+                                                    @else
+                                                        <p>Empty</p>
                                                     @endif
-                                                    <a href="{{ route('admin.carriers.documents.index', ['carrier' => $carrier->id]) }}"
-                                                        class="text-indigo-600 hover:text-indigo-900">
-                                                        <i data-lucide="edit" class="w-5 h-5"></i>
-                                                    </a>
-                                                    <button type="button"
-                                                        class="text-red-600 hover:text-red-900 delete-document-btn"
-                                                        data-document-id="{{ $document->id }}">
-                                                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                                                    </button>
+
                                                 </div>
                                             </td>
                                         </tr>
@@ -479,7 +480,7 @@
                                             <div class="font-medium">{{ $documentType->name }}</div>
                                             <div class="text-xs text-gray-500 mt-0.5">Required: {{ $documentType->is_required ? 'Yes' : 'No' }}</div>
                                         </div>
-                                        <a href="{{ route('admin.carriers.documents.index', ['carrier' => $carrier->id]) }}" class="btn btn-sm btn-primary">
+                                        <a href="{{ route('admin.carrier.documents', $carrier->slug) }}" class="btn btn-sm btn-primary">
                                             <i data-lucide="upload" class="w-4 h-4 mr-1"></i> Upload
                                         </a>
                                     </div>
@@ -492,7 +493,7 @@
                         @endif
                         
                         <div class="mt-4">
-                            <a href="{{ route('admin.carriers.documents.index', ['carrier' => $carrier->id]) }}" class="btn btn-outline-primary w-full">
+                            <a href="{{ route('admin.carrier.documents', $carrier->slug) }}" class="btn btn-outline-primary w-full">
                                 <i data-lucide="file-plus" class="w-4 h-4 mr-2"></i> Manage Documents
                             </a>
                         </div>
