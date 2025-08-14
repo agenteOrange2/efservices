@@ -27,7 +27,55 @@
                 </div>
             </div>
             <div class="mt-3.5 flex flex-col gap-8">
+                <!-- Quick Stats Section -->
                 <div class="box box--stacked flex flex-col p-5">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                            <i data-lucide="BarChart3" class="inline-block w-5 h-5 mr-2 text-primary"></i>
+                            Estadísticas Rápidas de Equipamiento
+                        </h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-blue-600">Total Flota</p>
+                                        <p class="text-2xl font-bold text-blue-900">{{ $totalVehiclesCount }}</p>
+                                    </div>
+                                    <i data-lucide="Truck" class="w-8 h-8 text-blue-500"></i>
+                                </div>
+                            </div>
+                            <div class="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-green-600">Activos</p>
+                                        <p class="text-2xl font-bold text-green-900">{{ $activeVehiclesCount }}</p>
+                                        <p class="text-xs text-green-600">{{ $totalVehiclesCount > 0 ? round(($activeVehiclesCount / $totalVehiclesCount) * 100, 1) : 0 }}%</p>
+                                    </div>
+                                    <i data-lucide="CheckCircle" class="w-8 h-8 text-green-500"></i>
+                                </div>
+                            </div>
+                            <div class="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-red-600">Fuera de Servicio</p>
+                                        <p class="text-2xl font-bold text-red-900">{{ $outOfServiceVehiclesCount }}</p>
+                                        <p class="text-xs text-red-600">{{ $totalVehiclesCount > 0 ? round(($outOfServiceVehiclesCount / $totalVehiclesCount) * 100, 1) : 0 }}%</p>
+                                    </div>
+                                    <i data-lucide="AlertTriangle" class="w-8 h-8 text-red-500"></i>
+                                </div>
+                            </div>
+                            <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 p-4 rounded-lg border border-yellow-200">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-yellow-600">Suspendidos</p>
+                                        <p class="text-2xl font-bold text-yellow-900">{{ $suspendedVehiclesCount }}</p>
+                                        <p class="text-xs text-yellow-600">{{ $totalVehiclesCount > 0 ? round(($suspendedVehiclesCount / $totalVehiclesCount) * 100, 1) : 0 }}%</p>
+                                    </div>
+                                    <i data-lucide="MinusCircle" class="w-8 h-8 text-yellow-500"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="grid grid-cols-4 gap-5">
                         <!-- Clickable tab cards -->
                         <a href="{{ route('admin.reports.equipment-list', ['tab' => 'all'] + request()->except('tab', 'page')) }}"

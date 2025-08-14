@@ -22,11 +22,159 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class ReportsController extends Controller
 {
     /**
-     * Mostrar la página principal de reportes.
+     * Mostrar la página principal de reportes con estadísticas.
      */
     public function index()
     {
-        return view('admin.reports.index');
+        // Obtener estadísticas generales del sistema
+        $stats = $this->getSystemStats();
+        
+        return view('admin.reports.index', compact('stats'));
+    }
+    
+    /**
+     * Obtener estadísticas generales del sistema.
+     */
+    private function getSystemStats()
+    {
+        // Estadísticas de Carriers
+        $totalCarriers = Carrier::count();
+        $activeCarriers = Carrier::where('status', Carrier::STATUS_ACTIVE)->count();
+        $pendingCarriers = Carrier::where('status', Carrier::STATUS_PENDING)->count();
+        
+        // Estadísticas de Conductores
+        $totalDrivers = UserDriverDetail::count();
+        $activeDrivers = UserDriverDetail::where('status', UserDriverDetail::STATUS_ACTIVE)->count();
+        $approvedDrivers = UserDriverDetail::whereHas('application', function($q) {
+            $q->where('status', DriverApplication::STATUS_APPROVED);
+        })->count();
+        $pendingDrivers = UserDriverDetail::whereHas('application', function($q) {
+            $q->where('status', DriverApplication::STATUS_PENDING);
+        })->count();
+        
+        // Estadísticas de Vehículos
+        $totalVehicles = Vehicle::count();
+        $activeVehicles = Vehicle::where('status', 'active')->count();
+        $outOfServiceVehicles = Vehicle::where('status', 'out_of_service')->count();
+        
+        // Estadísticas de Documentos
+        $totalDocuments = CarrierDocument::count();
+        $approvedDocuments = CarrierDocument::where('status', 'approved')->count();
+        $pendingDocuments = CarrierDocument::where('status', 'pending')->count();
+        $rejectedDocuments = CarrierDocument::where('status', 'rejected')->count();
+        
+        // Estadísticas de Accidentes
+        $totalAccidents = DriverAccident::count();
+        $recentAccidents = DriverAccident::whereDate('created_at', '>=', now()->subDays(30))->count();
+        
+        // Estadísticas mensuales para gráficos
+        $monthlyDrivers = $this->getMonthlyDriverStats();
+        $monthlyVehicles = $this->getMonthlyVehicleStats();
+        $monthlyDocuments = $this->getMonthlyDocumentStats();
+        
+        return [
+            'carriers' => [
+                'total' => $totalCarriers,
+                'active' => $activeCarriers,
+                'pending' => $pendingCarriers,
+                'percentage_active' => $totalCarriers > 0 ? round(($activeCarriers / $totalCarriers) * 100, 1) : 0
+            ],
+            'drivers' => [
+                'total' => $totalDrivers,
+                'active' => $activeDrivers,
+                'approved' => $approvedDrivers,
+                'pending' => $pendingDrivers,
+                'percentage_active' => $totalDrivers > 0 ? round(($activeDrivers / $totalDrivers) * 100, 1) : 0
+            ],
+            'vehicles' => [
+                'total' => $totalVehicles,
+                'active' => $activeVehicles,
+                'out_of_service' => $outOfServiceVehicles,
+                'percentage_active' => $totalVehicles > 0 ? round(($activeVehicles / $totalVehicles) * 100, 1) : 0
+            ],
+            'documents' => [
+                'total' => $totalDocuments,
+                'approved' => $approvedDocuments,
+                'pending' => $pendingDocuments,
+                'rejected' => $rejectedDocuments,
+                'percentage_approved' => $totalDocuments > 0 ? round(($approvedDocuments / $totalDocuments) * 100, 1) : 0
+            ],
+            'accidents' => [
+                'total' => $totalAccidents,
+                'recent' => $recentAccidents
+            ],
+            'monthly' => [
+                'drivers' => $monthlyDrivers,
+                'vehicles' => $monthlyVehicles,
+                'documents' => $monthlyDocuments
+            ]
+        ];
+    }
+    
+    /**
+     * Obtener estadísticas mensuales de conductores.
+     */
+    private function getMonthlyDriverStats()
+    {
+        $months = [];
+        $data = [];
+        
+        for ($i = 5; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $months[] = $date->format('M Y');
+            $data[] = UserDriverDetail::whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->count();
+        }
+        
+        return [
+            'labels' => $months,
+            'data' => $data
+        ];
+    }
+    
+    /**
+     * Obtener estadísticas mensuales de vehículos.
+     */
+    private function getMonthlyVehicleStats()
+    {
+        $months = [];
+        $data = [];
+        
+        for ($i = 5; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $months[] = $date->format('M Y');
+            $data[] = Vehicle::whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->count();
+        }
+        
+        return [
+            'labels' => $months,
+            'data' => $data
+        ];
+    }
+    
+    /**
+     * Obtener estadísticas mensuales de documentos.
+     */
+    private function getMonthlyDocumentStats()
+    {
+        $months = [];
+        $data = [];
+        
+        for ($i = 5; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $months[] = $date->format('M Y');
+            $data[] = CarrierDocument::whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->count();
+        }
+        
+        return [
+            'labels' => $months,
+            'data' => $data
+        ];
     }
 
     /**

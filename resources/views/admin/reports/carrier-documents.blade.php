@@ -98,55 +98,58 @@
     </div>
 </div>
 
-<!-- Statistics Cards -->
+<!-- Enhanced Statistics Cards -->
 <div class="mt-3.5 flex flex-col gap-8">
-    <div class="box box--stacked flex flex-col p-5">
-        <div class="grid grid-cols-4 gap-5">
-            <!-- Total Carriers -->
-            <div class="box col-span-4 rounded-[0.6rem] border border-dashed border-slate-300/80 p-5 shadow-sm md:col-span-2 xl:col-span-1">
-                <div class="text-base text-slate-500">Total Carriers</div>
-                <div class="mt-1.5 text-2xl font-medium">{{ $totalCarriers }}</div>
-                <div class="absolute inset-y-0 right-0 mr-5 flex flex-col justify-center">
-                    <div class="flex items-center rounded-full border border-success/10 bg-success/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-success">
-                        <x-base.lucide class="ml-px h-4 w-4 stroke-[1.5] mr-1" icon="Truck" />
-                        Carriers
-                    </div>
+    <!-- Quick Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100 text-sm font-medium">Total Carriers</p>
+                    <p class="text-2xl font-bold">{{ $totalCarriers }}</p>
+                    <p class="text-blue-200 text-xs mt-1">{{ $totalDocuments }} documents</p>
+                </div>
+                <div class="bg-blue-400 bg-opacity-30 rounded-full p-3">
+                    <x-base.lucide icon="Truck" class="h-6 w-6" />
                 </div>
             </div>
-            
-            <!-- Active Carriers -->
-            <div class="box col-span-4 rounded-[0.6rem] border border-dashed border-slate-300/80 p-5 shadow-sm md:col-span-2 xl:col-span-1">
-                <div class="text-base text-slate-500">Active Carriers</div>
-                <div class="mt-1.5 text-2xl font-medium">{{ $activeCarriers }}</div>
-                <div class="absolute inset-y-0 right-0 mr-5 flex flex-col justify-center">
-                    <div class="flex items-center rounded-full border border-success/10 bg-success/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-success">
-                        <x-base.lucide class="ml-px h-4 w-4 stroke-[1.5] mr-1" icon="CheckCircle" />
-                        Active
-                    </div>
+        </div>
+        
+        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-4 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-sm font-medium">Active</p>
+                    <p class="text-2xl font-bold">{{ $activeCarriers }}</p>
+                    <p class="text-green-200 text-xs mt-1">{{ $totalCarriers > 0 ? round(($activeCarriers / $totalCarriers) * 100, 1) : 0 }}% of total</p>
+                </div>
+                <div class="bg-green-400 bg-opacity-30 rounded-full p-3">
+                    <x-base.lucide icon="CheckCircle" class="h-6 w-6" />
                 </div>
             </div>
-            
-            <!-- Pending Carriers -->
-            <div class="box col-span-4 rounded-[0.6rem] border border-dashed border-slate-300/80 p-5 shadow-sm md:col-span-2 xl:col-span-1">
-                <div class="text-base text-slate-500">Pending Carriers</div>
-                <div class="mt-1.5 text-2xl font-medium">{{ $pendingCarriers }}</div>
-                <div class="absolute inset-y-0 right-0 mr-5 flex flex-col justify-center">
-                    <div class="flex items-center rounded-full border border-warning/10 bg-warning/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-warning">
-                        <x-base.lucide class="ml-px h-4 w-4 stroke-[1.5] mr-1" icon="Clock" />
-                        Pending
-                    </div>
+        </div>
+        
+        <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg p-4 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-yellow-100 text-sm font-medium">Pending</p>
+                    <p class="text-2xl font-bold">{{ $pendingCarriers }}</p>
+                    <p class="text-yellow-200 text-xs mt-1">{{ $totalCarriers > 0 ? round(($pendingCarriers / $totalCarriers) * 100, 1) : 0 }}% of total</p>
+                </div>
+                <div class="bg-yellow-400 bg-opacity-30 rounded-full p-3">
+                    <x-base.lucide icon="Clock" class="h-6 w-6" />
                 </div>
             </div>
-            
-            <!-- Total Documents -->
-            <div class="box col-span-4 rounded-[0.6rem] border border-dashed border-slate-300/80 p-5 shadow-sm md:col-span-2 xl:col-span-1">
-                <div class="text-base text-slate-500">Total Documents</div>
-                <div class="mt-1.5 text-2xl font-medium">{{ $totalDocuments }}</div>
-                <div class="absolute inset-y-0 right-0 mr-5 flex flex-col justify-center">
-                    <div class="flex items-center rounded-full border border-info/10 bg-info/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-info">
-                        <x-base.lucide class="ml-px h-4 w-4 stroke-[1.5] mr-1" icon="FileText" />
-                        Documents
-                    </div>
+        </div>
+        
+        <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-4 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-100 text-sm font-medium">Documents</p>
+                    <p class="text-2xl font-bold">{{ $totalDocuments }}</p>
+                    <p class="text-purple-200 text-xs mt-1">{{ $approvedDocuments }} approved</p>
+                </div>
+                <div class="bg-purple-400 bg-opacity-30 rounded-full p-3">
+                    <x-base.lucide icon="FileText" class="h-6 w-6" />
                 </div>
             </div>
         </div>

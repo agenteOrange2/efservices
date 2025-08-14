@@ -25,6 +25,57 @@
         </div>
 
         <div class="mt-3.5 flex flex-col gap-8">
+            <!-- Quick Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-blue-100 text-sm font-medium">Total Prospects</p>
+                            <p class="text-2xl font-bold">{{ $prospects->total() }}</p>
+                        </div>
+                        <div class="bg-blue-400 bg-opacity-30 rounded-full p-3">
+                            <x-base.lucide icon="Users" class="h-6 w-6" />
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg p-4 text-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-yellow-100 text-sm font-medium">Draft</p>
+                            <p class="text-2xl font-bold">{{ $prospects->where('status', 'draft')->count() }}</p>
+                        </div>
+                        <div class="bg-yellow-400 bg-opacity-30 rounded-full p-3">
+                            <x-base.lucide icon="AlertCircle" class="h-6 w-6" />
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-blue-100 text-sm font-medium">Pending</p>
+                            <p class="text-2xl font-bold">{{ $prospects->where('status', 'pending')->count() }}</p>
+                        </div>
+                        <div class="bg-blue-400 bg-opacity-30 rounded-full p-3">
+                            <x-base.lucide icon="Clock" class="h-6 w-6" />
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-4 text-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-red-100 text-sm font-medium">Rejected</p>
+                            <p class="text-2xl font-bold">{{ $prospects->where('status', 'rejected')->count() }}</p>
+                        </div>
+                        <div class="bg-red-400 bg-opacity-30 rounded-full p-3">
+                            <x-base.lucide icon="XCircle" class="h-6 w-6" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="box box--stacked flex flex-col p-5">
                 <div class="flex flex-col gap-y-2 p-5 sm:flex-row sm:items-center">
                     <div>
