@@ -21,7 +21,10 @@ return new class extends Migration
             $table->string('email');
             $table->timestamp('expires_at');
             $table->timestamp('verified_at')->nullable();
+            $table->string('signature_path')->nullable();
+            $table->string('document_path')->nullable();
             $table->timestamps();
+
         });
     }
 

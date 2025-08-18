@@ -350,16 +350,7 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ asset('js/dashboard-new.js') }}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize dashboard data
-        window.dashboardData = {
-            stats: @json($stats),
-            chartData: @json($chartData),
-            dateRange: '{{ $dateRange }}',
-            customDateStart: '{{ $customDateStart }}',
-            customDateEnd: '{{ $customDateEnd }}'
-        };
-    });
-</script>
+<!-- <script>
+
+</script> -->
 @endpush

@@ -55,11 +55,6 @@ class UserCarrierDetail extends Model implements HasMedia
     * Relación con el modelo Carrier.
     */
 
-    public function carrer()
-    {
-        return $this->belongsTo(Carrier::class);
-    }
-
     public function carrier()
     {
         return $this->belongsTo(Carrier::class, 'carrier_id', 'id');

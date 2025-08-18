@@ -13,6 +13,7 @@ use App\Models\CarrierDocument;
 use App\Models\UserDriverDetail;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use App\Services\CarrierService;
 use App\Services\CarrierDocumentService;
 use App\Traits\SendsCustomNotifications;
 use Illuminate\Support\Facades\Notification;
@@ -23,10 +24,14 @@ class CarrierController extends Controller
 
     use SendsCustomNotifications;
     protected $documentService;
+    protected $carrierService;
 
-    public function __construct(CarrierDocumentService $documentService)
-    {
+    public function __construct(
+        CarrierDocumentService $documentService,
+        CarrierService $carrierService
+    ) {
         $this->documentService = $documentService;
+        $this->carrierService = $carrierService;
     }
 
     /**
@@ -34,8 +39,17 @@ class CarrierController extends Controller
      */
     public function index()
     {
-        $carriers = Carrier::with('membership')->paginate(10);
-        return view('admin.carrier.index', compact('carriers'));
+        try {
+            $carriers = $this->carrierService->getAllCarriers(['per_page' => 10]);
+            return view('admin.carrier.index', compact('carriers'));
+        } catch (\Exception $e) {
+            Log::error('Error loading carriers index', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->with('error', 'Error loading carriers');
+        }
     }
 
     /**
@@ -68,58 +82,26 @@ class CarrierController extends Controller
             'status' => 'required|integer|in:0,1,2',
         ]);
 
-        // Crear el carrier
-        $carrier = Carrier::create(array_merge($validated, [
-            'slug' => Str::slug($validated['name']),
-            'referrer_token' => Str::random(16),
-        ]));
-
-        // Validar límites antes de crear
-        /*
-        $membership = Membership::findOrFail($request->id_plan);
-        if (!$membership->canAddCarriers()) {
-            return back()->with('error', 'Membership limit reached');
-        }
-        */
-
-        // Generar documentos base automáticamente
-        $this->documentService->generateBaseDocuments($carrier);
-
-        // Subir logo (si se envió)
-        if ($request->hasFile('logo_carrier')) {
-            $carrier->addMediaFromRequest('logo_carrier')
-                ->usingFileName(Str::slug($carrier->name) . '.webp')
-                ->toMediaCollection('logo_carrier');
-        }
-
-        // Notificar al admin sobre el nuevo carrier
         try {
-            // Obtener todos los superadmins
-            $superadmins = User::role('superadmin')->get();
-            
-            foreach ($superadmins as $admin) {
-                $admin->notify(new NewCarrierNotification($carrier));
-            }
-    
-            Log::info('New carrier notification sent to all superadmins', [
-                'carrier_id' => $carrier->id,
-                'superadmin_count' => $superadmins->count()
-            ]);
+            // Crear el carrier usando el servicio
+            $carrier = $this->carrierService->createCarrier($validated, $request->file('logo_carrier'));
+
+            // Redirigir al tab de usuarios del carrier
+            return redirect()
+                ->route('admin.carrier.user_carriers.index', $carrier)
+                ->with($this->sendNotification(
+                    'success',
+                    'Carrier creado exitosamente. Ahora puedes administrar los usuarios asociados.'
+                ));
         } catch (\Exception $e) {
-            Log::error('Error sending new carrier notification', [
+            Log::error('Error creating carrier', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'carrier_id' => $carrier->id
+                'data' => $validated
             ]);
+            
+            return back()->withInput()->with('error', 'Error creating carrier: ' . $e->getMessage());
         }
-
-        // Redirigir al tab de usuarios del carrier
-        return redirect()
-            ->route('admin.carrier.user_carriers.index', $carrier)
-            ->with($this->sendNotification(
-                'success',
-                'Carrier creado exitosamente. Ahora puedes administrar los usuarios asociados.'
-            ));
     }
 
     /**
@@ -165,42 +147,39 @@ class CarrierController extends Controller
      */
     public function show(Carrier $carrier)
     {
-        // Cargar relaciones necesarias
-        $carrier->load([
-            'membership',
-            'userCarriers.user',
-            'documents.documentType',
-            'documents.media'
-        ]);
-        
-        // Obtener usuarios del carrier
-        $userCarriers = $carrier->userCarriers;
-        
-        // Obtener conductores asociados al carrier
-        $drivers = UserDriverDetail::where('carrier_id', $carrier->id)
-            ->with(['user', 'licenses'])
-            ->get();
-        
-        // Documentos clasificados por estado
-        $documents = $carrier->documents;
-        $pendingDocuments = $documents->where('status', 0); // STATUS_PENDING = 0
-        $approvedDocuments = $documents->where('status', 1); // STATUS_APPROVED = 1
-        $rejectedDocuments = $documents->where('status', 2); // STATUS_REJECTED = 2
-        
-        // Tipos de documentos que faltan
-        $existingDocTypeIds = $documents->pluck('document_type_id')->toArray();
-        $missingDocumentTypes = DocumentType::whereNotIn('id', $existingDocTypeIds)->get();
-        
-        return view('admin.carrier.show', compact(
-            'carrier', 
-            'userCarriers', 
-            'drivers', 
-            'documents',
-            'pendingDocuments',
-            'approvedDocuments',
-            'rejectedDocuments',
-            'missingDocumentTypes'
-        ));
+        try {
+            // Obtener datos completos del carrier usando el servicio
+            $carrierData = $this->carrierService->getCarrierWithDetails($carrier->id);
+            
+            // Extraer datos para la vista
+            $carrier = $carrierData['carrier'];
+            $userCarriers = $carrierData['userCarriers'];
+            $drivers = $carrierData['drivers'];
+            $documents = $carrierData['documents'];
+            $pendingDocuments = $carrierData['pendingDocuments'];
+            $approvedDocuments = $carrierData['approvedDocuments'];
+            $rejectedDocuments = $carrierData['rejectedDocuments'];
+            $missingDocumentTypes = $carrierData['missingDocumentTypes'];
+            
+            return view('admin.carrier.show', compact(
+                'carrier', 
+                'userCarriers', 
+                'drivers', 
+                'documents',
+                'pendingDocuments',
+                'approvedDocuments',
+                'rejectedDocuments',
+                'missingDocumentTypes'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error loading carrier details', [
+                'carrier_id' => $carrier->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->with('error', 'Error loading carrier details');
+        }
     }
     
     /**
@@ -288,33 +267,31 @@ class CarrierController extends Controller
             'referrer_token' => 'nullable|string|max:16|unique:carriers,referrer_token,' . $carrier->id,
         ]);
 
-        // Actualizar slug solo si cambia el nombre
-        if ($carrier->name !== $validated['name']) {
-            $validated['slug'] = Str::slug($validated['name']);
+        try {
+            // Actualizar el carrier usando el servicio
+            $updatedCarrier = $this->carrierService->updateCarrier(
+                $carrier->id, 
+                $validated, 
+                $request->file('logo_carrier')
+            );
+
+            return redirect()
+                ->route('admin.carrier.user_carriers.index', $updatedCarrier)
+                ->with($this->sendNotification(
+                    'success',
+                    'Carrier actualizado exitosamente.',
+                    'Los cambios han sido guardados correctamente.'
+                ));
+        } catch (\Exception $e) {
+            Log::error('Error updating carrier', [
+                'carrier_id' => $carrier->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'data' => $validated
+            ]);
+            
+            return back()->withInput()->with('error', 'Error updating carrier: ' . $e->getMessage());
         }
-
-        // Subir logo (si se envió)
-        if ($request->hasFile('logo_carrier')) {
-            $fileName = strtolower(str_replace(' ', '_', $carrier->name)) . '.webp';
-
-            // Limpiar la colección anterior
-            $carrier->clearMediaCollection('logo_carrier');
-
-            // Guardar la nueva foto con el nombre personalizado
-            $carrier->addMediaFromRequest('logo_carrier')
-                ->usingFileName($fileName)
-                ->toMediaCollection('logo_carrier');
-        }
-
-        $carrier->update($validated);
-
-        return redirect()
-            ->route('admin.carrier.user_carriers.index', $carrier)
-            ->with($this->sendNotification(
-                'success',
-                'Carrier actualizado exitosamente.',
-                'Los cambios han sido guardados correctamente.'
-            ));
     }
 
     public function approveDefaultDocument(Request $request, Carrier $carrier, CarrierDocument $document)
@@ -328,6 +305,94 @@ class CarrierController extends Controller
         return response()->json([
             'message' => $validated['approved'] ? 'Default document approved' : 'Default document unapproved',
         ]);
+    }
+
+    /**
+     * Aprobar información bancaria del carrier.
+     */
+    public function approveBanking(Carrier $carrier)
+    {
+        try {
+            $bankingDetails = $carrier->bankingDetails;
+            
+            if (!$bankingDetails) {
+                return back()->with('error', 'No banking information found for this carrier.');
+            }
+            
+            // Actualizar estado de información bancaria
+            $bankingDetails->update(['status' => 'approved']);
+            
+            // Actualizar estado del carrier a activo
+            $carrier->update(['status' => 'active']);
+            
+            Log::info('Banking information approved', [
+                'carrier_id' => $carrier->id,
+                'admin_user_id' => auth()->id(),
+                'banking_details_id' => $bankingDetails->id
+            ]);
+            
+            return back()->with($this->sendNotification(
+                'success',
+                'Banking information approved successfully.',
+                'The carrier can now access their dashboard.'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error approving banking information', [
+                'carrier_id' => $carrier->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->with('error', 'Error approving banking information: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Rechazar información bancaria del carrier.
+     */
+    public function rejectBanking(Request $request, Carrier $carrier)
+    {
+        $request->validate([
+            'rejection_reason' => 'required|string|max:500'
+        ]);
+        
+        try {
+            $bankingDetails = $carrier->bankingDetails;
+            
+            if (!$bankingDetails) {
+                return back()->with('error', 'No banking information found for this carrier.');
+            }
+            
+            // Actualizar estado de información bancaria
+            $bankingDetails->update([
+                'status' => 'rejected',
+                'rejection_reason' => $request->rejection_reason
+            ]);
+            
+            // Mantener el carrier en estado pending_validation
+            $carrier->update(['status' => 'pending_validation']);
+            
+            Log::info('Banking information rejected', [
+                'carrier_id' => $carrier->id,
+                'admin_user_id' => auth()->id(),
+                'banking_details_id' => $bankingDetails->id,
+                'rejection_reason' => $request->rejection_reason
+            ]);
+            
+            return back()->with($this->sendNotification(
+                'warning',
+                'Banking information rejected.',
+                'The carrier will need to resubmit their banking information.'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error rejecting banking information', [
+                'carrier_id' => $carrier->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->with('error', 'Error rejecting banking information: ' . $e->getMessage());
+        }
     }
 
     /**

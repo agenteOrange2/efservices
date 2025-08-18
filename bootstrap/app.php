@@ -32,9 +32,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // Registrar alias de middleware
         $middleware->alias([
             'check.user.status' => \App\Http\Middleware\CheckUserStatus::class,
+            'api.rate.limit' => \App\Http\Middleware\ApiRateLimit::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
-            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'prevent.mass.assignment' => \App\Http\Middleware\PreventMassAssignment::class,
+            'security.headers' => \App\Http\Middleware\SecurityHeaders::class
         ]);
 
         // Middleware web group
@@ -45,7 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            \App\Http\Middleware\CheckUserStatus::class,
+            \App\Http\Middleware\SecurityHeaders::class,
             
         ]);
     })

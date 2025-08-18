@@ -66,7 +66,7 @@ Route::prefix('employment-verification')->name('employment-verification.')->grou
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('home');
 
 // Ruta personalizada para cierre de sesión
 Route::post('/custom-logout', [LogoutController::class, 'logout'])->name('custom.logout');

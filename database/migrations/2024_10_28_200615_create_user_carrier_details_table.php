@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('carrier_id')->nullable()->constrained('carriers')->onDelete('cascade'); // Relación con carriers
             $table->string('phone'); // Teléfono del carrier user
             $table->string('job_position'); // Cargo o puesto
-            $table->unsignedTinyInteger('status')->default(0)->index(); // 0: inactive, 1: active, 2: pending
+            $table->unsignedTinyInteger('status')->default(1)->index(); // 0: inactive, 1: active, 2: pending
             $table->string('confirmation_token', 64)->nullable(); // Token de confirmación
             $table->timestamps();
         });

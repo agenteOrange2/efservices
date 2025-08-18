@@ -10,6 +10,7 @@ use App\Models\DocumentType;
 use Illuminate\Http\Request;
 use App\Models\UserDriverDetail;
 use App\Http\Controllers\Controller;
+use App\Services\ReportService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use App\Models\Admin\Driver\DriverAccident;
@@ -17,274 +18,102 @@ use App\Models\Admin\Driver\DriverApplication;
 use App\Models\Admin\Vehicle\Vehicle;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Cache;
 
 class ReportsController extends Controller
 {
+    protected $reportService;
+
+    public function __construct(ReportService $reportService)
+    {
+        $this->reportService = $reportService;
+    }
     /**
      * Mostrar la página principal de reportes con estadísticas.
      */
     public function index()
     {
-        // Obtener estadísticas generales del sistema
-        $stats = $this->getSystemStats();
+        $startTime = microtime(true);
         
-        return view('admin.reports.index', compact('stats'));
-    }
-    
-    /**
-     * Obtener estadísticas generales del sistema.
-     */
-    private function getSystemStats()
-    {
-        // Estadísticas de Carriers
-        $totalCarriers = Carrier::count();
-        $activeCarriers = Carrier::where('status', Carrier::STATUS_ACTIVE)->count();
-        $pendingCarriers = Carrier::where('status', Carrier::STATUS_PENDING)->count();
-        
-        // Estadísticas de Conductores
-        $totalDrivers = UserDriverDetail::count();
-        $activeDrivers = UserDriverDetail::where('status', UserDriverDetail::STATUS_ACTIVE)->count();
-        $approvedDrivers = UserDriverDetail::whereHas('application', function($q) {
-            $q->where('status', DriverApplication::STATUS_APPROVED);
-        })->count();
-        $pendingDrivers = UserDriverDetail::whereHas('application', function($q) {
-            $q->where('status', DriverApplication::STATUS_PENDING);
-        })->count();
-        
-        // Estadísticas de Vehículos
-        $totalVehicles = Vehicle::count();
-        $activeVehicles = Vehicle::where('status', 'active')->count();
-        $outOfServiceVehicles = Vehicle::where('status', 'out_of_service')->count();
-        
-        // Estadísticas de Documentos
-        $totalDocuments = CarrierDocument::count();
-        $approvedDocuments = CarrierDocument::where('status', 'approved')->count();
-        $pendingDocuments = CarrierDocument::where('status', 'pending')->count();
-        $rejectedDocuments = CarrierDocument::where('status', 'rejected')->count();
-        
-        // Estadísticas de Accidentes
-        $totalAccidents = DriverAccident::count();
-        $recentAccidents = DriverAccident::whereDate('created_at', '>=', now()->subDays(30))->count();
-        
-        // Estadísticas mensuales para gráficos
-        $monthlyDrivers = $this->getMonthlyDriverStats();
-        $monthlyVehicles = $this->getMonthlyVehicleStats();
-        $monthlyDocuments = $this->getMonthlyDocumentStats();
-        
-        return [
-            'carriers' => [
-                'total' => $totalCarriers,
-                'active' => $activeCarriers,
-                'pending' => $pendingCarriers,
-                'percentage_active' => $totalCarriers > 0 ? round(($activeCarriers / $totalCarriers) * 100, 1) : 0
-            ],
-            'drivers' => [
-                'total' => $totalDrivers,
-                'active' => $activeDrivers,
-                'approved' => $approvedDrivers,
-                'pending' => $pendingDrivers,
-                'percentage_active' => $totalDrivers > 0 ? round(($activeDrivers / $totalDrivers) * 100, 1) : 0
-            ],
-            'vehicles' => [
-                'total' => $totalVehicles,
-                'active' => $activeVehicles,
-                'out_of_service' => $outOfServiceVehicles,
-                'percentage_active' => $totalVehicles > 0 ? round(($activeVehicles / $totalVehicles) * 100, 1) : 0
-            ],
-            'documents' => [
-                'total' => $totalDocuments,
-                'approved' => $approvedDocuments,
-                'pending' => $pendingDocuments,
-                'rejected' => $rejectedDocuments,
-                'percentage_approved' => $totalDocuments > 0 ? round(($approvedDocuments / $totalDocuments) * 100, 1) : 0
-            ],
-            'accidents' => [
-                'total' => $totalAccidents,
-                'recent' => $recentAccidents
-            ],
-            'monthly' => [
-                'drivers' => $monthlyDrivers,
-                'vehicles' => $monthlyVehicles,
-                'documents' => $monthlyDocuments
-            ]
-        ];
-    }
-    
-    /**
-     * Obtener estadísticas mensuales de conductores.
-     */
-    private function getMonthlyDriverStats()
-    {
-        $months = [];
-        $data = [];
-        
-        for ($i = 5; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
-            $months[] = $date->format('M Y');
-            $data[] = UserDriverDetail::whereYear('created_at', $date->year)
-                ->whereMonth('created_at', $date->month)
-                ->count();
+        try {
+            // Cache key para estadísticas generales
+            $cacheKey = 'reports_general_stats';
+            
+            // Obtener estadísticas del caché o generar nuevas
+            $stats = Cache::remember($cacheKey, 600, function () {
+                return $this->reportService->getGeneralReport();
+            });
+            
+            // Log performance
+            $executionTime = round((microtime(true) - $startTime) * 1000, 2);
+            Log::info('Reports index loaded', [
+                'execution_time_ms' => $executionTime,
+                'cache_hit' => Cache::has($cacheKey)
+            ]);
+            
+            return view('admin.reports.index', compact('stats'));
+        } catch (\Exception $e) {
+            Log::error('Error loading reports index', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'execution_time_ms' => round((microtime(true) - $startTime) * 1000, 2)
+            ]);
+            
+            return back()->with('error', 'Error loading reports');
         }
-        
-        return [
-            'labels' => $months,
-            'data' => $data
-        ];
     }
     
-    /**
-     * Obtener estadísticas mensuales de vehículos.
-     */
-    private function getMonthlyVehicleStats()
-    {
-        $months = [];
-        $data = [];
-        
-        for ($i = 5; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
-            $months[] = $date->format('M Y');
-            $data[] = Vehicle::whereYear('created_at', $date->year)
-                ->whereMonth('created_at', $date->month)
-                ->count();
-        }
-        
-        return [
-            'labels' => $months,
-            'data' => $data
-        ];
-    }
+    // Método eliminado - ahora se usa ReportService::getGeneralReport()
     
-    /**
-     * Obtener estadísticas mensuales de documentos.
-     */
-    private function getMonthlyDocumentStats()
-    {
-        $months = [];
-        $data = [];
-        
-        for ($i = 5; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
-            $months[] = $date->format('M Y');
-            $data[] = CarrierDocument::whereYear('created_at', $date->year)
-                ->whereMonth('created_at', $date->month)
-                ->count();
-        }
-        
-        return [
-            'labels' => $months,
-            'data' => $data
-        ];
-    }
+    // Métodos eliminados - ahora se usan en ReportService
 
     /**
      * Generar reporte de conductores activos.
      */
     public function activeDrivers(Request $request)
     {
-        // Obtener todos los carriers para el filtro
-        $carriers = Carrier::where('status', Carrier::STATUS_ACTIVE)
-            ->orderBy('name')
-            ->get();
+        $startTime = microtime(true);
+        
+        try {
+            // Preparar filtros para el servicio
+            $filters = [
+                'search' => $request->input('search', ''),
+                'carrier' => $request->input('carrier', ''),
+                'tab' => $request->input('tab', 'all'),
+                'date_from' => $request->input('date_from'),
+                'date_to' => $request->input('date_to'),
+                'per_page' => $request->input('per_page', 10)
+            ];
 
-        // Get filter parameters
-        $search = $request->input('search', '');
-        $carrierFilter = $request->input('carrier', '');
-        $tab = $request->input('tab', 'all');
-        $perPage = $request->input('per_page', 10);
-        $dateFrom = $request->input('date_from'); // Filtro de fecha inicial
-        $dateTo = $request->input('date_to');     // Filtro de fecha final
-
-        // Base query for all approved drivers
-        $query = UserDriverDetail::with(['user', 'carrier', 'application'])
-            ->whereHas('application', function ($q) {
-                $q->where('status', DriverApplication::STATUS_APPROVED);
+            // Cache key basado en filtros (excluyendo paginación para mejor hit rate)
+            $cacheKey = 'active_drivers_' . md5(serialize(array_except($filters, ['per_page'])));
+            
+            // Obtener datos del caché o generar nuevos
+            $reportData = Cache::remember($cacheKey, 300, function () use ($filters) {
+                return $this->reportService->getDriversReport($filters);
             });
+            
+            // Log performance
+            $executionTime = round((microtime(true) - $startTime) * 1000, 2);
+            Log::info('Active drivers report loaded', [
+                'execution_time_ms' => $executionTime,
+                'cache_hit' => Cache::has($cacheKey),
+                'filters' => $filters
+            ]);
 
-        // Apply tab filters
-        switch ($tab) {
-            case 'active':
-                $query->where('status', UserDriverDetail::STATUS_ACTIVE);
-                break;
-            case 'inactive':
-                $query->where('status', UserDriverDetail::STATUS_INACTIVE);
-                break;
-            case 'new':
-                $query->whereDate('created_at', '>=', now()->subDays(30));
-                break;
-                // Default 'all' tab doesn't need additional filtering
+            return view('admin.reports.active-drivers', $reportData);
+        } catch (\Exception $e) {
+            Log::error('Error loading active drivers report', [
+                'filters' => $request->all(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'execution_time_ms' => round((microtime(true) - $startTime) * 1000, 2)
+            ]);
+            
+            return back()->with('error', 'Error loading drivers report');
         }
-
-        $query->orderBy('created_at', 'desc');
-
-        // Apply search filter if provided
-        if (!empty($search)) {
-            $query->where(function ($q) use ($search) {
-                $q->whereHas('user', function ($userQuery) use ($search) {
-                    $userQuery->where('name', 'like', '%' . $search . '%')
-                        ->orWhere('email', 'like', '%' . $search . '%');
-                })
-                    ->orWhere('last_name', 'like', '%' . $search . '%')
-                    ->orWhere('phone', 'like', '%' . $search . '%');
-            });
-        }
-
-        // Apply carrier filter if provided
-        if (!empty($carrierFilter)) {
-            $query->where('carrier_id', $carrierFilter);
-        }
-
-        // Aplicar filtro de fecha inicial si se proporciona
-        if (!empty($dateFrom)) {
-            $query->whereDate('created_at', '>=', $dateFrom);
-        }
-
-        // Aplicar filtro de fecha final si se proporciona
-        if (!empty($dateTo)) {
-            $query->whereDate('created_at', '<=', $dateTo);
-        }
-
-        // Get paginated results
-        $drivers = $query->paginate($perPage);
-
-        // Get all carriers for the filter dropdown
-        $carriers = Carrier::orderBy('name')->get();
-
-        // Calculate completion percentage for each driver (emulando el comportamiento original)
-        foreach ($drivers as $driver) {
-            // Simplificado para reporte - podríamos implementar calculateProfileCompleteness completo si es necesario
-            $driver->completion_percentage = 100; // Por defecto para reporte
-        }
-
-        // Get counts for tabs
-        $totalDriversCount = UserDriverDetail::whereHas('application', function ($q) {
-            $q->where('status', DriverApplication::STATUS_APPROVED);
-        })->count();
-
-        $activeDriversCount = UserDriverDetail::whereHas('application', function ($q) {
-            $q->where('status', DriverApplication::STATUS_APPROVED);
-        })->where('status', UserDriverDetail::STATUS_ACTIVE)->count();
-
-        $inactiveDriversCount = UserDriverDetail::whereHas('application', function ($q) {
-            $q->where('status', DriverApplication::STATUS_APPROVED);
-        })->where('status', UserDriverDetail::STATUS_INACTIVE)->count();
-
-        $newDriversCount = UserDriverDetail::whereHas('application', function ($q) {
-            $q->where('status', DriverApplication::STATUS_APPROVED);
-        })->whereDate('created_at', '>=', now()->subDays(30))->count();
-
-        return view('admin.reports.active-drivers', compact(
-            'drivers',
-            'carriers',
-            'search',
-            'carrierFilter',
-            'tab',
-            'perPage',
-            'totalDriversCount',
-            'activeDriversCount',
-            'inactiveDriversCount',
-            'newDriversCount'
-        ));
     }
 
     /**
@@ -415,11 +244,8 @@ class ReportsController extends Controller
      */
     public function equipmentList(Request $request)
     {
-        // Obtener carriers iniciales solo para los primeros filtros
-        $carriers = Carrier::where('status', 'active')
-            ->orderBy('name')
-            ->get();
-
+        $startTime = microtime(true);
+        
         // Get filter parameters
         $search = $request->input('search', '');
         $carrierFilter = $request->input('carrier', '');
@@ -427,6 +253,21 @@ class ReportsController extends Controller
         $perPage = $request->input('per_page', 10);
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
+        
+        // Cache key para carriers (datos estáticos)
+        $carriersData = Cache::remember('equipment_carriers_list', 1800, function () {
+            return Carrier::orderBy('name')->get();
+        });
+        
+        // Cache key para conteos de vehículos (datos que cambian menos frecuentemente)
+        $vehicleCounts = Cache::remember('vehicle_counts', 600, function () {
+            return [
+                'total' => Vehicle::count(),
+                'active' => Vehicle::active()->count(),
+                'out_of_service' => Vehicle::outOfService()->count(),
+                'suspended' => Vehicle::suspended()->count()
+            ];
+        });
 
         // Base query for all vehicles
         $query = Vehicle::with(['carrier', 'driver', 'vehicleType', 'vehicleMake']);
@@ -481,27 +322,26 @@ class ReportsController extends Controller
         $query->orderBy('created_at', 'desc');
         $vehicles = $query->paginate($perPage);
 
-        // Get counts for tabs
-        $totalVehiclesCount = Vehicle::count();
-        $activeVehiclesCount = Vehicle::active()->count();
-        $outOfServiceVehiclesCount = Vehicle::outOfService()->count();
-        $suspendedVehiclesCount = Vehicle::suspended()->count();
+        // Log performance
+        $executionTime = round((microtime(true) - $startTime) * 1000, 2);
+        Log::info('Equipment list loaded', [
+            'execution_time_ms' => $executionTime,
+            'filters' => compact('search', 'carrierFilter', 'tab', 'dateFrom', 'dateTo'),
+            'total_vehicles' => $vehicles->total()
+        ]);
 
-        // Obtener TODOS los carriers sin filtrar por status, exactamente como en activeDrivers
-        $carriers = Carrier::orderBy('name')->get();
-
-        return view('admin.reports.equipment-list', compact(
-            'vehicles',
-            'carriers',
-            'search',
-            'carrierFilter',
-            'tab',
-            'perPage',
-            'totalVehiclesCount',
-            'activeVehiclesCount',
-            'outOfServiceVehiclesCount',
-            'suspendedVehiclesCount'
-        ));
+        return view('admin.reports.equipment-list', [
+            'vehicles' => $vehicles,
+            'carriers' => $carriersData,
+            'search' => $search,
+            'carrierFilter' => $carrierFilter,
+            'tab' => $tab,
+            'perPage' => $perPage,
+            'totalVehiclesCount' => $vehicleCounts['total'],
+            'activeVehiclesCount' => $vehicleCounts['active'],
+            'outOfServiceVehiclesCount' => $vehicleCounts['out_of_service'],
+            'suspendedVehiclesCount' => $vehicleCounts['suspended']
+        ]);
     }
 
     /**

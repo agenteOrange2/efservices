@@ -29,7 +29,7 @@
                     <div class="text-2xl font-medium">Sign In</div>
                     <div class="mt-2.5 text-slate-600">
                         Don't have an account?
-                        <a class="font-medium text-primary">
+                        <a href="{{ route('carrier.wizard.step1') }}" class="font-medium text-primary hover:underline">
                             Sign Up
                         </a>
                     </div>

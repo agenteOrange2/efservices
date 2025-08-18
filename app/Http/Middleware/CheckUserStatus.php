@@ -15,18 +15,41 @@ class CheckUserStatus
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $user = $request->user();
-
-        Log::info('CheckUserStatus middleware', [
-            'user_id' => $user ? $user->id : null,
+        $user = Auth::user();
+        
+        if (!$user) {
+            Log::info('CheckUserStatus middleware: No authenticated user, redirecting to login', [
+                'path' => $request->path(),
+                'ip' => $request->ip(),
+                'session_id' => $request->session()->getId()
+            ]);
+            return redirect()->route('login');
+        }
+        
+        Log::info('CheckUserStatus middleware: User access attempt', [
+            'user_id' => $user->id,
+            'email' => $user->email,
             'path' => $request->path(),
-            'is_carrier' => $user ? $user->hasRole('user_carrier') : false,
-            'is_driver' => $user ? $user->hasRole('driver') : false
+            'full_url' => $request->fullUrl(),
+            'method' => $request->method(),
+            'is_carrier' => $user->hasRole('user_carrier'),
+            'is_driver' => $user->hasRole('user_driver'),
+            'all_roles' => $user->getRoleNames()->toArray(),
+            'session_id' => $request->session()->getId(),
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'referer' => $request->header('referer')
         ]);
 
         // Verificar si es una ruta de registro por referencia
         if ($this->isReferralRoute($request)) {
-            return $next($request);
+            Log::info('CheckUserStatus middleware completed - passing to next middleware', [
+            'user_id' => $user ? $user->id : null,
+            'path' => $request->path(),
+            'method' => $request->method()
+        ]);
+        
+        return $next($request);
         }
 
         // Rutas públicas que siempre son accesibles
@@ -46,6 +69,37 @@ class CheckUserStatus
                     ->withErrors(['email' => 'Your account has been deactivated. Please contact support.']);
             }
 
+            // Verificar si un usuario con carrier completo intenta acceder al wizard
+            if ($request->is('carrier/wizard*') && $user->carrierDetails && $user->carrierDetails->carrier_id) {
+                $carrier = $user->carrierDetails->carrier;
+                
+                // Si el carrier está activo, redirigir al dashboard
+                if ($carrier && $carrier->status === Carrier::STATUS_ACTIVE) {
+                    Log::info('Usuario con carrier activo intentando acceder al wizard, redirigiendo al dashboard', [
+                        'user_id' => $user->id,
+                        'carrier_id' => $carrier->id,
+                        'carrier_status' => $carrier->status
+                    ]);
+                    return redirect()->route('carrier.dashboard')
+                        ->with('info', 'You have already completed the registration process.');
+                }
+                
+                // Si el carrier ya tiene id_plan Y datos bancarios (completó todo el wizard), redirigir al dashboard
+                // Permitir acceso al step4 si no tiene datos bancarios aún
+                if ($carrier && $carrier->id_plan && !$request->is('carrier/wizard/step4')) {
+                    // Verificar si tiene datos bancarios
+                    $hasBankingInfo = $carrier->bankingDetails()->exists();
+                    if ($hasBankingInfo) {
+                        Log::info('Usuario con carrier y datos bancarios completos intentando acceder al wizard, redirigiendo al dashboard', [
+                            'user_id' => $user->id,
+                            'carrier_id' => $carrier->id
+                        ]);
+                        return redirect()->route('carrier.dashboard')
+                            ->with('info', 'You have already completed the registration process.');
+                    }
+                }
+            }
+
             // Verificar estado del carrier y redirigir según corresponda
             if (!$this->isCarrierSetupRoute($request)) {
                 // Agregamos logs para diagnosticar el problema
@@ -58,9 +112,26 @@ class CheckUserStatus
                 
                 // PRIMERO: verificar si el usuario tiene que completar su registro
                 if (!$user->carrierDetails || !$user->carrierDetails->carrier_id) {
-                    Log::info('Redirigiendo a complete-registration', ['user_id' => $user->id]);
-                    return redirect()->route('carrier.complete_registration')
+                    Log::info('Redirigiendo a wizard step 2', [
+                        'user_id' => $user->id,
+                        'redirect_url' => route('carrier.wizard.step2'),
+                        'session_id' => $request->session()->getId(),
+                        'current_path' => $request->path(),
+                        'full_url' => $request->fullUrl(),
+                        'method' => $request->method()
+                    ]);
+                    
+                    $redirect = redirect()->route('carrier.wizard.step2')
                         ->with('warning', 'Please complete your registration first.');
+                    
+                    Log::info('Redirect response created', [
+                        'user_id' => $user->id,
+                        'redirect_status' => $redirect->getStatusCode(),
+                        'redirect_headers' => $redirect->headers->all(),
+                        'target_url' => $redirect->getTargetUrl()
+                    ]);
+                    
+                    return $redirect;
                 }
 
                 // SEGUNDO: Verificar estado del user_carrier
@@ -76,11 +147,22 @@ class CheckUserStatus
                     'user_id' => $user->id,
                     'carrier_id' => $carrier->id,
                     'carrier_status' => $carrier->status,
-                    'ACTIVE_STATUS' => Carrier::STATUS_ACTIVE
+                    'ACTIVE_STATUS' => Carrier::STATUS_ACTIVE,
+                    'PENDING_VALIDATION_STATUS' => Carrier::STATUS_PENDING_VALIDATION
                 ]);
 
-                // Si el carrier está pendiente o inactivo y NO está en la ruta de documentos o logout
-                if ($carrier->status !== Carrier::STATUS_ACTIVE && !$request->is('carrier/*/documents*') && !$request->is('carrier/confirmation') && !$request->is('logout')) {
+                // Si el carrier está en estado PENDING_VALIDATION (esperando validación admin)
+                if ($carrier->status === Carrier::STATUS_PENDING_VALIDATION && !$request->is('carrier/pending-validation') && !$request->is('carrier/*/documents*') && !$request->is('logout')) {
+                    Log::info('Redirigiendo a pending-validation (carrier awaiting admin validation)', [
+                        'user_id' => $user->id,
+                        'carrier_status' => $carrier->status
+                    ]);
+                    return redirect()->route('carrier.pending.validation')
+                        ->with('info', 'Your account is pending administrative validation. We will review your banking information and activate your account soon.');
+                }
+
+                // Si el carrier está inactivo (no pending, active ni pending_validation) y NO está en la ruta de documentos, wizard o logout
+                if ($carrier->status !== Carrier::STATUS_ACTIVE && $carrier->status !== Carrier::STATUS_PENDING && $carrier->status !== Carrier::STATUS_PENDING_VALIDATION && !$request->is('carrier/*/documents*') && !$request->is('carrier/confirmation') && !$request->is('carrier/wizard*') && !$request->is('logout')) {
                     Log::info('Redirigiendo a confirmation (carrier not active)', [
                         'user_id' => $user->id,
                         'carrier_status' => $carrier->status
@@ -196,6 +278,14 @@ class CheckUserStatus
         $publicRoutes = [
             '/',
             'login',
+            'forgot-password',
+            'reset-password/*',
+            'user/confirm-password',
+            'user/confirmed-password-status',
+            'carrier/wizard/step1',
+            'carrier/wizard/step2',
+            'carrier/wizard/step3',
+            'carrier/wizard/check-uniqueness',
             'carrier/register',
             'carrier/confirm/*',
             'driver/register',
@@ -253,9 +343,16 @@ class CheckUserStatus
             'carrier/complete-registration',
             'carrier/confirmation',
             'carrier/pending', 
+            'carrier/pending-validation',
             'carrier/register',
             'carrier/confirm/*',
-            'carrier/*/documents*'
+            'carrier/*/documents*',
+            'carrier/wizard/step1',
+            'carrier/wizard/step2',
+            'carrier/wizard/step3',
+            'carrier/wizard/step4',
+            'carrier/wizard/check-uniqueness',
+            'carrier/wizard/check-verification'
         ];
         
         // Rutas que definitivamente NO son de configuración

@@ -13,11 +13,21 @@ return new class extends Migration
     {
         Schema::table('driver_testings', function (Blueprint $table) {
             // Añadir nuevos campos para las razones de la prueba
-            $table->boolean('is_pre_employment_test')->default(false)->after('is_reasonable_suspicion_test');
-            $table->boolean('is_follow_up_test')->default(false)->after('is_pre_employment_test');
-            $table->boolean('is_return_to_duty_test')->default(false)->after('is_follow_up_test');
-            $table->boolean('is_other_reason_test')->default(false)->after('is_return_to_duty_test');
-            $table->string('other_reason_description')->nullable()->after('is_other_reason_test');
+            if (!Schema::hasColumn('driver_testings', 'is_pre_employment_test')) {
+                $table->boolean('is_pre_employment_test')->default(false)->after('is_reasonable_suspicion_test');
+            }
+            if (!Schema::hasColumn('driver_testings', 'is_follow_up_test')) {
+                $table->boolean('is_follow_up_test')->default(false)->after('is_pre_employment_test');
+            }
+            if (!Schema::hasColumn('driver_testings', 'is_return_to_duty_test')) {
+                $table->boolean('is_return_to_duty_test')->default(false)->after('is_follow_up_test');
+            }
+            if (!Schema::hasColumn('driver_testings', 'is_other_reason_test')) {
+                $table->boolean('is_other_reason_test')->default(false)->after('is_return_to_duty_test');
+            }
+            if (!Schema::hasColumn('driver_testings', 'other_reason_description')) {
+                $table->string('other_reason_description')->nullable()->after('is_other_reason_test');
+            }
         });
     }
 

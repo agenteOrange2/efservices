@@ -5,39 +5,57 @@ namespace App\Http\Controllers\Admin;
 use App\Models\Carrier;
 use App\Models\UserDriverDetail;
 use App\Http\Controllers\Controller;
+use App\Services\DriverService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DriversController extends Controller
 {
+    protected $driverService;
+
+    public function __construct(DriverService $driverService)
+    {
+        $this->driverService = $driverService;
+    }
     public function index()
     {
-        $drivers = UserDriverDetail::with(['user', 'carrier', 'assignedVehicle'])
-            ->select('user_driver_details.*')
-            ->addSelect([
-                'total_trips' => DB::table('trips')
-                    ->whereColumn('driver_id', 'user_driver_details.id')
-                    ->selectRaw('COUNT(*)')
-            ])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        try {
+            // Obtener conductores con paginación usando el servicio
+            $drivers = $this->driverService->getAllDrivers(10);
+            
+            // Obtener estadísticas usando el servicio
+            $stats = $this->driverService->getDriverStatistics();
 
-        $stats = [
-            'total_drivers' => UserDriverDetail::count(),
-            'active_drivers' => UserDriverDetail::where('status', UserDriverDetail::STATUS_ACTIVE)->count(),
-            'drivers_without_vehicle' => UserDriverDetail::whereNull('assigned_vehicle_id')->count(),
-            'carriers_with_drivers' => Carrier::has('userDrivers')->count(),
-        ];
-
-        return view('admin.drivers.index', compact('drivers', 'stats'));
+            return view('admin.drivers.index', compact('drivers', 'stats'));
+        } catch (\Exception $e) {
+            Log::error('Error loading drivers index', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->with('error', 'Error loading drivers');
+        }
     }
 
     public function toggleStatus(UserDriverDetail $driver)
     {
-        $driver->status = $driver->status === UserDriverDetail::STATUS_ACTIVE 
-            ? UserDriverDetail::STATUS_INACTIVE 
-            : UserDriverDetail::STATUS_ACTIVE;
-        $driver->save();
+        try {
+            // Cambiar estado usando el servicio
+            $newStatus = $driver->status === UserDriverDetail::STATUS_ACTIVE 
+                ? UserDriverDetail::STATUS_INACTIVE 
+                : UserDriverDetail::STATUS_ACTIVE;
+            
+            $this->driverService->updateDriverStatus($driver->id, $newStatus);
 
-        return back()->with('success', 'Driver status updated successfully');
+            return back()->with('success', 'Driver status updated successfully');
+        } catch (\Exception $e) {
+            Log::error('Error updating driver status', [
+                'driver_id' => $driver->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->with('error', 'Error updating driver status');
+        }
     }
 }

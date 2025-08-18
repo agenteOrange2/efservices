@@ -44,13 +44,13 @@ class CarrierAuthController extends Controller
     /**
      * Manejar la lógica específica de login para carriers.
      */
-    private function handleCarrierLogin(User $user)
+    public function handleCarrierLogin(User $user)
     {
         // Verificar si el usuario tiene carrier details
         if (!$user->carrierDetails || !$user->carrierDetails->carrier_id) {
             Log::info('Usuario carrier sin detalles completos', ['user_id' => $user->id]);
             
-            return redirect()->route('carrier.complete_registration')
+            return redirect()->route('carrier.wizard.step2')
                 ->with('warning', 'Please complete your registration.');
         }
         
@@ -66,6 +66,15 @@ class CarrierAuthController extends Controller
                 
                 return redirect()->route('carrier.confirmation')
                     ->with('warning', 'Your account is pending approval.');
+                    
+            case Carrier::STATUS_PENDING_VALIDATION:
+                Log::info('Carrier con estado pendiente validación', [
+                    'user_id' => $user->id,
+                    'carrier_id' => $carrier->id
+                ]);
+                
+                return redirect()->route('carrier.pending.validation')
+                    ->with('info', 'Your banking information is being validated. Please wait for approval.');
                     
             case Carrier::STATUS_INACTIVE:
                 Log::warning('Intento de login con carrier inactivo', [
@@ -109,8 +118,11 @@ class CarrierAuthController extends Controller
     }
 
     /**
-     * Manejar la autenticación después del login automático.
+     * MÉTODO COMENTADO: Este método interceptaba el proceso de autenticación
+     * y bypaseaba la lógica de redirección de FortifyServiceProvider.
+     * Se removió para permitir que Fortify maneje correctamente las redirecciones post-login.
      */
+    /*
     public function authenticated(Request $request, $user)
     {
         // Verificar si el usuario tiene el rol de carrier
@@ -126,6 +138,7 @@ class CarrierAuthController extends Controller
         // Por defecto
         return redirect()->route('home');
     }
+    */
 
     /**
      * Obtener el estado actual del carrier para el usuario autenticado.

@@ -46,8 +46,8 @@ use App\Http\Controllers\Admin\MasterCompanyController;
 Route::get('theme-switcher/{activeTheme}', [ThemeController::class, 'switch'])->name('theme-switcher');
 
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-Route::post('/dashboard/export-pdf', [DashboardController::class, 'exportPdf'])->name('dashboard.export-pdf');
-Route::post('/dashboard/ajax-update', [DashboardController::class, 'ajaxUpdate'])->name('dashboard.ajax-update');
+Route::post('/dashboard/export-pdf', [DashboardController::class, 'exportPdf'])->middleware('api.rate.limit:admin_reports,30,1')->name('dashboard.export-pdf');
+Route::post('/dashboard/ajax-update', [DashboardController::class, 'ajaxUpdate'])->middleware('api.rate.limit:admin_ajax,120,1')->name('dashboard.ajax-update');
 
 // Dashboard principal
 // Aquí solo mantenemos las rutas del dashboard principal
@@ -136,7 +136,7 @@ Route::resource('companies', MasterCompanyController::class);
 */
 
 // API para obtener conductores activos por carrier (para Ajax)
-Route::get('/api/drivers/by-carrier/{carrier}', [AccidentsController::class, 'getDriversByCarrier'])->name('api.drivers.by-carrier');
+Route::get('/api/drivers/by-carrier/{carrier}', [AccidentsController::class, 'getDriversByCarrier'])->middleware('api.rate.limit:admin_api,60,1')->name('api.drivers.by-carrier');
 
 // Ruta para eliminar documentos de traffic convictions (usada por el formulario)
 Route::delete('traffic/documents/{document}', [TrafficConvictionsController::class, 'destroyDocument'])->name('traffic.doc.delete');
@@ -423,6 +423,8 @@ Route::get('carrier/export-excel', [CarrierController::class, 'exportToExcel'])-
 Route::get('carrier/export-pdf', [CarrierController::class, 'exportToPdf'])->name('carrier.export.pdf');
 Route::post('carrier/{carrier}/delete-photo', [CarrierController::class, 'deletePhoto'])->name('carrier.delete-photo');
 
+// Gestión de Drivers
+Route::resource('drivers', DriversController::class);
 
 /*
 Route::post('carrier/{carrier}/delete-photo', [CarrierController::class, 'deletePhoto'])->name('carrier.delete-photo');
@@ -491,6 +493,10 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
     Route::get('/{carrier:slug}/documents', [CarrierController::class, 'documents'])->name('documents');
     Route::put('/document/{document}/update-status', [CarrierController::class, 'updateDocumentStatus'])->name('document.update-status');
     Route::post('/{carrier}/delete-photo', [CarrierController::class, 'deletePhoto'])->name('delete-photo');
+    
+    // Rutas para gestionar información bancaria
+    Route::post('/{carrier}/banking/approve', [CarrierController::class, 'approveBanking'])->name('banking.approve');
+    Route::post('/{carrier}/banking/reject', [CarrierController::class, 'rejectBanking'])->name('banking.reject');
 
     // Rutas anidadas para UserCarriers
     Route::prefix('{carrier:slug}/user-carriers')->name('user_carriers.')->group(function () {

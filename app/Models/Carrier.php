@@ -23,13 +23,23 @@ class Carrier extends Model implements HasMedia
         'address',
         'state',
         'zipcode',
+        'country',
         'ein_number',
         'dot_number',
         'mc_number',
         'state_dot',
         'ifta_account',
+        'ifta',
+        'business_type',
+        'years_in_business',
+        'fleet_size',
+        'user_id',
         'id_plan',
+        'membership_id',
+        'documents_ready',
+        'terms_accepted_at',
         'status',
+        'document_status',
         'referrer_token_expires_at',
     ];
 
@@ -73,6 +83,7 @@ class Carrier extends Model implements HasMedia
     public const STATUS_INACTIVE = 0;
     public const STATUS_ACTIVE = 1;
     public const STATUS_PENDING = 2;
+    public const STATUS_PENDING_VALIDATION = 3;
 
     public const DOCUMENT_STATUS_PENDING = 'pending';
     public const DOCUMENT_STATUS_IN_PROGRESS = 'in_progress';
@@ -119,6 +130,7 @@ class Carrier extends Model implements HasMedia
             self::STATUS_ACTIVE => 'Active',
             self::STATUS_INACTIVE => 'Inactive',
             self::STATUS_PENDING => 'Pending',
+            self::STATUS_PENDING_VALIDATION => 'Pending Validation',
             default => 'Unknown',
         };
     }
@@ -179,5 +191,11 @@ class Carrier extends Model implements HasMedia
     public function vehicles()
     {
         return $this->hasMany(\App\Models\Admin\Vehicle\Vehicle::class);
+    }
+
+    // Relación con detalles bancarios
+    public function bankingDetails()
+    {
+        return $this->hasOne(CarrierBankingDetail::class);
     }
 }

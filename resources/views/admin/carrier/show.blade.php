@@ -246,6 +246,13 @@
                             <i data-lucide="file-text" class="w-4 h-4"></i>
                             <span>Documents</span>
                         </button>
+                        <button id="tab-banking"
+                            class="tab-button px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600 whitespace-nowrap flex items-center gap-2"
+                            data-tw-toggle="tab" data-target="#tab-content-banking"
+                            aria-controls="tab-content-banking" aria-selected="false">
+                            <i data-lucide="credit-card" class="w-4 h-4"></i>
+                            <span>Banking Info</span>
+                        </button>
                     </nav>
                 </div>
 
@@ -464,6 +471,102 @@
                 </div>
             </div>
 
+            <!-- Banking Info Tab -->
+            <div id="banking-info" class="tab-pane hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="credit-card" class="w-5 h-5 text-blue-600"></i>
+                            <h2 class="text-lg font-semibold text-gray-900">Banking Information</h2>
+                        </div>
+                        @if($carrier->bankingDetails && $carrier->bankingDetails->status === 'pending')
+                            <div class="flex gap-2">
+                                <form method="POST" action="{{ route('admin.carrier.banking.approve', $carrier->id) }}" class="inline">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                        <i data-lucide="check" class="w-4 h-4 mr-1"></i>
+                                        Approve
+                                    </button>
+                                </form>
+                                <button type="button" onclick="openRejectModal()" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                    <i data-lucide="x" class="w-4 h-4 mr-1"></i>
+                                    Reject
+                                </button>
+                            </div>
+                        @endif
+                        
+                        @if($carrier->bankingDetails && $carrier->bankingDetails->status === 'rejected' && $carrier->bankingDetails->rejection_reason)
+                            <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                <p class="text-sm font-medium text-red-800 mb-1">Rejection Reason:</p>
+                                <p class="text-sm text-red-700">{{ $carrier->bankingDetails->rejection_reason }}</p>
+                            </div>
+                        @endif
+                    </div>
+
+                    @if($carrier->bankingDetails)
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Account Holder Name</label>
+                                    <div class="px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                                        {{ $carrier->bankingDetails->account_holder_name }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+                                    <div class="px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                                        {{ substr($carrier->bankingDetails->account_number, 0, 4) }}****{{ substr($carrier->bankingDetails->account_number, -4) }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                                    <div class="px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                                        {{ $carrier->bankingDetails->country_code === 'US' ? 'United States' : $carrier->bankingDetails->country_code }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                    <div class="px-3 py-2">
+                                        @if($carrier->bankingDetails->status === 'approved')
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></span>
+                                                Approved
+                                            </span>
+                                        @elseif($carrier->bankingDetails->status === 'rejected')
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-1.5"></span>
+                                                Rejected
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                <span class="w-1.5 h-1.5 bg-yellow-400 rounded-full mr-1.5"></span>
+                                                Pending Validation
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Submitted Date</label>
+                                    <div class="px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                                        {{ $carrier->bankingDetails->created_at->format('M d, Y H:i') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <div class="text-center py-8">
+                            <div class="text-gray-500">
+                                <i data-lucide="credit-card" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                                <p class="text-lg font-medium">No Banking Information</p>
+                                <p class="text-sm">This carrier has not submitted banking details yet.</p>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
             {{-- <!-- Columna Derecha - Documentos Faltantes -->
     <div class="col-span-12 lg:col-span-3">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-fit">
@@ -609,6 +712,59 @@
                         lucide.createIcons();
                     }
                 });
+                
+                // Función para abrir el modal de rechazo
+                function openRejectModal() {
+                    document.getElementById('rejectModal').classList.remove('hidden');
+                }
+                
+                // Función para cerrar el modal de rechazo
+                function closeRejectModal() {
+                    document.getElementById('rejectModal').classList.add('hidden');
+                    document.getElementById('rejectionReason').value = '';
+                }
             </script>
         @endpush
+        
+        <!-- Modal de Rechazo -->
+        <div id="rejectModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Reject Banking Information</h3>
+                        <button type="button" onclick="closeRejectModal()" class="text-gray-400 hover:text-gray-600">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    
+                    <form action="{{ route('admin.carrier.banking.reject', $carrier) }}" method="POST">
+                        @csrf
+                        <div class="mb-4">
+                            <label for="rejectionReason" class="block text-sm font-medium text-gray-700 mb-2">
+                                Reason for Rejection <span class="text-red-500">*</span>
+                            </label>
+                            <textarea 
+                                id="rejectionReason" 
+                                name="rejection_reason" 
+                                rows="4" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500" 
+                                placeholder="Please provide a detailed reason for rejecting the banking information..."
+                                required
+                            ></textarea>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" onclick="closeRejectModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors duration-200">
+                                <i data-lucide="x" class="w-4 h-4 mr-1 inline"></i>
+                                Reject Banking Info
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
     @endsection

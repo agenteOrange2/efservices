@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('employment_verification_tokens', function (Blueprint $table) {
-            $table->string('signature_path')->nullable()->after('verified_at');
-            $table->string('document_path')->nullable()->after('signature_path');
+        Schema::table('carriers', function (Blueprint $table) {
+            $table->string('country', 2)->default('US')->after('zipcode');
         });
     }
 
@@ -22,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('employment_verification_tokens', function (Blueprint $table) {
-            //
+        Schema::table('carriers', function (Blueprint $table) {
+            $table->dropColumn('country');
         });
     }
 };

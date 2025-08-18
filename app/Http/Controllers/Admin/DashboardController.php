@@ -3,108 +3,129 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Carrier;
-use App\Models\CarrierDocument as Document;
-use App\Models\UserDriverDetail as Driver;
-use App\Models\User;
-use App\Models\Admin\Vehicle\Vehicle;
-use App\Models\Admin\Vehicle\VehicleMaintenance;
+use App\Services\StatisticsService;
 use Carbon\Carbon;
-use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use App\Models\User;
+use App\Models\Carrier;
+use App\Models\Driver;
+use App\Models\Vehicle;
+use App\Models\VehicleMaintenance;
+use Carbon\CarbonPeriod;
 
 class DashboardController extends Controller
 {
+    protected $statisticsService;
+
+    public function __construct(StatisticsService $statisticsService)
+    {
+        $this->statisticsService = $statisticsService;
+    }
+
     /**
      * Mostrar el dashboard con las estadísticas
      */
     public function index(Request $request)
     {
-        // Valores predeterminados para filtros de fecha
-        $dateRange = $request->input('date_range', 'daily');
-        $customDateStart = $request->input('custom_date_start', Carbon::now()->subDays(7)->format('Y-m-d'));
-        $customDateEnd = $request->input('custom_date_end', Carbon::now()->format('Y-m-d'));
+        $startTime = microtime(true);
+        
+        try {
+            // Valores predeterminados para filtros de fecha
+            $dateRange = $request->input('date_range', 'daily');
+            $customDateStart = $request->input('custom_date_start', Carbon::now()->subDays(7)->format('Y-m-d'));
+            $customDateEnd = $request->input('custom_date_end', Carbon::now()->format('Y-m-d'));
 
-        // Obtener los datos según los filtros
-        $stats = $this->loadStats($dateRange, $customDateStart, $customDateEnd);
+            // Cache key único basado en parámetros
+            $cacheKey = "dashboard_data_{$dateRange}_{$customDateStart}_{$customDateEnd}";
+            
+            // Intentar obtener datos del caché
+            $dashboardData = Cache::remember($cacheKey, 300, function () use ($dateRange, $customDateStart, $customDateEnd) {
+                $stats = $this->statisticsService->getDashboardStats();
+                return [
+                    'stats' => [
+                        'carriers' => $stats['carriers'],
+                        'drivers' => $stats['drivers'],
+                        'revenue' => $stats['revenue'],
+                        'activity' => $stats['activity']
+                    ],
+                    'chartData' => $this->prepareChartData($dateRange, $customDateStart, $customDateEnd),
+                    'growthStats' => $stats['growth'],
+                    'systemAlerts' => $stats['alerts'],
+                ];
+            });
+            
+            // Log performance
+            $executionTime = round((microtime(true) - $startTime) * 1000, 2);
+            Log::info('Dashboard loaded', [
+                'execution_time_ms' => $executionTime,
+                'cache_hit' => Cache::has($cacheKey),
+                'date_range' => $dateRange
+            ]);
 
-        // Preparar los datos de gráficos
-        $chartData = $this->prepareChartData($dateRange, $customDateStart, $customDateEnd);
-
-        return view('admin.dashboard', compact('stats', 'chartData', 'dateRange', 'customDateStart', 'customDateEnd'));
+            return view('admin.dashboard', array_merge($dashboardData, [
+                'pageTitle' => 'Dashboard',
+                'breadcrumbs' => [
+                    ['name' => 'Dashboard', 'url' => route('admin.dashboard')]
+                ],
+                'dateRange' => $dateRange,
+                'customDateStart' => $customDateStart,
+                'customDateEnd' => $customDateEnd,
+                'stats' => $dashboardData['stats'] // Pasar $stats directamente para @json($stats)
+            ]));
+        } catch (\Exception $e) {
+            Log::error('Error loading dashboard statistics', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'execution_time_ms' => round((microtime(true) - $startTime) * 1000, 2)
+            ]);
+            
+            return view('admin.dashboard')->with('error', 'Error loading dashboard data');
+        }
     }
 
 
     /**
-     * Cargar estadísticas según filtros
+     * Exportar estadísticas a PDF
      */
-    private function loadStats($dateRange, $startDate = null, $endDate = null)
+    public function exportPdf(Request $request)
     {
-        // Determinar fechas según el filtro seleccionado
-        $dateFilter = $this->getDateFilter($dateRange, $startDate, $endDate);
-        $start = $dateFilter['start'];
-        $end = $dateFilter['end'];
-        
-        // Totales generales
-        $stats = [
-            // Vehículos
-            'totalVehicles' => Vehicle::count(),
-            'activeVehicles' => Vehicle::where('status', 'active')->count(),
-            'suspendedVehicles' => Vehicle::where('status', 'suspended')->count(),
-            'outOfServiceVehicles' => Vehicle::where('status', 'out_of_service')->count(),
+        try {
+            $dateRange = $request->input('date_range', 'daily');
+            $customDateStart = $request->input('custom_date_start', Carbon::now()->subDays(7)->format('Y-m-d'));
+            $customDateEnd = $request->input('custom_date_end', Carbon::now()->format('Y-m-d'));
+
+            // Obtener estadísticas usando el servicio
+            $dashboardStats = $this->statisticsService->getDashboardStats();
+            $stats = [
+                'carriers' => $dashboardStats['carriers'],
+                'drivers' => $dashboardStats['drivers'],
+                'revenue' => $dashboardStats['revenue'],
+                'activity' => $dashboardStats['activity']
+            ];
+            $chartData = $this->prepareChartData($dateRange, $customDateStart, $customDateEnd);
+            $growthStats = $dashboardStats['growth'];
+
+            $pdf = Pdf::loadView('admin.dashboard.pdf', compact(
+                'stats', 
+                'chartData', 
+                'growthStats',
+                'dateRange', 
+                'customDateStart', 
+                'customDateEnd'
+            ));
+
+            return $pdf->download('dashboard-statistics-' . now()->format('Y-m-d') . '.pdf');
+        } catch (\Exception $e) {
+            Log::error('Error exporting dashboard PDF', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             
-            // Maintenance - ensure all statuses are counted correctly
-            'totalMaintenance' => VehicleMaintenance::count(),
-            'completedMaintenance' => VehicleMaintenance::where('status', 'completed')->count(),
-            'pendingMaintenance' => VehicleMaintenance::whereIn('status', ['pending', 'in_progress'])->count(), // Include both 'pending' and 'in_progress'
-            'overdueMaintenance' => VehicleMaintenance::where('status', 'overdue')->count(),
-            'upcomingMaintenance' => VehicleMaintenance::where('status', 'upcoming')->count(),
-            
-            // Users - General statistics for all users
-            'totalUsers' => User::count(),
-            'activeUsers' => User::where('status', 'active')->count(),
-            'pendingUsers' => User::where('status', 'pending')->count(),
-            'inactiveUsers' => User::whereIn('status', ['inactive', 'suspended'])->count(),
-            
-            // Map user data to the variables expected by the dashboard
-            'totalSuperAdmins' => User::count(),
-            'activeUserCarriers' => User::where('status', 'active')->count(),
-            'pendingUserCarriers' => User::where('status', 'pending')->count(),
-            'inactiveUserCarriers' => User::whereIn('status', ['inactive', 'suspended'])->count(),
-            
-            // Carriers
-            'totalCarriers' => Carrier::count(),
-            'activeCarriers' => User::whereHas('roles', function ($query) {
-                $query->where('name', 'carrier');
-            })->where('status', 'active')->count(),
-            'pendingCarriers' => User::whereHas('roles', function ($query) {
-                $query->where('name', 'carrier');
-            })->where('status', 'pending')->count(),
-            'inactiveCarriers' => User::whereHas('roles', function ($query) {
-                $query->where('name', 'carrier');
-            })->where('status', 'inactive')->count(),
-            
-            // Drivers
-            'totalUserDrivers' => Driver::count(),
-            'activeUserDrivers' => Driver::where('status', 'active')->count(),
-            'pendingUserDrivers' => Driver::where('status', 'pending')->count(),
-            'inactiveUserDrivers' => Driver::where('status', 'inactive')->count(),
-            
-            // Otros
-            'totalSuperAdmins' => User::whereHas('roles', function ($query) {
-                $query->where('name', 'super-admin');
-            })->count(),
-            'totalDocuments' => Document::count(),
-            
-            // Tablas de datos recientes
-            'recentCarriers' => $this->getRecentCarriers($start, $end),
-            'recentUserCarriers' => $this->getRecentUserCarriers($start, $end),
-            'recentUserDrivers' => $this->getRecentUserDrivers($start, $end)
-        ];
-        
-        return $stats;
+            return back()->with('error', 'Error exporting PDF');
+        }
     }
     
     /**
@@ -446,117 +467,117 @@ class DashboardController extends Controller
     /**
      * Exportar dashboard en PDF
      */
-    public function exportPdf(Request $request)
-    {
-        try {
-            // Obtener los mismos datos que en el dashboard
-            $dateRange = $request->input('date_range', 'daily');
-            $customDateStart = $request->input('custom_date_start', Carbon::now()->subDays(7)->format('Y-m-d'));
-            $customDateEnd = $request->input('custom_date_end', Carbon::now()->format('Y-m-d'));
+    // public function exportPdf(Request $request)
+    // {
+    //     try {
+    //         // Obtener los mismos datos que en el dashboard
+    //         $dateRange = $request->input('date_range', 'daily');
+    //         $customDateStart = $request->input('custom_date_start', Carbon::now()->subDays(7)->format('Y-m-d'));
+    //         $customDateEnd = $request->input('custom_date_end', Carbon::now()->format('Y-m-d'));
             
-            // Preparar rango de fechas para mostrar en PDF
-            $dateRangeText = 'Reporte Diario';
-            if ($dateRange === 'weekly') {
-                $dateRangeText = 'Reporte Semanal';
-            } elseif ($dateRange === 'monthly') {
-                $dateRangeText = 'Reporte Mensual';
-            } elseif ($dateRange === 'yearly') {
-                $dateRangeText = 'Reporte Anual';
-            } elseif ($dateRange === 'custom') {
-                $dateRangeText = 'Reporte Personalizado: ' . Carbon::parse($customDateStart)->format('d/m/Y') . ' - ' . Carbon::parse($customDateEnd)->format('d/m/Y');
-            }
+    //         // Preparar rango de fechas para mostrar en PDF
+    //         $dateRangeText = 'Reporte Diario';
+    //         if ($dateRange === 'weekly') {
+    //             $dateRangeText = 'Reporte Semanal';
+    //         } elseif ($dateRange === 'monthly') {
+    //             $dateRangeText = 'Reporte Mensual';
+    //         } elseif ($dateRange === 'yearly') {
+    //             $dateRangeText = 'Reporte Anual';
+    //         } elseif ($dateRange === 'custom') {
+    //             $dateRangeText = 'Reporte Personalizado: ' . Carbon::parse($customDateStart)->format('d/m/Y') . ' - ' . Carbon::parse($customDateEnd)->format('d/m/Y');
+    //         }
             
-            // Datos para el PDF
-            $activeVehicles = Vehicle::where('status', 'active')->count();
-            $suspendedVehicles = Vehicle::where('status', 'suspended')->count();
-            $outOfServiceVehicles = Vehicle::where('status', 'out_of_service')->count();
-            $totalVehicles = $activeVehicles + $suspendedVehicles + $outOfServiceVehicles;
+    //         // Datos para el PDF
+    //         $activeVehicles = Vehicle::where('status', 'active')->count();
+    //         $suspendedVehicles = Vehicle::where('status', 'suspended')->count();
+    //         $outOfServiceVehicles = Vehicle::where('status', 'out_of_service')->count();
+    //         $totalVehicles = $activeVehicles + $suspendedVehicles + $outOfServiceVehicles;
             
-            $completedMaintenance = VehicleMaintenance::where('status', 'completed')->count();
-            $pendingMaintenance = VehicleMaintenance::where('status', 'pending')->count();
-            $upcomingMaintenance = VehicleMaintenance::where('status', 'upcoming')->count();
-            $overdueMaintenance = VehicleMaintenance::where('status', 'overdue')->count();
-            $totalMaintenance = $completedMaintenance + $pendingMaintenance + $upcomingMaintenance + $overdueMaintenance;
+    //         $completedMaintenance = VehicleMaintenance::where('status', 'completed')->count();
+    //         $pendingMaintenance = VehicleMaintenance::where('status', 'pending')->count();
+    //         $upcomingMaintenance = VehicleMaintenance::where('status', 'upcoming')->count();
+    //         $overdueMaintenance = VehicleMaintenance::where('status', 'overdue')->count();
+    //         $totalMaintenance = $completedMaintenance + $pendingMaintenance + $upcomingMaintenance + $overdueMaintenance;
             
-            // Datos recientes
-            $recentVehicles = Vehicle::with('carrier')
-                ->orderBy('created_at', 'desc')
-                ->limit(5)
-                ->get()
-                ->map(function($vehicle) {
-                    // Make sure status is properly formatted and translated to English
-                    $statusLabel = ucfirst($vehicle->status);
-                    if ($statusLabel == 'Out_of_service') {
-                        $statusLabel = 'Out of Service';
-                    }
+    //         // Datos recientes
+    //         $recentVehicles = Vehicle::with('carrier')
+    //             ->orderBy('created_at', 'desc')
+    //             ->limit(5)
+    //             ->get()
+    //             ->map(function($vehicle) {
+    //                 // Make sure status is properly formatted and translated to English
+    //                 $statusLabel = ucfirst($vehicle->status);
+    //                 if ($statusLabel == 'Out_of_service') {
+    //                     $statusLabel = 'Out of Service';
+    //                 }
                     
-                    return [
-                        'make' => $vehicle->make ?? 'N/A',
-                        'model' => $vehicle->model ?? 'N/A',
-                        'year' => $vehicle->year ?? 'N/A',
-                        'vin' => $vehicle->vin ?? 'N/A',
-                        'carrier' => $vehicle->carrier ? $vehicle->carrier->name : 'N/A',
-                        'status' => $statusLabel,
-                        'status_class' => $this->getVehicleStatusClass($vehicle->status),
-                        'created_at' => $vehicle->created_at ? $vehicle->created_at->format('d/m/Y') : 'N/A'
-                    ];
-                })->toArray();
+    //                 return [
+    //                     'make' => $vehicle->make ?? 'N/A',
+    //                     'model' => $vehicle->model ?? 'N/A',
+    //                     'year' => $vehicle->year ?? 'N/A',
+    //                     'vin' => $vehicle->vin ?? 'N/A',
+    //                     'carrier' => $vehicle->carrier ? $vehicle->carrier->name : 'N/A',
+    //                     'status' => $statusLabel,
+    //                     'status_class' => $this->getVehicleStatusClass($vehicle->status),
+    //                     'created_at' => $vehicle->created_at ? $vehicle->created_at->format('d/m/Y') : 'N/A'
+    //                 ];
+    //             })->toArray();
             
-            $recentMaintenance = VehicleMaintenance::with('vehicle')
-                ->orderBy('created_at', 'desc')
-                ->limit(5)
-                ->get()
-                ->map(function($maintenance) {
-                    // Make sure status is properly formatted and translated to English
-                    $statusLabel = ucfirst($maintenance->status);
-                    if ($statusLabel == 'In_progress') {
-                        $statusLabel = 'In Progress';
-                    } elseif ($statusLabel == 'Pending') {
-                        $statusLabel = 'Pending';
-                    } elseif ($statusLabel == 'Completed') {
-                        $statusLabel = 'Completed';
-                    } elseif ($statusLabel == 'Overdue') {
-                        $statusLabel = 'Overdue';
-                    } elseif ($statusLabel == 'Upcoming') {
-                        $statusLabel = 'Upcoming';
-                    }
+    //         $recentMaintenance = VehicleMaintenance::with('vehicle')
+    //             ->orderBy('created_at', 'desc')
+    //             ->limit(5)
+    //             ->get()
+    //             ->map(function($maintenance) {
+    //                 // Make sure status is properly formatted and translated to English
+    //                 $statusLabel = ucfirst($maintenance->status);
+    //                 if ($statusLabel == 'In_progress') {
+    //                     $statusLabel = 'In Progress';
+    //                 } elseif ($statusLabel == 'Pending') {
+    //                     $statusLabel = 'Pending';
+    //                 } elseif ($statusLabel == 'Completed') {
+    //                     $statusLabel = 'Completed';
+    //                 } elseif ($statusLabel == 'Overdue') {
+    //                     $statusLabel = 'Overdue';
+    //                 } elseif ($statusLabel == 'Upcoming') {
+    //                     $statusLabel = 'Upcoming';
+    //                 }
                     
-                    return [
-                        'vehicle' => ($maintenance->vehicle ? ($maintenance->vehicle->make ?? '') . ' ' . ($maintenance->vehicle->model ?? '') . ' ' . ($maintenance->vehicle->year ?? '') : 'N/A'),
-                        'service_date' => $maintenance->service_date ? Carbon::parse($maintenance->service_date)->format('d/m/Y') : 'N/A',
-                        'next_service_date' => $maintenance->next_service_date ? Carbon::parse($maintenance->next_service_date)->format('d/m/Y') : 'N/A',
-                        'cost' => '$' . number_format($maintenance->cost ?? 0, 2),
-                        'status' => $statusLabel,
-                        'status_class' => $this->getStatusClass($maintenance->status)
-                    ];
-                })->toArray();
+    //                 return [
+    //                     'vehicle' => ($maintenance->vehicle ? ($maintenance->vehicle->make ?? '') . ' ' . ($maintenance->vehicle->model ?? '') . ' ' . ($maintenance->vehicle->year ?? '') : 'N/A'),
+    //                     'service_date' => $maintenance->service_date ? Carbon::parse($maintenance->service_date)->format('d/m/Y') : 'N/A',
+    //                     'next_service_date' => $maintenance->next_service_date ? Carbon::parse($maintenance->next_service_date)->format('d/m/Y') : 'N/A',
+    //                     'cost' => '$' . number_format($maintenance->cost ?? 0, 2),
+    //                     'status' => $statusLabel,
+    //                     'status_class' => $this->getStatusClass($maintenance->status)
+    //                 ];
+    //             })->toArray();
             
-            // Crear el PDF
-            $pdf = PDF::loadView('admin.reports.dashboard-pdf', [
-                'dateRange' => $dateRangeText,
-                'generatedAt' => Carbon::now()->format('d/m/Y H:i:s'),
-                'totalVehicles' => $totalVehicles,
-                'activeVehicles' => $activeVehicles,
-                'suspendedVehicles' => $suspendedVehicles,
-                'outOfServiceVehicles' => $outOfServiceVehicles,
-                'totalMaintenance' => $totalMaintenance,
-                'completedMaintenance' => $completedMaintenance,
-                'pendingMaintenance' => $pendingMaintenance,
-                'upcomingMaintenance' => $upcomingMaintenance,
-                'overdueMaintenance' => $overdueMaintenance,
-                'recentVehicles' => $recentVehicles,
-                'recentMaintenance' => $recentMaintenance
-            ]);
+    //         // Crear el PDF
+    //         $pdf = PDF::loadView('admin.reports.dashboard-pdf', [
+    //             'dateRange' => $dateRangeText,
+    //             'generatedAt' => Carbon::now()->format('d/m/Y H:i:s'),
+    //             'totalVehicles' => $totalVehicles,
+    //             'activeVehicles' => $activeVehicles,
+    //             'suspendedVehicles' => $suspendedVehicles,
+    //             'outOfServiceVehicles' => $outOfServiceVehicles,
+    //             'totalMaintenance' => $totalMaintenance,
+    //             'completedMaintenance' => $completedMaintenance,
+    //             'pendingMaintenance' => $pendingMaintenance,
+    //             'upcomingMaintenance' => $upcomingMaintenance,
+    //             'overdueMaintenance' => $overdueMaintenance,
+    //             'recentVehicles' => $recentVehicles,
+    //             'recentMaintenance' => $recentMaintenance
+    //         ]);
             
-            return $pdf->download('dashboard-report-' . Carbon::now()->format('Y-m-d') . '.pdf');
+    //         return $pdf->download('dashboard-report-' . Carbon::now()->format('Y-m-d') . '.pdf');
             
-        } catch (\Exception $e) {
-            // Log el error
-            \Illuminate\Support\Facades\Log::error('Error generando PDF: ' . $e->getMessage());
-            // Retornar respuesta de error
-            return response()->json(['error' => 'Error al generar PDF: ' . $e->getMessage()], 500);
-        }
-    }
+    //     } catch (\Exception $e) {
+    //         // Log el error
+    //         \Illuminate\Support\Facades\Log::error('Error generando PDF: ' . $e->getMessage());
+    //         // Retornar respuesta de error
+    //         return response()->json(['error' => 'Error al generar PDF: ' . $e->getMessage()], 500);
+    //     }
+    // }
     
     /**
      * Actualizar dashboard por AJAX

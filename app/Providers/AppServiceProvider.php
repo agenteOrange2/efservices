@@ -2,6 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Carrier;
+use App\Models\Admin\Vehicle\Vehicle;
+use App\Observers\CarrierObserver;
+// use App\Observers\DriverObserver; // Comentado: Driver model no existe
+// use App\Observers\VehicleObserver; // Comentado: usar Vehicle específico si es necesario
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +24,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Registrar observers para invalidación automática de caché
+        Carrier::observe(CarrierObserver::class);
+        // Driver::observe(DriverObserver::class); // Comentado: Driver model no existe
+        // Vehicle::observe(VehicleObserver::class); // Comentado: usar Vehicle específico si es necesario
+        
         // Usar las funciones globales en Laravel 11
         app('session')->put('activeTheme', 'raze');
         
