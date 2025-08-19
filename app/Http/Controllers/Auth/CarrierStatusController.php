@@ -246,7 +246,7 @@ class CarrierStatusController extends Controller
 
         $carrier = $user->carrierDetails ? $user->carrierDetails->carrier : null;
         
-        if (!$carrier || $carrier->status !== Carrier::STATUS_PENDING_VALIDATION) {
+        if (!$carrier || $carrier->status !== Carrier::STATUS_PENDING) {
             return redirect()->route('carrier.dashboard');
         }
         

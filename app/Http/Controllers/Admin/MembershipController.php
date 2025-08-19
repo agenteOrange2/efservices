@@ -26,21 +26,33 @@ class MembershipController extends Controller
     //Crear y guardar un nuevo plan de membresía
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        // Validación base
+        $rules = [
             'name' => 'required|string|max:255',
             'description' => 'required|string|max:300',
             'pricing_type' => 'required|string|in:plan,individual',
-            'price' => $request->pricing_type === 'plan' ? 'required|numeric' : 'nullable|numeric',
-            'carrier_price' => $request->pricing_type === 'individual' ? 'required|numeric' : 'nullable|numeric',
-            'driver_price' => $request->pricing_type === 'individual' ? 'required|numeric' : 'nullable|numeric',
-            'vehicle_price' => $request->pricing_type === 'individual' ? 'required|numeric' : 'nullable|numeric',
             'max_carrier' => 'required|integer|min:1',
             'max_drivers' => 'required|integer|min:1',
             'max_vehicles' => 'required|integer|min:1',
             'image_membership' => 'nullable|image|max:2048',
             'status' => 'nullable|boolean',
             'show_in_register' => 'nullable|boolean',
-        ]);
+        ];
+
+        // Validación condicional basada en pricing_type
+        if ($request->input('pricing_type') === 'plan') {
+            $rules['price'] = 'required|numeric|min:0';
+            $rules['carrier_price'] = 'nullable|numeric|min:0';
+            $rules['driver_price'] = 'nullable|numeric|min:0';
+            $rules['vehicle_price'] = 'nullable|numeric|min:0';
+        } else {
+            $rules['price'] = 'nullable|numeric|min:0';
+            $rules['carrier_price'] = 'required|numeric|min:0';
+            $rules['driver_price'] = 'required|numeric|min:0';
+            $rules['vehicle_price'] = 'required|numeric|min:0';
+        }
+
+        $validated = $request->validate($rules);
         
         // Establecer show_in_register como false si no está presente
         $validated['show_in_register'] = $request->has('show_in_register') ? 1 : 0;
@@ -73,20 +85,32 @@ class MembershipController extends Controller
     // Actualizar un plan de membresía existente
     public function update(Request $request, Membership $membership)
     {
-        $validated = $request->validate([
+        // Validación base
+        $rules = [
             'name' => 'required|string|max:255',
             'description' => 'required|string|max:300',
             'pricing_type' => 'required|string|in:plan,individual',
-            'price' => $request->pricing_type === 'plan' ? 'required|numeric' : 'nullable|numeric',
-            'carrier_price' => $request->pricing_type === 'individual' ? 'required|numeric' : 'nullable|numeric',
-            'driver_price' => $request->pricing_type === 'individual' ? 'required|numeric' : 'nullable|numeric',
-            'vehicle_price' => $request->pricing_type === 'individual' ? 'required|numeric' : 'nullable|numeric',
             'max_carrier' => 'required|integer|min:1',
             'max_drivers' => 'required|integer|min:1',
             'max_vehicles' => 'required|integer|min:1',
             'image_membership' => 'nullable|image|max:2048',
             'status' => 'nullable|boolean',
-        ]);
+        ];
+
+        // Validación condicional basada en pricing_type
+        if ($request->input('pricing_type') === 'plan') {
+            $rules['price'] = 'required|numeric|min:0';
+            $rules['carrier_price'] = 'nullable|numeric|min:0';
+            $rules['driver_price'] = 'nullable|numeric|min:0';
+            $rules['vehicle_price'] = 'nullable|numeric|min:0';
+        } else {
+            $rules['price'] = 'nullable|numeric|min:0';
+            $rules['carrier_price'] = 'required|numeric|min:0';
+            $rules['driver_price'] = 'required|numeric|min:0';
+            $rules['vehicle_price'] = 'required|numeric|min:0';
+        }
+
+        $validated = $request->validate($rules);
 
         // Establecer el estado como 0 si no está presente
         $validated['status'] = $request->has('status') ? 1 : 0;

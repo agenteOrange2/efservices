@@ -72,14 +72,19 @@ class CarrierController extends Controller
             'address' => 'required|string|max:255',
             'state' => 'required|string|max:255',
             'zipcode' => 'required|string|max:10',
-            'ein_number' => 'required|string|max:255',
-            'dot_number' => 'nullable|string|max:255',
-            'mc_number' => 'nullable|string|max:255',
+            'ein_number' => 'required|string|max:255|unique:carriers,ein_number',
+            'dot_number' => 'nullable|string|max:255|unique:carriers,dot_number',
+            'mc_number' => 'nullable|string|max:255|unique:carriers,mc_number',
             'state_dot' => 'nullable|string|max:255',
             'ifta_account' => 'nullable|string|max:255',
             'logo_img' => 'nullable|image|max:2048',
             'id_plan' => 'required|exists:memberships,id',
-            'status' => 'required|integer|in:0,1,2',
+            'status' => 'required|integer|in:' . implode(',', [
+                Carrier::STATUS_INACTIVE,
+                Carrier::STATUS_ACTIVE,
+                Carrier::STATUS_PENDING,
+                Carrier::STATUS_PENDING_VALIDATION
+            ]),
         ]);
 
         try {
@@ -148,7 +153,7 @@ class CarrierController extends Controller
     public function show(Carrier $carrier)
     {
         try {
-            // Obtener datos completos del carrier usando el servicio
+            // Obtener datos completos del carrier usando el servicio optimizado
             $carrierData = $this->carrierService->getCarrierWithDetails($carrier->id);
             
             // Extraer datos para la vista
@@ -160,6 +165,15 @@ class CarrierController extends Controller
             $approvedDocuments = $carrierData['approvedDocuments'];
             $rejectedDocuments = $carrierData['rejectedDocuments'];
             $missingDocumentTypes = $carrierData['missingDocumentTypes'];
+            $stats = $carrierData['stats'];
+            
+            // Extraer detalles bancarios del carrier
+            $bankingDetails = $carrier->bankingDetails;
+            
+            // Validar datos críticos antes de mostrar la vista
+            if (!$carrier) {
+                return back()->with('error', 'Carrier data could not be loaded');
+            }
             
             return view('admin.carrier.show', compact(
                 'carrier', 
@@ -169,16 +183,24 @@ class CarrierController extends Controller
                 'pendingDocuments',
                 'approvedDocuments',
                 'rejectedDocuments',
-                'missingDocumentTypes'
+                'missingDocumentTypes',
+                'stats',
+                'bankingDetails'
             ));
         } catch (\Exception $e) {
             Log::error('Error loading carrier details', [
                 'carrier_id' => $carrier->id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
             
-            return back()->with('error', 'Error loading carrier details');
+            return back()->with($this->sendNotification(
+                'error',
+                'Error al cargar los detalles del carrier',
+                'Por favor, inténtalo de nuevo o contacta al administrador si el problema persiste.'
+            ));
         }
     }
     
@@ -263,7 +285,12 @@ class CarrierController extends Controller
             'ifta_account' => 'nullable|string|max:255',
             'logo_img' => 'nullable|image|max:2048',
             'id_plan' => 'required|exists:memberships,id',
-            'status' => 'required|integer|in:0,1,2',
+            'status' => 'required|integer|in:' . implode(',', [
+                Carrier::STATUS_INACTIVE,
+                Carrier::STATUS_ACTIVE,
+                Carrier::STATUS_PENDING,
+                Carrier::STATUS_PENDING_VALIDATION
+            ]),
             'referrer_token' => 'nullable|string|max:16|unique:carriers,referrer_token,' . $carrier->id,
         ]);
 

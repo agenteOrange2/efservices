@@ -15,13 +15,21 @@ class CarrierService
     /**
      * Obtener todos los carriers con eager loading optimizado
      */
-    public function getAllCarriers(array $filters = []): Collection
+    public function getAllCarriers(array $filters = []): Collection|\Illuminate\Pagination\LengthAwarePaginator
     {
         try {
             $query = Carrier::with([
-                'membership:id,name,price',
-                'userCarriers:id,carrier_id,user_id,phone,job_position,status',
-                'userCarriers.user:id,name,email,status'
+                'membership:id,name,price,description',
+                'userCarriers:id,carrier_id,user_id,phone,job_position,status,created_at',
+                'userCarriers.user:id,name,email,status,access_type',
+                'documents:id,carrier_id,document_type_id,status',
+                'documents.documentType:id,name',
+                'bankingDetails:id,carrier_id,account_holder_name,account_number,country_code,status,rejection_reason'
+            ])
+            ->select([
+                'id', 'name', 'slug', 'address', 'state', 'zipcode',
+                'ein_number', 'dot_number', 'mc_number', 'status',
+                'document_status', 'id_plan', 'created_at', 'updated_at'
             ]);
 
             // Aplicar filtros
@@ -37,8 +45,15 @@ class CarrierService
                 $query->where(function ($q) use ($filters) {
                     $q->where('name', 'like', '%' . $filters['search'] . '%')
                       ->orWhere('ein_number', 'like', '%' . $filters['search'] . '%')
-                      ->orWhere('dot_number', 'like', '%' . $filters['search'] . '%');
+                      ->orWhere('dot_number', 'like', '%' . $filters['search'] . '%')
+                      ->orWhere('mc_number', 'like', '%' . $filters['search'] . '%');
                 });
+            }
+
+            // Paginación si se especifica
+            if (!empty($filters['per_page'])) {
+                return $query->orderBy('created_at', 'desc')
+                            ->paginate($filters['per_page']);
             }
 
             return $query->orderBy('created_at', 'desc')->get();
@@ -59,7 +74,7 @@ class CarrierService
                 'userCarriers:id,carrier_id,user_id,phone,job_position,status,created_at',
                 'userCarriers.user:id,name,email,status,access_type',
                 'vehicles:id,carrier_id,make,model,year,vin,status',
-                'drivers:id,carrier_id,user_id,license_number,status'
+                'userDrivers:id,carrier_id,user_id,status'
             ])->find($carrierId);
         } catch (Exception $e) {
             Log::error('Error al obtener carrier por ID: ' . $e->getMessage());
@@ -68,9 +83,117 @@ class CarrierService
     }
 
     /**
+     * Obtener carrier con todos los detalles para la vista show
+     * Optimizado con eager loading eficiente y mejor manejo de errores
+     */
+    public function getCarrierWithDetails(int $carrierId): array
+    {
+        try {
+            // Validar que el carrier existe antes de procesar
+            if (!Carrier::where('id', $carrierId)->exists()) {
+                throw new \Illuminate\Database\Eloquent\ModelNotFoundException(
+                    "Carrier with ID {$carrierId} not found"
+                );
+            }
+
+            // Obtener carrier con todas las relaciones necesarias en una sola consulta optimizada
+            $carrier = Carrier::with([
+                'membership:id,name,price,description',
+                'bankingDetails:id,carrier_id,account_holder_name,account_number,country_code,status,rejection_reason,created_at',
+                'userCarriers:id,carrier_id,user_id,phone,job_position,status,created_at',
+                'userCarriers.user:id,name,email,status,access_type',
+                'userDrivers:id,carrier_id,user_id,status,created_at',
+                'userDrivers.user:id,name,email,status',
+                'documents:id,carrier_id,document_type_id,status,date,created_at',
+                'documents.documentType:id,name,requirement,default_file_path'
+            ])->findOrFail($carrierId);
+
+            // Extraer relaciones ya cargadas para evitar consultas adicionales
+            $userCarriers = $carrier->userCarriers ?? collect();
+            $drivers = $carrier->userDrivers ?? collect();
+            $documents = $carrier->documents ?? collect();
+
+            // Validar que las relaciones críticas existen
+            if (!$carrier->membership) {
+                Log::warning('Carrier without membership plan', ['carrier_id' => $carrierId]);
+            }
+
+            // Filtrar documentos por estado de manera eficiente
+            $documentsByStatus = $documents->groupBy('status');
+            $pendingDocuments = $documentsByStatus->get('pending', collect());
+            $approvedDocuments = $documentsByStatus->get('approved', collect());
+            $rejectedDocuments = $documentsByStatus->get('rejected', collect());
+
+            // Obtener tipos de documentos faltantes de manera optimizada
+            $existingDocumentTypeIds = $documents->pluck('document_type_id')->unique()->toArray();
+            $missingDocumentTypes = collect();
+            
+            if (!empty($existingDocumentTypeIds)) {
+                $missingDocumentTypes = \App\Models\DocumentType::select('id', 'name', 'requirement')
+                    ->whereNotIn('id', $existingDocumentTypeIds)
+                    ->orderBy('name')
+                    ->get();
+            } else {
+                // Si no hay documentos, todos los tipos están faltantes
+                $missingDocumentTypes = \App\Models\DocumentType::select('id', 'name', 'requirement')
+                    ->orderBy('name')
+                    ->get();
+            }
+
+            // Calcular estadísticas adicionales
+            $stats = [
+                'total_users' => $userCarriers->count(),
+                'active_users' => $userCarriers->where('status', 1)->count(),
+                'total_drivers' => $drivers->count(),
+                'active_drivers' => $drivers->where('status', 1)->count(),
+                'total_documents' => $documents->count(),
+                'pending_documents_count' => $pendingDocuments->count(),
+                'approved_documents_count' => $approvedDocuments->count(),
+                'rejected_documents_count' => $rejectedDocuments->count(),
+                'missing_documents_count' => $missingDocumentTypes->count(),
+                'document_completion_percentage' => $documents->count() > 0 
+                    ? round(($approvedDocuments->count() / $documents->count()) * 100, 1) 
+                    : 0
+            ];
+
+            Log::info('Carrier details loaded successfully', [
+                'carrier_id' => $carrierId,
+                'stats' => $stats
+            ]);
+
+            return [
+                'carrier' => $carrier,
+                'userCarriers' => $userCarriers,
+                'drivers' => $drivers,
+                'documents' => $documents,
+                'pendingDocuments' => $pendingDocuments,
+                'approvedDocuments' => $approvedDocuments,
+                'rejectedDocuments' => $rejectedDocuments,
+                'missingDocumentTypes' => $missingDocumentTypes,
+                'stats' => $stats
+            ];
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::error('Carrier not found', [
+                'carrier_id' => $carrierId,
+                'error' => $e->getMessage()
+            ]);
+            throw new Exception("El transportista con ID {$carrierId} no fue encontrado");
+        } catch (\Exception $e) {
+            Log::error('Error al obtener detalles completos del carrier', [
+                'carrier_id' => $carrierId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            throw new Exception('Error al obtener los detalles del transportista: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Crear un nuevo carrier con transacción
      */
-    public function createCarrier(array $data): Carrier
+    public function createCarrier(array $data, $logoFile = null): Carrier
     {
         DB::beginTransaction();
         
@@ -82,13 +205,23 @@ class CarrierService
             $carrier = Carrier::create([
                 'name' => $data['name'],
                 'address' => $data['address'],
+                'state' => $data['state'],
+                'zipcode' => $data['zipcode'],
                 'ein_number' => $data['ein_number'],
                 'dot_number' => $data['dot_number'] ?? null,
                 'mc_number' => $data['mc_number'] ?? null,
+                'state_dot' => $data['state_dot'] ?? null,
+                'ifta_account' => $data['ifta_account'] ?? null,
                 'id_plan' => $data['id_plan'],
-                'status' => $data['status'] ?? 'active',
-                'document_status' => $data['document_status'] ?? 'pending'
+                'status' => $data['status'] ?? Carrier::STATUS_PENDING,
+                'document_status' => $data['document_status'] ?? Carrier::DOCUMENT_STATUS_PENDING
             ]);
+
+            // Manejar el archivo de logo si se proporciona
+            if ($logoFile) {
+                $carrier->addMediaFromRequest('logo_img')
+                    ->toMediaCollection('logo_carrier');
+            }
 
             // Si se proporciona información del usuario, crear la relación
             if (!empty($data['user_data'])) {
@@ -105,6 +238,8 @@ class CarrierService
             throw new Exception('Error al crear el transportista: ' . $e->getMessage());
         }
     }
+
+
 
     /**
      * Actualizar un carrier con transacción
@@ -159,7 +294,7 @@ class CarrierService
             }
 
             // Soft delete
-            $carrier->update(['status' => 'inactive']);
+            $carrier->update(['status' => Carrier::STATUS_INACTIVE]);
             
             DB::commit();
             Log::info('Carrier eliminado exitosamente: ' . $carrierId);
@@ -180,11 +315,13 @@ class CarrierService
         try {
             return [
                 'total' => Carrier::count(),
-                'active' => Carrier::where('status', 'active')->count(),
-                'inactive' => Carrier::where('status', 'inactive')->count(),
-                'pending_documents' => Carrier::where('document_status', 'pending')->count(),
-                'approved_documents' => Carrier::where('document_status', 'approved')->count(),
-                'rejected_documents' => Carrier::where('document_status', 'rejected')->count(),
+                'active' => Carrier::where('status', Carrier::STATUS_ACTIVE)->count(),
+                'inactive' => Carrier::where('status', Carrier::STATUS_INACTIVE)->count(),
+                'pending' => Carrier::where('status', Carrier::STATUS_PENDING)->count(),
+                'pending_validation' => Carrier::where('status', Carrier::STATUS_PENDING_VALIDATION)->count(),
+                'pending_documents' => Carrier::where('document_status', Carrier::DOCUMENT_STATUS_PENDING)->count(),
+                'in_progress_documents' => Carrier::where('document_status', Carrier::DOCUMENT_STATUS_IN_PROGRESS)->count(),
+                'completed_documents' => Carrier::where('document_status', Carrier::DOCUMENT_STATUS_COMPLETED)->count(),
                 'recent' => Carrier::where('created_at', '>=', now()->subDays(30))->count()
             ];
         } catch (Exception $e) {
@@ -198,6 +335,19 @@ class CarrierService
      */
     private function validateCarrierData(array $data, ?int $carrierId = null): void
     {
+        // Validar campos requeridos
+        $requiredFields = ['name', 'address', 'state', 'zipcode', 'ein_number'];
+        foreach ($requiredFields as $field) {
+            if (empty($data[$field])) {
+                throw new Exception("El campo {$field} es requerido");
+            }
+        }
+
+        // Validar formato EIN (XX-XXXXXXX)
+        if (!empty($data['ein_number']) && !preg_match('/^\d{2}-\d{7}$/', $data['ein_number'])) {
+            throw new Exception('El formato del número EIN debe ser XX-XXXXXXX');
+        }
+
         // Validar EIN único
         if (!empty($data['ein_number'])) {
             $query = Carrier::where('ein_number', $data['ein_number']);
@@ -218,6 +368,27 @@ class CarrierService
             if ($query->exists()) {
                 throw new Exception('El número DOT ya está registrado');
             }
+        }
+
+        // Validar MC único si se proporciona
+        if (!empty($data['mc_number'])) {
+            $query = Carrier::where('mc_number', $data['mc_number']);
+            if ($carrierId) {
+                $query->where('id', '!=', $carrierId);
+            }
+            if ($query->exists()) {
+                throw new Exception('El número MC ya está registrado');
+            }
+        }
+
+        // Validar estado válido
+        if (isset($data['status']) && !in_array($data['status'], [
+            Carrier::STATUS_INACTIVE,
+            Carrier::STATUS_ACTIVE,
+            Carrier::STATUS_PENDING,
+            Carrier::STATUS_PENDING_VALIDATION
+        ])) {
+            throw new Exception('Estado de carrier inválido');
         }
     }
 

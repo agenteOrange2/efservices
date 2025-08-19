@@ -42,9 +42,33 @@
 
                 <!-- Form -->
                 <div class="mt-4 sm:mt-6">
-                    <form method="POST" action="{{ route('carrier.wizard.step3.process') }}" id="membership-form">
-                        @csrf
-                        <input type="hidden" name="step" value="membership">
+                    <!-- Alpine.js Data Container - Extended to include entire form and summary -->
+                    <div x-data="{
+                        selectedPlan: null,
+                        termsAccepted: false,
+                        
+                        selectPlan(planId) {
+                            this.selectedPlan = planId;
+                            document.querySelector(`input[name='membership_id'][value='${planId}']`).checked = true;
+                        }
+                    }" x-init="
+                        // Initialize with old values if they exist
+                        const checkedMembership = document.querySelector('input[name=\"membership_id\"]:checked');
+                        if (checkedMembership) {
+                            this.selectedPlan = parseInt(checkedMembership.value);
+                        }
+                        
+                        const checkedTerms = document.querySelector('input[name=\"terms_accepted\"]:checked');
+                        if (checkedTerms) {
+                            this.termsAccepted = true;
+                        }
+                    ">
+                    <div class="flex flex-col  lg:gap-8">
+                        <!-- Left Panel - Form -->
+                        <div class="lg:w-full">
+                            <form method="POST" action="{{ route('carrier.wizard.step3.process') }}" id="membership-form">
+                                @csrf
+                                <input type="hidden" name="step" value="membership">
 
                         <!-- Error Messages -->
                         @if ($errors->any())
@@ -62,11 +86,13 @@
                                 </ul>
                             </div>
                         @endif
-
+                        
                         <!-- Membership Plans -->
                         <div class="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
                             @foreach($memberships as $membership)
-                                <div class="membership-option border-2 border-slate-200 rounded-lg p-3 sm:p-4 cursor-pointer transition-all duration-200 hover:border-primary/50" 
+                                <div class="membership-option border-2 rounded-lg p-3 sm:p-4 cursor-pointer transition-all duration-200" 
+                                     :class="selectedPlan === {{ $membership->id }} ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-primary/50'"
+                                     @click="selectPlan({{ $membership->id }})"
                                      data-membership-id="{{ $membership->id }}">
                                     <div class="flex items-start justify-between">
                                         <div class="flex items-start">
@@ -147,31 +173,17 @@
                             @endforeach
                         </div>
 
-                        <!-- Document Upload Question -->
-                        <div class="mb-4 sm:mb-6">
-                            <x-base.form-label class="text-sm sm:text-base font-medium mb-2 sm:mb-3">Do you have your required documents ready to upload?</x-base.form-label>
-                            <div class="space-y-2">
-                                <label class="flex items-start sm:items-center cursor-pointer">
-                                    <input type="radio" name="has_documents" value="yes" class="mr-2 sm:mr-3 mt-0.5 sm:mt-0 text-primary focus:ring-primary" {{ old('has_documents') === 'yes' ? 'checked' : '' }}>
-                                    <span class="text-sm sm:text-base text-slate-700">Yes, I have all required documents ready</span>
-                                </label>
-                                <label class="flex items-start sm:items-center cursor-pointer">
-                                    <input type="radio" name="has_documents" value="no" class="mr-2 sm:mr-3 mt-0.5 sm:mt-0 text-primary focus:ring-primary" {{ old('has_documents') === 'no' ? 'checked' : '' }}>
-                                    <span class="text-sm sm:text-base text-slate-700">No, I'll upload them later</span>
-                                </label>
-                            </div>
-                            <div class="text-red-500 text-sm mt-1 hidden" id="has_documents-error"></div>
-                        </div>
+
 
                         <!-- Terms and Conditions -->
                         <div class="mb-4 sm:mb-6">
                             <label class="flex items-start cursor-pointer">
-                                <input type="checkbox" name="terms_accepted" value="1" class="mt-0.5 sm:mt-1 mr-2 sm:mr-3 text-primary focus:ring-primary" {{ old('terms_accepted') ? 'checked' : '' }} required>
+                                <input type="checkbox" name="terms_accepted" value="1" class="mt-0.5 sm:mt-1 mr-2 sm:mr-3 text-primary focus:ring-primary" {{ old('terms_accepted') ? 'checked' : '' }} required @change="termsAccepted = $event.target.checked">
                                 <span class="text-xs sm:text-sm text-slate-700">
                                     I agree to the 
-                                    <a href="#" class="text-primary hover:underline" target="_blank">Terms of Service</a> 
+                                    <button type="button" class="text-primary hover:underline" onclick="openTermsModal()">Terms of Service</button> 
                                     and 
-                                    <a href="#" class="text-primary hover:underline" target="_blank">Privacy Policy</a>
+                                    <button type="button" class="text-primary hover:underline" onclick="openPrivacyModal()">Privacy Policy</button>
                                 </span>
                             </label>
                             <div class="text-red-500 text-sm mt-1 hidden" id="terms_accepted-error"></div>
@@ -199,6 +211,7 @@
                                 variant="primary" 
                                 rounded
                                 id="submit-btn"
+                                disabled
                             >
                                 <span class="flex items-center justify-center">
                                     <span id="submit-text">Continue to Banking Info</span>
@@ -213,98 +226,221 @@
                                     </div>
                                 </span>
                             </x-base.button>
+                                </div>
+                            </form>
                         </div>
-                    </form>
+                        
+
+                    </div>
+                    </div> <!-- End Alpine.js Data Container -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <div
+        class="container fixed inset-0 grid h-screen w-screen grid-cols-12 pl-14 pr-12 lg:max-w-[1550px] xl:px-24 2xl:max-w-[1750px]">
+        <div @class([
+            'relative h-screen col-span-12 lg:col-span-5 2xl:col-span-4 z-20',
+            "after:bg-white after:hidden after:lg:block after:content-[''] after:absolute after:right-0 after:inset-y-0 after:bg-gradient-to-b after:from-white after:to-slate-100/80 after:w-[800%] after:rounded-[0_1.2rem_1.2rem_0/0_1.7rem_1.7rem_0]",
+            "before:content-[''] before:hidden before:lg:block before:absolute before:right-0 before:inset-y-0 before:my-6 before:bg-gradient-to-b before:from-white/10 before:to-slate-50/10 before:bg-white/50 before:w-[800%] before:-mr-4 before:rounded-[0_1.2rem_1.2rem_0/0_1.7rem_1.7rem_0]",
+        ])></div>
+        <div @class([
+            'h-full col-span-7 2xl:col-span-8 lg:relative',
+            "before:content-[''] before:absolute before:lg:-ml-10 before:left-0 before:inset-y-0 before:bg-gradient-to-b before:from-theme-1 before:to-theme-2 before:w-screen before:lg:w-[800%]",
+            "after:content-[''] after:absolute after:inset-y-0 after:left-0 after:w-screen after:lg:w-[800%] after:bg-texture-white after:bg-fixed after:bg-center after:lg:bg-[25rem_-25rem] after:bg-no-repeat",
+        ])>
+            <div class="sticky top-0 z-10 flex-col justify-center hidden h-screen ml-16 lg:flex xl:ml-28 2xl:ml-36">
+                <div class="text-[2.6rem] font-medium leading-[1.4] text-white xl:text-5xl xl:leading-[1.2]">
+                    Welcome to EF Services
+                </div>
+                <div class="mt-5 text-base leading-relaxed text-white/70 xl:text-lg">
+                    Our dedicated team is committed to guiding you at every turn. We go above and beyond to ensure
+                    complete customer satisfaction, delivering tailored transport solutions designed to keep you moving
+                    forward.
+                </div>
+                <div class="flex flex-col gap-3 mt-10 xl:flex-row xl:items-center">
+                    {{-- <div class="flex items-center">
+                        <div class="image-fit zoom-in h-9 w-9 2xl:h-11 2xl:w-11">
+                            <x-base.tippy class="rounded-full border-[3px] border-white/50"
+                                src="{{ Vite::asset($users[0]['photo']) }}"
+                                alt="Tailwise - Admin Dashboard Template" as="img"
+                                content="{{ $users[0]['name'] }}" />
+                        </div>
+                        <div class="-ml-3 image-fit zoom-in h-9 w-9 2xl:h-11 2xl:w-11">
+                            <x-base.tippy class="rounded-full border-[3px] border-white/50"
+                                src="{{ Vite::asset($users[1]['photo']) }}"
+                                alt="Tailwise - Admin Dashboard Template" as="img"
+                                content="{{ $users[1]['name'] }}" />
+                        </div>
+                        <div class="-ml-3 image-fit zoom-in h-9 w-9 2xl:h-11 2xl:w-11">
+                            <x-base.tippy class="rounded-full border-[3px] border-white/50"
+                                src="{{ Vite::asset($users[2]['photo']) }}"
+                                alt="Tailwise - Admin Dashboard Template" as="img"
+                                content="{{ $users[2]['name'] }}" />
+                        </div>
+                        <div class="-ml-3 image-fit zoom-in h-9 w-9 2xl:h-11 2xl:w-11">
+                            <x-base.tippy class="rounded-full border-[3px] border-white/50"
+                                src="{{ Vite::asset($users[3]['photo']) }}"
+                                alt="Tailwise - Admin Dashboard Template" as="img"
+                                content="{{ $users[3]['name'] }}" />
+                        </div>
+                    </div> --}}
+                    <div class="text-base text-white/70 xl:ml-2 2xl:ml-3">
+                        Log in now and experience the difference that passion, reliability, and innovation can bring to
+                        your operations.
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('membership-form');
-            const membershipOptions = document.querySelectorAll('.membership-option');
-            const submitBtn = document.getElementById('submit-btn');
 
-            // Handle membership option clicks
-            membershipOptions.forEach(option => {
-                option.addEventListener('click', function() {
-                    const radio = this.querySelector('input[type="radio"]');
-                    radio.checked = true;
-                    updateSelectedOption();
-                });
-            });
-
-            // Handle radio button changes
-            document.querySelectorAll('input[name="membership_id"]').forEach(radio => {
-                radio.addEventListener('change', updateSelectedOption);
-            });
-
-            function updateSelectedOption() {
-                membershipOptions.forEach(option => {
-                    const radio = option.querySelector('input[type="radio"]');
-                    if (radio.checked) {
-                        option.classList.add('border-primary', 'bg-primary/5');
-                        option.classList.remove('border-slate-200');
-                    } else {
-                        option.classList.remove('border-primary', 'bg-primary/5');
-                        option.classList.add('border-slate-200');
-                    }
-                });
-            }
-
-            // Form validation
-            form.addEventListener('submit', function(e) {
-                let isValid = true;
-
-                // Check if membership is selected
-                const membershipSelected = document.querySelector('input[name="membership_id"]:checked');
-                if (!membershipSelected) {
-                    isValid = false;
-                    alert('Please select a membership plan.');
-                }
-
-                // Check if document question is answered
-                const documentsAnswered = document.querySelector('input[name="has_documents"]:checked');
-                if (!documentsAnswered) {
-                    isValid = false;
-                    showFieldError('has_documents', 'Please indicate if you have documents ready.');
-                }
-
-                // Check if terms are accepted
-                const termsAccepted = document.querySelector('input[name="terms_accepted"]:checked');
-                if (!termsAccepted) {
-                    isValid = false;
-                    showFieldError('terms_accepted', 'Please accept the terms and conditions.');
-                }
-
-                if (!isValid) {
-                    e.preventDefault();
-                } else {
-                    showLoadingState();
-                }
-            });
-
-            function showFieldError(fieldName, message) {
-                const errorDiv = document.getElementById(`${fieldName}-error`);
-                if (errorDiv) {
-                    errorDiv.textContent = message;
-                    errorDiv.classList.remove('hidden');
-                }
-            }
-
-            function showLoadingState() {
-                const submitText = document.getElementById('submit-text');
-                const loadingSpinner = document.getElementById('loading-spinner');
+<!-- Terms Modal -->
+<div id="termsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
+        <div class="flex justify-between items-center p-6 border-b">
+            <h3 class="text-xl font-semibold text-slate-800">Terms of Service - EF Services</h3>
+            <button type="button" onclick="closeTermsModal()" class="text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="p-6 overflow-y-auto max-h-[60vh]">
+            <div class="prose prose-sm max-w-none">
+                <h4 class="font-semibold mb-3">1. Acceptance of Terms</h4>
+                <p class="mb-4">By accessing and using EF Services, you accept and agree to be bound by the terms and provision of this agreement.</p>
                 
-                submitBtn.disabled = true;
-                submitText.classList.add('hidden');
-                loadingSpinner.classList.remove('hidden');
-            }
+                <h4 class="font-semibold mb-3">2. Services Description</h4>
+                <p class="mb-4">EF Services provides comprehensive transportation management solutions including carrier registration, driver management, vehicle tracking, and compliance monitoring.</p>
+                
+                <h4 class="font-semibold mb-3">3. User Responsibilities</h4>
+                <p class="mb-4">Users are responsible for maintaining the confidentiality of their account information and for all activities that occur under their account.</p>
+                
+                <h4 class="font-semibold mb-3">4. Payment Terms</h4>
+                <p class="mb-4">Membership fees are charged according to the selected plan. All payments are processed securely and are non-refundable unless otherwise specified.</p>
+                
+                <h4 class="font-semibold mb-3">5. Data Protection</h4>
+                <p class="mb-4">We are committed to protecting your personal information and comply with all applicable data protection regulations.</p>
+                
+                <h4 class="font-semibold mb-3">6. Limitation of Liability</h4>
+                <p class="mb-4">EF Services shall not be liable for any indirect, incidental, special, consequential, or punitive damages.</p>
+                
+                <h4 class="font-semibold mb-3">7. Modifications</h4>
+                <p class="mb-4">We reserve the right to modify these terms at any time. Users will be notified of significant changes.</p>
+            </div>
+        </div>
+        <div class="p-6 border-t bg-slate-50">
+            <button type="button" onclick="closeTermsModal()" class="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors">
+                I Understand
+            </button>
+        </div>
+    </div>
+</div>
 
-            // Initialize selected option on page load
-            updateSelectedOption();
-        });
-    </script>
+<!-- Privacy Policy Modal -->
+<div id="privacyModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
+        <div class="flex justify-between items-center p-6 border-b">
+            <h3 class="text-xl font-semibold text-slate-800">Privacy Policy - EF Services</h3>
+            <button type="button" onclick="closePrivacyModal()" class="text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="p-6 overflow-y-auto max-h-[60vh]">
+            <div class="prose prose-sm max-w-none">
+                <h4 class="font-semibold mb-3">Information We Collect</h4>
+                <p class="mb-4">We collect information you provide directly to us, such as when you create an account, use our services, or contact us for support.</p>
+                
+                <h4 class="font-semibold mb-3">How We Use Your Information</h4>
+                <p class="mb-4">We use the information we collect to provide, maintain, and improve our services, process transactions, and communicate with you.</p>
+                
+                <h4 class="font-semibold mb-3">Information Sharing</h4>
+                <p class="mb-4">We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, except as described in this policy.</p>
+                
+                <h4 class="font-semibold mb-3">Data Security</h4>
+                <p class="mb-4">We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.</p>
+                
+                <h4 class="font-semibold mb-3">Cookies and Tracking</h4>
+                <p class="mb-4">We use cookies and similar technologies to enhance your experience and analyze usage patterns on our platform.</p>
+                
+                <h4 class="font-semibold mb-3">Your Rights</h4>
+                <p class="mb-4">You have the right to access, update, or delete your personal information. Contact us if you wish to exercise these rights.</p>
+                
+                <h4 class="font-semibold mb-3">Contact Information</h4>
+                <p class="mb-4">If you have questions about this Privacy Policy, please contact us at privacy@efservices.la</p>
+            </div>
+        </div>
+        <div class="p-6 border-t bg-slate-50">
+            <button type="button" onclick="closePrivacyModal()" class="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors">
+                I Understand
+            </button>
+        </div>
+    </div>
+</div>
+
 </x-guest-layout>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const submitBtn = document.getElementById('submit-btn');
+    
+    function updateButtonState() {
+        const selectedPlan = document.querySelector('input[name="membership_id"]:checked');
+        const termsAccepted = document.querySelector('input[name="terms_accepted"]:checked');
+        
+        // Enable/disable submit button - only require plan selection and terms acceptance
+        if (selectedPlan && termsAccepted) {
+            submitBtn.disabled = false;
+        } else {
+            submitBtn.disabled = true;
+        }
+    }
+    
+    // Add event listeners
+    document.querySelectorAll('input[name="membership_id"]').forEach(input => {
+        input.addEventListener('change', updateButtonState);
+    });
+    
+    document.querySelector('input[name="terms_accepted"]').addEventListener('change', updateButtonState);
+    
+    // Initial state check
+    updateButtonState();
+});
+
+// Modal functions
+function openTermsModal() {
+    document.getElementById('termsModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeTermsModal() {
+    document.getElementById('termsModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+function openPrivacyModal() {
+    document.getElementById('privacyModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePrivacyModal() {
+    document.getElementById('privacyModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+// Close modals when clicking outside
+document.getElementById('termsModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeTermsModal();
+    }
+});
+
+document.getElementById('privacyModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closePrivacyModal();
+    }
+});
+</script>

@@ -67,14 +67,7 @@ class CarrierAuthController extends Controller
                 return redirect()->route('carrier.confirmation')
                     ->with('warning', 'Your account is pending approval.');
                     
-            case Carrier::STATUS_PENDING_VALIDATION:
-                Log::info('Carrier con estado pendiente validación', [
-                    'user_id' => $user->id,
-                    'carrier_id' => $carrier->id
-                ]);
-                
-                return redirect()->route('carrier.pending.validation')
-                    ->with('info', 'Your banking information is being validated. Please wait for approval.');
+            // STATUS_PENDING_VALIDATION case removed - now using STATUS_PENDING for admin review
                     
             case Carrier::STATUS_INACTIVE:
                 Log::warning('Intento de login con carrier inactivo', [

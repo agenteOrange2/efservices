@@ -1,19 +1,22 @@
 import Pristine from "pristinejs";
 import Toastify from 'toastify-js';
 import TomSelect from 'tom-select';
-import Alpine from 'alpinejs';
 import Pikaday from 'pikaday';
 import moment from 'moment';
 import 'pikaday/css/pikaday.css';
 
-// Evitar inicialización duplicada
-if (!window.Livewire) {
-    Livewire.start(); // Inicializa Livewire primero
+// Alpine.js se carga desde CDN en el layout guest
+// Solo configurar si no está ya disponible
+if (!window.Alpine) {
+    import('alpinejs').then(Alpine => {
+        window.Alpine = Alpine.default;
+        Alpine.default.start();
+    });
 }
 
-if (!window.Alpine) {
-    window.Alpine = Alpine;
-    Alpine.start();   // Luego inicializa Alpine
+// Inicializar Livewire si está disponible
+if (typeof Livewire !== 'undefined') {
+    Livewire.start();
 }
 
 // Importar jQuery explícitamente

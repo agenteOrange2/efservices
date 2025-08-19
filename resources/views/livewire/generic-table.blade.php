@@ -109,6 +109,29 @@
                                         </svg>
                                         <div class="ml-1 whitespace-nowrap">Pending</div>
                                     </div>
+                                @elseif ($item[$column] == 3)
+                                    <!-- Status Pending Validation -->
+                                    <div class="flex items-center justify-start text-info text-start">
+                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24"
+                                            height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <path d="M12 6v6l4 2"></path>
+                                        </svg>
+                                        <div class="ml-1 whitespace-nowrap">Pending Validation</div>
+                                    </div>
+                                @else
+                                    <!-- Status desconocido -->
+                                    <div class="flex items-center justify-start text-slate-500 text-start">
+                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24"
+                                            height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                            <path d="M12 17h.01"></path>
+                                        </svg>
+                                        <div class="ml-1 whitespace-nowrap">Unknown ({{ $item[$column] }})</div>
+                                    </div>
                                 @endif
                             @elseif ($column === 'requirement')
                                 {{-- Nuevo bloque para el campo "requirement" --}}

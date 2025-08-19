@@ -154,8 +154,6 @@ class FortifyServiceProvider extends ServiceProvider
                 
                 switch ($carrier->status) {
                     case \App\Models\Carrier::STATUS_PENDING:
-                        return route('carrier.confirmation');
-                    case \App\Models\Carrier::STATUS_PENDING_VALIDATION:
                         return route('carrier.pending.validation');
                     case \App\Models\Carrier::STATUS_INACTIVE:
                         return route('login');

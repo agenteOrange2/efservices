@@ -148,11 +148,11 @@ class CheckUserStatus
                     'carrier_id' => $carrier->id,
                     'carrier_status' => $carrier->status,
                     'ACTIVE_STATUS' => Carrier::STATUS_ACTIVE,
-                    'PENDING_VALIDATION_STATUS' => Carrier::STATUS_PENDING_VALIDATION
+                    'PENDING_STATUS' => Carrier::STATUS_PENDING
                 ]);
 
-                // Si el carrier está en estado PENDING_VALIDATION (esperando validación admin)
-                if ($carrier->status === Carrier::STATUS_PENDING_VALIDATION && !$request->is('carrier/pending-validation') && !$request->is('carrier/*/documents*') && !$request->is('logout')) {
+                // Si el carrier está en estado PENDING (esperando validación admin)
+                if ($carrier->status === Carrier::STATUS_PENDING && !$request->is('carrier/pending-validation') && !$request->is('carrier/*/documents*') && !$request->is('logout')) {
                     Log::info('Redirigiendo a pending-validation (carrier awaiting admin validation)', [
                         'user_id' => $user->id,
                         'carrier_status' => $carrier->status
@@ -161,8 +161,8 @@ class CheckUserStatus
                         ->with('info', 'Your account is pending administrative validation. We will review your banking information and activate your account soon.');
                 }
 
-                // Si el carrier está inactivo (no pending, active ni pending_validation) y NO está en la ruta de documentos, wizard o logout
-                if ($carrier->status !== Carrier::STATUS_ACTIVE && $carrier->status !== Carrier::STATUS_PENDING && $carrier->status !== Carrier::STATUS_PENDING_VALIDATION && !$request->is('carrier/*/documents*') && !$request->is('carrier/confirmation') && !$request->is('carrier/wizard*') && !$request->is('logout')) {
+                // Si el carrier está inactivo (no pending ni active) y NO está en la ruta de documentos, wizard o logout
+                if ($carrier->status !== Carrier::STATUS_ACTIVE && $carrier->status !== Carrier::STATUS_PENDING && !$request->is('carrier/*/documents*') && !$request->is('carrier/confirmation') && !$request->is('carrier/wizard*') && !$request->is('logout')) {
                     Log::info('Redirigiendo a confirmation (carrier not active)', [
                         'user_id' => $user->id,
                         'carrier_status' => $carrier->status

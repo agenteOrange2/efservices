@@ -16,6 +16,9 @@
 
 
 
+    <!-- Alpine.js CDN - Load before any x-data -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -35,7 +38,24 @@
     @livewireScripts
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>    
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Ensure Alpine.js is available -->
+    <script>
+        // Wait for Alpine.js to be available before initializing components
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if Alpine is available, if not wait for it
+            if (typeof window.Alpine === 'undefined') {
+                const checkAlpine = setInterval(() => {
+                    if (typeof window.Alpine !== 'undefined') {
+                        clearInterval(checkAlpine);
+                        console.log('Alpine.js is now available');
+                    }
+                }, 50);
+            }
+        });
+    </script>
+    
     <script>
         // Mobile menu functionality
         const menuToggle = document.getElementById('menu-toggle');
@@ -60,8 +80,9 @@
                 lucide.createIcons();
             }
             
-            // Initialize Swiper
-            const swiper = new Swiper('.swiper', {
+            // Initialize Swiper only if available
+            if (typeof Swiper !== 'undefined' && document.querySelector('.swiper')) {
+                const swiper = new Swiper('.swiper', {
                 effect: 'fade',
                 fadeEffect: {
                     crossFade: true
@@ -92,18 +113,19 @@
                 });
             });
 
-            // Update active nav box on slide change
-            swiper.on('slideChange', function() {
-                const realIndex = swiper.realIndex;
+                // Update active nav box on slide change
+                swiper.on('slideChange', function() {
+                    const realIndex = swiper.realIndex;
 
-                navBoxes.forEach((box, i) => {
-                    if (i === realIndex) {
-                        box.classList.add('active');
-                    } else {
-                        box.classList.remove('active');
-                    }
+                    navBoxes.forEach((box, i) => {
+                        if (i === realIndex) {
+                            box.classList.add('active');
+                        } else {
+                            box.classList.remove('active');
+                        }
+                    });
                 });
-            });
+            }
 
         });
     </script>

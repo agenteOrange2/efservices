@@ -258,17 +258,17 @@
                                 <div class="flex-1 w-full mt-3 xl:mt-0">
                                     <div class="grid-cols-3 gap-2 sm:grid">
                                         <x-base.input-group>
-                                            <x-base.input-group.text>$</x-base.input-group.text>
+                                            <x-base.input-group.text>#</x-base.input-group.text>
                                             <x-base.form-input class="w-full" type="number" name="max_carrier" id="max_carrier"
                                                 value="{{ old('max_carrier') }}" placeholder="Max Carrier" />
                                         </x-base.input-group>
                                         <x-base.input-group>
-                                            <x-base.input-group.text>$</x-base.input-group.text>
+                                            <x-base.input-group.text>#</x-base.input-group.text>
                                             <x-base.form-input class="w-full" type="number" name="max_drivers" id="max_drivers"
                                                 value="{{ old('max_drivers') }}" placeholder="Max Driver" />
                                         </x-base.input-group>
                                         <x-base.input-group>
-                                            <x-base.input-group.text>$</x-base.input-group.text>
+                                            <x-base.input-group.text>#</x-base.input-group.text>
                                             <x-base.form-input class="w-full" type="number" name="max_vehicles" id="max_vehicles"
                                                 value="{{ old('max_vehicles') }}" placeholder="Max Vehicles" />
                                         </x-base.input-group>

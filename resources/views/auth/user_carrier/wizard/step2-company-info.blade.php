@@ -205,11 +205,12 @@
                         <!-- Business Details -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-5">
                             <div>
-                                <x-base.form-label for="business_type">Business Type</x-base.form-label>
+                                <x-base.form-label for="business_type">Business Type*</x-base.form-label>
                                 <x-base.form-select 
                                     class="block w-full rounded-[0.6rem] border-slate-300/80 px-3 sm:px-4 py-2.5 sm:py-3.5 transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm sm:text-base"
                                     name="business_type" 
                                     id="business_type"
+                                    required
                                 >
                                     <option value="">Select Type</option>
                                     <option value="LLC" {{ old('business_type') === 'LLC' ? 'selected' : '' }}>LLC</option>
@@ -220,11 +221,12 @@
                                 <div class="text-red-500 text-sm mt-1 hidden" id="business_type-error"></div>
                             </div>
                             <div>
-                                <x-base.form-label for="years_in_business">Years in Business</x-base.form-label>
+                                <x-base.form-label for="years_in_business">Years in Business*</x-base.form-label>
                                 <x-base.form-select 
                                     class="block w-full rounded-[0.6rem] border-slate-300/80 px-3 sm:px-4 py-2.5 sm:py-3.5 transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm sm:text-base"
                                     name="years_in_business" 
                                     id="years_in_business"
+                                    required
                                 >
                                     <option value="">Select Range</option>
                                     <option value="0-1" {{ old('years_in_business') === '0-1' ? 'selected' : '' }}>Less than 1 year</option>
@@ -239,11 +241,12 @@
 
                         <!-- Fleet Size -->
                         <div class="mb-5 sm:mb-6">
-                            <x-base.form-label for="fleet_size">Fleet Size</x-base.form-label>
+                            <x-base.form-label for="fleet_size">Fleet Size*</x-base.form-label>
                             <x-base.form-select 
                                 class="block w-full rounded-[0.6rem] border-slate-300/80 px-3 sm:px-4 py-2.5 sm:py-3.5 transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm sm:text-base"
                                 name="fleet_size" 
                                 id="fleet_size"
+                                required
                             >
                                 <option value="">Select Fleet Size</option>
                                 <option value="1-5" {{ old('fleet_size') === '1-5' ? 'selected' : '' }}>1-5 vehicles</option>
@@ -297,40 +300,135 @@
             </div>
         </div>
     </div>
+    <div
+        class="container fixed inset-0 grid h-screen w-screen grid-cols-12 pl-14 pr-12 lg:max-w-[1550px] xl:px-24 2xl:max-w-[1750px]">
+        <div @class([
+            'relative h-screen col-span-12 lg:col-span-5 2xl:col-span-4 z-20',
+            "after:bg-white after:hidden after:lg:block after:content-[''] after:absolute after:right-0 after:inset-y-0 after:bg-gradient-to-b after:from-white after:to-slate-100/80 after:w-[800%] after:rounded-[0_1.2rem_1.2rem_0/0_1.7rem_1.7rem_0]",
+            "before:content-[''] before:hidden before:lg:block before:absolute before:right-0 before:inset-y-0 before:my-6 before:bg-gradient-to-b before:from-white/10 before:to-slate-50/10 before:bg-white/50 before:w-[800%] before:-mr-4 before:rounded-[0_1.2rem_1.2rem_0/0_1.7rem_1.7rem_0]",
+        ])></div>
+        <div @class([
+            'h-full col-span-7 2xl:col-span-8 lg:relative',
+            "before:content-[''] before:absolute before:lg:-ml-10 before:left-0 before:inset-y-0 before:bg-gradient-to-b before:from-theme-1 before:to-theme-2 before:w-screen before:lg:w-[800%]",
+            "after:content-[''] after:absolute after:inset-y-0 after:left-0 after:w-screen after:lg:w-[800%] after:bg-texture-white after:bg-fixed after:bg-center after:lg:bg-[25rem_-25rem] after:bg-no-repeat",
+        ])>
+            <div class="sticky top-0 z-10 flex-col justify-center hidden h-screen ml-16 lg:flex xl:ml-28 2xl:ml-36">
+                <div class="text-[2.6rem] font-medium leading-[1.4] text-white xl:text-5xl xl:leading-[1.2]">
+                    Welcome to EF Services
+                </div>
+                <div class="mt-5 text-base leading-relaxed text-white/70 xl:text-lg">
+                    Our dedicated team is committed to guiding you at every turn. We go above and beyond to ensure
+                    complete customer satisfaction, delivering tailored transport solutions designed to keep you moving
+                    forward.
+                </div>
+                <div class="flex flex-col gap-3 mt-10 xl:flex-row xl:items-center">
+                    {{-- <div class="flex items-center">
+                        <div class="image-fit zoom-in h-9 w-9 2xl:h-11 2xl:w-11">
+                            <x-base.tippy class="rounded-full border-[3px] border-white/50"
+                                src="{{ Vite::asset($users[0]['photo']) }}"
+                                alt="Tailwise - Admin Dashboard Template" as="img"
+                                content="{{ $users[0]['name'] }}" />
+                        </div>
+                        <div class="-ml-3 image-fit zoom-in h-9 w-9 2xl:h-11 2xl:w-11">
+                            <x-base.tippy class="rounded-full border-[3px] border-white/50"
+                                src="{{ Vite::asset($users[1]['photo']) }}"
+                                alt="Tailwise - Admin Dashboard Template" as="img"
+                                content="{{ $users[1]['name'] }}" />
+                        </div>
+                        <div class="-ml-3 image-fit zoom-in h-9 w-9 2xl:h-11 2xl:w-11">
+                            <x-base.tippy class="rounded-full border-[3px] border-white/50"
+                                src="{{ Vite::asset($users[2]['photo']) }}"
+                                alt="Tailwise - Admin Dashboard Template" as="img"
+                                content="{{ $users[2]['name'] }}" />
+                        </div>
+                        <div class="-ml-3 image-fit zoom-in h-9 w-9 2xl:h-11 2xl:w-11">
+                            <x-base.tippy class="rounded-full border-[3px] border-white/50"
+                                src="{{ Vite::asset($users[3]['photo']) }}"
+                                alt="Tailwise - Admin Dashboard Template" as="img"
+                                content="{{ $users[3]['name'] }}" />
+                        </div>
+                    </div> --}}
+                    <div class="text-base text-white/70 xl:ml-2 2xl:ml-3">
+                        Log in now and experience the difference that passion, reliability, and innovation can bring to
+                        your operations.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="https://unpkg.com/imask"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize input masks
+            // Initialize input masks with more flexible patterns
             const zipMask = IMask(document.getElementById('zip_code'), {
-                mask: '00000',
+                mask: [
+                    {
+                        mask: '00000'
+                    },
+                    {
+                        mask: '00000-0000'
+                    }
+                ],
                 lazy: false
             });
 
             const einMask = IMask(document.getElementById('ein_number'), {
                 mask: '00-0000000',
-                lazy: false
+                lazy: false,
+                prepare: function (str) {
+                    return str.replace(/[^\d]/g, '');
+                },
+                commit: function (value, masked) {
+                    // Auto-format EIN as user types
+                    if (value.length >= 2) {
+                        const digits = value.replace(/[^\d]/g, '');
+                        if (digits.length >= 2) {
+                            return digits.substring(0, 2) + '-' + digits.substring(2, 9);
+                        }
+                    }
+                    return value;
+                }
             });
 
             const dotMask = IMask(document.getElementById('dot_number'), {
-                mask: '0000000',
+                mask: /^\d{1,8}$/,
                 lazy: false
             });
 
             const mcMask = IMask(document.getElementById('mc_number'), {
-                mask: 'MC-000000',
-                lazy: false
+                mask: [
+                    {
+                        mask: 'MC-000000000'
+                    },
+                    {
+                        mask: /^\d{1,8}$/
+                    }
+                ],
+                lazy: false,
+                prepare: function (str) {
+                    // Allow input with or without MC prefix
+                    const cleaned = str.replace(/[^\dMC-]/gi, '').toUpperCase();
+                    return cleaned;
+                }
             });
 
+            // More flexible masks for state-specific fields
             const stateDotMask = IMask(document.getElementById('state_dot_number'), {
-                mask: /^[A-Z]{2}\d{6}$/,
-                lazy: false
+                mask: /^[A-Za-z0-9\-]{1,20}$/,
+                lazy: false,
+                prepare: function (str) {
+                    return str.toUpperCase();
+                }
             });
 
             const iftaMask = IMask(document.getElementById('ifta_account_number'), {
-                mask: 'IFTA000000',
-                lazy: false
+                mask: /^[A-Za-z0-9\-]{1,20}$/,
+                lazy: false,
+                prepare: function (str) {
+                    return str.toUpperCase();
+                }
             });
 
             // Real-time validation
@@ -510,19 +608,28 @@
             }
 
             function isValidEIN(ein) {
-                return /^\d{2}-\d{7}$/.test(ein);
+                // Accept EIN with or without dash, then validate format
+                const cleanEin = ein.replace(/[^\d]/g, '');
+                if (cleanEin.length === 9) {
+                    return /^\d{2}-\d{7}$/.test(ein) || /^\d{9}$/.test(cleanEin);
+                }
+                return false;
             }
 
             function isValidZipCode(zip) {
-                return /^\d{5}$/.test(zip);
+                // Accept 5-digit or 9-digit ZIP codes
+                return /^\d{5}(-\d{4})?$/.test(zip);
             }
 
             function isValidDOTNumber(dot) {
-                return /^\d{7}$/.test(dot);
+                // Accept 1-8 digits
+                return /^\d{1,8}$/.test(dot);
             }
 
             function isValidMCNumber(mc) {
-                return /^MC-\d{6}$/.test(mc);
+                // Accept MC number with or without MC prefix
+                const cleanMc = mc.replace(/[^\d]/g, '');
+                return /^(MC-)?\d{1,8}$/.test(mc) || /^\d{1,8}$/.test(cleanMc);
             }
 
             function setupAjaxValidation() {
@@ -560,9 +667,13 @@
                     case 'dot_number':
                         return /^\d{1,8}$/.test(value);
                     case 'mc_number':
-                        return /^MC-\d{1,8}$/.test(value);
+                        // Accept MC number with or without MC prefix
+                        const cleanMc = value.replace(/[^\d]/g, '');
+                        return /^(MC-)?\d{1,8}$/.test(value) || /^\d{1,8}$/.test(cleanMc);
                     case 'ein_number':
-                        return /^\d{2}-\d{7}$/.test(value);
+                        // Accept EIN with or without dash
+                        const cleanEin = value.replace(/[^\d]/g, '');
+                        return /^\d{2}-\d{7}$/.test(value) || (cleanEin.length === 9 && /^\d{9}$/.test(cleanEin));
                     default:
                         return true;
                 }
@@ -573,9 +684,9 @@
                     case 'dot_number':
                         return 'DOT number must be 1-8 digits';
                     case 'mc_number':
-                        return 'MC number must be in format MC-123456';
+                        return 'MC number must be 1-8 digits (with or without MC- prefix)';
                     case 'ein_number':
-                        return 'EIN must be in format XX-XXXXXXX';
+                        return 'EIN must be 9 digits (format: XX-XXXXXXX or XXXXXXXXX)';
                     default:
                         return 'Invalid format';
                 }

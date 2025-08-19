@@ -51,7 +51,7 @@ class CarrierDashboardController extends Controller
         
         // Verificar el estado del carrier y redirigir según corresponda
         switch ($carrier->status) {
-            case Carrier::STATUS_PENDING_VALIDATION:
+            case Carrier::STATUS_PENDING:
                 return redirect()->route('carrier.pending.validation')
                     ->with('info', 'Su solicitud está pendiente de validación.');
                     

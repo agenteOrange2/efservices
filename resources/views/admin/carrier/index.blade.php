@@ -51,9 +51,10 @@
                                 'type' => 'select',
                                 'label' => 'Status',
                                 'options' => [
-                                    'pending' => 'Pending',
-                                    'active' => 'Active',
-                                    'inactive' => 'Inactive',
+                                    '0' => 'Inactive',
+                                    '1' => 'Active',
+                                    '2' => 'Pending',
+                                    '3' => 'Pending Validation',
                                 ],
                             ],
                         ]" />
@@ -61,16 +62,17 @@
                 </div>
                 {{-- <livewire:carrier-manager /> --}}
 
-                <livewire:generic-table class="p-0" model="App\Models\Carrier" :columns="['name', 'address', 'status', 'created_at']" :searchableFields="['name', 'address', 'status', 'created_at']"
+                <livewire:generic-table class="p-0" model="App\Models\Carrier" :columns="['name', 'address', 'ein_number', 'dot_number', 'status', 'created_at']" :searchableFields="['name', 'address', 'ein_number', 'dot_number']"
                     editRoute="admin.carrier.edit" showSlugRoute="admin.carrier.show" exportExcelRoute="admin.carrier.export.excel"
                     exportPdfRoute="admin.carrier.export.pdf" :customFilters="[
                         'status' => [
                             'type' => 'select',
                             'label' => 'Status',
                             'options' => [
-                                'pending' => 'Pending',
-                                'active' => 'Active',
-                                'inactive' => 'Inactive',
+                                '0' => 'Inactive',
+                                '1' => 'Active',
+                                '2' => 'Pending',
+                                '3' => 'Pending Validation',
                             ],
                         ],
                     ]" />

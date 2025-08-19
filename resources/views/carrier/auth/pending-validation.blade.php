@@ -9,29 +9,37 @@
                 <!-- Timer Circle -->
                 <div class="flex justify-center my-6">
                     <div class="relative">
-                        <svg class="w-28 h-28" viewBox="0 0 100 100">
+                        <svg class="w-32 h-32" viewBox="0 0 100 100">
                             <circle 
                                 cx="50" 
                                 cy="50" 
                                 r="45" 
                                 fill="none" 
                                 stroke="#E2E8F0" 
-                                stroke-width="8" 
+                                stroke-width="6" 
                             />
                             <circle 
                                 cx="50" 
                                 cy="50" 
                                 r="45" 
                                 fill="none" 
-                                stroke="#03045E" 
-                                stroke-width="8" 
+                                stroke="url(#gradient)" 
+                                stroke-width="6" 
                                 stroke-dasharray="282.5" 
-                                stroke-dashoffset="150" 
+                                stroke-dashoffset="85" 
                                 stroke-linecap="round" 
+                                class="animate-pulse"
                             />
+                            <defs>
+                                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#1D4ED8;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
                         </svg>
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <div class="text-2xl font-bold text-gray-700">{{ $estimatedTime['estimated_days_remaining'] }}d</div>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <div class="text-2xl font-bold text-blue-600">{{ $estimatedTime['estimated_days_remaining'] }}</div>
+                            <div class="text-xs text-gray-500 font-medium">days left</div>
                         </div>
                     </div>
                 </div>
@@ -117,29 +125,38 @@
             <div class="border-t border-gray-100 mt-2"></div>
             
             <!-- Information Section -->
-            <div class="p-4 bg-blue-50 border-l-4 border-blue-400">
+            <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 rounded-r-lg">
                 <div class="flex">
                     <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                        </svg>
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="h-4 w-4 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
                     </div>
                     <div class="ml-3">
+                        <h4 class="text-sm font-semibold text-blue-800 mb-1">Security Notice</h4>
                         <p class="text-sm text-blue-700">
-                            <strong>Security Notice:</strong> Your banking information is encrypted and secure. Our team is validating the details to ensure account safety and compliance.
+                            Your banking information is encrypted and secure. Our team is validating the details to ensure account safety and compliance.
                         </p>
                     </div>
                 </div>
             </div>
             
             <!-- Action Buttons -->
-            <div class="flex p-4">
-                <a href="mailto:support@efservices.la" class="flex-1 py-3 px-4 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium text-center hover:bg-gray-50 transition-colors">
+            <div class="flex p-4 space-x-3">
+                <a href="mailto:support@efservices.la" class="flex-1 py-3 px-4 bg-white border-2 border-gray-200 text-gray-700 rounded-lg font-medium text-center hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 flex items-center justify-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
                     Contact Support
                 </a>
-                <form method="POST" action="{{ route('custom.logout') }}" class="flex-1 ml-3">
+                <form method="POST" action="{{ route('custom.logout') }}" class="flex-1">
                     @csrf
-                    <button type="submit" class="w-full py-3 px-4 bg-primary text-white rounded-lg font-medium hover:bg-primary transition-colors">
+                    <button type="submit" class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
                         Sign Out
                     </button>
                 </form>

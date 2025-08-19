@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CarrierBasicInfoRequest;
 use App\Http\Requests\CarrierCompanyInfoRequest;
+use App\Http\Requests\CarrierStep2Request;
 use App\Http\Requests\CarrierBankingInfoRequest;
 use App\Models\User;
 use App\Models\UserCarrierDetail;
@@ -230,7 +231,7 @@ class CarrierWizardController extends Controller
     /**
      * Process step 2: Company Information
      */
-    public function processStep2(CarrierCompanyInfoRequest $request): RedirectResponse
+    public function processStep2(CarrierStep2Request $request): RedirectResponse
     {
         try {
             if (!app()->environment('testing')) {
@@ -248,25 +249,14 @@ class CarrierWizardController extends Controller
             }
             */
 
+            // Get processed data from request
+            $carrierData = $request->getProcessedData();
+            $carrierData['status'] = 2; // pending_membership
+            
             // Create or update carrier
             $carrier = Carrier::updateOrCreate(
                 ['user_id' => $user->id],
-                [
-                    'name' => $request->carrier_name,
-                    'address' => $request->address,
-                    'state' => $request->state,
-                    'zipcode' => $request->zipcode,
-                    'ein_number' => $request->ein_number,
-                    'dot_number' => $request->dot_number,
-                    'mc_number' => $request->mc_number,
-                    'state_dot' => $request->state_dot,
-                    'ifta' => $request->ifta,
-                    'business_type' => $request->business_type,
-                    'years_in_business' => $request->years_in_business,
-                    'fleet_size' => $request->fleet_size,
-                    'slug' => Str::slug($request->carrier_name . '-' . $request->dot_number),
-                    'status' => 2 // pending_membership
-                ]
+                $carrierData
             );
 
             // Update UserCarrierDetail with carrier_id
@@ -347,7 +337,6 @@ class CarrierWizardController extends Controller
     {
         $request->validate([
             'membership_id' => 'required|exists:memberships,id',
-            'documents_ready' => 'required|in:yes,no,later',
             'terms_accepted' => 'required|accepted'
         ]);
 
@@ -369,10 +358,10 @@ class CarrierWizardController extends Controller
             // Update carrier with membership
             $carrier->update([
                 'id_plan' => $membership->id,
-                'documents_ready' => $request->documents_ready,
+                'documents_ready' => 'no',
                 'terms_accepted_at' => now(),
                 'status' => Carrier::STATUS_PENDING,
-                'document_status' => $request->documents_ready === 'yes' ? Carrier::DOCUMENT_STATUS_IN_PROGRESS : Carrier::DOCUMENT_STATUS_PENDING
+                'document_status' => Carrier::DOCUMENT_STATUS_PENDING
             ]);
 
             // Update user status
@@ -391,7 +380,6 @@ class CarrierWizardController extends Controller
                 'user_id' => $user->id,
                 'carrier_id' => $carrier->id,
                 'membership_id' => $membership->id,
-                'documents_ready' => $request->documents_ready,
                 'step' => 'membership_selection'
             ]);
 
@@ -554,9 +542,9 @@ class CarrierWizardController extends Controller
                 ]
             );
 
-            // Update carrier status to pending validation
+            // Update carrier status to pending for admin review
             $carrier->update([
-                'status' => Carrier::STATUS_PENDING_VALIDATION
+                'status' => Carrier::STATUS_PENDING
             ]);
 
             if (!app()->environment('testing')) {
