@@ -182,11 +182,11 @@
                                     class="block rounded-[0.6rem] border-slate-300/80 px-3 sm:px-4 py-2.5 sm:py-3.5 transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm sm:text-base"
                                     type="text" 
                                     placeholder="ST123456" 
-                                    name="state_dot_number" 
-                                    id="state_dot_number"
-                                    value="{{ old('state_dot_number') }}"
+                                    name="state_dot" 
+                                    id="state_dot"
+                                    value="{{ old('state_dot') }}"
                                 />
-                                <div class="text-red-500 text-sm mt-1 hidden" id="state_dot_number-error"></div>
+                                <div class="text-red-500 text-sm mt-1 hidden" id="state_dot-error"></div>
                             </div>
                             <div>
                                 <x-base.form-label for="ifta_account_number">IFTA Account Number</x-base.form-label>
@@ -194,11 +194,11 @@
                                     class="block rounded-[0.6rem] border-slate-300/80 px-3 sm:px-4 py-2.5 sm:py-3.5 transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm sm:text-base"
                                     type="text" 
                                     placeholder="IFTA123456" 
-                                    name="ifta_account_number" 
-                                    id="ifta_account_number"
-                                    value="{{ old('ifta_account_number') }}"
+                                    name="ifta_account" 
+                                    id="ifta_account"
+                                    value="{{ old('ifta_account') }}"
                                 />
-                                <div class="text-red-500 text-sm mt-1 hidden" id="ifta_account_number-error"></div>
+                                <div class="text-red-500 text-sm mt-1 hidden" id="ifta_account-error"></div>
                             </div>
                         </div>
 

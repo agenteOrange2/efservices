@@ -100,6 +100,18 @@
                             <p class="text-sm font-semibold text-gray-900 mt-1">{{ $carrier->ifta_account ?? 'N/A' }}</p>
                         </div>
                         <div class="bg-gray-50 rounded-lg p-3">
+                            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Business Type</label>
+                            <p class="text-sm font-semibold text-gray-900 mt-1">{{ $carrier->business_type ?? 'N/A' }}</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Years in Business</label>
+                            <p class="text-sm font-semibold text-gray-900 mt-1">{{ $carrier->years_in_business ?? 'N/A' }}</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Fleet Size</label>
+                            <p class="text-sm font-semibold text-gray-900 mt-1">{{ $carrier->fleet_size ?? 'N/A' }}</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
                             <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Plan</label>
                             <p class="text-sm font-semibold text-gray-900 mt-1">
                                 {{ $carrier->membership->name ?? 'No Plan' }}</p>
