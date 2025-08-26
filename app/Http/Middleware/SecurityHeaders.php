@@ -88,8 +88,8 @@ class SecurityHeaders
             return implode('; ', [
                 "default-src 'self'",
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Allow inline scripts for admin functionality
-                "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
-                "font-src 'self' fonts.gstatic.com",
+                "style-src 'self' 'unsafe-inline' fonts.googleapis.com fonts.bunny.net",
+                "font-src 'self' fonts.gstatic.com fonts.bunny.net data:",
                 "img-src 'self' data: https:",
                 "connect-src 'self'",
                 "frame-src 'none'",
@@ -100,12 +100,12 @@ class SecurityHeaders
             ]);
         }
         
-        // General CSP for public pages
+        // General CSP for public pages (including driver registration)
         return implode('; ', [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline'",
-            "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
-            "font-src 'self' fonts.gstatic.com",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Allow unsafe-eval for Livewire/Alpine.js
+            "style-src 'self' 'unsafe-inline' fonts.googleapis.com fonts.bunny.net",
+            "font-src 'self' fonts.gstatic.com fonts.bunny.net data:",
             "img-src 'self' data: https:",
             "connect-src 'self'",
             "frame-src 'self'",

@@ -18,6 +18,10 @@ use App\Services\CarrierDocumentService;
 use App\Traits\SendsCustomNotifications;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\Admin\Carrier\NewCarrierNotification;
+use App\Mail\PaymentValidatedMail;
+use App\Mail\BankingRejectedMail;
+use App\Mail\BankingPendingMail;
+use Illuminate\Support\Facades\Mail;
 
 class CarrierController extends Controller
 {
@@ -350,7 +354,32 @@ class CarrierController extends Controller
             $bankingDetails->update(['status' => 'approved']);
             
             // Actualizar estado del carrier a activo
-            $carrier->update(['status' => 'active']);
+            $carrier->update(['status' => Carrier::STATUS_ACTIVE]);
+            
+            // Enviar email de notificación
+            try {
+                // Obtener el email del usuario principal del carrier
+                $primaryUser = $carrier->userCarriers()->with('user')->first();
+                $userEmail = $primaryUser ? $primaryUser->user->email : null;
+                
+                if ($userEmail) {
+                    Mail::to($userEmail)->send(new PaymentValidatedMail($carrier));
+                    Log::info('Payment validated email sent', [
+                        'carrier_id' => $carrier->id,
+                        'email' => $userEmail
+                    ]);
+                } else {
+                    Log::warning('No primary user email found for carrier', [
+                        'carrier_id' => $carrier->id
+                    ]);
+                }
+            } catch (\Exception $emailError) {
+                Log::error('Error sending payment validated email', [
+                    'carrier_id' => $carrier->id,
+                    'email' => $carrier->email,
+                    'error' => $emailError->getMessage()
+                ]);
+            }
             
             Log::info('Banking information approved', [
                 'carrier_id' => $carrier->id,
@@ -361,7 +390,7 @@ class CarrierController extends Controller
             return back()->with($this->sendNotification(
                 'success',
                 'Banking information approved successfully.',
-                'The carrier can now access their dashboard.'
+                'The carrier can now access their dashboard and has been notified by email.'
             ));
         } catch (\Exception $e) {
             Log::error('Error approving banking information', [
@@ -397,7 +426,32 @@ class CarrierController extends Controller
             ]);
             
             // Mantener el carrier en estado pending_validation
-            $carrier->update(['status' => 'pending_validation']);
+            $carrier->update(['status' => Carrier::STATUS_PENDING_VALIDATION]);
+            
+            // Enviar email de notificación
+            try {
+                // Obtener el email del usuario principal del carrier
+                $primaryUser = $carrier->userCarriers()->with('user')->first();
+                $userEmail = $primaryUser ? $primaryUser->user->email : null;
+                
+                if ($userEmail) {
+                    Mail::to($userEmail)->send(new BankingRejectedMail($carrier, $request->rejection_reason));
+                    Log::info('Banking rejected email sent', [
+                        'carrier_id' => $carrier->id,
+                        'email' => $userEmail
+                    ]);
+                } else {
+                    Log::warning('No primary user email found for carrier', [
+                        'carrier_id' => $carrier->id
+                    ]);
+                }
+            } catch (\Exception $emailError) {
+                Log::error('Error sending banking rejected email', [
+                    'carrier_id' => $carrier->id,
+                    'email' => $carrier->email,
+                    'error' => $emailError->getMessage()
+                ]);
+            }
             
             Log::info('Banking information rejected', [
                 'carrier_id' => $carrier->id,
@@ -409,7 +463,7 @@ class CarrierController extends Controller
             return back()->with($this->sendNotification(
                 'warning',
                 'Banking information rejected.',
-                'The carrier will need to resubmit their banking information.'
+                'The carrier has been notified by email and will need to resubmit their banking information.'
             ));
         } catch (\Exception $e) {
             Log::error('Error rejecting banking information', [
@@ -419,6 +473,140 @@ class CarrierController extends Controller
             ]);
             
             return back()->with('error', 'Error rejecting banking information: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Actualizar información bancaria del carrier.
+     */
+    public function updateBanking(Request $request, Carrier $carrier)
+    {
+        $request->validate([
+            'bank_name' => 'required|string|max:255',
+            'account_holder_name' => 'required|string|max:255',
+            'account_number' => 'required|string|max:50',
+            'routing_number' => 'required|string|max:20',
+            'account_type' => 'required|in:checking,savings',
+            'status' => 'required|in:pending,approved,rejected',
+            'rejection_reason' => 'nullable|string|max:500'
+        ]);
+        
+        try {
+            $bankingDetails = $carrier->bankingDetails;
+            
+            if (!$bankingDetails) {
+                return back()->with('error', 'No banking information found for this carrier.');
+            }
+            
+            $oldStatus = $bankingDetails->status;
+            $newStatus = $request->status;
+            
+            // Actualizar información bancaria
+            $bankingDetails->update([
+                'bank_name' => $request->bank_name,
+                'account_holder_name' => $request->account_holder_name,
+                'account_number' => $request->account_number,
+                'routing_number' => $request->routing_number,
+                'account_type' => $request->account_type,
+                'status' => $newStatus,
+                'rejection_reason' => $request->rejection_reason
+            ]);
+            
+            // Manejar cambios de estado y envío de emails
+            if ($oldStatus !== $newStatus) {
+                // Obtener el email del usuario principal del carrier
+                $primaryUser = $carrier->userCarriers()->with('user')->first();
+                $userEmail = $primaryUser ? $primaryUser->user->email : null;
+                $user = $primaryUser ? $primaryUser->user : null;
+                
+                if ($newStatus === 'approved') {
+                    $carrier->update(['status' => Carrier::STATUS_ACTIVE]);
+                    
+                    // Enviar email de aprobación
+                    if ($userEmail) {
+                        try {
+                            Mail::to($userEmail)->send(new PaymentValidatedMail($carrier, $user));
+                            Log::info('Payment validated email sent after manual approval', [
+                                'carrier_id' => $carrier->id,
+                                'email' => $userEmail
+                            ]);
+                        } catch (\Exception $emailError) {
+                            Log::error('Error sending payment validated email after manual approval', [
+                                'carrier_id' => $carrier->id,
+                                'email' => $userEmail,
+                                'error' => $emailError->getMessage()
+                            ]);
+                        }
+                    }
+                } elseif ($newStatus === 'rejected' && $request->rejection_reason) {
+                    $carrier->update(['status' => Carrier::STATUS_PENDING_VALIDATION]);
+                    
+                    // Enviar email de rechazo
+                    if ($userEmail) {
+                        try {
+                            Mail::to($userEmail)->send(new BankingRejectedMail($carrier, $request->rejection_reason));
+                            Log::info('Banking rejected email sent after manual rejection', [
+                                'carrier_id' => $carrier->id,
+                                'email' => $userEmail
+                            ]);
+                        } catch (\Exception $emailError) {
+                            Log::error('Error sending banking rejected email after manual rejection', [
+                                'carrier_id' => $carrier->id,
+                                'email' => $userEmail,
+                                'error' => $emailError->getMessage()
+                            ]);
+                        }
+                    }
+                } elseif ($newStatus === 'pending') {
+                    $carrier->update(['status' => Carrier::STATUS_PENDING_VALIDATION]);
+                    
+                    // Enviar email de pending
+                    if ($userEmail) {
+                        try {
+                            Mail::to($userEmail)->send(new BankingPendingMail($carrier, $user));
+                            Log::info('Banking pending email sent after status change', [
+                                'carrier_id' => $carrier->id,
+                                'email' => $userEmail
+                            ]);
+                        } catch (\Exception $emailError) {
+                            Log::error('Error sending banking pending email', [
+                                'carrier_id' => $carrier->id,
+                                'email' => $userEmail,
+                                'error' => $emailError->getMessage()
+                            ]);
+                        }
+                    }
+                }
+                
+                if (!$userEmail) {
+                    Log::warning('No primary user email found for carrier', [
+                        'carrier_id' => $carrier->id,
+                        'status_change' => $oldStatus . ' -> ' . $newStatus
+                    ]);
+                }
+            }
+            
+            Log::info('Banking information updated', [
+                'carrier_id' => $carrier->id,
+                'admin_user_id' => auth()->id(),
+                'banking_details_id' => $bankingDetails->id,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus
+            ]);
+            
+            return back()->with($this->sendNotification(
+                'success',
+                'Banking information updated successfully.',
+                'The changes have been saved and the carrier has been notified if status changed.'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error updating banking information', [
+                'carrier_id' => $carrier->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->with('error', 'Error updating banking information: ' . $e->getMessage());
         }
     }
 

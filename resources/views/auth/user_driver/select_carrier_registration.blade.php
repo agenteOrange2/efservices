@@ -33,7 +33,7 @@
             <h3 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Available Carriers</h3>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" x-data="{ carriers: [] }" x-init="carriers = {{ json_encode($carriers->filter(function($carrier) { 
-                return $carrier->status == 1 && $carrier->userDrivers()->count() < ($carrier->membership->max_drivers ?? 1);
+                return $carrier->status == 1 && !$carrier->is_full;
             })->values()) }}">
                 <!-- Mensaje si no hay carriers disponibles después de filtrar -->
                 <template x-if="carriers.filter(carrier => carrier.name.toLowerCase().includes(search.toLowerCase()) || 

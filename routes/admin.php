@@ -497,6 +497,7 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
     // Rutas para gestionar información bancaria
     Route::post('/{carrier}/banking/approve', [CarrierController::class, 'approveBanking'])->name('banking.approve');
     Route::post('/{carrier}/banking/reject', [CarrierController::class, 'rejectBanking'])->name('banking.reject');
+    Route::put('/{carrier}/banking/update', [CarrierController::class, 'updateBanking'])->name('banking.update');
 
     // Rutas anidadas para UserCarriers
     Route::prefix('{carrier:slug}/user-carriers')->name('user_carriers.')->group(function () {

@@ -161,8 +161,28 @@ class CheckUserStatus
                         ->with('info', 'Your account is pending administrative validation. We will review your banking information and activate your account soon.');
                 }
 
-                // Si el carrier está inactivo (no pending ni active) y NO está en la ruta de documentos, wizard o logout
-                if ($carrier->status !== Carrier::STATUS_ACTIVE && $carrier->status !== Carrier::STATUS_PENDING && !$request->is('carrier/*/documents*') && !$request->is('carrier/confirmation') && !$request->is('carrier/wizard*') && !$request->is('logout')) {
+                // Si el carrier está inactivo (STATUS_INACTIVE)
+                if ($carrier->status === Carrier::STATUS_INACTIVE && !$request->is('carrier/inactive') && !$request->is('carrier/request-reactivation') && !$request->is('logout')) {
+                    Log::info('Redirigiendo a inactive (carrier inactive)', [
+                        'user_id' => $user->id,
+                        'carrier_status' => $carrier->status
+                    ]);
+                    return redirect()->route('carrier.inactive')
+                        ->with('warning', 'Your carrier account is currently inactive.');
+                }
+
+                // Si el carrier está en estado PENDING_VALIDATION (esperando validación de pago)
+                if ($carrier->status === Carrier::STATUS_PENDING_VALIDATION && !$request->is('carrier/pending-validation') && !$request->is('logout')) {
+                    Log::info('Redirigiendo a pending-validation (carrier awaiting payment validation)', [
+                        'user_id' => $user->id,
+                        'carrier_status' => $carrier->status
+                    ]);
+                    return redirect()->route('carrier.pending.validation')
+                        ->with('info', 'Your payment is being validated. Please wait for confirmation.');
+                }
+
+                // Si el carrier está inactivo (no pending, no active, no inactive, no pending_validation) y NO está en la ruta de documentos, wizard o logout
+                if ($carrier->status !== Carrier::STATUS_ACTIVE && $carrier->status !== Carrier::STATUS_PENDING && $carrier->status !== Carrier::STATUS_INACTIVE && $carrier->status !== Carrier::STATUS_PENDING_VALIDATION && !$request->is('carrier/*/documents*') && !$request->is('carrier/confirmation') && !$request->is('carrier/wizard*') && !$request->is('logout')) {
                     Log::info('Redirigiendo a confirmation (carrier not active)', [
                         'user_id' => $user->id,
                         'carrier_status' => $carrier->status

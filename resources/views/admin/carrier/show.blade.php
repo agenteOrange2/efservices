@@ -758,7 +758,7 @@
                                         <span class="text-sm font-medium text-yellow-800">This banking information requires your review and approval.</span>
                                     </div>
                                     <div class="flex gap-3">
-                                        <form method="POST" action="{{ route('admin.carrier.banking.approve', $carrier->id) }}" class="inline">
+                                        <form method="POST" action="{{ route('admin.carrier.banking.approve', $carrier) }}" class="inline">
                                             @csrf
                                             <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-150">
                                                 <i data-lucide="check" class="w-4 h-4 mr-2"></i>
@@ -786,6 +786,14 @@
                                 </div>
                             </div>
                         @endif
+
+                        <!-- Edit Banking Information Button -->
+                        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                            <button type="button" onclick="toggleBankingEditForm()" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150">
+                                <i data-lucide="edit" class="w-4 h-4 mr-2"></i>
+                                Edit Banking Information
+                            </button>
+                        </div>
 
                         <!-- Banking Details -->
                         <div class="p-6">
@@ -909,6 +917,83 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Banking Edit Form (Hidden by default) -->
+                        <div id="bankingEditForm" class="hidden border-t border-gray-200 bg-gray-50 p-6">
+                            <form method="POST" action="{{ route('admin.carrier.banking.update', $carrier) }}" class="space-y-6">
+                                @csrf
+                                @method('PUT')
+                                
+                                <div class="bg-white rounded-lg p-6 border border-gray-200">
+                                    <h3 class="text-lg font-medium text-gray-900 mb-6 flex items-center gap-2">
+                                        <i data-lucide="edit-3" class="w-5 h-5 text-blue-600"></i>
+                                        Edit Banking Information
+                                    </h3>
+                                    
+                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <!-- Left Column -->
+                                        <div class="space-y-4">
+                                            <div>
+                                                <label for="bank_name" class="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>
+                                                <input type="text" id="bank_name" name="bank_name" value="{{ old('bank_name', $carrier->bankingDetails->bank_name) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                            </div>
+                                            
+                                            <div>
+                                                <label for="account_holder_name" class="block text-sm font-medium text-gray-700 mb-2">Account Holder Name</label>
+                                                <input type="text" id="account_holder_name" name="account_holder_name" value="{{ old('account_holder_name', $carrier->bankingDetails->account_holder_name) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                            </div>
+                                            
+                                            <div>
+                                                <label for="account_number" class="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
+                                                <input type="text" id="account_number" name="account_number" value="{{ old('account_number', $carrier->bankingDetails->account_number) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Right Column -->
+                                        <div class="space-y-4">
+                                            <div>
+                                                <label for="routing_number" class="block text-sm font-medium text-gray-700 mb-2">Routing Number</label>
+                                                <input type="text" id="routing_number" name="routing_number" value="{{ old('routing_number', $carrier->bankingDetails->routing_number) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                            </div>
+                                            
+                                            <div>
+                                                <label for="account_type" class="block text-sm font-medium text-gray-700 mb-2">Account Type</label>
+                                                <select id="account_type" name="account_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                                    <option value="checking" {{ old('account_type', $carrier->bankingDetails->account_type) === 'checking' ? 'selected' : '' }}>Checking</option>
+                                                    <option value="savings" {{ old('account_type', $carrier->bankingDetails->account_type) === 'savings' ? 'selected' : '' }}>Savings</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div>
+                                                <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                                <select id="status" name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required onchange="toggleRejectionReason()">
+                                                    <option value="pending" {{ old('status', $carrier->bankingDetails->status) === 'pending' ? 'selected' : '' }}>Pending</option>
+                                                    <option value="approved" {{ old('status', $carrier->bankingDetails->status) === 'approved' ? 'selected' : '' }}>Approved</option>
+                                                    <option value="rejected" {{ old('status', $carrier->bankingDetails->status) === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Rejection Reason (shown only when status is rejected) -->
+                                    <div id="rejectionReasonDiv" class="mt-4 {{ old('status', $carrier->bankingDetails->status) === 'rejected' ? '' : 'hidden' }}">
+                                        <label for="rejection_reason" class="block text-sm font-medium text-gray-700 mb-2">Rejection Reason</label>
+                                        <textarea id="rejection_reason" name="rejection_reason" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Please provide a reason for rejection...">{{ old('rejection_reason', $carrier->bankingDetails->rejection_reason) }}</textarea>
+                                    </div>
+                                    
+                                    <!-- Form Actions -->
+                                    <div class="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+                                        <button type="button" onclick="toggleBankingEditForm()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                            Cancel
+                                        </button>
+                                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                            <i data-lucide="save" class="w-4 h-4 mr-2 inline"></i>
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 @else
@@ -1098,6 +1183,36 @@
                 function closeRejectModal() {
                     document.getElementById('rejectModal').classList.add('hidden');
                     document.getElementById('rejectionReason').value = '';
+                }
+                
+                // Función para mostrar/ocultar el formulario de edición de banking
+                function toggleBankingEditForm() {
+                    const form = document.getElementById('bankingEditForm');
+                    const editBtn = document.getElementById('editBankingBtn');
+                    
+                    if (form.classList.contains('hidden')) {
+                        form.classList.remove('hidden');
+                        editBtn.textContent = 'Cancel Edit';
+                        editBtn.classList.remove('btn-primary');
+                        editBtn.classList.add('btn-secondary');
+                    } else {
+                        form.classList.add('hidden');
+                        editBtn.textContent = 'Edit Banking Information';
+                        editBtn.classList.remove('btn-secondary');
+                        editBtn.classList.add('btn-primary');
+                    }
+                }
+                
+                // Función para mostrar/ocultar el campo de razón de rechazo
+                function toggleRejectionReason() {
+                    const statusSelect = document.getElementById('banking_status');
+                    const rejectionReasonDiv = document.getElementById('rejectionReasonDiv');
+                    
+                    if (statusSelect.value === 'rejected') {
+                        rejectionReasonDiv.classList.remove('hidden');
+                    } else {
+                        rejectionReasonDiv.classList.add('hidden');
+                    }
                 }
             </script>
         @endpush

@@ -224,9 +224,10 @@ class CarrierStatusController extends Controller
                 return redirect()->route('carrier.dashboard');
                 
             case Carrier::STATUS_INACTIVE:
-                Auth::logout();
-                return redirect()->route('login')
-                    ->withErrors(['email' => 'Your account has been deactivated. Please contact support.']);
+                return redirect()->route('carrier.inactive');
+                
+            case Carrier::STATUS_PENDING_VALIDATION:
+                return redirect()->route('carrier.pending-validation');
                     
             default:
                 return redirect()->route('carrier.confirmation');
@@ -295,5 +296,108 @@ class CarrierStatusController extends Controller
         ]);
 
         return back()->with('success', 'Your support request has been submitted. We will contact you soon.');
+    }
+
+    /**
+     * Show the inactive status page
+     */
+    public function showInactive()
+    {
+        $user = Auth::user();
+        
+        if (!$user || !$user->hasRole('user_carrier')) {
+            return redirect()->route('login');
+        }
+
+        $carrier = $user->carrierDetails ? $user->carrierDetails->carrier : null;
+        
+        if (!$carrier) {
+            return redirect()->route('carrier.wizard.step1');
+        }
+        
+        // Only show this page if carrier is actually inactive
+        if ($carrier->status !== Carrier::STATUS_INACTIVE) {
+            return $this->redirectBasedOnStatus($carrier);
+        }
+        
+        // Log user action
+        Log::info('Carrier viewed inactive status page', [
+            'user_id' => $user->id,
+            'carrier_id' => $carrier->id,
+            'carrier_status' => $carrier->status
+        ]);
+        
+        return view('carrier.auth.inactive-status', compact('carrier'));
+    }
+    
+    /**
+     * Show the payment validated page
+     */
+    public function showPaymentValidated()
+    {
+        $user = Auth::user();
+        
+        if (!$user || !$user->hasRole('user_carrier')) {
+            return redirect()->route('login');
+        }
+
+        $carrier = $user->carrierDetails ? $user->carrierDetails->carrier : null;
+        
+        if (!$carrier) {
+            return redirect()->route('carrier.wizard.step1');
+        }
+        
+        // This page should only be shown for active carriers who just completed validation
+        if ($carrier->status !== Carrier::STATUS_ACTIVE) {
+            return $this->redirectBasedOnStatus($carrier);
+        }
+        
+        // Log user action
+        Log::info('Carrier viewed payment validated page', [
+            'user_id' => $user->id,
+            'carrier_id' => $carrier->id,
+            'carrier_status' => $carrier->status
+        ]);
+        
+        return view('carrier.auth.payment-validated', compact('carrier'));
+    }
+    
+    /**
+     * Handle reactivation request for inactive carriers
+     */
+    public function requestReactivation(Request $request)
+    {
+        $user = Auth::user();
+        
+        if (!$user || !$user->hasRole('user_carrier')) {
+            return redirect()->route('login');
+        }
+
+        $carrier = $user->carrierDetails ? $user->carrierDetails->carrier : null;
+        
+        if (!$carrier || $carrier->status !== Carrier::STATUS_INACTIVE) {
+            return redirect()->route('carrier.status');
+        }
+        
+        $request->validate([
+            'reason' => 'required|string|max:1000',
+            'additional_info' => 'nullable|string|max:2000'
+        ]);
+        
+        // Log reactivation request
+        Log::info('Carrier requested reactivation', [
+            'user_id' => $user->id,
+            'carrier_id' => $carrier->id,
+            'reason' => $request->reason,
+            'additional_info' => $request->additional_info
+        ]);
+        
+        // Here you would typically:
+        // 1. Create a reactivation request record
+        // 2. Send notification to admin
+        // 3. Send confirmation email to carrier
+        
+        return redirect()->route('carrier.inactive')
+            ->with('success', 'Your reactivation request has been submitted successfully. Our team will review it and contact you within 2-3 business days.');
     }
 }

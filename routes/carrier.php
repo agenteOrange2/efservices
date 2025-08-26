@@ -69,10 +69,13 @@ Route::middleware(['auth'])->group(function () {
         return redirect()->route('carrier.wizard.step2');
     })->name('complete_registration');
     
-    // Rutas de estado y confirmación (sin middleware de verificación)
+    // Rutas de estado y confirmación
     Route::get('/confirmation', [CarrierStatusController::class, 'showConfirmation'])->name('confirmation');
     Route::get('/pending', [CarrierStatusController::class, 'showPending'])->name('pending');
     Route::get('/pending-validation', [CarrierStatusController::class, 'pendingValidation'])->name('pending.validation');
+    Route::get('/inactive', [CarrierStatusController::class, 'showInactive'])->name('inactive');
+    Route::get('/payment-validated', [CarrierStatusController::class, 'showPaymentValidated'])->name('payment-validated');
+    Route::post('/request-reactivation', [CarrierStatusController::class, 'requestReactivation'])->name('request.reactivation');
     Route::get('/status', [CarrierStatusController::class, 'getRegistrationStatus'])->name('status');
     Route::get('/support', [CarrierStatusController::class, 'showSupport'])->name('support');
     Route::post('/support', [CarrierStatusController::class, 'submitSupportRequest']);
