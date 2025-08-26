@@ -305,9 +305,13 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
-                            <label class="block mb-1">Registration Expiration Date *</label>
-                            <input type="date" wire:model="vehicle_registration_expiration_date"
-                                class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                            <x-unified-date-picker
+                                name="vehicle_registration_expiration_date"
+                                label="Registration Expiration Date *"
+                                wireModel="vehicle_registration_expiration_date"
+                                placeholder="MM/DD/YYYY"
+                                :value="$vehicle_registration_expiration_date"
+                            />
                             @error('vehicle_registration_expiration_date')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
@@ -652,8 +656,8 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
                             <label class="block mb-1">Registration Expiration Date *</label>
-                            <input type="date" wire:model="vehicle_registration_expiration_date"
-                                class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                            <x-base.form-input type="text" wire:model="vehicle_registration_expiration_date"
+                                class="w-full px-3 py-2 border rounded" placeholder="MM/DD/YYYY" />
                             @error('vehicle_registration_expiration_date')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
@@ -768,9 +772,13 @@
                     </label>
 
                     <div x-show="$wire.has_twic_card" x-transition class="mt-2">
-                        <label class="block mb-1">TWIC Card Expiration Date *</label>
-                        <input type="date" wire:model="twic_expiration_date"
-                            class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                        <x-unified-date-picker
+                            name="twic_expiration_date"
+                            label="TWIC Card Expiration Date *"
+                            wireModel="twic_expiration_date"
+                            placeholder="MM/DD/YYYY"
+                            :value="$twic_expiration_date"
+                        />
                         @error('twic_expiration_date')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
@@ -872,19 +880,25 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div>
-                                    <label class="block mb-1">Start Date *</label>
-                                    <input type="date"
-                                        wire:model.defer="work_histories.{{ $index }}.start_date"
-                                        class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                                    <x-unified-date-picker
+                                        name="work_histories.{{ $index }}.start_date"
+                                        label="Start Date *"
+                                        wireModel="work_histories.{{ $index }}.start_date"
+                                        placeholder="MM/DD/YYYY"
+                                        :value="$work_histories[$index]['start_date'] ?? ''"
+                                    />
                                     @error('work_histories.' . $index . '.start_date')
                                         <span class="text-red-500 text-sm">{{ $message }}</span>
                                     @enderror
                                 </div>
                                 <div>
-                                    <label class="block mb-1">End Date *</label>
-                                    <input type="date"
-                                        wire:model.defer="work_histories.{{ $index }}.end_date"
-                                        class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                                    <x-unified-date-picker
+                                        name="work_histories.{{ $index }}.end_date"
+                                        label="End Date *"
+                                        wireModel="work_histories.{{ $index }}.end_date"
+                                        placeholder="MM/DD/YYYY"
+                                        :value="$work_histories[$index]['end_date'] ?? ''"
+                                    />
                                     @error('work_histories.' . $index . '.end_date')
                                         <span class="text-red-500 text-sm">{{ $message }}</span>
                                     @enderror

@@ -14,6 +14,7 @@ use App\Models\Admin\Driver\DriverApplication;
 use App\Models\Admin\Driver\DriverApplicationDetail;
 use App\Mail\ThirdPartyVehicleVerification;
 use Illuminate\Support\Carbon;
+use App\Helpers\DateHelper;
 
 class ApplicationStep extends Component
 {
@@ -163,6 +164,44 @@ class ApplicationStep extends Component
             'eligible_to_work' => 'accepted',
         ];
     }
+    
+    /**
+     * Unified validation method for consistency across all navigation methods
+     */
+    protected function validateStep($partial = false)
+    {
+        if ($partial) {
+            $this->validate($this->partialRules());
+        } else {
+            $this->validate($this->rules());
+        }
+    }
+    
+    /**
+     * Validate that previous steps are completed before advancing
+     */
+    protected function validateStepCompletion()
+    {
+        if (!$this->driverId) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Driver information is required to proceed.'
+            ]);
+            return false;
+        }
+        
+        // Check if driver has completed previous steps (step 1 and 2)
+        $driver = UserDriverDetail::find($this->driverId);
+        if (!$driver || $driver->current_step < 2) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Please complete previous steps before proceeding.'
+            ]);
+            return false;
+        }
+        
+        return true;
+    }
 
     // Initialize
     public function mount($driverId = null)
@@ -261,7 +300,7 @@ class ApplicationStep extends Component
             $this->vehicle_irp_apportioned_plate = $vehicle->irp_apportioned_plate;
             $this->vehicle_registration_state = $vehicle->registration_state;
             $this->vehicle_registration_number = $vehicle->registration_number;
-            $this->vehicle_registration_expiration_date = $vehicle->registration_expiration_date ? $vehicle->registration_expiration_date->format('Y-m-d') : null;
+            $this->vehicle_registration_expiration_date = DateHelper::toDisplay($vehicle->registration_expiration_date);
             $this->vehicle_permanent_tag = $vehicle->permanent_tag;
             $this->vehicle_location = $vehicle->location;
             $this->vehicle_notes = $vehicle->notes;
@@ -350,7 +389,7 @@ class ApplicationStep extends Component
             $this->eligible_to_work = $details->eligible_to_work;
             $this->can_speak_english = $details->can_speak_english;
             $this->has_twic_card = $details->has_twic_card;
-            $this->twic_expiration_date = $details->twic_expiration_date ? $details->twic_expiration_date->format('Y-m-d') : null;
+            $this->twic_expiration_date = DateHelper::toDisplay($details->twic_expiration_date);
             $this->expected_pay = $details->expected_pay;
             $this->how_did_hear = $details->how_did_hear;
             $this->how_did_hear_other = $details->how_did_hear_other;
@@ -405,7 +444,7 @@ class ApplicationStep extends Component
                 $this->vehicle_irp_apportioned_plate = (bool)$vehicle->irp_apportioned_plate;
                 $this->vehicle_registration_state = $vehicle->registration_state;
                 $this->vehicle_registration_number = $vehicle->registration_number;
-                $this->vehicle_registration_expiration_date = $vehicle->registration_expiration_date ? $vehicle->registration_expiration_date->format('Y-m-d') : null;
+                $this->vehicle_registration_expiration_date = $vehicle->registration_expiration_date ? DateHelper::toDisplay($vehicle->registration_expiration_date) : null;
                 $this->vehicle_permanent_tag = (bool)$vehicle->permanent_tag;
                 $this->vehicle_location = $vehicle->location;
                 $this->vehicle_notes = $vehicle->notes;
@@ -421,8 +460,8 @@ class ApplicationStep extends Component
                 $this->work_histories[] = [
                     'id' => $history->id,
                     'previous_company' => $history->previous_company,
-                    'start_date' => $history->start_date ? $history->start_date->format('Y-m-d') : null,
-                    'end_date' => $history->end_date ? $history->end_date->format('Y-m-d') : null,
+                    'start_date' => DateHelper::toDisplay($history->start_date),
+                    'end_date' => DateHelper::toDisplay($history->end_date),
                     'location' => $history->location,
                     'position' => $history->position,
                     'reason_for_leaving' => $history->reason_for_leaving,
@@ -492,7 +531,7 @@ class ApplicationStep extends Component
                             'registration_state' => $this->vehicle_registration_state ?: $this->applying_location,
                             'registration_number' => $this->vehicle_registration_number ?: 'Pending',
                             'registration_expiration_date' => $this->vehicle_registration_expiration_date 
-                                ? Carbon::parse($this->vehicle_registration_expiration_date) 
+                                ? Carbon::parse(DateHelper::toDatabase($this->vehicle_registration_expiration_date)) 
                                 : now()->addYear(),
                             'permanent_tag' => $this->vehicle_permanent_tag,
                             'location' => $this->vehicle_location,
@@ -511,7 +550,7 @@ class ApplicationStep extends Component
                     if (!$existingVehicle) {
                     // Preparar datos para el registro de vehículo
                     $registrationDate = $this->vehicle_registration_expiration_date 
-                        ? Carbon::parse($this->vehicle_registration_expiration_date) 
+                        ? Carbon::parse(DateHelper::toDatabase($this->vehicle_registration_expiration_date)) 
                         : now()->addYear();
                     
                     // Determinar el tipo de vehículo según la posición seleccionada
@@ -565,7 +604,7 @@ class ApplicationStep extends Component
                     'eligible_to_work' => $this->eligible_to_work,
                     'can_speak_english' => $this->can_speak_english,
                     'has_twic_card' => $this->has_twic_card,
-                    'twic_expiration_date' => $this->has_twic_card ? $this->twic_expiration_date : null,
+                    'twic_expiration_date' => $this->has_twic_card ? DateHelper::toDatabase($this->twic_expiration_date) : null,
                     'expected_pay' => $this->expected_pay,
                     'how_did_hear' => $this->how_did_hear,
                     'how_did_hear_other' => $this->how_did_hear === 'other' ? $this->how_did_hear_other : null,
@@ -634,8 +673,8 @@ class ApplicationStep extends Component
                         if ($history) {
                             $history->update([
                                 'previous_company' => $historyData['previous_company'],
-                                'start_date' => $historyData['start_date'],
-                                'end_date' => $historyData['end_date'],
+                                'start_date' => DateHelper::toDatabase($historyData['start_date']),
+                                'end_date' => DateHelper::toDatabase($historyData['end_date']),
                                 'location' => $historyData['location'],
                                 'position' => $historyData['position'],
                                 'reason_for_leaving' => $historyData['reason_for_leaving'] ?? null,
@@ -648,8 +687,8 @@ class ApplicationStep extends Component
                         // Create new history
                         $history = $userDriverDetail->workHistories()->create([
                             'previous_company' => $historyData['previous_company'],
-                            'start_date' => $historyData['start_date'],
-                            'end_date' => $historyData['end_date'],
+                            'start_date' => DateHelper::toDatabase($historyData['start_date']),
+                            'end_date' => DateHelper::toDatabase($historyData['end_date']),
                             'location' => $historyData['location'],
                             'position' => $historyData['position'],
                             'reason_for_leaving' => $historyData['reason_for_leaving'] ?? null,
@@ -723,6 +762,11 @@ class ApplicationStep extends Component
     // Next step
     public function next()
     {
+        // Step completion validation - ensure previous steps are completed
+        if (!$this->validateStepCompletion()) {
+            return;
+        }
+        
         // Verificar si es third_party_driver y no se ha enviado el correo
         if ($this->applying_position === 'third_party_driver' && !$this->email_sent && 
             $this->third_party_email && $this->third_party_name && $this->third_party_phone) {
@@ -732,8 +776,8 @@ class ApplicationStep extends Component
             return;
         }
         
-        // Full validation
-        $this->validate($this->rules());
+        // Full validation using unified validation method
+        $this->validateStep();
 
         // Save to database
         if ($this->driverId) {
@@ -747,10 +791,11 @@ class ApplicationStep extends Component
     // Previous step
     public function previous()
     {
-        $this->saveApplicationDetails();
-        // Basic save before going back
+        // Use unified validation method for consistency
+        $this->validateStep(true); // partial validation
+        
+        // Save to database
         if ($this->driverId) {
-            $this->validate($this->partialRules());
             $this->saveApplicationDetails();
         }
 
@@ -762,8 +807,8 @@ class ApplicationStep extends Component
     // Save and exit
     public function saveAndExit()
     {
-        // Basic validation
-        $this->validate($this->partialRules());
+        // Use unified validation method for consistency
+        $this->validateStep(true); // partial validation
 
         // Save to database
         if ($this->driverId) {
@@ -968,16 +1013,56 @@ class ApplicationStep extends Component
                 'expires_at' => $expiresAt,
             ]);
             
-            // Enviar correo electrónico
-            Mail::to($this->third_party_email)
-                ->send(new ThirdPartyVehicleVerification(
-                    $this->third_party_name,
-                    $userDriverDetail->user->name . ' ' . $userDriverDetail->last_name,
-                    $vehicleData,
-                    $token,
-                    $this->driverId,
-                    $application->id
-                ));
+            // Log configuración de correo antes del envío
+            Log::info('Configuración de correo SMTP', [
+                'mail_mailer' => config('mail.default'),
+                'mail_host' => config('mail.mailers.smtp.host'),
+                'mail_port' => config('mail.mailers.smtp.port'),
+                'mail_encryption' => config('mail.mailers.smtp.encryption'),
+                'mail_username' => config('mail.mailers.smtp.username'),
+                'mail_from_address' => config('mail.from.address'),
+                'recipient_email' => $this->third_party_email
+            ]);
+            
+            // Enviar correo electrónico con manejo específico de errores SMTP
+            try {
+                Mail::to($this->third_party_email)
+                    ->send(new ThirdPartyVehicleVerification(
+                        $this->third_party_name,
+                        $userDriverDetail->user->name . ' ' . $userDriverDetail->last_name,
+                        $vehicleData,
+                        $token,
+                        $this->driverId,
+                        $application->id
+                    ));
+                    
+                Log::info('Correo enviado exitosamente', [
+                    'recipient' => $this->third_party_email,
+                    'token' => $token
+                ]);
+            } catch (\Swift_TransportException $e) {
+                Log::error('Error de transporte SMTP', [
+                    'error' => $e->getMessage(),
+                    'code' => $e->getCode(),
+                    'recipient' => $this->third_party_email
+                ]);
+                throw new \Exception('SMTP Transport Error: ' . $e->getMessage());
+            } catch (\Symfony\Component\Mailer\Exception\TransportException $e) {
+                Log::error('Error de transporte Symfony Mailer', [
+                    'error' => $e->getMessage(),
+                    'code' => $e->getCode(),
+                    'recipient' => $this->third_party_email
+                ]);
+                throw new \Exception('Mailer Transport Error: ' . $e->getMessage());
+            } catch (\Exception $e) {
+                Log::error('Error general al enviar correo', [
+                    'error' => $e->getMessage(),
+                    'code' => $e->getCode(),
+                    'recipient' => $this->third_party_email,
+                    'trace' => $e->getTraceAsString()
+                ]);
+                throw $e;
+            }
             
             // Marcar como enviado
             $this->email_sent = true;

@@ -25,6 +25,11 @@ class LicenseStep extends Component
     // Driving Experience
     public $experiences = [];
 
+    // File uploads
+    public $front_image;
+    public $back_image;
+    public $current_license_index = 0;
+
     // References
     public $driverId;
 
@@ -38,9 +43,9 @@ class LicenseStep extends Component
                 'licenses.*.license_number' => 'required|string|max:255',
                 'licenses.*.state_of_issue' => 'required|string|max:255',
                 'licenses.*.license_class' => 'required|string|max:255',
-                'licenses.*.expiration_date' => $this->getExpirationDateValidation(),
+                'licenses.*.expiration_date' => $this->getExpirationDateValidationRules(),
                 'experiences.*.equipment_type' => 'required|string|max:255',
-                'experiences.*.years_experience' => $this->getYearsExperienceValidation(),
+                'experiences.*.years_experience' => $this->getYearsExperienceValidationRules(),
                 'experiences.*.miles_driven' => 'required|integer|min:0',
             ]
         );
@@ -547,6 +552,86 @@ class LicenseStep extends Component
 
         $this->dispatch('saveAndExit');
     }
+
+    // Handle front image upload
+    public function updatedFrontImage()
+    {
+        $this->validate([
+            'front_image' => 'image|max:2048', // 2MB Max
+        ]);
+
+        if ($this->front_image) {
+            $this->saveTempImage($this->front_image, 'front');
+        }
+    }
+
+    // Handle back image upload
+    public function updatedBackImage()
+    {
+        $this->validate([
+            'back_image' => 'image|max:2048', // 2MB Max
+        ]);
+
+        if ($this->back_image) {
+            $this->saveTempImage($this->back_image, 'back');
+        }
+    }
+
+    // Save temporary image
+    private function saveTempImage($uploadedFile, $side)
+    {
+        try {
+            // Create temp directory if it doesn't exist
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+
+            // Generate unique filename
+            $filename = uniqid() . '_' . $side . '.' . $uploadedFile->getClientOriginalExtension();
+            $tempPath = $tempDir . '/' . $filename;
+
+            // Store the file
+            $uploadedFile->storeAs('temp', $filename);
+
+            // Generate preview URL
+            $previewUrl = asset('storage/temp/' . $filename);
+
+            // Store in session for later processing
+            $tempFiles = session('temp_files', []);
+            $token = uniqid('license_' . $side . '_');
+            $tempFiles[$token] = [
+                'path' => $tempPath,
+                'filename' => $uploadedFile->getClientOriginalName(),
+                'preview_url' => $previewUrl,
+                'side' => $side,
+                'license_index' => $this->current_license_index
+            ];
+            session(['temp_files' => $tempFiles]);
+
+            // Update the current license with temp info
+            $this->licenses[$this->current_license_index]['temp_' . $side . '_token'] = $token;
+            $this->licenses[$this->current_license_index][$side . '_preview'] = $previewUrl;
+            $this->licenses[$this->current_license_index][$side . '_filename'] = $uploadedFile->getClientOriginalName();
+
+            // Clear the uploaded file property
+            $this->{$side . '_image'} = null;
+
+        } catch (\Exception $e) {
+            Log::error('Error saving temporary image', [
+                'error' => $e->getMessage(),
+                'side' => $side
+            ]);
+            session()->flash('error', 'Error al guardar la imagen: ' . $e->getMessage());
+        }
+    }
+
+    // Set current license index for uploads
+    public function setCurrentLicenseIndex($index)
+    {
+        $this->current_license_index = $index;
+    }
+
     // Render
     public function render()
     {
