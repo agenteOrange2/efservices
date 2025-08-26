@@ -285,4 +285,25 @@
     </div>
 </div>
 
+<script>
+    document.addEventListener('livewire:initialized', () => {
+        Livewire.on('process-temporary-photo', () => {
+            // Get the temporary photo from sessionStorage
+            const storageKey = 'driver_registration_photo';
+            const photoData = sessionStorage.getItem(storageKey);
+            
+            if (photoData) {
+                // Call the Livewire method to upload the photo
+                @this.uploadTemporaryPhoto(photoData).then(() => {
+                    // Clear the sessionStorage after successful upload
+                    sessionStorage.removeItem(storageKey);
+                    console.log('Temporary photo processed successfully');
+                }).catch((error) => {
+                    console.error('Error processing temporary photo:', error);
+                });
+            }
+        });
+    });
+</script>
+
 

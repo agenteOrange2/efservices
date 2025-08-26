@@ -3,6 +3,8 @@
 namespace App\Livewire\Driver\Steps;
 
 use App\Helpers\Constants;
+use App\Helpers\DateHelper;
+use App\Traits\DriverValidationTrait;
 use Livewire\Component;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +17,7 @@ use App\Models\Admin\Driver\DriverRelatedEmployment;
 
 class EmploymentHistoryStep extends Component
 {
+    use DriverValidationTrait;
     // Unemployment Periods
     public $has_unemployment_periods = false;
     public $unemployment_periods = [];
@@ -90,25 +93,13 @@ class EmploymentHistoryStep extends Component
     // Validation rules
     protected function rules()
     {
-        return [
-            'has_unemployment_periods' => 'sometimes|boolean',
-            'has_completed_employment_history' => 'accepted',
-            'unemployment_form.start_date' => 'required|date',
-            'unemployment_form.end_date' => 'required|date|after_or_equal:unemployment_form.start_date',
-            'unemployment_form.comments' => 'nullable|string',
-            'company_form.company_name' => 'required|string|max:255',
-            'company_form.email' => 'nullable|email|max:255',
-            'company_form.employed_from' => 'required|date',
-            'company_form.employed_to' => 'required|date|after_or_equal:company_form.employed_from',
-            'company_form.positions_held' => 'required|string|max:255',
-            'company_form.reason_for_leaving' => 'required|string|max:255',
-            'company_form.other_reason_description' =>
-            'required_if:company_form.reason_for_leaving,other|max:255',
-            'related_employment_form.start_date' => 'required|date',
-            'related_employment_form.end_date' => 'required|date|after_or_equal:related_employment_form.start_date',
-            'related_employment_form.position' => 'required|string|max:255',
-            'related_employment_form.comments' => 'nullable|string',
-        ];
+        return array_merge(
+            $this->getDriverRegistrationRules('employment'),
+            [
+                'has_unemployment_periods' => 'sometimes|boolean',
+                'has_completed_employment_history' => 'accepted',
+            ]
+        );
     }
 
     // Rules for partial saves
@@ -157,8 +148,8 @@ class EmploymentHistoryStep extends Component
         foreach ($unemploymentPeriods as $period) {
             $this->unemployment_periods[] = [
                 'id' => $period->id,
-                'start_date' => $period->start_date->format('Y-m-d'),
-                'end_date' => $period->end_date->format('Y-m-d'),
+                'start_date' => DateHelper::toDisplay($period->start_date),
+                'end_date' => DateHelper::toDisplay($period->end_date),
                 'comments' => $period->comments,
             ];
         }
@@ -189,8 +180,8 @@ class EmploymentHistoryStep extends Component
                 'phone' => $masterCompany ? $masterCompany->phone : '',
                 'email' => $masterCompany ? $masterCompany->email : ($company->email ?? ''),
                 'fax' => $masterCompany ? $masterCompany->fax : '',
-                'employed_from' => $company->employed_from->format('Y-m-d'),
-                'employed_to' => $company->employed_to->format('Y-m-d'),
+                'employed_from' => DateHelper::toDisplay($company->employed_from),
+                'employed_to' => DateHelper::toDisplay($company->employed_to),
                 'positions_held' => $company->positions_held,
                 'subject_to_fmcsr' => $company->subject_to_fmcsr,
                 'safety_sensitive_function' => $company->safety_sensitive_function,
@@ -208,8 +199,8 @@ class EmploymentHistoryStep extends Component
         foreach ($relatedEmployments as $employment) {
             $this->related_employments[] = [
                 'id' => $employment->id,
-                'start_date' => $employment->start_date->format('Y-m-d'),
-                'end_date' => $employment->end_date->format('Y-m-d'),
+                'start_date' => DateHelper::toDisplay($employment->start_date),
+                'end_date' => DateHelper::toDisplay($employment->end_date),
                 'position' => $employment->position,
                 'comments' => $employment->comments,
             ];
@@ -334,8 +325,8 @@ class EmploymentHistoryStep extends Component
                         $unemploymentPeriod = DriverUnemploymentPeriod::find($period['id']);
                         if ($unemploymentPeriod) {
                             $unemploymentPeriod->update([
-                                'start_date' => $period['start_date'],
-                                'end_date' => $period['end_date'],
+                                'start_date' => DateHelper::toDatabase($period['start_date']),
+                'end_date' => DateHelper::toDatabase($period['end_date']),
                                 'comments' => $period['comments'] ?? null
                             ]);
                             $updatedPeriodIds[] = $unemploymentPeriod->id;
@@ -343,8 +334,8 @@ class EmploymentHistoryStep extends Component
                     } else {
                         // Create new period
                         $unemploymentPeriod = $userDriverDetail->unemploymentPeriods()->create([
-                            'start_date' => $period['start_date'],
-                            'end_date' => $period['end_date'],
+                            'start_date' => DateHelper::toDatabase($period['start_date']),
+                'end_date' => DateHelper::toDatabase($period['end_date']),
                             'comments' => $period['comments'] ?? null
                         ]);
                         $updatedPeriodIds[] = $unemploymentPeriod->id;
@@ -393,8 +384,8 @@ class EmploymentHistoryStep extends Component
                         if ($employmentCompany) {
                             $employmentCompany->update([
                                 'master_company_id' => $masterCompanyId,
-                                'employed_from' => $company['employed_from'],
-                                'employed_to' => $company['employed_to'],
+                                'employed_from' => DateHelper::toDatabase($company['employed_from']),
+                'employed_to' => DateHelper::toDatabase($company['employed_to']),
                                 'positions_held' => $company['positions_held'],
                                 'subject_to_fmcsr' => $company['subject_to_fmcsr'] ?? false,
                                 'safety_sensitive_function' => $company['safety_sensitive_function'] ?? false,
@@ -410,8 +401,8 @@ class EmploymentHistoryStep extends Component
                         // Create new employment company
                         $employmentCompany = $userDriverDetail->employmentCompanies()->create([
                             'master_company_id' => $masterCompanyId,
-                            'employed_from' => $company['employed_from'],
-                            'employed_to' => $company['employed_to'],
+                            'employed_from' => DateHelper::toDatabase($company['employed_from']),
+                'employed_to' => DateHelper::toDatabase($company['employed_to']),
                             'positions_held' => $company['positions_held'],
                             'subject_to_fmcsr' => $company['subject_to_fmcsr'] ?? false,
                             'safety_sensitive_function' => $company['safety_sensitive_function'] ?? false,
@@ -445,8 +436,8 @@ class EmploymentHistoryStep extends Component
                         $relatedEmployment = DriverRelatedEmployment::find($employment['id']);
                         if ($relatedEmployment) {
                             $relatedEmployment->update([
-                                'start_date' => $employment['start_date'],
-                                'end_date' => $employment['end_date'],
+                                'start_date' => DateHelper::toDatabase($employment['start_date']),
+                'end_date' => DateHelper::toDatabase($employment['end_date']),
                                 'position' => $employment['position'],
                                 'comments' => $employment['comments'] ?? null
                             ]);
@@ -456,8 +447,8 @@ class EmploymentHistoryStep extends Component
                         // Create new related employment
                         $relatedEmployment = DriverRelatedEmployment::create([
                             'user_driver_detail_id' => $this->driverId,
-                            'start_date' => $employment['start_date'],
-                            'end_date' => $employment['end_date'],
+                            'start_date' => DateHelper::toDatabase($employment['start_date']),
+                'end_date' => DateHelper::toDatabase($employment['end_date']),
                             'position' => $employment['position'],
                             'comments' => $employment['comments'] ?? null
                         ]);

@@ -1,4 +1,10 @@
-<div class="box--stacked flex flex-col p-0">
+<div class="box--stacked flex flex-col p-0" 
+     x-data="stepGeneralForm()" 
+     x-init="init()" 
+     @sync-form-data.window="syncFormData($event.detail)"
+     @photo-uploaded.window="handlePhotoUploaded($event.detail)"
+     @photo-removed.window="clearPhotoData()"
+     @file-removed="$wire.fileRemoved($event.detail.fieldName, $event.detail.index)">
     <div class="flex items-center px-5 py-5 border-b border-slate-200/60 dark:border-darkmode-400">
         <h2 class="font-medium text-base mr-auto">Driver Information</h2>
     </div>
@@ -16,28 +22,31 @@
             </div>
         </div>
         <div class="mt-3 w-full flex-1 xl:mt-0">
-            <div class="flex items-center space-x-4">
-                <div class="w-24 h-24 bg-gray-100 rounded-full overflow-hidden">
-                    @if ($photo && $photo instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile && $photo->isPreviewable())
-                        <img src="{{ $photo->temporaryUrl() }}" class="w-full h-full object-cover">
-                    @elseif($photo_preview_url)
-                        <img src="{{ $photo_preview_url }}" class="w-full h-full object-cover">
-                    @else
-                        <div class="w-full h-full flex items-center justify-center text-gray-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
-                    @endif
+            <!-- Photo Upload Input -->
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                @if($photo_preview_url)
+                    <div class="mb-4">
+                        <img src="{{ $photo_preview_url }}" alt="Profile Photo" class="mx-auto h-32 w-32 object-cover rounded-full">
+                        <p class="mt-2 text-sm text-gray-600">Current Photo</p>
+                    </div>
+                @endif
+                
+                <div class="mb-4">
+                    <input type="file" wire:model="photo" accept="image/*" 
+                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                 </div>
-                <input type="file" wire:model.live="photo" id="photo" class="hidden"
-                    accept="image/jpeg,image/png,image/jpg,image/webp">
-                <label for="photo" class="px-4 py-2 bg-gray-200 rounded cursor-pointer hover:bg-gray-300">
-                    Choose Photo
-                </label>
+                
+                <div wire:loading wire:target="photo" class="text-blue-600">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Uploading photo...
+                </div>
+                
+                <p class="text-xs text-gray-500 mt-2">PNG, JPG, GIF up to 5MB</p>
             </div>
+            
             @error('photo')
                 <span class="text-red-500 text-sm">{{ $message }}</span>
             @enderror
@@ -178,12 +187,10 @@
             </div>
         </div>
         <div class="mt-3 w-full flex-1 xl:mt-0">
-            <x-date-picker
+            <x-unified-date-picker
                 wire:model="date_of_birth"
-                id="date_of_birth"
-                name="date_of_birth"
-                value="{{ $date_of_birth }}"
-                required
+                placeholder="MM/DD/YYYY"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             @error('date_of_birth')
                 <span class="text-red-500 text-sm">{{ $message }}</span>
@@ -341,3 +348,103 @@
         </div>
     @endif
 </div>
+
+<script>
+    function stepGeneralForm() {
+        return {
+            init() {
+                this.restoreFormData();
+                this.setupEventListeners();
+            },
+            
+            setupEventListeners() {
+                // Escuchar evento de foto removida
+                document.addEventListener('photo-removed', () => {
+                    this.clearPhotoData();
+                });
+            },
+            
+            syncFormData(data) {
+                // Sincronizar datos del formulario con sessionStorage
+                if (data) {
+                    sessionStorage.setItem('step_general_form_data', JSON.stringify(data));
+                }
+            },
+            
+            handlePhotoUploaded(data) {
+                // Manejar foto subida desde Livewire
+                if (data && data.url) {
+                    const photoData = {
+                        url: data.url,
+                        name: data.name || 'photo.jpg',
+                        id: Date.now()
+                    };
+                    
+                    // Actualizar el componente de imagen
+                    const imageUpload = document.querySelector('[x-data*="unifiedImageUpload"]');
+                    if (imageUpload && imageUpload._x_dataStack) {
+                        const component = imageUpload._x_dataStack[0];
+                        if (component) {
+                            component.files = [photoData];
+                            component.storeFilesInSession([photoData]);
+                        }
+                    }
+                }
+            },
+            
+            clearPhotoData() {
+                // Limpiar datos de foto del sessionStorage
+                sessionStorage.removeItem('unified_image_upload_photo');
+                
+                // Limpiar también del componente de imagen
+                const imageUpload = document.querySelector('[x-data*="unifiedImageUpload"]');
+                if (imageUpload && imageUpload._x_dataStack) {
+                    const component = imageUpload._x_dataStack[0];
+                    if (component) {
+                        component.files = [];
+                        component.clearSessionStorage();
+                    }
+                }
+            },
+            
+            restoreFormData() {
+                // Restaurar datos del formulario desde sessionStorage
+                const savedData = sessionStorage.getItem('step_general_form_data');
+                if (savedData) {
+                    try {
+                        const data = JSON.parse(savedData);
+                        
+                        // Restaurar fecha de nacimiento
+                        if (data.date_of_birth) {
+                            const dateInput = document.querySelector('input[wire\\:model="date_of_birth"]');
+                            if (dateInput) {
+                                dateInput.value = data.date_of_birth;
+                                dateInput.dispatchEvent(new Event('input'));
+                            }
+                        }
+                        
+                        // Restaurar otros campos si es necesario
+                        ['name', 'middle_name', 'last_name', 'email', 'phone'].forEach(field => {
+                            if (data[field]) {
+                                const input = document.querySelector(`input[wire\\:model="${field}"]`);
+                                if (input && !input.value) {
+                                    input.value = data[field];
+                                    input.dispatchEvent(new Event('input'));
+                                }
+                            }
+                        });
+                        
+                    } catch (e) {
+                        console.error('Error restoring form data:', e);
+                    }
+                }
+            },
+            
+            clearStoredData() {
+                // Limpiar datos almacenados
+                sessionStorage.removeItem('step_general_form_data');
+                sessionStorage.removeItem('unified_image_upload_photo');
+            }
+        }
+    }
+</script>

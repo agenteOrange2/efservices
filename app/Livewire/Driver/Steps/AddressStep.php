@@ -75,8 +75,6 @@ class AddressStep extends Component
     
     public function mount($driverId = null)
     {
-
-        
         $this->driverId = $driverId;
         if ($this->driverId) {
             $this->loadExistingData();
@@ -86,6 +84,14 @@ class AddressStep extends Component
         if (!$this->lived_three_years && empty($this->previous_addresses)) {
             $this->previous_addresses = [$this->getEmptyPreviousAddress()];
         }
+        
+        // Process temporary photo if available when mounting step 2
+        $this->processTemporaryPhoto();
+        
+        Log::info('AddressStep mounted', [
+            'driver_id' => $this->driverId,
+            'temp_photo_in_session' => session('temp_photo_file') ? 'yes' : 'no'
+        ]);
     }
     
     // Load existing data
@@ -397,7 +403,10 @@ class AddressStep extends Component
         
         // Save to database
         if ($this->driverId) {
-            $this->saveAddresses();            
+            $this->saveAddresses();
+            
+            // Process temporary photo upload after user registration is complete
+            $this->processTemporaryPhoto();
         }
         
         // Move to next step
@@ -428,6 +437,131 @@ class AddressStep extends Component
         }
         
         $this->dispatch('saveAndExit');
+    }
+    
+    // Process temporary photo upload after user registration is complete
+    private function processTemporaryPhoto()
+    {
+        try {
+            Log::info('processTemporaryPhoto called', [
+                'driver_id' => $this->driverId,
+                'session_temp_file' => session('temp_photo_file'),
+                'session_data' => [
+                    'temp_photo_file' => session('temp_photo_file'),
+                    'temp_photo_original_name' => session('temp_photo_original_name'),
+                    'temp_photo_extension' => session('temp_photo_extension')
+                ]
+            ]);
+            
+            // Check if we have temporary photo data in session
+            $tempFileName = session('temp_photo_file');
+            $originalName = session('temp_photo_original_name');
+            $extension = session('temp_photo_extension');
+            
+            if ($tempFileName && $this->driverId) {
+                $tempPath = storage_path('app/temp/' . $tempFileName);
+                
+                Log::info('Procesando foto temporal desde archivo', [
+                    'temp_file' => $tempFileName,
+                    'temp_path' => $tempPath,
+                    'file_exists' => file_exists($tempPath),
+                    'driver_id' => $this->driverId
+                ]);
+                
+                if (file_exists($tempPath)) {
+                    // Get the driver detail
+                    $driverDetail = UserDriverDetail::find($this->driverId);
+                    
+                    if ($driverDetail) {
+                        // Clear existing photos
+                        $driverDetail->clearMediaCollection('profile_photo_driver');
+                        
+                        // Add new photo to collection
+                        $driverDetail->addMedia($tempPath)
+                            ->usingName($originalName ?? 'profile_photo')
+                            ->toMediaCollection('profile_photo_driver');
+                        
+                        Log::info('Foto de perfil guardada exitosamente', [
+                            'driver_id' => $driverDetail->id,
+                            'original_name' => $originalName
+                        ]);
+                        
+                        // Clean up temporary file and session data
+                        unlink($tempPath);
+                        session()->forget(['temp_photo_file', 'temp_photo_original_name', 'temp_photo_extension']);
+                        
+                        Log::info('Archivo temporal limpiado y datos de sesión eliminados');
+                    } else {
+                        Log::error('Driver detail no encontrado', ['driver_id' => $this->driverId]);
+                    }
+                } else {
+                    Log::warning('Archivo temporal no existe', ['temp_path' => $tempPath]);
+                }
+            } else {
+                Log::info('No hay foto temporal para procesar o falta driver_id', [
+                    'temp_file' => $tempFileName,
+                    'driver_id' => $this->driverId
+                ]);
+                
+                // Still emit event to frontend as fallback
+                $this->dispatch('process-temporary-photo');
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Error in processTemporaryPhoto', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    public function uploadTemporaryPhoto($photoData)
+    {
+        try {
+            if (!$photoData || !isset($photoData['data'])) {
+                return;
+            }
+
+            // Get the driver detail
+            $driverDetail = UserDriverDetail::where('user_id', auth()->id())->first();
+            
+            if (!$driverDetail) {
+                Log::error('Driver detail not found for user: ' . auth()->id());
+                return;
+            }
+
+            // Decode base64 image data
+            $imageData = $photoData['data'];
+            if (strpos($imageData, 'data:') === 0) {
+                $imageData = substr($imageData, strpos($imageData, ',') + 1);
+            }
+            $decodedImage = base64_decode($imageData);
+
+            // Create temporary file
+            $tempPath = tempnam(sys_get_temp_dir(), 'driver_photo_');
+            file_put_contents($tempPath, $decodedImage);
+
+            // Clear existing photos
+            $driverDetail->clearMediaCollection('profile_photo_driver');
+            
+            // Add new photo to collection
+            $driverDetail->addMedia($tempPath)
+                ->usingName($photoData['name'] ?? 'profile_photo')
+                ->toMediaCollection('profile_photo_driver');
+            
+            // Clean up temporary file
+            unlink($tempPath);
+            
+            Log::info('Profile photo uploaded successfully for driver: ' . $driverDetail->id);
+            
+            return ['success' => true, 'message' => 'Photo uploaded successfully'];
+            
+        } catch (Exception $e) {
+            Log::error('Error uploading temporary photo: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Error uploading photo: ' . $e->getMessage()];
+        }
     }
     
     // Render

@@ -125,6 +125,8 @@ export default defineConfig({
                 'resources/js/vendors/litepicker.js',
                 'resources/js/vendors/tippy.js',
                 'resources/js/date-picker.js', // Nuestro componente de date-picker personalizado
+                'resources/js/unified-image-upload.js', // Componente unificado de subida de imágenes
+                'resources/js/unified-date-picker.js', // Componente unificado de date picker
                 'resources/js/ckeditor-classic.js', // CKEditor para formularios de texto enriquecido
               ],
             refresh: true,

@@ -244,18 +244,22 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>                        
+                    <div>
                         <x-base.form-label for="unemployment_form.start_date">Start Date*</x-base.form-label>   
-                        <input type="date" wire:model="unemployment_form.start_date"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                        <x-unified-date-picker 
+                            wire:model="unemployment_form.start_date" 
+                            placeholder="MM/DD/YYYY" 
+                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                         @error('unemployment_form.start_date')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
-                    <div>                        
-                        <x-base.form-label for="unemployment_form.end_date">Start Date*</x-base.form-label>   
-                        <input type="date" wire:model="unemployment_form.end_date"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                    <div>
+                        <x-base.form-label for="unemployment_form.end_date">End Date*</x-base.form-label>   
+                        <x-unified-date-picker 
+                            wire:model="unemployment_form.end_date" 
+                            placeholder="MM/DD/YYYY" 
+                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                         @error('unemployment_form.end_date')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
@@ -390,16 +394,20 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Employed From*</label>
-                            <input type="date" wire:model="company_form.employed_from"
-                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                            <x-unified-date-picker 
+                                wire:model="company_form.employed_from" 
+                                placeholder="MM/DD/YYYY" 
+                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                             @error('company_form.employed_from')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Employed To*</label>
-                            <input type="date" wire:model="company_form.employed_to"
-                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                            <x-unified-date-picker 
+                                wire:model="company_form.employed_to" 
+                                placeholder="MM/DD/YYYY" 
+                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                             @error('company_form.employed_to')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
@@ -596,16 +604,20 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div class="mt-3 w-full flex-1 xl:mt-0">
                         <x-base.form-label for="related_employment_form.start_date">Start Date*</x-base.form-label>                        
-                        <input type="date" wire:model="related_employment_form.start_date"
-                            class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                        <x-unified-date-picker 
+                            wire:model="related_employment_form.start_date" 
+                            placeholder="MM/DD/YYYY" 
+                            class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
                         @error('related_employment_form.start_date')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
-                    <div>                        
+                    <div>
                         <x-base.form-label for="related_employment_form.end_date">End Date*</x-base.form-label>
-                        <input type="date" wire:model="related_employment_form.end_date"
-                            class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                        <x-unified-date-picker 
+                            wire:model="related_employment_form.end_date" 
+                            placeholder="MM/DD/YYYY" 
+                            class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
                         @error('related_employment_form.end_date')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror

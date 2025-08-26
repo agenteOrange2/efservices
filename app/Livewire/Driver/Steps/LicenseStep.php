@@ -3,6 +3,8 @@
 namespace App\Livewire\Driver\Steps;
 
 use App\Helpers\Constants;
+use App\Helpers\DateHelper;
+use App\Traits\DriverValidationTrait;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +16,7 @@ use App\Services\Admin\TempUploadService;
 
 class LicenseStep extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, DriverValidationTrait;
 
     // License Information
     public $current_license_number = '';
@@ -29,16 +31,19 @@ class LicenseStep extends Component
     // Validation rules
     protected function rules()
     {
-        return [
-            'current_license_number' => 'required|string|max:255',
-            'licenses.*.license_number' => 'required|string|max:255',
-            'licenses.*.state_of_issue' => 'required|string|max:255',
-            'licenses.*.license_class' => 'required|string|max:255',
-            'licenses.*.expiration_date' => 'required|date',
-            'experiences.*.equipment_type' => 'required|string|max:255',
-            'experiences.*.years_experience' => 'required|integer|min:0',
-            'experiences.*.miles_driven' => 'required|integer|min:0',
-        ];
+        return array_merge(
+            $this->getDriverRegistrationRules('license'),
+            [
+                'current_license_number' => 'required|string|max:255',
+                'licenses.*.license_number' => 'required|string|max:255',
+                'licenses.*.state_of_issue' => 'required|string|max:255',
+                'licenses.*.license_class' => 'required|string|max:255',
+                'licenses.*.expiration_date' => $this->getExpirationDateValidation(),
+                'experiences.*.equipment_type' => 'required|string|max:255',
+                'experiences.*.years_experience' => $this->getYearsExperienceValidation(),
+                'experiences.*.miles_driven' => 'required|integer|min:0',
+            ]
+        );
     }
 
     // Rules for partial saves
@@ -47,6 +52,12 @@ class LicenseStep extends Component
         return [
             'current_license_number' => 'required|string|max:255',
         ];
+    }
+
+    // Custom validation messages
+    protected function messages()
+    {
+        return $this->getValidationMessages();
     }
 
     // Initialize
@@ -90,7 +101,7 @@ class LicenseStep extends Component
                     'license_number' => $license->license_number,
                     'state_of_issue' => $license->state_of_issue,
                     'license_class' => $license->license_class,
-                    'expiration_date' => $license->expiration_date ? $license->expiration_date->format('Y-m-d') : null,
+                    'expiration_date' => $license->expiration_date ? DateHelper::toDisplay($license->expiration_date->format('Y-m-d')) : '',
                     'is_cdl' => $license->is_cdl,
                     'is_primary' => $license->is_primary,
                     'endorsements' => $license->endorsements ? $license->endorsements->pluck('code')->toArray() : [],
@@ -151,7 +162,7 @@ class LicenseStep extends Component
                             'license_number' => $licenseInfo['license_number'],
                             'state_of_issue' => $licenseInfo['state_of_issue'] ?? '',
                             'license_class' => $licenseInfo['license_class'] ?? '',
-                            'expiration_date' => $licenseInfo['expiration_date'] ?? now(),
+                            'expiration_date' => DateHelper::toDatabase($licenseInfo['expiration_date']) ?? now(),
                             'is_cdl' => isset($licenseInfo['is_cdl']),
                             'is_primary' => $index === 0,
                             'status' => 'active'
@@ -171,7 +182,7 @@ class LicenseStep extends Component
                         'license_number' => $licenseInfo['license_number'],
                         'state_of_issue' => $licenseInfo['state_of_issue'] ?? '',
                         'license_class' => $licenseInfo['license_class'] ?? '',
-                        'expiration_date' => $licenseInfo['expiration_date'] ?? now(),
+                        'expiration_date' => DateHelper::toDatabase($licenseInfo['expiration_date']) ?? now(),
                         'is_cdl' => isset($licenseInfo['is_cdl']),
                         'is_primary' => $index === 0,
                         'status' => 'active'
@@ -191,7 +202,7 @@ class LicenseStep extends Component
                             );
                             $license->endorsements()->attach($endorsement->id, [
                                 'issued_date' => now(),
-                                'expiration_date' => $licenseInfo['expiration_date'] ?? now()
+                                'expiration_date' => DateHelper::toDatabase($licenseInfo['expiration_date']) ?? now()
                             ]);
                         }
                     }
@@ -280,7 +291,7 @@ class LicenseStep extends Component
                 );
                 $license->endorsements()->attach($endorsement->id, [
                     'issued_date' => now(),
-                    'expiration_date' => $licenseInfo['expiration_date'] ?? now()
+                    'expiration_date' => DateHelper::toDatabase($licenseInfo['expiration_date']) ?? now()
                 ]);
             }
         }

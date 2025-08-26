@@ -14,6 +14,7 @@ use App\Models\Admin\Driver\DriverAccident;
 use App\Models\Admin\Driver\DriverTrafficConviction;
 use App\Models\Admin\Driver\DriverTesting;
 use App\Models\Admin\Driver\DriverInspection;
+use App\Models\UserDriverDetail;
 
 class UploadController extends Controller
 {
@@ -28,7 +29,8 @@ class UploadController extends Controller
         'accident' => DriverAccident::class,
         'traffic' => DriverTrafficConviction::class,
         'testing' => DriverTesting::class,
-        'inspection' => DriverInspection::class
+        'inspection' => DriverInspection::class,
+        'user_driver' => UserDriverDetail::class
     ];
     
     public function __construct(TempUploadService $tempUploadService)

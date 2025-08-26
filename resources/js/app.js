@@ -5,19 +5,8 @@ import Pikaday from 'pikaday';
 import moment from 'moment';
 import 'pikaday/css/pikaday.css';
 
-// Alpine.js se carga desde CDN en el layout guest
-// Solo configurar si no está ya disponible
-if (!window.Alpine) {
-    import('alpinejs').then(Alpine => {
-        window.Alpine = Alpine.default;
-        Alpine.default.start();
-    });
-}
-
-// Inicializar Livewire si está disponible
-if (typeof Livewire !== 'undefined') {
-    Livewire.start();
-}
+// Alpine.js ya está incluido en Livewire, no necesitamos cargarlo por separado
+// Livewire se inicializa automáticamente
 
 // Importar jQuery explícitamente
 import $ from 'jquery';
@@ -40,6 +29,9 @@ if (typeof $ === "undefined" || typeof Pristine === "undefined") {
   import("@left4code/tw-starter/dist/js/modal");
   import("@left4code/tw-starter/dist/js/tab");
 }
+
+// Importar unified-image-upload para que esté disponible globalmente
+import "./unified-image-upload";
 
 // Otros scripts
 try {

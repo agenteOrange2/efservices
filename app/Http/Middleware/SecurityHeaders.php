@@ -103,7 +103,7 @@ class SecurityHeaders
         // General CSP for public pages (including driver registration)
         return implode('; ', [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Allow unsafe-eval for Livewire/Alpine.js
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net", // Allow CDN scripts for signature_pad and pikaday
             "style-src 'self' 'unsafe-inline' fonts.googleapis.com fonts.bunny.net",
             "font-src 'self' fonts.gstatic.com fonts.bunny.net data:",
             "img-src 'self' data: https:",

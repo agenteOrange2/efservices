@@ -13,10 +13,12 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\DriverRegistrationCredentials;
 use App\Mail\NewDriverNotification;
 use App\Models\User;
+use App\Helpers\DateHelper;
+use App\Traits\DriverValidationTrait;
 
 class StepGeneral extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, DriverValidationTrait;
 
     // Propiedades principales
     public $driverId;
@@ -43,110 +45,70 @@ class StepGeneral extends Component
 
     /**
      * Convierte una fecha a formato Y-m-d para almacenarla en la base de datos
-     * Maneja múltiples formatos de entrada posibles
+     * Utiliza el DateHelper unificado
      */
     protected function formatDateForDatabase($date)
     {
-        if (empty($date)) return null;
-        
-        // Intentar diferentes formatos de fecha
-        $formats = ['m-d-Y', 'Y-m-d', 'd-m-Y', 'm/d/Y', 'Y/m/d', 'd/m/Y'];
-        
-        foreach ($formats as $format) {
-            try {
-                return \Carbon\Carbon::createFromFormat($format, $date)->format('Y-m-d');
-            } catch (\Exception $e) {
-                // Intentar con el siguiente formato
-                continue;
-            }
-        }
-        
-        // Último intento: usar el parser genérico de Carbon
-        try {
-            return \Carbon\Carbon::parse($date)->format('Y-m-d');
-        } catch (\Exception $e) {
-            // Si todo falla, devolver la fecha tal cual
-            return $date;
-        }
+        return DateHelper::toDatabase($date);
     }
 
     /**
-     * Convierte una fecha del formato de base de datos a m-d-Y para mostrarla
+     * Convierte una fecha del formato de base de datos a m/d/Y para mostrarla
+     * Utiliza el DateHelper unificado
      */
     protected function formatDateForDisplay($date)
     {
-        if (empty($date)) return null;
-        
-        try {
-            if ($date instanceof \Carbon\Carbon) {
-                return $date->format('m-d-Y');
-            } else {
-                return \Carbon\Carbon::parse($date)->format('m-d-Y');
-            }
-        } catch (\Exception $e) {
-            return $date;
-        }
+        return DateHelper::toDisplay($date);
     }
     
-    // Validación para el formulario
+    // Validación para el formulario usando el trait unificado
     protected function rules()
     {
-        $rules = [
-            'name' => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'date_of_birth' => [
-                'required',
-                function ($attribute, $value, $fail) {
-                    // Verificar que la fecha tenga un formato válido y que la persona sea mayor de 18 años
-                    try {
-                        // Intentar parsear la fecha en formato m-d-Y
-                        $birthDate = \Carbon\Carbon::createFromFormat('m-d-Y', $value);
-                    } catch (\Exception $e) {
-                        // Si falla, intentar parsear como fecha Y-m-d (formato que podría venir del datepicker)
-                        try {
-                            $birthDate = \Carbon\Carbon::createFromFormat('Y-m-d', $value);
-                        } catch (\Exception $e2) {
-                            // Último intento: parsear como fecha genérica
-                            try {
-                                $birthDate = \Carbon\Carbon::parse($value);
-                            } catch (\Exception $e3) {
-                                $fail('Invalid date format. Please use MM-DD-YYYY format.');
-                                return;
-                            }
-                        }
-                    }
-                    
-                    // Verificar que la persona sea mayor de 18 años
-                    $minDate = \Carbon\Carbon::now()->subYears(18);
-
-                    if ($birthDate->isAfter($minDate)) {
-                        $fail('You must be at least 18 years old to register.');
-                    }
-                },
-            ],
-            'terms_accepted' => 'required|accepted',
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:1024',
-        ];
-
+        $baseRules = $this->getDriverRegistrationRules('general');
+        
+        // Personalizar reglas específicas para este paso
+        $baseRules['date_of_birth'] = $this->getDateOfBirthValidationRules();
+        $baseRules['photo'] = $this->getImageValidationRules(false); // Foto opcional
+        
         // Si es un nuevo registro, requerimos email y password
         if (!$this->driverId) {
-            $rules['email'] = 'required|email|unique:users,email';
-            $rules['password'] = 'required|min:8|confirmed';
+            $baseRules['email'] = $this->getEmailValidationRules();
+            $baseRules['password'] = $this->getPasswordValidationRules();
         } else {
-            $rules['email'] = 'required|email|unique:users,email,' . $this->getUserId();
-            $rules['password'] = 'nullable|min:8|confirmed';
+            $baseRules['email'] = $this->getEmailValidationRules($this->getUserId());
+            $baseRules['password'] = $this->getPasswordValidationRules(false); // No requerido para actualización
         }
 
-        return $rules;
+        return $baseRules;
+    }
+    
+    /**
+     * Mensajes de validación personalizados
+     */
+    protected function messages()
+    {
+        return $this->getValidationMessages();
     }
 
     // Este método se dispara cuando se actualiza la foto
     public function updatedPhoto()
     {
+        Log::info('=== INICIO updatedPhoto() ===', [
+            'photo_exists' => !is_null($this->photo),
+            'photo_type' => $this->photo ? get_class($this->photo) : 'null',
+            'session_id' => session()->getId()
+        ]);
+        
         if ($this->photo) {
             try {
+                Log::info('Procesando foto subida', [
+                    'original_name' => $this->photo->getClientOriginalName(),
+                    'size' => $this->photo->getSize(),
+                    'mime_type' => $this->photo->getMimeType(),
+                    'is_valid' => $this->photo->isValid(),
+                    'path' => $this->photo->path()
+                ]);
+
                 // Antes de intentar previsualizar, validar la extensión
                 $extension = $this->photo->getClientOriginalExtension();
 
@@ -159,6 +121,7 @@ class StepGeneral extends Component
                         // Si no se puede determinar la extensión, rechazar el archivo
                         $this->reset('photo');
                         $this->addError('photo', 'El archivo debe tener una extensión reconocible (jpg, png, etc.)');
+                        Log::warning('Archivo rechazado: sin extensión reconocible', ['mime' => $mime]);
                         return;
                     }
 
@@ -167,6 +130,7 @@ class StepGeneral extends Component
                     // así que debemos rechazar archivos sin extensión
                     $this->reset('photo');
                     $this->addError('photo', 'Por favor, sube un archivo con extensión (jpg, png, etc.)');
+                    Log::warning('Archivo rechazado: sin extensión en nombre', ['mime' => $mime]);
                     return;
                 }
 
@@ -175,16 +139,84 @@ class StepGeneral extends Component
                     'photo' => 'image|mimes:jpg,jpeg,png,gif,webp|max:2048',
                 ]);
 
-                // Si llegamos aquí, la foto es válida para previsualización
-                $this->photo_preview_url = null;
+                Log::info('Foto validada correctamente', ['extension' => $extension]);
+
+                // Guardar archivo temporalmente en el sistema de archivos
+                $tempFileName = 'temp_photo_' . uniqid() . '.' . $extension;
+                $tempPath = storage_path('app/temp/' . $tempFileName);
+                
+                Log::info('Preparando guardado temporal', [
+                    'temp_filename' => $tempFileName,
+                    'temp_path' => $tempPath,
+                    'storage_temp_dir' => storage_path('app/temp'),
+                    'temp_dir_exists' => file_exists(storage_path('app/temp'))
+                ]);
+                
+                // Crear directorio temporal si no existe
+                if (!file_exists(storage_path('app/temp'))) {
+                    mkdir(storage_path('app/temp'), 0755, true);
+                    Log::info('Directorio temporal creado', [
+                        'path' => storage_path('app/temp'),
+                        'created' => file_exists(storage_path('app/temp'))
+                    ]);
+                }
+                
+                // Mover archivo a ubicación temporal
+                $storedPath = $this->photo->storeAs('temp', $tempFileName);
+                
+                Log::info('Foto guardada temporalmente', [
+                    'temp_file' => $tempFileName,
+                    'temp_path' => $tempPath,
+                    'stored_path' => $storedPath,
+                    'file_exists' => file_exists($tempPath),
+                    'file_size' => file_exists($tempPath) ? filesize($tempPath) : 'N/A'
+                ]);
+
+                // Generar URL temporal para previsualización
+                $this->photo_preview_url = $this->photo->temporaryUrl();
+                
+                // Guardar información del archivo temporal en sesión para procesamiento posterior
+                session([
+                    'temp_photo_file' => $tempFileName,
+                    'temp_photo_original_name' => $this->photo->getClientOriginalName(),
+                    'temp_photo_extension' => $extension
+                ]);
+                
+                Log::info('Información de foto guardada en sesión', [
+                    'temp_file' => $tempFileName,
+                    'session_data' => session('temp_photo_file')
+                ]);
+                
+                // Disparar evento para que el componente frontend maneje la persistencia
+                $this->dispatch('photo-uploaded', [
+                    'url' => $this->photo_preview_url,
+                    'name' => $this->photo->getClientOriginalName(),
+                    'temp_file' => $tempFileName
+                ]);
+                
+                Log::info('Evento photo-uploaded disparado correctamente');
+                
+                Log::info('=== FIN updatedPhoto() - ÉXITO ===', [
+                    'temp_file' => $tempFileName,
+                    'preview_url_set' => !empty($this->photo_preview_url),
+                    'session_data_saved' => !empty(session('temp_photo_file'))
+                ]);
+                
             } catch (\Exception $e) {
                 $this->reset('photo');
                 $this->addError('photo', 'Error al procesar la imagen: ' . $e->getMessage());
-                Log::error('Error al procesar la imagen', [
+                Log::error('=== FIN updatedPhoto() - ERROR ===', [
                     'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
                     'trace' => $e->getTraceAsString()
                 ]);
             }
+        } else {
+            Log::info('=== FIN updatedPhoto() - SIN FOTO ===', [
+                'photo_is_null' => is_null($this->photo),
+                'photo_empty' => empty($this->photo)
+            ]);
         }
     }
 
@@ -254,8 +286,8 @@ class StepGeneral extends Component
             $this->middle_name = $driver->middle_name;
             $this->last_name = $driver->last_name;
             $this->phone = $driver->phone;
-            // Usar formato m-d-Y para mostrar en la vista
-            $this->date_of_birth = $driver->date_of_birth ? $driver->date_of_birth->format('m-d-Y') : null;
+            // Usar formato m/d/Y para mostrar en la vista
+            $this->date_of_birth = $driver->date_of_birth ? DateHelper::toDisplay($driver->date_of_birth) : null;
             $this->status = $driver->status;
             $this->terms_accepted = $driver->terms_accepted;
 
@@ -402,58 +434,7 @@ class StepGeneral extends Component
                     'status' => 'draft'
                 ]);
 
-                // Subir foto si existe y es válida
-                if ($this->photo && $this->photo->isValid()) {
-                    try {
-                        // Intentar obtener la extensión del archivo
-                        $extension = strtolower($this->photo->getClientOriginalExtension());
-
-                        // Si no hay extensión, intentar determinarla a partir del mime type
-                        if (empty($extension)) {
-                            $mime = $this->photo->getMimeType();
-                            $mimeExtensions = [
-                                'image/jpeg' => 'jpg',
-                                'image/png' => 'png',
-                                'image/gif' => 'gif',
-                                'image/webp' => 'webp',
-                                'image/bmp' => 'bmp',
-                                'image/svg+xml' => 'svg',
-                            ];
-
-                            if (isset($mimeExtensions[$mime])) {
-                                $extension = $mimeExtensions[$mime];
-                            } else if (strpos($mime, 'image/') === 0) {
-                                $extension = 'jpg';
-                            }
-                        }
-
-                        // Si tenemos una extensión válida, guardar el archivo
-                        if (!empty($extension)) {
-                            $fileName = time() . '.' . $extension;
-
-                            $driver->addMedia($this->photo->getRealPath())
-                                ->usingFileName($fileName)
-                                ->usingName($user->name)
-                                ->toMediaCollection('profile_photo_driver');
-
-                            Log::info('Foto guardada correctamente', [
-                                'driver_id' => $driver->id,
-                                'extension' => $extension,
-                                'file_name' => $fileName
-                            ]);
-                        } else {
-                            Log::warning('No se pudo guardar la foto - sin extensión válida', [
-                                'mime' => $this->photo->getMimeType(),
-                                'original_name' => $this->photo->getClientOriginalName()
-                            ]);
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('Error al guardar la foto', [
-                            'error' => $e->getMessage(),
-                            'trace' => $e->getTraceAsString()
-                        ]);
-                    }
-                }
+                // Nota: La foto se procesará después del registro cuando tengamos el ID del driver
 
                 // Restablecer el driverId y despachar evento
                 $this->driverId = $driver->id;
@@ -649,20 +630,59 @@ class StepGeneral extends Component
             // No actualizamos carrier_id aquí para evitar cambios inesperados
         ]);
 
-        // Actualizar foto si se carga una nueva
-        if ($this->photo && $this->photo->isValid()) {
-            $driver->clearMediaCollection('profile_photo_driver');
-
-            $extension = $this->photo->getClientOriginalExtension();
-            if (!empty($extension)) {
-                $driver->addMedia($this->photo->getRealPath())
-                    ->usingFileName(time() . '.' . $extension)
-                    ->usingName($user->name)
-                    ->toMediaCollection('profile_photo_driver');
-            }
-        }
+        // Nota: La foto se procesará en un paso posterior del registro
 
         Log::info('Driver actualizado', ['driver_id' => $driver->id]);
+    }
+
+    /**
+     * Método para manejar eventos de archivos removidos desde el frontend
+     */
+    public function fileRemoved($fieldName, $index = null)
+    {
+        if ($fieldName === 'photo') {
+            $this->photo = null;
+            $this->photo_preview_url = null;
+            
+            // Limpiar también de la sesión
+            session()->forget('step_general_photo_preview_url');
+            
+            // Disparar evento para limpiar el frontend
+            $this->dispatch('photo-removed');
+        }
+    }
+
+    /**
+     * Método para restaurar datos desde sessionStorage
+     */
+    public function restoreFromSession($data)
+    {
+        if (isset($data['date_of_birth']) && !empty($data['date_of_birth'])) {
+            $this->date_of_birth = $data['date_of_birth'];
+        }
+        
+        // Para la foto, solo restauramos la URL de previsualización si existe
+        if (isset($data['photo_preview_url']) && !empty($data['photo_preview_url'])) {
+            $this->photo_preview_url = $data['photo_preview_url'];
+        }
+    }
+
+    /**
+     * Método llamado después de cada actualización de Livewire
+     * para mantener la sincronización con el frontend
+     */
+    public function dehydrate()
+    {
+        // Disparar evento para sincronizar datos con sessionStorage
+        $this->dispatch('sync-form-data', [
+            'date_of_birth' => $this->date_of_birth,
+            'photo_preview_url' => $this->photo_preview_url,
+            'name' => $this->name,
+            'middle_name' => $this->middle_name,
+            'last_name' => $this->last_name,
+            'email' => $this->email,
+            'phone' => $this->phone
+        ]);
     }
 
     public function render()

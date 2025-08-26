@@ -74,8 +74,10 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Expiration Date <span
                                 class="text-red-500">*</span></label>
-                        <input type="date" wire:model="licenses.{{ $index }}.expiration_date"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                        <x-unified-date-picker 
+                            wire:model="licenses.{{ $index }}.expiration_date" 
+                            placeholder="MM/DD/YYYY" 
+                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                         @error("licenses.{$index}.expiration_date")
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
@@ -141,201 +143,37 @@
 
                 <!-- License Images -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div x-data="{
-                        preview: '{{ $license['front_preview'] ?? '' }}',
-                        filename: '{{ $license['front_filename'] ?? '' }}',
-                        loading: false,
-                        error: ''
-                    }">
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">License Front Image</label>
-                        <div class="flex items-center space-x-2">
-                            <button type="button" @click="$refs.license_front.click()"
-                                class="px-3 py-2 bg-gray-200 rounded cursor-pointer hover:bg-gray-300 text-sm"
-                                :disabled="loading">
-                                <span x-show="!loading">Select Image</span>
-                                <span x-show="loading" class="flex items-center">
-                                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-primary"
-                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10"
-                                            stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                        </path>
-                                    </svg>
-                                    Uploading...
-                                </span>
-                            </button>
-                            <input type="file" x-ref="license_front" class="hidden" accept="image/*"
-                                @change="
-                            const file = $event.target.files[0];
-                            if(!file) return;
-                            if(file.size > 2 * 1024 * 1024) {
-                                error = 'File size must be less than 2MB';
-                                $event.target.value = '';
-                                return;
-                            }
-                            loading = true;
-                            filename = file.name;
-                            if(file.type.startsWith('image/')) {
-                                preview = URL.createObjectURL(file);
-                            }
-                            const formData = new FormData();
-                            formData.append('file', file);
-                            formData.append('type', 'license_front');
-                            fetch('/api/documents/upload', {
-                                method: 'POST',
-                                body: formData,
-                                headers: {
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                    'Accept': 'application/json'
-                                }
-                            })
-                            .then(response => {
-                                if (!response.ok) {
-                                    throw new Error('Network response was not ok: ' + response.status);
-                                }
-                                return response.json();
-                            })
-                            .then(result => {
-                                if (result.error) {
-                                    throw new Error(result.error);
-                                }
-                                @this.set('licenses.{{ $index }}.temp_front_token', result.token);
-                                @this.set('licenses.{{ $index }}.front_preview', preview);
-                                @this.set('licenses.{{ $index }}.front_filename', filename);
-                                loading = false;
-                                error = '';
-                            })
-                            .catch(err => {
-                                console.error('Error uploading:', err);
-                                error = 'Failed to upload image: ' + err.message;
-                                loading = false;
-                            });
-                        ">
-                            <span x-text="filename" class="text-sm text-gray-600 truncate max-w-[100px]"></span>
-                            <button type="button" x-show="filename"
-                                @click="
-                            preview = '';
-                            filename = '';
-                            @this.set('licenses.{{ $index }}.temp_front_token', '');
-                            @this.set('licenses.{{ $index }}.front_preview', '');
-                            @this.set('licenses.{{ $index }}.front_filename', '');
-                            $refs.license_front.value = '';
-                            error = '';
-                        "
-                                class="text-red-500 hover:text-red-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                    fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div x-show="preview" class="mt-2">
-                            <img :src="preview" class="h-32 object-contain border rounded"
-                                alt="License Front Preview" />
-                        </div>
-                        <p x-show="error" x-text="error" class="text-red-500 text-sm mt-1"></p>
+                        <x-unified-image-upload 
+                            wire:model="licenses.{{ $index }}.temp_front_token" 
+                            :existing-image="$license['front_preview'] ?? ''" 
+                            accept="image/*" 
+                            max-size="2048" 
+                            class="w-full"
+                            :model-type="'user_driver'"
+                            :model-id="$driverId"
+                            collection="license_documents" />
+                        @error("licenses.{$index}.temp_front_token")
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <!-- License Back Image -->
-                    <div x-data="{
-                        preview: '{{ $license['back_preview'] ?? '' }}',
-                        filename: '{{ $license['back_filename'] ?? '' }}',
-                        loading: false,
-                        error: ''
-                    }">
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">License Back Image</label>
-                        <div class="flex items-center space-x-2">
-                            <button type="button" @click="$refs.license_back.click()"
-                                class="px-3 py-2 bg-gray-200 rounded cursor-pointer hover:bg-gray-300 text-sm"
-                                :disabled="loading">
-                                <span x-show="!loading">Select Image</span>
-                                <span x-show="loading" class="flex items-center">
-                                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-primary"
-                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10"
-                                            stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                        </path>
-                                    </svg>
-                                    Uploading...
-                                </span>
-                            </button>
-                            <input type="file" x-ref="license_back" class="hidden" accept="image/*"
-                                @change="
-                            const file = $event.target.files[0];
-                            if(!file) return;
-                            if(file.size > 2 * 1024 * 1024) {
-                                error = 'File size must be less than 2MB';
-                                $event.target.value = '';
-                                return;
-                            }
-                            loading = true;
-                            filename = file.name;
-                            if(file.type.startsWith('image/')) {
-                                preview = URL.createObjectURL(file);
-                            }
-                            const formData = new FormData();
-                            formData.append('file', file);
-                            formData.append('type', 'license_back');
-                            fetch('/api/documents/upload', {
-                                method: 'POST',
-                                body: formData,
-                                headers: {
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                    'Accept': 'application/json'
-                                }
-                            })
-                            .then(response => {
-                                if (!response.ok) {
-                                    throw new Error('Network response was not ok: ' + response.status);
-                                }
-                                return response.json();
-                            })
-                            .then(result => {
-                                if (result.error) {
-                                    throw new Error(result.error);
-                                }
-                                @this.set('licenses.{{ $index }}.temp_back_token', result.token);
-                                @this.set('licenses.{{ $index }}.back_preview', preview);
-                                @this.set('licenses.{{ $index }}.back_filename', filename);
-                                loading = false;
-                                error = '';
-                            })
-                            .catch(err => {
-                                console.error('Error uploading:', err);
-                                error = 'Failed to upload image: ' + err.message;
-                                loading = false;
-                            });
-                        ">
-                            <span x-text="filename" class="text-sm text-gray-600 truncate max-w-[100px]"></span>
-                            <button type="button" x-show="filename"
-                                @click="
-                            preview = '';
-                            filename = '';
-                            @this.set('licenses.{{ $index }}.temp_back_token', '');
-                            @this.set('licenses.{{ $index }}.back_preview', '');
-                            @this.set('licenses.{{ $index }}.back_filename', '');
-                            $refs.license_back.value = '';
-                            error = '';
-                        "
-                                class="text-red-500 hover:text-red-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                    fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div x-show="preview" class="mt-2">
-                            <img :src="preview" class="h-32 object-contain border rounded"
-                                alt="License Back Preview" />
-                        </div>
-                        <p x-show="error" x-text="error" class="text-red-500 text-sm mt-1"></p>
+                        <x-unified-image-upload 
+                            wire:model="licenses.{{ $index }}.temp_back_token" 
+                            :existing-image="$license['back_preview'] ?? ''" 
+                            accept="image/*" 
+                            max-size="2048" 
+                            class="w-full"
+                            :model-type="'user_driver'"
+                            :model-id="$driverId"
+                            collection="license_documents" />
+                        @error("licenses.{$index}.temp_back_token")
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
                 </div>
             </div>
