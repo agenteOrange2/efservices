@@ -246,13 +246,7 @@ trait DriverValidationTrait
                 
             case 'license':
                 return [
-                    'current_license_number' => $this->getLicenseNumberValidationRules(),
-                    'license_number' => $this->getLicenseNumberValidationRules(),
-                    'state_of_issue' => $this->getStateValidationRules(),
-                    'license_class' => ['required', 'string'],
-                    'expiration_date' => $this->getExpirationDateValidationRules(),
-                    'front_image' => $this->getImageValidationRules(false),
-                    'back_image' => $this->getImageValidationRules(false)
+                    'current_license_number' => $this->getLicenseNumberValidationRules()
                 ];
                 
             case 'employment':

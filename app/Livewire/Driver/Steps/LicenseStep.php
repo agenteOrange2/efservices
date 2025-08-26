@@ -102,6 +102,7 @@ class LicenseStep extends Component
             $this->licenses = [];
             foreach ($licenses as $license) {
                 $this->licenses[] = [
+                    'unique_id' => 'license_' . $license->id . '_' . uniqid(),
                     'id' => $license->id,
                     'license_number' => $license->license_number,
                     'state_of_issue' => $license->state_of_issue,
@@ -177,8 +178,7 @@ class LicenseStep extends Component
                         // Update endorsements
                         $this->updateLicenseEndorsements($license, $licenseInfo);
 
-                        // Process images
-                        $this->processLicenseImages($license, $licenseInfo);
+                        // Images are now uploaded directly, no processing needed
                     }
                 } else {
                     // Create new license
@@ -212,8 +212,7 @@ class LicenseStep extends Component
                         }
                     }
 
-                    // Process images
-                    $this->processLicenseImages($license, $licenseInfo);
+                    // Images are now uploaded directly, no processing needed
                 }
             }
             Log::info('Updated license IDs', ['ids' => $updatedLicenseIds]);
@@ -302,125 +301,7 @@ class LicenseStep extends Component
         }
     }
 
-    protected function processLicenseImages($license, $licenseInfo)
-    {
-        try {
-            $tempUploadService = app(TempUploadService::class);
-
-            // Process front image
-            if (!empty($licenseInfo['temp_front_token'])) {
-                Log::info('Processing front image', [
-                    'license_id' => $license->id,
-                    'token' => $licenseInfo['temp_front_token'],
-                    'session_id' => session()->getId(),
-                    'temp_files' => array_keys(session('temp_files', []))
-                ]);
-
-                // Intenta obtener el archivo de la sesión
-                $tempPath = $tempUploadService->moveToPermanent($licenseInfo['temp_front_token']);
-
-                // Si no se encuentra en la sesión, intenta buscarlo directamente en el almacenamiento
-                if (!$tempPath || !file_exists($tempPath)) {
-                    // Buscar en el almacenamiento por un patrón que coincida con el token
-                    $tempFiles = session('temp_files', []);
-                    Log::info('Buscando archivo en temp_files', ['temp_files' => $tempFiles]);
-                    
-                    // Si no podemos encontrarlo en la sesión, intentamos buscarlo directamente en el storage
-                    $possiblePaths = [
-                        storage_path('app/public/temp/license_front'),
-                        storage_path('app/public/temp')
-                    ];
-                    
-                    foreach ($possiblePaths as $dir) {
-                        if (is_dir($dir)) {
-                            $files = scandir($dir);
-                            Log::info('Archivos en directorio', ['dir' => $dir, 'files' => $files]);
-                            
-                            // Buscar archivos recientes
-                            foreach ($files as $file) {
-                                if ($file != '.' && $file != '..' && is_file($dir . '/' . $file)) {
-                                    // Si el archivo fue creado en las últimas 24 horas, lo usamos
-                                    if (filemtime($dir . '/' . $file) > time() - 86400) {
-                                        $tempPath = $dir . '/' . $file;
-                                        Log::info('Encontrado archivo reciente', ['path' => $tempPath]);
-                                        break 2; // Salir de ambos bucles
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if ($tempPath && file_exists($tempPath)) {
-                    $license->clearMediaCollection('license_front');
-                    $license->addMedia($tempPath)
-                        ->toMediaCollection('license_front');
-                    Log::info('Front image added to media collection');
-                } else {
-                    Log::error('Failed to process front image - file not found');
-                }
-            }
-
-            // Process back image
-            if (!empty($licenseInfo['temp_back_token'])) {
-                Log::info('Processing back image', [
-                    'license_id' => $license->id,
-                    'token' => $licenseInfo['temp_back_token'],
-                    'session_id' => session()->getId(),
-                    'temp_files' => array_keys(session('temp_files', []))
-                ]);
-
-                // Intenta obtener el archivo de la sesión
-                $tempPath = $tempUploadService->moveToPermanent($licenseInfo['temp_back_token']);
-
-                // Si no se encuentra en la sesión, intenta buscarlo directamente en el almacenamiento
-                if (!$tempPath || !file_exists($tempPath)) {
-                    // Buscar en el almacenamiento por un patrón que coincida con el token
-                    $tempFiles = session('temp_files', []);
-                    Log::info('Buscando archivo en temp_files', ['temp_files' => $tempFiles]);
-                    
-                    // Si no podemos encontrarlo en la sesión, intentamos buscarlo directamente en el storage
-                    $possiblePaths = [
-                        storage_path('app/public/temp/license_back'),
-                        storage_path('app/public/temp')
-                    ];
-                    
-                    foreach ($possiblePaths as $dir) {
-                        if (is_dir($dir)) {
-                            $files = scandir($dir);
-                            Log::info('Archivos en directorio', ['dir' => $dir, 'files' => $files]);
-                            
-                            // Buscar archivos recientes
-                            foreach ($files as $file) {
-                                if ($file != '.' && $file != '..' && is_file($dir . '/' . $file)) {
-                                    // Si el archivo fue creado en las últimas 24 horas, lo usamos
-                                    if (filemtime($dir . '/' . $file) > time() - 86400) {
-                                        $tempPath = $dir . '/' . $file;
-                                        Log::info('Encontrado archivo reciente', ['path' => $tempPath]);
-                                        break 2; // Salir de ambos bucles
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if ($tempPath && file_exists($tempPath)) {
-                    $license->clearMediaCollection('license_back');
-                    $license->addMedia($tempPath)
-                        ->toMediaCollection('license_back');
-                    Log::info('Back image added to media collection');
-                } else {
-                    Log::error('Failed to process back image - file not found');
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error('Error processing license images', [
-                'error' => $e->getMessage(),
-                'license_id' => $license->id
-            ]);
-        }
-    }
+    // Method removed - images are now uploaded directly via unified-image-upload component
 
     // Get endorsement name from code
     private function getEndorsementName($code)
@@ -470,6 +351,7 @@ class LicenseStep extends Component
     protected function getEmptyLicense()
     {
         return [
+            'unique_id' => uniqid('license_', true),
             'license_number' => '',
             'state_of_issue' => '',
             'license_class' => '',
@@ -504,12 +386,67 @@ class LicenseStep extends Component
         $this->licenses[$index][$side . '_filename'] = $filename;
     }
 
-    // Remove temporary upload
+    // Remove license image (both temporary and permanent)
     public function removeLicenseImage($index, $side)
     {
-        $this->licenses[$index]['temp_' . $side . '_token'] = '';
-        $this->licenses[$index][$side . '_preview'] = '';
-        $this->licenses[$index][$side . '_filename'] = '';
+        try {
+            $license = $this->licenses[$index];
+            
+            // If it's a permanent image (has license ID), delete from Media Library
+            if (isset($license['id']) && $license['id']) {
+                $licenseModel = DriverLicense::find($license['id']);
+                if ($licenseModel) {
+                    $collection = 'license_' . $side;
+                    $media = $licenseModel->getFirstMedia($collection);
+                    if ($media) {
+                        $media->delete();
+                        Log::info('Deleted permanent license image', [
+                            'license_id' => $license['id'],
+                            'collection' => $collection,
+                            'media_id' => $media->id
+                        ]);
+                    }
+                }
+            }
+            
+            // If it's a temporary image, remove from temp storage
+            if (!empty($license['temp_' . $side . '_token'])) {
+                $tempFiles = session('temp_files', []);
+                $token = $license['temp_' . $side . '_token'];
+                if (isset($tempFiles[$token])) {
+                    $tempPath = storage_path('app/' . $tempFiles[$token]['path']);
+                    $publicTempPath = public_path('storage/temp/' . basename($tempFiles[$token]['path']));
+                    
+                    // Delete temp files
+                    if (file_exists($tempPath)) {
+                        unlink($tempPath);
+                    }
+                    if (file_exists($publicTempPath)) {
+                        unlink($publicTempPath);
+                    }
+                    
+                    // Remove from session
+                    unset($tempFiles[$token]);
+                    session(['temp_files' => $tempFiles]);
+                }
+            }
+            
+            // Clear the license data
+            $this->licenses[$index]['temp_' . $side . '_token'] = '';
+            $this->licenses[$index][$side . '_preview'] = '';
+            $this->licenses[$index][$side . '_filename'] = '';
+            
+            // Emit success message
+            $this->dispatch('imageDeleted', 'Imagen eliminada correctamente');
+            
+        } catch (\Exception $e) {
+            Log::error('Error removing license image', [
+                'error' => $e->getMessage(),
+                'index' => $index,
+                'side' => $side
+            ]);
+            $this->dispatch('imageDeleteError', 'Error al eliminar la imagen: ' . $e->getMessage());
+        }
     }
 
     // Next step
@@ -594,14 +531,19 @@ class LicenseStep extends Component
             // Store the file
             $uploadedFile->storeAs('temp', $filename);
 
-            // Generate preview URL
+            // Generate preview URL (copy to public temp for preview)
+            $publicTempDir = public_path('storage/temp');
+            if (!file_exists($publicTempDir)) {
+                mkdir($publicTempDir, 0755, true);
+            }
+            copy($tempPath, $publicTempDir . '/' . $filename);
             $previewUrl = asset('storage/temp/' . $filename);
 
             // Store in session for later processing
             $tempFiles = session('temp_files', []);
             $token = uniqid('license_' . $side . '_');
             $tempFiles[$token] = [
-                'path' => $tempPath,
+                'path' => 'temp/' . $filename,
                 'filename' => $uploadedFile->getClientOriginalName(),
                 'preview_url' => $previewUrl,
                 'side' => $side,

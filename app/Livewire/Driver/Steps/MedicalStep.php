@@ -151,8 +151,8 @@ class MedicalStep extends Component
                     
                     // Si no podemos encontrarlo en la sesión, intentamos buscarlo directamente en el storage
                     $possiblePaths = [
-                        storage_path('app/public/temp/medical_card'),
-                        storage_path('app/public/temp')
+                        storage_path('app/temp/medical_card'),
+                        storage_path('app/temp')
                     ];
                     
                     foreach ($possiblePaths as $dir) {

@@ -6,6 +6,9 @@
     'maxSize' => 5, // MB
     'showPreview' => true,
     'existingFiles' => [],
+    'existingImage' => null, // Nueva prop para imagen existente
+    'existingImageUrl' => null, // URL de imagen existente
+    'existingImageName' => null, // Nombre de imagen existente
     'required' => false,
     'label' => 'Upload Images',
     'helpText' => 'Drag and drop images here or click to browse',
@@ -15,7 +18,10 @@
     'customProperties' => [],
     'value' => null,
     'temporaryStorage' => false,
-    'storageKey' => null
+    'storageKey' => null,
+    'documentType' => 'document', // Nuevo parámetro para especificar el tipo de documento
+    'side' => null, // Prop para especificar el lado de la licencia (front/back)
+    'uniqueId' => null // Prop para el ID único de la licencia
 ])
 
 <div class="space-y-4" x-data="{
@@ -35,6 +41,10 @@
     init() {
         @if($value)
             this.files = [{ name: '{{ $value }}', url: '{{ asset('storage/' . $value) }}', uploaded: true }];
+        @elseif($existingImageUrl)
+            this.files = [{ name: '{{ $existingImageName ?? "Existing Image" }}', url: '{{ $existingImageUrl }}', uploaded: true, existing: true }];
+        @elseif($existingImage)
+            this.files = [{ name: 'Existing Image', url: '{{ $existingImage }}', uploaded: true, existing: true }];
         @endif
     },
     
@@ -70,10 +80,40 @@
         });
     },
     
-    removeFile(index) {
+    async removeFile(index) {
+        const file = this.files[index];
+        
+        // If it's an existing image, delete it from the server
+        if (file.existing && this.modelId) {
+            try {
+                const deleteFormData = new FormData();
+                deleteFormData.append('model_type', this.modelType || 'user_driver');
+                deleteFormData.append('model_id', this.modelId);
+                deleteFormData.append('collection', '{{ $documentType }}');
+                
+                const deleteResponse = await fetch('/api/documents/delete-media', {
+                    method: 'POST',
+                    body: deleteFormData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                    }
+                });
+                
+                if (!deleteResponse.ok) {
+                    const errorData = await deleteResponse.json();
+                    this.error = 'Failed to delete image: ' + (errorData.error || 'Unknown error');
+                    return;
+                }
+                
+                this.success = 'Image deleted successfully';
+            } catch (error) {
+                this.error = 'Failed to delete image: ' + error.message;
+                return;
+            }
+        }
+        
         this.files.splice(index, 1);
         this.error = null;
-        this.success = null;
     },
     
     async uploadFiles() {
@@ -138,56 +178,89 @@
                 const fileObj = this.files[i];
                 if (!fileObj.file) continue;
                 
-                // Step 1: Temporary upload
-                const tempFormData = new FormData();
-                tempFormData.append('file', fileObj.file);
-                tempFormData.append('type', 'document');
+                // Check if this is a license upload for direct processing
+                const isLicenseUpload = ['license_front', 'license_back'].includes('{{ $documentType }}');
                 
-                const tempResponse = await fetch('/api/documents/upload', {
-                    method: 'POST',
-                    body: tempFormData,
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content')
-                    }
-                });
-                
-                if (!tempResponse.ok) {
-                    const errorData = await tempResponse.json();
-                    throw new Error(errorData.error || 'Temporary upload failed');
-                }
-                
-                const tempResult = await tempResponse.json();
-                
-                // Step 2: Permanent storage
-                const storeFormData = new FormData();
-                storeFormData.append('model_type', this.modelType);
-                storeFormData.append('model_id', this.modelId);
-                storeFormData.append('collection', this.collection);
-                storeFormData.append('token', tempResult.token);
-                
-                // Add custom properties if provided
-                if (this.customProperties && Object.keys(this.customProperties).length > 0) {
-                    Object.keys(this.customProperties).forEach(key => {
-                        storeFormData.append(`custom_properties[${key}]`, this.customProperties[key]);
+                if (isLicenseUpload && this.modelId) {
+                    // Direct license upload
+                    const directFormData = new FormData();
+                    directFormData.append('file', fileObj.file);
+                    directFormData.append('driver_id', this.modelId);
+                    directFormData.append('type', '{{ $documentType }}');
+                    @if($uniqueId)
+                    directFormData.append('unique_id', '{{ $uniqueId }}');
+                    @endif
+                    
+                    const directResponse = await fetch('/api/documents/upload-license-direct', {
+                        method: 'POST',
+                        body: directFormData,
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                        }
                     });
-                }
-                
-                const storeResponse = await fetch('/api/documents/store', {
-                    method: 'POST',
-                    body: storeFormData,
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                    
+                    if (!directResponse.ok) {
+                        const errorData = await directResponse.json();
+                        throw new Error(errorData.error || 'Direct license upload failed');
                     }
-                });
-                
-                if (!storeResponse.ok) {
-                    const errorData = await storeResponse.json();
-                    throw new Error(errorData.error || 'Permanent storage failed');
+                    
+                    const directResult = await directResponse.json();
+                    fileObj.uploaded = true;
+                    fileObj.documentId = directResult.document.id;
+                    
+                } else {
+                    // Original two-step process for other document types
+                    // Step 1: Temporary upload
+                    const tempFormData = new FormData();
+                    tempFormData.append('file', fileObj.file);
+                    tempFormData.append('type', '{{ $documentType }}');
+                    
+                    const tempResponse = await fetch('/api/documents/upload', {
+                        method: 'POST',
+                        body: tempFormData,
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                        }
+                    });
+                    
+                    if (!tempResponse.ok) {
+                        const errorData = await tempResponse.json();
+                        throw new Error(errorData.error || 'Temporary upload failed');
+                    }
+                    
+                    const tempResult = await tempResponse.json();
+                    
+                    // Step 2: Permanent storage
+                    const storeFormData = new FormData();
+                    storeFormData.append('model_type', this.modelType);
+                    storeFormData.append('model_id', this.modelId);
+                    storeFormData.append('collection', this.collection);
+                    storeFormData.append('token', tempResult.token);
+                    
+                    // Add custom properties if provided
+                    if (this.customProperties && Object.keys(this.customProperties).length > 0) {
+                        Object.keys(this.customProperties).forEach(key => {
+                            storeFormData.append(`custom_properties[${key}]`, this.customProperties[key]);
+                        });
+                    }
+                    
+                    const storeResponse = await fetch('/api/documents/store', {
+                        method: 'POST',
+                        body: storeFormData,
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                        }
+                    });
+                    
+                    if (!storeResponse.ok) {
+                        const errorData = await storeResponse.json();
+                        throw new Error(errorData.error || 'Permanent storage failed');
+                    }
+                    
+                    const storeResult = await storeResponse.json();
+                    fileObj.uploaded = true;
+                    fileObj.documentId = storeResult.document.id;
                 }
-                
-                const storeResult = await storeResponse.json();
-                fileObj.uploaded = true;
-                fileObj.documentId = storeResult.document.id;
                 
                 this.progress = Math.round(((i + 1) / this.files.length) * 100);
             }
@@ -255,6 +328,31 @@
     <div x-show="uploading" class="w-full bg-gray-200 rounded-full h-2">
         <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" :style="`width: ${progress}%`"></div>
     </div>
+
+    <!-- Existing Image Preview -->
+    @if($existingImageUrl && $showPreview)
+        <!-- <div class="mb-4">
+            <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <img src="{{ $existingImageUrl }}" alt="Current image" class="h-16 w-16 object-cover rounded-lg shadow-sm">
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900">{{ $existingImageName ?: 'Imagen actual' }}</p>
+                    <p class="text-xs text-green-600">✓ Subida</p>
+                </div>
+                <button 
+                    type="button" 
+                    class="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100 transition-colors"
+                    onclick="if(confirm('¿Estás seguro de que quieres eliminar esta imagen?')) { 
+                        @this.call('removeLicenseImage', '{{ $uniqueId }}', '{{ $side }}');
+                    }"
+                    title="Eliminar imagen"
+                >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div> -->
+    @endif
 
     <!-- File Preview -->
     @if($showPreview)

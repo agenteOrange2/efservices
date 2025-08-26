@@ -61,11 +61,17 @@ Route::prefix('documents')->group(function () {
     // Ruta para carga temporal de archivos
     Route::post('/upload', [UploadController::class, 'upload']);
     
+    // Ruta para upload directo de licencias
+    Route::post('/upload-license-direct', [UploadController::class, 'uploadLicenseDirect']);
+    
     // Rutas para guardar documentos permanentes en diferentes colecciones
     Route::post('/store', [UploadController::class, 'storeDocument']);
     
     // Ruta para eliminar documentos
     Route::delete('/{id}', [UploadController::class, 'deleteDocument']);
+    
+    // Ruta para eliminar media de una colección específica
+    Route::post('/delete-media', [UploadController::class, 'deleteMedia']);
     
     // Ruta para obtener documentos de un modelo
     Route::get('/model/{type}/{id}', [UploadController::class, 'getDocuments']);

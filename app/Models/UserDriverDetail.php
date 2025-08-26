@@ -141,13 +141,25 @@ class UserDriverDetail extends Model implements HasMedia
         $this->addMediaCollection('profile_photo_driver')
             ->useDisk('public')
             ->singleFile();
+            
+        $this->addMediaCollection('license_front')
+            ->useDisk('public')
+            ->singleFile();
+            
+        $this->addMediaCollection('license_back')
+            ->useDisk('public')
+            ->singleFile();
     }
 
     public function registerMediaConversions(Media $media = null): void
     {
-        $this->addMediaConversion('webp')
-            ->format('webp')
-            ->keepOriginalImageFormat();
+        // Deshabilitar conversiones temporalmente para evitar errores
+        // Solo aplicar conversiones a fotos de perfil, no a licencias
+        if ($media && $media->collection_name === 'profile_photo_driver') {
+            $this->addMediaConversion('webp')
+                ->format('webp')
+                ->keepOriginalImageFormat();
+        }
     }
 
     // Relación con direcciones

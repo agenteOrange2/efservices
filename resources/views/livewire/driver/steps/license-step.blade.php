@@ -1,4 +1,4 @@
-<div class="bg-white p-4 rounded-lg shadow">
+<div class="bg-white p-0 rounded-lg shadow">
     <h3 class="text-lg font-semibold mb-4">Driver's License Information</h3>
 
     <!-- Current License Number -->
@@ -147,13 +147,18 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">License Front Image</label>
                         <x-unified-image-upload 
                             wire:model="licenses.{{ $index }}.temp_front_token" 
-                            :existing-image="$license['front_preview'] ?? ''" 
+                            :existing-image-url="$license['front_preview'] ?? ''"
+                            :existing-image-name="$license['front_filename'] ?? ''"
+                            :unique-id="$license['unique_id'] ?? ''"
+                            side="front"
                             accept="image/*" 
                             max-size="2048" 
                             class="w-full"
                             :model-type="'user_driver'"
                             :model-id="$driverId"
-                            collection="license_documents" />
+                            collection="license_documents"
+                            document-type="license_front"
+                            :show-preview="true" />
                         @error("licenses.{$index}.temp_front_token")
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
@@ -164,13 +169,18 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">License Back Image</label>
                         <x-unified-image-upload 
                             wire:model="licenses.{{ $index }}.temp_back_token" 
-                            :existing-image="$license['back_preview'] ?? ''" 
+                            :existing-image-url="$license['back_preview'] ?? ''"
+                            :existing-image-name="$license['back_filename'] ?? ''"
+                            :unique-id="$license['unique_id'] ?? ''"
+                            side="back"
                             accept="image/*" 
                             max-size="2048" 
                             class="w-full"
                             :model-type="'user_driver'"
                             :model-id="$driverId"
-                            collection="license_documents" />
+                            collection="license_documents"
+                            document-type="license_back"
+                            :show-preview="true" />
                         @error("licenses.{$index}.temp_back_token")
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
@@ -299,3 +309,40 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Escuchar eventos de eliminación de imágenes
+    document.addEventListener('livewire:init', () => {
+        Livewire.on('image-deleted', (event) => {
+            // Mostrar mensaje de éxito
+            if (event.message) {
+                // Crear y mostrar notificación de éxito
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50';
+                notification.textContent = event.message;
+                document.body.appendChild(notification);
+                
+                // Remover notificación después de 3 segundos
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+        });
+        
+        Livewire.on('image-delete-error', (event) => {
+            // Mostrar mensaje de error
+            if (event.message) {
+                // Crear y mostrar notificación de error
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50';
+                notification.textContent = event.message;
+                document.body.appendChild(notification);
+                
+                // Remover notificación después de 5 segundos
+                setTimeout(() => {
+                    notification.remove();
+                }, 5000);
+            }
+        });
+    });
+</script>

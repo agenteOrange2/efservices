@@ -420,9 +420,9 @@ class TrainingStep extends Component
 
                     // Si no podemos encontrarlo en la sesión, intentamos buscarlo directamente en el storage
                     $possiblePaths = [
-                        storage_path('app/public/temp/school_certificates'),
-                        storage_path('app/public/temp/school_certificate'),
-                        storage_path('app/public/temp')
+                        storage_path('app/temp/school_certificates'),
+                        storage_path('app/temp/school_certificate'),
+                        storage_path('app/temp')
                     ];
 
                     // Primero intentamos buscar por nombre de archivo si lo tenemos
@@ -530,9 +530,9 @@ class TrainingStep extends Component
 
                     // Si no podemos encontrarlo en la sesión, intentamos buscarlo directamente en el storage
                     $possiblePaths = [
-                        storage_path('app/public/temp/course_certificates'),
-                        storage_path('app/public/temp/certificates'),
-                        storage_path('app/public/temp')
+                        storage_path('app/temp/course_certificates'),
+                        storage_path('app/temp/certificates'),
+                        storage_path('app/temp')
                     ];
 
                     // Primero intentamos buscar por nombre de archivo si lo tenemos

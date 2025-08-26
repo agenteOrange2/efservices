@@ -92,6 +92,7 @@ return [
         // Model::class => PathGenerator::class
         // or
         // 'model_morph_alias' => PathGenerator::class
+        \App\Models\UserDriverDetail::class => \App\MediaLibrary\CustomPathGenerator::class,
     ],
 
     /*

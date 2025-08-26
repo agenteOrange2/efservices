@@ -11,6 +11,17 @@ class CustomPathGenerator implements PathGenerator
     public function getPath(Media $media): string
     {
         $model = $media->model;
+        $modelType = get_class($model);
+        $collection = $media->collection_name;
+        $customProperties = $media->custom_properties;
+
+        \Illuminate\Support\Facades\Log::info('CustomPathGenerator called', [
+            'model_type' => $modelType,
+            'collection' => $collection,
+            'custom_properties' => $customProperties,
+            'media_id' => $media->id,
+            'model_id' => $model->id ?? 'unknown'
+        ]);
 
         if ($model instanceof \App\Models\UserCarrierDetail) {
             // Almacena específicamente en `user_carrier/{id}`
@@ -18,7 +29,27 @@ class CustomPathGenerator implements PathGenerator
         }
 
         if ($model instanceof \App\Models\UserDriverDetail) {
-            // Almacena específicamente en `user_carrier/{id}`
+            $driverId = $model->id ?? 'unknown';
+            $collection = $media->collection_name;
+            
+            // Manejo específico para licencias con subdirectorios front/back
+            if ($collection === 'license_front') {
+                \Illuminate\Support\Facades\Log::info('CustomPathGenerator: Creando ruta para license_front', [
+                    'driver_id' => $driverId,
+                    'media_id' => $media->id,
+                    'collection' => $collection
+                ]);
+                return "driver/{$driverId}/licenses/front/";
+            } elseif ($collection === 'license_back') {
+                \Illuminate\Support\Facades\Log::info('CustomPathGenerator: Creando ruta para license_back', [
+                    'driver_id' => $driverId,
+                    'media_id' => $media->id,
+                    'collection' => $collection
+                ]);
+                return "driver/{$driverId}/licenses/back/";
+            }
+            
+            // Default para otras colecciones
             return "driver/{$model->id}/";
         }
 
@@ -74,23 +105,7 @@ class CustomPathGenerator implements PathGenerator
             return "driver/{$driverId}/training_schools/{$schoolId}/";
         }
 
-        // Ruta personalizada para documentos de verificación de datos
-        if ($model instanceof \App\Models\UserDriverDetail) {
-            $driverId = $model->id ?? 'unknown';
-            $collection = $media->collection_name;
-            
-            if ($collection === 'driving_records') {
-                return "verification_documents/license/{$driverId}/";
-            }
-            
-            if ($collection === 'criminal_records') {
-                return "verification_documents/criminal/{$driverId}/";
-            }
-            
-            if ($collection === 'medical_records') {
-                return "verification_documents/medical/{$driverId}/";
-            }
-        }
+        // Lógica duplicada eliminada - UserDriverDetail se maneja arriba en el archivo
         
         if ($model instanceof \App\Models\Admin\Driver\DriverCourse) {
             $driverId = $model->driverDetail->id ?? 'unknown';
@@ -269,5 +284,43 @@ class CustomPathGenerator implements PathGenerator
     public function getPathForResponsiveImages(Media $media): string
     {
         return $this->getPath($media) . 'responsive/';
+    }
+
+    /**
+     * Genera nombres de archivo únicos para las licencias incluyendo el unique_id de la licencia
+     */
+    public function getPathForFile(Media $media): string
+    {
+        $model = $media->model;
+        $collection = $media->collection_name;
+        $customProperties = $media->custom_properties;
+        
+        // Solo aplicar nombres únicos para licencias de UserDriverDetail
+        if ($model instanceof \App\Models\UserDriverDetail && 
+            ($collection === 'license_front' || $collection === 'license_back')) {
+            
+            // Usar unique_id de las custom_properties si está disponible, sino usar driver_id como fallback
+            $uniqueId = $customProperties['unique_id'] ?? $model->id;
+            $extension = pathinfo($media->file_name, PATHINFO_EXTENSION);
+            
+            if ($collection === 'license_front') {
+                $fileName = "card_front_{$uniqueId}.{$extension}";
+            } else {
+                $fileName = "card_back_{$uniqueId}.{$extension}";
+            }
+            
+            \Illuminate\Support\Facades\Log::info('CustomPathGenerator: Generando nombre único de archivo con unique_id', [
+                'unique_id' => $uniqueId,
+                'driver_id' => $model->id,
+                'collection' => $collection,
+                'original_name' => $media->file_name,
+                'new_name' => $fileName
+            ]);
+            
+            return $this->getPath($media) . $fileName;
+        }
+        
+        // Para otros modelos, usar el comportamiento por defecto
+        return $this->getPath($media) . $media->file_name;
     }
 }

@@ -122,8 +122,8 @@ class CertificationStep extends Component
                     
                     // Si no podemos encontrarlo en la sesión, intentamos buscarlo directamente en el storage
                     $possiblePaths = [
-                        storage_path('app/public/temp/signature'),
-                        storage_path('app/public/temp')
+                        storage_path('app/temp/signature'),
+                        storage_path('app/temp')
                     ];
                     
                     foreach ($possiblePaths as $dir) {
