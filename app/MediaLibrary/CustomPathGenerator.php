@@ -23,6 +23,21 @@ class CustomPathGenerator implements PathGenerator
             'model_id' => $model->id ?? 'unknown'
         ]);
 
+        // Manejo para carga temporal de licencias
+        if ($model instanceof \App\Models\TempDriverUpload) {
+            $sessionId = $model->session_id;
+            $collection = $media->collection_name;
+            
+            \Illuminate\Support\Facades\Log::info('CustomPathGenerator: Creando ruta temporal', [
+                'session_id' => $sessionId,
+                'file_type' => $model->file_type,
+                'collection' => $collection,
+                'temp_upload_id' => $model->id
+            ]);
+            
+            return "temp/driver/{$sessionId}/{$collection}/";
+        }
+
         if ($model instanceof \App\Models\UserCarrierDetail) {
             // Almacena específicamente en `user_carrier/{id}`
             return "user_carrier/{$model->id}/";

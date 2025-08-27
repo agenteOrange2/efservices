@@ -43,6 +43,7 @@ class DriverMedicalQualification extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('medical_card')
+            ->useDisk('public')
             ->singleFile();
     }
 }

@@ -13,6 +13,7 @@ use App\Models\UserDriverDetail;
 use App\Models\Admin\Driver\DriverLicense;
 use App\Models\Admin\Driver\LicenseEndorsement;
 use App\Services\Admin\TempUploadService;
+use Carbon\Carbon;
 
 class LicenseStep extends Component
 {
@@ -114,9 +115,7 @@ class LicenseStep extends Component
                     'front_preview' => $license->getFirstMediaUrl('license_front') ?: null,
                     'back_preview' => $license->getFirstMediaUrl('license_back') ?: null,
                     'front_filename' => $license->getFirstMedia('license_front')?->file_name ?? '',
-                    'back_filename' => $license->getFirstMedia('license_back')?->file_name ?? '',
-                    'temp_front_token' => '',
-                    'temp_back_token' => '',
+                    'back_filename' => $license->getFirstMedia('license_back')?->file_name ?? ''
                 ];
             }
         }
@@ -178,7 +177,10 @@ class LicenseStep extends Component
                         // Update endorsements
                         $this->updateLicenseEndorsements($license, $licenseInfo);
 
-                        // Images are now uploaded directly, no processing needed
+                        // Images are now uploaded directly to existing licenses, no migration needed
+                        
+                        // Update license array with current license ID
+                        $this->licenses[$index]['id'] = $license->id;
                     }
                 } else {
                     // Create new license
@@ -212,7 +214,7 @@ class LicenseStep extends Component
                         }
                     }
 
-                    // Images are now uploaded directly, no processing needed
+                    // Images are now uploaded directly to existing licenses, no migration needed
                 }
             }
             Log::info('Updated license IDs', ['ids' => $updatedLicenseIds]);
@@ -301,7 +303,7 @@ class LicenseStep extends Component
         }
     }
 
-    // Method removed - images are now uploaded directly via unified-image-upload component
+    // Note: Temporary image methods removed - licenses now created before image upload
 
     // Get endorsement name from code
     private function getEndorsementName($code)
@@ -358,8 +360,6 @@ class LicenseStep extends Component
             'expiration_date' => '',
             'is_cdl' => false,
             'endorsements' => [],
-            'temp_front_token' => '',
-            'temp_back_token' => '',
             'front_preview' => '',
             'front_filename' => '',
             'back_preview' => '',
@@ -387,9 +387,29 @@ class LicenseStep extends Component
     }
 
     // Remove license image (both temporary and permanent)
-    public function removeLicenseImage($index, $side)
+    public function removeLicenseImage($uniqueId, $side)
     {
         try {
+            // Find the license index by unique_id
+            $index = null;
+            foreach ($this->licenses as $i => $license) {
+                if (isset($license['unique_id']) && $license['unique_id'] === $uniqueId) {
+                    $index = $i;
+                    break;
+                }
+            }
+            
+            // If license not found, log error and return
+            if ($index === null) {
+                Log::error('License not found for deletion', [
+                    'unique_id' => $uniqueId,
+                    'side' => $side,
+                    'available_licenses' => array_column($this->licenses, 'unique_id')
+                ]);
+                $this->dispatch('imageDeleteError', 'No se pudo encontrar la licencia para eliminar la imagen.');
+                return;
+            }
+            
             $license = $this->licenses[$index];
             
             // If it's a permanent image (has license ID), delete from Media Library
@@ -442,7 +462,8 @@ class LicenseStep extends Component
         } catch (\Exception $e) {
             Log::error('Error removing license image', [
                 'error' => $e->getMessage(),
-                'index' => $index,
+                'unique_id' => $uniqueId,
+                'index' => $index ?? 'not_found',
                 'side' => $side
             ]);
             $this->dispatch('imageDeleteError', 'Error al eliminar la imagen: ' . $e->getMessage());
@@ -490,88 +511,127 @@ class LicenseStep extends Component
         $this->dispatch('saveAndExit');
     }
 
-    // Handle front image upload
-    public function updatedFrontImage()
-    {
-        $this->validate([
-            'front_image' => 'image|max:2048', // 2MB Max
-        ]);
-
-        if ($this->front_image) {
-            $this->saveTempImage($this->front_image, 'front');
-        }
-    }
-
-    // Handle back image upload
-    public function updatedBackImage()
-    {
-        $this->validate([
-            'back_image' => 'image|max:2048', // 2MB Max
-        ]);
-
-        if ($this->back_image) {
-            $this->saveTempImage($this->back_image, 'back');
-        }
-    }
-
-    // Save temporary image
-    private function saveTempImage($uploadedFile, $side)
-    {
-        try {
-            // Create temp directory if it doesn't exist
-            $tempDir = storage_path('app/temp');
-            if (!file_exists($tempDir)) {
-                mkdir($tempDir, 0755, true);
-            }
-
-            // Generate unique filename
-            $filename = uniqid() . '_' . $side . '.' . $uploadedFile->getClientOriginalExtension();
-            $tempPath = $tempDir . '/' . $filename;
-
-            // Store the file
-            $uploadedFile->storeAs('temp', $filename);
-
-            // Generate preview URL (copy to public temp for preview)
-            $publicTempDir = public_path('storage/temp');
-            if (!file_exists($publicTempDir)) {
-                mkdir($publicTempDir, 0755, true);
-            }
-            copy($tempPath, $publicTempDir . '/' . $filename);
-            $previewUrl = asset('storage/temp/' . $filename);
-
-            // Store in session for later processing
-            $tempFiles = session('temp_files', []);
-            $token = uniqid('license_' . $side . '_');
-            $tempFiles[$token] = [
-                'path' => 'temp/' . $filename,
-                'filename' => $uploadedFile->getClientOriginalName(),
-                'preview_url' => $previewUrl,
-                'side' => $side,
-                'license_index' => $this->current_license_index
-            ];
-            session(['temp_files' => $tempFiles]);
-
-            // Update the current license with temp info
-            $this->licenses[$this->current_license_index]['temp_' . $side . '_token'] = $token;
-            $this->licenses[$this->current_license_index][$side . '_preview'] = $previewUrl;
-            $this->licenses[$this->current_license_index][$side . '_filename'] = $uploadedFile->getClientOriginalName();
-
-            // Clear the uploaded file property
-            $this->{$side . '_image'} = null;
-
-        } catch (\Exception $e) {
-            Log::error('Error saving temporary image', [
-                'error' => $e->getMessage(),
-                'side' => $side
-            ]);
-            session()->flash('error', 'Error al guardar la imagen: ' . $e->getMessage());
-        }
-    }
+    // Note: Temporary image upload methods removed - images now uploaded directly to existing licenses
 
     // Set current license index for uploads
     public function setCurrentLicenseIndex($index)
     {
         $this->current_license_index = $index;
+    }
+
+    // Create individual license
+    public function createLicense($index)
+    {
+        try {
+            // Validate the specific license data
+            $this->validateLicenseAtIndex($index);
+            
+            $licenseData = $this->licenses[$index];
+            
+            // Create the license record
+            $license = DriverLicense::create([
+                'user_driver_detail_id' => $this->driverId,
+                'current_license_number' => $licenseData['license_number'],
+                'license_number' => $licenseData['license_number'],
+                'state_of_issue' => $licenseData['state_of_issue'],
+                'license_class' => $licenseData['license_class'],
+                'expiration_date' => Carbon::parse($licenseData['expiration_date'])->format('Y-m-d'),
+                'is_cdl' => $licenseData['is_cdl'] ?? false,
+            ]);
+            
+            // Update the license array with the new ID and unique_id
+            $this->licenses[$index]['id'] = $license->id;
+            $this->licenses[$index]['unique_id'] = 'license_' . $license->id . '_' . substr(md5($license->id . time()), 0, 8);
+            
+            Log::info('License created successfully', [
+                'license_id' => $license->id,
+                'driver_id' => $this->driverId,
+                'index' => $index
+            ]);
+            
+            session()->flash('success', 'Licencia creada exitosamente. Ahora puede subir las imágenes.');
+            
+        } catch (\ValidationException $e) {
+            // Re-throw validation exceptions to show field errors
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error('Error creating license', [
+                'error' => $e->getMessage(),
+                'index' => $index,
+                'driver_id' => $this->driverId
+            ]);
+            session()->flash('error', 'Error al crear la licencia: ' . $e->getMessage());
+        }
+    }
+    
+    // Update individual license
+    public function updateLicense($index)
+    {
+        try {
+            // Validate the specific license data
+            $this->validateLicenseAtIndex($index);
+            
+            $licenseData = $this->licenses[$index];
+            
+            if (empty($licenseData['id'])) {
+                throw new \Exception('No se puede actualizar una licencia sin ID');
+            }
+            
+            // Find and update the license record
+            $license = DriverLicense::findOrFail($licenseData['id']);
+            $license->update([
+                'current_license_number' => $licenseData['license_number'],
+                'license_number' => $licenseData['license_number'],
+                'state_of_issue' => $licenseData['state_of_issue'],
+                'license_class' => $licenseData['license_class'],
+                'expiration_date' => Carbon::parse($licenseData['expiration_date'])->format('Y-m-d'),
+                'is_cdl' => $licenseData['is_cdl'] ?? false,
+                'endorsements' => $licenseData['endorsements'] ?? [],
+            ]);
+            
+            Log::info('License updated successfully', [
+                'license_id' => $license->id,
+                'driver_id' => $this->driverId,
+                'index' => $index
+            ]);
+            
+            session()->flash('success', 'Licencia actualizada exitosamente.');
+            
+        } catch (\ValidationException $e) {
+            // Re-throw validation exceptions to show field errors
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error('Error updating license', [
+                'error' => $e->getMessage(),
+                'index' => $index,
+                'license_id' => $licenseData['id'] ?? 'unknown'
+            ]);
+            session()->flash('error', 'Error al actualizar la licencia: ' . $e->getMessage());
+        }
+    }
+    
+    // Validate license data at specific index
+    private function validateLicenseAtIndex($index)
+    {
+        $rules = [
+            "licenses.{$index}.license_number" => 'required|string|max:50',
+            "licenses.{$index}.state_of_issue" => 'required|string|size:2',
+            "licenses.{$index}.license_class" => 'required|string|in:A,B,C',
+            "licenses.{$index}.expiration_date" => 'required|date|after:today',
+            "licenses.{$index}.is_cdl" => 'boolean',
+            "licenses.{$index}.endorsements" => 'array',
+            "licenses.{$index}.endorsements.*" => 'string|in:N,H,X,T,P,S',
+        ];
+        
+        $messages = [
+            "licenses.{$index}.license_number.required" => 'El número de licencia es requerido.',
+            "licenses.{$index}.state_of_issue.required" => 'El estado de emisión es requerido.',
+            "licenses.{$index}.license_class.required" => 'La clase de licencia es requerida.',
+            "licenses.{$index}.expiration_date.required" => 'La fecha de expiración es requerida.',
+            "licenses.{$index}.expiration_date.after" => 'La fecha de expiración debe ser posterior a hoy.',
+        ];
+        
+        $this->validate($rules, $messages);
     }
 
     // Render

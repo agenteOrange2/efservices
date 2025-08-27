@@ -9,11 +9,13 @@
     'existingImage' => null, // Nueva prop para imagen existente
     'existingImageUrl' => null, // URL de imagen existente
     'existingImageName' => null, // Nombre de imagen existente
+    'removeMethod' => 'removeLicenseImage', // Método de eliminación configurable
     'required' => false,
     'label' => 'Upload Images',
     'helpText' => 'Drag and drop images here or click to browse',
     'modelType' => null,
     'modelId' => null,
+    'driverId' => null, // ID del UserDriverDetail para uploads de licencias
     'collection' => 'documents',
     'customProperties' => [],
     'value' => null,
@@ -33,37 +35,60 @@
     dragOver: false,
     modelType: @js($modelType),
     modelId: @js($modelId),
+    driverId: @js($driverId),
     collection: @js($collection),
     customProperties: @js($customProperties),
     temporaryStorage: @js($temporaryStorage),
     storageKey: @js($storageKey),
+    documentType: @js($documentType),
+    uniqueId: @js($uniqueId),
+    multiple: @js($multiple),
+    maxSize: @js($maxSize),
+    value: @js($value),
+    existingImageUrl: @js($existingImageUrl ?? null),
+    existingImageName: @js($existingImageName ?? null),
+    existingImage: @js($existingImage ?? null),
     
     init() {
-        @if($value)
-            this.files = [{ name: '{{ $value }}', url: '{{ asset('storage/' . $value) }}', uploaded: true }];
-        @elseif($existingImageUrl)
-            this.files = [{ name: '{{ $existingImageName ?? "Existing Image" }}', url: '{{ $existingImageUrl }}', uploaded: true, existing: true }];
-        @elseif($existingImage)
-            this.files = [{ name: 'Existing Image', url: '{{ $existingImage }}', uploaded: true, existing: true }];
-        @endif
+        if (this.value) {
+            this.files = [{ 
+                name: this.value, 
+                url: '/storage/' + this.value, 
+                uploaded: true 
+            }];
+        } else if (this.existingImageUrl) {
+            this.files = [{ 
+                name: this.existingImageName || 'Existing Image', 
+                url: this.existingImageUrl, 
+                uploaded: true, 
+                existing: true 
+            }];
+        } else if (this.existingImage) {
+            this.files = [{ 
+                name: 'Existing Image', 
+                url: this.existingImage, 
+                uploaded: true, 
+                existing: true 
+            }];
+        }
     },
     
     handleFiles(fileList) {
         this.error = null;
         const newFiles = Array.from(fileList);
         
-        if (!{{ $multiple ? 'true' : 'false' }}) {
+        if (!this.multiple) {
             this.files = [];
         }
         
         newFiles.forEach(file => {
-            if (file.size > {{ $maxSize }} * 1024) {
-                this.error = 'File ' + file.name + ' is too large. Maximum size is {{ $maxSize }}KB.';
+            if (file.size > this.maxSize * 1024) {
+                this.error = `File ${file.name} is too large. Maximum size is ${this.maxSize}KB.`;
                 return;
             }
             
             if (!file.type.startsWith('image/')) {
-                this.error = 'File ' + file.name + ' is not a valid image.';
+                this.error = `File ${file.name} is not a valid image.`;
                 return;
             }
             
@@ -81,17 +106,33 @@
     },
     
     async removeFile(index) {
-        const file = this.files[index];
+        console.log('Removing file at index:', index);
+        console.log('Document type:', this.documentType);
+        console.log('Driver ID:', this.driverId);
+        console.log('Model ID:', this.modelId);
         
-        // If it's an existing image, delete it from the server
-        if (file.existing && this.modelId) {
+        const file = this.files[index];
+        if (!file) return;
+
+        // Create FormData for deletion
+        const deleteFormData = new FormData();
+        deleteFormData.append('model_type', this.modelType || 'user_driver');
+        
+        // Use driverId for license documents, modelId for others
+        if (this.documentType && this.documentType.startsWith('license')) {
+            console.log('Using driverId for license document');
+            deleteFormData.append('model_id', this.driverId);
+        } else {
+            console.log('Using modelId for non-license document');
+            deleteFormData.append('model_id', this.modelId);
+        }
+        
+        deleteFormData.append('collection', this.collection || 'default');
+
+        if (file.isExisting) {
+            // Delete existing file from server
             try {
-                const deleteFormData = new FormData();
-                deleteFormData.append('model_type', this.modelType || 'user_driver');
-                deleteFormData.append('model_id', this.modelId);
-                deleteFormData.append('collection', '{{ $documentType }}');
-                
-                const deleteResponse = await fetch('/api/documents/delete-media', {
+                const response = await fetch('/api/documents/delete-media', {
                     method: 'POST',
                     body: deleteFormData,
                     headers: {
@@ -99,21 +140,48 @@
                     }
                 });
                 
-                if (!deleteResponse.ok) {
-                    const errorData = await deleteResponse.json();
-                    this.error = 'Failed to delete image: ' + (errorData.error || 'Unknown error');
-                    return;
-                }
+                const data = await response.json();
                 
-                this.success = 'Image deleted successfully';
+                if (data.success) {
+                    console.log('File deleted successfully');
+                } else {
+                    console.error('Failed to delete file:', data.message);
+                    alert(`Failed to delete image: ${data.message}`);
+                }
             } catch (error) {
-                this.error = 'Failed to delete image: ' + error.message;
-                return;
+                console.error('Error deleting file:', error);
+                alert(`Failed to delete image: ${error.message}`);
             }
+        } else {
+            // Remove temporary file
+            this.removeTempFile(file.tempId);
+        }
+
+        // Remove from files array
+        this.files.splice(index, 1);
+    },
+    
+    removeTempFile(tempId) {
+        // Remove temporary file from session storage if it exists
+        if (this.storageKey) {
+            sessionStorage.removeItem(this.storageKey);
         }
         
-        this.files.splice(index, 1);
-        this.error = null;
+        // Remove any temporary file references by tempId
+        if (tempId) {
+            // Clean up any temporary storage related to this tempId
+            const tempKey = `temp_file_${tempId}`;
+            sessionStorage.removeItem(tempKey);
+            
+            // Also clean up any other temporary references
+            Object.keys(sessionStorage).forEach(key => {
+                if (key.includes(tempId)) {
+                    sessionStorage.removeItem(key);
+                }
+            });
+        }
+        
+        console.log('Temporary file removed:', tempId);
     },
     
     async uploadFiles() {
@@ -154,7 +222,7 @@
                 this.success = 'Photo stored temporarily. It will be uploaded after registration.';
                 
             } catch (error) {
-                this.error = 'Temporary storage failed: ' + error.message;
+                this.error = `Temporary storage failed: ${error.message}`;
                 console.error('Temporary storage error:', error);
             } finally {
                 this.uploading = false;
@@ -178,18 +246,29 @@
                 const fileObj = this.files[i];
                 if (!fileObj.file) continue;
                 
-                // Check if this is a license upload for direct processing
-                const isLicenseUpload = ['license_front', 'license_back'].includes('{{ $documentType }}');
+                // Check if this is a license upload for processing
+                const isLicenseUpload = ['license_front', 'license_back'].includes(this.documentType);
                 
-                if (isLicenseUpload && this.modelId) {
-                    // Direct license upload
+                // Debug logging
+                console.log('Upload Debug:', {
+                    isLicenseUpload,
+                    modelId: this.modelId,
+                    uniqueId: this.uniqueId,
+                    documentType: this.documentType
+                });
+                
+                // Check if uniqueId has the license_ID_hash format (indicates existing license)
+                const hasValidLicenseFormat = this.uniqueId && /^license_\d+_/.test(this.uniqueId);
+                
+                if (isLicenseUpload && this.modelId && hasValidLicenseFormat) {
+                    // Direct license upload for existing licenses
                     const directFormData = new FormData();
                     directFormData.append('file', fileObj.file);
-                    directFormData.append('driver_id', this.modelId);
-                    directFormData.append('type', '{{ $documentType }}');
-                    @if($uniqueId)
-                    directFormData.append('unique_id', '{{ $uniqueId }}');
-                    @endif
+                    directFormData.append('driver_id', this.driverId || this.modelId);
+                    directFormData.append('type', this.documentType);
+                    if (this.uniqueId) {
+                        directFormData.append('unique_id', this.uniqueId);
+                    }
                     
                     const directResponse = await fetch('/api/documents/upload-license-direct', {
                         method: 'POST',
@@ -208,12 +287,38 @@
                     fileObj.uploaded = true;
                     fileObj.documentId = directResult.document.id;
                     
+                } else if (isLicenseUpload && !hasValidLicenseFormat) {
+                    // Temporary license upload for new licenses (no valid license_ID_hash format)
+                    const tempLicenseFormData = new FormData();
+                    tempLicenseFormData.append('file', fileObj.file);
+                    tempLicenseFormData.append('type', this.documentType);
+                    if (this.uniqueId) {
+                        tempLicenseFormData.append('session_id', this.uniqueId);
+                    }
+                    
+                    const tempLicenseResponse = await fetch('/api/driver/upload-license-temp', {
+                        method: 'POST',
+                        body: tempLicenseFormData,
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                        }
+                    });
+                    
+                    if (!tempLicenseResponse.ok) {
+                        const errorData = await tempLicenseResponse.json();
+                        throw new Error(errorData.error || 'Temporary license upload failed');
+                    }
+                    
+                    const tempLicenseResult = await tempLicenseResponse.json();
+                    fileObj.uploaded = true;
+                    fileObj.documentId = tempLicenseResult.temp_upload.id;
+                    
                 } else {
                     // Original two-step process for other document types
                     // Step 1: Temporary upload
                     const tempFormData = new FormData();
                     tempFormData.append('file', fileObj.file);
-                    tempFormData.append('type', '{{ $documentType }}');
+                    tempFormData.append('type', this.documentType);
                     
                     const tempResponse = await fetch('/api/documents/upload', {
                         method: 'POST',
@@ -267,8 +372,13 @@
             
             this.success = 'Files uploaded and stored successfully!';
             
+            // Dispatch event to refresh preview in Livewire component
+            if (this.modelType === 'medical_card') {
+                @this.call('refreshMedicalCardPreview');
+            }
+            
         } catch (error) {
-            this.error = 'Upload failed: ' + error.message;
+            this.error = `Upload failed: ${error.message}`;
             console.error('Upload error:', error);
         } finally {
             this.uploading = false;
@@ -331,18 +441,18 @@
 
     <!-- Existing Image Preview -->
     @if($existingImageUrl && $showPreview)
-        <!-- <div class="mb-4">
+        <div class="mb-4">
             <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <img src="{{ $existingImageUrl }}" alt="Current image" class="h-16 w-16 object-cover rounded-lg shadow-sm">
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-medium text-gray-900">{{ $existingImageName ?: 'Imagen actual' }}</p>
-                    <p class="text-xs text-green-600">✓ Subida</p>
+                    <p class="text-xs text-green-600">✓ uploaded</p>
                 </div>
                 <button 
                     type="button" 
                     class="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100 transition-colors"
                     onclick="if(confirm('¿Estás seguro de que quieres eliminar esta imagen?')) { 
-                        @this.call('removeLicenseImage', '{{ $uniqueId }}', '{{ $side }}');
+                        @this.call('{{ $removeMethod }}', '{{ $uniqueId }}', '{{ $side }}');
                     }"
                     title="Eliminar imagen"
                 >
@@ -351,12 +461,12 @@
                     </svg>
                 </button>
             </div>
-        </div> -->
+        </div>
     @endif
 
     <!-- File Preview -->
     @if($showPreview)
-        <div x-show="files.length > 0" class="space-y-2">
+        <!-- <div x-show="files.length > 0" class="space-y-2">
             <template x-for="(file, index) in files" :key="index">
                 <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                     <img :src="file.url" :alt="file.name" class="h-12 w-12 object-cover rounded">
@@ -375,7 +485,7 @@
                     </button>
                 </div>
             </template>
-        </div>
+        </div> -->
     @endif
 
     <!-- Upload Button -->

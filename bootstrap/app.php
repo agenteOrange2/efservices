@@ -37,7 +37,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'prevent.mass.assignment' => \App\Http\Middleware\PreventMassAssignment::class,
-            'security.headers' => \App\Http\Middleware\SecurityHeaders::class
+            'security.headers' => \App\Http\Middleware\SecurityHeaders::class,
+            'validate.upload.session' => \App\Http\Middleware\ValidateUploadSession::class
         ]);
 
         // Middleware web group

@@ -45,9 +45,11 @@ class DriverLicense extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('license_front')
+            ->useDisk('public')
             ->singleFile();
             
         $this->addMediaCollection('license_back')
+            ->useDisk('public')
             ->singleFile();
     }
 }

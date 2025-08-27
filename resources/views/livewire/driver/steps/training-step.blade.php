@@ -71,8 +71,13 @@
                     <div>
                         <label class="block text-sm font-medium mb-1">Start Date <span
                                 class="text-red-500">*</span></label>
-                        <input type="date" wire:model="training_schools.{{ $index }}.date_start"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                        <x-unified-date-picker
+                            name="training_schools.{{ $index }}.date_start"
+                            wireModel="training_schools.{{ $index }}.date_start"
+                            value="{{ $school['date_start'] ?? '' }}"
+                            placeholder="MM/DD/YYYY"
+                            class="w-full"
+                        />
                         @error("training_schools.{$index}.date_start")
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
@@ -80,8 +85,13 @@
                     <div>
                         <label class="block text-sm font-medium mb-1">End Date <span
                                 class="text-red-500">*</span></label>
-                        <input type="date" wire:model="training_schools.{{ $index }}.date_end"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                        <x-unified-date-picker
+                            name="training_schools.{{ $index }}.date_end"
+                            wireModel="training_schools.{{ $index }}.date_end"
+                            value="{{ $school['date_end'] ?? '' }}"
+                            placeholder="MM/DD/YYYY"
+                            class="w-full"
+                        />
                         @error("training_schools.{$index}.date_end")
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
@@ -115,6 +125,38 @@
                     </div>
                 </div>
 
+                <!-- Create/Update Buttons -->
+                <div class="mt-4 flex gap-2">
+                    @if(empty($school['id']))
+                        <button type="button" wire:click="createTrainingSchool({{ $index }})"
+                            class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                            <i class="fas fa-plus mr-1"></i> Crear Escuela
+                        </button>
+                    @else
+                        <button type="button" wire:click="updateTrainingSchool({{ $index }})"
+                            class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            <i class="fas fa-edit mr-1"></i> Actualizar Escuela
+                        </button>
+                    @endif
+                    
+                    @if($index > 0)
+                        <button type="button" wire:click="removeTrainingSchool({{ $index }})"
+                            class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                            <i class="fas fa-trash mr-1"></i> Remover
+                        </button>
+                    @endif
+                </div>
+
+                @if(empty($school['id']))
+                    <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                        <p class="text-sm text-yellow-800">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Debe crear la escuela de entrenamiento antes de poder subir certificados.
+                        </p>
+                    </div>
+                @endif
+
+                @if(!empty($school['id']))
                 <div class="mb-2">
                     <label class="block text-sm font-medium mb-2">Which of the following skills were trained in your
                         program? (select all that apply)</label>
@@ -166,8 +208,10 @@
                         </div>
                     </div>
                 </div>
+                @endif
 
                 <!-- Certificate Uploads -->
+                @if(!empty($school['id']))
                 <div class="mb-4" x-data="{
                     isUploading: false,
                     async uploadCertificate(event) {
@@ -322,7 +366,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            @endif
         @endforeach
 
         <button type="button" wire:click="addTrainingSchool"
@@ -383,7 +427,7 @@
                             @error("courses.{$index}.organization_name")
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
-                        </div>                 
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -411,8 +455,11 @@
                         <div>
                             <label class="block text-sm font-medium mb-1">Certification Date <span
                                     class="text-red-500">*</span></label>
-                            <input type="date" wire:model="courses.{{ $index }}.certification_date"
-                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                            <x-unified-date-picker 
+                                name="courses[{{ $index }}][certification_date]"
+                                wireModel="courses.{{ $index }}.certification_date"
+                                :value="$course['certification_date'] ?? ''"
+                                placeholder="MM/DD/YYYY" />
                             @error("courses.{$index}.certification_date")
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror                            
@@ -428,12 +475,47 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium mb-1">Expiration Date (Optional)</label>
-                            <input type="date" wire:model="courses.{{ $index }}.expiration_date"
-                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                            <x-unified-date-picker 
+                                name="courses[{{ $index }}][expiration_date]"
+                                wireModel="courses.{{ $index }}.expiration_date"
+                                :value="$course['expiration_date'] ?? ''"
+                                placeholder="MM/DD/YYYY" />
                         </div>
                     </div>
 
+                    <!-- Create/Update Buttons -->
+                    <div class="mt-4 flex gap-2">
+                        @if(empty($course['id']))
+                            <button type="button" wire:click="createCourse({{ $index }})"
+                                class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                                <i class="fas fa-plus mr-1"></i> Crear Curso
+                            </button>
+                        @else
+                            <button type="button" wire:click="updateCourse({{ $index }})"
+                                class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                <i class="fas fa-edit mr-1"></i> Actualizar Curso
+                            </button>
+                        @endif
+                        
+                        @if($index > 0)
+                            <button type="button" wire:click="removeCourse({{ $index }})"
+                                class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                <i class="fas fa-trash mr-1"></i> Remover
+                            </button>
+                        @endif
+                    </div>
+
+                    @if(empty($course['id']))
+                        <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                            <p class="text-sm text-yellow-800">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Debe crear el curso antes de poder subir certificados.
+                            </p>
+                        </div>
+                    @endif
+
                     <!-- Course Certificates Section -->
+                    @if(!empty($course['id']))
                     <div class="mt-6">
                         <h5 class="text-sm font-semibold mb-2">Upload Course Certificates</h5>
                         <div class="mb-4" x-data="{
@@ -587,6 +669,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
             @endforeach
 
             <button type="button" wire:click="addCourse"

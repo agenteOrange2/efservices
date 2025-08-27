@@ -15,6 +15,7 @@ use App\Models\Admin\Driver\DriverTrafficConviction;
 use App\Models\Admin\Driver\DriverTesting;
 use App\Models\Admin\Driver\DriverInspection;
 use App\Models\Admin\Driver\DriverLicense;
+use App\Models\Admin\Driver\DriverMedicalQualification;
 use App\Models\UserDriverDetail;
 
 class UploadController extends Controller
@@ -31,7 +32,8 @@ class UploadController extends Controller
         'traffic' => DriverTrafficConviction::class,
         'testing' => DriverTesting::class,
         'inspection' => DriverInspection::class,
-        'user_driver' => UserDriverDetail::class
+        'user_driver' => UserDriverDetail::class,
+        'medical_card' => DriverMedicalQualification::class
     ];
     
     public function __construct(TempUploadService $tempUploadService)
@@ -72,7 +74,12 @@ class UploadController extends Controller
             
             if (!$licenseId) {
                 return response()->json([
-                    'error' => 'Formato de unique_id inválido. Se esperaba formato: license_ID_hash'
+                    'error' => 'Formato de unique_id inválido. Se esperaba formato: license_ID_hash. Para licencias nuevas, use el endpoint temporal /api/driver/upload-license-temp',
+                    'details' => [
+                        'received_unique_id' => $uniqueId,
+                        'expected_format' => 'license_[ID]_[hash]',
+                        'suggestion' => 'Para licencias nuevas sin ID en base de datos, use el endpoint temporal'
+                    ]
                 ], 400);
             }
             

@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\UserDriverController;
 use App\Http\Controllers\Api\UserDriverApiController;
 use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\DocumentController;
+use App\Http\Controllers\Api\TempUploadController as ApiTempUploadController;
 
 // Ruta pública para eliminar documentos de manera segura (solo requiere CSRF)
 // Esta ruta es necesaria para el funcionamiento del modal de eliminación de documentos
@@ -54,6 +55,29 @@ Route::get('/active-carriers', function () {
         ->orderBy('name')
         ->get(['id', 'name', 'dot_number']);
     return response()->json($carriers);
+});
+
+// Rutas API para sistema de carga temporal de licencias de conductor
+Route::prefix('driver')->middleware(['validate.upload.session'])->group(function () {
+    // Endpoint principal para carga temporal de licencias
+    Route::post('/upload-license-temp', [ApiTempUploadController::class, 'uploadLicense'])
+        ->name('api.driver.upload-license-temp');
+    
+    // Obtener preview de licencia temporal
+    Route::get('/temp-license/{id}/preview', [ApiTempUploadController::class, 'previewLicense'])
+        ->name('api.driver.temp-license.preview');
+    
+    // Eliminar archivo temporal
+    Route::delete('/temp-license/{id}', [ApiTempUploadController::class, 'deleteTempLicense'])
+        ->name('api.driver.temp-license.delete');
+    
+    // Validar contenido de licencia (OCR opcional)
+    Route::post('/validate-license', [ApiTempUploadController::class, 'validateLicense'])
+        ->name('api.driver.validate-license');
+    
+    // Obtener todos los uploads de una sesión
+    Route::get('/session-uploads', [ApiTempUploadController::class, 'getSessionUploads'])
+        ->name('api.driver.session-uploads');
 });
 
 // Rutas API para gestión de documentos (sin autenticación ni CSRF para facilitar desarrollo)

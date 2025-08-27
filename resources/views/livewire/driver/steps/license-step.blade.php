@@ -76,8 +76,10 @@
                                 class="text-red-500">*</span></label>
                         <x-unified-date-picker 
                             wire:model="licenses.{{ $index }}.expiration_date" 
+                            :value="$license['expiration_date'] ?? ''"
                             placeholder="MM/DD/YYYY" 
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
+                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" 
+                            required />
                         @error("licenses.{$index}.expiration_date")
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
@@ -141,51 +143,74 @@
                     </div>
                 </div>
 
-                <!-- License Images -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">License Front Image</label>
-                        <x-unified-image-upload 
-                            wire:model="licenses.{{ $index }}.temp_front_token" 
-                            :existing-image-url="$license['front_preview'] ?? ''"
-                            :existing-image-name="$license['front_filename'] ?? ''"
-                            :unique-id="$license['unique_id'] ?? ''"
-                            side="front"
-                            accept="image/*" 
-                            max-size="2048" 
-                            class="w-full"
-                            :model-type="'user_driver'"
-                            :model-id="$driverId"
-                            collection="license_documents"
-                            document-type="license_front"
-                            :show-preview="true" />
-                        @error("licenses.{$index}.temp_front_token")
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <!-- License Back Image -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">License Back Image</label>
-                        <x-unified-image-upload 
-                            wire:model="licenses.{{ $index }}.temp_back_token" 
-                            :existing-image-url="$license['back_preview'] ?? ''"
-                            :existing-image-name="$license['back_filename'] ?? ''"
-                            :unique-id="$license['unique_id'] ?? ''"
-                            side="back"
-                            accept="image/*" 
-                            max-size="2048" 
-                            class="w-full"
-                            :model-type="'user_driver'"
-                            :model-id="$driverId"
-                            collection="license_documents"
-                            document-type="license_back"
-                            :show-preview="true" />
-                        @error("licenses.{$index}.temp_back_token")
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                        @enderror
-                    </div>
+                <!-- Create/Update License Button -->
+                <div class="mb-4">
+                    @if(empty($license['id']))
+                        <button type="button" wire:click="createLicense({{ $index }})"
+                            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm">
+                            <i class="fas fa-save mr-1"></i> Crear Licencia
+                        </button>
+                        <p class="text-sm text-gray-600 mt-2">
+                            <i class="fas fa-info-circle mr-1"></i> 
+                            Debe crear la licencia antes de poder subir las imágenes.
+                        </p>
+                    @else
+                        <button type="button" wire:click="updateLicense({{ $index }})"
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+                            <i class="fas fa-edit mr-1"></i> Actualizar Licencia
+                        </button>
+                        <p class="text-sm text-green-600 mt-2">
+                            <i class="fas fa-check-circle mr-1"></i> 
+                            Licencia creada. Ahora puede subir las imágenes.
+                        </p>
+                    @endif
                 </div>
+
+                <!-- License Images - Only show if license has been created -->
+                @if(!empty($license['id']))
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">License Front Image</label>
+                            <x-unified-image-upload 
+     
+                                :existing-image-url="$license['front_preview'] ?? ''"
+                                :existing-image-name="$license['front_filename'] ?? ''"
+                                :unique-id="$license['unique_id'] ?? ''"
+                                side="front"
+                                accept="image/*" 
+                                max-size="2048" 
+                                class="w-full"
+                                :model-type="'user_driver'"
+                                :model-id="$license['id']"
+                                :driver-id="$driverId"
+                                collection="license_documents"
+                                document-type="license_front"
+                                :show-preview="true" />
+
+                        </div>
+
+                        <!-- License Back Image -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">License Back Image</label>
+                            <x-unified-image-upload 
+ 
+                                :existing-image-url="$license['back_preview'] ?? ''"
+                                :existing-image-name="$license['back_filename'] ?? ''"
+                                :unique-id="$license['unique_id'] ?? ''"
+                                side="back"
+                                accept="image/*" 
+                                max-size="2048" 
+                                class="w-full"
+                                :model-type="'user_driver'"
+                                :model-id="$license['id']"
+                                :driver-id="$driverId"
+                                collection="license_documents"
+                                document-type="license_back"
+                                :show-preview="true" />
+
+                        </div>
+                    </div>
+                @endif
             </div>
         @endforeach
 

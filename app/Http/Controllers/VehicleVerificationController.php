@@ -22,6 +22,11 @@ class VehicleVerificationController extends Controller
      */
     public function showVerificationForm($token)
     {
+        Log::info('Iniciando verificación de token', [
+            'token' => $token,
+            'timestamp' => now()->toDateTimeString()
+        ]);
+        
         // Buscar el token en la base de datos
         $verification = VehicleVerificationToken::where('token', $token)
             ->where('expires_at', '>', now())
@@ -29,8 +34,22 @@ class VehicleVerificationController extends Controller
             ->first();
         
         if (!$verification) {
+            Log::warning('Token no encontrado o inválido', [
+                'token' => $token,
+                'expired_tokens' => VehicleVerificationToken::where('token', $token)->where('expires_at', '<=', now())->count(),
+                'verified_tokens' => VehicleVerificationToken::where('token', $token)->where('verified', true)->count(),
+                'total_tokens' => VehicleVerificationToken::where('token', $token)->count()
+            ]);
             return view('vehicle-verification.already-verified');
         }
+        
+        Log::info('Token encontrado exitosamente', [
+            'token' => $token,
+            'verification_id' => $verification->id,
+            'application_id' => $verification->driver_application_id,
+            'vehicle_id' => $verification->vehicle_id,
+            'expires_at' => $verification->expires_at->toDateTimeString()
+        ]);
         
         // Cargar relaciones necesarias
         $verification->load(['vehicle', 'driverApplication.details']);
@@ -39,18 +58,49 @@ class VehicleVerificationController extends Controller
         if (!$verification->vehicle || !$verification->driverApplication) {
             Log::error('Datos incompletos para verificación de vehículo', [
                 'token' => $token,
+                'verification_id' => $verification->id,
                 'has_vehicle' => (bool)$verification->vehicle,
-                'has_application' => (bool)$verification->driverApplication
+                'has_application' => (bool)$verification->driverApplication,
+                'vehicle_id' => $verification->vehicle_id,
+                'application_id' => $verification->driver_application_id
             ]);
             return view('vehicle-verification.error', [
                 'message' => 'No se encontraron todos los datos necesarios para la verificación.'
             ]);
         }
         
+        Log::info('Relaciones cargadas exitosamente', [
+            'token' => $token,
+            'vehicle_id' => $verification->vehicle->id,
+            'application_id' => $verification->driverApplication->id
+        ]);
+        
         // Obtener los datos del vehículo y la aplicación
         $vehicle = $verification->vehicle;
         $application = $verification->driverApplication;
         $applicationDetails = $application->details;
+        
+        // Verificar que tenemos los detalles de la aplicación
+        if (!$applicationDetails) {
+            Log::error('Detalles de aplicación no encontrados', [
+                'token' => $token,
+                'application_id' => $application->id,
+                'verification_id' => $verification->id,
+                'application_exists' => (bool)$application,
+                'details_relationship' => $application->details()->exists(),
+                'details_count' => $application->details()->count()
+            ]);
+            return view('vehicle-verification.error', [
+                'message' => 'No se encontraron los detalles de la aplicación para la verificación.'
+            ]);
+        }
+        
+        Log::info('Detalles de aplicación encontrados exitosamente', [
+            'token' => $token,
+            'application_id' => $application->id,
+            'details_id' => $applicationDetails->id,
+            'applying_position' => $applicationDetails->applying_position
+        ]);
         
         // Determinar si es owner_operator o third_party_driver
         $isOwnerOperator = $applicationDetails->applying_position === 'owner_operator';
@@ -76,6 +126,11 @@ class VehicleVerificationController extends Controller
      */
     public function processVerification(Request $request, $token)
     {
+        // Convertir el checkbox a boolean antes de la validación
+        $request->merge([
+            'agree_terms' => $request->has('agree_terms') && $request->input('agree_terms') !== null
+        ]);
+        
         // Validar los datos de entrada
         $validated = $request->validate([
             'signature' => 'required|string',

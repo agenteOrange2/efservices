@@ -961,8 +961,8 @@ class ApplicationStep extends Component
             // Guardar el ID del vehículo
             $this->vehicle_id = $vehicle->id;
             
-            // Solo actualizamos la tabla third_party_details, no driver_application_details
-            // Los datos generales se guardarán cuando el usuario use next/previous step, no aquí
+            // Los driver_application_details se crearán cuando el usuario complete el formulario principal
+            // No se crean aquí porque los campos requeridos no están disponibles en el formulario de terceros
             
             // Actualizar los detalles específicos de Third Party en la tabla correspondiente
             $thirdPartyDetails = $application->thirdPartyDetail()->updateOrCreate(
@@ -1013,6 +1013,24 @@ class ApplicationStep extends Component
                 'expires_at' => $expiresAt,
             ]);
             
+            // Verificar que el token se guardó correctamente antes de continuar
+            if (!$verification || !$verification->id) {
+                throw new \Exception('No se pudo crear el token de verificación');
+            }
+            
+            Log::info('Token de verificación creado exitosamente', [
+                'token' => $token,
+                'verification_id' => $verification->id,
+                'application_id' => $application->id,
+                'vehicle_id' => $vehicle->id
+            ]);
+            
+            // Marcar como enviado antes del commit
+            $this->email_sent = true;
+            
+            // Commit de la transacción ANTES de enviar el correo
+            DB::commit();
+            
             // Log configuración de correo antes del envío
             Log::info('Configuración de correo SMTP', [
                 'mail_mailer' => config('mail.default'),
@@ -1024,7 +1042,7 @@ class ApplicationStep extends Component
                 'recipient_email' => $this->third_party_email
             ]);
             
-            // Enviar correo electrónico con manejo específico de errores SMTP
+            // Enviar correo electrónico DESPUÉS del commit para evitar problemas de timing
             try {
                 Mail::to($this->third_party_email)
                     ->send(new ThirdPartyVehicleVerification(
@@ -1036,38 +1054,52 @@ class ApplicationStep extends Component
                         $application->id
                     ));
                     
-                Log::info('Correo enviado exitosamente', [
+                Log::info('Correo enviado exitosamente después del commit', [
                     'recipient' => $this->third_party_email,
-                    'token' => $token
+                    'token' => $token,
+                    'verification_id' => $verification->id
                 ]);
             } catch (\Swift_TransportException $e) {
                 Log::error('Error de transporte SMTP', [
                     'error' => $e->getMessage(),
                     'code' => $e->getCode(),
-                    'recipient' => $this->third_party_email
+                    'recipient' => $this->third_party_email,
+                    'token' => $token
                 ]);
-                throw new \Exception('SMTP Transport Error: ' . $e->getMessage());
+                // No lanzar excepción aquí ya que los datos ya están guardados
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'Los datos se guardaron correctamente, pero hubo un error al enviar el correo: ' . $e->getMessage()
+                ]);
+                return;
             } catch (\Symfony\Component\Mailer\Exception\TransportException $e) {
                 Log::error('Error de transporte Symfony Mailer', [
                     'error' => $e->getMessage(),
                     'code' => $e->getCode(),
-                    'recipient' => $this->third_party_email
+                    'recipient' => $this->third_party_email,
+                    'token' => $token
                 ]);
-                throw new \Exception('Mailer Transport Error: ' . $e->getMessage());
+                // No lanzar excepción aquí ya que los datos ya están guardados
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'Los datos se guardaron correctamente, pero hubo un error al enviar el correo: ' . $e->getMessage()
+                ]);
+                return;
             } catch (\Exception $e) {
                 Log::error('Error general al enviar correo', [
                     'error' => $e->getMessage(),
                     'code' => $e->getCode(),
                     'recipient' => $this->third_party_email,
+                    'token' => $token,
                     'trace' => $e->getTraceAsString()
                 ]);
-                throw $e;
+                // No lanzar excepción aquí ya que los datos ya están guardados
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'Los datos se guardaron correctamente, pero hubo un error al enviar el correo: ' . $e->getMessage()
+                ]);
+                return;
             }
-            
-            // Marcar como enviado
-            $this->email_sent = true;
-            
-            DB::commit();
             
             $this->dispatch('notify', [
                 'type' => 'success',

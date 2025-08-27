@@ -1,98 +1,94 @@
-@props([
-    'name' => '',
-    'value' => '',
-    'label' => '',
-    'required' => false,
-    'placeholder' => 'MM/DD/YYYY',
-    'minDate' => null,
-    'maxDate' => null,
-    'wireModel' => null,
-    'id' => null,
-    'class' => '',
-    'disabled' => false,
-    'readonly' => false,
-    'helpText' => null,
-    'errorField' => null
-])
+@props(['wireModel' => null, 'placeholder' => 'Select date', 'required' => false])
 
 @php
-    use App\Helpers\DateHelper;
-    
-    $componentId = $id ?? 'date-picker-' . uniqid();
-    $inputId = $componentId . '-input';
-    $errorFieldName = $errorField ?? $name;
-    
-    // Format the value for display
-    $displayValue = $value ? DateHelper::toDisplay($value) : '';
-    
-    // Set default min/max dates if not provided
-    $minDateFormatted = $minDate ? DateHelper::toDisplay($minDate) : null;
-    $maxDateFormatted = $maxDate ? DateHelper::toDisplay($maxDate) : null;
+    $id = 'date-picker-' . uniqid();
+    // Detectar si se está usando wire:model o wireModel
+    $modelAttribute = $attributes->get('wire:model') ?? $wireModel;
 @endphp
 
-@vite('resources/js/unified-date-picker.js')
-
-<div class="unified-date-picker {{ $class }}" x-data="unifiedDatePicker({
-    value: '{{ $displayValue }}',
-    inputId: '{{ $inputId }}',
-    minDate: {{ $minDateFormatted ? "'$minDateFormatted'" : 'null' }},
-    maxDate: {{ $maxDateFormatted ? "'$maxDateFormatted'" : 'null' }},
-    wireModel: '{{ $attributes->wire('model')->value() }}'
-})" x-init="init()">
-    @if($label)
-        <label for="{{ $inputId }}" class="block text-sm font-medium text-gray-700 mb-1">
-            {{ $label }}
-            @if($required)
-                <span class="text-red-500">*</span>
-            @endif
-        </label>
-    @endif
+<div x-data="{
+    displayValue: '',
+    picker: null,
+    modelField: '{{ $modelAttribute }}',
     
-    <div class="relative">
-        <input
-            type="text"
-            id="{{ $inputId }}"
-            name="{{ $name }}"
-            x-model="value"
+    init() {
+        this.$nextTick(() => {
+            // Initialize Pikaday
+            this.picker = new Pikaday({
+                field: this.$refs.input,
+                format: 'MM/DD/YYYY',
+                onSelect: (date) => {
+                    // Format for display (MM/DD/YYYY)
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const year = date.getFullYear();
+                    this.displayValue = `${month}/${day}/${year}`;
+                    
+                    // Convert to Laravel format (YYYY-MM-DD) and update Livewire
+                    const laravelDate = date.toISOString().split('T')[0];
+                    if (this.modelField) {
+                        $wire.set(this.modelField, laravelDate);
+                    }
+                }
+            });
+            
+            // Load existing value if any
+            if (this.modelField) {
+                const existingValue = $wire.get(this.modelField);
+                if (existingValue) {
+                    const date = new Date(existingValue);
+                    if (!isNaN(date.getTime())) {
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const year = date.getFullYear();
+                        this.displayValue = `${month}/${day}/${year}`;
+                        this.picker.setDate(date);
+                    }
+                }
+            }
+        });
+    },
+    
+    clearDate() {
+        this.displayValue = '';
+        if (this.picker) {
+            this.picker.setDate(null);
+        }
+        if (this.modelField) {
+            $wire.set(this.modelField, null);
+        }
+    }
+}" class="relative">
+    <div class="flex items-center">
+        <input     
+            x-ref="input"
+            x-model="displayValue"
+            type="text" 
             placeholder="{{ $placeholder }}"
+            class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" 
+            readonly
             {{ $required ? 'required' : '' }}
-            {{ $disabled ? 'disabled' : '' }}
-            {{ $readonly ? 'readonly' : '' }}
-            @if($wireModel)
-                wire:model="{{ $wireModel }}"
-            @endif
-            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 {{ $disabled ? 'bg-gray-100 cursor-not-allowed' : '' }} {{ $readonly ? 'bg-gray-50' : '' }}"
-            autocomplete="off"
-        >
+        />
         
-        <!-- Calendar Icon -->
-        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
+        <div class="absolute right-2 flex items-center space-x-1">
+            <button type="button" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+            </button>
+            
+            <button 
+                type="button" 
+                @click="clearDate()" 
+                x-show="displayValue" 
+                class="text-gray-400 hover:text-red-500"
+            >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
         </div>
-        
-        <!-- Clear Button -->
-        <button
-            type="button"
-            x-show="value && !disabled && !readonly"
-            @click="clearDate()"
-            class="absolute inset-y-0 right-8 flex items-center pr-1 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-            tabindex="-1"
-        >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-        </button>
     </div>
-    
-    @if($helpText)
-        <p class="mt-1 text-sm text-gray-500">{{ $helpText }}</p>
-    @endif
-    
-    @error($errorFieldName)
-        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-    @enderror
 </div>
 
 @push('styles')

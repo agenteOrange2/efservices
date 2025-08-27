@@ -1042,6 +1042,256 @@ class TrainingStep extends Component
         ];
     }
 
+    // Create training school
+    public function createTrainingSchool($index)
+    {
+        try {
+            if (!$this->driverId || !isset($this->training_schools[$index])) {
+                return false;
+            }
+
+            $schoolData = $this->training_schools[$index];
+            
+            // Validate required fields
+            $this->validate([
+                "training_schools.{$index}.school_name" => 'required|string|max:255',
+                "training_schools.{$index}.city" => 'required|string|max:255',
+                "training_schools.{$index}.state" => 'required|string|max:2',
+                "training_schools.{$index}.date_start" => 'required|date',
+                "training_schools.{$index}.date_end" => 'required|date|after_or_equal:training_schools.{$index}.date_start',
+            ]);
+
+            $userDriverDetail = UserDriverDetail::find($this->driverId);
+            if (!$userDriverDetail) {
+                return false;
+            }
+
+            // Create new training school
+            $trainingSchool = $userDriverDetail->trainingSchools()->create([
+                'school_name' => $schoolData['school_name'],
+                'city' => $schoolData['city'],
+                'state' => $schoolData['state'],
+                'date_start' => $schoolData['date_start'],
+                'date_end' => $schoolData['date_end'],
+                'graduated' => $schoolData['graduated'] ?? false,
+                'subject_to_safety_regulations' => $schoolData['subject_to_safety_regulations'] ?? false,
+                'performed_safety_functions' => $schoolData['performed_safety_functions'] ?? false,
+                'training_skills' => $schoolData['training_skills'] ?? [],
+            ]);
+
+            // Update the array with the new ID
+            $this->training_schools[$index]['id'] = $trainingSchool->id;
+            $this->training_schools[$index]['certificates'] = [];
+
+            // Process certificates if any
+            if (!empty($schoolData['temp_certificate_tokens'])) {
+                $this->processSchoolCertificates($trainingSchool, $schoolData);
+                $this->refreshSchoolData($index, $trainingSchool);
+            }
+
+            session()->flash('success', 'Escuela de entrenamiento creada exitosamente.');
+            return true;
+
+        } catch (\Exception $e) {
+            Log::error('Error creating training school', [
+                'error' => $e->getMessage(),
+                'index' => $index,
+                'driver_id' => $this->driverId
+            ]);
+            session()->flash('error', 'Error al crear la escuela de entrenamiento.');
+            return false;
+        }
+    }
+
+    // Update training school
+    public function updateTrainingSchool($index)
+    {
+        try {
+            if (!$this->driverId || !isset($this->training_schools[$index]) || empty($this->training_schools[$index]['id'])) {
+                return false;
+            }
+
+            $schoolData = $this->training_schools[$index];
+            
+            // Validate required fields
+            $this->validate([
+                "training_schools.{$index}.school_name" => 'required|string|max:255',
+                "training_schools.{$index}.city" => 'required|string|max:255',
+                "training_schools.{$index}.state" => 'required|string|max:2',
+                "training_schools.{$index}.date_start" => 'required|date',
+                "training_schools.{$index}.date_end" => 'required|date|after_or_equal:training_schools.{$index}.date_start',
+            ]);
+
+            $userDriverDetail = UserDriverDetail::find($this->driverId);
+            if (!$userDriverDetail) {
+                return false;
+            }
+
+            $trainingSchool = $userDriverDetail->trainingSchools()->find($schoolData['id']);
+            if (!$trainingSchool) {
+                return false;
+            }
+
+            // Update training school
+            $trainingSchool->update([
+                'school_name' => $schoolData['school_name'],
+                'city' => $schoolData['city'],
+                'state' => $schoolData['state'],
+                'date_start' => $schoolData['date_start'],
+                'date_end' => $schoolData['date_end'],
+                'graduated' => $schoolData['graduated'] ?? false,
+                'subject_to_safety_regulations' => $schoolData['subject_to_safety_regulations'] ?? false,
+                'performed_safety_functions' => $schoolData['performed_safety_functions'] ?? false,
+                'training_skills' => $schoolData['training_skills'] ?? [],
+            ]);
+
+            // Process certificates if any
+            if (!empty($schoolData['temp_certificate_tokens'])) {
+                $this->processSchoolCertificates($trainingSchool, $schoolData);
+                $this->refreshSchoolData($index, $trainingSchool);
+            }
+
+            session()->flash('success', 'Escuela de entrenamiento actualizada exitosamente.');
+            return true;
+
+        } catch (\Exception $e) {
+            Log::error('Error updating training school', [
+                'error' => $e->getMessage(),
+                'index' => $index,
+                'driver_id' => $this->driverId
+            ]);
+            session()->flash('error', 'Error al actualizar la escuela de entrenamiento.');
+            return false;
+        }
+    }
+
+    // Create course
+    public function createCourse($index)
+    {
+        try {
+            if (!$this->driverId || !isset($this->courses[$index])) {
+                return false;
+            }
+
+            $courseData = $this->courses[$index];
+            
+            // Validate required fields
+            $this->validate([
+                "courses.{$index}.organization_name" => 'required|string|max:255',
+                "courses.{$index}.city" => 'required|string|max:255',
+                "courses.{$index}.state" => 'required|string|max:2',
+                "courses.{$index}.certification_date" => 'required|date',
+            ]);
+
+            $userDriverDetail = UserDriverDetail::find($this->driverId);
+            if (!$userDriverDetail) {
+                return false;
+            }
+
+            // Handle organization name
+            $organizationName = $courseData['organization_name'];
+            if ($organizationName === 'Other' && !empty($courseData['organization_name_other'])) {
+                $organizationName = $courseData['organization_name_other'];
+            }
+
+            // Create new course
+            $course = $userDriverDetail->courses()->create([
+                'organization_name' => $organizationName,
+                'city' => $courseData['city'],
+                'state' => $courseData['state'],
+                'certification_date' => $courseData['certification_date'],
+                'experience' => $courseData['experience'] ?? '',
+                'expiration_date' => $courseData['expiration_date'] ?? null,
+            ]);
+
+            // Update the array with the new ID
+            $this->courses[$index]['id'] = $course->id;
+            $this->courses[$index]['certificates'] = [];
+
+            // Process certificates if any
+            if (!empty($courseData['temp_certificate_tokens'])) {
+                $this->processCourseCertificates($course, $courseData);
+                $this->refreshCourseCertificates($index, $course);
+            }
+
+            session()->flash('success', 'Curso creado exitosamente.');
+            return true;
+
+        } catch (\Exception $e) {
+            Log::error('Error creating course', [
+                'error' => $e->getMessage(),
+                'index' => $index,
+                'driver_id' => $this->driverId
+            ]);
+            session()->flash('error', 'Error al crear el curso.');
+            return false;
+        }
+    }
+
+    // Update course
+    public function updateCourse($index)
+    {
+        try {
+            if (!$this->driverId || !isset($this->courses[$index]) || empty($this->courses[$index]['id'])) {
+                return false;
+            }
+
+            $courseData = $this->courses[$index];
+            
+            // Validate required fields
+            $this->validate([
+                "courses.{$index}.organization_name" => 'required|string|max:255',
+                "courses.{$index}.city" => 'required|string|max:255',
+                "courses.{$index}.state" => 'required|string|max:2',
+                "courses.{$index}.certification_date" => 'required|date',
+            ]);
+
+            $userDriverDetail = UserDriverDetail::find($this->driverId);
+            if (!$userDriverDetail) {
+                return false;
+            }
+
+            $course = $userDriverDetail->courses()->find($courseData['id']);
+            if (!$course) {
+                return false;
+            }
+
+            // Handle organization name
+            $organizationName = $courseData['organization_name'];
+            if ($organizationName === 'Other' && !empty($courseData['organization_name_other'])) {
+                $organizationName = $courseData['organization_name_other'];
+            }
+
+            // Update course
+            $course->update([
+                'organization_name' => $organizationName,
+                'city' => $courseData['city'],
+                'state' => $courseData['state'],
+                'certification_date' => $courseData['certification_date'],
+                'experience' => $courseData['experience'] ?? '',
+                'expiration_date' => $courseData['expiration_date'] ?? null,
+            ]);
+
+            // Process certificates if any
+            if (!empty($courseData['temp_certificate_tokens'])) {
+                $this->processCourseCertificates($course, $courseData);
+                $this->refreshCourseCertificates($index, $course);
+            }
+
+            session()->flash('success', 'Curso actualizado exitosamente.');
+            return true;
+
+        } catch (\Exception $e) {
+            Log::error('Error updating course', [
+                'error' => $e->getMessage(),
+                'index' => $index,
+                'driver_id' => $this->driverId
+            ]);
+            session()->flash('error', 'Error al actualizar el curso.');
+            return false;
+        }
+    }
+
     // Next step
     public function next()
     {
