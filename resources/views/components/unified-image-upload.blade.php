@@ -411,9 +411,9 @@
             <input 
                 type="file" 
                 :name="name"
-                :accept="accept"
+                accept="{{ $acceptedTypes }}"
                 :multiple="multiple"
-                :required="required"
+                {{ $required ? 'required' : '' }}
                 class="hidden"
                 x-ref="fileInput"
                 @change="handleFiles($event.target.files)"

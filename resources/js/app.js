@@ -38,7 +38,7 @@ try {
   import("./vendors/chartjs");
   import("./vendors/tiny-slider");
   import("./vendors/tippy");
-  import("./vendors/litepicker");
+  // import("./vendors/litepicker"); // Removed to prevent conflicts with Pikaday
   import("./vendors/tom-select");
   import("./vendors/dropzone");
   import("./pages/notification");

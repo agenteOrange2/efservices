@@ -18,8 +18,7 @@ return new class extends Migration
             $table->date('date_end');
             $table->string('school_name');
             $table->string('city');
-            $table->string('state');
-            $table->string('phone_number');
+            $table->string('state');            
             $table->boolean('graduated')->default(false);
             $table->boolean('subject_to_safety_regulations')->default(false);
             $table->boolean('performed_safety_functions')->default(false);

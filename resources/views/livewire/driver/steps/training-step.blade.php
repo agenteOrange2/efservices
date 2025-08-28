@@ -34,13 +34,7 @@
                         @error("training_schools.{$index}.school_name")
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Phone Number</label>
-                        <input type="text" wire:model="training_schools.{{ $index }}.phone_number"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
-                            placeholder="(555) 555-5555">
-                    </div>
+                    </div>                    
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -125,28 +119,6 @@
                     </div>
                 </div>
 
-                <!-- Create/Update Buttons -->
-                <div class="mt-4 flex gap-2">
-                    @if(empty($school['id']))
-                        <button type="button" wire:click="createTrainingSchool({{ $index }})"
-                            class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                            <i class="fas fa-plus mr-1"></i> Crear Escuela
-                        </button>
-                    @else
-                        <button type="button" wire:click="updateTrainingSchool({{ $index }})"
-                            class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                            <i class="fas fa-edit mr-1"></i> Actualizar Escuela
-                        </button>
-                    @endif
-                    
-                    @if($index > 0)
-                        <button type="button" wire:click="removeTrainingSchool({{ $index }})"
-                            class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-                            <i class="fas fa-trash mr-1"></i> Remover
-                        </button>
-                    @endif
-                </div>
-
                 @if(empty($school['id']))
                     <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                         <p class="text-sm text-yellow-800">
@@ -229,8 +201,11 @@
                             const formData = new FormData();
                             formData.append('file', file);
                             formData.append('type', 'school_certificates');
+                            formData.append('driver_id', '{{ $driverId }}');
+                            formData.append('model_id', '{{ $school["id"] }}');
+                            formData.append('model_type', 'training_school');
                             try {
-                                const response = await fetch('/api/documents/upload', {
+                                const response = await fetch('/api/documents/upload-certificate-direct', {
                                     method: 'POST',
                                     body: formData,
                                     headers: {
@@ -241,13 +216,8 @@
                 
                                 if (response.ok) {
                                     const data = await response.json();
-                                    // Generar URL de vista previa para imágenes
-                                    let previewUrl = null;
-                                    if (file.type.startsWith('image/')) {
-                                        previewUrl = URL.createObjectURL(file);
-                                    }
-                                    // Añadir el certificado a Livewire
-                                    @this.call('addCertificate', {{ $index }}, data.token, file.name, previewUrl, file.type);
+                                    // Refrescar la vista para mostrar el nuevo certificado
+                                    $wire.$refresh();
                                 } else {
                                     console.error('Error uploading file:', await response.text());
                                     alert('Error uploading file. Please try again.');
@@ -366,6 +336,28 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Create/Update Buttons - Moved after certificate preview -->
+                <div class="mt-4 flex gap-2">
+                    @if(empty($school['id']))
+                        <button type="button" wire:click="createTrainingSchool({{ $index }})"
+                            class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                            <i class="fas fa-plus mr-1"></i> Crear Escuela
+                        </button>
+                    @else
+                        <button type="button" wire:click="updateTrainingSchool({{ $index }})"
+                            class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            <i class="fas fa-edit mr-1"></i> Actualizar Escuela
+                        </button>
+                    @endif
+                    
+                    @if($index > 0)
+                        <button type="button" wire:click="removeTrainingSchool({{ $index }})"
+                            class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                            <i class="fas fa-trash mr-1"></i> Remover
+                        </button>
+                    @endif
+                </div>
             @endif
         @endforeach
 
@@ -483,28 +475,6 @@
                         </div>
                     </div>
 
-                    <!-- Create/Update Buttons -->
-                    <div class="mt-4 flex gap-2">
-                        @if(empty($course['id']))
-                            <button type="button" wire:click="createCourse({{ $index }})"
-                                class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                                <i class="fas fa-plus mr-1"></i> Crear Curso
-                            </button>
-                        @else
-                            <button type="button" wire:click="updateCourse({{ $index }})"
-                                class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                                <i class="fas fa-edit mr-1"></i> Actualizar Curso
-                            </button>
-                        @endif
-                        
-                        @if($index > 0)
-                            <button type="button" wire:click="removeCourse({{ $index }})"
-                                class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-                                <i class="fas fa-trash mr-1"></i> Remover
-                            </button>
-                        @endif
-                    </div>
-
                     @if(empty($course['id']))
                         <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                             <p class="text-sm text-yellow-800">
@@ -523,6 +493,15 @@
                             async uploadCourseCertificate(event) {
                                 const files = event.target.files;
                                 if (!files || files.length === 0) return;
+                                
+                                // Verificar que el curso tenga un ID antes de permitir la subida
+                                const courseId = '{{ $course["id"] ?? "" }}';
+                                if (!courseId) {
+                                    alert('Debe crear el curso antes de subir certificados.');
+                                    event.target.value = '';
+                                    return;
+                                }
+                                
                                 this.isUploading = true;
                                 for (let i = 0; i < files.length; i++) {
                                     const file = files[i];
@@ -535,8 +514,11 @@
                                     const formData = new FormData();
                                     formData.append('file', file);
                                     formData.append('type', 'course_certificates');
+                                    formData.append('driver_id', '{{ $driverId }}');
+                                    formData.append('model_id', courseId);
+                                    formData.append('model_type', 'course');
                                     try {
-                                        const response = await fetch('/api/documents/upload', {
+                                        const response = await fetch('/api/documents/upload-certificate-direct', {
                                             method: 'POST',
                                             body: formData,
                                             headers: {
@@ -547,13 +529,10 @@
                         
                                         if (response.ok) {
                                             const data = await response.json();
-                                            // Generar URL de vista previa para imágenes
-                                            let previewUrl = null;
-                                            if (file.type.startsWith('image/')) {
-                                                previewUrl = URL.createObjectURL(file);
-                                            }
-                                            // Añadir el certificado a Livewire
-                                            @this.call('addCourseCertificate', {{ $index }}, data.token, file.name, previewUrl, file.type);
+                                            // Refrescar la vista para mostrar el nuevo certificado
+                                            @this.call('refreshCourseCertificates', {{ $index }});
+                                            // Disparar evento para actualizar la vista automáticamente
+                                            window.dispatchEvent(new CustomEvent('certificates-updated'));
                                         } else {
                                             console.error('Error uploading file:', await response.text());
                                             alert('Error uploading file. Please try again.');
@@ -668,6 +647,28 @@
                             @endif
                         </div>
                     </div>
+                </div>
+                
+                <!-- Create/Update Buttons - Moved after certificate preview -->
+                <div class="mt-4 flex gap-2">
+                    @if(empty($course['id']))
+                        <button type="button" wire:click="createCourse({{ $index }})"
+                            class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                            <i class="fas fa-plus mr-1"></i> Crear Curso
+                        </button>
+                    @else
+                        <button type="button" wire:click="updateCourse({{ $index }})"
+                            class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            <i class="fas fa-edit mr-1"></i> Actualizar Curso
+                        </button>
+                    @endif
+                    
+                    @if($index > 0)
+                        <button type="button" wire:click="removeCourse({{ $index }})"
+                            class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                            <i class="fas fa-trash mr-1"></i> Remover
+                        </button>
+                    @endif
                 </div>
                 @endif
             @endforeach

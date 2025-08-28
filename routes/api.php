@@ -88,6 +88,9 @@ Route::prefix('documents')->group(function () {
     // Ruta para upload directo de licencias
     Route::post('/upload-license-direct', [UploadController::class, 'uploadLicenseDirect']);
     
+    // Ruta para upload directo de certificados
+    Route::post('/upload-certificate-direct', [UploadController::class, 'uploadCertificateDirect']);
+    
     // Rutas para guardar documentos permanentes en diferentes colecciones
     Route::post('/store', [UploadController::class, 'storeDocument']);
     

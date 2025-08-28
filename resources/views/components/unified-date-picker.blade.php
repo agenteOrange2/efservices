@@ -10,30 +10,63 @@
     displayValue: '',
     picker: null,
     modelField: '{{ $modelAttribute }}',
+    isInitialized: false,
     
     init() {
         this.$nextTick(() => {
-            // Initialize Pikaday
+            this.initializeDatePicker();
+        });
+    },
+    
+    initializeDatePicker() {
+        try {
+            // Check if Pikaday is available
+            if (typeof Pikaday === 'undefined') {
+                console.warn('Pikaday library not loaded. Date picker will not function.');
+                return;
+            }
+            
+            // Check if $wire is available
+            if (typeof $wire === 'undefined') {
+                console.warn('Livewire $wire not available. Date picker may not sync properly.');
+            }
+            
+            // Initialize Pikaday with error handling
             this.picker = new Pikaday({
                 field: this.$refs.input,
                 format: 'MM/DD/YYYY',
                 onSelect: (date) => {
-                    // Format for display (MM/DD/YYYY)
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const year = date.getFullYear();
-                    this.displayValue = `${month}/${day}/${year}`;
-                    
-                    // Convert to Laravel format (YYYY-MM-DD) and update Livewire
-                    const laravelDate = date.toISOString().split('T')[0];
-                    if (this.modelField) {
-                        $wire.set(this.modelField, laravelDate);
+                    try {
+                        // Format for display (MM/DD/YYYY)
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const year = date.getFullYear();
+                        this.displayValue = `${month}/${day}/${year}`;
+                        
+                        // Convert to Laravel format (YYYY-MM-DD) and update Livewire
+                        const laravelDate = date.toISOString().split('T')[0];
+                        if (this.modelField && typeof $wire !== 'undefined') {
+                            $wire.set(this.modelField, laravelDate);
+                        }
+                    } catch (error) {
+                        console.error('Error in date selection:', error);
                     }
                 }
             });
             
+            this.isInitialized = true;
+            
             // Load existing value if any
-            if (this.modelField) {
+            this.loadExistingValue();
+            
+        } catch (error) {
+            console.error('Error initializing date picker:', error);
+        }
+    },
+    
+    loadExistingValue() {
+        try {
+            if (this.modelField && typeof $wire !== 'undefined') {
                 const existingValue = $wire.get(this.modelField);
                 if (existingValue) {
                     const date = new Date(existingValue);
@@ -42,23 +75,31 @@
                         const day = String(date.getDate()).padStart(2, '0');
                         const year = date.getFullYear();
                         this.displayValue = `${month}/${day}/${year}`;
-                        this.picker.setDate(date);
+                        if (this.picker) {
+                            this.picker.setDate(date);
+                        }
                     }
                 }
             }
-        });
+        } catch (error) {
+            console.error('Error loading existing date value:', error);
+        }
     },
     
     clearDate() {
-        this.displayValue = '';
-        if (this.picker) {
-            this.picker.setDate(null);
-        }
-        if (this.modelField) {
-            $wire.set(this.modelField, null);
+        try {
+            this.displayValue = '';
+            if (this.picker) {
+                this.picker.setDate(null);
+            }
+            if (this.modelField && typeof $wire !== 'undefined') {
+                $wire.set(this.modelField, null);
+            }
+        } catch (error) {
+            console.error('Error clearing date:', error);
         }
     }
-}" class="relative">
+}" class="relative unified-date-picker">
     <div class="flex items-center">
         <input     
             x-ref="input"
@@ -95,10 +136,11 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
 <style>
 .unified-date-picker .pika-single {
-    z-index: 9999;
+    z-index: 10000 !important;
     border: 1px solid #e5e7eb;
     border-radius: 0.375rem;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    position: absolute;
 }
 
 .unified-date-picker .pika-single.is-hidden {
@@ -108,6 +150,12 @@
 .unified-date-picker .pika-single.is-bound {
     position: absolute;
     box-shadow: 0 5px 15px -5px rgba(0, 0, 0, 0.506);
+}
+
+/* Ensure date picker appears above modals and other overlays */
+.unified-date-picker {
+    position: relative;
+    z-index: 1;
 }
 
 @media (max-width: 640px) {
@@ -120,8 +168,4 @@
     }
 }
 </style>
-@endpush
-
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
 @endpush

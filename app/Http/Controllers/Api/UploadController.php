@@ -146,6 +146,108 @@ class UploadController extends Controller
     }
 
     /**
+     * Sube un archivo directamente a la carpeta específica de certificados
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function uploadCertificateDirect(Request $request)
+    {
+        try {
+            // Validar la solicitud
+            $validated = $request->validate([
+                'file' => 'required|file|max:10240', // 10MB max
+                'type' => 'required|string|in:school_certificates,course_certificates',
+                'driver_id' => 'required|integer',
+                'model_id' => 'required|integer',
+                'model_type' => 'required|string|in:training_school,course'
+            ]);
+            
+            $file = $request->file('file');
+            $type = $request->input('type');
+            $driverId = $request->input('driver_id');
+            $modelId = $request->input('model_id');
+            $modelType = $request->input('model_type');
+            
+            // Verificar que el driver existe
+            $driver = UserDriverDetail::findOrFail($driverId);
+            
+            // Buscar el modelo específico según el tipo
+            if ($modelType === 'training_school') {
+                $model = DriverTrainingSchool::where('user_driver_detail_id', $driverId)
+                    ->where('id', $modelId)
+                    ->first();
+                    
+                if (!$model) {
+                    return response()->json([
+                        'error' => 'Escuela de entrenamiento no encontrada con el ID proporcionado'
+                    ], 404);
+                }
+                
+                $collection = 'school_certificates';
+            } else {
+                $model = DriverCourse::where('user_driver_detail_id', $driverId)
+                    ->where('id', $modelId)
+                    ->first();
+                    
+                if (!$model) {
+                    return response()->json([
+                        'error' => 'Curso no encontrado con el ID proporcionado'
+                    ], 404);
+                }
+                
+                $collection = 'course_certificates';
+            }
+            
+            // Generar nombre único de archivo
+            $extension = $file->getClientOriginalExtension();
+            $uniqueFileName = "{$modelType}_{$modelId}_certificate_" . time() . ".{$extension}";
+            
+            // Guardar directamente usando Media Library en el modelo específico
+            $media = $model->addMedia($file)
+                ->usingName($file->getClientOriginalName())
+                ->usingFileName($uniqueFileName)
+                ->withCustomProperties([
+                    'certificate_type' => $type,
+                    'uploaded_at' => now()->toDateTimeString()
+                ])
+                ->toMediaCollection($collection);
+            
+            Log::info('Certificado guardado directamente', [
+                'driver_id' => $driverId,
+                'model_type' => $modelType,
+                'model_id' => $modelId,
+                'type' => $type,
+                'collection' => $collection,
+                'media_id' => $media->id,
+                'path' => $media->getPath()
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Certificado guardado correctamente',
+                'document' => [
+                    'id' => $media->id,
+                    'name' => $media->name,
+                    'file_name' => $media->file_name,
+                    'mime_type' => $media->mime_type,
+                    'size' => $media->size,
+                    'collection' => $media->collection_name,
+                    'url' => $media->getUrl(),
+                    'custom_properties' => $media->custom_properties
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error en upload directo de certificado: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => 'Error al procesar el archivo: ' . $e->getMessage()
+            ], 422);
+        }
+    }
+
+    /**
      * Sube un archivo temporal al servidor (método original mantenido para compatibilidad)
      * 
      * @param Request $request

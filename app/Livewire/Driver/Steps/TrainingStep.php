@@ -143,7 +143,7 @@ class TrainingStep extends Component
                     'graduated' => (bool)($school->graduated ?? false),
                     'subject_to_safety_regulations' => (bool)($school->subject_to_safety_regulations ?? false),
                     'performed_safety_functions' => (bool)($school->performed_safety_functions ?? false),
-                    'training_skills' => json_decode($school->training_skills) ?: [],
+                    'training_skills' => is_array($school->training_skills) ? $school->training_skills : (json_decode($school->training_skills) ?: []),
                     'certificates' => $certificates,
                     'temp_certificate_tokens' => []
                 ];
@@ -742,7 +742,7 @@ class TrainingStep extends Component
             }
 
             // Buscar y eliminar el certificado específico
-            $media = $course->getMedia('certificates')->find($certificateId);
+            $media = $course->getMedia('course_certificates')->find($certificateId);
             if ($media) {
                 $media->delete();
 
@@ -767,15 +767,27 @@ class TrainingStep extends Component
     }
 
     // Refresh course certificates
-    public function refreshCourseCertificates($courseIndex, $course)
+    public function refreshCourseCertificates($courseIndex, $course = null)
     {
+        // Si no se proporciona el modelo, lo obtenemos
+        if (!$course) {
+            $courseData = $this->courses[$courseIndex] ?? null;
+            if (!$courseData || empty($courseData['id'])) return;
+            
+            $userDriverDetail = UserDriverDetail::find($this->driverId);
+            if (!$userDriverDetail) return;
+            
+            $course = $userDriverDetail->courses()->find($courseData['id']);
+            if (!$course) return;
+        }
+
         // Asegúrate que el curso esté recargado con sus relaciones
         $course->refresh();
 
         // Actualiza los certificados
         $certificates = [];
-        if ($course->hasMedia('certificates')) {
-            foreach ($course->getMedia('certificates') as $certificate) {
+        if ($course->hasMedia('course_certificates')) {
+            foreach ($course->getMedia('course_certificates') as $certificate) {
                 $certificates[] = [
                     'id' => $certificate->id,
                     'filename' => $certificate->file_name,
@@ -805,7 +817,7 @@ class TrainingStep extends Component
             if (!$course) return false;
 
             // Eliminar todos los certificados
-            $course->clearMediaCollection('certificates');
+            $course->clearMediaCollection('course_certificates');
 
             // Actualizar el componente
             $this->refreshCourseCertificates($courseIndex, $course);
@@ -936,13 +948,25 @@ class TrainingStep extends Component
         }
     }
 
-    private function refreshCertificates($schoolIndex, $school)
+    public function refreshCertificates($schoolIndex, $schoolModel = null)
     {
+        // Si no se proporciona el modelo, lo obtenemos
+        if (!$schoolModel) {
+            $schoolData = $this->training_schools[$schoolIndex] ?? null;
+            if (!$schoolData || empty($schoolData['id'])) return;
+            
+            $userDriverDetail = UserDriverDetail::find($this->driverId);
+            if (!$userDriverDetail) return;
+            
+            $schoolModel = $userDriverDetail->trainingSchools()->find($schoolData['id']);
+            if (!$schoolModel) return;
+        }
+        
         // Actualizar la lista de certificados en el componente
         $certificates = [];
 
-        if ($school->hasMedia('school_certificates')) {
-            foreach ($school->getMedia('school_certificates') as $certificate) {
+        if ($schoolModel->hasMedia('school_certificates')) {
+            foreach ($schoolModel->getMedia('school_certificates') as $certificate) {
                 $certificates[] = [
                     'id' => $certificate->id,
                     'filename' => $certificate->file_name,
