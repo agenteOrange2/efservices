@@ -16,8 +16,7 @@
 
 
 
-    <!-- Alpine.js CDN - Load before any x-data -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Alpine.js is already included with Livewire, no need to load separately -->
     
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])

@@ -8,12 +8,17 @@ use App\Traits\DriverValidationTrait;
 use Livewire\Component;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use App\Models\UserDriverDetail;
+
 use App\Models\Admin\Driver\MasterCompany;
 use App\Models\Admin\Driver\DriverEmploymentCompany;
 use App\Models\Admin\Driver\DriverUnemploymentPeriod;
 use App\Models\Admin\Driver\DriverRelatedEmployment;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use App\Models\Admin\Driver\EmploymentVerificationToken;
+use App\Mail\EmploymentVerification;
+use Illuminate\Support\Facades\Log;
 
 class EmploymentHistoryStep extends Component
 {
@@ -73,7 +78,8 @@ class EmploymentHistoryStep extends Component
         'reason_for_leaving' => '',
         'other_reason_description' => '',
         'explanation' => '',
-        'is_from_master' => false
+        'is_from_master' => false,
+        'email_sent' => false
     ];
 
     // Search Company Modal
@@ -189,6 +195,7 @@ class EmploymentHistoryStep extends Component
                 'other_reason_description' => $company->other_reason_description,
                 'explanation' => $company->explanation,
                 'is_from_master' => true,
+                'email_sent' => $company->email_sent ?? false,
             ];
         }
 
@@ -362,18 +369,25 @@ class EmploymentHistoryStep extends Component
                         // Use existing master company
                         $masterCompanyId = $company['master_company_id'];
                     } else {
-                        // Create new master company
-                        $masterCompany = MasterCompany::create([
-                            'company_name' => $company['company_name'],
-                            'address' => $company['address'] ?? null,
-                            'city' => $company['city'] ?? null,
-                            'state' => $company['state'] ?? null,
-                            'zip' => $company['zip'] ?? null,
-                            'contact' => $company['contact'] ?? null,
-                            'phone' => $company['phone'] ?? null,
-                            'email' => $company['email'] ?? null,
-                            'fax' => $company['fax'] ?? null,
-                        ]);
+                        // Check if MasterCompany already exists by name
+                        $masterCompany = MasterCompany::where('company_name', $company['company_name'])->first();
+                        
+                        if (!$masterCompany) {
+                            // Create new master company
+                            $masterCompany = MasterCompany::create([
+                                'company_name' => $company['company_name'],
+                                'address' => $company['address'] ?? null,
+                                'city' => $company['city'] ?? null,
+                                'state' => $company['state'] ?? null,
+                                'zip' => $company['zip'] ?? null,
+                                'contact' => $company['contact'] ?? null,
+                                'phone' => $company['phone'] ?? null,
+                                'email' => $company['email'] ?? null,
+                                'fax' => $company['fax'] ?? null,
+                            ]);
+                        } else {
+                            Log::info('Using existing MasterCompany', ['company_name' => $company['company_name'], 'id' => $masterCompany->id]);
+                        }
                         $masterCompanyId = $masterCompany->id;
                     }
 
@@ -410,7 +424,8 @@ class EmploymentHistoryStep extends Component
                             'other_reason_description' => $company['reason_for_leaving'] === 'other' ? 
                                 $company['other_reason_description'] : null,
                             'email' => $company['email'] ?? null,
-                            'explanation' => $company['explanation'] ?? null
+                            'explanation' => $company['explanation'] ?? null,
+                            'email_sent' => $company['email_sent'] ?? false
                         ]);
                         $updatedCompanyIds[] = $employmentCompany->id;
                     }
@@ -467,6 +482,10 @@ class EmploymentHistoryStep extends Component
             $userDriverDetail->update(['current_step' => 10]);
 
             DB::commit();
+            
+            // Send bulk verification emails after successful save
+            $this->sendBulkVerificationEmails();
+            
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
@@ -581,6 +600,7 @@ class EmploymentHistoryStep extends Component
             'contact' => '',
             'phone' => '',
             'fax' => '',
+            'email' => '',
             'employed_from' => '',
             'employed_to' => '',
             'positions_held' => '',
@@ -589,7 +609,8 @@ class EmploymentHistoryStep extends Component
             'reason_for_leaving' => '',
             'other_reason_description' => '',
             'explanation' => '',
-            'is_from_master' => false
+            'is_from_master' => false,
+            'email_sent' => false
         ];
         $this->editing_company_index = null;
     }
@@ -697,6 +718,7 @@ class EmploymentHistoryStep extends Component
                 'contact' => $masterCompany->contact,
                 'phone' => $masterCompany->phone,
                 'fax' => $masterCompany->fax,
+                'email' => $masterCompany->email, // Incluir email de la MasterCompany
                 // Campos editables para el periodo de empleo
                 'employed_from' => '',
                 'employed_to' => '',
@@ -706,7 +728,8 @@ class EmploymentHistoryStep extends Component
                 'reason_for_leaving' => '',
                 'other_reason_description' => '',
                 'explanation' => '',
-                'is_from_master' => true // Indicar que viene de MasterCompany
+                'is_from_master' => true, // Indicar que viene de MasterCompany
+                'email_sent' => false // Asegurar que se marque como no enviado
             ];
             $this->closeSearchCompanyModal();
             $this->showCompanyForm = true;
@@ -1036,9 +1059,12 @@ class EmploymentHistoryStep extends Component
     
         // Guardar en la base de datos
         if ($this->driverId) {
+            Log::info('EmploymentHistoryStep: Iniciando next() para driver', ['driver_id' => $this->driverId]);
             $this->saveEmploymentHistoryData();
+            
+
         }
-    
+
         // Avanzar al siguiente paso
         $this->dispatch('nextStep');
     }
@@ -1063,6 +1089,131 @@ class EmploymentHistoryStep extends Component
         }
 
         $this->dispatch('saveAndExit');
+    }
+
+
+
+    // Send bulk verification emails
+    public function sendBulkVerificationEmails()
+    {
+        if (!$this->driverId) {
+            return;
+        }
+
+        Log::info('EmploymentHistoryStep: sendBulkVerificationEmails() iniciado', [
+            'driver_id' => $this->driverId
+        ]);
+
+        $successCount = 0;
+        $failCount = 0;
+
+        // Buscar directamente en la base de datos las compañías que necesitan correo
+        $driverCompanies = DriverEmploymentCompany::where('user_driver_detail_id', $this->driverId)
+            ->where(function ($query) {
+                $query->where('email_sent', false)
+                    ->orWhereNull('email_sent');
+            })
+            ->whereNotNull('email')
+            ->get();
+
+        Log::info('EmploymentHistoryStep: Compañías que necesitan correo', [
+            'cantidad' => count($driverCompanies)
+        ]);
+
+        foreach ($driverCompanies as $dbCompany) {
+            // Obtener la master company
+            $masterCompany = MasterCompany::find($dbCompany->master_company_id);
+            if (!$masterCompany) {
+                Log::warning('EmploymentHistoryStep: No se encontró la master company', [
+                    'master_company_id' => $dbCompany->master_company_id,
+                    'company_id' => $dbCompany->id
+                ]);
+                continue;
+            }
+
+            try {
+                // Generate verification token
+                $token = Str::random(64);
+                
+                // Create employment verification token record
+                EmploymentVerificationToken::create([
+                    'driver_id' => $this->driverId,
+                    'employment_company_id' => $dbCompany->id,
+                    'token' => $token,
+                    'email' => $dbCompany->email,
+                    'expires_at' => now()->addDays(30),
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+                
+                // Get driver name
+                $driver = UserDriverDetail::find($this->driverId);
+                $driverName = $driver && $driver->user ? $driver->user->name : 'Driver';
+                
+                // Prepare employment data
+                $employmentData = [
+                    'company_name' => $masterCompany->company_name,
+                    'contact_email' => $dbCompany->email,
+                    'employed_from' => $dbCompany->employed_from ?? 'Not specified',
+                    'employed_to' => $dbCompany->employed_to ?? 'Not specified',
+                    'positions_held' => $dbCompany->positions_held ?? 'Not specified',
+                    'reason_for_leaving' => $dbCompany->reason_for_leaving ?? 'Not specified',
+                    'subject_to_fmcsr' => $dbCompany->subject_to_fmcsr ?? false,
+                    'safety_sensitive_function' => $dbCompany->safety_sensitive_function ?? false
+                ];
+                
+                // Send email
+                Mail::to($dbCompany->email)->send(new EmploymentVerification(
+                    $masterCompany->company_name,
+                    $driverName,
+                    $employmentData,
+                    $token,
+                    $this->driverId,
+                    $dbCompany->id
+                ));
+
+                // Actualizar directamente en la base de datos
+                $dbCompany->update([
+                    'email_sent' => true
+                ]);
+
+                // Actualizar también en memoria si existe
+                foreach ($this->employment_companies as $index => $company) {
+                    if (!empty($company['id']) && $company['id'] == $dbCompany->id) {
+                        $this->employment_companies[$index]['email_sent'] = true;
+                        break;
+                    }
+                }
+
+                $successCount++;
+
+                Log::info('EmploymentHistoryStep: Correo de verificación enviado correctamente', [
+                    'company_id' => $dbCompany->id,
+                    'email' => $dbCompany->email
+                ]);
+            } catch (\Exception $e) {
+                $failCount++;
+                Log::error('EmploymentHistoryStep: Error al enviar correo de verificación', [
+                    'error' => $e->getMessage(),
+                    'company_email' => $dbCompany->email,
+                    'company_id' => $dbCompany->id
+                ]);
+            }
+        }
+
+        Log::info('EmploymentHistoryStep: Resultado del envío de correos', [
+            'success_count' => $successCount,
+            'fail_count' => $failCount
+        ]);
+
+        // Notificar al usuario sobre el resultado
+        if ($successCount > 0) {
+            session()->flash('success', "$successCount verification emails were sent successfully" . ($failCount > 0 ? " ($failCount failed)" : ""));
+        } elseif ($failCount > 0) {
+            session()->flash('error', "Failed to send $failCount verification emails. Check logs for details.");
+        } else {
+            session()->flash('info', 'No emails to send. All companies either have no contact email or verification emails have already been sent.');
+        }
     }
 
     // Render

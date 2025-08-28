@@ -1,4 +1,4 @@
-{{-- resources/views/livewire/driver/steps/company-policy-step.blade.php --}}
+{{-- resources/views/livewire/admin/driver/steps/step-company-policy.blade.php --}}
 <div class="bg-white p-4 rounded-lg shadow">
     <h3 class="text-lg font-semibold mb-4 border-b pb-2">Company Policies</h3>
 
@@ -93,7 +93,7 @@
             Clearinghouse</h4>
 
         <div class="prose prose-sm max-w-none mb-4 text-gray-700">
-            <p>I hereby consent to EF Services conducting limited queries of the Federal Motor Carrier Safety
+            <p>I hereby consent to {{ $company_name }} conducting limited queries of the Federal Motor Carrier Safety
                 Administration (FMCSA) Commercial Driver's License Drug and Alcohol Clearinghouse to determine whether
                 drug or alcohol violation information about me exists in the Clearinghouse.</p>
             <!-- Aquí iría todo el texto de la política -->
@@ -102,7 +102,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Employee Name</label>
-                <p class="px-3 py-2 bg-gray-100 rounded-md text-sm">{{ $company_name }}</p>
+                <p class="px-3 py-2 bg-gray-100 rounded-md text-sm">{{ $company_name }} / EFCTS </p>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Commercial Driver's License Number</label>

@@ -27,11 +27,35 @@
 
                 <input type="hidden" wire:model="accidents.{{ $index }}.id">
 
+                @if(empty($accident['id']))
+                    <!-- Botón para crear accident -->
+                    <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-blue-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path>
+                                </svg>
+                                <p class="text-sm text-blue-700">
+                                    <strong>Create this accident record first to enable document uploads.</strong>
+                                </p>
+                            </div>
+                            <button type="button" 
+                                    wire:click="createAccident({{ $index }})"
+                                    class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition">
+                                <i class="fas fa-plus mr-1"></i> Create Accident
+                            </button>
+                        </div>
+                    </div>
+                @endif
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Accident Date</label>
-                        <input type="date" wire:model="accidents.{{ $index }}.accident_date"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                        <x-unified-date-picker 
+                            wire:model="accidents.{{ $index }}.accident_date"
+                            placeholder="Select accident date"
+                            format="MM/DD/YYYY"
+                        />
                         @error("accidents.{$index}.accident_date")
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
@@ -92,14 +116,35 @@
                         placeholder="Additional details about the accident"></textarea>
                 </div>
                 
-                <!-- Componente de carga de archivos para este accidente específico -->
-                <livewire:components.file-uploader 
-                    :key="'accident-uploader-' . $index"
-                    model-name="accident_files"
-                    :model-index="$index"
-                    label="Upload Accident Documents"
-                    :existing-files="isset($accident['documents']) ? $accident['documents'] : []"
-                />
+                @if(!empty($accident['id']))
+                    @php
+                        $isAccidentComplete = !empty($accident['accident_date']) && 
+                                            !empty($accident['nature_of_accident']);
+                    @endphp
+                    
+                    @if(!$isAccidentComplete)
+                        <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                </svg>
+                                <p class="text-sm text-yellow-700">
+                                    <strong>Complete the accident details before uploading documents.</strong>
+                                    Date and nature of accident are required.
+                                </p>
+                            </div>
+                        </div>
+                    @endif
+                    
+                    <!-- Componente de carga de archivos para este accidente específico -->
+                    <livewire:components.file-uploader 
+                        :key="'accident-uploader-' . $index"
+                        model-name="accident_files"
+                        :model-index="$index"
+                        label="Upload Accident Documents"
+                        :existing-files="isset($accident['documents']) ? $accident['documents'] : []"
+                    />
+                @endif
             </div>
         @endforeach
 

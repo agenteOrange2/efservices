@@ -249,6 +249,7 @@
                         <x-unified-date-picker 
                             wire:model="unemployment_form.start_date" 
                             placeholder="MM/DD/YYYY" 
+                            format="MM/DD/YYYY"
                             class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                         @error('unemployment_form.start_date')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
@@ -259,6 +260,7 @@
                         <x-unified-date-picker 
                             wire:model="unemployment_form.end_date" 
                             placeholder="MM/DD/YYYY" 
+                            format="MM/DD/YYYY"
                             class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                         @error('unemployment_form.end_date')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
@@ -397,6 +399,7 @@
                             <x-unified-date-picker 
                                 wire:model="company_form.employed_from" 
                                 placeholder="MM/DD/YYYY" 
+                                format="MM/DD/YYYY"
                                 class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                             @error('company_form.employed_from')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
@@ -407,6 +410,7 @@
                             <x-unified-date-picker 
                                 wire:model="company_form.employed_to" 
                                 placeholder="MM/DD/YYYY" 
+                                format="MM/DD/YYYY"
                                 class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                             @error('company_form.employed_to')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
@@ -607,6 +611,7 @@
                         <x-unified-date-picker 
                             wire:model="related_employment_form.start_date" 
                             placeholder="MM/DD/YYYY" 
+                            format="MM/DD/YYYY"
                             class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
                         @error('related_employment_form.start_date')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
@@ -617,6 +622,7 @@
                         <x-unified-date-picker 
                             wire:model="related_employment_form.end_date" 
                             placeholder="MM/DD/YYYY" 
+                            format="MM/DD/YYYY"
                             class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
                         @error('related_employment_form.end_date')
                             <span class="text-red-500 text-sm">{{ $message }}</span>

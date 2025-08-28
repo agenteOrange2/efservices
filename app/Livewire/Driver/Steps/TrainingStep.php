@@ -801,6 +801,40 @@ class TrainingStep extends Component
         $this->courses[$courseIndex]['certificates'] = $certificates;
     }
 
+    public function refreshTrainingSchoolCertificates($schoolIndex, $school = null)
+    {
+        // Si no se proporciona el modelo, lo obtenemos
+        if (!$school) {
+            $schoolData = $this->training_schools[$schoolIndex] ?? null;
+            if (!$schoolData || empty($schoolData['id'])) return;
+            
+            $userDriverDetail = UserDriverDetail::find($this->driverId);
+            if (!$userDriverDetail) return;
+            
+            $school = $userDriverDetail->trainingSchools()->find($schoolData['id']);
+            if (!$school) return;
+        }
+
+        // Asegúrate que la escuela esté recargada con sus relaciones
+        $school->refresh();
+
+        // Actualiza los certificados
+        $certificates = [];
+        if ($school->hasMedia('school_certificates')) {
+            foreach ($school->getMedia('school_certificates') as $certificate) {
+                $certificates[] = [
+                    'id' => $certificate->id,
+                    'filename' => $certificate->file_name,
+                    'url' => $certificate->getUrl(),
+                    'is_image' => Str::startsWith($certificate->mime_type, 'image/'),
+                ];
+            }
+        }
+
+        // Actualiza la escuela completa en el array
+        $this->training_schools[$schoolIndex]['certificates'] = $certificates;
+    }
+
     // Clear all course certificates
     public function clearAllCourseCertificates($courseIndex)
     {

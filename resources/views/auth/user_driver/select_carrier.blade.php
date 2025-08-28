@@ -227,6 +227,5 @@
     </div>
     </div>
     
-    <!-- Alpine.js para la funcionalidad de búsqueda y filtrado -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Alpine.js is already included with Livewire -->
 </x-driver-layout>

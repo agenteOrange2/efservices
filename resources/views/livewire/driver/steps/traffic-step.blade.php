@@ -28,55 +28,103 @@
 
                 <input type="hidden" wire:model="traffic_convictions.{{ $index }}.id">
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Conviction Date</label>
-                        <input type="date" wire:model="traffic_convictions.{{ $index }}.conviction_date"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
-                        @error("traffic_convictions.{$index}.conviction_date")
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                        @enderror
+                @if(empty($conviction['id']))
+                    <!-- Botón para crear traffic conviction -->
+                    <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-blue-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path>
+                                </svg>
+                                <p class="text-sm text-blue-700">
+                                    <strong>Create this traffic conviction first to enable document uploads.</strong>
+                                </p>
+                            </div>
+                            <button type="button" 
+                                    wire:click="createTrafficConviction({{ $index }})"
+                                    class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition">
+                                <i class="fas fa-plus mr-1"></i> Create Traffic
+                            </button>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Location</label>
-                        <input type="text" wire:model="traffic_convictions.{{ $index }}.location"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
-                            placeholder="City, State">
-                        @error("traffic_convictions.{$index}.location")
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                        @enderror
-                    </div>
-                </div>
+                @endif
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label class="block text-sm font-medium mb-1">Charge</label>
-                        <input type="text" wire:model="traffic_convictions.{{ $index }}.charge"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
-                            placeholder="Violation charged">
-                        @error("traffic_convictions.{$index}.charge")
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                        @enderror
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Conviction Date <span class="text-red-500">*</span>
+                        </label>
+                        <x-unified-date-picker
+                            name="traffic_convictions.{{ $index }}.conviction_date"
+                            wire:model="traffic_convictions.{{ $index }}.conviction_date"
+                            :value="$conviction['conviction_date'] ?? ''"
+                            placeholder="Select conviction date"
+                            class="w-full"
+                        />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Penalty</label>
-                        <input type="text" wire:model="traffic_convictions.{{ $index }}.penalty"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
-                            placeholder="Fine, points, etc.">
-                        @error("traffic_convictions.{$index}.penalty")
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                        @enderror
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Location <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               wire:model="traffic_convictions.{{ $index }}.location"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Enter location">
                     </div>
                 </div>
                 
-                <!-- Componente de carga de archivos para esta convicción específica -->
-                <livewire:components.file-uploader 
-                    :key="'traffic-uploader-' . $index"
-                    model-name="ticket_files"
-                    :model-index="$index"
-                    label="Upload Ticket Documents"
-                    :existing-files="isset($conviction['documents']) ? $conviction['documents'] : []"
-                />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Charge <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               wire:model="traffic_convictions.{{ $index }}.charge"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Enter charge">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Penalty <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               wire:model="traffic_convictions.{{ $index }}.penalty"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Enter penalty">
+                    </div>
+                </div>
+                
+                @php
+                    $isConvictionComplete = !empty($conviction['conviction_date']) && 
+                                          !empty($conviction['location']) && 
+                                          !empty($conviction['charge']) && 
+                                          !empty($conviction['penalty']);
+                @endphp
+                
+                @if(!empty($conviction['id']))
+                    @if(!$isConvictionComplete)
+                        <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                </svg>
+                                <p class="text-sm text-yellow-700">
+                                    <strong>Complete los datos de la convicción antes de subir archivos.</strong>
+                                    Todos los campos marcados con * son obligatorios.
+                                </p>
+                            </div>
+                        </div>
+                    @endif
+                    
+                    <!-- Componente de carga de archivos para esta convicción específica -->
+                    <livewire:components.file-uploader 
+                        :key="'traffic-uploader-' . $index"
+                        model-name="ticket_files"
+                        :model-index="$index"
+                        label="Upload Ticket Documents"
+                        :existing-files="isset($conviction['documents']) ? $conviction['documents'] : []"
+                    />
+                @endif
             </div>
         @endforeach
 
