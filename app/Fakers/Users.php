@@ -9,6 +9,7 @@ class Users
     public static function fakeUsers(): Collection
     {
         return collect([
+            /*
             [
                 "name" => "Tom Hanks",
                 "position" => "Sales Manager",
@@ -23,7 +24,6 @@ class Users
                 "addressLine2" => "Suite 456",
                 "isActive" => true,
             ],
-            /*
             [
                 "name" => "Meryl Streep",
                 "position" => "Marketing Coordinator",

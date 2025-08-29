@@ -1,10 +1,10 @@
-{{-- resources/views/pdf/driver/accident.blade.php --}}
+{{-- resources/views/pdf/driver/courses.blade.php --}}
 <!DOCTYPE html>
 <html>
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Driver Application - Accident Record</title>
+    <title>Driver Application - Driver Courses</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -90,8 +90,13 @@
             text-align: center;
         }
 
-        .accident-item {
+        .course-item {
             margin-top: 15px;
+        }
+
+        ul {
+            margin: 0;
+            padding-left: 15px;
         }
     </style>
 </head>
@@ -102,52 +107,41 @@
         <h2>{{ $title }}</h2>
     </div>
 
-    <div class="section">
-        <div class="section-title">Accident Record Information</div>
-        <table>
-            <tr>
-                <td colspan="2"><strong>Have you had any accidents in the last three years?</strong><br>{{ $userDriverDetail->accidents && $userDriverDetail->accidents->count() > 0 ? 'Yes' : 'No' }}</td>
-            </tr>
-        </table>
-    </div>
-
-    @if($userDriverDetail->accidents && $userDriverDetail->accidents->count() > 0)
+    @if($userDriverDetail->courses && $userDriverDetail->courses->count() > 0)
         <div class="section">
-            <div class="section-title">Accidents</div>
-            @foreach($userDriverDetail->accidents as $index => $accident)
-                <div class="accident-item">
-                    <h4>Accident #{{ $index + 1 }}</h4>
+            <div class="section-title">Driver Courses</div>
+            @foreach($userDriverDetail->courses as $index => $course)
+                <div class="course-item">
+                    <h4>Course #{{ $index + 1 }}</h4>
                     <table>
                         <tr>
-                            <td style="width: 50%"><strong>Accident Date</strong><br>{{ $accident->accident_date ? date('m/d/Y', strtotime($accident->accident_date)) : 'N/A' }}</td>
-                            <td style="width: 50%"><strong>Nature of Accident</strong><br>{{ $accident->nature_of_accident ?? 'N/A' }}</td>
+                            <td colspan="2"><strong>Organization Name</strong><br>{{ $course->organization_name ?? 'N/A' }}</td>
                         </tr>
                         <tr>
-                            <td style="width: 25%"><strong>Injuries Involved?</strong><br>{{ $accident->had_injuries ? 'Yes' : 'No' }}</td>
-                            @if($accident->had_injuries)
-                                <td style="width: 25%"><strong>Number of Injuries</strong><br>{{ $accident->number_of_injuries ?? '0' }}</td>
-                            @else
-                                <td style="width: 25%"></td>
-                            @endif
-                            <td style="width: 25%"><strong>Fatalities Involved?</strong><br>{{ $accident->had_fatalities ? 'Yes' : 'No' }}</td>
-                            @if($accident->had_fatalities)
-                                <td style="width: 25%"><strong>Number of Fatalities</strong><br>{{ $accident->number_of_fatalities ?? '0' }}</td>
-                            @else
-                                <td style="width: 25%"></td>
-                            @endif
+                            <td style="width: 33.33%"><strong>City</strong><br>{{ $course->city ?? 'N/A' }}</td>
+                            <td style="width: 33.33%"><strong>State</strong><br>{{ $course->state ?? 'N/A' }}</td>
+                            <td style="width: 33.33%"><strong>Status</strong><br>{{ $course->status ?? 'N/A' }}</td>
                         </tr>
-                        @if($accident->comments)
+                        <tr>
+                            <td style="width: 50%"><strong>Certification Date</strong><br>{{ $course->certification_date ? date('m/d/Y', strtotime($course->certification_date)) : 'N/A' }}</td>
+                            <td style="width: 50%"><strong>Expiration Date</strong><br>{{ $course->expiration_date ? date('m/d/Y', strtotime($course->expiration_date)) : 'N/A' }}</td>
+                        </tr>
+                        @if($course->experience)
                             <tr>
-                                <td colspan="4"><strong>Comments</strong><br>{{ $accident->comments }}</td>
+                                <td colspan="2">
+                                    <strong>Experience</strong><br>
+                                    {{ $course->experience }}
+                                </td>
                             </tr>
                         @endif
                     </table>
                 </div>
             @endforeach
         </div>
-    @elseif($userDriverDetail->application && $userDriverDetail->application->details && $userDriverDetail->application->details->has_accidents)
+    @else
         <div class="section">
-            <p>No accident data found.</p>
+            <div class="section-title">Driver Courses</div>
+            <p>No driver courses found.</p>
         </div>
     @endif
 

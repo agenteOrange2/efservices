@@ -111,7 +111,7 @@
         <div class="section-title">Training School Information</div>
         <table>
             <tr>
-                <td colspan="2"><strong>Have you attended commercial driver training school?</strong><br>{{ $userDriverDetail->application && $userDriverDetail->application->details && $userDriverDetail->application->details->has_attended_training_school ? 'Yes' : 'No' }}</td>
+                <td colspan="2"><strong>Have you attended commercial driver training school?</strong><br>{{ $userDriverDetail->trainingSchools && $userDriverDetail->trainingSchools->count() > 0 ? 'Yes' : 'No' }}</td>
             </tr>
         </table>
     </div>

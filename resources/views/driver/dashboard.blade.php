@@ -272,17 +272,17 @@
                     </div>
                     <div class="flex justify-center mt-6">
                         <div class="flex">
-                            @foreach ($products->take(5) as $fakerKey => $faker)
+                            {{-- @foreach ($products->take(5) as $fakerKey => $faker)
                                 <div class="image-fit zoom-in -ml-3.5 h-11 w-11 first:ml-0">
-                                    {{-- <x-base.tippy
+                                    <x-base.tippy
                                     class="cursor-pointer rounded-full border-[3px] border-slate-50"
                                     src="{{ Vite::asset($faker['images'][0]['path']) }}"
                                     alt="Tailwise - Admin Dashboard Template"
                                     as="img"
                                     content="{{ $faker['name'] }}"
-                                /> --}}
+                                />
                                 </div>
-                            @endforeach
+                            @endforeach --}}
                         </div>
                         <div
                             class="inset-y-0 z-10 my-auto -ml-3 flex h-[22px] items-center rounded-full border border-slate-200/80 bg-white px-2.5 text-xs font-medium text-primary shadow">

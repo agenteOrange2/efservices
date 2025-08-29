@@ -201,9 +201,10 @@ class CarrierStatusController extends Controller
         // Tiempo típico de aprobación: 2-5 días hábiles
         $estimatedDays = 5 - $daysSinceCreation;
         $estimatedDays = max(0, $estimatedDays);
+        $estimatedDays = intval($estimatedDays); // Convertir a entero para eliminar decimales
         
         return [
-            'days_since_creation' => $daysSinceCreation,
+            'days_since_creation' => intval($daysSinceCreation), // Asegurar que también sea entero
             'estimated_days_remaining' => $estimatedDays,
             'message' => $estimatedDays > 0 
                 ? "Estimated approval in {$estimatedDays} business days"

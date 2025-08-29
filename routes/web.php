@@ -70,3 +70,12 @@ Route::get('/', function () {
 
 // Ruta personalizada para cierre de sesión
 Route::post('/custom-logout', [LogoutController::class, 'logout'])->name('custom.logout');
+
+// Rutas de administración para destinatarios de notificaciones
+Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->group(function () {
+    Route::get('/notification-recipients', [NotificationRecipientsController::class, 'index'])->name('admin.notification-recipients.index');
+    Route::post('/notification-recipients', [NotificationRecipientsController::class, 'store'])->name('admin.notification-recipients.store');
+    Route::delete('/notification-recipients/{recipient}', [NotificationRecipientsController::class, 'destroy'])->name('admin.notification-recipients.destroy');
+    Route::patch('/notification-recipients/{recipient}/toggle', [NotificationRecipientsController::class, 'toggle'])->name('admin.notification-recipients.toggle');
+    Route::get('/notification-recipients/users', [NotificationRecipientsController::class, 'getUsers'])->name('admin.notification-recipients.users');
+});

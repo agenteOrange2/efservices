@@ -134,7 +134,7 @@ class CertificationStep extends Component
                             // Buscar archivos recientes
                             foreach ($files as $file) {
                                 if ($file != '.' && $file != '..' && is_file($dir . '/' . $file)) {
-                                    // Si el archivo fue creado en las últimas 24 horas, lo usamos
+                                    // Si el archivo fue creado en las útimas 24 horas, lo usamos
                                     if (filemtime($dir . '/' . $file) > time() - 86400) {
                                         $tempPath = $dir . '/' . $file;
                                         Log::info('Encontrado archivo reciente', ['path' => $tempPath]);
@@ -276,33 +276,108 @@ class CertificationStep extends Component
      */
     private function generateApplicationPDFs(UserDriverDetail $userDriverDetail)
     {
-        // Primero, asegurémonos de que tenemos la firma
+        // CORRECCIÓN: Cargar TODAS las relaciones necesarias incluyendo relaciones anidadas
+        $userDriverDetail->load([
+            'user',
+            'carrier',
+            'application.details',
+            'application.addresses',
+            'application.ownerOperatorDetail',
+            'licenses.endorsements',
+            'medicalQualification',
+            'experiences',
+            'employmentCompanies.masterCompany', // AGREGADO: Cargar relación anidada masterCompany
+            'unemploymentPeriods',
+            'workHistories', // AGREGADO: Cargar historial de trabajo (Other Employment)
+            'driver_related_employments', // CORREGIDO: Usar driver_related_employments en lugar de relatedEmployments
+            'trainingSchools',
+            'courses', // AGREGADO: Cargar cursos de driver_courses
+            'trafficConvictions',
+            'accidents',
+            'fmcsrData',
+            'criminalHistory',
+            'certification',
+            'addresses' // AGREGADO: Cargar direcciones directamente del UserDriverDetail
+        ]);
+        
+        // CORRECCIÓN 2: Validar que los datos críticos existen
+        $missingData = [];
+        
+        if (!$userDriverDetail->user) {
+            $missingData[] = 'user';
+        }
+        
+        if (!$userDriverDetail->application) {
+            $missingData[] = 'application';
+        }
+        
+        if (!$userDriverDetail->carrier) {
+            $missingData[] = 'carrier';
+        }
+        
+        // Si faltan datos críticos, registrar error y salir
+        if (!empty($missingData)) {
+            Log::error('Datos críticos faltantes para generar PDFs', [
+                'driver_id' => $userDriverDetail->id,
+                'missing_data' => $missingData
+            ]);
+            return;
+        }
+        
+        // Verificar que tenemos la firma
         if (empty($this->signature)) {
+            Log::warning('No se puede generar PDFs sin firma', [
+                'driver_id' => $userDriverDetail->id
+            ]);
             return;
         }
         
         // Preparar la firma una sola vez para todos los PDFs
         $signaturePath = $this->prepareSignatureForPDF($this->signature);
-
+    
         if (!$signaturePath) {
             Log::error('No se pudo preparar la firma para PDFs', [
                 'driver_id' => $userDriverDetail->id
             ]);
             return;
         }
-
+    
         Log::info('Firma preparada para PDFs', [
             'driver_id' => $userDriverDetail->id,
-            'signature_path' => $signaturePath
+            'signature_path' => $signaturePath,
+            'loaded_relations' => array_keys($userDriverDetail->getRelations())
         ]);
         
-        // Asegurarse que los directorios existen
+        // CORRECCIÓN 3: Verificar y crear directorios con manejo de errores
         $driverPath = 'driver/' . $userDriverDetail->id;
         $appSubPath = $driverPath . '/driver_applications';
         
-        // Asegúrate de que los directorios existen
-        Storage::disk('public')->makeDirectory($driverPath);
-        Storage::disk('public')->makeDirectory($appSubPath);
+        try {
+            // Crear directorios si no existen
+            if (!Storage::disk('public')->exists($driverPath)) {
+                Storage::disk('public')->makeDirectory($driverPath);
+                Log::info('Directorio creado', ['path' => $driverPath]);
+            }
+            
+            if (!Storage::disk('public')->exists($appSubPath)) {
+                Storage::disk('public')->makeDirectory($appSubPath);
+                Log::info('Subdirectorio creado', ['path' => $appSubPath]);
+            }
+            
+            // Verificar permisos de escritura
+            $testFile = $appSubPath . '/test_write.txt';
+            Storage::disk('public')->put($testFile, 'test');
+            Storage::disk('public')->delete($testFile);
+            Log::info('Permisos de escritura verificados', ['path' => $appSubPath]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error creando directorios o verificando permisos', [
+                'driver_id' => $userDriverDetail->id,
+                'error' => $e->getMessage(),
+                'path' => $appSubPath
+            ]);
+            throw new \Exception('No se pueden crear directorios para PDFs: ' . $e->getMessage());
+        }
         
         // Configuraciones de pasos - definir la vista y nombre de archivo para cada paso
         $steps = [
@@ -312,40 +387,80 @@ class CertificationStep extends Component
             ['view' => 'pdf.driver.licenses', 'filename' => 'drivers_licenses.pdf', 'title' => 'Drivers Licenses'],
             ['view' => 'pdf.driver.medical', 'filename' => 'calificacion_medica.pdf', 'title' => 'Medical Qualification'],
             ['view' => 'pdf.driver.training', 'filename' => 'training_schools.pdf', 'title' => 'Training Schools'],
+            ['view' => 'pdf.driver.courses', 'filename' => 'driver_courses.pdf', 'title' => 'Driver Courses'], // AGREGADO: PDF para cursos de driver_courses
             ['view' => 'pdf.driver.traffic', 'filename' => 'traffic_violations.pdf', 'title' => 'Traffic Violations'],
-            ['view' => 'pdf.driver.accident', 'filename' => 'accident_record.pdf', 'title' => 'Accident Record '],
+            ['view' => 'pdf.driver.accident', 'filename' => 'accident_record.pdf', 'title' => 'Accident Record'],
             ['view' => 'pdf.driver.fmcsr', 'filename' => 'fmcsr_requirements.pdf', 'title' => 'FMCSR Requirements'],
             ['view' => 'pdf.driver.employment', 'filename' => 'employment_history.pdf', 'title' => 'Employment History'],
             ['view' => 'pdf.driver.certification', 'filename' => 'certification.pdf', 'title' => 'Certification'],
         ];
         
-        // Generar PDF para cada paso
+        // CORRECCIÓN 4: Generar PDF para cada paso con validación de vista
+        $successfulPdfs = 0;
+        $totalPdfs = count($steps);
+        
         foreach ($steps as $step) {
             try {
-                $pdf = App::make('dompdf.wrapper')->loadView($step['view'], [
+                // Verificar que la vista existe
+                if (!view()->exists($step['view'])) {
+                    Log::warning('Vista PDF no encontrada', [
+                        'driver_id' => $userDriverDetail->id,
+                        'view' => $step['view'],
+                        'filename' => $step['filename']
+                    ]);
+                    continue;
+                }
+                
+                // CORRECCIÓN 5: Preparar datos formateados para el PDF
+                $pdfData = [
                     'userDriverDetail' => $userDriverDetail,
-                    'signaturePath' => $signaturePath, // Usamos la ruta del archivo, no base64
+                    'signaturePath' => $signaturePath,
                     'title' => $step['title'],
-                    'date' => now()->format('d/m/Y')
-                ]);
+                    'date' => now()->format('d/m/Y'),
+                    // Formatear fechas específicas para PDFs
+                    'formatted_dates' => [
+                        'date_of_birth' => $userDriverDetail->date_of_birth ? $userDriverDetail->date_of_birth->format('m/d/Y') : '',
+                        'hire_date' => optional($userDriverDetail->application->details)->hire_date ?? '',
+                        'medical_expiry' => optional($userDriverDetail->medicalQualification)->expiration_date ?? '' // CORREGIDO: era medicalQualifications->first()
+                    ],
+                    // Datos adicionales para evitar errores en vistas
+                    'user_name' => $userDriverDetail->user->name ?? 'N/A',
+                    'user_email' => $userDriverDetail->user->email ?? 'N/A',
+                    'carrier_name' => $userDriverDetail->carrier->name ?? 'N/A'
+                ];
+                
+                $pdf = App::make('dompdf.wrapper')->loadView($step['view'], $pdfData);
                 
                 // Guardar PDF usando Storage para evitar problemas de permisos
                 $pdfContent = $pdf->output();
                 Storage::disk('public')->put($appSubPath . '/' . $step['filename'], $pdfContent);
                 
-                Log::info('PDF individual generado', [
+                $successfulPdfs++;
+                
+                Log::info('PDF individual generado exitosamente', [
                     'driver_id' => $userDriverDetail->id,
-                    'filename' => $step['filename']
+                    'filename' => $step['filename'],
+                    'view' => $step['view'],
+                    'file_size' => strlen($pdfContent)
                 ]);
+                
             } catch (\Exception $e) {
                 Log::error('Error generando PDF individual', [
                     'driver_id' => $userDriverDetail->id,
                     'filename' => $step['filename'],
-                    'error' => $e->getMessage()
+                    'view' => $step['view'],
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
             }
         }
         
+        Log::info('Resumen de generación de PDFs individuales', [
+            'driver_id' => $userDriverDetail->id,
+            'successful' => $successfulPdfs,
+            'total' => $totalPdfs,
+            'success_rate' => round(($successfulPdfs / $totalPdfs) * 100, 2) . '%'
+        ]);
         // Generar el PDF combinado primero (completa_aplicacion.pdf o solicitud.pdf)
         if (view()->exists('pdf.driver.complete_application')) {
             $this->generateCombinedPDF($userDriverDetail, $signaturePath);
@@ -636,41 +751,102 @@ class CertificationStep extends Component
     }
     
     /**
-     * Prepara la firma para usarla en PDFs
-     * @param string $signature La firma en formato base64 o ruta de archivo
-     * @return string|null La ruta al archivo de firma
+     * Preparar la firma para uso en PDFs
+     * @param string $signatureBase64 Firma en formato base64
+     * @return string|null Ruta al archivo temporal de firma o null si hay error
      */
-    private function prepareSignatureForPDF($signature)
+    private function prepareSignatureForPDF($signatureBase64)
     {
-        // Si no hay firma, retornar null
-        if (empty($signature)) {
+        try {
+            if (empty($signatureBase64)) {
+                Log::warning('Firma vacía proporcionada');
+                return null;
+            }
+            
+            // Limpiar el base64 - manejar diferentes formatos
+            $signatureData = $signatureBase64;
+            
+            // Remover prefijos comunes de data URL
+            $prefixes = [
+                'data:image/png;base64,',
+                'data:image/jpeg;base64,',
+                'data:image/jpg;base64,',
+                'data:image/webp;base64,'
+            ];
+            
+            foreach ($prefixes as $prefix) {
+                if (strpos($signatureData, $prefix) === 0) {
+                    $signatureData = substr($signatureData, strlen($prefix));
+                    break;
+                }
+            }
+            
+            // Limpiar espacios y caracteres problemáticos
+            $signatureData = str_replace([' ', '\n', '\r', '\t'], '', $signatureData);
+            $signatureData = str_replace(' ', '+', $signatureData);
+            
+            // Validar que es base64 válido
+            if (!preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $signatureData)) {
+                Log::error('Formato de firma base64 inválido');
+                return null;
+            }
+            
+            // Decodificar
+            $decodedSignature = base64_decode($signatureData, true);
+            
+            if ($decodedSignature === false) {
+                Log::error('Error decodificando firma base64');
+                return null;
+            }
+            
+            // Validar que es una imagen válida
+            $imageInfo = @getimagesizefromstring($decodedSignature);
+            if ($imageInfo === false) {
+                Log::error('Los datos decodificados no son una imagen válida');
+                return null;
+            }
+            
+            // Crear directorio temporal si no existe
+            $tempDir = storage_path('app/temp');
+            if (!is_dir($tempDir)) {
+                if (!mkdir($tempDir, 0755, true)) {
+                    Log::error('No se pudo crear directorio temporal', ['path' => $tempDir]);
+                    return null;
+                }
+            }
+            
+            // Crear archivo temporal con nombre único
+            $tempPath = $tempDir . '/sig_' . uniqid() . '_' . time() . '.png';
+            
+            // Guardar archivo
+            if (file_put_contents($tempPath, $decodedSignature) === false) {
+                Log::error('Error guardando archivo temporal de firma', ['path' => $tempPath]);
+                return null;
+            }
+            
+            // Verificar que el archivo se creó correctamente
+            if (!file_exists($tempPath) || filesize($tempPath) === 0) {
+                Log::error('Archivo temporal de firma no se creó correctamente', ['path' => $tempPath]);
+                return null;
+            }
+            
+            Log::info('Firma preparada exitosamente', [
+                'temp_path' => $tempPath,
+                'file_size' => filesize($tempPath),
+                'image_type' => $imageInfo['mime'] ?? 'unknown'
+            ]);
+            
+            return $tempPath;
+            
+        } catch (\Exception $e) {
+            Log::error('Error preparando firma para PDF', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return null;
         }
-
-        // Si ya es una ruta de archivo, verificar que existe
-        if (is_string($signature) && file_exists($signature)) {
-            return $signature;
-        }
-
-        // Si es base64, convertir a archivo temporal
-        if (is_string($signature) && strpos($signature, 'data:image') === 0) {
-            $signatureData = base64_decode(explode(',', $signature)[1]);
-            $tempFile = storage_path('app/temp/sig_' . uniqid() . '.png');
-
-            // Asegurar que el directorio existe
-            if (!file_exists(dirname($tempFile))) {
-                mkdir(dirname($tempFile), 0755, true);
-            }
-
-            file_put_contents($tempFile, $signatureData);
-
-            // Registrar la creación para limpieza posterior
-            Log::info('Archivo temporal de firma creado', ['path' => $tempFile]);
-
-            return $tempFile;
-        }
-
-        return null;
     }
     
     // Renderizar

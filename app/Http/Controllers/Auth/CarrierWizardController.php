@@ -24,6 +24,8 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use App\Events\CarrierStepCompleted;
+use App\Events\CarrierRegistrationCompleted;
 
 class CarrierWizardController extends Controller
 {
@@ -107,6 +109,14 @@ class CarrierWizardController extends Controller
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent()
             ]);
+
+            // Disparar evento de paso completado
+            event(new CarrierStepCompleted($user, 'step1', [
+                'email' => $user->email,
+                'name' => $user->name,
+                'phone' => $processedData['phone'],
+                'job_position' => $processedData['job_position']
+            ]));
 
             // Redirect to login for email verification
             return redirect()->route('login')
@@ -281,6 +291,14 @@ class CarrierWizardController extends Controller
                 'step' => 'company_info'
             ]);
 
+            // Disparar evento de paso completado
+            event(new CarrierStepCompleted($user, 'step2', [
+                'carrier_id' => $carrier->id,
+                'company_name' => $carrier->name,
+                'address' => $carrier->address,
+                'state' => $carrier->state
+            ]));
+
             return redirect()->route('carrier.wizard.step3')
                 ->with('success', 'Company information saved successfully!');
 
@@ -382,6 +400,13 @@ class CarrierWizardController extends Controller
                 'membership_id' => $membership->id,
                 'step' => 'membership_selection'
             ]);
+
+            // Disparar evento de paso completado
+            event(new CarrierStepCompleted($user, 'step3', [
+                'carrier_id' => $carrier->id,
+                'membership_id' => $membership->id,
+                'membership_name' => $membership->name ?? 'Unknown'
+            ]));
 
             // Always redirect to step 4 for banking information
             return redirect()->route('carrier.wizard.step4')
@@ -557,6 +582,13 @@ class CarrierWizardController extends Controller
                 'country_code' => $request->country_code,
                 'step' => 'banking_information'
             ]);
+
+            // Disparar evento de registro completado
+            event(new CarrierRegistrationCompleted($user, $carrier, [
+                'banking_info' => 'completed',
+                'registration_method' => 'wizard',
+                'total_steps' => 4
+            ]));
 
             // Redirect to pending validation page
             return redirect()->route('carrier.pending.validation')

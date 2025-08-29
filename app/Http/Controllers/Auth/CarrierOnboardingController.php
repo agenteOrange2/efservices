@@ -14,6 +14,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Services\CarrierDocumentService;
 use App\Traits\GeneratesBaseDocuments;
+use App\Events\CarrierRegistrationCompleted;
 
 class CarrierOnboardingController extends Controller
 {
@@ -133,6 +134,13 @@ class CarrierOnboardingController extends Controller
             
             // Generar documentos base
             $this->generateCarrierDocuments($carrier, $user);
+            
+            // Disparar evento de registro completado
+            event(new CarrierRegistrationCompleted($user, $carrier, [
+                'registration_method' => 'onboarding',
+                'has_documents' => $validated['has_documents'],
+                'membership_id' => $validated['id_plan']
+            ]));
             
             // Redireccionar según la elección de documentos
             return $this->redirectAfterRegistration($validated, $carrier);

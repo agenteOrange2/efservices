@@ -3,6 +3,8 @@
 namespace App\Mail;
 
 use App\Models\UserCarrier;
+use App\Models\User;
+use App\Models\Carrier;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -14,14 +16,40 @@ class NewCarrierAdminNotification extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $userCarrier;
+    public $user;
+    public $carrier;
+    public $eventType;
+    public $step;
+    public $data;
+    public $userCarrier; // Mantener compatibilidad hacia atrás
 
     /**
      * Create a new message instance.
      */
-    public function __construct(UserCarrier $userCarrier)
-    {
-        $this->userCarrier = $userCarrier;
+    public function __construct(
+        $userOrUserCarrier,
+        ?Carrier $carrier = null,
+        ?string $eventType = null,
+        ?string $step = null,
+        array $data = []
+    ) {
+        // Compatibilidad hacia atrás con UserCarrier
+        if ($userOrUserCarrier instanceof UserCarrier) {
+            $this->userCarrier = $userOrUserCarrier;
+            $this->user = $userOrUserCarrier->user;
+            $this->carrier = $userOrUserCarrier->carrier;
+            $this->eventType = 'legacy';
+            $this->step = null;
+            $this->data = [];
+        } else {
+            // Nuevo sistema con User
+            $this->user = $userOrUserCarrier;
+            $this->carrier = $carrier;
+            $this->eventType = $eventType ?? 'unknown';
+            $this->step = $step;
+            $this->data = $data;
+            $this->userCarrier = null;
+        }
     }
 
     /**
@@ -29,9 +57,24 @@ class NewCarrierAdminNotification extends Mailable
      */
     public function envelope(): Envelope
     {
+        $subject = $this->getSubjectByEventType();
+        
         return new Envelope(
-            subject: 'New Carrier Admin Notification',
+            subject: $subject,
         );
+    }
+
+    /**
+     * Get subject based on event type
+     */
+    private function getSubjectByEventType(): string
+    {
+        return match($this->eventType) {
+            'step_completed' => "Carrier Step Completed: {$this->step}",
+            'registration_completed' => 'New Carrier Registration Completed',
+            'legacy' => 'New Carrier Admin Notification',
+            default => 'Carrier Notification'
+        };
     }
 
     /**
@@ -40,9 +83,14 @@ class NewCarrierAdminNotification extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.new_carrier_admin_notification', // Vista que mostrarás en el correo
+            view: 'emails.new_carrier_admin_notification',
             with: [
-                'userCarrier' => $this->userCarrier, // Pasarás el modelo como datos
+                'user' => $this->user,
+                'carrier' => $this->carrier,
+                'eventType' => $this->eventType,
+                'step' => $this->step,
+                'data' => $this->data,
+                'userCarrier' => $this->userCarrier, // Compatibilidad hacia atrás
             ],
         );
     }

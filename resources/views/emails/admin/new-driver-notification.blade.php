@@ -5,7 +5,7 @@ A new driver has been registered in the system:
 
 **Driver Name:** {{ $driverName }}  
 **Driver Email:** {{ $driverEmail }}  
-**Carrier:** {{ $carrierName }} (ID: {{ $carrierId }})
+**Carrier:** {{ $carrierName }}
 
 @component('mail::button', ['url' => $driverLink])
 View Drivers

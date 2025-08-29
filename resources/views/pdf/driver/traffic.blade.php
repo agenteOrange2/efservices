@@ -106,7 +106,7 @@
         <div class="section-title">Traffic Violations Information</div>
         <table>
             <tr>
-                <td colspan="2"><strong>Have you had any traffic violations in the last three years?</strong><br>{{ $userDriverDetail->application && $userDriverDetail->application->details && $userDriverDetail->application->details->has_traffic_convictions ? 'Yes' : 'No' }}</td>
+                <td colspan="2"><strong>Have you had any traffic violations in the last three years?</strong><br>{{ $userDriverDetail->trafficConvictions && $userDriverDetail->trafficConvictions->count() > 0 ? 'Yes' : 'No' }}</td>                
             </tr>
         </table>
     </div>

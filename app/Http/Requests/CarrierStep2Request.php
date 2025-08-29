@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class CarrierStep2Request extends FormRequest
@@ -12,7 +13,7 @@ class CarrierStep2Request extends FormRequest
      */
     public function authorize(): bool
     {
-        return auth()->check() && auth()->user()->hasRole('user_carrier');
+        return Auth::check() && Auth::user() && Auth::user()->hasRole('user_carrier');
     }
 
     /**
@@ -65,13 +66,13 @@ class CarrierStep2Request extends FormRequest
                 'regex:/^(MC-)?\d{1,8}$/', // MC numbers pueden tener prefijo MC- o solo números
                 Rule::unique('carriers', 'mc_number')->whereNotNull('mc_number')
             ],
-            'state_dot_number' => [
+            'state_dot' => [
                 'nullable',
                 'string',
                 'max:50',
                 'regex:/^[a-zA-Z0-9\-]+$/' // Formato variable por estado
             ],
-            'ifta_account_number' => [
+            'ifta_account' => [
                 'nullable',
                 'string',
                 'max:50',
@@ -128,8 +129,8 @@ class CarrierStep2Request extends FormRequest
             'mc_number.regex' => 'Please enter a valid MC number (up to 8 digits).',
             'mc_number.unique' => 'This MC number is already registered.',
             
-            'state_dot_number.regex' => 'Please enter a valid State DOT number.',
-            'ifta_account_number.regex' => 'Please enter a valid IFTA account number.',
+            'state_dot.regex' => 'Please enter a valid State DOT number.',
+            'ifta_account.regex' => 'Please enter a valid IFTA account number.',
             
             'business_type.required' => 'Please select a valid business type.',
             'business_type.in' => 'Please select a valid business type.',
@@ -155,8 +156,8 @@ class CarrierStep2Request extends FormRequest
             'ein_number' => 'EIN number',
             'dot_number' => 'DOT number',
             'mc_number' => 'MC number',
-            'state_dot_number' => 'State DOT number',
-            'ifta_account_number' => 'IFTA account number',
+            'state_dot' => 'State DOT number',
+            'ifta_account' => 'IFTA account number',
             'business_type' => 'business type',
             'years_in_business' => 'years in business',
             'fleet_size' => 'fleet size'
@@ -176,8 +177,8 @@ class CarrierStep2Request extends FormRequest
             'ein_number' => $this->formatEIN($this->ein_number ?? ''),
             'dot_number' => $this->cleanNumericField($this->dot_number),
             'mc_number' => $this->cleanMCNumber($this->mc_number),
-            'state_dot_number' => $this->cleanAlphanumericField($this->state_dot_number),
-            'ifta_account_number' => $this->cleanAlphanumericField($this->ifta_account_number)
+            'state_dot' => $this->cleanAlphanumericField($this->state_dot),
+            'ifta_account' => $this->cleanAlphanumericField($this->ifta_account)
         ]);
     }
 
@@ -187,7 +188,7 @@ class CarrierStep2Request extends FormRequest
     protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
         \Illuminate\Support\Facades\Log::info('Carrier step 2 validation failed', [
-            'user_id' => auth()->id(),
+            'user_id' => Auth::check() ? Auth::id() : null,
             'errors' => $validator->errors()->toArray(),
             'input' => $this->except(['ein_number']) // No loggear EIN por seguridad
         ]);
@@ -214,8 +215,8 @@ class CarrierStep2Request extends FormRequest
             'ein_number' => $validated['ein_number'],
             'dot_number' => $validated['dot_number'],
             'mc_number' => $validated['mc_number'],
-            'state_dot_number' => $validated['state_dot_number'],
-            'ifta_account_number' => $validated['ifta_account_number'],
+            'state_dot' => $validated['state_dot'],
+            'ifta_account' => $validated['ifta_account'],
             'business_type' => $validated['business_type'],
             'years_in_business' => $validated['years_in_business'],
             'fleet_size' => $validated['fleet_size'],

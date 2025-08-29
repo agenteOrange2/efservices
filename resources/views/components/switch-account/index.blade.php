@@ -5,13 +5,13 @@
         </x-base.dialog.title>
         <x-base.dialog.description class="px-2.5 pb-4 pt-3.5">
             <div class="flex flex-col gap-1.5">
-                @foreach ($users->take(5) as $fakerKey => $faker)
+                {{-- @foreach ($users->take(5) as $fakerKey => $faker)
                     <div class="flex cursor-pointer items-center rounded-lg px-2.5 py-1 hover:bg-slate-100">
                         <div class="image-fit h-11 w-11 overflow-hidden rounded-full border-[3px] border-slate-200/70">
-                            {{-- <img
+                             <img
                                 src="{{ Vite::asset($faker['photo']) }}"
                                 alt="Tailwise - Admin Dashboard Template"
-                            > --}}
+                            > 
                             <img src="Imagen" alt="">
                         </div>
                         <div class="ml-3.5">
@@ -40,7 +40,7 @@
                             </div>
                         </div>
                     </div>
-                @endforeach
+                @endforeach --}}
             </div>
         </x-base.dialog.description>
         <x-base.dialog.footer class="flex h-14 items-center justify-center text-center">

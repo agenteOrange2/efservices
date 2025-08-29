@@ -139,11 +139,12 @@
         <div class="toc-item">4. Driver's Licenses .............................. Page 5</div>
         <div class="toc-item">5. Medical Qualification .......................... Page 6</div>
         <div class="toc-item">6. Training Schools ............................... Page 7</div>
-        <div class="toc-item">7. Traffic Violations ............................. Page 8</div>
-        <div class="toc-item">8. Accident Record ................................ Page 9</div>
-        <div class="toc-item">9. FMCSR Requirements ............................ Page 10</div>
-        <div class="toc-item">10. Employment History ........................... Page 11</div>
-        <div class="toc-item">11. Certification ................................ Page 12</div>
+        <div class="toc-item">7. Driver Courses ................................. Page 8</div>
+        <div class="toc-item">8. Traffic Violations ............................. Page 9</div>
+        <div class="toc-item">9. Accident Record ............................... Page 10</div>
+        <div class="toc-item">10. FMCSR Requirements ........................... Page 11</div>
+        <div class="toc-item">11. Employment History ........................... Page 12</div>
+        <div class="toc-item">12. Certification ................................ Page 13</div>
     </div>
 
     <div class="page-break"></div>
@@ -497,7 +498,7 @@
         <table>
             <tr>
                 <td colspan="2"><strong>Have you attended commercial driver training
-                        school?</strong><br>{{ $userDriverDetail->application && $userDriverDetail->application->details && $userDriverDetail->application->details->has_attended_training_school ? 'Yes' : 'No' }}
+                        school?</strong><br>{{ $userDriverDetail->trainingSchools && $userDriverDetail->trainingSchools->count() > 0 ? 'Yes' : 'No' }}
                 </td>
             </tr>
         </table>
@@ -564,13 +565,46 @@
 
     <div class="page-break"></div>
 
-    <!-- 7. Traffic Violations -->
+    <!-- 7. Driver Courses -->
     <div class="section">
-        <div class="section-title">7. TRAFFIC VIOLATIONS</div>
+        <div class="section-title">7. DRIVER COURSES</div>
+        
+        @if ($userDriverDetail->courses && $userDriverDetail->courses->count() > 0)
+            <div class="section-title">Driver Courses</div>
+            @foreach ($userDriverDetail->courses as $index => $course)
+                <div class="course-item">
+                    <h4>Course #{{ $index + 1 }}</h4>
+                    <table>
+                        <tr>
+                            <td style="width: 50%"><strong>Organization Name</strong><br>{{ $course->organization_name ?? 'N/A' }}</td>
+                            <td style="width: 50%"><strong>Course Type</strong><br>{{ $course->course_type ?? 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50%"><strong>Certification Date</strong><br>{{ $course->certification_date ? date('m/d/Y', strtotime($course->certification_date)) : 'N/A' }}</td>
+                            <td style="width: 50%"><strong>Expiration Date</strong><br>{{ $course->expiration_date ? date('m/d/Y', strtotime($course->expiration_date)) : 'N/A' }}</td>
+                        </tr>
+                        @if ($course->experience)
+                            <tr>
+                                <td colspan="2"><strong>Experience</strong><br>{{ $course->experience }}</td>
+                            </tr>
+                        @endif
+                    </table>
+                </div>
+            @endforeach
+        @else
+            <p>No driver courses found.</p>
+        @endif
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- 8. Traffic Violations -->
+    <div class="section">
+        <div class="section-title">8. TRAFFIC VIOLATIONS</div>
         <table>
             <tr>
                 <td colspan="2"><strong>Have you had any traffic violations in the last three
-                        years?</strong><br>{{ $userDriverDetail->application && $userDriverDetail->application->details && $userDriverDetail->application->details->has_traffic_convictions ? 'Yes' : 'No' }}
+                        years?</strong><br>{{ $userDriverDetail->trafficConvictions && $userDriverDetail->trafficConvictions->count() > 0 ? 'Yes' : 'No' }}
                 </td>
             </tr>
         </table>
@@ -606,13 +640,13 @@
 
     <div class="page-break"></div>
 
-    <!-- 8. Accident Record -->
+    <!-- 9. Accident Record -->
     <div class="section">
-        <div class="section-title">8. ACCIDENT RECORD</div>
+        <div class="section-title">9. ACCIDENT RECORD</div>
         <table>
             <tr>
                 <td colspan="2"><strong>Have you had any accidents in the last three
-                        years?</strong><br>{{ $userDriverDetail->application && $userDriverDetail->application->details && $userDriverDetail->application->details->has_accidents ? 'Yes' : 'No' }}
+                        years?</strong><br>{{ $userDriverDetail->accidents && $userDriverDetail->accidents->count() > 0 ? 'Yes' : 'No' }}
                 </td>
             </tr>
         </table>
@@ -666,9 +700,9 @@
 
     <div class="page-break"></div>
 
-    <!-- 9. FMCSR Requirements -->
+    <!-- 10. FMCSR Requirements -->
     <div class="section">
-        <div class="section-title">9. FMCSR REQUIREMENTS</div>
+        <div class="section-title">10. FMCSR REQUIREMENTS</div>
         @if ($userDriverDetail->fmcsrData)
             @php
                 $fmcsr = $userDriverDetail->fmcsrData;
@@ -751,9 +785,9 @@
 
     <div class="page-break"></div>
 
-    <!-- 10. Employment History -->
+    <!-- 11. Employment History -->
     <div class="section">
-        <div class="section-title">10. EMPLOYMENT HISTORY</div>
+        <div class="section-title">11. EMPLOYMENT HISTORY</div>
         <table>
             <tr>
                 <td style="width: 50%"><strong>Have you been unemployed in the last 10
@@ -854,9 +888,9 @@
 
     <div class="page-break"></div>
 
-    <!-- 11. Certification -->
+    <!-- 12. Certification -->
     <div class="section">
-        <div class="section-title">11. CERTIFICATION</div>
+        <div class="section-title">12. CERTIFICATION</div>
         <p style="margin-bottom: 20px;">I certify that all information provided in this application is true and
             complete to the best of my knowledge. I understand that any false information or omission may disqualify me
             from further consideration for employment and may result in my dismissal if discovered at a later date.</p>

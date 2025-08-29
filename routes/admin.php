@@ -858,6 +858,33 @@ Route::prefix('notifications')->name('notifications.')->group(function () {
     Route::delete('/', [NotificationsController::class, 'deleteAll'])->name('delete-all');
 });
 
+/*
+|--------------------------------------------------------------------------
+| RUTAS NOTIFICATION SETTINGS
+|--------------------------------------------------------------------------
+*/
+Route::prefix('notification-settings')->name('notification-settings.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\NotificationSettingsController::class, 'index'])->name('index');
+    Route::get('/{eventType}', [\App\Http\Controllers\NotificationSettingsController::class, 'show'])->name('show');
+    Route::put('/{eventType}', [\App\Http\Controllers\NotificationSettingsController::class, 'update'])->name('update');
+    Route::get('/logs/index', [\App\Http\Controllers\NotificationSettingsController::class, 'logs'])->name('logs');
+    Route::get('/logs/data', [\App\Http\Controllers\NotificationSettingsController::class, 'getLogsData'])->name('logs.data');
+    Route::post('/test', [\App\Http\Controllers\NotificationSettingsController::class, 'testNotification'])->name('test');
+});
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS NOTIFICATION RECIPIENTS
+|--------------------------------------------------------------------------
+*/
+Route::prefix('notification-recipients')->name('notification-recipients.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\NotificationRecipientsController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\Admin\NotificationRecipientsController::class, 'store'])->name('store');
+    Route::delete('/{recipient}', [\App\Http\Controllers\Admin\NotificationRecipientsController::class, 'destroy'])->name('destroy');
+    Route::put('/{recipient}/toggle', [\App\Http\Controllers\Admin\NotificationRecipientsController::class, 'toggle'])->name('toggle');
+    Route::get('/users/search', [\App\Http\Controllers\Admin\NotificationRecipientsController::class, 'getUsers'])->name('users.search');
+});
+
 
 Route::controller(PageController::class)->group(function () {
     //Route::get('/', 'dashboardOverview1')->name('dashboard-overview-1');

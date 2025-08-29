@@ -145,18 +145,18 @@
                     <h4>Company #{{ $index + 1 }}</h4>
                     <table>
                         <tr>
-                            <td colspan="2"><strong>Company Name</strong><br>{{ $company->company_name ?? 'N/A' }}</td>
+                            <td colspan="2"><strong>Company Name</strong><br>{{ $company->masterCompany->company_name ?? $company->company_name ?? 'N/A' }}</td>
                         </tr>
                         <tr>
-                            <td style="width: 50%"><strong>Address</strong><br>{{ $company->address ?? 'N/A' }}</td>
-                            <td style="width: 50%"><strong>City, State, ZIP</strong><br>{{ $company->city ?? 'N/A' }}, {{ $company->state ?? '' }} {{ $company->zip ?? '' }}</td>
+                            <td style="width: 50%"><strong>Address</strong><br>{{ $company->masterCompany->address ?? $company->address ?? 'N/A' }}</td>
+                            <td style="width: 50%"><strong>City, State, ZIP</strong><br>{{ $company->masterCompany->city ?? $company->city ?? 'N/A' }}, {{ $company->masterCompany->state ?? $company->state ?? '' }} {{ $company->masterCompany->zip ?? $company->zip ?? '' }}</td>
                         </tr>
                         <tr>
-                            <td style="width: 50%"><strong>Contact</strong><br>{{ $company->contact ?? 'N/A' }}</td>
+                            <td style="width: 50%"><strong>Contact</strong><br>{{ $company->masterCompany->contact ?? $company->contact ?? 'N/A' }}</td>
                             <td style="width: 50%">
                                 <strong>Phone / Fax</strong><br>
-                                Phone: {{ $company->phone ?? 'N/A' }}<br>
-                                Fax: {{ $company->fax ?? 'N/A' }}
+                                Phone: {{ $company->masterCompany->phone ?? $company->phone ?? 'N/A' }}<br>
+                                Fax: {{ $company->masterCompany->fax ?? $company->fax ?? 'N/A' }}
                             </td>
                         </tr>
                         <tr>
@@ -185,6 +185,58 @@
                     </table>
                 </div>
             @endforeach
+        </div>
+    @endif
+
+    @if(($userDriverDetail->workHistories && $userDriverDetail->workHistories->count() > 0) || ($userDriverDetail->driver_related_employments && $userDriverDetail->driver_related_employments->count() > 0))
+        <div class="section">
+            <div class="section-title">Other Employment</div>
+            
+            @if($userDriverDetail->workHistories && $userDriverDetail->workHistories->count() > 0)
+                @foreach($userDriverDetail->workHistories as $index => $workHistory)
+                    <div class="company-item">
+                        <h4>Work History #{{ $index + 1 }}</h4>
+                        <table>                            
+                            <tr>
+                                <td style="width: 50%"><strong>Start Date</strong><br>{{ $workHistory->start_date ? date('m/d/Y', strtotime($workHistory->start_date)) : 'N/A' }}</td>
+                                <td style="width: 50%"><strong>End Date</strong><br>{{ $workHistory->end_date ? date('m/d/Y', strtotime($workHistory->end_date)) : 'N/A' }}</td>
+                            </tr>
+                            <tr>                                
+                                <td style="width: 50%"><strong>Position</strong><br>{{ $workHistory->position ?? 'N/A' }}</td>
+                            </tr>                            
+                            
+                            @if($workHistory->description)
+                            <tr>
+                                <td colspan="2"><strong>Description</strong><br>{{ $workHistory->description }}</td>
+                            </tr>
+                            @endif
+                        </table>
+                    </div>
+                @endforeach
+            @endif
+            
+            @if($userDriverDetail->driver_related_employments && $userDriverDetail->driver_related_employments->count() > 0)
+                @foreach($userDriverDetail->driver_related_employments as $index => $relatedEmployment)
+                    <div class="company-item">
+                        <h4>Related Employment #{{ $index + 1 }}</h4>
+                        <table>
+                            <tr>
+                                <td style="width: 50%"><strong>Start Date</strong><br>{{ $relatedEmployment->start_date ? date('m/d/Y', strtotime($relatedEmployment->start_date)) : 'N/A' }}</td>
+                                <td style="width: 50%"><strong>End Date</strong><br>{{ $relatedEmployment->end_date ? date('m/d/Y', strtotime($relatedEmployment->end_date)) : 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <td style="width: 50%"><strong>Position</strong><br>{{ $relatedEmployment->position ?? 'N/A' }}</td>
+                                <td style="width: 50%"></td>
+                            </tr>
+                            @if($relatedEmployment->comments)
+                            <tr>
+                                <td colspan="2"><strong>Comments</strong><br>{{ $relatedEmployment->comments }}</td>
+                            </tr>
+                            @endif
+                        </table>
+                    </div>
+                @endforeach
+            @endif
         </div>
     @endif
 

@@ -18,7 +18,7 @@
                 <div class="flex flex-col gap-3.5 px-5 py-3">
                     <div
                         class="relative overflow-hidden before:absolute before:inset-y-0 before:left-0 before:ml-[14px] before:w-px before:bg-slate-200/60 before:content-[''] before:dark:bg-darkmode-400">
-                        @foreach ($activities->take(5) as $fakerKey => $faker)
+                        {{-- @foreach ($activities->take(5) as $fakerKey => $faker)
                             <div @class([
                                 'mb-3 last:mb-0 relative',
                                 "first:before:content-[''] first:before:h-1/2 first:before:w-5 first:before:bg-white first:before:absolute",
@@ -102,24 +102,24 @@
                                             <div class="grid grid-cols-3 overflow-hidden rounded-[0.6rem]">
                                                 <div
                                                     class="image-fit h-12 cursor-pointer overflow-hidden border border-slate-100 saturate-[.6] hover:saturate-100 sm:h-20">
-                                                    {{-- <img
+                                                     <img
                                                         src="{{ Vite::asset($faker['images'][0]) }}"
                                                         alt="Tailwise - Admin Dashboard Template"
-                                                    > --}}
+                                                    > 
                                                 </div>
                                                 <div
                                                     class="image-fit h-12 cursor-pointer overflow-hidden border border-slate-100 saturate-[.6] hover:saturate-100 sm:h-20">
-                                                    {{-- <img
+                                                
                                                         src="{{ Vite::asset($faker['images'][1]) }}"
                                                         alt="Tailwise - Admin Dashboard Template"
-                                                    > --}}
+                                                    > 
                                                 </div>
                                                 <div
                                                     class="image-fit h-12 cursor-pointer overflow-hidden border border-slate-100 saturate-[.6] hover:saturate-100 sm:h-20">
-                                                    {{-- <img
+                                                   <img
                                                         src="{{ Vite::asset($faker['images'][2]) }}"
                                                         alt="Tailwise - Admin Dashboard Template"
-                                                    > --}}
+                                                    > 
                                                 </div>
                                             </div>
                                         </div>
@@ -129,7 +129,7 @@
                                     </div>
                                 </div>
                             </div>
-                        @endforeach
+                        @endforeach --}}
                     </div>
                 </div>
             </x-base.slideover.description>

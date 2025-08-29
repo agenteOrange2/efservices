@@ -251,6 +251,14 @@ class UserDriverDetail extends Model implements HasMedia
         return $this->hasMany(\App\Models\Admin\Driver\DriverRelatedEmployment::class);
     }
 
+    /**
+     * Relación con empleos relacionados del conductor (nueva tabla)
+     */
+    public function driver_related_employments()
+    {
+        return $this->hasMany(\App\Models\Admin\Driver\DriverRelatedEmployment::class, 'user_driver_detail_id');
+    }
+
 
     public function companyPolicy()
     {

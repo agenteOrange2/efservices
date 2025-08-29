@@ -106,10 +106,13 @@
                 <td style="width: 25%"><strong>Date of Application</strong><br>{{ $userDriverDetail->date_of_birth ? date('d/m/Y', strtotime($userDriverDetail->date_of_birth)) : 'N/A' }}</td>
             </tr>
             <tr>
-                <td style="width: 50%"><strong>Current Address</strong><br>{{ $address->address_line1 ?? 'N/A' }}</td>
-                <td style="width: 16.66%"><strong>City</strong><br>{{ $address->city ?? 'N/A' }}</td>
-                <td style="width: 16.66%"><strong>State</strong><br>{{ $address->state ?? 'N/A' }}</td>
-                <td style="width: 16.66%"><strong>Zip</strong><br>{{ $address->zip_code ?? 'N/A' }}</td>
+                @php
+                    $currentAddress = $userDriverDetail->addresses->where('primary', 1)->first() ?? $userDriverDetail->addresses->first();
+                @endphp
+                <td style="width: 50%"><strong>Current Address</strong><br>{{ $currentAddress->address_line1 ?? 'N/A' }}</td>
+                <td style="width: 16.66%"><strong>City</strong><br>{{ $currentAddress->city ?? 'N/A' }}</td>
+                <td style="width: 16.66%"><strong>State</strong><br>{{ $currentAddress->state ?? 'N/A' }}</td>
+                <td style="width: 16.66%"><strong>Zip</strong><br>{{ $currentAddress->zip_code ?? 'N/A' }}</td>
             </tr>
             <tr>
                 <td style="width: 50%"><strong>Email Address</strong><br>{{ $userDriverDetail->user->email ?? 'N/A' }}</td>
@@ -138,6 +141,34 @@
             <span class="label">Date:</span>
             <span class="value">{{ $date }}</span>
         </div>
+    </div>
+    <!-- Ejemplo de corrección en vista general -->
+    <div class="field">
+        <label>Fecha de Nacimiento:</label>
+        <span>
+            @if($userDriverDetail->date_of_birth)
+                {{ $userDriverDetail->date_of_birth->format('m/d/Y') }}
+            @elseif(isset($formatted_dates['date_of_birth']) && !empty($formatted_dates['date_of_birth']))
+                {{ $formatted_dates['date_of_birth'] }}
+            @else
+                N/A
+            @endif
+        </span>
+    </div>
+    
+    <div class="field">
+        <label>Nombre Legal:</label>
+        <span>{{ $user_name }} {{ $userDriverDetail->middle_name ?? '' }} {{ $userDriverDetail->last_name ?? '' }}</span>
+    </div>
+    
+    <div class="field">
+        <label>Email:</label>
+        <span>{{ $user_email }}</span>
+    </div>
+    
+    <div class="field">
+        <label>Carrier:</label>
+        <span>{{ $carrier_name }}</span>
     </div>
 </body>
 

@@ -227,20 +227,13 @@
                                 <x-base.menu class="ml-5">
                                     <x-base.menu.button
                                         class="image-fit h-[36px] w-[36px] overflow-hidden rounded-full border-[3px] border-slate-200/70">
-                                        {{-- <img src="{{ Vite::asset($users[0]['photo']) }}"
-                                            alt="Tailwise - Admin Dashboard Template"> --}}
+                                        
+                                        <img src="#"
+                                            alt="Tailwise - Admin Dashboard Template">
+                                        
                                     </x-base.menu.button>
-                                    <x-base.menu.items class="mt-1 w-56">
-                                        <x-base.menu.item data-tw-toggle="modal" data-tw-target="#switch-account">
-                                            <x-base.lucide class="mr-2 h-4 w-4" icon="ToggleLeft" />
-                                            Switch Account
-                                        </x-base.menu.item>
-                                        <x-base.menu.divider />
-                                        <x-base.menu.item
-                                            href="{{ route('admin.settings', ['page' => 'connected-services']) }}">
-                                            <x-base.lucide class="mr-2 h-4 w-4" icon="Settings" />
-                                            Connected Services
-                                        </x-base.menu.item>
+                                    <x-base.menu.items class="mt-1 w-56">                                        
+                                        <x-base.menu.divider />                                        
                                         <x-base.menu.item
                                             href="{{ route('admin.settings', ['page' => 'email-settings']) }}">
                                             <x-base.lucide class="mr-2 h-4 w-4" icon="Inbox" />
@@ -255,19 +248,12 @@
                                             <x-base.lucide class="mr-2 h-4 w-4" icon="Users" />
                                             Profile Info
                                         </x-base.menu.item>
-                                        <x-base.menu.item href="{{ route('login') }}">
-                                            <x-base.lucide class="mr-2 h-4 w-4" icon="Power" />
-                                            Logout
-                                            <!-- Authentication -->
-
-                                        </x-base.menu.item>
                                         <form method="POST" action="{{ route('logout') }}" x-data>
                                             @csrf
-
-                                            <x-responsive-nav-link href="{{ route('logout') }}"
-                                                @click.prevent="$root.submit();">
-                                                {{ __('Log Out') }}
-                                            </x-responsive-nav-link>
+                                            <x-base.menu.item href="{{ route('logout') }}" @click.prevent="$root.submit();">
+                                                <x-base.lucide class="mr-2 h-4 w-4" icon="Power" />
+                                                Logout
+                                            </x-base.menu.item>
                                         </form>
                                     </x-base.menu.items>
                                 </x-base.menu>
