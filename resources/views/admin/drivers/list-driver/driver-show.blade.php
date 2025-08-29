@@ -107,7 +107,7 @@
                             alt="{{ $driver->user->name ?? 'Unknown' }}" as="img"
                             content="{{ $driver->user->name ?? 'Unknown' }} {{ $driver->last_name }}" />
                         @endif                        
-                </div>
+            </div>
                 <div class="flex-grow text-center md:text-left">
                     <h3 class="text-2xl font-bold">
                         {{ $driver->user->name ?? 'Unknown' }} {{ $driver->middle_name }} {{ $driver->last_name }}
@@ -1260,243 +1260,144 @@
 
             <!-- Documents Tab -->
             <div class="hidden p-6" id="documents" role="tabpanel" aria-labelledby="documents-tab">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Driver Documents -->
-                    <div class="border rounded-lg p-4">
-                        <h4 class="font-medium text-lg mb-4 pb-2 border-b">Driver Documents</h4>
-
-                        <!-- Records específicos -->
-                        <div class="mb-4 pb-3 border-b">
-                            <h5 class="font-medium mb-2">Driver Records</h5>
-                            <div class="grid grid-cols-1 gap-2">
-                                <!-- Driving Record -->
-                                <div class="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                    <div class="flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round"
-                                            class="w-4 h-4 mr-2 text-slate-500">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                        </svg>
-                                        <span>Driving Record</span>
-                                    </div>
-                                    <div>
-                                        @if ($drivingRecord)
-                                            <a href="{{ $drivingRecord->getUrl() }}" target="_blank"
-                                                class="text-blue-600 hover:underline flex items-center">
-                                                <i data-lucide="eye" class="w-4 h-4 mr-1"></i> View
-                                            </a>
-                                        @else
-                                            <span class="text-slate-400 text-sm">Not uploaded</span>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <!-- Medical Record -->
-                                <div class="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                    <div class="flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round"
-                                            class="w-4 h-4 mr-2 text-slate-500">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                        </svg>
-                                        <span>Medical Record</span>
-                                    </div>
-                                    <div>
-                                        @if ($medicalRecord)
-                                            <a href="{{ $medicalRecord->getUrl() }}" target="_blank"
-                                                class="text-blue-600 hover:underline flex items-center">
-                                                <i data-lucide="eye" class="w-4 h-4 mr-1"></i> View
-                                            </a>
-                                        @else
-                                            <span class="text-slate-400 text-sm">Not uploaded</span>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <!-- Criminal Record -->
-                                <div class="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                    <div class="flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round"
-                                            class="w-4 h-4 mr-2 text-slate-500">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                        </svg>
-                                        <span>Criminal Record</span>
-                                    </div>
-                                    <div>
-                                        @if ($criminalRecord)
-                                            <a href="{{ $criminalRecord->getUrl() }}" target="_blank"
-                                                class="text-blue-600 hover:underline flex items-center">
-                                                <i data-lucide="eye" class="w-4 h-4 mr-1"></i> View
-                                            </a>
-                                        @else
-                                            <span class="text-slate-400 text-sm">Not uploaded</span>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <!-- Clearing House Record -->
-                                <div class="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                    <div class="flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round"
-                                            class="w-4 h-4 mr-2 text-slate-500">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                        </svg>
-                                        <span>Clearing House Record</span>
-                                    </div>
-                                    <div>
-                                        @if ($clearingHouseRecord)
-                                            <a href="{{ $clearingHouseRecord->getUrl() }}" target="_blank"
-                                                class="text-blue-600 hover:underline flex items-center">
-                                                <i data-lucide="eye" class="w-4 h-4 mr-1"></i> View
-                                            </a>
-                                        @else
-                                            <span class="text-slate-400 text-sm">Not uploaded</span>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
+                <!-- Header with Actions -->
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-blue-100 rounded-lg">
+                            <i data-lucide="folder" class="w-5 h-5 text-blue-600"></i>
                         </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Driver Documents</h3>
+                            <p class="text-sm text-gray-500">Manage and organize driver documentation</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex items-center gap-2">
+                        <button disabled
+                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                            Download Selected (0)
+                        </button>
+                        <button class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700">
+                            <i data-lucide="archive" class="w-4 h-4 mr-2"></i>
+                            Download All
+                        </button>
+                    </div>
+                </div>
 
-                        <ul class="space-y-3">
-                            <!-- License Documents -->
-                            @if ($driver->licenses && $driver->licenses->count() > 0)
-                                @foreach ($driver->licenses as $license)
-                                    @if ($license->getFirstMediaUrl('license_front') || $license->getFirstMediaUrl('license_back'))
-                                        <li class="pb-2 border-b last:border-b-0 last:pb-0">
-                                            <p class="font-medium">Driver's License ({{ $license->license_number }})</p>
-                                            <div class="flex space-x-4 mt-1">
-                                                @if ($license->getFirstMediaUrl('license_front'))
-                                                    <a href="{{ $license->getFirstMediaUrl('license_front') }}"
-                                                        target="_blank"
-                                                        class="text-blue-600 hover:underline flex items-center">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                            height="16" viewBox="0 0 24 24" fill="none"
-                                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                                            stroke-linejoin="round" class="w-4 h-4 mr-1">
-                                                            <rect x="3" y="3" width="18" height="18"
-                                                                rx="2" ry="2"></rect>
-                                                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                                            <polyline points="21 15 16 10 5 21"></polyline>
-                                                        </svg>
-                                                        Front Image
-                                                    </a>
-                                                @endif
+                <!-- Filters and Search -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Search -->
+                        <div class="relative">
+                            <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                            <input type="text" 
+                                   placeholder="Search documents..."
+                                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        
+                        <!-- Category Filter -->
+                        <div>
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">All Categories</option>
+                                <option value="license">License Documents</option>
+                                <option value="medical">Medical Records</option>
+                                <option value="background">Background Checks</option>
+                                <option value="training">Training & Certifications</option>
+                                <option value="other">Other Documents</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Status Filter -->
+                        <div>
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">All Status</option>
+                                <option value="approved">Approved</option>
+                                <option value="pending">Pending Review</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="expired">Expired</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Date Range -->
+                        <div>
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">All Dates</option>
+                                <option value="last_30">Last 30 Days</option>
+                                <option value="last_90">Last 90 Days</option>
+                                <option value="expired">Expired</option>
+                                <option value="expiring_soon">Expiring Soon</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                </div>
 
-                                                @if ($license->getFirstMediaUrl('license_back'))
-                                                    <a href="{{ $license->getFirstMediaUrl('license_back') }}"
-                                                        target="_blank"
-                                                        class="text-blue-600 hover:underline flex items-center">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                            height="16" viewBox="0 0 24 24" fill="none"
-                                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                                            stroke-linejoin="round" class="w-4 h-4 mr-1">
-                                                            <rect x="3" y="3" width="18" height="18"
-                                                                rx="2" ry="2"></rect>
-                                                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                                            <polyline points="21 15 16 10 5 21"></polyline>
-                                                        </svg>
-                                                        Back Image
-                                                    </a>
-                                                @endif
-                                            </div>
-                                        </li>
-                                    @endif
-                                @endforeach
-                            @endif
-
-                            <!-- Medical Card -->
-                            @if ($driver->medicalQualification && $driver->medicalQualification->getFirstMediaUrl('medical_card'))
-                                <li class="pb-2 border-b last:border-b-0 last:pb-0">
-                                    <p class="font-medium">Medical Card</p>
-                                    <a href="{{ $driver->medicalQualification->getFirstMediaUrl('medical_card') }}"
-                                        target="_blank" class="text-blue-600 hover:underline flex items-center mt-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                        </svg>
-                                        View Medical Card
-                                    </a>
-                                </li>
-                            @endif
-
-                            <!-- Training Certificates -->
-                            @php
-                                $hasCertificates = false;
-                                foreach ($driver->trainingSchools as $school) {
-                                    if ($school->getDocuments('school_certificates')->count() > 0) {
-                                        $hasCertificates = true;
-                                        break;
-                                    }
-                                }
-                            @endphp
-
-                            @if ($hasCertificates)
-                                <li class="pb-2 border-b last:border-b-0 last:pb-0">
-                                    <p class="font-medium">Training Certificates</p>
-                                    <div class="space-y-2 mt-1">
-                                        @foreach ($driver->trainingSchools as $school)
-                                            @if ($school->getDocuments('school_certificates')->count() > 0)
-                                                <div>
-                                                    <p class="text-slate-500 text-sm">{{ $school->school_name }}</p>
-                                                    <div class="flex flex-wrap gap-2 mt-1">
-                                                        @foreach ($school->getDocuments('school_certificates') as $certificate)
-                                                            <a href="{{ $certificate->getUrl() }}" target="_blank"
-                                                                class="text-blue-600 hover:underline flex items-center text-sm">
-                                                                <i data-lucide="file-text" class="w-3 h-3 mr-1"></i>
-                                                                {{ Str::limit($certificate->file_name, 20) }}
-                                                            </a>
-                                                        @endforeach
+                <!-- Categorized Documents Section -->
+                <div class="mt-8">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-6">Categorized Documents</h3>
+                    
+                    <!-- Document Categories Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        @foreach($documentsByCategory as $category => $documents)
+                            @if(count($documents) > 0)
+                                <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h4 class="text-lg font-medium text-gray-900 capitalize">
+                                            {{ str_replace('_', ' ', $category) }}
+                                        </h4>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            {{ count($documents) }} {{ count($documents) === 1 ? 'document' : 'documents' }}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="space-y-3">
+                                        @foreach($documents as $document)
+                                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-150">
+                                                <div class="flex items-center space-x-3">
+                                                    <div class="flex-shrink-0">
+                                                        <i data-lucide="file-text" class="w-5 h-5 text-gray-500"></i>
+                                                    </div>
+                                                    <div class="min-w-0 flex-1">
+                                                        <p class="text-sm font-medium text-gray-900 truncate">
+                                                            {{ $document['name'] }}
+                                                        </p>
+                                                        <p class="text-xs text-gray-500">
+                                                            {{ $document['date'] }} • {{ $document['size'] }}
+                                                        </p>
                                                     </div>
                                                 </div>
-                                            @endif
+                                                <div class="flex items-center space-x-2">
+                                                    <a href="{{ $document['url'] }}" 
+                                                       target="_blank"
+                                                       class="inline-flex items-center p-1.5 text-gray-400 hover:text-blue-600 transition-colors duration-150">
+                                                        <i data-lucide="eye" class="w-4 h-4"></i>
+                                                    </a>
+                                                    <a href="{{ $document['url'] }}" 
+                                                       download
+                                                       class="inline-flex items-center p-1.5 text-gray-400 hover:text-green-600 transition-colors duration-150">
+                                                        <i data-lucide="download" class="w-4 h-4"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
                                         @endforeach
                                     </div>
-                                </li>
+                                </div>
                             @endif
-
-                            <!-- Download All -->
-                            <li class="pt-2 mt-2 border-t">
-                                <a href="{{ route('admin.drivers.documents.download', $driver->id) }}"
-                                    class="text-blue-600 hover:underline flex items-center font-medium">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1.5">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                        <polyline points="7 10 12 15 17 10"></polyline>
-                                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                                    </svg>
-                                    Download All Documents (ZIP)
-                                </a>
-                            </li>
-                        </ul>
+                        @endforeach
+                        
+                        @if(empty($documentsByCategory) || collect($documentsByCategory)->sum(fn($docs) => count($docs)) === 0)
+                            <div class="col-span-full text-center py-12">
+                                <div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                    <i data-lucide="folder-x" class="w-8 h-8 text-gray-400"></i>
+                                </div>
+                                <h3 class="text-lg font-medium text-gray-900 mb-2">No documents found</h3>
+                                <p class="text-gray-500">This driver has no documents uploaded yet.</p>
+                            </div>
+                        @endif
                     </div>
+                </div>
 
                     <!-- Application Documents -->
                     <div class="border rounded-lg p-4">
