@@ -134,7 +134,7 @@ class DriverGeneralInfoStep extends Component
             ]);
 
             // Assign role
-            $user->assignRole('driver');
+            $user->assignRole('user_driver');
 
             // Create driver detail
             $userDriverDetail = UserDriverDetail::create([

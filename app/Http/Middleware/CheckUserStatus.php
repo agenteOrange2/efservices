@@ -205,69 +205,109 @@ class CheckUserStatus
             }
         }
 
-        if ($user && $user->hasRole('driver')) {
-            // 1. Verificar si existe el detalle del driver
-            if (!$user->driverDetails) {
-                return redirect()->route('driver.complete_registration')
-                    ->with('warning', 'Please complete your initial registration.');
+        if ($user && $user->hasRole('user_driver')) {
+            // Verificar primero si el usuario está activo (independientemente del driver)
+            if ($user->status != 1) { // Si el usuario está inactivo
+                Auth::logout(); // Cerrar sesión del usuario
+                return redirect()->route('login')
+                    ->withErrors(['email' => 'Your account has been deactivated. Please contact support.']);
             }
 
-            $driverDetail = $user->driverDetails;
-
-            // 2. Obtener la aplicación del driver
-            $application = $user->driverApplication ?? null;
-
-            // Si no tiene aplicación, crearla en estado borrador
-            if (!$application) {
-                $application = DriverApplication::create([
+            // Verificar estado del driver y redirigir según corresponda
+            if (!$this->isDriverSetupRoute($request)) {
+                Log::info('Driver middleware check', [
                     'user_id' => $user->id,
-                    'status' => DriverApplication::STATUS_DRAFT
+                    'has_driver_details' => $user->driverDetails ? 'yes' : 'no',
+                    'path' => $request->path()
                 ]);
-                Log::info('Created new driver application', ['user_id' => $user->id, 'application_id' => $application->id]);
+                
+                // PRIMERO: verificar si el usuario tiene que completar su registro inicial
+                if (!$user->driverDetails) {
+                    Log::info('Redirigiendo a complete_registration', [
+                        'user_id' => $user->id,
+                        'redirect_url' => route('driver.complete_registration')
+                    ]);
+                    
+                    return redirect()->route('driver.complete_registration')
+                        ->with('warning', 'Please complete your initial registration.');
+                }
+
+                $driverDetail = $user->driverDetails;
+                $application = $user->driverApplication;
+
+                // Si no tiene aplicación, crearla en estado borrador
+                if (!$application) {
+                    $application = DriverApplication::create([
+                        'user_id' => $user->id,
+                        'status' => DriverApplication::STATUS_DRAFT
+                    ]);
+                    Log::info('Created new driver application', ['user_id' => $user->id, 'application_id' => $application->id]);
+                }
+
+                // SEGUNDO: Verificar estado del user_driver_detail
+                if ($driverDetail->status != UserDriverDetail::STATUS_ACTIVE) {
+                    Log::info('Redirigiendo a pending (user_driver_detail inactive)', ['user_id' => $user->id]);
+                    return redirect()->route('driver.pending')
+                        ->with('warning', 'Your driver account is pending approval.');
+                }
+                
+                // TERCERO: Verificar estado de la aplicación del driver
+                Log::info('Verificando driver application status', [
+                    'user_id' => $user->id,
+                    'application_status' => $application->status,
+                    'application_completed' => $driverDetail->application_completed,
+                    'current_step' => $driverDetail->current_step
+                ]);
+
+                // Si la aplicación está en borrador y no completada
+                if ($application->status === DriverApplication::STATUS_DRAFT && !$driverDetail->application_completed) {
+                    $step = $driverDetail->current_step ?? 1;
+                    Log::info('Redirigiendo a registration step (draft incomplete)', [
+                        'user_id' => $user->id,
+                        'step' => $step
+                    ]);
+                    return redirect()->route('driver.registration.continue', ['step' => $step])
+                        ->with('info', 'Please complete your application to continue.');
+                }
+
+                // Si la aplicación está pendiente de revisión
+                if ($application->status === DriverApplication::STATUS_PENDING && !$request->is('driver/pending') && !$request->is('driver/profile') && !$request->is('logout')) {
+                    Log::info('Redirigiendo a pending (application under review)', [
+                        'user_id' => $user->id,
+                        'application_status' => $application->status
+                    ]);
+                    return redirect()->route('driver.pending')
+                        ->with('info', 'Your application is under review. We will notify you once it has been processed.');
+                }
+
+                // Si la aplicación fue rechazada
+                if ($application->status === DriverApplication::STATUS_REJECTED && !$request->is('driver/rejected') && !$request->is('driver/profile') && !$request->is('logout')) {
+                    Log::info('Redirigiendo a rejected (application rejected)', [
+                        'user_id' => $user->id,
+                        'application_status' => $application->status
+                    ]);
+                    return redirect()->route('driver.rejected')
+                        ->with('error', 'Your application has been rejected. Please contact support for more information.');
+                }
+
+                // Si la aplicación está aprobada pero faltan documentos
+                if ($application->status === DriverApplication::STATUS_APPROVED && !$driverDetail->hasRequiredDocuments() && !$request->is('driver/documents*') && !$request->is('driver/profile') && !$request->is('logout')) {
+                    Log::info('Redirigiendo a documents (missing required documents)', [
+                        'user_id' => $user->id,
+                        'application_status' => $application->status
+                    ]);
+                    return redirect()->route('driver.documents.pending')
+                        ->with('warning', 'Please upload all required documents to complete your registration.');
+                }
+
+                // Si necesita subir documentos y no está en la ruta de documentos
+                if ($application->status === DriverApplication::STATUS_APPROVED && !$request->is('driver/documents*') && !$driverDetail->hasRequiredDocuments()) {
+                    return redirect()->route('driver.documents.pending')
+                        ->with('warning', 'Please complete your document submission before proceeding.');
+                }
             }
 
-            // 3. Lógica según el estado de la aplicación
-            switch ($application->status) {
-                case DriverApplication::STATUS_DRAFT:
-                    // Si la aplicación no está completa y no está en ninguna ruta relacionada con el registro
-                    if (
-                        !$driverDetail->application_completed &&
-                        !$request->is('driver/registration*') &&
-                        !$request->is('livewire/*')
-                    ) {
-
-                        $step = $driverDetail->current_step ?? 1;
-                        return redirect()->route('driver.registration.continue', ['step' => $step])
-                            ->with('info', 'Please complete your application to continue.');
-                    }
-                    break;
-
-                case DriverApplication::STATUS_PENDING:
-                    // Si la aplicación está pendiente de revisión
-                    if (!$request->is('driver/pending') && !$this->isDriverExemptRoute($request)) {
-                        return redirect()->route('driver.pending')
-                            ->with('warning', 'Your application is under review.');
-                    }
-                    break;
-
-                case DriverApplication::STATUS_REJECTED:
-                    // Si la aplicación fue rechazada
-                    if (!$request->is('driver/rejected') && !$this->isDriverExemptRoute($request)) {
-                        return redirect()->route('driver.rejected')
-                            ->with('error', 'Your application has been rejected. Please contact support for more information.');
-                    }
-                    break;
-
-                case DriverApplication::STATUS_APPROVED:
-                    // Si la aplicación está aprobada, verificar documentos
-                    if (!$driverDetail->hasRequiredDocuments() && !$request->is('driver/documents*') && !$this->isDriverExemptRoute($request)) {
-                        return redirect()->route('driver.documents.pending')
-                            ->with('warning', 'Please upload required documents.');
-                    }
-                    break;
-            }
-
-            // 4. Accesos restringidos para todos los drivers
+            // Prevenir acceso al área de admin y carrier
             if ($request->is('admin*') || $request->is('carrier*')) {
                 return redirect()->route('driver.dashboard')
                     ->with('warning', 'Access denied to this area.');
@@ -311,12 +351,9 @@ class CheckUserStatus
             'driver/register',
             'driver/register/form',
             'driver/confirm/*',
-            'driver/*',
             'driver/error',
             'driver/quota-exceeded',
             'driver/carrier-status',
-            'driver/pending',
-            'driver/rejected',
             'driver/registration/success',
             'livewire/*',
             'vehicle-verification/*',
@@ -392,26 +429,57 @@ class CheckUserStatus
         return $this->routeMatches($request, $setupRoutes);
     }
 
-    private function isDriverExemptRoute(Request $request): bool
+    /**
+     * Check if the current route is a driver setup route
+     * @param Request $request
+     * @return bool
+     */
+    private function isDriverSetupRoute(Request $request): bool
     {
-        // Rutas que un driver puede acceder aunque su aplicación no esté aprobada
-        $exemptRoutes = [
-            'driver/logout',
-            'driver/profile',
-            'driver/account',
-            'driver/select-carrier',
+        $setupRoutes = [
+            'driver/complete_registration',
             'driver/registration/*',
             'driver/pending',
             'driver/rejected',
-            'driver/documents/*'
+            'driver/documents/*',
+            'driver/profile',
+            'driver/logout',
+            'logout',
+            'livewire/*'
         ];
-
-        foreach ($exemptRoutes as $route) {
+        
+        // Rutas que definitivamente NO son de configuración (requieren verificación completa)
+        $nonSetupRoutes = [
+            'driver/dashboard',
+            'driver/loads/*',
+            'driver/profile/edit'
+        ];
+        
+        // Si la ruta está en la lista de NO configuración, return false inmediatamente
+        foreach ($nonSetupRoutes as $route) {
             if ($request->is($route)) {
-                return true;
+                return false;
             }
         }
-        return false;
+
+        return $this->routeMatches($request, $setupRoutes);
+    }
+
+    /**
+     * Check if the current route is a driver exempt route
+     * @param Request $request
+     * @return bool
+     */
+    private function isDriverExemptRoute(Request $request): bool
+    {
+        $exemptRoutes = [
+            'driver/logout',
+            'driver/profile',
+            'driver/pending',
+            'driver/documents/*',
+        ];
+        
+        return $this->routeMatches($request, $exemptRoutes);
     }
 
     private function routeMatches(Request $request, array $routes): bool

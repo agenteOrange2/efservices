@@ -12,17 +12,17 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
         then: function () {
-            Route::middleware('web', 'auth')
+            Route::middleware('web', 'auth', 'check.role.access:superadmin')
                 ->prefix('admin')
                 ->name('admin.')
                 ->group(base_path('routes/admin.php'));
 
-            Route::middleware(['web'])
+            Route::middleware(['web', 'check.role.access:user_carrier'])
                 ->prefix('carrier')
                 ->name('carrier.')
                 ->group(base_path('routes/carrier.php'));
 
-            Route::middleware(['web'])
+            Route::middleware(['web', 'check.role.access:user_driver'])
                 ->prefix('driver')
                 ->name('driver.')
                 ->group(base_path('routes/driver.php'));
@@ -32,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Registrar alias de middleware
         $middleware->alias([
             'check.user.status' => \App\Http\Middleware\CheckUserStatus::class,
+            'check.role.access' => \App\Http\Middleware\CheckRoleAccess::class,
             'api.rate.limit' => \App\Http\Middleware\ApiRateLimit::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,

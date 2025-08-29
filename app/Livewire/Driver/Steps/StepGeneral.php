@@ -342,7 +342,7 @@ class StepGeneral extends Component
                     'password' => Hash::make($this->password || 'password123'),
                 ]);
 
-                $user->assignRole('driver');
+                $user->assignRole('user_driver');
 
                 // Crear detalles del driver - convertir fecha al formato de base de datos
                 $driver = $user->driverDetails()->create([
@@ -413,7 +413,7 @@ class StepGeneral extends Component
                     'password' => Hash::make($this->password),
                 ]);
 
-                $user->assignRole('driver');
+                $user->assignRole('user_driver');
 
                 // Crear detalles del driver con carrier_id validado
                 $driver = $user->driverDetails()->create([

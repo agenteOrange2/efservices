@@ -76,7 +76,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit traffic violations'
         ]);
 
-        $driver = Role::firstOrCreate(['name' => 'driver']);
+        $driver = Role::firstOrCreate(['name' => 'user_driver']);
         $driver->givePermissionTo([
             'view driver dashboard',
             'view drivers',

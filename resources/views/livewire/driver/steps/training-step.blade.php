@@ -1,3 +1,4 @@
+<div>
 <div class="bg-white p-4 rounded-lg shadow">
     <h3 class="text-lg font-semibold mb-4">Commercial Driver Training Schools</h3>
 
@@ -200,7 +201,7 @@
                             formData.append('file', file);
                             formData.append('type', 'school_certificates');
                             formData.append('driver_id', '{{ $driverId }}');
-                            formData.append('model_id', '{{ $school["id"] }}');
+                            formData.append('model_id', {{ $school['id'] ?? 'null' }});
                             formData.append('model_type', 'training_school');
                             try {
                                 const response = await fetch('/api/documents/upload-certificate-direct', {
@@ -231,12 +232,11 @@
                         event.target.value = '';
                     }
                 }">
-                <label class="block text-sm font-medium mb-1">School Certificates</label>
                 <div class="flex items-center mb-2 mt-4">
-                    <input type="file" id="training_certificate_{{ $index }}"
+                    <input type="file" id="school_certificate_{{ $index }}"
                         @change="uploadCertificate($event)" class="hidden" multiple
                         accept=".pdf,.jpg,.jpeg,.png">
-                    <label for="training_certificate_{{ $index }}"
+                    <label for="school_certificate_{{ $index }}"
                         class="cursor-pointer bg-blue-600 text-white px-3 py-2 rounded-md shadow-sm text-sm hover:bg-blue-700 inline-flex items-center">
                         <span x-show="!isUploading">
                             <i class="fas fa-upload mr-2"></i> Upload Certificate(s)
@@ -254,86 +254,83 @@
                         </span>
                     </label>
                 </div>
-                <!-- Lista de certificados cargados con previsualización -->
-                <div class="mt-6 border-t border-slate-200/60 bg-slate-50" x-data="{}"
-                    x-on:certificates-updated.window="$wire.$refresh()">
-                    <!-- Botón para eliminar todos los certificados, colocado fuera de los bucles -->
-                    @if (isset($school['certificates']) && count($school['certificates']) > 0)
-                    <div class="flex justify-end mb-2">
-                        <button type="button" wire:click="clearAllCertificates({{ $index }})"
-                            class="text-red-500 text-sm hover:text-red-700">
-                            <i class="fas fa-trash mr-1"></i> Eliminar todos los certificados
-                        </button>
+            </div>
+
+            <!-- Certificate List -->
+            <div class="mt-6 border-t border-slate-200/60 bg-slate-50" x-data="{}"
+                x-on:certificates-updated.window="$wire.$refresh()">
+                <!-- Botón para eliminar todos los certificados, colocado fuera de los bucles -->
+                @if (isset($school['certificates']) && count($school['certificates']) > 0)
+                <div class="flex justify-end mb-2">
+                    <button type="button" wire:click="clearAllCertificates({{ $index }})"
+                        class="text-red-500 text-sm hover:text-red-700">
+                        <i class="fas fa-trash mr-1"></i> Eliminar todos los certificados
+                    </button>
+                </div>
+                @endif
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mt-3">
+                    <!-- Temporary Certificate Tokens -->
+                    @if (!empty($school['temp_certificate_tokens']))
+                    @foreach ($school['temp_certificate_tokens'] as $tokenIndex => $token)
+                    <div class="border rounded-md p-2 relative flex flex-col">
+                        <!-- Preview Image -->
+                        <div class="h-24 flex items-center justify-center mb-2 bg-gray-50 rounded">
+                            @if (isset($token['preview_url']) && Str::startsWith($token['file_type'] ?? '', 'image/'))
+                            <img src="{{ $token['preview_url'] }}" class="object-contain h-full w-full"
+                                alt="Certificate preview">
+                            @else
+                            <div class="flex flex-col items-center justify-center">
+                                <i class="fas fa-file-pdf text-red-500 text-3xl mb-1"></i>
+                                <span class="text-xs text-gray-600">PDF Document</span>
+                            </div>
+                            @endif
+                        </div>
+                        <!-- Info del archivo y botón eliminar -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 overflow-hidden">
+                                <span class="text-sm truncate block">{{ $token['filename'] }}</span>
+                            </div>
+                            <button type="button"
+                                wire:click="removeCertificate({{ $index }}, {{ $tokenIndex }})"
+                                class="text-red-500 hover:text-red-700 ml-2">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
+                    @endforeach
                     @endif
 
-                    <!-- Grid de certificados -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                        <!-- Certificados temporales -->
-                        @if (isset($school['temp_certificate_tokens']))
-                        @foreach ($school['temp_certificate_tokens'] ?? [] as $tokenIndex => $certFile)
-                        <div class="flex flex-col bg-gray-50 p-2 rounded mb-1 relative">
-                            <!-- Miniatura -->
-                            <div
-                                class="w-full h-32 mb-2 bg-gray-200 flex items-center justify-center rounded overflow-hidden">
-                                @if (isset($certFile['preview_url']) && Str::startsWith($certFile['file_type'] ?? '', 'image/'))
-                                <img src="{{ $certFile['preview_url'] }}"
-                                    class="object-contain h-full w-full" alt="Certificate preview">
-                                @else
-                                <div class="flex flex-col items-center justify-center">
-                                    <i class="fas fa-file-pdf text-red-500 text-3xl mb-1"></i>
-                                    <span class="text-xs text-gray-600">PDF Document</span>
-                                </div>
-                                @endif
+                    <!-- Existing Certificates -->
+                    @if (!empty($school['certificates']))
+                    @foreach ($school['certificates'] as $cert)
+                    <div class="border rounded-md p-2 relative flex flex-col">
+                        <!-- Preview Image -->
+                        <div class="h-24 flex items-center justify-center mb-2 bg-gray-50 rounded">
+                            @if ($cert['is_image'])
+                            <img src="{{ $cert['url'] }}" class="object-contain h-full w-full"
+                                alt="Certificate preview">
+                            @else
+                            <div class="flex flex-col items-center justify-center">
+                                <i class="fas fa-file-pdf text-red-500 text-3xl mb-1"></i>
+                                <span class="text-xs text-gray-600">PDF Document</span>
                             </div>
-                            <!-- Info del archivo y botón eliminar -->
-                            <div class="flex items-center justify-between">
-                                <div class="flex-1 overflow-hidden">
-                                    <span
-                                        class="text-sm truncate block">{{ $certFile['filename'] ?? 'Document' }}</span>
-                                </div>
-                                <button type="button"
-                                    wire:click="removeCertificate({{ $index }}, {{ $tokenIndex }})"
-                                    class="text-red-500 hover:text-red-700 ml-2">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
+                            @endif
                         </div>
-                        @endforeach
-                        @endif
-
-                        <!-- Certificados existentes -->
-                        @if (isset($school['certificates']))
-                        @foreach ($school['certificates'] ?? [] as $cert)
-                        <div class="flex flex-col bg-gray-50 p-2 rounded mb-1 relative">
-                            <!-- Miniatura -->
-                            <div
-                                class="w-full h-32 mb-2 bg-gray-200 flex items-center justify-center rounded overflow-hidden">
-                                @if ($cert['is_image'])
-                                <img src="{{ $cert['url'] }}" class="object-contain h-full w-full"
-                                    alt="Certificate preview">
-                                @else
-                                <div class="flex flex-col items-center justify-center">
-                                    <i class="fas fa-file-pdf text-red-500 text-3xl mb-1"></i>
-                                    <span class="text-xs text-gray-600">PDF Document</span>
-                                </div>
-                                @endif
+                        <!-- Info del archivo y botón eliminar -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 overflow-hidden">
+                                <span class="text-sm truncate block">{{ $cert['filename'] }}</span>
                             </div>
-                            <!-- Info del archivo y botón eliminar -->
-                            <div class="flex items-center justify-between">
-                                <div class="flex-1 overflow-hidden">
-                                    <span class="text-sm truncate block">{{ $cert['filename'] }}</span>
-                                </div>
-                                <button type="button"
-                                    wire:click="removeCertificateById({{ $index }}, {{ $cert['id'] }})"
-                                    class="text-red-500 hover:text-red-700 ml-2">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
+                            <button type="button"
+                                wire:click="removeCertificateById({{ $index }}, {{ $cert['id'] }})"
+                                class="text-red-500 hover:text-red-700 ml-2">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
-                        @endforeach
-                        @endif
                     </div>
+                    @endforeach
+                    @endif
                 </div>
             </div>
             @endif
@@ -342,368 +339,349 @@
             <div class="my-4 flex gap-2">
                 @if(empty($school['id']))
                 <button type="button" wire:click="createTrainingSchool({{ $index }})"
-                    class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                    <i class="fas fa-plus mr-1"></i> New School
+                    class="border border-green-700 px-4 py-2 rounded text-primary hover:text-white hover:bg-green-700 transition">
+                    New Training School
                 </button>
                 @else
                 <button type="button" wire:click="updateTrainingSchool({{ $index }})"
                     class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    <i class="fas fa-edit mr-1"></i> Update School
+                    Update Training School
+                </button>
+                @endif
+            </div>
+        </div>
+        @endforeach
+
+        <button type="button" wire:click="addTrainingSchool"
+            class="border border-primary/50 px-4 py-2 rounded text-primary hover:text-white hover:bg-primary transition">
+            <i class="fas fa-plus mr-1"></i> Add Another Training School
+        </button>
+    </div>
+</div>
+<!-- END TRAINING SCHOOLS SECTION -->
+
+<!-- COURSES SECTION -->
+<div class="bg-white p-4 rounded-lg shadow mt-6">
+    <h3 class="text-lg font-semibold mb-4">Professional Courses and Certifications</h3>
+
+    <div class="mb-6">
+        <label class="inline-flex items-center cursor-pointer">
+            <input type="checkbox" wire:model.live="has_completed_courses" class="sr-only peer">
+            <div
+                class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
+            </div>
+            <span class="ms-3 text-sm font-medium">Have you completed any professional courses or certifications?</span>
+        </label>
+    </div>
+
+    <div x-show="$wire.has_completed_courses" x-transition>
+        @foreach ($courses as $index => $course)
+        <div class="border p-4 rounded-lg mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="font-medium">Course/Certification #{{ $index + 1 }}</h4>
+                @if (count($courses) > 1)
+                <button type="button" wire:click="removeCourse({{ $index }})"
+                    class="text-red-500 text-sm">
+                    <i class="fas fa-trash mr-1"></i> Remove
                 </button>
                 @endif
             </div>
 
-            @endforeach
-
-            <button type="button" wire:click="addTrainingSchool"
-                class="border border-primary/50 px-4 py-2 rounded text-primary hover:text-white hover:bg-primary transition">
-                <i class="fas fa-plus mr-1"></i> Add Another Training School
-            </button>
-        </div>
-    </div>
-
-    <!-- COURSES SECTION -->
-    <div class="mt-10 mb-6 border-t pt-6">
-            <h3 class="text-lg font-semibold mb-4">Professional Courses and Certifications</h3>
-
-            <div class="mb-6">
-                <label class="inline-flex items-center cursor-pointer">
-                    <input type="checkbox" wire:model.live="has_completed_courses" class="sr-only peer">
-                    <div
-                        class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
-                    </div>
-                    <span class="ms-3 text-sm font-medium">Have you completed any professional courses or certifications?</span>
-                </label>
+            <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Organization Name <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" wire:model="courses.{{ $index }}.organization_name"
+                        class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
+                        placeholder="Name of organization">
+                    @error("courses.{$index}.organization_name")
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                    @enderror
+                </div>
             </div>
 
-            <div x-show="$wire.has_completed_courses" x-transition>
-                @foreach ($courses as $index => $course)
-                <div class="border p-4 rounded-lg mb-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h4 class="font-medium">Course/Certification #{{ $index + 1 }}</h4>
-                        @if (count($courses) > 1)
-                        <button type="button" wire:click="removeCourse({{ $index }})"
-                            class="text-red-500 text-sm">
-                            <i class="fas fa-trash mr-1"></i> Remove
-                        </button>
-                        @endif
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">City <span class="text-red-500">*</span></label>
+                    <input type="text" wire:model="courses.{{ $index }}.city"
+                        class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" placeholder="City">
+                    @error("courses.{$index}.city")
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                    @enderror
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">State <span class="text-red-500">*</span></label>
+                    <select wire:model="courses.{{ $index }}.state"
+                        class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                        <option value="">Select State</option>
+                        @foreach ($usStates as $code => $name)
+                        <option value="{{ $code }}">{{ $name }}</option>
+                        @endforeach
+                    </select>
+                    @error("courses.{$index}.state")
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                    @enderror
+                </div>
+            </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4">
-                        <div x-data="{ showOtherField: {{ in_array($course['organization_name'] ?? '', ['H2S', 'PEC', 'SANDTRAX', 'OSHA10', 'OSHA30']) ? 'false' : 'true' }} }">
-                            <label class="block text-sm font-medium mb-1">Organization Name <span class="text-red-500">*</span></label>
-                            <select wire:model="courses.{{ $index }}.organization_name"
-                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8"
-                                x-on:change="showOtherField = ($event.target.value === 'Other')">
-                                <option value="">Select Organization</option>
-                                <option value="H2S">H2S</option>
-                                <option value="PEC">PEC</option>
-                                <option value="SANDTRAX">SANDTRAX</option>
-                                <option value="OSHA10">OSHA10</option>
-                                <option value="OSHA30">OSHA30</option>
-                                <option value="Other">Other</option>
-                            </select>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Expiration Date</label>
+                    <x-unified-date-picker
+                        name="courses.{{ $index }}.expiration_date"
+                        wireModel="courses.{{ $index }}.expiration_date"
+                        value="{{ $course['expiration_date'] ?? '' }}"
+                        placeholder="MM/DD/YYYY"
+                        class="w-full" />
+                    @error("courses.{$index}.expiration_date")
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                    @enderror
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Certification Date</label>
+                    <x-unified-date-picker
+                        name="courses.{{ $index }}.certification_date"
+                        wireModel="courses.{{ $index }}.certification_date"
+                        value="{{ $course['certification_date'] ?? '' }}"
+                        placeholder="MM/DD/YYYY"
+                        class="w-full" />
+                    @error("courses.{$index}.certification_date")
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                    @enderror
+                </div>
+            </div>
 
-                            <!-- Campo para "Other" que se muestra condicionalmente -->
-                            <div x-show="showOtherField" class="mt-2">
-                                <input type="text" wire:model="courses.{{ $index }}.organization_name_other"
-                                    class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
-                                    placeholder="Specify organization name">
-                            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Years of Experience</label>
+                <input type="number" wire:model="courses.{{ $index }}.years_experience"
+                    class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
+                    placeholder="Years of experience" min="0" step="0.1">
+                @error("courses.{$index}.years_experience")
+                <span class="text-red-500 text-sm">{{ $message }}</span>
+                @enderror
+            </div>
 
-                            @error("courses.{$index}.organization_name")
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
+            @if(empty($course['id']))
+            <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p class="text-sm text-yellow-800">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Debe crear el curso antes de poder subir certificados.
+                </p>
+            </div>
+            @endif
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">City <span class="text-red-500">*</span></label>
-                            <input type="text" wire:model="courses.{{ $index }}.city"
-                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" placeholder="City">
-                            @error("courses.{$index}.city")
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">State <span class="text-red-500">*</span></label>
-                            <select wire:model="courses.{{ $index }}.state"
-                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
-                                <option value="">Select State</option>
-                                @foreach ($usStates as $code => $name)
-                                <option value="{{ $code }}">{{ $name }}</option>
-                                @endforeach
-                            </select>
-                            @error("courses.{$index}.state")
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Expiration Date (Optional)</label>
-                            <x-unified-date-picker
-                                name="courses[{{ $index }}][expiration_date]"
-                                wireModel="courses.{{ $index }}.expiration_date"
-                                :value="$course['expiration_date'] ?? ''"
-                                placeholder="MM/DD/YYYY" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Certification Date <span
-                                    class="text-red-500">*</span></label>
-                            <x-unified-date-picker
-                                name="courses[{{ $index }}][certification_date]"
-                                wireModel="courses.{{ $index }}.certification_date"
-                                :value="$course['certification_date'] ?? ''"
-                                placeholder="MM/DD/YYYY" />
-                            @error("courses.{$index}.certification_date")
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="w-full gap-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Experience</label>
-                            <textarea wire:model="courses.{{ $index }}.experience"
-                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
-                                placeholder="Describe your experience" rows="3"></textarea>
-                        </div>
-                    </div>
-
-                    @if(empty($course['id']))
-                    <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                        <p class="text-sm text-yellow-800">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Debe crear el curso antes de poder subir certificados.
-                        </p>
-                    </div>
-                    @endif
-                    <!-- Course Certificates Section -->
-                    @if(!empty($course['id']))
-                    <div class="mt-6">
-                        <h5 class="text-sm font-semibold mb-2">Upload Course Certificates</h5>
-                        <div class="mb-4" x-data="{
-                            isUploading: false,
-                            async uploadCourseCertificate(event) {
-                                const files = event.target.files;
-                                if (!files || files.length === 0) return;
-                                
-                                // Verificar que el curso tenga un ID antes de permitir la subida
-                                const courseId = '{{ $course["id"] ?? "" }}';
-                                if (!courseId) {
-                                    alert('Debe crear el curso antes de subir certificados.');
-                                    event.target.value = '';
-                                    return;
-                                }
-                                
-                                this.isUploading = true;
-                                for (let i = 0; i < files.length; i++) {
-                                    const file = files[i];
-                                    // Validar tamaño del archivo
-                                    if (file.size > 2 * 1024 * 1024) {
-                                        alert('File size must be less than 2MB');
-                                        continue;
-                                    }
-                                    // Preparar FormData
-                                    const formData = new FormData();
-                                    formData.append('file', file);
-                                    formData.append('type', 'course_certificates');
-                                    formData.append('driver_id', '{{ $driverId }}');
-                                    formData.append('model_id', courseId);
-                                    formData.append('model_type', 'course');
-                                    try {
-                                        const response = await fetch('/api/documents/upload-certificate-direct', {
-                                            method: 'POST',
-                                            body: formData,
-                                            headers: {
-                                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                                'Accept': 'application/json'
-                                            }
-                                        });
-                        
-                                        if (response.ok) {
-                                            const data = await response.json();
-                                            // Refrescar la vista para mostrar el nuevo certificado
-                                            @this.call('refreshCourseCertificates', {{ $index }});
-                                            // Disparar evento para actualizar la vista automáticamente
-                                            window.dispatchEvent(new CustomEvent('certificates-updated'));
-                                        } else {
-                                            console.error('Error uploading file:', await response.text());
-                                            alert('Error uploading file. Please try again.');
-                                        }
-                                    } catch (error) {
-                                        console.error('Error:', error);
-                                        alert('Error uploading file. Please try again.');
-                                    }
-                                }
-                                this.isUploading = false;
-                                event.target.value = '';
+            <!-- Certificate Uploads -->
+            @if(!empty($course['id']))
+            <div class="mb-4" x-data="{
+                    isUploading: false,
+                    async uploadCourseCertificate(event) {
+                        const files = event.target.files;
+                        if (!files || files.length === 0) return;
+                        this.isUploading = true;
+                        const courseId = {{ $course['id'] ?? 'null' }};
+                        for (let i = 0; i < files.length; i++) {
+                            const file = files[i];
+                            // Validar tamaño del archivo
+                            if (file.size > 2 * 1024 * 1024) {
+                                alert('File size must be less than 2MB');
+                                continue;
                             }
-                        }">
-                            <div class="flex items-center mb-2 mt-4">
-                                <input type="file" id="course_certificate_{{ $index }}"
-                                    @change="uploadCourseCertificate($event)" class="hidden" multiple
-                                    accept=".pdf,.jpg,.jpeg,.png">
-                                <label for="course_certificate_{{ $index }}"
-                                    class="cursor-pointer bg-blue-600 text-white px-3 py-2 rounded-md shadow-sm text-sm hover:bg-blue-700 inline-flex items-center">
-                                    <span x-show="!isUploading">
-                                        <i class="fas fa-upload mr-2"></i> Upload Certificate(s)
-                                    </span>
-                                    <span x-show="isUploading" class="flex items-center">
-                                        <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
-                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10"
-                                                stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor"
-                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                            </path>
-                                        </svg>
-                                        Uploading...
-                                    </span>
-                                </label>
-                            </div>
-                        </div>
+                            // Preparar FormData
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            formData.append('type', 'course_certificates');
+                            formData.append('driver_id', '{{ $driverId }}');
+                            formData.append('model_id', courseId);
+                            formData.append('model_type', 'course');
+                            try {
+                                const response = await fetch('/api/documents/upload-certificate-direct', {
+                                    method: 'POST',
+                                    body: formData,
+                                    headers: {
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                        'Accept': 'application/json'
+                                    }
+                                });
+                
+                                if (response.ok) {
+                                    const data = await response.json();
+                                    // Refrescar la vista para mostrar el nuevo certificado
+                                    @this.call('refreshCourseCertificates', {{ $index }});
+                                    // Disparar evento para actualizar la vista automáticamente
+                                    window.dispatchEvent(new CustomEvent('certificates-updated'));
+                                } else {
+                                    console.error('Error uploading file:', await response.text());
+                                    alert('Error uploading file. Please try again.');
+                                }
+                            } catch (error) {
+                                console.error('Error:', error);
+                                alert('Error uploading file. Please try again.');
+                            }
+                        }
+                        this.isUploading = false;
+                        event.target.value = '';
+                    }
+                }">
+                <div class="flex items-center mb-2 mt-4">
+                    <input type="file" id="course_certificate_{{ $index }}"
+                        @change="uploadCourseCertificate($event)" class="hidden" multiple
+                        accept=".pdf,.jpg,.jpeg,.png">
+                    <label for="course_certificate_{{ $index }}"
+                        class="cursor-pointer bg-blue-600 text-white px-3 py-2 rounded-md shadow-sm text-sm hover:bg-blue-700 inline-flex items-center">
+                        <span x-show="!isUploading">
+                            <i class="fas fa-upload mr-2"></i> Upload Certificate(s)
+                        </span>
+                        <span x-show="isUploading" class="flex items-center">
+                            <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                    stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            Uploading...
+                        </span>
+                    </label>
+                </div>
+            </div>
 
-                        <!-- Certificate List -->
-                        <div class="mt-6 border-t border-slate-200/60 bg-slate-50" x-data="{}"
-                            x-on:certificates-updated.window="$wire.$refresh()">
-                            <!-- Botón para eliminar todos los certificados, colocado fuera de los bucles -->
-                            @if (isset($course['certificates']) && count($course['certificates']) > 0)
-                            <div class="flex justify-end mb-2">
-                                <button type="button" wire:click="clearAllCourseCertificates({{ $index }})"
-                                    class="text-red-500 text-sm hover:text-red-700">
-                                    <i class="fas fa-trash mr-1"></i> Eliminar todos los certificados
-                                </button>
-                            </div>
-                            @endif
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mt-3">
-                                <!-- Temporary Certificate Tokens -->
-                                @if (!empty($course['temp_certificate_tokens']))
-                                @foreach ($course['temp_certificate_tokens'] as $tokenIndex => $token)
-                                <div class="border rounded-md p-2 relative flex flex-col">
-                                    <!-- Preview Image -->
-                                    <div class="h-24 flex items-center justify-center mb-2 bg-gray-50 rounded">
-                                        @if (isset($token['preview_url']) && Str::startsWith($token['file_type'] ?? '', 'image/'))
-                                        <img src="{{ $token['preview_url'] }}" class="object-contain h-full w-full"
-                                            alt="Certificate preview">
-                                        @else
-                                        <div class="flex flex-col items-center justify-center">
-                                            <i class="fas fa-file-pdf text-red-500 text-3xl mb-1"></i>
-                                            <span class="text-xs text-gray-600">PDF Document</span>
-                                        </div>
-                                        @endif
-                                    </div>
-                                    <!-- Info del archivo y botón eliminar -->
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex-1 overflow-hidden">
-                                            <span class="text-sm truncate block">{{ $token['filename'] }}</span>
-                                        </div>
-                                        <button type="button"
-                                            wire:click="removeCourseCertificate({{ $index }}, {{ $tokenIndex }})"
-                                            class="text-red-500 hover:text-red-700 ml-2">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                @endforeach
-                                @endif
-
-                                <!-- Existing Certificates -->
-                                @if (!empty($course['certificates']))
-                                @foreach ($course['certificates'] as $cert)
-                                <div class="border rounded-md p-2 relative flex flex-col">
-                                    <!-- Preview Image -->
-                                    <div class="h-24 flex items-center justify-center mb-2 bg-gray-50 rounded">
-                                        @if ($cert['is_image'])
-                                        <img src="{{ $cert['url'] }}" class="object-contain h-full w-full"
-                                            alt="Certificate preview">
-                                        @else
-                                        <div class="flex flex-col items-center justify-center">
-                                            <i class="fas fa-file-pdf text-red-500 text-3xl mb-1"></i>
-                                            <span class="text-xs text-gray-600">PDF Document</span>
-                                        </div>
-                                        @endif
-                                    </div>
-                                    <!-- Info del archivo y botón eliminar -->
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex-1 overflow-hidden">
-                                            <span class="text-sm truncate block">{{ $cert['filename'] }}</span>
-                                        </div>
-                                        <button type="button"
-                                            wire:click="removeCertificateByIdFromCourse({{ $index }}, {{ $cert['id'] }})"
-                                            class="text-red-500 hover:text-red-700 ml-2">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                @endforeach
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-
-                    <!-- Create/Update Buttons - Moved after certificate preview -->
-                    <div class="my-4 flex gap-2">
-                        @if(empty($course['id']))
-                        <button type="button" wire:click="createCourse({{ $index }})"
-                            class="border border-green-700 px-4 py-2 rounded text-primary hover:text-white hover:bg-green-700 transition">                            New Course
-                        </button>
-                        @else
-                        <button type="button" wire:click="updateCourse({{ $index }})"
-                            class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                            Updated Course
-                        </button>
-                        @endif
-                    </div>
-                    @endforeach
-
-                    <button type="button" wire:click="addCourse"
-                        class="border border-primary/50 px-4 py-2 rounded text-primary hover:text-white hover:bg-primary transition">
-                        <i class="fas fa-plus mr-1"></i> Add Another Course/Certification
+            <!-- Certificate List -->
+            <div class="mt-6 border-t border-slate-200/60 bg-slate-50" x-data="{}"
+                x-on:certificates-updated.window="$wire.$refresh()">
+                <!-- Botón para eliminar todos los certificados, colocado fuera de los bucles -->
+                @if (isset($course['certificates']) && count($course['certificates']) > 0)
+                <div class="flex justify-end mb-2">
+                    <button type="button" wire:click="clearAllCourseCertificates({{ $index }})"
+                        class="text-red-500 text-sm hover:text-red-700">
+                        <i class="fas fa-trash mr-1"></i> Eliminar todos los certificados
                     </button>
                 </div>
-            </div>
-        </div>
-        <!-- END COURSES SECTION -->
+                @endif
 
-        <!-- Navigation Buttons -->
-            <div class="mt-8 px-5 py-5 border-t border-slate-200/60 dark:border-darkmode-400">
-                <div class="flex flex-col sm:flex-row justify-between gap-4">
-                    <div class="w-full sm:w-auto">
-                        <x-base.button type="button" wire:click="previous" class="w-full sm:w-44" variant="secondary">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20"
-                                fill="currentColor">
-                                <path fill-rule="evenodd"
-                                    d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z"
-                                    clip-rule="evenodd" />
-                            </svg> Previous
-                        </x-base.button>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mt-3">
+                    <!-- Temporary Certificate Tokens -->
+                    @if (!empty($course['temp_certificate_tokens']))
+                    @foreach ($course['temp_certificate_tokens'] as $tokenIndex => $token)
+                    <div class="border rounded-md p-2 relative flex flex-col">
+                        <!-- Preview Image -->
+                        <div class="h-24 flex items-center justify-center mb-2 bg-gray-50 rounded">
+                            @if (isset($token['preview_url']) && Str::startsWith($token['file_type'] ?? '', 'image/'))
+                            <img src="{{ $token['preview_url'] }}" class="object-contain h-full w-full"
+                                alt="Certificate preview">
+                            @else
+                            <div class="flex flex-col items-center justify-center">
+                                <i class="fas fa-file-pdf text-red-500 text-3xl mb-1"></i>
+                                <span class="text-xs text-gray-600">PDF Document</span>
+                            </div>
+                            @endif
+                        </div>
+                        <!-- Info del archivo y botón eliminar -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 overflow-hidden">
+                                <span class="text-sm truncate block">{{ $token['filename'] }}</span>
+                            </div>
+                            <button type="button"
+                                wire:click="removeCourseCertificate({{ $index }}, {{ $tokenIndex }})"
+                                class="text-red-500 hover:text-red-700 ml-2">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                        <x-base.button type="button" wire:click="saveAndExit" class="w-full sm:w-44 text-white"
-                            variant="warning">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20"
-                                fill="currentColor">
-                                <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5L9 4H4z" />
-                            </svg>
-                            Save & Exit
-                        </x-base.button>
-                        <x-base.button type="button" wire:click="next" class="w-full sm:w-44" variant="primary">
-                            Next
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20"
-                                fill="currentColor">
-                                <path fill-rule="evenodd"
-                                    d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </x-base.button>
+                    @endforeach
+                    @endif
+
+                    <!-- Existing Certificates -->
+                    @if (!empty($course['certificates']))
+                    @foreach ($course['certificates'] as $cert)
+                    <div class="border rounded-md p-2 relative flex flex-col">
+                        <!-- Preview Image -->
+                        <div class="h-24 flex items-center justify-center mb-2 bg-gray-50 rounded">
+                            @if ($cert['is_image'])
+                            <img src="{{ $cert['url'] }}" class="object-contain h-full w-full"
+                                alt="Certificate preview">
+                            @else
+                            <div class="flex flex-col items-center justify-center">
+                                <i class="fas fa-file-pdf text-red-500 text-3xl mb-1"></i>
+                                <span class="text-xs text-gray-600">PDF Document</span>
+                            </div>
+                            @endif
+                        </div>
+                        <!-- Info del archivo y botón eliminar -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 overflow-hidden">
+                                <span class="text-sm truncate block">{{ $cert['filename'] }}</span>
+                            </div>
+                            <button type="button"
+                                wire:click="removeCertificateByIdFromCourse({{ $index }}, {{ $cert['id'] }})"
+                                class="text-red-500 hover:text-red-700 ml-2">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
+                    @endforeach
+                    @endif
                 </div>
             </div>
+            @endif
+
+            <!-- Create/Update Buttons - Moved after certificate preview -->
+            <div class="my-4 flex gap-2">
+                @if(empty($course['id']))
+                <button type="button" wire:click="createCourse({{ $index }})"
+                    class="border border-green-700 px-4 py-2 rounded text-primary hover:text-white hover:bg-green-700 transition">
+                    New Course
+                </button>
+                @else
+                <button type="button" wire:click="updateCourse({{ $index }})"
+                    class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Updated Course
+                </button>
+                @endif
+            </div>
+        </div>
+        @endforeach
+
+        <button type="button" wire:click="addCourse"
+            class="border border-primary/50 px-4 py-2 rounded text-primary hover:text-white hover:bg-primary transition">
+            <i class="fas fa-plus mr-1"></i> Add Another Course/Certification
+        </button>
+    </div>
+</div>
+<!-- END COURSES SECTION -->
+
+<!-- Navigation Buttons -->
+<div class="mt-8 px-5 py-5 border-t border-slate-200/60 dark:border-darkmode-400">
+    <div class="flex flex-col sm:flex-row justify-between gap-4">
+        <div class="w-full sm:w-auto">
+            <x-base.button type="button" wire:click="previous" class="w-full sm:w-44" variant="secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20"
+                    fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z"
+                        clip-rule="evenodd" />
+                </svg> Previous
+            </x-base.button>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            <x-base.button type="button" wire:click="saveAndExit" class="w-full sm:w-44 text-white"
+                variant="warning">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20"
+                    fill="currentColor">
+                    <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5L9 4H4z" />
+                </svg>
+                Save & Exit
+            </x-base.button>
+            <x-base.button type="button" wire:click="next" class="w-full sm:w-44" variant="primary">
+                Next
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20"
+                    fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                </svg>
+            </x-base.button>
         </div>
     </div>
+</div>
 </div>

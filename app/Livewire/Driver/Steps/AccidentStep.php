@@ -273,7 +273,7 @@ class AccidentStep extends Component
 
             // Crear el accidente en la base de datos
             $driverAccident = \App\Models\Admin\Driver\DriverAccident::create([
-                'driver_id' => $this->driverId,
+                'user_driver_detail_id' => $this->driverId,
                 'accident_date' => $accident['accident_date'],
                 'nature_of_accident' => $accident['nature_of_accident'],
                 'had_injuries' => $accident['had_injuries'] ?? false,
@@ -287,7 +287,7 @@ class AccidentStep extends Component
             $this->accidents[$index]['id'] = $driverAccident->id;
 
             // Actualizar has_accidents en driver_details
-            $userDriverDetail = \App\Models\Admin\Driver\UserDriverDetail::where('driver_id', $this->driverId)->first();
+            $userDriverDetail = \App\Models\UserDriverDetail::where('driver_id', $this->driverId)->first();
             if ($userDriverDetail) {
                 $userDriverDetail->update(['has_accidents' => true]);
             }

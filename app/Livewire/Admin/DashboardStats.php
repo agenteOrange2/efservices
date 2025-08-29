@@ -246,7 +246,7 @@ class DashboardStats extends Component
                     'id' => $userDriver->id,
                     'name' => $userDriver->user?->name ?? 'N/A',
                     'email' => $userDriver->user?->email ?? 'N/A',
-                    'role' => 'driver',
+                    'role' => 'user_driver',
                     'carrier' => $userDriver->carrier?->name ?? 'N/A',
                     'status' => $this->getStatusBadge($userDriver->status),
                     'created_at' => $userDriver->created_at->format('d M Y'),

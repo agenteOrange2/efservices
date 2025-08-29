@@ -11,8 +11,8 @@ use App\Http\Controllers\Driver\RegistrationController;
 use App\Http\Controllers\Auth\DriverRegistrationController;
 
 
-// Rutas para el módulo de entrenamientos del conductor
-Route::middleware('auth')->prefix('trainings')->name('driver.trainings.')->group(function () {
+// Rutas para el módulo de entrenamientos del conductor (requieren verificación de estado)
+Route::middleware(['auth', 'check.user.status'])->prefix('trainings')->name('driver.trainings.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Driver\DriverTrainingController::class, 'index'])->name('index');
     Route::get('/{driverTraining}', [\App\Http\Controllers\Driver\DriverTrainingController::class, 'show'])->name('show');
     Route::post('/{driverTraining}/complete', [\App\Http\Controllers\Driver\DriverTrainingController::class, 'complete'])->name('complete');
@@ -89,8 +89,8 @@ Route::get('/register/{carrier:slug}/token/{token}', App\Livewire\Driver\DriverR
     ->name('referred.registration');
 
 
-// Para la selección de carrier después de confirmar email
-Route::middleware(['auth'])->group(function () {
+// Rutas protegidas (requieren autenticación y verificación de estado del usuario)
+Route::middleware(['auth', 'check.user.status'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     // Estados de aplicación
@@ -106,32 +106,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/select-carrier', [DriverRegistrationController::class, 'showSelectCarrier'])->name('select_carrier');
     Route::post('/select-carrier', [DriverRegistrationController::class, 'selectCarrier'])->name('select_carrier.submit');
 
-    // La ruta de carga de archivos temporales se ha movido fuera del grupo de autenticación
-});
-
-Route::post('/temp-upload', [TempUploadController::class, 'upload'])
-    ->name('driver.temp.upload')
-    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
-
-
-// This route is now handled within the auth middleware group above
-
-
-
-// Rutas protegidas (requieren autenticación y rol de driver)
-Route::middleware(['auth'])->group(function () {
-    // Dashboard
-    Route::get('dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard');
-
-    // Estado pendiente    
-
     // Status routes
     Route::get('/carrier-status', function () {
         return view('driver.status.carrier');
     })->name('carrier.status');
-
-    Route::get('/documents-pending', function () {
-        return view('driver.status.documents-pending');
-    })->name('documents.pending');
 });
+
+// Ruta de carga temporal (sin CSRF para uploads AJAX)
+Route::post('/temp-upload', [TempUploadController::class, 'upload'])
+    ->name('driver.temp.upload')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);

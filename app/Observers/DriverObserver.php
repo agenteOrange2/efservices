@@ -42,3 +42,8 @@ class DriverObserver
     /**
      * Handle the Driver "force deleted" event.
      */
+    public function forceDeleted(Driver $driver): void
+    {
+        CacheInvalidationService::invalidateDriverCache($driver->id);
+    }
+}
