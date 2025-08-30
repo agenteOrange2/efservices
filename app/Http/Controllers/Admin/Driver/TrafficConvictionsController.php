@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Validation\Rule;
 use App\Models\Admin\Driver\DriverTrafficConviction;
 
 class TrafficConvictionsController extends Controller
@@ -160,14 +161,30 @@ class TrafficConvictionsController extends Controller
         try {
             $validated = $request->validate([
                 'user_driver_detail_id' => 'required|exists:user_driver_details,id',
-                'conviction_date' => 'required|date',
+                'conviction_date' => [
+                    'required',
+                    'date',
+                    Rule::unique('driver_traffic_convictions')
+                        ->where('user_driver_detail_id', $request->user_driver_detail_id)
+                        ->where('location', $request->location)
+                        ->where('charge', $request->charge)
+                ],
                 'location' => 'required|string|max:255',
                 'charge' => 'required|string|max:255',
                 'penalty' => 'required|string|max:255',
+            ], [
+                'conviction_date.unique' => 'Esta infracción de tráfico ya existe para este conductor.'
             ]);
 
-            $conviction = new DriverTrafficConviction($validated);
-            $conviction->save();
+            $conviction = DriverTrafficConviction::firstOrCreate(
+                [
+                    'user_driver_detail_id' => $validated['user_driver_detail_id'],
+                    'conviction_date' => $validated['conviction_date'],
+                    'location' => $validated['location'],
+                    'charge' => $validated['charge'],
+                ],
+                $validated
+            );
 
             // Procesar los archivos subidos vía Livewire usando nuestro nuevo método
             $files = $request->get('traffic_image_files');

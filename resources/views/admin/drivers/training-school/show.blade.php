@@ -225,10 +225,10 @@
                                         <td>{{ $document->created_at->format('m/d/Y H:i') }}</td>
                                         <td>
                                             <div class="flex justify-center items-center">
-                                                <a href="{{ route('admin.training-schools.documents.preview', $document->id) }}" target="_blank" class="flex items-center text-primary mr-3" title="View">
+                                                <a href="{{ route('admin.training-schools.docs.preview', $document->id) }}" target="_blank" class="flex items-center text-primary mr-3" title="View">
                                                     <x-base.lucide class="w-4 h-4" icon="eye" />
                                                 </a>
-                                                <a href="{{ route('admin.training-schools.documents.preview', $document->id) }}?download=true" class="flex items-center text-info mr-3" title="Download">
+                                                <a href="{{ route('admin.training-schools.docs.preview', $document->id) }}?download=true" class="flex items-center text-info mr-3" title="Download">
                                                     <x-base.lucide class="w-4 h-4" icon="download" />
                                                 </a>
                                                 <button type="button" 
@@ -250,7 +250,7 @@
                                                                 This process cannot be undone.
                                                             </div>
                                                         </div>
-                                                        <form action="{{ route('admin.training-schools.documents.delete', $document->id) }}" method="POST" class="px-5 pb-8 text-center">
+                                                        <form action="{{ route('admin.training-schools.docs.delete', $document->id) }}" method="POST" class="px-5 pb-8 text-center">
                                                             @csrf
                                                             @method('DELETE')
                                                             <x-base.button data-tw-dismiss="modal" type="button" variant="outline-secondary" class="mr-1 w-24">

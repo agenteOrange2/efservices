@@ -131,7 +131,7 @@
                             class="mr-2">
                             Cancel
                         </x-base.button>
-                        <x-base.button type="submit" variant="primary">
+                        <x-base.button type="submit" variant="primary" id="submit-btn">
                             Create Conviction
                         </x-base.button>
                     </div>
@@ -262,6 +262,29 @@
                                 driverSelect.dispatchEvent(new Event('change'));
                             });
                     }
+                });
+
+                // Protección contra doble clic en el botón de submit
+                const form = document.querySelector('form');
+                const submitBtn = document.getElementById('submit-btn');
+                let isSubmitting = false;
+
+                form.addEventListener('submit', function(e) {
+                    if (isSubmitting) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    
+                    isSubmitting = true;
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Creating...';
+                    
+                    // Reactivar el botón después de 5 segundos como medida de seguridad
+                    setTimeout(() => {
+                        isSubmitting = false;
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = 'Create Conviction';
+                    }, 5000);
                 });
             });
         </script>

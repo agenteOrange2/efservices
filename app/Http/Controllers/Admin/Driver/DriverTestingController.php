@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin\Driver;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreDriverTestingRequest;
+use App\Http\Requests\UpdateDriverTestingRequest;
 use App\Models\Admin\Driver\DriverTesting;
 use App\Models\UserDriverDetail;
 use App\Models\Carrier;
@@ -116,20 +118,10 @@ class DriverTestingController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreDriverTestingRequest $request)
     {
         // Log para debug
-        Log::info('Driver Testing Store - Request data', ['files' => $request->driver_testing_files]);        
-
-        $request->validate([
-            'user_driver_detail_id' => 'required|exists:user_driver_details,id',
-            'carrier_id' => 'required|exists:carriers,id',
-            'test_date' => 'required|date',
-            'test_type' => 'required|string',
-            'administered_by' => 'required|string',
-            'location' => 'required|string',
-            'bill_to' => 'required|string',
-        ]);
+        Log::info('Driver Testing Store - Request data', ['files' => $request->driver_testing_files]);
         
         // Crear registro en la base de datos
         $driverTesting = new DriverTesting($request->all());
@@ -247,22 +239,10 @@ class DriverTestingController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, DriverTesting $driverTesting)
+    public function update(UpdateDriverTestingRequest $request, DriverTesting $driverTesting)
     {
         // Log para debug
         Log::info('Driver Testing Update - Request data', ['files' => $request->driver_testing_files]);
-        $request->validate([
-            'test_type' => 'required|string',
-            'location' => 'required|string',
-            'test_date' => 'required|date',
-            'status' => 'required|string',
-            'test_result' => 'required|string',
-            'administered_by' => 'required|string',
-            'requester_name' => 'nullable|string',
-            'scheduled_time' => 'nullable|date_format:Y-m-d\TH:i',
-            'notes' => 'nullable|string',
-            'bill_to' => 'required|string',
-        ]);
         
         // Actualizar los campos básicos
         $driverTesting->fill($request->all());
@@ -523,47 +503,52 @@ class DriverTestingController extends Controller
         // Obtener conductores activos para el carrier especificado
         $drivers = UserDriverDetail::where('carrier_id', $carrier->id)
             ->where('status', 1) // Solo conductores activos
-            ->with(['user' => function($query) {
-                $query->select('id', 'name', 'middle_name', 'last_name', 'email', 'date_of_birth');
-            }])
+            ->with([
+                'user' => function($query) {
+                    $query->select('id', 'name', 'middle_name', 'last_name', 'email', 'phone', 'date_of_birth');
+                },
+                'licenses' => function($query) {
+                    $query->where('status', 'active')
+                          ->select('id', 'user_driver_detail_id', 'license_number', 'license_class', 'license_state', 'expiration_date')
+                          ->orderBy('created_at', 'desc');
+                }
+            ])
             ->get();
             
         // Crear un array con los datos procesados
         $processedDrivers = [];
         
         foreach ($drivers as $driver) {
-            // Obtener y formatear fecha de nacimiento si existe
-            $dobFormatted = null;
-            if ($driver->user && $driver->user->date_of_birth) {
-                try {
-                    $dobFormatted = date('m/d/Y', strtotime($driver->user->date_of_birth));
-                } catch (\Exception $e) {
-                    // Si hay error, usar el valor original
-                    $dobFormatted = $driver->user->date_of_birth;
-                }
-            }
+            // Obtener la licencia activa (la primera en la colección)
+            $license = $driver->licenses->first();
             
-            // Asegurar que todos los campos existan
+            // Formatear nombre completo
+            $fullName = trim(($driver->user->name ?? '') . ' ' . ($driver->user->middle_name ?? '') . ' ' . ($driver->user->last_name ?? ''));
+            
+            // Asegurar que todos los campos existan en el formato que espera el JavaScript
             $formattedDriver = [
                 'id' => $driver->id,
-                'user' => [
-                    'id' => $driver->user->id,
-                    'name' => $driver->user->name,
-                    'middle_name' => $driver->user->middle_name,
-                    'last_name' => $driver->user->last_name,
-                    'email' => $driver->user->email,
-                    'date_of_birth' => $dobFormatted
-                ],
-                'phone' => $driver->phone,
-                // Incluir info del carrier (dot_number es el USDOT)
-                'carrier_usdot' => $carrier->dot_number
+                'full_name' => $fullName,
+                'first_name' => $driver->user->name ?? '',
+                'middle_name' => $driver->user->middle_name ?? '',
+                'last_name' => $driver->user->last_name ?? '',
+                'email' => $driver->user->email ?? 'N/A',
+                'phone' => $driver->user->phone ?? 'N/A',
+                'license_number' => $license ? $license->license_number : 'N/A',
+                'license_class' => $license ? $license->license_class : 'N/A',
+                'license_expiration_formatted' => $license && $license->expiration_date 
+                    ? date('m/d/Y', strtotime($license->expiration_date)) 
+                    : 'N/A'
             ];
             
             $processedDrivers[] = $formattedDriver;
         }
 
-        // Devolver la respuesta con los datos procesados
-        return response()->json($processedDrivers);
+        // Devolver la respuesta en el formato que espera el JavaScript
+        return response()->json([
+            'status' => 'success',
+            'drivers' => $processedDrivers
+        ]);
     }
     
     /**
@@ -571,9 +556,15 @@ class DriverTestingController extends Controller
      */
     public function getDriverDetails(UserDriverDetail $driverDetail)
     {
-        $driverDetail->load(['user', 'carrier', 'licenses' => function($query) {
-            $query->where('status', 'active')->orderBy('created_at', 'desc');
-        }]);
+        $driverDetail->load([
+            'user:id,name,middle_name,last_name,email,phone', 
+            'carrier:id,name,usdot', 
+            'licenses' => function($query) {
+                $query->where('status', 'active')
+                      ->select('id', 'user_driver_detail_id', 'license_number', 'license_class', 'license_state', 'expiration_date')
+                      ->orderBy('created_at', 'desc');
+            }
+        ]);
         
         // Obtener la licencia activa (la primera en la colección, ya que están ordenadas por created_at desc)
         $license = $driverDetail->licenses->first();
@@ -581,17 +572,17 @@ class DriverTestingController extends Controller
         $driver = [
             'id' => $driverDetail->id,
             'first_name' => $driverDetail->user->name,
-            'middle_name' => $driverDetail->middle_name ?? '',
-            'last_name' => $driverDetail->last_name ?? '',
-            'name' => trim($driverDetail->user->name . ' ' . $driverDetail->middle_name . ' ' . $driverDetail->last_name),
+            'middle_name' => $driverDetail->user->middle_name ?? '',
+            'last_name' => $driverDetail->user->last_name ?? '',
+            'name' => trim($driverDetail->user->name . ' ' . ($driverDetail->user->middle_name ?? '') . ' ' . ($driverDetail->user->last_name ?? '')),
             'email' => $driverDetail->user->email,
-            'phone' => $driverDetail->phone ?? 'N/A',
-            'license' => $license ? $license->license_number : ($driverDetail->license_number ?? 'N/A'),
-            'license_class' => $license ? $license->license_class : ($driverDetail->license_class ?? ''),
-            'license_state' => $license ? $license->license_state : ($driverDetail->license_state ?? 'N/A'),
+            'phone' => $driverDetail->user->phone ?? 'N/A',
+            'license' => $license ? $license->license_number : 'N/A',
+            'license_class' => $license ? $license->license_class : '',
+            'license_state' => $license ? $license->license_state : 'N/A',
             'license_expiration' => $license && $license->expiration_date 
                 ? date('m/d/Y', strtotime($license->expiration_date)) 
-                : ($driverDetail->license_exp_date ? date('m/d/Y', strtotime($driverDetail->license_exp_date)) : 'N/A'),
+                : 'N/A',
             'carrier' => [
                 'id' => $driverDetail->carrier->id,
                 'name' => $driverDetail->carrier->name,

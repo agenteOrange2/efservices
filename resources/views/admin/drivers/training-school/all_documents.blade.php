@@ -41,7 +41,7 @@
         <!-- Filtros -->
         <div class="box box--stacked mt-5">
             <div class="box-body p-5">
-                <form action="{{ route('admin.training-schools.documents') }}" method="GET" id="filter-form"
+                <form action="{{ route('admin.training-schools.docs.all') }}" method="GET" id="filter-form"
                     class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
@@ -105,7 +105,7 @@
                             <x-base.lucide class="w-4 h-4 mr-2" icon="filter" />
                             Filter
                         </x-base.button>
-                        <x-base.button as="a" href="{{ route('admin.training-schools.documents') }}" variant="outline-secondary">
+                        <x-base.button as="a" href="{{ route('admin.training-schools.docs.all') }}" variant="outline-secondary">
                             <x-base.lucide class="w-4 h-4 mr-2" icon="refresh-cw" />
                             Reset
                         </x-base.button>
@@ -180,7 +180,7 @@
                                 <td>{{ $document->created_at->format('m/d/Y H:i') }}</td>
                                 <td class="text-center">
                                     <div class="flex justify-center">
-                                        <a href="{{ route('admin.training-schools.documents.preview', $document->id) }}" class="btn btn-sm btn-primary mr-2" target="_blank">
+                                        <a href="{{ route('admin.training-schools.docs.preview', $document->id) }}" class="btn btn-sm btn-primary mr-2" target="_blank">
                                             <x-base.lucide class="w-4 h-4" icon="eye" />
                                         </a>
                                         @if($trainingSchool)
@@ -188,7 +188,7 @@
                                             <x-base.lucide class="w-4 h-4" icon="clipboard-list" />
                                         </a>
                                         @endif
-                                        <form action="{{ route('admin.training-schools.documents.delete', $document->id) }}" method="POST" class="inline">
+                                        <form action="{{ route('admin.training-schools.docs.delete', $document->id) }}" method="POST" class="inline">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Está seguro de eliminar este documento?')">

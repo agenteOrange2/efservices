@@ -44,7 +44,7 @@
                             <x-base.lucide
                                 class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3] text-slate-500"
                                 icon="Search" />
-                            <x-base.form-input class="rounded-[0.5rem] pl-9 sm:w-64" name="search_term"
+                            <x-base.form-input class="rounded-[0.5rem] pl-9" name="search_term"
                                 value="{{ request('search_term') }}" type="text" placeholder="Search tests..." />
                         </div>
                     </div>
@@ -80,14 +80,14 @@
                     <div class="mt-3">
                         <x-base.form-label for="test_date_from">From Date</x-base.form-label>
                         <x-base.litepicker id="test_date_from" name="test_date_from" class="w-full"
-                            value="{{ request('test_date_from') }}" />
+                            value="{{ request('test_date_from') }}" placeholder="Select Date" />
                     </div>
 
                     <!-- Filtro por fecha fin -->
                     <div class="mt-3">
                         <x-base.form-label for="test_date_to">To Date</x-base.form-label>
                         <x-base.litepicker id="test_date_to" name="test_date_to" class="w-full"
-                            value="{{ request('test_date_to') }}" />
+                            value="{{ request('test_date_to') }}" placeholder="Select Date" />
                     </div>
 
                     <!-- Filtro por Location -->

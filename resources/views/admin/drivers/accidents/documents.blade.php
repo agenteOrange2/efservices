@@ -52,7 +52,7 @@
                     @endif
 
                     <!-- Carrier Filter -->
-                    <div>
+                    {{-- <div>
                         <x-base.form-label for="carrier_id">Carrier</x-base.form-label>
                         <select id="carrier_id" name="carrier_id" class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
                             <option value="">All Carriers</option>
@@ -63,7 +63,7 @@
                                 </option>
                             @endforeach
                         </select>
-                    </div>
+                    </div> --}}
 
                     <!-- Driver Filter -->
                     <div>

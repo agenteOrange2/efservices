@@ -135,8 +135,8 @@
                                         class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8"
                                         required>
                                         <option value="">-- Select test type --</option>
-                                        @foreach ($testTypes as $key => $testType)
-                                            <option value="{{ $key }}">{{ $testType }}</option>
+                                        @foreach ($testTypes as $testType)
+                                            <option value="{{ $testType }}">{{ $testType }}</option>
                                         @endforeach
                                     </select>
                                     @error('test_type')
@@ -493,32 +493,356 @@
     </div>
 @endsection
 @push('scripts')
-    <script src="{{ asset('js/driver-testing-form.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar el formulario de driver testing
-            const driverTestingForm = new DriverTestingForm({
-                formId: 'create-test-form',
-                carrierId: 'carrier_id',
-                driverId: 'user_driver_detail_id',
-                driverLoading: 'driver-loading',
-                driverDetailCard: 'driver-detail-card',
-                driverName: 'driver-name',
-                driverEmail: 'driver-email',
-                driverPhone: 'driver-phone',
-                driverLicense: 'driver-license',
-                driverLicenseClass: 'driver-license-class',
-                driverLicenseExpiration: 'driver-license-expiration',
-                carrierIdHidden: 'carrier_id_hidden',
-                userDriverDetailIdHidden: 'user_driver_detail_id_hidden',
-                otherReasonCheckbox: 'is_other_reason_test',
-                otherReasonContainer: 'other_reason_container',
-                driverTestingFilesInput: 'driver_testing_files_input',
-                oldDriverId: '{{ old('user_driver_detail_id') }}'
+            // Referencias a elementos DOM - Verificando que existan
+            const carrierSelect = document.getElementById('carrier_id');
+            const driverSelect = document.getElementById('user_driver_detail_id');
+            const driverLoading = document.getElementById('driver-loading');
+            const driverDetailCard = document.getElementById('driver-detail-card');
+            const driverName = document.getElementById('driver-name');
+            const driverEmail = document.getElementById('driver-email');
+            const driverPhone = document.getElementById('driver-phone');
+            const driverLicense = document.getElementById('driver-license');
+            const driverLicenseClass = document.getElementById('driver-license-class');
+            const driverLicenseExpiration = document.getElementById('driver-license-expiration');
+            const carrierIdHidden = document.getElementById('carrier_id_hidden');
+            const userDriverDetailIdHidden = document.getElementById('user_driver_detail_id_hidden');
+
+            // Verificar que todos los elementos existan
+            console.log('DOM Elements:', {
+                carrierSelect: !!carrierSelect,
+                driverSelect: !!driverSelect,
+                driverDetailCard: !!driverDetailCard,
+                driverName: !!driverName,
+                driverEmail: !!driverEmail,
+                driverPhone: !!driverPhone,
+                driverLicense: !!driverLicense,
+                driverLicenseClass: !!driverLicenseClass,
+                driverLicenseExpiration: !!driverLicenseExpiration
             });
 
-            // Inicializar el formulario
-            driverTestingForm.init();
+            // Cargar drivers cuando se selecciona un carrier
+            carrierSelect.addEventListener('change', function() {
+                const carrierId = this.value;
+                carrierIdHidden.value = carrierId;
+
+                // Limpiar y deshabilitar el select de drivers si no hay carrier seleccionado
+                if (!carrierId) {
+                    driverSelect.innerHTML = '<option value="">-- Select a driver --</option>';
+                    driverSelect.disabled = true;
+                    driverDetailCard.classList.add('hidden');
+                    return;
+                }
+
+                // Mostrar indicador de carga
+                driverSelect.disabled = true;
+                driverLoading.classList.remove('hidden');
+                driverSelect.innerHTML = '<option value="">Loading drivers...</option>';
+
+                // Cargar conductores para el carrier seleccionado
+                fetch(`/api/active-drivers-by-carrier/${carrierId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Drivers data received:', data);
+                        // Guardar datos para uso posterior
+                        window.driversData = data;
+
+                        // Limpiar el select
+                        driverSelect.innerHTML = '<option value="">-- Select a driver --</option>';
+                        driverSelect.disabled = false;
+
+                        if (data && data.length > 0) {
+                            // Agregar opciones al select
+                            data.forEach(driver => {
+                                const option = document.createElement('option');
+                                option.value = driver.id;
+
+                                // Crear nombre completo del conductor
+                                // El nombre (first name) viene de la tabla users
+                                const firstName = driver.user ? driver.user.name || '' : '';
+                                // El middle_name y last_name vienen directamente de la tabla user_driver_details
+                                const middleName = driver.middle_name || '';
+                                const lastName = driver.last_name || '';
+
+                                const fullName = `${firstName} ${middleName} ${lastName}`
+                                    .replace(/\s+/g, ' ').trim();
+                                option.textContent = fullName;
+
+                                // Obtener la licencia activa (la primera en la colección, ya que están ordenadas por created_at desc)
+                                let licenseInfo = 'N/A';
+                                let licenseClass = '';
+                                let licenseExpiration = '';
+
+                                if (driver.licenses && driver.licenses.length > 0) {
+                                    const activeLicense = driver.licenses[0];
+                                    licenseInfo = activeLicense.license_number || 'N/A';
+                                    licenseClass = activeLicense.license_class || '';
+                                    licenseExpiration = activeLicense.expiration_date || '';
+
+                                    // Formatear la fecha de expiración si existe
+                                    if (licenseExpiration) {
+                                        const expDate = new Date(licenseExpiration);
+                                        licenseExpiration = expDate.toLocaleDateString();
+                                    }
+                                }
+
+                                // Para depuración
+                                console.log('Driver data structure:', {
+                                    id: driver.id,
+                                    user_name: driver.user ? driver.user.name : null,
+                                    middle_name: driver.middle_name,
+                                    last_name: driver.last_name,
+                                    phone: driver.phone,
+                                    license: licenseInfo
+                                });
+
+                                // Guardar datos adicionales como atributos data-*
+                                option.setAttribute('data-email', driver.user ? driver.user
+                                    .email || '' : '');
+                                option.setAttribute('data-phone', driver.phone || '');
+                                option.setAttribute('data-license', licenseInfo);
+                                option.setAttribute('data-license-class', licenseClass);
+                                option.setAttribute('data-license-expiration',
+                                    licenseExpiration);
+
+                                // Guardar componentes del nombre por separado para mejor formato en la tarjeta
+                                option.setAttribute('data-first-name', firstName);
+                                option.setAttribute('data-middle-name', middleName);
+                                option.setAttribute('data-last-name', lastName);
+
+                                // Verificar que los atributos se hayan establecido correctamente
+                                console.log('Driver option:', {
+                                    id: driver.id,
+                                    name: fullName,
+                                    email: option.getAttribute('data-email'),
+                                    phone: option.getAttribute('data-phone'),
+                                    license: option.getAttribute('data-license'),
+                                    licenseClass: option.getAttribute(
+                                        'data-license-class'),
+                                    licenseExpiration: option.getAttribute(
+                                        'data-license-expiration')
+                                });
+
+                                driverSelect.appendChild(option);
+                            });
+                        } else {
+                            // Agregar un mensaje si no hay drivers
+                            const option = document.createElement('option');
+                            option.value = '';
+                            option.disabled = true;
+                            option.textContent = 'No active drivers found for this carrier';
+                            driverSelect.appendChild(option);
+                        }
+
+                        driverLoading.classList.add('hidden');
+                    })
+                    .catch(error => {
+                        console.error('Error loading drivers:', error);
+                        driverLoading.classList.add('hidden');
+                        driverSelect.innerHTML = '<option value="">Error loading drivers</option>';
+                    });
+            });
+
+            // Si hay un valor previo para driver (por ejemplo, después de un error de validación), seleccionarlo
+            if ('{{ old('user_driver_detail_id') }}') {
+                // Esperar a que se carguen los drivers si es necesario
+                const checkDriversLoaded = setInterval(() => {
+                    if (window.driversData && window.driversData.length > 0) {
+                        clearInterval(checkDriversLoaded);
+                        driverSelect.value = '{{ old('user_driver_detail_id') }}';
+                        // Disparar el evento change para mostrar los detalles del conductor
+                        const event = new Event('change');
+                        driverSelect.dispatchEvent(event);
+                    }
+                }, 500);
+            }
+
+            // Evento al cambiar el driver - usando datos completos
+            driverSelect.addEventListener('change', function() {
+                const driverId = this.value;
+                userDriverDetailIdHidden.value = driverId;
+
+                if (!driverId) {
+                    driverDetailCard.classList.add('hidden');
+                    return;
+                }
+
+                try {
+                    // Obtener los datos del driver seleccionado
+                    const driverSelectedOption = this.options[this.selectedIndex];
+                    console.log('Selected driver option:', driverSelectedOption);
+
+                    // Verificar que la opción tenga los atributos data-*
+                    console.log('Option attributes:', {
+                        email: driverSelectedOption.getAttribute('data-email'),
+                        phone: driverSelectedOption.getAttribute('data-phone'),
+                        license: driverSelectedOption.getAttribute('data-license')
+                    });
+
+                    // Obtener el nombre completo formateado correctamente
+                    const driverNameText = driverSelectedOption.textContent;
+
+                    // Obtener el resto de datos del conductor
+                    const driverEmailText = driverSelectedOption.getAttribute('data-email') || 'N/A';
+                    const driverPhoneText = driverSelectedOption.getAttribute('data-phone') || 'N/A';
+                    const driverLicenseText = driverSelectedOption.getAttribute('data-license') || 'N/A';
+                    const driverLicenseClassText = driverSelectedOption.getAttribute(
+                        'data-license-class') || 'N/A';
+                    const driverLicenseExpirationText = driverSelectedOption.getAttribute(
+                        'data-license-expiration') || 'N/A';
+
+                    // Obtener componentes del nombre por separado para mostrarlos formateados
+                    // Estos datos vienen correctamente de los atributos data-* que establecimos
+                    const firstName = driverSelectedOption.getAttribute('data-first-name') || '';
+                    const middleName = driverSelectedOption.getAttribute('data-middle-name') || '';
+                    const lastName = driverSelectedOption.getAttribute('data-last-name') || '';
+
+                    console.log('Nombre completo componentes:', {
+                        firstName,
+                        middleName,
+                        lastName
+                    });
+
+                    // Crear un nombre formateado para mostrar
+                    const formattedName = [
+                        firstName,
+                        middleName ? `<span class="text-gray-700">${middleName}</span>` : '',
+                        lastName ? `<span class="font-semibold">${lastName}</span>` : ''
+                    ].filter(Boolean).join(' ');
+
+                    // Formatear la información de la licencia
+                    const licenseInfo = driverLicenseText !== 'N/A' ?
+                        `${driverLicenseText}` : 'N/A';
+
+                    console.log('Driver details to display:', {
+                        name: driverNameText,
+                        email: driverEmailText,
+                        phone: driverPhoneText,
+                        license: licenseInfo,
+                        licenseClass: driverLicenseClassText,
+                        licenseExpiration: driverLicenseExpirationText
+                    });
+
+                    // Actualizar la tarjeta de detalles - verificando que los elementos existan
+                    if (driverName) driverName.innerHTML = formattedName || driverNameText;
+                    if (driverEmail) driverEmail.textContent = driverEmailText;
+                    if (driverPhone) driverPhone.textContent = driverPhoneText;
+                    if (driverLicense) driverLicense.textContent = licenseInfo;
+                    if (driverLicenseClass) driverLicenseClass.textContent = driverLicenseClassText;
+                    if (driverLicenseExpiration) driverLicenseExpiration.textContent =
+                        driverLicenseExpirationText;
+
+                    // Mostrar la tarjeta de detalles
+                    if (driverDetailCard) driverDetailCard.classList.remove('hidden');
+                } catch (error) {
+                    console.error('Error displaying driver details:', error);
+                }
+            });
+
+            // Validar formulario antes de enviar
+            const createTestForm = document.getElementById('create-test-form');
+            createTestForm.addEventListener('submit', function(e) {
+                // Verificar que se haya seleccionado un carrier
+                const carrierId = document.getElementById('carrier_id').value;
+                if (!carrierId) {
+                    e.preventDefault();
+                    alert('Please select a carrier');
+                    return false;
+                }
+
+                // Verificar que se haya seleccionado un driver
+                const driverId = document.getElementById('user_driver_detail_id').value;
+                if (!driverId) {
+                    e.preventDefault();
+                    alert('Please select a driver');
+                    return false;
+                }
+
+                // Actualizar campos ocultos
+                carrierIdHidden.value = carrierId;
+                userDriverDetailIdHidden.value = driverId;
+
+                return true;
+            });
+
+            // Control de visibilidad para el campo Other Reason Description
+            const otherReasonCheckbox = document.getElementById('is_other_reason_test');
+            const otherReasonContainer = document.getElementById('other_reason_container');
+
+            // Función para manejar la visibilidad del campo de descripción
+            function toggleOtherReasonField() {
+                if (otherReasonCheckbox.checked) {
+                    otherReasonContainer.style.display = 'block';
+                } else {
+                    otherReasonContainer.style.display = 'none';
+                }
+            }
+
+            // Manejar cambio en el checkbox
+            otherReasonCheckbox.addEventListener('change', toggleOtherReasonField);
+
+            // Inicializar estado al cargar la página
+            toggleOtherReasonField();
+
+            // Inicializar array para archivos subidos
+            let uploadedFiles = [];
+            const driverTestingFilesInput = document.getElementById('driver_testing_files_input');
+            driverTestingFilesInput.value = JSON.stringify(uploadedFiles);
+
+            // Escuchar eventos de Livewire 3
+            window.addEventListener('livewire:initialized', () => {
+                console.log('Livewire 3 initialized - registering event listeners');
+
+                // Escuchar el evento fileUploaded del componente Livewire
+                Livewire.on('fileUploaded', (eventData) => {
+                    console.log('Archivo subido:', eventData);
+                    // Extraer los datos del evento
+                    const data = eventData[0]; // Los datos vienen como primer elemento del array
+
+                    if (data.modelName === 'driver_testing_files') {
+                        // Añadir el archivo al array con la estructura correcta que espera el controlador
+                        uploadedFiles.push({
+                            path: data
+                                .tempPath, // Mantener el nombre que envía el componente
+                            original_name: data
+                                .originalName, // Mantener el nombre que envía el componente
+                            mime_type: data.mimeType,
+                            size: data.size
+                        });
+
+                        // Actualizar el campo oculto con el nuevo array
+                        driverTestingFilesInput.value = JSON.stringify(uploadedFiles);
+                        console.log('Archivos actualizados:', driverTestingFilesInput.value);
+                    }
+                });
+
+                // Escuchar el evento fileRemoved del componente Livewire
+                Livewire.on('fileRemoved', (eventData) => {
+                    console.log('Archivo eliminado:', eventData);
+                    // Extraer los datos del evento
+                    const data = eventData[0]; // Los datos vienen como primer elemento del array
+
+                    if (data.modelName === 'driver_testing_files') {
+                        // Eliminar el archivo del array
+                        const fileId = data.fileId;
+                        uploadedFiles = uploadedFiles.filter((file, index) => {
+                            // Para archivos temporales, el ID contiene un timestamp
+                            if (fileId.startsWith('temp_') && index === uploadedFiles
+                                .length - 1) {
+                                // Eliminar el último archivo añadido si es temporal
+                                return false;
+                            }
+                            return true;
+                        });
+
+                        // Actualizar el campo oculto con el nuevo array
+                        driverTestingFilesInput.value = JSON.stringify(uploadedFiles);
+                        console.log('Archivos actualizados después de eliminar:',
+                            driverTestingFilesInput.value);
+                    }
+                });
+            });
         });
     </script>
 @endpush

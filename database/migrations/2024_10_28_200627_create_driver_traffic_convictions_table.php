@@ -17,7 +17,7 @@ return new class extends Migration
             $table->date('conviction_date');
             $table->string('location');
             $table->string('charge');
-            $table->string('penalty');
+            $table->string('penalty');            
             $table->timestamps();
         });
     }

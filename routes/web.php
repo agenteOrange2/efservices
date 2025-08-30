@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\CustomLoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\VehicleVerificationController;
 use App\Http\Controllers\EmploymentVerificationController;
+use App\Http\Controllers\Admin\NotificationRecipientsController;
 
 // Rutas públicas (sin autenticación)
 /*

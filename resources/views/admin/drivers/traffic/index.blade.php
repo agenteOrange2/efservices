@@ -78,11 +78,11 @@
                         <div>
                             <x-base.form-label for="date_from">From Date</x-base.form-label>
                             <x-base.litepicker id="date_from" name="date_from" class="w-full"
-                                value="{{ request('date_from') }}" />
+                                value="{{ request('date_from') }}" placeholder="Select Date" />
                         </div>
                         <div>
                             <x-base.form-label for="date_to">To Date</x-base.form-label>
-                            <x-base.litepicker id="date_to" name="date_to" class="w-full" value="{{ request('date_to') }}" />
+                            <x-base.litepicker id="date_to" name="date_to" class="w-full" value="{{ request('date_to') }}" placeholder="Select Date" />
                         </div>
                         <div class="flex items-end">
                             <button type="submit" class="btn btn-primary mr-2">

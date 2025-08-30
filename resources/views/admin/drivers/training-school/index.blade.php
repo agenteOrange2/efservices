@@ -34,7 +34,7 @@
                     <x-base.lucide class="w-4 h-4 mr-2" icon="plus" />
                     Add New Training School
                 </x-base.button>
-                <x-base.button as="a" href="{{ route('admin.training-schools.documents') }}" class="w-full sm:w-auto" variant="outline-primary">
+                <x-base.button as="a" href="{{ route('admin.training-schools.docs.all') }}" class="w-full sm:w-auto" variant="outline-primary">
                     <x-base.lucide class="w-4 h-4 mr-2" icon="file-text" />
                     View All Documents
                 </x-base.button>
@@ -169,7 +169,7 @@
                                                         ->where('collection_name', 'school_certificates')
                                                         ->count();
                                                 @endphp
-                                                <a href="{{ route('admin.training-schools.show.documents', $school->id) }}" class="flex items-center">
+                                                <a href="{{ route('admin.training-schools.docs.show', $school->id) }}" class="flex items-center">
                                                     <span class="bg-primary/20 text-primary rounded px-2 py-1 text-xs">
                                                         <x-base.lucide class="w-3 h-3 inline-block" icon="file-text" />
                                                         {{ $docsCount }} {{ Str::plural('Document', $docsCount) }}

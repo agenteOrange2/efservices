@@ -106,7 +106,7 @@ class EmploymentVerificationAdminController extends Controller
             $companyName = $employmentCompany->masterCompany ? $employmentCompany->masterCompany->name : 'Empresa personalizada';
             
             // Obtener el nombre completo del conductor
-            $driverName = $employmentCompany->userDriverDetail->user->name . ' ' . $employmentCompany->userDriverDetail->last_name;
+            $driverName = $employmentCompany->userDriverDetail->user->name . ' ' . ($employmentCompany->userDriverDetail->user->last_name ?? '');
             
             // Preparar los datos de empleo para el correo
             $employmentData = [

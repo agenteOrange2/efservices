@@ -42,14 +42,14 @@
         <div class="box box--stacked mt-5">
             <div class="box-body p-5">
                 <form action="{{ route('admin.accidents.index') }}" method="GET"
-                    class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
+                    class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div >
                         <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                        <div class="relative">
+                        <div class="relative w-full">
                             <x-base.lucide
                                 class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3] text-slate-500"
                                 icon="Search" />
-                            <x-base.form-input class="rounded-[0.5rem] pl-9 sm:w-64" name="search_term"
+                            <x-base.form-input class="rounded-[0.5rem] pl-9 w-full" name="search_term"
                                 value="{{ request('search_term') }}" type="text" placeholder="Search accidents..." />
                         </div>
                     </div>
@@ -66,7 +66,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div>
+                    {{-- <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Driver</label>
                         <select name="driver_filter"
                             class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
@@ -78,15 +78,15 @@
                                 </option>
                             @endforeach
                         </select>
-                    </div>
+                    </div> --}}
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Date From</label>
                         <x-base.litepicker id="date_from" name="date_from" class="w-full"
-                            value="{{ request('date_from') }}" />
+                            value="{{ request('date_from') }}" placeholder="Select Date" />
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
-                        <x-base.litepicker id="date_to" name="date_to" class="w-full" value="{{ request('date_to') }}" />
+                        <x-base.litepicker id="date_to" name="date_to" class="w-full" value="{{ request('date_to') }}" placeholder="Select Date" />
                     </div>
                     <div class="flex items-end">
                         <x-base.button type="submit" variant="outline-primary" class="mr-2">

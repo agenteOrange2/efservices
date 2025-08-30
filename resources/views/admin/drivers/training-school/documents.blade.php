@@ -46,7 +46,7 @@
                 <h3 class="box-title">Filters</h3>
             </div>
             <div class="box-body p-5">
-                <form action="{{ route('admin.training-schools.documents') }}" method="GET"
+                <form action="{{ route('admin.training-schools.docs.all') }}" method="GET"
                     class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <x-base.form-label for="school_filter">School</x-base.form-label>
@@ -104,7 +104,7 @@
                             <x-base.lucide class="w-4 h-4 mr-1" icon="search" />
                             Filter
                         </x-base.button>
-                        <a href="{{ route('admin.training-schools.documents') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('admin.training-schools.docs.all') }}" class="btn btn-outline-secondary">
                             <x-base.lucide class="w-4 h-4 mr-1" icon="refresh-cw" />
                             Reset
                         </a>
@@ -188,7 +188,7 @@
                                         <td>{{ $document->created_at->format('m/d/Y H:i') }}</td>
                                         <td class="text-center">
                                             <div class="flex justify-center">
-                                                <a href="{{ route('admin.training-schools.documents.preview', $document->id) }}"
+                                                <a href="{{ route('admin.training-schools.docs.preview', $document->id) }}"
                                                     class="btn btn-sm btn-primary mr-2" target="_blank">
                                                     <x-base.lucide class="w-4 h-4" icon="eye" />
                                                 </a>
@@ -199,7 +199,7 @@
                                                     </a>
                                                 @endif
                                                 <form
-                                                    action="{{ route('admin.training-schools.documents.delete', $document->id) }}"
+                                                    action="{{ route('admin.training-schools.docs.delete', $document->id) }}"
                                                     method="POST" class="inline">
                                                     @csrf
                                                     @method('DELETE')

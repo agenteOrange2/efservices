@@ -268,14 +268,71 @@
                             <div class="box-body p-5">
                                 <div>
                                     @if ($driverTesting->getMedia('drug_test_pdf')->count() > 0)
-                                        <div class="max-w-full overflow-hidden">
-                                            <embed src="{{ $driverTesting->getFirstMediaUrl('drug_test_pdf') }}" type="application/pdf"
-                                                width="100%" height="600px">
+                                        @php
+                                            $pdfUrl = $driverTesting->getFirstMediaUrl('drug_test_pdf');
+                                        @endphp
+                                        <div class="w-full border border-slate-200 rounded-md overflow-hidden bg-gray-50">
+                                            <!-- PDF Viewer con fallbacks -->
+                                            <div class="pdf-viewer-container" style="height: 700px;">
+                                                <iframe 
+                                                    src="{{ $pdfUrl }}#toolbar=1&navpanes=1&scrollbar=1" 
+                                                    class="w-full h-full border-0" 
+                                                    title="PDF Preview"
+                                                    onload="this.style.opacity=1"
+                                                    style="opacity:0; transition: opacity 0.3s;"
+                                                    onerror="handlePdfError(this)">
+                                                </iframe>
+                                                
+                                                <!-- Fallback para navegadores que no soportan iframe con PDF -->
+                                                <div id="pdf-fallback" class="hidden text-center py-10">
+                                                    <x-base.lucide class="w-16 h-16 mx-auto text-blue-500 mb-4" icon="file-text" />
+                                                    <p class="text-gray-700 mb-4">Unable to display PDF in browser</p>
+                                                    <div class="space-y-2">
+                                                        <a href="{{ $pdfUrl }}" target="_blank" 
+                                                           class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                                                            <x-base.lucide class="w-4 h-4 mr-2" icon="external-link" />
+                                                            Open in New Tab
+                                                        </a>
+                                                        <br>
+                                                        <a href="{{ $pdfUrl }}" download 
+                                                           class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
+                                                            <x-base.lucide class="w-4 h-4 mr-2" icon="download" />
+                                                            Download PDF
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Controles adicionales -->
+                                        <div class="mt-4 flex justify-between items-center">
+                                            <div class="text-sm text-gray-600">
+                                                <x-base.lucide class="w-4 h-4 inline mr-1" icon="info" />
+                                                PDF Size: {{ human_filesize($driverTesting->getFirstMedia('drug_test_pdf')->size) }}
+                                            </div>
+                                            <div class="flex space-x-2">
+                                                <a href="{{ $pdfUrl }}" target="_blank" 
+                                                   class="inline-flex items-center px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors">
+                                                    <x-base.lucide class="w-3 h-3 mr-1" icon="external-link" />
+                                                    Open in New Tab
+                                                </a>
+                                                <a href="{{ $pdfUrl }}" download 
+                                                   class="inline-flex items-center px-3 py-1 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors">
+                                                    <x-base.lucide class="w-3 h-3 mr-1" icon="download" />
+                                                    Download
+                                                </a>
+                                            </div>
                                         </div>
                                     @else
                                         <div class="text-center py-10 text-gray-500">
-                                            <x-base.lucide class="w-16 h-16 mx-auto" icon="file-question" />
-                                            <p class="mt-3">No PDF report has been generated for this test yet.</p>
+                                            <x-base.lucide class="w-16 h-16 mx-auto mb-4" icon="file-question" />
+                                            <p class="text-lg font-medium mb-2">No PDF Report Available</p>
+                                            <p class="text-sm mb-4">No PDF report has been generated for this test yet.</p>
+                                            <a href="{{ route('admin.driver-testings.regenerate-pdf', $driverTesting->id) }}" 
+                                               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                                                <x-base.lucide class="w-4 h-4 mr-2" icon="refresh-cw" />
+                                                Generate PDF Report
+                                            </a>
                                         </div>
                                     @endif
                                 </div>
@@ -481,4 +538,54 @@
             </x-base.dialog.footer>
         </x-base.dialog.panel>
     </x-base.dialog>
+
+    @push('scripts')
+    <script>
+        // Función para manejar errores del PDF viewer
+        function handlePdfError(iframe) {
+            console.warn('PDF iframe failed to load, showing fallback');
+            
+            // Ocultar el iframe
+            iframe.style.display = 'none';
+            
+            // Mostrar el fallback
+            const fallback = document.getElementById('pdf-fallback');
+            if (fallback) {
+                fallback.classList.remove('hidden');
+            }
+        }
+
+        // Verificar si el PDF se cargó correctamente después de un tiempo
+        document.addEventListener('DOMContentLoaded', function() {
+            const iframe = document.querySelector('.pdf-viewer-container iframe');
+            if (iframe) {
+                // Timeout para verificar si el PDF se cargó
+                setTimeout(function() {
+                    try {
+                        // Intentar acceder al contenido del iframe
+                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                        
+                        // Si no hay contenido o hay error, mostrar fallback
+                        if (!iframeDoc || iframeDoc.body.innerHTML.trim() === '') {
+                            handlePdfError(iframe);
+                        }
+                    } catch (e) {
+                        // Error de acceso (CORS, etc.), pero el PDF podría estar cargando
+                        console.log('PDF loading or CORS restriction detected');
+                    }
+                }, 3000); // Esperar 3 segundos
+
+                // Listener adicional para errores de carga
+                iframe.addEventListener('error', function() {
+                    handlePdfError(this);
+                });
+
+                // Verificar si el src está vacío
+                if (!iframe.src || iframe.src.trim() === '') {
+                    handlePdfError(iframe);
+                }
+            }
+        });
+    </script>
+    @endpush
 @endsection
