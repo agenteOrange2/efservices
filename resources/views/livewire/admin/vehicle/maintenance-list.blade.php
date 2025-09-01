@@ -16,7 +16,7 @@
                 </div>
             </div>
             <div class="flex-1 mt-3 sm:mt-0 sm:ml-2">
-                <select wire:model.live="carrierId" class="form-select w-full sm:w-auto">
+                <select wire:model.live="carrierId" class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
                     <option value="">All Carriers</option>
                     @foreach ($carriers as $carrier)
                         <option value="{{ $carrier->id }}">{{ $carrier->name }}</option>
@@ -24,7 +24,7 @@
                 </select>
             </div>
             <div class="flex-1 mt-3 sm:mt-0 sm:ml-2">
-                <select wire:model.live="status" class="form-select w-full sm:w-auto">
+                <select wire:model.live="status" class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
                     <option value="">All States</option>
                     <option value="1">Completed</option>
                     <option value="0">Pending</option>

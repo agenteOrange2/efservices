@@ -164,6 +164,17 @@
                         @enderror
                     </div>
 
+                    <div class="mt-3">
+                        <div class="flex items-center">
+                            <input id="is_historical" type="checkbox" name="is_historical" value="1"
+                                {{ old('is_historical', $maintenance->is_historical ?? false) ? 'checked' : '' }} class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2">
+                            <label for="is_historical" class="ml-2 form-label">Historical Service (Past Maintenance)</label>
+                        </div>
+                        @error('is_historical')
+                            <div class="text-danger mt-2">{{ $message }}</div>
+                        @enderror
+                    </div>
+
                     <!-- Sección de documentos adjuntos usando Livewire file-uploader -->
                     <div class="mt-8 pt-5 border-t border-slate-200/60 dark:border-darkmode-400">
                         <h3 class="text-lg font-medium mb-5">Attachments</h3>

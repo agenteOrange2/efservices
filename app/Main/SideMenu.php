@@ -175,6 +175,12 @@ class SideMenu
                         'params' => [],
                         'title' => "Maintenance",
                     ],
+                    [
+                        'icon' => "alert-circle",
+                        'route_name' => "admin.vehicles.emergency-repairs.index",
+                        'params' => [],
+                        'title' => "Emergency Repairs",
+                    ],
                 ],
             ],
             "REPORT GENERATOR",

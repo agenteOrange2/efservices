@@ -38,6 +38,7 @@ use App\Http\Controllers\Admin\Driver\DriverRecruitmentController;
 use App\Http\Controllers\Admin\Vehicles\VehicleDocumentController;
 use App\Http\Controllers\Admin\Driver\TrafficConvictionsController;
 use App\Http\Controllers\Admin\Vehicles\VehicleMaintenanceController;
+use App\Http\Controllers\Admin\Vehicles\EmergencyRepairController;
 use App\Http\Controllers\Admin\Vehicles\MaintenanceNotificationController;
 use App\Http\Controllers\Admin\Driver\EmploymentVerificationAdminController;
 use App\Http\Controllers\Admin\MasterCompanyController;
@@ -64,11 +65,20 @@ Route::post('/dashboard/ajax-update', [DashboardController::class, 'ajaxUpdate']
 |--------------------------------------------------------------------------
 */
 
-// 1. Rutas básicas para vehículos
-Route::resource('vehicles', VehicleController::class);
-
+// 1. Rutas específicas de vehículos (DEBEN IR ANTES DEL RESOURCE)
 // Ruta para API de obtener conductores por carrier (utilizada en create y edit)
 Route::get('vehicles/drivers-by-carrier/{carrierId}', [VehicleController::class, 'getDriversByCarrier']);
+
+// Rutas para reparaciones de emergencia (DEBEN IR ANTES DEL RESOURCE)
+Route::prefix('vehicles')->name('vehicles.')->group(function () {
+    Route::resource('emergency-repairs', EmergencyRepairController::class);
+    Route::get('emergency-repairs/vehicles-by-carrier/{carrierId}', [EmergencyRepairController::class, 'getVehiclesByCarrier'])->name('emergency-repairs.vehicles-by-carrier');
+    Route::get('emergency-repairs/drivers-by-carrier/{carrierId}', [EmergencyRepairController::class, 'getDriversByCarrier'])->name('emergency-repairs.drivers-by-carrier');
+    Route::delete('emergency-repairs/{emergencyRepair}/files/{mediaId}', [EmergencyRepairController::class, 'deleteFile'])->name('emergency-repairs.delete-file');
+});
+
+// 2. Rutas básicas para vehículos (RESOURCE AL FINAL)
+Route::resource('vehicles', VehicleController::class);
 
 // 2. Rutas para maintenances como recurso anidado
 Route::resource('vehicles.maintenances', VehicleMaintenanceController::class);
@@ -96,6 +106,8 @@ Route::delete('vehicles/{vehicle}/vehicle-maintenances/{serviceItemId}/files/{me
 //     Route::get('/', [VehicleMaintenanceController::class, 'index'])->name('maintenance.index');
 //     Route::get('/{serviceItem}', [VehicleMaintenanceController::class, 'show'])->name('maintenance.show');
 // });
+
+
 
 // Rutas para tipos y marcas de vehículos
 Route::resource('vehicle-types', VehicleTypeController::class);

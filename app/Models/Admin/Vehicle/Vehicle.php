@@ -5,6 +5,7 @@ use App\Models\Carrier;
 use App\Models\Admin\Driver\DriverApplicationDetail;
 use App\Models\UserDriverDetail;
 use App\Models\Admin\Driver\DriverInspection;
+use App\Models\EmergencyRepair;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -74,6 +75,14 @@ class Vehicle extends Model
     public function maintenances(): HasMany
     {
         return $this->hasMany(VehicleMaintenance::class);
+    }
+
+    /**
+     * Relationship with emergency repairs of the vehicle.
+     */
+    public function emergencyRepairs(): HasMany
+    {
+        return $this->hasMany(EmergencyRepair::class);
     }
 
     public function vehicleMake(): BelongsTo

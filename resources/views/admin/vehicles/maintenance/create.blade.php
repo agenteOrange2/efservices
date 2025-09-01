@@ -158,6 +158,17 @@
                         @enderror
                     </div>
 
+                    <div class="mt-3">
+                        <div class="flex items-center">
+                            <input id="is_historical" type="checkbox" name="is_historical" value="1"
+                                {{ old('is_historical') ? 'checked' : '' }} class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2">
+                            <label for="is_historical" class="ml-2 form-label">Historical Service (Past Maintenance)</label>
+                        </div>
+                        @error('is_historical')
+                            <div class="text-danger mt-2">{{ $message }}</div>
+                        @enderror
+                    </div>
+
                     <div class="flex justify-end mt-5">
                         <x-base.button as="a" href="{{ route('admin.maintenance.index') }}"
                             variant="outline-secondary" class="mr-2">

@@ -68,19 +68,34 @@ class MaintenanceController extends Controller
     public function store(Request $request)
     {
         //dd($request->all());
-        // Validar los datos del formulario
-        $validated = $request->validate([
+        // Validación condicional basada en si es un servicio histórico
+        $isHistorical = $request->boolean('is_historical');
+        
+        $validationRules = [
             'vehicle_id' => 'required|exists:vehicles,id',
             'unit' => 'required|string|min:1|max:255',
             'service_tasks' => 'required|string|min:1|max:255',
             'service_date' => 'required|date',
-            'next_service_date' => 'required|date|after:service_date',
             'vendor_mechanic' => 'required|string|min:1|max:255',
             'cost' => 'required|numeric|min:0',
             'odometer' => 'required|integer|min:0',
             'description' => 'nullable|string|max:1000',
-            'status' => 'nullable|boolean'
-        ]);
+            'status' => 'nullable|boolean',
+            'is_historical' => 'nullable|boolean'
+        ];
+        
+        // Ajustar validación de fechas según si es histórico o no
+        if ($isHistorical) {
+            // Para servicios históricos, permitir fechas pasadas y next_service_date puede ser anterior a service_date
+            $validationRules['next_service_date'] = 'required|date';
+        } else {
+            // Para servicios normales, mantener validación original
+            $validationRules['service_date'] .= '|before_or_equal:today';
+            $validationRules['next_service_date'] = 'required|date|after:service_date';
+        }
+        
+        // Validar los datos del formulario
+        $validated = $request->validate($validationRules);
         
         try {
             DB::beginTransaction();
@@ -97,6 +112,7 @@ class MaintenanceController extends Controller
                 'odometer' => $request->odometer,
                 'description' => $request->description,
                 'status' => $request->status ? 1 : 0,
+                'is_historical' => $request->boolean('is_historical'),
                 'created_by' => \Illuminate\Support\Facades\Auth::id(),
             ]);
             
@@ -158,19 +174,34 @@ class MaintenanceController extends Controller
         // Buscar el registro de mantenimiento
         $maintenance = VehicleMaintenance::findOrFail($id);
         
-        // Validar los datos del formulario
-        $validated = $request->validate([
+        // Validación condicional basada en si es un servicio histórico
+        $isHistorical = $request->boolean('is_historical');
+        
+        $validationRules = [
             'vehicle_id' => 'required|exists:vehicles,id',
             'unit' => 'required|string|min:1|max:255',
             'service_tasks' => 'required|string|min:1|max:255',
             'service_date' => 'required|date',
-            'next_service_date' => 'required|date|after:service_date',
             'vendor_mechanic' => 'required|string|min:1|max:255',
             'cost' => 'required|numeric|min:0',
             'odometer' => 'required|integer|min:0',
             'description' => 'nullable|string|max:1000',
-            'status' => 'nullable|boolean'
-        ]);
+            'status' => 'nullable|boolean',
+            'is_historical' => 'nullable|boolean'
+        ];
+        
+        // Ajustar validación de fechas según si es histórico o no
+        if ($isHistorical) {
+            // Para servicios históricos, permitir fechas pasadas y next_service_date puede ser anterior a service_date
+            $validationRules['next_service_date'] = 'required|date';
+        } else {
+            // Para servicios normales, mantener validación original
+            $validationRules['service_date'] .= '|before_or_equal:today';
+            $validationRules['next_service_date'] = 'required|date|after:service_date';
+        }
+        
+        // Validar los datos del formulario
+        $validated = $request->validate($validationRules);
         
         try {
             DB::beginTransaction();
@@ -187,6 +218,7 @@ class MaintenanceController extends Controller
                 'odometer' => $request->odometer,
                 'description' => $request->description,
                 'status' => $request->status ? true : false,
+                'is_historical' => $request->boolean('is_historical'),
                 'updated_by' => \Illuminate\Support\Facades\Auth::id(),
             ]);
             

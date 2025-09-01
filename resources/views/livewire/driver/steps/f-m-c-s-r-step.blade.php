@@ -1,13 +1,21 @@
 <div class="bg-white p-4 rounded-lg shadow">
     <h3 class="text-lg font-semibold mb-4">FMCSR Requirements</h3>
 
-    <!-- Question 1: Disqualification -->
+    <!-- Pregunta 1: Descalificación -->
     <div class="mb-6 border-b pb-4">
         <div x-data="{ isDisqualified: @entangle('is_disqualified') }">
-            <div class="flex items-center mb-2">
-                <input type="checkbox" id="is_disqualified" wire:model="is_disqualified"
-                    class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2">
-                <label for="is_disqualified" class="text-sm font-medium">
+            <div class="flex items-center mb-2">                 
+                    <div class="flex items-center">
+                        <span class="mr-2 text-sm {{ $is_disqualified ? 'text-gray-400' : 'text-gray-700 font-medium' }}">No</span>
+                        <label class="inline-flex items-center cursor-pointer">                            
+                            <input type="checkbox" wire:model="is_disqualified" x-model="isDisqualified" class="sr-only peer">
+                            <div
+                                class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                            </div>
+                        </label>
+                        <span class="ml-2 text-sm {{ $is_disqualified ? 'text-gray-700 font-medium' : 'text-gray-400' }}">Yes</span>
+                    </div>
+                <label for="is_disqualified" class="text-sm font-medium ml-5">
                     Under FMCSR 391.15, are you currently disqualified from driving a commercial motor vehicle? [49 CFR
                     391.15]
                 </label>
@@ -20,17 +28,26 @@
                 @error('disqualified_details')
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                 @enderror
+                
             </div>
         </div>
     </div>
 
-    <!-- Question 2: License Suspension -->
+    <!-- Pregunta 2: Suspensión de licencia -->
     <div class="mb-6 border-b pb-4">
         <div x-data="{ isSuspended: @entangle('is_license_suspended') }">
-            <div class="flex items-center mb-2">
-                <input type="checkbox" id="is_license_suspended" wire:model="is_license_suspended"
-                    class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2">
-                <label for="is_license_suspended" class="text-sm font-medium">
+            <div class="flex items-center mb-2">                
+                    <div class="flex items-center">
+                        <span class="mr-2 text-sm {{ $is_license_suspended ? 'text-gray-400' : 'text-gray-700 font-medium' }}">No</span>
+                        <label class="inline-flex items-center cursor-pointer">                            
+                            <input type="checkbox" wire:model="is_license_suspended" x-model="isSuspended" class="sr-only peer">
+                            <div
+                                class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                            </div>
+                        </label>
+                        <span class="ml-2 text-sm {{ $is_license_suspended ? 'text-gray-700 font-medium' : 'text-gray-400' }}">Yes</span>
+                    </div>
+                <label for="is_license_suspended" class="text-sm font-medium ml-5">
                     Has your license, permit, or privilege to drive ever been suspended or revoked for any reason? [49
                     CFR 391.21(b)(9)]
                 </label>
@@ -47,13 +64,23 @@
         </div>
     </div>
 
-    <!-- Question 3: License Denial -->
+    <!-- Pregunta 3: Denegación de licencia -->
     <div class="mb-6 border-b pb-4">
         <div x-data="{ isDenied: @entangle('is_license_denied') }">
             <div class="flex items-center mb-2">
-                <input type="checkbox" id="is_license_denied" wire:model="is_license_denied"
-                    class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2">
-                <label for="is_license_denied" class="text-sm font-medium">
+                {{-- <input type="checkbox" id="is_license_denied" wire:model="is_license_denied" x-model="isDenied"
+                    class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2"> --}}
+                <div class="flex items-center">
+                    <span class="mr-2 text-sm {{ $is_license_denied ? 'text-gray-400' : 'text-gray-700 font-medium' }}">No</span>
+                    <label class="inline-flex items-center cursor-pointer">                            
+                        <input type="checkbox" wire:model="is_license_denied" x-model="isDenied" class="sr-only peer">
+                        <div
+                            class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                        </div>
+                        </label>
+                        <span class="ml-2 text-sm {{ $is_license_suspended ? 'text-gray-700 font-medium' : 'text-gray-400' }}">Yes</span>
+                    </div>
+                <label for="is_license_denied" class="text-sm font-medium ml-5">
                     Have you ever been denied a license, permit, or privilege to operate a motor vehicle? [49 CFR
                     391.21(b)(9)]
                 </label>
@@ -69,13 +96,23 @@
         </div>
     </div>
 
-    <!-- Question 4: Positive Drug Test -->
+    <!-- Pregunta 4: Prueba de drogas positiva -->
     <div class="mb-6 border-b pb-4">
         <div x-data="{ hasPositiveTest: @entangle('has_positive_drug_test') }">
             <div class="flex items-center mb-2">
                 <input type="checkbox" id="has_positive_drug_test" wire:model="has_positive_drug_test"
-                    class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2">
-                <label for="has_positive_drug_test" class="text-sm font-medium">
+                    x-model="hasPositiveTest" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2">
+                    <div class="flex items-center">
+                        <span class="mr-2 text-sm {{ $has_positive_drug_test ? 'text-gray-400' : 'text-gray-700 font-medium' }}">No</span>
+                        <label class="inline-flex items-center cursor-pointer">                            
+                            <input type="checkbox" wire:model="has_positive_drug_test" x-model="hasPositiveTest" class="sr-only peer">
+                            <div
+                                class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                            </div>
+                        </label>
+                        <span class="ml-2 text-sm {{ $has_positive_drug_test ? 'text-gray-700 font-medium' : 'text-gray-400' }}">Yes</span>
+                    </div>                    
+                <label for="has_positive_drug_test" class="text-sm font-medium ml-5">
                     Within the past two years, have you tested positive, or refused to test, on a pre-employment drug or
                     alcohol test by an employer to whom you applied, but did not obtain, safety-sensitive transportation
                     work covered by DOT agency drug and alcohol testing rules? [49 CFR 40.25(j)]
@@ -85,7 +122,6 @@
                 <p class="mb-4 text-sm text-gray-600">If yes, please provide the name of the Substance Abuse
                     Professional (SAP) that evaluated you below, along with the name of the agency that performed your
                     return to duty test.</p>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Substance Abuse Professional</label>
@@ -106,7 +142,6 @@
                         @enderror
                     </div>
                 </div>
-
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Return to Duty Test Agency</label>
                     <input type="text" wire:model="return_duty_agency"
@@ -116,7 +151,6 @@
                         <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
-
                 <div class="mb-2 p-3 bg-gray-50 rounded-md">
                     <p class="text-xs text-gray-600 italic mb-2">*If you answered yes to the above question please agree
                         to Consent for Release of Information regarding Previous Pre-Employment Controlled Substances or

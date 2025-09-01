@@ -28,6 +28,7 @@ class VehicleMaintenance extends Model implements HasMedia
         'cost',
         'odometer',
         'status',
+        'is_historical',
     ];
 
     /**
@@ -40,6 +41,7 @@ class VehicleMaintenance extends Model implements HasMedia
         'next_service_date' => 'datetime',
         'cost' => 'decimal:2',
         'status' => 'boolean',
+        'is_historical' => 'boolean',
     ];
 
     /**
