@@ -134,7 +134,7 @@
                         <div>
                             <x-base.form-label for="odometer">Lectura de Odómetro</x-base.form-label>
                             <x-base.form-input id="odometer" name="odometer" type="number"
-                                class="w-full" placeholder="Ej: 50000"
+                                class="w-full" placeholder="Ej: 50000" min="0"
                                 value="{{ old('odometer', $maintenance->odometer) }}" required />
                             @error('odometer')
                                 <div class="text-danger mt-1">{{ $message }}</div>
@@ -146,7 +146,7 @@
                         <x-base.form-label for="description">Descripción</x-base.form-label>
                         <x-base.form-textarea id="description" name="description"
                             class="w-full @error('description') border-danger @enderror" rows="4"
-                            placeholder="Detalles adicionales del mantenimiento">{{ old('description', $maintenance->description) }}</x-base.form-textarea>
+                            placeholder="Detalles adicionales del mantenimiento" maxlength="1000">{{ old('description', $maintenance->description) }}</x-base.form-textarea>
                         @error('description')
                             <div class="text-danger mt-1">{{ $message }}</div>
                         @enderror

@@ -77,12 +77,12 @@ class VehicleController extends Controller
             'type' => 'required|string|max:255',
             'company_unit_number' => 'nullable|string|max:255',
             'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
-            'vin' => 'required|string|max:255|unique:vehicles,vin',
+            'vin' => 'required|string|size:17|unique:vehicles,vin',
             'gvwr' => 'nullable|string|max:255',
             'registration_number' => 'required|string|max:255',
             'registration_state' => 'required|string|max:255',
-            'registration_expiration_date' => 'required|date',
-            'ownership_type' => 'required|in:company,leased,owned,third-party,unassigned',
+            'registration_expiration_date' => 'required|date|after:today',
+            'ownership_type' => 'required|in:owned,leased,third-party,unassigned',
             'user_driver_detail_id' => 'nullable|exists:user_driver_details,id',
             'owner_name' => 'nullable|required_if:ownership_type,owned|string|max:255',
             'owner_phone' => 'nullable|required_if:ownership_type,owned|string|max:255',
@@ -319,6 +319,11 @@ class VehicleController extends Controller
         $vehicleTypes = VehicleType::all();
         $usStates = Constants::usStates();
         
+        // Cargar historial de mantenimiento del vehículo
+        $maintenanceHistory = \App\Models\Admin\Vehicle\VehicleMaintenance::where('vehicle_id', $vehicle->id)
+            ->orderBy('service_date', 'desc')
+            ->get();
+        
         // Cargar detalles adicionales del tipo de propiedad
         $ownerDetails = null;
         $thirdPartyDetails = null;
@@ -354,7 +359,8 @@ class VehicleController extends Controller
             'vehicleTypes', 
             'usStates',
             'ownerDetails',
-            'thirdPartyDetails'
+            'thirdPartyDetails',
+            'maintenanceHistory'
         ));
     }
     public function update(Request $request, Vehicle $vehicle)
@@ -366,12 +372,12 @@ class VehicleController extends Controller
             'type' => 'required|string|max:255',
             'company_unit_number' => 'nullable|string|max:255',
             'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
-            'vin' => 'required|string|max:255|unique:vehicles,vin,' . $vehicle->id,
+            'vin' => 'required|string|size:17|unique:vehicles,vin,' . $vehicle->id,
             'gvwr' => 'nullable|string|max:255',
             'registration_number' => 'required|string|max:255',
             'registration_state' => 'required|string|max:255',
-            'registration_expiration_date' => 'required|date',
-            'ownership_type' => 'required|in:company,leased,owned,third-party,unassigned',
+            'registration_expiration_date' => 'required|date|after:today',
+            'ownership_type' => 'required|in:owned,leased,third-party,unassigned',
             'user_driver_detail_id' => 'nullable|exists:user_driver_details,id',
             'owner_name' => 'nullable|required_if:ownership_type,owned|string|max:255',
             'owner_phone' => 'nullable|required_if:ownership_type,owned|string|max:255',
@@ -455,7 +461,7 @@ class VehicleController extends Controller
                     // First, try to get the user_id from the user_driver_detail_id if it exists
                     if ($vehicle->user_driver_detail_id) {
                         try {
-                            $userDriverDetail = \App\Models\userDriverDetail::find($vehicle->user_driver_detail_id);
+                            $userDriverDetail = \App\Models\UserDriverDetail::find($vehicle->user_driver_detail_id);
                             if ($userDriverDetail && $userDriverDetail->user_id) {
                                 $userId = $userDriverDetail->user_id;
                                 \Illuminate\Support\Facades\Log::info('Found user_id from user_driver_detail (update)', [

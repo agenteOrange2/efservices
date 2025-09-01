@@ -81,7 +81,6 @@ class TrainingSchoolsController extends Controller
                 'school_name' => 'required|string|max:255',
                 'city' => 'required|string|max:100',
                 'state' => 'required|string|max:100',
-                'phone_number' => 'required|string|max:20',
                 'training_skills' => 'nullable|array',
                 'training_files' => 'nullable|string', // JSON de archivos del componente Livewire
             ]);
@@ -94,7 +93,7 @@ class TrainingSchoolsController extends Controller
             $trainingSchool->school_name = $request->school_name;
             $trainingSchool->city = $request->city;
             $trainingSchool->state = $request->state;
-            $trainingSchool->phone_number = $request->phone_number;
+
             $trainingSchool->graduated = $request->has('graduated');
             $trainingSchool->subject_to_safety_regulations = $request->has('subject_to_safety_regulations');
             $trainingSchool->performed_safety_functions = $request->has('performed_safety_functions');
@@ -265,7 +264,6 @@ class TrainingSchoolsController extends Controller
                 'school_name' => 'required|string|max:255',
                 'city' => 'required|string|max:100',
                 'state' => 'required|string|max:100',
-                'phone_number' => 'required|string|max:20',
                 'training_skills' => 'nullable|array',
                 'training_files' => 'nullable|string', // JSON de archivos del componente Livewire
             ]);
@@ -277,7 +275,7 @@ class TrainingSchoolsController extends Controller
             $trainingSchool->school_name = $request->school_name;
             $trainingSchool->city = $request->city;
             $trainingSchool->state = $request->state;
-            $trainingSchool->phone_number = $request->phone_number;
+
             $trainingSchool->graduated = $request->has('graduated');
             $trainingSchool->subject_to_safety_regulations = $request->has('subject_to_safety_regulations');
             $trainingSchool->performed_safety_functions = $request->has('performed_safety_functions');

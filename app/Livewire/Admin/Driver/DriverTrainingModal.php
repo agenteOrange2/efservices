@@ -27,7 +27,7 @@ class DriverTrainingModal extends Component
     public $school_name;
     public $city;
     public $state;
-    public $phone_number;
+
     public $date_start;
     public $date_end;
     public $graduated = false;
@@ -59,7 +59,7 @@ class DriverTrainingModal extends Component
         'school_name' => 'required|string|max:255',
         'city' => 'required|string|max:100',
         'state' => 'required|string|max:100',
-        'phone_number' => 'required|string|max:20',
+
         'date_start' => 'required|date',
         'date_end' => 'required|date|after_or_equal:date_start',
     ];
@@ -99,7 +99,7 @@ class DriverTrainingModal extends Component
         $this->school_name = $school->school_name;
         $this->city = $school->city;
         $this->state = $school->state;
-        $this->phone_number = $school->phone_number;
+
         $this->date_start = optional($school->date_start)->format('Y-m-d');
         $this->date_end = optional($school->date_end)->format('Y-m-d');
         $this->graduated = $school->graduated;
@@ -281,7 +281,7 @@ class DriverTrainingModal extends Component
             'school_name' => $this->school_name,
             'city' => $this->city,
             'state' => $this->state,
-            'phone_number' => $this->phone_number,
+
             'date_start' => $this->date_start,
             'date_end' => $this->date_end,
             'graduated' => $this->graduated ? 1 : 0,
@@ -344,7 +344,7 @@ class DriverTrainingModal extends Component
             'school_name',
             'city',
             'state',
-            'phone_number',
+
             'date_start',
             'date_end',
             'graduated',

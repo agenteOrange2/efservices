@@ -124,8 +124,7 @@
                     <h4>School #{{ $index + 1 }}</h4>
                     <table>
                         <tr>
-                            <td style="width: 50%"><strong>School Name</strong><br>{{ $school->school_name ?? 'N/A' }}</td>
-                            <td style="width: 50%"><strong>Phone Number</strong><br>{{ $school->phone_number ?? 'N/A' }}</td>
+                            <td style="width: 100%"><strong>School Name</strong><br>{{ $school->school_name ?? 'N/A' }}</td>
                         </tr>
                         <tr>
                             <td style="width: 33.33%"><strong>City</strong><br>{{ $school->city ?? 'N/A' }}</td>

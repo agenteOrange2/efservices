@@ -50,68 +50,67 @@
                         <p class="mt-1 text-base">{{ $driver->carrier->name }}</p>
                     </div>
                     <div>
-                        <h3 class="text-sm font-medium text-gray-500">License</h3>
-                        <p class="mt-1 text-base">{{ $driver->license_number }}</p>
+                        <h3 class="text-sm font-medium text-gray-500">Status</h3>
+                        <div class="mt-1">
+                            @php
+                                $statusClass = '';
+                                $iconClass = '';
+                                switch(strtolower($driver->status_name)) {
+                                    case 'active':
+                                    case 'activo':
+                                        $statusClass = 'bg-green-100 text-green-800 border-green-200';
+                                        $iconClass = 'text-green-600';
+                                        break;
+                                    case 'inactive':
+                                    case 'inactivo':
+                                        $statusClass = 'bg-red-100 text-red-800 border-red-200';
+                                        $iconClass = 'text-red-600';
+                                        break;
+                                    case 'pending':
+                                    case 'pendiente':
+                                        $statusClass = 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                                        $iconClass = 'text-yellow-600';
+                                        break;
+                                    case 'suspended':
+                                    case 'suspendido':
+                                        $statusClass = 'bg-orange-100 text-orange-800 border-orange-200';
+                                        $iconClass = 'text-orange-600';
+                                        break;
+                                    default:
+                                        $statusClass = 'bg-gray-100 text-gray-800 border-gray-200';
+                                        $iconClass = 'text-gray-600';
+                                }
+                            @endphp
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border {{ $statusClass }}">
+                                @switch(strtolower($driver->status_name))
+                                    @case('active')
+                                    @case('activo')
+                                        <x-base.lucide class="w-4 h-4 mr-1 {{ $iconClass }}" icon="check-circle" />
+                                        @break
+                                    @case('inactive')
+                                    @case('inactivo')
+                                        <x-base.lucide class="w-4 h-4 mr-1 {{ $iconClass }}" icon="x-circle" />
+                                        @break
+                                    @case('pending')
+                                    @case('pendiente')
+                                        <x-base.lucide class="w-4 h-4 mr-1 {{ $iconClass }}" icon="clock" />
+                                        @break
+                                    @case('suspended')
+                                    @case('suspendido')
+                                        <x-base.lucide class="w-4 h-4 mr-1 {{ $iconClass }}" icon="pause-circle" />
+                                        @break
+                                    @default
+                                        <x-base.lucide class="w-4 h-4 mr-1 {{ $iconClass }}" icon="help-circle" />
+                                @endswitch
+                                {{ $driver->status_name }}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Licencia del conductor -->
-        @if(isset($license))
-        <div class="box box--stacked mt-5">
-            <div class="box-header">
-                <h3 class="box-title">Driver License</h3>
-            </div>
-            <div class="box-body p-5">
-                <div class="flex flex-col md:flex-row gap-4">
-                    <div class="w-full md:w-1/3">
-                        <div class="border rounded-lg overflow-hidden shadow-sm">
-                            <div class="p-4 bg-gray-50 border-b">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <h4 class="font-medium text-gray-900 truncate" title="{{ $license->name }}">
-                                            {{ $license->name }}
-                                        </h4>
-                                        <p class="text-xs text-gray-500 mt-1">
-                                            {{ $license->human_readable_size }} • 
-                                            {{ $license->mime_type }} • 
-                                            {{ $license->created_at->format('M d, Y') }}
-                                        </p>
-                                    </div>
-                                    <div class="flex">
-                                        <a href="{{ $license->getUrl() }}" target="_blank" class="text-blue-600 hover:text-blue-800 mr-2">
-                                            <x-base.lucide class="w-5 h-5" icon="eye" />
-                                        </a>
-                                        <a href="{{ $license->getUrl() }}" download class="text-green-600 hover:text-green-800">
-                                            <x-base.lucide class="w-5 h-5" icon="download" />
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="w-full md:w-2/3">
-                        <div class="h-full flex items-center">
-                            @if(in_array($license->mime_type, ['image/jpeg', 'image/png', 'image/gif', 'image/jpg']))
-                                <img src="{{ $license->getUrl() }}" alt="Driver License" class="max-h-48 object-contain rounded-lg border shadow-sm">
-                            @else
-                                <div class="flex items-center justify-center w-full h-full bg-gray-100 rounded-lg border p-6">
-                                    <div class="text-center">
-                                        <x-base.lucide class="h-12 w-12 mx-auto text-gray-400" icon="file-text" />
-                                        <p class="mt-2 text-sm text-gray-600">Preview not available</p>
-                                        <a href="{{ $license->getUrl() }}" target="_blank" class="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                            View Document
-                                        </a>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        @endif
+
 
         <!-- Filtros -->
         <div class="box box--stacked mt-5">
@@ -124,7 +123,7 @@
                             <x-base.lucide
                                 class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3] text-slate-500"
                                 icon="Search" />
-                            <x-base.form-input class="rounded-[0.5rem] pl-9 sm:w-64" name="search_term"
+                            <x-base.form-input class="rounded-[0.5rem] pl-9" name="search_term"
                                 value="{{ request('search_term') }}" type="text" placeholder="Search documents..." />
                         </div>
                     </div>
@@ -141,15 +140,15 @@
                             class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
                     </div>
 
-                    <div class="flex items-end">
-                        <button type="submit" class="btn btn-primary mr-2">
+                    <div class="flex items-end justify-between sm:justify-start">
+                        <x-base.button type="submit" class="btn btn-primary mr-2 flex item-center" variant="primary" >
                             <x-base.lucide class="w-4 h-4 mr-1" icon="filter" />
                             Apply Filters
-                        </button>
-                        <button type="button" id="clear-filters" class="btn btn-outline-secondary">
+                        </x-base.button>
+                        <x-base.button type="button" id="clear-filters" class="btn btn-outline-secondary flex item-center" variant="primary">
                             <x-base.lucide class="w-4 h-4 mr-1" icon="x" />
                             Clear Filters
-                        </button>
+                        </x-base.button>
                     </div>
                 </form>
             </div>

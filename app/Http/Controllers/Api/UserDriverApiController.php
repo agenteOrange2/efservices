@@ -1111,7 +1111,7 @@ class UserDriverApiController extends Controller
                 'training_schools.*.school_name' => 'required_with:training_schools|string|max:255',
                 'training_schools.*.city' => 'required_with:training_schools|string|max:255',
                 'training_schools.*.state' => 'required_with:training_schools|string|max:255',
-                'training_schools.*.phone_number' => 'nullable|string|max:20',
+
                 'training_schools.*.date_start' => 'required_with:training_schools|date',
                 'training_schools.*.date_end' => 'required_with:training_schools|date|after_or_equal:training_schools.*.date_start',
                 'training_schools.*.graduated' => 'nullable|boolean',
@@ -1175,7 +1175,7 @@ class UserDriverApiController extends Controller
                                 'school_name' => $schoolData['school_name'],
                                 'city' => $schoolData['city'],
                                 'state' => $schoolData['state'],
-                                'phone_number' => $schoolData['phone_number'] ?? null,
+
                                 'date_start' => $schoolData['date_start'],
                                 'date_end' => $schoolData['date_end'],
                                 'graduated' => isset($schoolData['graduated']),
@@ -1189,7 +1189,7 @@ class UserDriverApiController extends Controller
                                 'school_name' => $schoolData['school_name'],
                                 'city' => $schoolData['city'],
                                 'state' => $schoolData['state'],
-                                'phone_number' => $schoolData['phone_number'] ?? null,
+
                                 'date_start' => $schoolData['date_start'],
                                 'date_end' => $schoolData['date_end'],
                                 'graduated' => isset($schoolData['graduated']),

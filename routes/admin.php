@@ -91,11 +91,11 @@ Route::delete('vehicles/{vehicle}/vehicle-maintenances/{serviceItemId}/files/{me
     [VehicleMaintenanceController::class, 'deleteFile'])
     ->name('vehicles.vehicle-maintenances.delete-file');
 
-// 5. Rutas para mantenimientos centralizados
-Route::group(['prefix' => 'maintenance'], function () {
-    Route::get('/', [VehicleMaintenanceController::class, 'index'])->name('maintenance.index');
-    Route::get('/{serviceItem}', [VehicleMaintenanceController::class, 'show'])->name('maintenance.show');
-});
+// 5. Rutas para mantenimientos centralizados (COMENTADO - CONFLICTO CON MAINTENANCE CONTROLLER)
+// Route::group(['prefix' => 'maintenance'], function () {
+//     Route::get('/', [VehicleMaintenanceController::class, 'index'])->name('maintenance.index');
+//     Route::get('/{serviceItem}', [VehicleMaintenanceController::class, 'show'])->name('maintenance.show');
+// });
 
 // Rutas para tipos y marcas de vehículos
 Route::resource('vehicle-types', VehicleTypeController::class);
@@ -107,17 +107,23 @@ Route::prefix('maintenance')->name('maintenance.')->group(function () {
     Route::get('/', [MaintenanceController::class, 'index'])->name('index');
     Route::get('/create', [MaintenanceController::class, 'create'])->name('create');
     Route::post('/', [MaintenanceController::class, 'store'])->name('store');
+    
+    // Exportar PDF de mantenimiento (DEBE IR ANTES DE LAS RUTAS CON PARÁMETROS)
+    Route::post('/export-pdf', [MaintenanceController::class, 'exportPdf'])->name('export-pdf');
+    
+    // Calendario (DEBE IR ANTES DE LAS RUTAS CON PARÁMETROS)
+    Route::get('/calendar', [MaintenanceController::class, 'calendar'])->name('calendar');
+    Route::get('/calendar/events', [MaintenanceController::class, 'getEvents'])->name('calendar.events');
+    
+    // Reportes de mantenimiento (DEBE IR ANTES DE LAS RUTAS CON PARÁMETROS)
+    Route::get('/reports', [MaintenanceController::class, 'reports'])->name('reports');
+    
+    // Rutas con parámetros (DEBEN IR AL FINAL)
+    Route::get('/{maintenance}', [MaintenanceController::class, 'show'])->name('show');
     Route::get('/{maintenance}/edit', [MaintenanceController::class, 'edit'])->name('edit');
     Route::put('/{maintenance}', [MaintenanceController::class, 'update'])->name('update');
     Route::delete('/{maintenance}', [MaintenanceController::class, 'destroy'])->name('destroy');
-    
-    // Reportes
-    Route::get('/reports', [MaintenanceReportController::class, 'index'])->name('reports');
-    Route::post('/export-pdf', [MaintenanceReportController::class, 'exportPdf'])->name('export-pdf');
-    
-    // Calendario
-    Route::get('/calendar', [MaintenanceCalendarController::class, 'index'])->name('calendar');
-    Route::get('/calendar/events', [MaintenanceCalendarController::class, 'getEvents'])->name('calendar.events');
+    Route::post('/{maintenance}/reschedule', [MaintenanceController::class, 'reschedule'])->name('reschedule');
 });
 
 
@@ -838,8 +844,8 @@ Route::prefix('maintenance-system')->name('maintenance-system.')->group(function
 
     // Rutas adicionales para funcionalidades extendidas (opcionales)
     Route::get('/export', [MaintenanceController::class, 'export'])->name('export');
-    Route::get('/reports', [MaintenanceController::class, 'reports'])->name('reports');
-    Route::get('/calendar', [MaintenanceController::class, 'calendar'])->name('calendar');
+    // Nota: Las rutas de reports y calendar están definidas fuera de este grupo
+    // apuntando a MaintenanceReportController y MaintenanceCalendarController
 });
 
 

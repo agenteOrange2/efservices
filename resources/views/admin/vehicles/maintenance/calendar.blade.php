@@ -58,12 +58,12 @@ $breadcrumbLinks = [
             Maintenance Calendar
         </h2>
         <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
-            <a href="{{ route('admin.maintenance.create') }}" class="btn btn-primary shadow-md mr-2">
+            <x-base.button as="a" href="{{ route('admin.maintenance.create') }}" class="btn btn-primary  mr-2" variant="primary">
                 <i class="w-4 h-4 mr-2" data-lucide="plus"></i> New Maintenance
-            </a>
-            <a href="{{ route('admin.maintenance.index') }}" class="btn btn-secondary shadow-md">
+            </x-base.button>
+            <x-base.button as="a" href="{{ route('admin.maintenance.index') }}" class="btn btn-secondary " variant="primary">
                 <i class="w-4 h-4 mr-2" data-lucide="list"></i> List
-            </a>
+            </x-base.but>
         </div>
     </div>
     
@@ -76,7 +76,7 @@ $breadcrumbLinks = [
                     <form id="filter-form" action="{{ route('admin.maintenance.calendar') }}" method="GET">
                         <div class="mb-4">
                             <label class="form-label">Vehicle</label>
-                            <select name="vehicle_id" class="form-select w-full">
+                            <select name="vehicle_id" class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
                                 <option value="">All vehicles</option>
                                 @php
                                    $availableVehicles = isset($vehicles) ? $vehicles : collect();
@@ -90,7 +90,7 @@ $breadcrumbLinks = [
                         </div>
                         <div class="mb-4">
                             <label class="form-label">Status</label>
-                            <select name="status" class="form-select w-full">
+                            <select name="status" class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
                                 @php $selectedStatus = $status ?? ''; @endphp
                             <option value="">All</option>
                                 <option value="1" {{ $selectedStatus == '1' ? 'selected' : '' }}>Completed</option>
@@ -206,7 +206,10 @@ $breadcrumbLinks = [
                 try {
                     // Parsear los eventos directamente sin modificarlos
                     maintenanceEvents = JSON.parse(maintenanceEventsElement.dataset.events);
-                    console.log('Eventos cargados desde el backend:', maintenanceEvents);
+                    console.log('Elemento maintenance-events-data encontrado');
+                    console.log('Datos raw del elemento:', maintenanceEventsElement.dataset.events);
+                    console.log('Eventos parseados:', maintenanceEvents);
+                    console.log('Número de eventos:', maintenanceEvents.length);
                     
                     // Formatear los eventos para el calendario si es necesario
                     if (maintenanceEvents.length > 0 && !maintenanceEvents[0].hasOwnProperty('extendedProps')) {
@@ -241,6 +244,8 @@ $breadcrumbLinks = [
             // Si no hay eventos, usar los predeterminados
             if (!maintenanceEvents || !maintenanceEvents.length) {
                 console.warn('No hay eventos de mantenimiento para mostrar');
+            } else {
+                console.log('Eventos listos para el calendario:', maintenanceEvents);
             }
             
             // Buscar todas las instancias de calendario
@@ -310,13 +315,15 @@ $breadcrumbLinks = [
                         
                         console.log('Datos actualizados directamente en el DOM');
                         
-                        // Abrir el modal usando Tailwind API sin depender de Alpine
+                        // Abrir el modal usando el atributo data-tw-toggle
                         const modal = document.getElementById('maintenance-modal');
-                        if (modal && window.tailwind) {
-                            console.log('Abriendo modal con Tailwind API');
-                            window.tailwind.Modal.getOrCreateInstance(modal).show();
+                        if (modal) {
+                            console.log('Abriendo modal');
+                            // Usar el método correcto para abrir modales en Tailwind Elements
+                            const modalInstance = tailwind.Modal.getOrCreateInstance(modal);
+                            modalInstance.show();
                         } else {
-                            console.error('No se pudo abrir el modal con Tailwind API');
+                            console.error('No se pudo encontrar el modal');
                         }
                     },
                     selectable: true, // Permitir seleccionar fechas
@@ -419,18 +426,21 @@ $breadcrumbLinks = [
                         
                         console.log('Datos de evento actualizados directamente en el DOM');
                         
-                        // Abrir el modal usando Tailwind API sin depender de Alpine
+                        // Abrir el modal usando el método correcto
                         const modal = document.getElementById('maintenance-modal');
-                        if (modal && window.tailwind) {
-                            console.log('Abriendo modal de evento con Tailwind API');
-                            window.tailwind.Modal.getOrCreateInstance(modal).show();
+                        if (modal) {
+                            console.log('Abriendo modal de evento');
+                            // Usar el método correcto para abrir modales en Tailwind Elements
+                            const modalInstance = tailwind.Modal.getOrCreateInstance(modal);
+                            modalInstance.show();
                         } else {
-                            console.error('No se pudo abrir el modal con Tailwind API');
+                            console.error('No se pudo encontrar el modal');
                         }
                     }
                 };
                 
                 // Crear el calendario con nuestras opciones
+                console.log('Inicializando FullCalendar con eventos:', maintenanceEvents);
                 let calendar = new Calendar(el, calendarOptions);
                 calendar.render();
                 
@@ -463,13 +473,23 @@ $breadcrumbLinks = [
         }));
     });
     
-    // Función global para abrir el modal usando la API de Tailwind
+    // Función global para abrir el modal
     window.openMaintenanceModal = function() {
         // Utilizamos setTimeout para evitar reflow forzado
         setTimeout(() => {
             const modal = document.getElementById('maintenance-modal');
-            if (modal && window.tailwind) {
-                window.tailwind.Modal.getOrCreateInstance(modal).show();
+            if (modal) {
+                try {
+                    const modalInstance = tailwind.Modal.getOrCreateInstance(modal);
+                    modalInstance.show();
+                } catch (error) {
+                    console.error('Error opening modal:', error);
+                    // Fallback: trigger click on modal toggle button if exists
+                    const toggleButton = document.querySelector('[data-tw-toggle="modal"][data-tw-target="#maintenance-modal"]');
+                    if (toggleButton) {
+                        toggleButton.click();
+                    }
+                }
             }
         }, 10);
     };

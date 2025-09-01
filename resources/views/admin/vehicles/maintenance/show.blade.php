@@ -189,7 +189,7 @@
     <!-- Modal de Reprogramación Mejorado -->
     <x-base.dialog id="reschedule-modal" size="md">
         <x-base.dialog.panel>
-            <form id="reschedule-form" action="{{ route('admin.maintenance.reschedule', $maintenance->id) }}" method="POST">
+            <form id="reschedule-form" action="{{ route('admin.maintenance-system.reschedule', $maintenance->id) }}" method="POST">
                 @csrf
                 <div class="p-5">
                     <div class="text-center">

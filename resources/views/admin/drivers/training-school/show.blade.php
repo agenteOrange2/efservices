@@ -13,175 +13,208 @@
 @endphp
 
 @section('subcontent')
-    <div>
+    <div class="container mx-auto">
         <!-- Mensajes Flash -->
         @if (session()->has('success'))
-            <div class="alert alert-success flex items-center mb-5">
+            <div class="alert alert-success show mb-2" role="alert">
                 <x-base.lucide class="w-6 h-6 mr-2" icon="check-circle" />
                 {{ session('success') }}
             </div>
         @endif
 
         @if (session()->has('error'))
-            <div class="alert alert-danger flex items-center mb-5">
+            <div class="alert alert-danger show mb-2" role="alert">
                 <x-base.lucide class="w-6 h-6 mr-2" icon="alert-circle" />
                 {{ session('error') }}
             </div>
         @endif
 
-        <!-- Título de la página -->
-        <div class="flex flex-col sm:flex-row items-center mt-8">
-            <h2 class="text-lg font-medium">
-                Documents for {{ $school->school_name }}
+        <!-- Header profesional -->
+        <div class="intro-y flex flex-col sm:flex-row items-center mt-8 mb-6 p-3">
+            <h2 class="text-lg font-medium mr-auto flex items-center">
+                <x-base.lucide class="w-6 h-6 mr-2 text-slate-600" icon="graduation-cap" />
+                Training School Details
+                <span class="text-slate-500 ml-2">- {{ $school->school_name }}</span>
             </h2>
-            <div class="flex items-center sm:ml-auto mt-3 sm:mt-0">
-                <a href="{{ route('admin.training-schools.index') }}" class="btn btn-outline-secondary mr-2">
-                    <x-base.lucide class="w-4 h-4 mr-1" icon="arrow-left" />
-                    Back to Training Schools
-                </a>
-                <a href="{{ route('admin.training-schools.edit', $school->id) }}" class="btn btn-outline-primary">
-                    <x-base.lucide class="w-4 h-4 mr-1" icon="edit" />
-                    Edit Training School
-                </a>
+            <div class="w-full sm:w-auto flex mt-4 sm:mt-0">
+                <x-base.button as="a" href="{{ route('admin.training-schools.index') }}" class="btn btn-outline-secondary mr-2">
+                    <x-base.lucide class="w-4 h-4 mr-2" icon="arrow-left" />
+                    Back to Schools
+                </x-base.button>
+                <x-base.button as="a" href="{{ route('admin.training-schools.edit', $school->id) }}" class="btn btn-primary">
+                    <x-base.lucide class="w-4 h-4 mr-2" icon="edit" />
+                    Edit School
+                </x-base.button>
             </div>
         </div>
 
         <!-- Información de la escuela -->
-        <div class="box box--stacked mt-5">
+        <div class="box box--stacked mt-5 p-3">
             <div class="box-header">
-                <h3 class="box-title">Training School Details</h3>
+                <h3 class="box-title flex items-center">
+                    <x-base.lucide class="w-5 h-5 mr-2 text-slate-600" icon="info" />
+                    Training School Details
+                </h3>
             </div>
             <div class="box-body p-5">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
-                        <table class="table w-full">
-                            <tbody>
-                                <tr>
-                                    <th class="whitespace-nowrap w-40">Driver</th>
-                                    <td>{{ $school->userDriverDetail->user->name }} {{ $school->userDriverDetail->user->last_name ?? '' }}</td>
-                                </tr>
-                                <tr>
-                                    <th class="whitespace-nowrap">School Name</th>
-                                    <td>{{ $school->school_name }}</td>
-                                </tr>
-                                <tr>
-                                    <th class="whitespace-nowrap">Location</th>
-                                    <td>{{ $school->city }}, {{ $school->state }}</td>
-                                </tr>
-                                <tr>
-                                    <th class="whitespace-nowrap">Phone</th>
-                                    <td>{{ $school->phone_number }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <!-- Información básica -->
+                    <div class="space-y-4">
+                        <div class="flex items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <x-base.lucide class="w-5 h-5 text-slate-600 mr-3" icon="user" />
+                            <div>
+                                <p class="text-sm font-medium text-slate-500">Driver</p>
+                                <p class="font-semibold text-slate-800">{{ $school->userDriverDetail->user->name }} {{ $school->userDriverDetail->middle_name ? $school->userDriverDetail->middle_name . ' ' : '' }}{{ $school->userDriverDetail->last_name ?? '' }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <x-base.lucide class="w-5 h-5 text-slate-600 mr-3" icon="phone" />
+                            <div>
+                                <p class="text-sm font-medium text-slate-500">Driver Phone</p>
+                                <p class="font-semibold text-slate-800">{{ $school->userDriverDetail->phone ?? '-' }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <x-base.lucide class="w-5 h-5 text-slate-600 mr-3" icon="building" />
+                            <div>
+                                <p class="text-sm font-medium text-slate-500">School Name</p>
+                                <p class="font-semibold text-slate-800">{{ $school->school_name }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <x-base.lucide class="w-5 h-5 text-slate-600 mr-3" icon="map-pin" />
+                            <div>
+                                <p class="text-sm font-medium text-slate-500">Location</p>
+                                <p class="font-semibold text-slate-800">{{ $school->city }}, {{ $school->state }}</p>
+                            </div>
+                        </div>
+
                     </div>
-                    <div>
-                        <table class="table">
-                            <tbody>
-                                <tr>
-                                    <th class="whitespace-nowrap w-40">Start Date</th>
-                                    <td>{{ $school->date_start ? date('m/d/Y', strtotime($school->date_start)) : '-' }}</td>
-                                </tr>
-                                <tr>
-                                    <th class="whitespace-nowrap">End Date</th>
-                                    <td>{{ $school->date_end ? date('m/d/Y', strtotime($school->date_end)) : '-' }}</td>
-                                </tr>
-                                <tr>
-                                    <th class="whitespace-nowrap">Graduated</th>
-                                    <td>
-                                        @if ($school->graduated)
-                                            <span class="text-success flex items-center">
-                                                <x-base.lucide class="w-4 h-4 mr-1" icon="check-circle" />
-                                                Yes
-                                            </span>
-                                        @else
-                                            <span class="text-warning flex items-center">
-                                                <x-base.lucide class="w-4 h-4 mr-1" icon="clock" />
-                                                Not yet
-                                            </span>
-                                        @endif
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th class="whitespace-nowrap">Safety Regulations</th>
-                                    <td>
-                                        @if ($school->subject_to_safety_regulations)
-                                            <span class="text-success flex items-center">
-                                                <x-base.lucide class="w-4 h-4 mr-1" icon="check-circle" />
-                                                Subject to Safety Regulations
-                                            </span>
-                                        @else
-                                            <span class="text-danger flex items-center">
-                                                <x-base.lucide class="w-4 h-4 mr-1" icon="x-circle" />
-                                                Not Subject to Safety Regulations
-                                            </span>
-                                        @endif
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th class="whitespace-nowrap">Safety Functions</th>
-                                    <td>
-                                        @if ($school->performed_safety_functions)
-                                            <span class="text-success flex items-center">
-                                                <x-base.lucide class="w-4 h-4 mr-1" icon="check-circle" />
-                                                Performed Safety Functions
-                                            </span>
-                                        @else
-                                            <span class="text-danger flex items-center">
-                                                <x-base.lucide class="w-4 h-4 mr-1" icon="x-circle" />
-                                                Did Not Perform Safety Functions
-                                            </span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    
+                    <!-- Fechas y estados -->
+                    <div class="space-y-4">
+                        <div class="flex items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <x-base.lucide class="w-5 h-5 text-slate-600 mr-3" icon="calendar-days" />
+                            <div>
+                                <p class="text-sm font-medium text-slate-500">Start Date</p>
+                                <p class="font-semibold text-slate-800">{{ $school->date_start ? date('m/d/Y', strtotime($school->date_start)) : '-' }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <x-base.lucide class="w-5 h-5 text-slate-600 mr-3" icon="calendar-x" />
+                            <div>
+                                <p class="text-sm font-medium text-slate-500">End Date</p>
+                                <p class="font-semibold text-slate-800">{{ $school->date_end ? date('m/d/Y', strtotime($school->date_end)) : '-' }}</p>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <p class="text-sm font-medium text-slate-500 mb-2">Graduated</p>
+                            @if ($school->graduated)
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-success text-white">
+                                    <x-base.lucide class="w-4 h-4 mr-1" icon="check-circle" />
+                                    Graduated
+                                </span>
+                            @else
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-warning text-white">
+                                    <x-base.lucide class="w-4 h-4 mr-1" icon="clock" />
+                                    In Progress
+                                </span>
+                            @endif
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <p class="text-sm font-medium text-slate-500 mb-2">Safety Regulations</p>
+                            @if ($school->subject_to_safety_regulations)
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary text-white">
+                                    <x-base.lucide class="w-4 h-4 mr-1" icon="shield-check" />
+                                    Subject to Regulations
+                                </span>
+                            @else
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-slate-500 text-white">
+                                    <x-base.lucide class="w-4 h-4 mr-1" icon="shield-x" />
+                                    Not Subject
+                                </span>
+                            @endif
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <p class="text-sm font-medium text-slate-500 mb-2">Safety Functions</p>
+                            @if ($school->performed_safety_functions)
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-info text-white">
+                                    <x-base.lucide class="w-4 h-4 mr-1" icon="check-circle-2" />
+                                    Functions Performed
+                                </span>
+                            @else
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-danger text-white">
+                                    <x-base.lucide class="w-4 h-4 mr-1" icon="x-circle" />
+                                    Not Performed
+                                </span>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Habilidades de entrenamiento -->
-        <div class="box box--stacked mt-5">
+        <!-- Training Skills -->
+        <div class="box box--stacked mt-5 p-3">
             <div class="box-header">
-                <h3 class="box-title">Training Skills</h3>
+                <h3 class="box-title flex items-center">
+                    <x-base.lucide class="w-5 h-5 mr-2 text-slate-600" icon="award" />
+                    Training Skills
+                    @php
+                        $skills = $school->training_skills ?? [];
+                        if (is_string($skills)) {
+                            $skills = json_decode($skills, true) ?? [];
+                        }
+                    @endphp
+                    @if($skills && count($skills) > 0)
+                        <span class="ml-2 bg-primary text-white px-2 py-1 rounded-full text-xs font-medium">
+                            {{ count($skills) }}
+                        </span>
+                    @endif
+                </h3>
             </div>
             <div class="box-body p-5">
-                @php
-                    $trainingSkills = $school->training_skills ?? [];
-                    if (is_string($trainingSkills)) {
-                        $trainingSkills = json_decode($trainingSkills, true) ?? [];
-                    }
-                @endphp
-                
-                @if (count($trainingSkills) > 0)
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        @foreach ($trainingSkills as $skill)
-                            <div class="flex items-center">
-                                <x-base.lucide class="w-4 h-4 mr-2 text-success" icon="check" />
-                                <span>{{ ucfirst($skill) }}</span>
-                            </div>
+                @if($skills && count($skills) > 0)
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($skills as $skill)
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-success text-white">
+                                <x-base.lucide class="w-4 h-4 mr-1" icon="check-circle" />
+                                {{ $skill }}
+                            </span>
                         @endforeach
                     </div>
                 @else
-                    <div class="text-slate-500">No training skills specified.</div>
+                    <div class="text-center py-8">
+                        <div class="bg-slate-100 rounded-full p-3 mx-auto mb-3 w-12 h-12 flex items-center justify-center">
+                            <x-base.lucide class="w-6 h-6 text-slate-500" icon="alert-circle" />
+                        </div>
+                        <p class="text-slate-600 font-medium">No training skills specified</p>
+                        <p class="text-sm text-slate-500 mt-1">Skills will appear here once they are added to the training record.</p>
+                    </div>
                 @endif
             </div>
         </div>
 
         <!-- Documentos -->
-        <div class="box box--stacked mt-5">
+        <div class="box box--stacked mt-5 p-3">
             <div class="box-header">
-                <h3 class="box-title">Documents</h3>
+                <h3 class="box-title flex items-center">
+                    <x-base.lucide class="w-5 h-5 mr-2 text-slate-600" icon="file-text" />
+                    Documents
+                    @php
+                        $documents = \Spatie\MediaLibrary\MediaCollections\Models\Media::where('model_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)
+                            ->where('model_id', $school->id)
+                            ->where('collection_name', 'school_certificates')
+                            ->get();
+                    @endphp
+                    @if (count($documents) > 0)
+                        <span class="ml-2 bg-info text-white px-2 py-1 rounded-full text-xs font-medium">
+                            {{ count($documents) }}
+                        </span>
+                    @endif
+                </h3>
             </div>
             <div class="box-body p-0">
-                @php
-                    $documents = \Spatie\MediaLibrary\MediaCollections\Models\Media::where('model_type', \App\Models\Admin\Driver\DriverTrainingSchool::class)
-                        ->where('model_id', $school->id)
-                        ->where('collection_name', 'school_certificates')
-                        ->get();
-                @endphp
-                
                 @if (count($documents) > 0)
                     <div class="overflow-x-auto">
                         <table class="table table-striped w-full">

@@ -42,7 +42,7 @@
                             <x-base.lucide
                                 class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3] text-slate-500"
                                 icon="Search" />
-                            <x-base.form-input class="rounded-[0.5rem] pl-9 sm:w-64" name="search_term"
+                            <x-base.form-input class="rounded-[0.5rem] pl-9" name="search_term"
                                 value="{{ request('search_term') }}" type="text" placeholder="Search documents..." />
                         </div>
                     </div>
@@ -88,14 +88,14 @@
                     </div>
 
                     <div class="flex items-end">
-                        <button type="submit" class="btn btn-primary mr-2">
+                        <x-base.button type="submit" class="btn btn-primary mr-2">
                             <x-base.lucide class="w-4 h-4 mr-1" icon="filter" />
                             Apply Filters
-                        </button>
-                        <button type="button" id="clear-filters" class="btn btn-outline-secondary">
+                        </x-base.button>
+                        <x-base.button type="button" id="clear-filters" class="btn btn-outline-secondary">
                             <x-base.lucide class="w-4 h-4 mr-1" icon="x" />
                             Clear Filters
-                        </button>
+                        </x-base.button>
                     </div>
                 </form>
             </div>

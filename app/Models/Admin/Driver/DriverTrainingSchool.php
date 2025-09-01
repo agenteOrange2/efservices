@@ -23,7 +23,6 @@ class DriverTrainingSchool extends Model implements HasMedia
         'school_name',
         'city',
         'state',
-        'phone_number',
         'graduated',
         'subject_to_safety_regulations',
         'performed_safety_functions',

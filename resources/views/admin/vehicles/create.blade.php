@@ -181,7 +181,66 @@
                                         }
                                     }
                                     return true;
-                                }
+                                },
+                                
+                                // VIN validation
+                                vinError: '',
+                                validateVin() {
+                                    if (this.vin.length === 0) {
+                                        this.vinError = '';
+                                        return true;
+                                    }
+                                    if (this.vin.length !== 17) {
+                                        this.vinError = 'VIN must be exactly 17 characters';
+                                        return false;
+                                    }
+                                    // Check for invalid characters (I, O, Q are not allowed in VIN)
+                                    if (/[IOQ]/.test(this.vin.toUpperCase())) {
+                                        this.vinError = 'VIN cannot contain letters I, O, or Q';
+                                        return false;
+                                    }
+                                    this.vinError = '';
+                                    return true;
+                                },
+                                
+                                // Date validation
+                                registrationDateError: '',
+                                inspectionDateError: '',
+                                validateDate(field) {
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    
+                                    if (field === 'registration') {
+                                        if (!this.registrationExpirationDate) {
+                                            this.registrationDateError = '';
+                                            return true;
+                                        }
+                                        const selectedDate = new Date(this.registrationExpirationDate);
+                                        if (selectedDate <= today) {
+                                            this.registrationDateError = 'Registration expiration date must be in the future';
+                                            return false;
+                                        }
+                                        this.registrationDateError = '';
+                                        return true;
+                                    }
+                                    
+                                    if (field === 'inspection') {
+                                        if (!this.annualInspectionExpirationDate) {
+                                            this.inspectionDateError = '';
+                                            return true;
+                                        }
+                                        const selectedDate = new Date(this.annualInspectionExpirationDate);
+                                        if (selectedDate <= today) {
+                                            this.inspectionDateError = 'Annual inspection expiration date must be in the future';
+                                            return false;
+                                        }
+                                        this.inspectionDateError = '';
+                                        return true;
+                                    }
+                                },
+                                
+                                // Add annual inspection date to data
+                                annualInspectionExpirationDate: '{{ old('annual_inspection_expiration_date', '') }}'
                             }">
 
                                 {{-- Tabs en Blade --}}
@@ -198,7 +257,7 @@
                                                     General Information
                                                 </button>
                                             </li>
-                                            <li class="mr-2">
+                                            {{-- <li class="mr-2">
                                                 <button type="button" @click="activeTab = 'service'"
                                                     class="inline-block p-4"
                                                     :class="{
@@ -207,7 +266,7 @@
                                                     }">
                                                     Service Items
                                                 </button>
-                                            </li>
+                                            </li> --}}
                                         </ul>
                                     </div>
                                 </div>
@@ -332,10 +391,16 @@
                                                         </div>
                                                         {{-- VIN --}}
                                                         <div>
-                                                            <label class="block text-sm mb-1">VIN</label>
+                                                            <label class="block text-sm mb-1">VIN <span class="text-red-500">*</span></label>
                                                             <input type="text" name="vin" x-model="vin"
+                                                                maxlength="17" minlength="17"
+                                                                @input="validateVin()"
+                                                                :class="{'border-red-500': vinError, 'border-green-500': vin && vin.length === 17 && !vinError}"
                                                                 class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
                                                                 placeholder="e.g. 1HGBH41JXMN109186">
+                                                            <p class="text-red-500 text-xs mt-1" x-show="vinError" x-text="vinError"></p>
+                                                            <p class="text-green-500 text-xs mt-1" x-show="!vinError && vin && vin.length === 17">✓ Valid VIN format</p>
+                                                            <p class="text-gray-500 text-xs mt-1" x-show="!vinError && (!vin || vin.length !== 17)">VIN must be exactly 17 characters</p>
                                                             @error('vin')
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                                                             @enderror
@@ -495,10 +560,15 @@
                                                         </div>
                                                         {{-- Registration Expiration --}}
                                                         <div>
-                                                            <label class="block text-sm mb-1">Expiration Date</label>
+                                                            <label class="block text-sm mb-1">Expiration Date <span class="text-red-500">*</span></label>
                                                             <input type="date" name="registration_expiration_date"
                                                                 x-model="registrationExpirationDate"
+                                                                @change="validateDate($event.target.value, 'registration')"
+                                                                :class="{'border-red-500': registrationDateError, 'border-green-500': registrationExpirationDate && !registrationDateError}"
+                                                                min="{{ date('Y-m-d', strtotime('+1 day')) }}"
                                                                 class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
+                                                            <p class="text-red-500 text-xs mt-1" x-show="registrationDateError" x-text="registrationDateError"></p>
+                                                            <p class="text-gray-500 text-xs mt-1" x-show="!registrationDateError">Must be a future date</p>
                                                             @error('registration_expiration_date')
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                                                             @enderror
@@ -528,9 +598,8 @@
                                                     </div>
                                                 </div>
                                                 <div class="mt-3 w-full flex-1 xl:mt-0">
-                                                    <select id="user_driver_detail_id" name="user_driver_detail_id"
-                                                        x-model="selectedDriverId" @change="updateOwnerFromDriver()"
-                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
+                                                    <select id="user_driver_detail_id" name="user_driver_detail_id" class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
+                                                        x-model="selectedDriverId" @change="updateOwnerFromDriver()">
                                                         <option value="">None (Unassigned)</option>
                                                         <!-- Los drivers se cargarán dinámicamente vía JavaScript -->
                                                     </select>
@@ -771,10 +840,16 @@
                                                 </div>
                                                 <div class="mt-3 w-full flex-1 xl:mt-0">
                                                     <div>
-                                                        <label class="block text-sm mb-1">Expiration Date</label>
+                                                        <label class="block text-sm mb-1">Expiration Date <span class="text-red-500">*</span></label>
                                                         <input type="date" name="annual_inspection_expiration_date"
                                                             value="{{ old('annual_inspection_expiration_date') }}"
+                                                            x-model="annualInspectionExpirationDate"
+                                                            @change="validateDate($event.target.value, 'inspection')"
+                                                            :class="{'border-red-500': inspectionDateError, 'border-green-500': annualInspectionExpirationDate && !inspectionDateError}"
+                                                            min="{{ date('Y-m-d', strtotime('+1 day')) }}"
                                                             class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
+                                                        <p class="text-red-500 text-xs mt-1" x-show="inspectionDateError" x-text="inspectionDateError"></p>
+                                                        <p class="text-gray-500 text-xs mt-1" x-show="!inspectionDateError">Must be a future date</p>
                                                         @error('annual_inspection_expiration_date')
                                                             <span class="text-red-500 text-sm">{{ $message }}</span>
                                                         @enderror
@@ -851,9 +926,9 @@
                                 </div>
 
                                 {{-- TAB: SERVICE ITEMS --}}
-                                <div x-show="activeTab === 'service'">
-                                    {{-- Service Items with Alpine Loop --}}
-                                    {{-- <div class="bg-white p-4 rounded-lg shadow">
+                                {{-- <div x-show="activeTab === 'service'">
+                                    
+                                    <div class="bg-white p-4 rounded-lg shadow">
                                         <h3 class="text-lg font-semibold mb-4">Service History</h3>
                                         <p class="text-sm text-gray-600 mb-6">Add any maintenance or service records for
                                             this vehicle.</p>
@@ -967,8 +1042,8 @@
                                                 Add Service Item
                                             </button>
                                         </div>
-                                    </div> --}}
-                                </div>
+                                    </div>
+                                </div> --}}
 
                                 {{-- Botones Submit/Cancel --}}
                                 <div class="flex border-t border-slate-200/80 px-7 py-5 md:justify-end mt-6">

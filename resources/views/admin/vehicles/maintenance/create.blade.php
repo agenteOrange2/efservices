@@ -55,7 +55,7 @@
                             class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 @error('service_tasks') border-danger @enderror">
                             <option value="">Select Maintenance Type</option>
                             @foreach ($maintenanceTypes as $type)
-                                <option value="{{ $type }}">{{ $type }}</option>
+                                <option value="{{ $type }}" {{ old('service_tasks') == $type ? 'selected' : '' }}>{{ $type }}</option>
                             @endforeach
                         </select>
                         @error('service_tasks')
@@ -88,7 +88,7 @@
                         <div>
                             <x-base.form-label for="unit">Unit</x-base.form-label>
                             <x-base.form-input id="unit" name="unit" type="text"
-                                class="w-full" placeholder="Número de unidad o identificador" required />
+                                class="w-full" placeholder="Número de unidad o identificador" value="{{ old('unit') }}" required />
                             @error('unit')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -97,7 +97,7 @@
                         <div>
                             <x-base.form-label for="vendor_mechanic">Proveedor/Mecánico</x-base.form-label>
                             <x-base.form-input id="vendor_mechanic" name="vendor_mechanic" type="text"
-                                class="w-full" placeholder="Ej: Taller Automotriz XYZ" required />
+                                class="w-full" placeholder="Ej: Taller Automotriz XYZ" value="{{ old('vendor_mechanic') }}" required />
                             @error('vendor_mechanic')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -108,7 +108,7 @@
                         <div>
                             <x-base.form-label for="cost">Costo</x-base.form-label>
                             <x-base.form-input id="cost" name="cost" type="number"
-                                class="w-full" placeholder="Ex: 5000" required />
+                                class="w-full" placeholder="Ex: 5000" step="0.01" min="0" value="{{ old('cost') }}" required />
                             @error('cost')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -117,7 +117,7 @@
                         <div>
                             <x-base.form-label for="odometer">Lectura de Odómetro</x-base.form-label>
                             <x-base.form-input id="odometer" name="odometer" type="number"
-                                class="w-full" placeholder="Ej: 50000" required />
+                                class="w-full" placeholder="Ej: 50000" min="0" value="{{ old('odometer') }}" required />
                             @error('odometer')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
@@ -128,7 +128,7 @@
                     <div class="mt-6">
                         <x-base.form-label for="description">Descripción</x-base.form-label>
                         <x-base.form-textarea id="description" name="description" class="w-full"
-                            rows="4"></x-base.form-textarea>
+                            rows="4" maxlength="1000">{{ old('description') }}</x-base.form-textarea>
                         @error('description')
                             <div class="text-danger mt-1">{{ $message }}</div>
                         @enderror

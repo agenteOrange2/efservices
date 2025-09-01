@@ -69,6 +69,57 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+// Ruta temporal para debug del calendario
+Route::get('/debug-calendar', function () {
+    // Llamar directamente al método calendar del controlador
+    $controller = new \App\Http\Controllers\Admin\Vehicles\MaintenanceController();
+    
+    try {
+        // Simular exactamente lo que hace el método calendar
+        $maintenances = \App\Models\Admin\Vehicle\VehicleMaintenance::with('vehicle')
+            ->orderBy('next_service_date', 'asc')
+            ->get();
+
+        // Format data for calendar events usando el mismo código del controlador
+        $events = $maintenances->map(function ($maintenance) use ($controller) {
+            // Usar reflexión para acceder al método privado getStatusColor
+            $reflection = new \ReflectionClass($controller);
+            $method = $reflection->getMethod('getStatusColor');
+            $method->setAccessible(true);
+            
+            return [
+                'id' => $maintenance->id,
+                'title' => $maintenance->vehicle->make . ' ' . $maintenance->vehicle->model . ' - ' . $maintenance->service_tasks,
+                'start' => $maintenance->next_service_date->format('Y-m-d'),
+                'end' => $maintenance->next_service_date->format('Y-m-d'),
+                'backgroundColor' => $method->invoke($controller, $maintenance->status),
+                'borderColor' => $method->invoke($controller, $maintenance->status),
+                'url' => route('admin.maintenance.edit', $maintenance->id),
+                'extendedProps' => [
+                    'status' => $maintenance->status ? 'completed' : 'pending',
+                    'vehicle' => $maintenance->vehicle->make . ' ' . $maintenance->vehicle->model,
+                    'type' => $maintenance->service_tasks,
+                    'cost' => $maintenance->cost
+                ]
+            ];
+        });
+        
+        return response()->json([
+            'success' => true,
+            'total_maintenances' => $maintenances->count(),
+            'events_formatted' => $events,
+            'raw_maintenances' => $maintenances->toArray(),
+            'calendar_method_works' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
+    }
+});
+
 // Ruta personalizada para cierre de sesión
 Route::post('/custom-logout', [LogoutController::class, 'logout'])->name('custom.logout');
 

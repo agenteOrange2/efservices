@@ -49,14 +49,14 @@
                             <x-base.lucide
                                 class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3] text-slate-500"
                                 icon="Search" />
-                            <x-base.form-input class="rounded-[0.5rem] pl-9 sm:w-64" name="search_term"
+                            <x-base.form-input class="rounded-[0.5rem] pl-9" name="search_term"
                                 value="{{ request('search_term') }}" type="text" placeholder="Search documents..." />
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Filter by School</label>
-                        <select name="school_filter" id="school-filter" class="form-select w-full">
+                        <select name="school_filter" id="school-filter" class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
                             <option value="">All Schools</option>
                             @foreach ($schools as $schoolItem)
                                 <option value="{{ $schoolItem->id }}" {{ request('school_filter') == $schoolItem->id ? 'selected' : '' }}>
@@ -115,9 +115,9 @@
         </div>
 
         <!-- Tabla de documentos -->
-        <div class="box box--stacked mt-5">
+        <div class="box box--stacked mt-5 p-3">
             <div class="box-body p-0 overflow-x-auto">
-                <table class="table table-striped w-full">
+                <table class="table table-striped w-full text-start">
                     <thead>
                         <tr>
                             <th class="whitespace-nowrap">#</th>

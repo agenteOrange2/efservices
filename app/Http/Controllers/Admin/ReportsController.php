@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Arr;
 
 class ReportsController extends Controller
 {
@@ -43,7 +44,7 @@ class ReportsController extends Controller
             
             // Obtener estadísticas del caché o generar nuevas
             $stats = Cache::remember($cacheKey, 600, function () {
-                return $this->reportService->getGeneralReport();
+                return $this->reportService->getSystemOverviewReport();
             });
             
             // Log performance
@@ -88,11 +89,11 @@ class ReportsController extends Controller
             ];
 
             // Cache key basado en filtros (excluyendo paginación para mejor hit rate)
-            $cacheKey = 'active_drivers_' . md5(serialize(array_except($filters, ['per_page'])));
+            $cacheKey = 'active_drivers_' . md5(serialize(Arr::except($filters, ['per_page'])));
             
             // Obtener datos del caché o generar nuevos
             $reportData = Cache::remember($cacheKey, 300, function () use ($filters) {
-                return $this->reportService->getDriversReport($filters);
+                return $this->reportService->getDriverReport($filters);
             });
             
             // Log performance

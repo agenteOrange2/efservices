@@ -661,12 +661,34 @@ class InspectionsController extends Controller
      */
     public function driverDocuments(UserDriverDetail $driver, Request $request)
     {
-        // Obtener la licencia del conductor (la primera registrada)
-        $license = Media::where('collection_name', 'driver_license')
-            ->where('model_type', UserDriverDetail::class)
-            ->where('model_id', $driver->id)
-            ->orderBy('created_at', 'asc')
-            ->first();
+        // Obtener las licencias del conductor desde las colecciones correctas
+        $licenseDocuments = [];
+        
+        // Buscar en las licencias del conductor
+        if ($driver->licenses) {
+            foreach ($driver->licenses as $license) {
+                // Obtener archivos de license_front
+                $frontFiles = $license->getMedia('license_front');
+                foreach ($frontFiles as $file) {
+                    $licenseDocuments[] = $file;
+                }
+                
+                // Obtener archivos de license_back
+                $backFiles = $license->getMedia('license_back');
+                foreach ($backFiles as $file) {
+                    $licenseDocuments[] = $file;
+                }
+                
+                // Obtener archivos de license_documents
+                $docFiles = $license->getMedia('license_documents');
+                foreach ($docFiles as $file) {
+                    $licenseDocuments[] = $file;
+                }
+            }
+        }
+        
+        // Tomar el primer documento de licencia para mostrar como principal
+        $license = !empty($licenseDocuments) ? $licenseDocuments[0] : null;
             
         // Obtener IDs de todas las inspecciones del conductor
         $inspectionIds = DriverInspection::where('user_driver_detail_id', $driver->id)
@@ -703,7 +725,8 @@ class InspectionsController extends Controller
         return view('admin.drivers.inspections.driver-documents', compact(
             'documents',
             'driver',
-            'license'
+            'license',
+            'licenseDocuments'
         ));
     }
     

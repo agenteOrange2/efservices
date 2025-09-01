@@ -71,15 +71,15 @@ class MaintenanceController extends Controller
         // Validar los datos del formulario
         $validated = $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
-            'unit' => 'required|string|min:3|max:255',
-            'service_tasks' => 'required|string|min:3|max:255',
+            'unit' => 'required|string|min:1|max:255',
+            'service_tasks' => 'required|string|min:1|max:255',
             'service_date' => 'required|date',
             'next_service_date' => 'required|date|after:service_date',
-            'vendor_mechanic' => 'required|string|max:255',
+            'vendor_mechanic' => 'required|string|min:1|max:255',
             'cost' => 'required|numeric|min:0',
-            'odometer' => 'nullable|integer|min:0',
-            'description' => 'nullable|string',
-            'status' => 'boolean'
+            'odometer' => 'required|integer|min:0',
+            'description' => 'nullable|string|max:1000',
+            'status' => 'nullable|boolean'
         ]);
         
         try {
@@ -161,15 +161,15 @@ class MaintenanceController extends Controller
         // Validar los datos del formulario
         $validated = $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
-            'unit' => 'required|string|min:3|max:255',
-            'service_tasks' => 'required|string|min:3|max:255',
+            'unit' => 'required|string|min:1|max:255',
+            'service_tasks' => 'required|string|min:1|max:255',
             'service_date' => 'required|date',
             'next_service_date' => 'required|date|after:service_date',
-            'vendor_mechanic' => 'required|string|max:255',
+            'vendor_mechanic' => 'required|string|min:1|max:255',
             'cost' => 'required|numeric|min:0',
-            'odometer' => 'nullable|integer|min:0',
-            'description' => 'nullable|string',
-            'status' => 'boolean'
+            'odometer' => 'required|integer|min:0',
+            'description' => 'nullable|string|max:1000',
+            'status' => 'nullable|boolean'
         ]);
         
         try {
@@ -310,124 +310,7 @@ class MaintenanceController extends Controller
         return redirect()->route('admin.maintenance.index')
             ->with('info', 'La funcionalidad de exportación estará disponible próximamente');
     }
-    
-    /**
-     * Show maintenance reports.
-     */
-    public function reports()
-    {
-        // Para futura implementación de reportes
-        return view('admin.vehicles.maintenance.reports');
-    }
-    
-    /**
-     * Show maintenance calendar.
-     */
-    public function calendar(Request $request)
-    {
-        // Aplicar filtros si están presentes
-        $query = VehicleMaintenance::with('vehicle');
         
-        // Filtrar por vehículo si se especificó
-        if ($request->has('vehicle_id') && $request->vehicle_id) {
-            $query->where('vehicle_id', $request->vehicle_id);
-        }
-        
-        // Filtrar por estado si se especificó
-        if ($request->has('status') && $request->status !== '') {
-            $query->where('status', $request->status);
-        }
-        
-        // Obtener todos los mantenimientos con filtros aplicados
-        $maintenances = $query->get();
-            
-        // Convertir mantenimientos al formato de eventos para el calendario
-        $events = [];
-        // Para almacenar los próximos mantenimientos
-        $upcomingMaintenances = [];
-        $today = Carbon::today();
-        
-        foreach ($maintenances as $maintenance) {
-            // Definir la clase CSS según el estado (completado o pendiente)
-            $className = $maintenance->status ? 'maintenance-completed' : 'maintenance-pending';
-            
-            // Obtener información del vehículo si está disponible
-            $vehicleInfo = $maintenance->vehicle ? 
-                $maintenance->vehicle->make . ' ' . $maintenance->vehicle->model . 
-                ' (' . $maintenance->vehicle->year . ') - ' . $maintenance->vehicle->plate_number : 
-                'Vehículo no especificado';
-                
-            // Formatear fechas para mostrar
-            $serviceDateFormatted = Carbon::parse($maintenance->service_date)->format('d/m/Y');
-            
-            // Crear evento para la fecha de servicio
-            $events[] = [
-                'id' => 'service-' . $maintenance->id,
-                'title' => $maintenance->service_tasks . ' - ' . $vehicleInfo,
-                'start' => $maintenance->service_date, // Formato YYYY-MM-DD
-                'className' => $className,
-                'extendedProps' => [
-                    'vehicle' => $vehicleInfo,
-                    'serviceType' => $maintenance->service_tasks,
-                    'serviceDate' => $serviceDateFormatted,
-                    'status' => $maintenance->status,
-                    'cost' => '$' . number_format($maintenance->cost, 2),
-                    'description' => $maintenance->description ?? 'Sin descripción'
-                ]
-            ];
-            
-            // Crear evento para la próxima fecha de servicio si existe
-            if ($maintenance->next_service_date) {
-                $nextServiceDate = Carbon::parse($maintenance->next_service_date);
-                $nextServiceDateFormatted = $nextServiceDate->format('d/m/Y');
-                
-                // Si la próxima fecha de servicio es en el futuro, añadirla a los próximos mantenimientos
-                if ($nextServiceDate->gt($today)) {
-                    // Agregar este mantenimiento a la lista de próximos
-                    $maintenance->next_service_formatted = $nextServiceDateFormatted;
-                    $upcomingMaintenances[] = $maintenance;
-                }
-                
-                $events[] = [
-                    'id' => 'next-service-' . $maintenance->id,
-                    'title' => 'Próximo: ' . $maintenance->service_tasks . ' - ' . $vehicleInfo,
-                    'start' => $maintenance->next_service_date, // Formato YYYY-MM-DD
-                    'className' => 'maintenance-upcoming',
-                    'extendedProps' => [
-                        'vehicle' => $vehicleInfo,
-                        'serviceType' => $maintenance->service_tasks,
-                        'serviceDate' => $nextServiceDateFormatted,
-                        'status' => 2, // 2 para próximos mantenimientos
-                        'cost' => 'Por definir',
-                        'description' => 'Próximo mantenimiento programado'
-                    ]
-                ];
-            }
-        }
-        
-        // Ordenar los próximos mantenimientos por fecha
-        $upcomingMaintenances = collect($upcomingMaintenances)
-            ->sortBy(function ($maintenance) {
-                return Carbon::parse($maintenance->next_service_date)->timestamp;
-            })
-            ->take(5); // Mostrar solo los próximos 5 mantenimientos
-        
-        // Obtener todos los vehículos para el filtro
-        $vehicles = Vehicle::orderBy('make')->orderBy('model')->get();
-        
-        // Pasar el estado seleccionado de vuelta a la vista
-        $status = $request->status;
-        $vehicleId = $request->vehicle_id;
-            
-        return view('admin.vehicles.maintenance.calendar', compact(
-            'events', 
-            'upcomingMaintenances', 
-            'vehicles', 
-            'status', 
-            'vehicleId'
-        ));
-    }
-    
     /**
      * Subir documentos para un mantenimiento específico usando Spatie Media Library
      * 
@@ -726,6 +609,305 @@ class MaintenanceController extends Controller
                 'success' => false, 
                 'message' => 'Error al eliminar el archivo: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Display the maintenance calendar view
+     *
+     * @return \Illuminate\View\View
+     */
+    public function calendar()
+    {
+        try {
+            // Get all maintenance records with their vehicles for the calendar
+            $maintenances = VehicleMaintenance::with('vehicle')
+                ->orderBy('next_service_date', 'asc')
+                ->get();
+
+            // Format data for calendar events
+            $events = $maintenances->map(function ($maintenance) {
+                return [
+                    'id' => $maintenance->id,
+                    'title' => $maintenance->vehicle->make . ' ' . $maintenance->vehicle->model . ' - ' . $maintenance->service_tasks,
+                    'start' => $maintenance->next_service_date->format('Y-m-d'),
+                    'end' => $maintenance->next_service_date->format('Y-m-d'),
+                    'backgroundColor' => $this->getStatusColor($maintenance->status),
+                    'borderColor' => $this->getStatusColor($maintenance->status),
+                    'url' => route('admin.maintenance.edit', $maintenance->id),
+                    'extendedProps' => [
+                        'status' => $maintenance->status ? 'completed' : 'pending',
+                        'vehicle' => $maintenance->vehicle->make . ' ' . $maintenance->vehicle->model,
+                        'type' => $maintenance->service_tasks,
+                        'cost' => $maintenance->cost
+                    ]
+                ];
+            });
+
+            return view('admin.vehicles.maintenance.calendar', compact('events'));
+        } catch (\Exception $e) {
+            Log::error('Error loading maintenance calendar', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()->with('error', 'Error al cargar el calendario de mantenimiento');
+        }
+    }
+
+    /**
+     * Export maintenance reports to PDF.
+     */
+    public function exportPdf(Request $request)
+    {
+        $period = $request->input('period', 'all');
+        $vehicleId = $request->input('vehicle_id');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $status = $request->input('status');
+
+        // Build the query - same logic as reports method
+        $query = VehicleMaintenance::with(['vehicle'])
+            ->orderBy('service_date', 'desc');
+
+        // Apply vehicle filter
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        // Apply status filter - fix the status comparison
+        if ($status !== null && $status !== '') {
+            $query->where('status', $status == '1' ? true : false);
+        }
+
+        // Apply date filters based on period - fix the date filtering logic
+        switch ($period) {
+            case 'daily':
+                $query->whereDate('service_date', now()->format('Y-m-d'));
+                break;
+            case 'weekly':
+                $query->whereBetween('service_date', [now()->startOfWeek(), now()->endOfWeek()]);
+                break;
+            case 'monthly':
+                $query->whereBetween('service_date', [now()->startOfMonth(), now()->endOfMonth()]);
+                break;
+            case 'yearly':
+                $query->whereBetween('service_date', [now()->startOfYear(), now()->endOfYear()]);
+                break;
+            case 'custom':
+                if ($startDate && $endDate) {
+                    $query->whereBetween('service_date', [$startDate, $endDate]);
+                }
+                break;
+            case 'all':
+            default:
+                // No date filter - show all records
+                break;
+        }
+
+        $maintenances = $query->get();
+        
+        // Debug: Log the query and results
+        \Log::info('PDF Export Debug', [
+            'period' => $period,
+            'vehicleId' => $vehicleId,
+            'status' => $status,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'query_count' => $maintenances->count(),
+            'sql' => $query->toSql(),
+            'bindings' => $query->getBindings()
+        ]);
+        
+        // Calculate statistics
+        $totalMaintenances = $maintenances->count();
+        $vehiclesServiced = $maintenances->pluck('vehicle_id')->unique()->count();
+        $totalCost = $maintenances->sum('cost');
+        $avgCostPerVehicle = $vehiclesServiced > 0 ? $totalCost / $vehiclesServiced : 0;
+
+        // Generate PDF using DomPDF
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('admin.vehicles.maintenance.reports-pdf', compact(
+            'maintenances',
+            'totalMaintenances',
+            'vehiclesServiced', 
+            'totalCost',
+            'avgCostPerVehicle',
+            'period',
+            'startDate',
+            'endDate'
+        ));
+
+        $filename = 'maintenance-report-' . now()->format('Y-m-d-H-i-s') . '.pdf';
+        
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Get calendar events as JSON for AJAX requests
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getEvents()
+    {
+        try {
+            // Get all maintenance records with their vehicles for the calendar
+            $maintenances = VehicleMaintenance::with('vehicle')
+                ->orderBy('next_service_date', 'asc')
+                ->get();
+
+            // Format data for calendar events
+            $events = $maintenances->map(function ($maintenance) {
+                return [
+                    'id' => $maintenance->id,
+                    'title' => $maintenance->vehicle->make . ' ' . $maintenance->vehicle->model . ' - ' . $maintenance->service_tasks,
+                    'start' => $maintenance->next_service_date->format('Y-m-d'),
+                    'end' => $maintenance->next_service_date->format('Y-m-d'),
+                    'backgroundColor' => $this->getStatusColor($maintenance->status),
+                    'borderColor' => $this->getStatusColor($maintenance->status),
+                    'url' => route('admin.maintenance.edit', $maintenance->id),
+                    'extendedProps' => [
+                        'status' => $maintenance->status ? 'completed' : 'pending',
+                        'vehicle' => $maintenance->vehicle->make . ' ' . $maintenance->vehicle->model,
+                        'type' => $maintenance->service_tasks,
+                        'cost' => $maintenance->cost
+                    ]
+                ];
+            });
+
+            return response()->json($events);
+        } catch (\Exception $e) {
+            Log::error('Error loading maintenance calendar events', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([], 500);
+        }
+    }
+
+    /**
+     * Display the maintenance reports view
+     *
+     * @return \Illuminate\View\View
+     */
+    public function reports(Request $request)
+    {
+        try {
+            // Get filter parameters
+            $period = $request->get('period', 'all');
+            $vehicleId = $request->get('vehicle_id');
+            $status = $request->get('status');
+            $startDate = $request->get('start_date');
+            $endDate = $request->get('end_date');
+
+            // Build base query for filtered data
+            $filteredQuery = VehicleMaintenance::with('vehicle');
+            
+            if ($vehicleId) {
+                $filteredQuery->where('vehicle_id', $vehicleId);
+            }
+            
+            if ($status !== null && $status !== '') {
+                $filteredQuery->where('status', $status == '1' ? true : false);
+            }
+            
+            // Apply date filters based on period
+            switch ($period) {
+                case 'daily':
+                    $filteredQuery->whereDate('service_date', now()->format('Y-m-d'));
+                    break;
+                case 'weekly':
+                    $filteredQuery->whereBetween('service_date', [now()->startOfWeek(), now()->endOfWeek()]);
+                    break;
+                case 'monthly':
+                    $filteredQuery->whereBetween('service_date', [now()->startOfMonth(), now()->endOfMonth()]);
+                    break;
+                case 'yearly':
+                    $filteredQuery->whereBetween('service_date', [now()->startOfYear(), now()->endOfYear()]);
+                    break;
+                case 'custom':
+                    if ($startDate && $endDate) {
+                        $filteredQuery->whereBetween('service_date', [$startDate, $endDate]);
+                    }
+                    break;
+                case 'all':
+                default:
+                    // No date filter - show all records
+                    break;
+            }
+            
+            // Get paginated results for the table
+            $maintenances = $filteredQuery->paginate(15);
+            
+            // Calculate statistics from ALL filtered records (not just paginated)
+            $allFilteredMaintenances = $filteredQuery->get();
+            $totalMaintenances = $allFilteredMaintenances->count();
+            $totalVehiclesServiced = $allFilteredMaintenances->pluck('vehicle_id')->unique()->count();
+            $totalCost = $allFilteredMaintenances->sum('cost');
+            $avgCostPerVehicle = $totalVehiclesServiced > 0 ? $totalCost / $totalVehiclesServiced : 0;
+            
+            // Get service type distribution from all filtered records
+            $serviceTypeDistribution = [];
+            $serviceTypes = $allFilteredMaintenances->pluck('service_tasks')->filter()->countBy();
+            $totalServices = $serviceTypes->sum();
+            
+            foreach ($serviceTypes as $type => $count) {
+                $serviceTypeDistribution[$type] = [
+                    'count' => $count,
+                    'percentage' => $totalServices > 0 ? ($count / $totalServices) * 100 : 0
+                ];
+            }
+            
+            // Get upcoming maintenances (always from all records, not filtered)
+            $upcomingMaintenances = VehicleMaintenance::with('vehicle')
+                ->where('status', false)
+                ->where('next_service_date', '>=', now())
+                ->orderBy('next_service_date', 'asc')
+                ->limit(10)
+                ->get();
+            
+            // Get all vehicles for filter dropdown
+            $vehicles = Vehicle::orderBy('make')->orderBy('model')->get();
+            
+            return view('admin.vehicles.maintenance.reports', compact(
+                'maintenances',
+                'totalMaintenances',
+                'totalCost',
+                'vehicles',
+                'period',
+                'vehicleId',
+                'status',
+                'startDate',
+                'endDate',
+                'serviceTypeDistribution',
+                'upcomingMaintenances',
+                'avgCostPerVehicle'
+            ), [
+                'vehiclesServiced' => $totalVehiclesServiced
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error loading maintenance reports', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()->with('error', 'Error al cargar los reportes de mantenimiento');
+        }
+    }
+
+    /**
+     * Get color based on maintenance status
+     *
+     * @param bool $status
+     * @return string
+     */
+    private function getStatusColor($status)
+    {
+        if ($status) {
+            return '#28a745'; // Green - Completed
+        } else {
+            return '#dc3545'; // Red - Pending
         }
     }
 }

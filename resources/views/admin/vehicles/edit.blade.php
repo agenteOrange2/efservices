@@ -54,6 +54,49 @@
                                 thirdPartyFein: '{{ old('third_party_fein', $thirdPartyDetails ? $thirdPartyDetails->third_party_fein : '') }}',
                                 emailSent: {{ old('email_sent', $thirdPartyDetails && $thirdPartyDetails->email_sent ? 'true' : 'false') }},
                                 selectedDriverId: '{{ old('user_driver_detail_id', $vehicle->user_driver_detail_id) }}',
+                                // Validation variables
+                                vinError: '',
+                                registrationDateError: '',
+                                inspectionDateError: '',
+                                annualInspectionExpirationDate: '{{ old('annual_inspection_expiration_date', $vehicle->annual_inspection_expiration_date ? $vehicle->annual_inspection_expiration_date->format('Y-m-d') : '') }}',
+
+                                // VIN Validation
+                                validateVin(vin) {
+                                    if (!vin) {
+                                        this.vinError = '';
+                                        return;
+                                    }
+                                    if (vin.length !== 17) {
+                                        this.vinError = 'VIN must be exactly 17 characters';
+                                        return;
+                                    }
+                                    if (/[IOQ]/i.test(vin)) {
+                                        this.vinError = 'VIN cannot contain letters I, O, or Q';
+                                        return;
+                                    }
+                                    this.vinError = '';
+                                },
+                                // Date Validation
+                                validateDate(dateValue, type) {
+                                    if (!dateValue) return;
+                                    const selectedDate = new Date(dateValue);
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    
+                                    if (type === 'registration') {
+                                        if (selectedDate <= today) {
+                                            this.registrationDateError = 'Registration expiration date must be in the future';
+                                        } else {
+                                            this.registrationDateError = '';
+                                        }
+                                    } else if (type === 'inspection') {
+                                        if (selectedDate <= today) {
+                                            this.inspectionDateError = 'Annual inspection expiration date must be in the future';
+                                        } else {
+                                            this.inspectionDateError = '';
+                                        }
+                                    }
+                                },
 
                                 // Método para autocompletar datos del Owner Operator desde el driver seleccionado
                                 updateOwnerFromDriver() {
@@ -72,6 +115,7 @@
                                     }
                                 },
                                 // Service Items 
+                                /*
                                 serviceItems: [{!! $vehicle->service_items ? json_encode($vehicle->service_items) : '[]' !!}][0].length > 0 
                                     ? [{!! $vehicle->service_items ? json_encode($vehicle->service_items) : '[]' !!}][0] 
                                     : [{
@@ -84,6 +128,7 @@
                                         cost: '',
                                         odometer: ''
                                     }],
+                                    */
                                 // Métodos
                                 addServiceItem() {
                                     this.serviceItems.push({
@@ -267,10 +312,16 @@
                                                         </div>
                                                         {{-- VIN --}}
                                                         <div>
-                                                            <label class="block text-sm mb-1">VIN</label>
+                                                            <label class="block text-sm mb-1">VIN <span class="text-red-500">*</span></label>
                                                             <input type="text" name="vin" x-model="vin"
+                                                                maxlength="17" minlength="17"
+                                                                @input="validateVin($event.target.value)"
+                                                                :class="{'border-red-500': vinError, 'border-green-500': vin && vin.length === 17 && !vinError}"
                                                                 class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
                                                                 placeholder="e.g. 1HGBH41JXMN109186">
+                                                            <p class="text-red-500 text-xs mt-1" x-show="vinError" x-text="vinError"></p>
+                                                            <p class="text-green-500 text-xs mt-1" x-show="!vinError && vin && vin.length === 17">✓ Valid VIN format</p>
+                                                            <p class="text-gray-500 text-xs mt-1" x-show="!vin || (vin.length !== 17 && !vinError)">VIN must be exactly 17 characters</p>
                                                             @error('vin')
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                                                             @enderror
@@ -422,10 +473,15 @@
                                                         </div>
                                                         {{-- Registration Expiration --}}
                                                         <div>
-                                                            <label class="block text-sm mb-1">Expiration Date</label>
+                                                            <label class="block text-sm mb-1">Expiration Date <span class="text-red-500">*</span></label>
                                                             <input type="date" name="registration_expiration_date"
                                                                 x-model="registrationExpirationDate"
+                                                                @change="validateDate($event.target.value, 'registration')"
+                                                                :class="{'border-red-500': registrationDateError, 'border-green-500': registrationExpirationDate && !registrationDateError}"
+                                                                min="{{ date('Y-m-d', strtotime('+1 day')) }}"
                                                                 class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
+                                                            <p class="text-red-500 text-xs mt-1" x-show="registrationDateError" x-text="registrationDateError"></p>
+                                                            <p class="text-gray-500 text-xs mt-1" x-show="!registrationDateError">Must be a future date</p>
                                                             @error('registration_expiration_date')
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                                                             @enderror
@@ -516,45 +572,48 @@
                                                     </div>
 
                                                     <!-- Información del propietario (se muestra cuando ownership_type es "owned") -->
-                                                    <div class="mt-4" x-show="ownershipType === 'owned'">
-                                                        <div class="p-3 border border-slate-200 rounded-md bg-slate-50">
-                                                            <h4 class="font-medium mb-3">Información del Owner Operator
-                                                            </h4>
+                                                    <div class="mt-4" x-show="ownershipType === 'owned'" x-transition>
+                                                        <div class="p-4 border border-blue-200 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm">
+                                                            <div class="flex items-center mb-4">
+                                                                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                                                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                                                    </svg>
+                                                                </div>
+                                                                <h4 class="font-semibold text-blue-800">Información del Owner Operator</h4>
+                                                            </div>
                                                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                                 <!-- Nombre del propietario -->
                                                                 <div>
-                                                                    <label class="block text-sm mb-1">Nombre</label>
+                                                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
                                                                     <input type="text" name="owner_name"
                                                                         x-model="ownerName"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
+                                                                        class="py-2.5 px-3 block w-full border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
                                                                         placeholder="Nombre del propietario">
                                                                     @error('owner_name')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
+                                                                        <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
                                                                     @enderror
                                                                 </div>
                                                                 <!-- Teléfono del propietario -->
                                                                 <div>
-                                                                    <label class="block text-sm mb-1">Teléfono</label>
+                                                                    <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
                                                                     <input type="text" name="owner_phone"
                                                                         x-model="ownerPhone"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
+                                                                        class="py-2.5 px-3 block w-full border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
                                                                         placeholder="Teléfono del propietario">
                                                                     @error('owner_phone')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
+                                                                        <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
                                                                     @enderror
                                                                 </div>
                                                                 <!-- Email del propietario -->
                                                                 <div>
-                                                                    <label class="block text-sm mb-1">Email</label>
+                                                                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
                                                                     <input type="email" name="owner_email"
                                                                         x-model="ownerEmail"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
+                                                                        class="py-2.5 px-3 block w-full border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors"
                                                                         placeholder="Email del propietario">
                                                                     @error('owner_email')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
+                                                                        <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
                                                                     @enderror
                                                                 </div>
                                                             </div>
@@ -562,45 +621,48 @@
                                                     </div>
 
                                                     <!-- Información del tercero (se muestra cuando ownership_type es "third-party") -->
-                                                    <div class="mt-4" x-show="ownershipType === 'third-party'">
-                                                        <div class="p-3 border border-slate-200 rounded-md bg-slate-50">
-                                                            <h4 class="font-medium mb-3">Información de Third Party Company
-                                                            </h4>
+                                                    <div class="mt-4" x-show="ownershipType === 'third-party'" x-transition>
+                                                        <div class="p-4 border border-purple-200 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 shadow-sm">
+                                                            <div class="flex items-center mb-4">
+                                                                <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center mr-3">
+                                                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                                                    </svg>
+                                                                </div>
+                                                                <h4 class="font-semibold text-purple-800">Información de Third Party Company</h4>
+                                                            </div>
                                                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                                                 <!-- Nombre del tercero -->
                                                                 <div>
-                                                                    <label class="block text-sm mb-1">Nombre</label>
+                                                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
                                                                     <input type="text" name="third_party_name"
                                                                         x-model="thirdPartyName"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
+                                                                        class="py-2.5 px-3 block w-full border-gray-300 rounded-lg text-sm focus:border-purple-500 focus:ring-purple-500 transition-colors"
                                                                         placeholder="Nombre del tercero">
                                                                     @error('third_party_name')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
+                                                                        <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
                                                                     @enderror
                                                                 </div>
                                                                 <!-- Teléfono del tercero -->
                                                                 <div>
-                                                                    <label class="block text-sm mb-1">Teléfono</label>
+                                                                    <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
                                                                     <input type="text" name="third_party_phone"
                                                                         x-model="thirdPartyPhone"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
+                                                                        class="py-2.5 px-3 block w-full border-gray-300 rounded-lg text-sm focus:border-purple-500 focus:ring-purple-500 transition-colors"
                                                                         placeholder="Teléfono del tercero">
                                                                     @error('third_party_phone')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
+                                                                        <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
                                                                     @enderror
                                                                 </div>
                                                                 <!-- Email del tercero -->
                                                                 <div>
-                                                                    <label class="block text-sm mb-1">Email</label>
+                                                                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
                                                                     <input type="email" name="third_party_email"
                                                                         x-model="thirdPartyEmail"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
+                                                                        class="py-2.5 px-3 block w-full border-gray-300 rounded-lg text-sm focus:border-purple-500 focus:ring-purple-500 transition-colors"
                                                                         placeholder="Email del tercero">
                                                                     @error('third_party_email')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
+                                                                        <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
                                                                     @enderror
                                                                 </div>
                                                             </div>
@@ -608,26 +670,24 @@
                                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                                                 <!-- DBA -->
                                                                 <div>
-                                                                    <label class="block text-sm mb-1">DBA (Doing Business As)</label>
+                                                                    <label class="block text-sm font-medium text-gray-700 mb-2">DBA (Doing Business As)</label>
                                                                     <input type="text" name="third_party_dba"
                                                                         x-model="thirdPartyDba"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
+                                                                        class="py-2.5 px-3 block w-full border-gray-300 rounded-lg text-sm focus:border-purple-500 focus:ring-purple-500 transition-colors"
                                                                         placeholder="Nombre comercial">
                                                                     @error('third_party_dba')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
+                                                                        <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
                                                                     @enderror
                                                                 </div>
                                                                 <!-- FEIN -->
                                                                 <div>
-                                                                    <label class="block text-sm mb-1">FEIN (Federal Employer Identification Number)</label>
+                                                                    <label class="block text-sm font-medium text-gray-700 mb-2">FEIN (Federal Employer Identification Number)</label>
                                                                     <input type="text" name="third_party_fein"
                                                                         x-model="thirdPartyFein"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
+                                                                        class="py-2.5 px-3 block w-full border-gray-300 rounded-lg text-sm focus:border-purple-500 focus:ring-purple-500 transition-colors"
                                                                         placeholder="XX-XXXXXXX">
                                                                     @error('third_party_fein')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
+                                                                        <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
                                                                     @enderror
                                                                 </div>
                                                             </div>
@@ -635,39 +695,39 @@
                                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                                                 <!-- Dirección -->
                                                                 <div>
-                                                                    <label class="block text-sm mb-1">Dirección</label>
+                                                                    <label class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
                                                                     <input type="text" name="third_party_address"
                                                                         x-model="thirdPartyAddress"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
+                                                                        class="py-2.5 px-3 block w-full border-gray-300 rounded-lg text-sm focus:border-purple-500 focus:ring-purple-500 transition-colors"
                                                                         placeholder="Dirección completa">
                                                                     @error('third_party_address')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
+                                                                        <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
                                                                     @enderror
                                                                 </div>
                                                                 <!-- Contacto -->
                                                                 <div>
-                                                                    <label class="block text-sm mb-1">Contacto</label>
+                                                                    <label class="block text-sm font-medium text-gray-700 mb-2">Contacto</label>
                                                                     <input type="text" name="third_party_contact"
                                                                         x-model="thirdPartyContact"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
+                                                                        class="py-2.5 px-3 block w-full border-gray-300 rounded-lg text-sm focus:border-purple-500 focus:ring-purple-500 transition-colors"
                                                                         placeholder="Nombre de contacto">
                                                                     @error('third_party_contact')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
+                                                                        <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
                                                                     @enderror
                                                                 </div>
                                                             </div>
                                                             
                                                             <!-- Botón de enviar/reenviar correo -->
-                                                            <div class="mt-4">
+                                                            <div class="mt-6">
                                                                 <div class="flex items-center">
                                                                     <input type="hidden" name="email_sent" x-model="emailSent">
-                                                                    <button type="button" class="btn btn-primary" @click="emailSent = true">
-                                                                        <i class="fas fa-envelope mr-1"></i> 
+                                                                    <button type="button" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors duration-200" @click="emailSent = true">
+                                                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                                                        </svg>
                                                                         <span x-text="emailSent ? 'Reenviar correo al guardar' : 'Enviar correo al guardar'"></span>
                                                                     </button>
-                                                                    <div class="ml-2 text-xs text-gray-500">
+                                                                    <div class="ml-3 text-xs text-gray-600">
                                                                         <span x-show="!emailSent">Se enviará un correo al tercero para que complete su información</span>
                                                                         <span x-show="emailSent">Se reenviará un correo al tercero para que complete su información</span>
                                                                     </div>
@@ -679,88 +739,97 @@
                                             </div>
 
                                             {{-- Annual Inspection --}}
-                                            <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
-                                                <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
-                                                    <div class="text-left">
-                                                        <div class="flex items-center">
-                                                            <div class="font-medium">Annual Inspection</div>
-                                                        </div>
+                                            <div class="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm">
+                                                <div class="flex items-center mb-4">
+                                                    <div class="bg-blue-100 p-2 rounded-lg mr-3">
+                                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                        </svg>
                                                     </div>
+                                                    <h3 class="text-lg font-semibold text-gray-800">Annual Inspection</h3>
                                                 </div>
-                                                <div class="mt-3 w-full flex-1 xl:mt-0">
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
-                                                        <label class="block text-sm mb-1">Expiration Date</label>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-2">Expiration Date <span class="text-red-500">*</span></label>
                                                         <input type="date" name="annual_inspection_expiration_date"
                                                             value="{{ old('annual_inspection_expiration_date', $vehicle->annual_inspection_expiration_date ? $vehicle->annual_inspection_expiration_date->format('Y-m-d') : '') }}"
-                                                            class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
+                                                            x-model="annualInspectionExpirationDate"
+                                                            @change="validateDate($event.target.value, 'inspection')"
+                                                            :class="{'border-red-500': inspectionDateError, 'border-green-500': annualInspectionExpirationDate && !inspectionDateError}"
+                                                            min="{{ date('Y-m-d', strtotime('+1 day')) }}"
+                                                            class="py-2.5 px-3 block w-full border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors">
+                                                        <p class="text-red-500 text-xs mt-1" x-show="inspectionDateError" x-text="inspectionDateError"></p>
+                                                        <p class="text-gray-500 text-xs mt-1" x-show="!inspectionDateError">Must be a future date</p>
                                                         @error('annual_inspection_expiration_date')
-                                                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                                                            <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
                                                         @enderror
                                                     </div>
                                                 </div>
                                             </div>
 
                                             {{-- Status --}}
-                                            <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
-                                                <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
-                                                    <div class="text-left">
-                                                        <div class="flex items-center">
-                                                            <div class="font-medium">Status</div>
-                                                        </div>
+                                            <div class="mt-6 bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-xl p-6 shadow-sm">
+                                                <div class="flex items-center mb-4">
+                                                    <div class="bg-red-100 p-2 rounded-lg mr-3">
+                                                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                                        </svg>
                                                     </div>
+                                                    <h3 class="text-lg font-semibold text-gray-800">Status</h3>
                                                 </div>
-                                                <div class="mt-3 w-full flex-1 xl:mt-0 space-y-4">
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     {{-- Out of Service --}}
                                                     <div>
-                                                        <div class="flex items-center">
+                                                        <div class="flex items-center mb-3">
                                                             <input type="checkbox" name="out_of_service" value="1"
                                                                 x-model="outOfService"
                                                                 class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500">
-                                                            <label class="ms-2 text-sm font-medium text-gray-900">
+                                                            <label class="ml-3 text-sm font-medium text-gray-700">
                                                                 Out of Service
                                                             </label>
                                                         </div>
-                                                        <div x-show="outOfService" class="mt-2 ml-6">
-                                                            <label class="block text-sm mb-1">Out of Service Date</label>
+                                                        <div x-show="outOfService" class="ml-7">
+                                                            <label class="block text-sm font-medium text-gray-700 mb-2">Out of Service Date</label>
                                                             <input type="date" name="out_of_service_date"
                                                                 x-model="outOfServiceDate"
-                                                                class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
+                                                                class="py-2.5 px-3 block w-full border-gray-300 rounded-lg text-sm focus:border-red-500 focus:ring-red-500 transition-colors">
                                                         </div>
                                                     </div>
                                                     {{-- Suspended --}}
                                                     <div>
-                                                        <div class="flex items-center">
+                                                        <div class="flex items-center mb-3">
                                                             <input type="checkbox" name="suspended" value="1"
                                                                 x-model="suspended"
                                                                 class="w-4 h-4 text-yellow-600 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500">
-                                                            <label class="ms-2 text-sm font-medium text-gray-900">
+                                                            <label class="ml-3 text-sm font-medium text-gray-700">
                                                                 Suspended
                                                             </label>
                                                         </div>
-                                                        <div x-show="suspended" class="mt-2 ml-6">
-                                                            <label class="block text-sm mb-1">Suspension Date</label>
+                                                        <div x-show="suspended" class="ml-7">
+                                                            <label class="block text-sm font-medium text-gray-700 mb-2">Suspension Date</label>
                                                             <input type="date" name="suspended_date"
                                                                 x-model="suspendedDate"
-                                                                class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
+                                                                class="py-2.5 px-3 block w-full border-gray-300 rounded-lg text-sm focus:border-yellow-500 focus:ring-yellow-500 transition-colors">
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             {{-- Notes --}}
-                                            <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
-                                                <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
-                                                    <div class="text-left">
-                                                        <div class="flex items-center">
-                                                            <div class="font-medium">Notes</div>
-                                                        </div>
+                                            <div class="mt-6 bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-xl p-6 shadow-sm">
+                                                <div class="flex items-center mb-4">
+                                                    <div class="bg-gray-100 p-2 rounded-lg mr-3">
+                                                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                        </svg>
                                                     </div>
+                                                    <h3 class="text-lg font-semibold text-gray-800">Notes</h3>
                                                 </div>
-                                                <div class="mt-3 w-full flex-1 xl:mt-0">
-                                                    <textarea name="notes" rows="4" class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
+                                                <div>
+                                                    <textarea name="notes" rows="4" class="py-2.5 px-3 block w-full border-gray-300 rounded-lg text-sm focus:border-gray-500 focus:ring-gray-500 transition-colors resize-none"
                                                         placeholder="Enter any additional notes about this vehicle">{{ old('notes', $vehicle->notes) }}</textarea>
                                                     @error('notes')
-                                                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                                                        <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
                                                     @enderror
                                                 </div>
                                             </div>
@@ -769,124 +838,96 @@
                                 </div>
 
                                 {{-- TAB: SERVICE ITEMS --}}
-                                <div x-show="activeTab === 'service'">
-                                    {{-- Service Items with Alpine Loop --}}
-                                    {{-- <div class="bg-white p-4 rounded-lg shadow">
-                                        <h3 class="text-lg font-semibold mb-4">Service History</h3>
-                                        <p class="text-sm text-gray-600 mb-6">Add any maintenance or service records for
-                                            this vehicle.</p>
-
-                                        <template x-for="(item, index) in serviceItems" :key="index">
-                                            <div class="border p-4 rounded-lg mb-6">
+                                <div x-show="activeTab === 'service'">                                    
+                                    <div class="bg-white p-4 rounded-lg shadow">
+                                        <h3 class="text-lg font-semibold mb-4">Maintenance History</h3>
+                                        <p class="text-sm text-gray-600 mb-6">View maintenance records for this vehicle. Select a record to view details and navigate to edit it.</p>
+                                        
+                                        @if(isset($maintenanceHistory) && $maintenanceHistory->count() > 0)
+                                            <div class="mb-6">
+                                                <label class="block text-sm font-medium mb-2">Select Maintenance Record</label>
+                                                <select id="maintenanceSelect" class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm" onchange="showMaintenanceDetails(this.value)">
+                                                    <option value="">-- Select a maintenance record --</option>
+                                                    @foreach($maintenanceHistory as $maintenance)
+                                                        <option value="{{ $maintenance->id }}" 
+                                                                data-service-date="{{ $maintenance->service_date ? $maintenance->service_date->format('Y-m-d') : '' }}"
+                                                                data-next-service="{{ $maintenance->next_service_date ? $maintenance->next_service_date->format('Y-m-d') : '' }}"
+                                                                data-service-type="{{ $maintenance->service_type ?? '' }}"
+                                                                data-description="{{ $maintenance->description ?? '' }}"
+                                                                data-cost="{{ $maintenance->cost ?? '' }}"
+                                                                data-odometer="{{ $maintenance->odometer_reading ?? '' }}"
+                                                                data-vendor="{{ $maintenance->vendor_name ?? '' }}"
+                                                                data-status="{{ $maintenance->status ?? '' }}">
+                                                            {{ $maintenance->service_date ? $maintenance->service_date->format('M d, Y') : 'No Date' }} - 
+                                                            {{ $maintenance->service_type ?? 'General Maintenance' }}
+                                                            @if($maintenance->cost)
+                                                                (${{ number_format($maintenance->cost, 2) }})
+                                                            @endif
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            
+                                            <div id="maintenanceDetails" class="hidden border p-4 rounded-lg bg-gray-50">
                                                 <div class="flex justify-between items-center mb-4">
-                                                    <h4 class="font-semibold" x-text="`Service Item ${index + 1}`"></h4>
-                                                    <button type="button" @click="removeServiceItem(index)"
-                                                        class="text-red-500 hover:text-red-700"
-                                                        x-show="serviceItems.length > 1">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                                                            viewBox="0 0 20 20" fill="currentColor">
-                                                            <path fill-rule="evenodd"
-                                                                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                                                clip-rule="evenodd" />
-                                                        </svg>
+                                                    <h4 class="font-semibold text-lg">Maintenance Details</h4>
+                                                    <button type="button" id="editMaintenanceBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm" onclick="editMaintenance()">
+                                                        Edit Record
                                                     </button>
                                                 </div>
-
                                                 
-                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
-                                                        <label class="block text-sm mb-1">Service Date</label>
-                                                        <input type="date"
-                                                            :name="`service_items[${index}][service_date]`"
-                                                            x-model="item.service_date"
-                                                            @change="validateServiceDate(index)"
-                                                            class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
+                                                        <label class="block text-sm font-medium text-gray-700">Service Date</label>
+                                                        <p id="detailServiceDate" class="text-sm text-gray-900 bg-white p-2 rounded border">-</p>
                                                     </div>
                                                     <div>
-                                                        <label class="block text-sm mb-1">Next Service Date</label>
-                                                        <input type="date"
-                                                            :name="`service_items[${index}][next_service_date]`"
-                                                            x-model="item.next_service_date"
-                                                            @change="validateServiceDate(index)"
-                                                            :class="{ 'border-red-500': item.dateError }"
-                                                            class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
-                                                        <p class="text-red-500 text-xs mt-1" x-show="item.dateError"
-                                                            x-text="item.dateError"></p>
-                                                    </div>
-                                                </div>
-
-                                                
-                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                                    <div>
-                                                        <label class="block text-sm mb-1">Unit</label>
-                                                        <input type="text" :name="`service_items[${index}][unit]`"
-                                                            x-model="item.unit"
-                                                            class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                            placeholder="Unit number or identifier">
+                                                        <label class="block text-sm font-medium text-gray-700">Next Service Date</label>
+                                                        <p id="detailNextService" class="text-sm text-gray-900 bg-white p-2 rounded border">-</p>
                                                     </div>
                                                     <div>
-                                                        <label class="block text-sm mb-1">Service Tasks</label>
-                                                        <input type="text"
-                                                            :name="`service_items[${index}][service_tasks]`"
-                                                            x-model="item.service_tasks"
-                                                            class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                            placeholder="e.g. Oil change, brake inspection">
-                                                    </div>
-                                                </div>
-
-                                                
-                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                                    <div>
-                                                        <label class="block text-sm mb-1">Vendor/Mechanic</label>
-                                                        <input type="text"
-                                                            :name="`service_items[${index}][vendor_mechanic]`"
-                                                            x-model="item.vendor_mechanic"
-                                                            class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                            placeholder="e.g. ABC Auto Shop">
+                                                        <label class="block text-sm font-medium text-gray-700">Service Type</label>
+                                                        <p id="detailServiceType" class="text-sm text-gray-900 bg-white p-2 rounded border">-</p>
                                                     </div>
                                                     <div>
-                                                        <label class="block text-sm mb-1">Cost ($)</label>
-                                                        <input type="number" :name="`service_items[${index}][cost]`"
-                                                            x-model="item.cost" step="0.01" min="0"
-                                                            class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                            placeholder="0.00">
-                                                    </div>
-                                                </div>
-
-                                                
-                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                                    <div>
-                                                        <label class="block text-sm mb-1">Odometer Reading</label>
-                                                        <input type="number" :name="`service_items[${index}][odometer]`"
-                                                            x-model="item.odometer" min="0"
-                                                            class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                            placeholder="e.g. 50000">
+                                                        <label class="block text-sm font-medium text-gray-700">Cost</label>
+                                                        <p id="detailCost" class="text-sm text-gray-900 bg-white p-2 rounded border">-</p>
                                                     </div>
                                                     <div>
-                                                        <label class="block text-sm mb-1">Description</label>
-                                                        <textarea :name="`service_items[${index}][description]`" x-model="item.description" rows="2"
-                                                            class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                            placeholder="Additional details about the service"></textarea>
+                                                        <label class="block text-sm font-medium text-gray-700">Odometer Reading</label>
+                                                        <p id="detailOdometer" class="text-sm text-gray-900 bg-white p-2 rounded border">-</p>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700">Vendor</label>
+                                                        <p id="detailVendor" class="text-sm text-gray-900 bg-white p-2 rounded border">-</p>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700">Status</label>
+                                                        <p id="detailStatus" class="text-sm text-gray-900 bg-white p-2 rounded border">-</p>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700">Description</label>
+                                                        <p id="detailDescription" class="text-sm text-gray-900 bg-white p-2 rounded border">-</p>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </template>
-                                        
-                                        <div class="flex justify-center mt-4">
-                                            <button type="button" @click="addServiceItem"
-                                                class="py-2 px-4 border border-primary text-primary hover:bg-primary hover:text-white transition rounded">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1"
-                                                    viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fill-rule="evenodd"
-                                                        d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                                                        clip-rule="evenodd" />
-                                                </svg>
-                                                Add Service Item
-                                            </button>
-                                        </div>
-                                    </div> --}}
+                                        @else
+                                            <div class="text-center py-8">
+                                                <div class="text-gray-400 mb-4">
+                                                    <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                    </svg>
+                                                </div>
+                                                <h3 class="text-lg font-medium text-gray-900 mb-2">No Maintenance Records</h3>
+                                                <p class="text-gray-500 mb-4">This vehicle doesn't have any maintenance records yet.</p>
+                                                <a href="{{ route('admin.maintenance.create', ['vehicle_id' => $vehicle->id]) }}" 
+                                                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                                    Add First Maintenance Record
+                                                </a>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
-
                             </div>
 
                             {{-- Botones Submit/Cancel --}}
@@ -910,6 +951,47 @@
 
 @push('scripts')
     <script>
+        // Función para mostrar detalles del mantenimiento seleccionado
+        function showMaintenanceDetails() {
+            const select = document.getElementById('maintenanceSelect');
+            const detailsDiv = document.getElementById('maintenanceDetails');
+            const editBtn = document.getElementById('editMaintenanceBtn');
+            
+            if (!select.value) {
+                detailsDiv.classList.add('hidden');
+                return;
+            }
+            
+            const selectedOption = select.options[select.selectedIndex];
+            
+            // Mostrar el div de detalles
+            detailsDiv.classList.remove('hidden');
+            
+            // Llenar los campos con los datos
+            document.getElementById('detailServiceDate').textContent = selectedOption.dataset.serviceDate || '-';
+            document.getElementById('detailNextService').textContent = selectedOption.dataset.nextService || '-';
+            document.getElementById('detailServiceType').textContent = selectedOption.dataset.serviceType || '-';
+            document.getElementById('detailCost').textContent = selectedOption.dataset.cost ? '$' + parseFloat(selectedOption.dataset.cost).toFixed(2) : '-';
+            document.getElementById('detailOdometer').textContent = selectedOption.dataset.odometer || '-';
+            document.getElementById('detailVendor').textContent = selectedOption.dataset.vendor || '-';
+            document.getElementById('detailStatus').textContent = selectedOption.dataset.status || '-';
+            document.getElementById('detailDescription').textContent = selectedOption.dataset.description || '-';
+            
+            // Configurar el botón de editar
+            editBtn.dataset.maintenanceId = select.value;
+        }
+        
+        // Función para navegar a la edición del mantenimiento
+        function editMaintenance() {
+            const editBtn = document.getElementById('editMaintenanceBtn');
+            const maintenanceId = editBtn.dataset.maintenanceId;
+            
+            if (maintenanceId) {
+                // Navegar a la página de edición del mantenimiento
+                window.location.href = `/admin/maintenance/${maintenanceId}/edit`;
+            }
+        }
+        
         // Script para manejar la carga dinámica de drivers filtrados por carrier
         document.addEventListener('DOMContentLoaded', function() {
             // Obtener referencias a los elementos select

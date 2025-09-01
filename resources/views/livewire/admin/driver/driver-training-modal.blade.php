@@ -44,13 +44,7 @@
                                             @error('state') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                                         </div>
                                         
-                                        <!-- Teléfono -->
-                                        <div>
-                                            <label for="phone_number" class="block text-sm font-medium text-gray-700">Phone Number *</label>
-                                            <input type="text" id="phone_number" wire:model="phone_number" 
-                                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm">
-                                            @error('phone_number') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                                        </div>
+
 
                                         <!-- Fecha inicio -->
                                         <div>

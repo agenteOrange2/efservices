@@ -42,19 +42,19 @@
         </div>
 
         <!-- Filtros y búsqueda -->
-        <div class="box box--stacked mt-5">
+        <div class="box box--stacked mt-5 p-3">
             <div class="box-header">
                 <h3 class="box-title">Filter Training Schools</h3>
             </div>
             <div class="box-body p-5">
-                <form action="{{ route('admin.training-schools.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <form action="{{ route('admin.training-schools.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <x-base.form-label for="search_term">Search</x-base.form-label>
                         <x-base.form-input type="text" name="search_term" id="search_term" value="{{ request('search_term') }}" placeholder="School name, city..." />
                     </div>
                     <div>
                         <x-base.form-label for="driver_filter">Driver</x-base.form-label>
-                        <select id="driver_filter" name="driver_filter" class="tom-select w-full">
+                        <select id="driver_filter" name="driver_filter" class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
                             <option value="">All Drivers</option>
                             @foreach ($drivers as $driver)
                                 <option value="{{ $driver->id }}" {{ request('driver_filter') == $driver->id ? 'selected' : '' }}>
@@ -86,7 +86,7 @@
         </div>
 
         <!-- Lista de escuelas de entrenamiento -->
-        <div class="box box--stacked mt-5">
+        <div class="box box--stacked mt-5 p-3">
             <div class="box-header">
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                     <h3 class="box-title">Training Schools ({{ $trainingSchools->total() ?? 0 }})</h3>

@@ -31,14 +31,14 @@
                 Edit Training School: {{ $trainingSchool->school_name }}
             </h2>
             <div class="flex items-center sm:ml-auto mt-3 sm:mt-0">
-                <a href="{{ route('admin.training-schools.index') }}" class="btn btn-outline-secondary">
+                <x-base.button as="a" href="{{ route('admin.training-schools.index') }}" class="btn btn-outline-secondary">
                     <x-base.lucide class="w-4 h-4 mr-1" icon="arrow-left" />
                     Back to Training Schools
-                </a>
-                <a href="{{ route('admin.training-schools.show', $trainingSchool->id) }}" class="btn btn-outline-primary ml-2">
+                </x-base.button>
+                <x-base.button as="a" href="{{ route('admin.training-schools.show', $trainingSchool->id) }}" class="btn btn-outline-primary ml-2">
                     <x-base.lucide class="w-4 h-4 mr-1" icon="file-text" />
                     View Documents
-                </a>
+                </x-base.button>
             </div>
         </div>
 
@@ -111,7 +111,12 @@
                             <!-- Estado -->
                             <div>
                                 <x-base.form-label for="state" required>State</x-base.form-label>
-                                <x-base.form-input type="text" id="state" name="state" placeholder="Enter state" value="{{ old('state', $trainingSchool->state) }}" class="@error('state') border-danger @enderror" required />
+                                <select id="state" name="state" class="form-select block w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 @error('state') border-danger @enderror" required>
+                                    <option value="">Select State</option>
+                                    @foreach(\App\Helpers\Constants::usStates() as $code => $name)
+                                        <option value="{{ $code }}" {{ (old('state', $trainingSchool->state) == $code) ? 'selected' : '' }}>{{ $name }}</option>
+                                    @endforeach
+                                </select>
                                 @error('state')
                                     <div class="text-danger mt-1">{{ $message }}</div>
                                 @enderror
@@ -119,16 +124,7 @@
                         </div>
 
                         <!-- Columna Derecha -->
-                        <div class="space-y-4">
-                            <!-- Teléfono -->
-                            <div>
-                                <x-base.form-label for="phone_number" required>Phone Number</x-base.form-label>
-                                <x-base.form-input type="text" id="phone_number" name="phone_number" placeholder="Enter phone number" value="{{ old('phone_number', $trainingSchool->phone_number) }}" class="@error('phone_number') border-danger @enderror" required />
-                                @error('phone_number')
-                                    <div class="text-danger mt-1">{{ $message }}</div>
-                                @enderror
-                            </div>
-
+                        <div class="space-y-4">                            
                             <!-- Fecha de inicio -->
                             <div>
                                 <x-base.form-label for="date_start" required>Start Date</x-base.form-label>

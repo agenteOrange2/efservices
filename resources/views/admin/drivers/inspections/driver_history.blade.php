@@ -83,7 +83,7 @@ $breadcrumbLinks = [
                     <x-base.lucide
                         class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3] text-slate-500"
                         icon="Search" />
-                    <x-base.form-input class="rounded-[0.5rem] pl-9 sm:w-64" name="search_term"
+                    <x-base.form-input class="rounded-[0.5rem] pl-9" name="search_term"
                         value="{{ request('search_term') }}" type="text" placeholder="Search inspections..." />
                 </div>
                 

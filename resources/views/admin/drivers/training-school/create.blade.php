@@ -31,19 +31,19 @@
                 Add New Training School
             </h2>
             <div class="flex items-center sm:ml-auto mt-3 sm:mt-0">
-                <a href="{{ route('admin.training-schools.index') }}" class="btn btn-outline-secondary">
+                <x-base.button as="a" href="{{ route('admin.training-schools.index') }}" class="btn btn-outline-secondary" variant="primary">
                     <x-base.lucide class="w-4 h-4 mr-1" icon="arrow-left" />
                     Back to Training Schools
-                </a>
+                </x-base.button>
             </div>
         </div>
 
         <!-- Formulario -->
-        <div class="box box--stacked mt-5">
-            <div class="box-header">
-                <h3 class="box-title">Training School Information</h3>
-            </div>
+        <div class="box box--stacked mt-5">            
             <div class="box-body p-5">
+                <div class="box-header mb-5">
+                <h3 class="box-title text-2xl font-bold">Training School Information</h3>
+            </div>
                 <form action="{{ route('admin.training-schools.store') }}" method="post" enctype="multipart/form-data" id="schoolForm">
                     @csrf
 
@@ -108,7 +108,12 @@
                             <!-- Estado -->
                             <div>
                                 <x-base.form-label for="state" required>State</x-base.form-label>
-                                <x-base.form-input type="text" id="state" name="state" placeholder="Enter state" value="{{ old('state') }}" class="@error('state') border-danger @enderror" required />
+                                <select id="state" name="state" class="form-select block w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 @error('state') border-danger @enderror" required>
+                                    <option value="">Select State</option>
+                                    @foreach(\App\Helpers\Constants::usStates() as $code => $name)
+                                        <option value="{{ $code }}" {{ old('state') == $code ? 'selected' : '' }}>{{ $name }}</option>
+                                    @endforeach
+                                </select>
                                 @error('state')
                                     <div class="text-danger mt-1">{{ $message }}</div>
                                 @enderror
@@ -117,14 +122,6 @@
 
                         <!-- Columna Derecha -->
                         <div class="space-y-4">
-                            <!-- Teléfono -->
-                            <div>
-                                <x-base.form-label for="phone_number" required>Phone Number</x-base.form-label>
-                                <x-base.form-input type="text" id="phone_number" name="phone_number" placeholder="Enter phone number" value="{{ old('phone_number') }}" class="@error('phone_number') border-danger @enderror" required />
-                                @error('phone_number')
-                                    <div class="text-danger mt-1">{{ $message }}</div>
-                                @enderror
-                            </div>
 
                             <!-- Fecha de inicio -->
                             <div>

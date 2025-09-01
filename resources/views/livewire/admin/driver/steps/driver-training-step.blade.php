@@ -35,12 +35,7 @@
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Phone Number</label>
-                        <input type="text" wire:model="training_schools.{{ $index }}.phone_number"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
-                            placeholder="(555) 555-5555">
-                    </div>
+
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
