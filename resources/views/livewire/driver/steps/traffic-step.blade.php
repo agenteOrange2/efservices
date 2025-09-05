@@ -54,12 +54,12 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Conviction Date <span class="text-red-500">*</span>
                         </label>
-                        <x-unified-date-picker
+                        <input type="text"
                             name="traffic_convictions.{{ $index }}.conviction_date"
                             wire:model="traffic_convictions.{{ $index }}.conviction_date"
-                            :value="$conviction['conviction_date'] ?? ''"
-                            placeholder="Select conviction date"
-                            class="w-full"
+                            value="{{ $conviction['conviction_date'] ?? '' }}"
+                            placeholder="MM/DD/YYYY"
+                            class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
                         />
                     </div>
                     <div>

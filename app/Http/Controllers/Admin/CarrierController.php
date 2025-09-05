@@ -81,7 +81,7 @@ class CarrierController extends Controller
             'mc_number' => 'nullable|string|max:255|unique:carriers,mc_number',
             'state_dot' => 'nullable|string|max:255',
             'ifta_account' => 'nullable|string|max:255',
-            'logo_img' => 'nullable|image|max:2048',
+            'logo_carrier' => 'nullable|image|max:2048',
             'id_plan' => 'required|exists:memberships,id',
             'status' => 'required|integer|in:' . implode(',', [
                 Carrier::STATUS_INACTIVE,
@@ -94,6 +94,9 @@ class CarrierController extends Controller
         try {
             // Crear el carrier usando el servicio
             $carrier = $this->carrierService->createCarrier($validated, $request->file('logo_carrier'));
+            
+            // Generar documentos base para el carrier
+            $this->generateBaseDocuments($carrier);
 
             // Redirigir al tab de usuarios del carrier
             return redirect()
@@ -287,7 +290,7 @@ class CarrierController extends Controller
             'mc_number' => 'nullable|string|max:255',
             'state_dot' => 'nullable|string|max:255',
             'ifta_account' => 'nullable|string|max:255',
-            'logo_img' => 'nullable|image|max:2048',
+            'logo_carrier' => 'nullable|image|max:2048',
             'id_plan' => 'required|exists:memberships,id',
             'status' => 'required|integer|in:' . implode(',', [
                 Carrier::STATUS_INACTIVE,

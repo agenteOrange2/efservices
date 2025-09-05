@@ -172,31 +172,30 @@
     </div>
 
     <!-- Date of Birth -->
-    <div class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
-        <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
-            <div class="text-left">
-                <div class="flex items-center">
-                    <div class="font-medium">Date of Birth</div>
-                    <div
-                        class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                        Required</div>
-                </div>
-                <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
-                    This information is required to verify your age and provide age-appropriate services.
+        <!-- Date of Birth -->
+        <div class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
+            <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                <div class="text-left">
+                    <div class="flex items-center">
+                        <div class="font-medium">Date of Birth</div>
+                        <div
+                            class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                            Required</div>
+                    </div>
+                    <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
+                        This information is required to verify your age and provide age-appropriate services.
+                    </div>
                 </div>
             </div>
+            <div class="mt-3 w-full flex-1 xl:mt-0">
+                <input type="text" id="date_of_birth" name="date_of_birth" wire:model="date_of_birth"
+                    class="driver-datepicker disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm"
+                    placeholder="MM/DD/YYYY" />
+                @error('date_of_birth')
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                @enderror
+            </div>
         </div>
-        <div class="mt-3 w-full flex-1 xl:mt-0">
-            <x-unified-date-picker
-                wire:model="date_of_birth"
-                placeholder="MM/DD/YYYY"
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            @error('date_of_birth')
-                <span class="text-red-500 text-sm">{{ $message }}</span>
-            @enderror
-        </div>
-    </div>
 
     <!-- Password -->
     <div class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
@@ -446,5 +445,96 @@
                 sessionStorage.removeItem('unified_image_upload_photo');
             }
         }
+    }
+
+    // Función para formatear automáticamente la fecha en formato MM/DD/YYYY
+    function formatDateMask(input) {
+        let value = input.value.replace(/\D/g, ''); // Remover todo excepto números
+        let formattedValue = '';
+        
+        if (value.length > 0) {
+            // Mes (MM) - validar rango 01-12
+            if (value.length >= 1) {
+                let month = value.substring(0, 2);
+                let monthNum = parseInt(month);
+                
+                if (monthNum > 12) {
+                    month = '12';
+                } else if (monthNum < 1 && value.length >= 2) {
+                    month = '01';
+                } else if (value.length === 1 && monthNum === 0) {
+                    month = '0';
+                }
+                
+                formattedValue = month;
+            }
+            
+            // Día (DD) - validar rango 01-31
+            if (value.length >= 3) {
+                let day = value.substring(2, 4);
+                let dayNum = parseInt(day);
+                
+                if (dayNum > 31) {
+                    day = '31';
+                } else if (dayNum < 1 && value.length >= 4) {
+                    day = '01';
+                } else if (value.length === 3 && dayNum === 0) {
+                    day = '0';
+                }
+                
+                formattedValue += '/' + day;
+            }
+            
+            // Año (YYYY)
+            if (value.length >= 5) {
+                let year = value.substring(4, 8);
+                formattedValue += '/' + year;
+            }
+        }
+        
+        input.value = formattedValue;
+        
+        // Disparar evento para Livewire
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        
+        // Validar formato completo
+        validateDateFormat(input);
+    }
+    
+    // Función para validar el formato completo MM/DD/YYYY
+    function validateDateFormat(input) {
+        const value = input.value;
+        const pattern = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/;
+        
+        if (value.length === 10) {
+            if (!pattern.test(value)) {
+                input.setCustomValidity('Por favor ingrese una fecha válida en formato MM/DD/YYYY');
+            } else {
+                // Validar que la fecha sea real
+                const parts = value.split('/');
+                const month = parseInt(parts[0]);
+                const day = parseInt(parts[1]);
+                const year = parseInt(parts[2]);
+                
+                const date = new Date(year, month - 1, day);
+                if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+                    input.setCustomValidity('Por favor ingrese una fecha válida');
+                } else {
+                    input.setCustomValidity('');
+                }
+            }
+        } else {
+            input.setCustomValidity('');
+        }
+    }
+
+    // Función para permitir solo números en el input
+    function allowOnlyNumbers(evt) {
+        var charCode = (evt.which) ? evt.which : evt.keyCode;
+        // Permitir solo números (48-57), backspace (8), delete (46), tab (9), flechas (37-40)
+        if ((charCode >= 48 && charCode <= 57) || charCode == 8 || charCode == 46 || charCode == 9 || (charCode >= 37 && charCode <= 40)) {
+            return true;
+        }
+        return false;
     }
 </script>

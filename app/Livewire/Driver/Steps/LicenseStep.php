@@ -470,6 +470,56 @@ class LicenseStep extends Component
         }
     }
 
+    // Refresh license preview after permanent upload
+    public function refreshLicensePreview($licenseIndex = null, $side = null)
+    {
+        try {
+            // Validate that both parameters are provided
+            if ($licenseIndex === null || $side === null) {
+                Log::error('Missing required parameters for license preview refresh', [
+                    'licenseIndex' => $licenseIndex,
+                    'side' => $side
+                ]);
+                return;
+            }
+            
+            if (!isset($this->licenses[$licenseIndex])) {
+                Log::error('License index not found for preview refresh', [
+                    'index' => $licenseIndex,
+                    'available_licenses' => count($this->licenses)
+                ]);
+                return;
+            }
+
+            $license = $this->licenses[$licenseIndex];
+            
+            // Only refresh if license has an ID (exists in database)
+            if (isset($license['id']) && $license['id']) {
+                $licenseModel = DriverLicense::find($license['id']);
+                if ($licenseModel) {
+                    $collection = 'license_' . $side;
+                    if ($licenseModel->hasMedia($collection)) {
+                        $this->licenses[$licenseIndex][$side . '_preview'] = $licenseModel->getFirstMediaUrl($collection);
+                        $this->licenses[$licenseIndex][$side . '_filename'] = $licenseModel->getFirstMedia($collection)->file_name;
+                        
+                        Log::info('License preview refreshed', [
+                            'license_id' => $license['id'],
+                            'side' => $side,
+                            'preview_url' => $this->licenses[$licenseIndex][$side . '_preview'],
+                            'filename' => $this->licenses[$licenseIndex][$side . '_filename']
+                        ]);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error refreshing license preview', [
+                'error' => $e->getMessage(),
+                'license_index' => $licenseIndex,
+                'side' => $side
+            ]);
+        }
+    }
+
     // Next step
     public function next()
     {

@@ -106,13 +106,34 @@ class StoreCarrierRequest extends FormRequest
             'company_name' => trim($this->company_name),
             'address' => trim($this->address),
             'phone' => preg_replace('/[^\d+]/', '', $this->phone),
-            'ein_number' => strtoupper(trim($this->ein_number)),
+            'ein_number' => $this->formatEIN($this->ein_number),
             'dot_number' => $this->dot_number ? trim($this->dot_number) : null,
             'mc_number' => $this->mc_number ? strtoupper(trim($this->mc_number)) : null,
             'job_position' => trim($this->job_position),
             'status' => $this->status ?? 'pending',
             'document_status' => $this->document_status ?? 'pending'
         ]);
+    }
+
+    /**
+     * Format EIN number to XX-XXXXXXX format
+     */
+    private function formatEIN($ein)
+    {
+        if (empty($ein)) {
+            return $ein;
+        }
+
+        // Remove all non-numeric characters
+        $cleanEin = preg_replace('/[^0-9]/', '', $ein);
+        
+        // If we have exactly 9 digits, format as XX-XXXXXXX
+        if (strlen($cleanEin) === 9) {
+            return substr($cleanEin, 0, 2) . '-' . substr($cleanEin, 2);
+        }
+        
+        // Return the cleaned value if it doesn't match expected length
+        return strtoupper(trim($ein));
     }
 
     /**

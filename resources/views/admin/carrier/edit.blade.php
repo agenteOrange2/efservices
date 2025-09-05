@@ -158,7 +158,17 @@
                                             Regenerate
                                         </button>
                                     </div>
-                                    <small class="text-gray-500">Example:  {{ url("/driver/register/{$carrier->slug}?token={$carrier->referrer_token}") }}</small>
+                                    <div class="flex items-center space-x-2 mt-1">
+                        <small class="text-gray-500 flex-1">
+                            Example: <span id="driver-url" class="select-all">{{ url("/driver/register/{$carrier->slug}?token={$carrier->referrer_token}") }}</span>
+                        </small>
+                        <button type="button" id="copyUrlBtn" class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-500 bg-white border border-gray-300 rounded hover:bg-gray-50 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200" title="Copy URL">
+                            <svg id="copyIcon" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            <span id="copyText" class="ml-1">Copy</span>
+                        </button>
+                    </div>
                                 </div>
                             </div>
 
@@ -584,35 +594,106 @@
 @pushOnce('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            
 
-            document.getElementById('regenerateToken').addEventListener('click', function() {
-                const tokenField = document.getElementById('referrer_token');
-                tokenField.value = Math.random().toString(36).substring(2,
-                    18); // Generación rápida del token
-            });
+            // Regenerate Token functionality
+            const regenerateTokenBtn = document.getElementById('regenerateToken');
+            const tokenField = document.getElementById('referrer_token');
+            
+            if (regenerateTokenBtn && tokenField) {
+                regenerateTokenBtn.addEventListener('click', function() {
+                    tokenField.value = Math.random().toString(36).substring(2, 18);
+                    
+                });
+            } else {
+                console.error('Regenerate token elements not found');
+            }
 
-            const deletePhotoButton = document.getElementById('deletePhotoButton');
-            deletePhotoButton.addEventListener('click', function(event) {
-                event.preventDefault();
-                fetch('{{ route('admin.carrier.delete-photo', ['carrier' => $carrier->id]) }}', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
-                        },
-                    })
-                    .then(response => {
-                        if (!response.ok) throw new Error('Failed to delete the photo.');
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Actualiza la vista
-                        document.querySelector('[x-data]').__x.$data.originalPhoto = data
-                            .defaultPhotoUrl;
-                        document.querySelector('[x-data]').__x.$data.photoPreview = null;
-                        console.log('Photo deleted successfully.');
-                    })
-                    .catch(error => console.error('Error:', error));
-            });
+            // Copy URL functionality
+            const copyUrlBtn = document.getElementById('copyUrlBtn');
+            const urlElement = document.getElementById('driver-url');
+            const copyText = document.getElementById('copyText');
+            const copyIcon = document.getElementById('copyIcon');
+            
+            if (copyUrlBtn && urlElement && copyText && copyIcon) {
+                copyUrlBtn.addEventListener('click', function() {
+                    
+                    
+                    // Get the URL text
+                    const urlText = urlElement.textContent.trim();
+                    
+                    
+                    // Copy to clipboard
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(urlText).then(function() {                            
+                            showCopySuccess();
+                        }).catch(function(err) {
+                            console.error('Clipboard API failed:', err);
+                            fallbackCopy(urlText);
+                        });
+                    } else {                        
+                        fallbackCopy(urlText);
+                    }
+                });
+            } else {
+                console.error('Copy URL elements not found:', {
+                    copyUrlBtn: copyUrlBtn ? 'found' : 'missing',
+                    urlElement: urlElement ? 'found' : 'missing',
+                    copyText: copyText ? 'found' : 'missing',
+                    copyIcon: copyIcon ? 'found' : 'missing'
+                });
+            }
+            
+            function showCopySuccess() {
+                // Success - show copied state
+                copyText.textContent = 'Copied!';
+                copyUrlBtn.classList.add('text-green-600', 'bg-green-50', 'border-green-300');
+                copyUrlBtn.classList.remove('text-gray-500', 'bg-white', 'border-gray-300');
+                
+                // Change icon to checkmark
+                copyIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
+                
+                // Reset after 2 seconds
+                setTimeout(function() {
+                    copyText.textContent = 'Copy';
+                    copyUrlBtn.classList.remove('text-green-600', 'bg-green-50', 'border-green-300');
+                    copyUrlBtn.classList.add('text-gray-500', 'bg-white', 'border-gray-300');
+                    
+                    // Reset icon to copy
+                    copyIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>';
+                }, 2000);
+            }
+            
+            function fallbackCopy(text) {
+                // Try alternative method for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {                        
+                        showCopySuccess();
+                    } else {
+                        throw new Error('execCommand returned false');
+                    }
+                } catch (fallbackErr) {
+                    console.error('Fallback copy failed:', fallbackErr);
+                    copyText.textContent = 'Failed';
+                    setTimeout(function() {
+                        copyText.textContent = 'Copy';
+                    }, 2000);
+                }
+                
+                document.body.removeChild(textArea);
+            }
+
+
         });
     </script>
 @endPushOnce

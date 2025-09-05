@@ -44,6 +44,15 @@ class UserDriverDetail extends Model implements HasMedia
         'confirmation_token',
         'application_completed',
         'current_step',
+        'assigned_vehicle_id',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'emergency_contact_relationship',
+        'notes',
+        'hire_date',
+        'termination_date',
+        'created_by_admin',
+        'updated_by_admin',
     ];
 
     protected $casts = [
@@ -52,6 +61,11 @@ class UserDriverDetail extends Model implements HasMedia
         'terms_accepted' => 'boolean',
         'application_completed' => 'boolean',
         'current_step' => 'integer',
+        'assigned_vehicle_id' => 'integer',
+        'hire_date' => 'date',
+        'termination_date' => 'date',
+        'created_by_admin' => 'integer',
+        'updated_by_admin' => 'integer',
     ];
 
     public function hasRequiredDocuments(): bool

@@ -33,12 +33,15 @@ if (typeof $ === "undefined" || typeof Pristine === "undefined") {
 // Importar unified-image-upload para que esté disponible globalmente
 import "./unified-image-upload";
 
+// Importar driver-datepicker para el formulario de registro
+import "./components/driver-datepicker";
+
 // Otros scripts
 try {
   import("./vendors/chartjs");
   import("./vendors/tiny-slider");
   import("./vendors/tippy");
-  // import("./vendors/litepicker"); // Removed to prevent conflicts with Pikaday
+  import("./vendors/litepicker");
   import("./vendors/tom-select");
   import("./vendors/dropzone");
   import("./pages/notification");

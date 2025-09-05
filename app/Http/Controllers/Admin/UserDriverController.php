@@ -6,7 +6,9 @@ use App\Models\Carrier;
 use App\Models\UserDriverDetail;
 use App\Http\Controllers\Controller;
 use App\Services\Admin\DriverStepService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class UserDriverController extends Controller
 {
@@ -64,30 +66,12 @@ class UserDriverController extends Controller
      */
     public function edit(Carrier $carrier, UserDriverDetail $userDriverDetail)
     {
-        // Agregar logs detallados para diagnosticar problemas
-        \Illuminate\Support\Facades\Log::info('UserDriverController@edit - Inicio', [
-            'carrier_id' => $carrier->id,
-            'carrier_slug' => $carrier->slug,
-            'driver_id' => $userDriverDetail->id,
-            'user_id' => request()->user() ? request()->user()->id : null,
-            'url' => request()->fullUrl()
-        ]);
-        
         // Verify that the driver belongs to the carrier
-        // Convertir ambos IDs a enteros para asegurar una comparación correcta
         $driverCarrierId = (int)$userDriverDetail->carrier_id;
         $requestedCarrierId = (int)$carrier->id;
         
-        \Illuminate\Support\Facades\Log::info('UserDriverController@edit - Comparación de IDs', [
-            'driver_carrier_id_raw' => $userDriverDetail->carrier_id,
-            'driver_carrier_id_int' => $driverCarrierId,
-            'requested_carrier_id_raw' => $carrier->id,
-            'requested_carrier_id_int' => $requestedCarrierId,
-            'son_iguales' => ($driverCarrierId === $requestedCarrierId) ? 'sí' : 'no'
-        ]);
-        
         if ($driverCarrierId !== $requestedCarrierId) {
-            \Illuminate\Support\Facades\Log::warning('UserDriverController@edit - Redirección: conductor no pertenece al carrier', [
+            Log::warning('UserDriverController@edit - Driver does not belong to carrier', [
                 'driver_carrier_id' => $driverCarrierId,
                 'requested_carrier_id' => $requestedCarrierId
             ]);
@@ -96,13 +80,6 @@ class UserDriverController extends Controller
                 ->route('admin.carrier.user_drivers.index', $carrier)
                 ->with('error', 'El conductor no pertenece a este transportista');
         }
-        
-        // Log antes de retornar la vista
-        \Illuminate\Support\Facades\Log::info('UserDriverController@edit - Cargando vista', [
-            'view' => 'admin.user_driver.edit',
-            'carrier_id' => $carrier->id,
-            'driver_id' => $userDriverDetail->id
-        ]);
         
         // Return the new component-based edit form
         return view('admin.user_driver.edit', [

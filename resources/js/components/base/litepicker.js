@@ -13,14 +13,24 @@
             format: "MM/DD/YYYY",
             allowRepick: true,
             dropdowns: {
-                minYear: 1990,
+                minYear: 1950,
                 maxYear: 2050,
                 months: true,
                 years: true,
             },
             setup: (picker) => {
-                picker.on('selected', (date) => {
-                    // Simplemente seleccionar la fecha sin modificarla
+                picker.on('selected', (date1, date2) => {
+                    // Disparar evento input para que Livewire detecte el cambio
+                    const inputElement = picker.options.element;
+                    if (inputElement) {
+                        // Crear y disparar evento input
+                        const event = new Event('input', { bubbles: true });
+                        inputElement.dispatchEvent(event);
+                        
+                        // También disparar evento change para mayor compatibilidad
+                        const changeEvent = new Event('change', { bubbles: true });
+                        inputElement.dispatchEvent(changeEvent);
+                    }
                 });
             }
         };

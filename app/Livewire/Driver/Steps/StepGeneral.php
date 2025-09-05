@@ -34,7 +34,7 @@ class StepGeneral extends Component
     public $date_of_birth = '';
     public $password = '';
     public $password_confirmation = '';
-    public $status = 2; // Default: Pending
+    public $status = 1; // Default: Active
     public $terms_accepted = false;
     public $photo;
     public $photo_preview_url = null;
@@ -182,11 +182,6 @@ class StepGeneral extends Component
                     'temp_photo_extension' => $extension
                 ]);
                 
-                Log::info('Información de foto guardada en sesión', [
-                    'temp_file' => $tempFileName,
-                    'session_data' => session('temp_photo_file')
-                ]);
-                
                 // Disparar evento para que el componente frontend maneje la persistencia
                 $this->dispatch('photo-uploaded', [
                     'url' => $this->photo_preview_url,
@@ -194,29 +189,13 @@ class StepGeneral extends Component
                     'temp_file' => $tempFileName
                 ]);
                 
-                Log::info('Evento photo-uploaded disparado correctamente');
-                
-                Log::info('=== FIN updatedPhoto() - ÉXITO ===', [
-                    'temp_file' => $tempFileName,
-                    'preview_url_set' => !empty($this->photo_preview_url),
-                    'session_data_saved' => !empty(session('temp_photo_file'))
-                ]);
-                
             } catch (\Exception $e) {
                 $this->reset('photo');
                 $this->addError('photo', 'Error al procesar la imagen: ' . $e->getMessage());
-                Log::error('=== FIN updatedPhoto() - ERROR ===', [
-                    'error' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => $e->getTraceAsString()
+                Log::error('Error procesando foto', [
+                    'error' => $e->getMessage()
                 ]);
             }
-        } else {
-            Log::info('=== FIN updatedPhoto() - SIN FOTO ===', [
-                'photo_is_null' => is_null($this->photo),
-                'photo_empty' => empty($this->photo)
-            ]);
         }
     }
 
@@ -257,13 +236,6 @@ class StepGeneral extends Component
         if ($this->driverId) {
             $this->loadExistingData();
         }
-
-        // Logging para depuración
-        Log::info('StepGeneral montado', [
-            'driverId' => $this->driverId,
-            'isIndependent' => $this->isIndependent,
-            'carrier' => $this->carrier ? $this->carrier->id : null
-        ]);
     }
 
     // Cargar datos existentes
@@ -295,7 +267,10 @@ class StepGeneral extends Component
             if ($driver->carrier_id) {
                 $this->carrier = \App\Models\Carrier::find($driver->carrier_id);
                 // Si no es independiente y tiene carrier, actualizar bandera
-                $this->isIndependent = $driver->carrier_id == 0;
+                $this->isIndependent = false;
+            } else {
+                // Si no tiene carrier_id (null), es independiente
+                $this->isIndependent = true;
             }
 
             // También, intentar cargar la previsualización de la foto de perfil
@@ -303,11 +278,7 @@ class StepGeneral extends Component
                 $this->photo_preview_url = $driver->getFirstMediaUrl('profile_photo_driver');
             }
 
-            Log::info('Datos de driver cargados', [
-                'driver_id' => $driver->id,
-                'carrier_id' => $driver->carrier_id,
-                'photo_url' => $this->photo_preview_url
-            ]);
+            // Datos de driver cargados correctamente
         } catch (\Exception $e) {
             Log::error('Error al cargar datos existentes', [
                 'error' => $e->getMessage(),
@@ -319,7 +290,6 @@ class StepGeneral extends Component
     // Método para avanzar al siguiente paso
     public function next()
     {
-        Log::info('Método next() llamado en StepGeneral');
         $this->save();
     }
 
@@ -346,7 +316,7 @@ class StepGeneral extends Component
 
                 // Crear detalles del driver - convertir fecha al formato de base de datos
                 $driver = $user->driverDetails()->create([
-                    'carrier_id' => $this->carrier ? $this->carrier->id : ($this->isIndependent ? 0 : null),
+                    'carrier_id' => $this->carrier ? $this->carrier->id : ($this->isIndependent ? null : null),
                     'middle_name' => $this->middle_name,
                     'last_name' => $this->last_name,
                     'phone' => $this->phone,
@@ -380,7 +350,6 @@ class StepGeneral extends Component
     // Guardar información del driver
     public function save()
     {
-        Log::info('Método save() llamado en StepGeneral');
         $validatedData = $this->validate();
 
         try {
@@ -390,12 +359,10 @@ class StepGeneral extends Component
             $carrierId = null;
             if ($this->carrier && $this->carrier->id) {
                 $carrierId = $this->carrier->id;
-                Log::info('Usando carrier_id del objeto carrier', ['carrier_id' => $carrierId]);
             } else {
                 if ($this->isIndependent) {
-                    // Para registro independiente sin carrier, usar 0 o algún valor por defecto
-                    $carrierId = 0;
-                    Log::info('Registro independiente sin carrier, usando valor por defecto');
+                    // Para registro independiente sin carrier, usar null
+                    $carrierId = null;
                 } else {
                     throw new \Exception('No carrier ID available and not independent registration');
                 }
@@ -415,13 +382,15 @@ class StepGeneral extends Component
 
                 $user->assignRole('user_driver');
 
+                $formattedDate = $this->formatDateForDatabase($this->date_of_birth);
+                
                 // Crear detalles del driver con carrier_id validado
                 $driver = $user->driverDetails()->create([
                     'carrier_id' => $carrierId,
                     'middle_name' => $this->middle_name,
                     'last_name' => $this->last_name,
                     'phone' => $this->phone,
-                    'date_of_birth' => $this->formatDateForDatabase($this->date_of_birth),
+                    'date_of_birth' => $formattedDate,
                     'status' => $this->status,
                     'terms_accepted' => $this->terms_accepted,
                     'current_step' => 1,
@@ -441,12 +410,6 @@ class StepGeneral extends Component
 
                 // Autenticar al usuario inmediatamente después de crearlo
                 \Illuminate\Support\Facades\Auth::login($user);
-
-                Log::info('Usuario driver autenticado automáticamente', [
-                    'driver_id' => $driver->id,
-                    'user_id' => $user->id,
-                    'carrier_id' => $carrierId
-                ]);
 
                 // Emitir evento de driver creado al componente padre
                 $this->dispatch('driverCreated', $driver->id);

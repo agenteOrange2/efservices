@@ -479,6 +479,7 @@ class ApplicationStep extends Component
     protected function saveApplicationDetails()
     {
         try {
+            Log::info('ApplicationStep: Iniciando transacción de base de datos');
             DB::beginTransaction();
 
             Log::info('Guardando detalles de aplicación', ['driverId' => $this->driverId]);
@@ -823,12 +824,17 @@ class ApplicationStep extends Component
      */
     public function sendThirdPartyEmail()
     {
-        Log::info('Iniciando envío de correo a tercero', [
+        Log::info('ApplicationStep: Iniciando envío de correo a tercero', [
             'third_party_email' => $this->third_party_email,
-            'driver_id' => $this->driverId
+            'driver_id' => $this->driverId,
+            'third_party_name' => $this->third_party_name,
+            'third_party_phone' => $this->third_party_phone,
+            'vehicle_vin' => $this->vehicle_vin
         ]);
         
         // Validar todos los campos necesarios antes de continuar
+        Log::info('ApplicationStep: Iniciando validación de campos');
+        
         $this->validate([
             // Campos del tercero
             'third_party_email' => 'required|email',
@@ -855,15 +861,21 @@ class ApplicationStep extends Component
             DB::beginTransaction();
             
             // Obtener el usuario y la aplicación del conductor
+            Log::info('ApplicationStep: Buscando datos del conductor', ['driver_id' => $this->driverId]);
             $userDriverDetail = UserDriverDetail::find($this->driverId);
             if (!$userDriverDetail) {
+                Log::error('ApplicationStep: Driver no encontrado', ['driver_id' => $this->driverId]);
                 throw new \Exception('Driver not found');
             }
             
+            Log::info('ApplicationStep: Driver encontrado, buscando aplicación', ['driver_id' => $this->driverId]);
             $application = $userDriverDetail->application;
             if (!$application) {
+                Log::error('ApplicationStep: Aplicación del driver no encontrada', ['driver_id' => $this->driverId]);
                 throw new \Exception('Driver application not found');
             }
+            
+            Log::info('ApplicationStep: Aplicación encontrada', ['application_id' => $application->id]);
             
             // Verificar si ya existe un vehículo con el mismo VIN o si se seleccionó uno existente
             $vehicle = null;
@@ -1028,8 +1040,11 @@ class ApplicationStep extends Component
             // Marcar como enviado antes del commit
             $this->email_sent = true;
             
+            Log::info('ApplicationStep: Realizando commit de la transacción antes del envío de correo');
             // Commit de la transacción ANTES de enviar el correo
             DB::commit();
+            
+            Log::info('ApplicationStep: Transacción completada exitosamente, preparando envío de correo');
             
             // Log configuración de correo antes del envío
             Log::info('Configuración de correo SMTP', [
@@ -1043,6 +1058,13 @@ class ApplicationStep extends Component
             ]);
             
             // Enviar correo electrónico DESPUÉS del commit para evitar problemas de timing
+            Log::info('ApplicationStep: Iniciando envío de correo electrónico', [
+                'recipient' => $this->third_party_email,
+                'driver_name' => $userDriverDetail->user->name . ' ' . $userDriverDetail->last_name,
+                'token' => $token,
+                'vehicle_data' => $vehicleData
+            ]);
+            
             try {
                 Mail::to($this->third_party_email)
                     ->send(new ThirdPartyVehicleVerification(
@@ -1054,17 +1076,22 @@ class ApplicationStep extends Component
                         $application->id
                     ));
                     
-                Log::info('Correo enviado exitosamente después del commit', [
+                Log::info('ApplicationStep: Correo enviado exitosamente después del commit', [
                     'recipient' => $this->third_party_email,
                     'token' => $token,
                     'verification_id' => $verification->id
                 ]);
             } catch (\Swift_TransportException $e) {
-                Log::error('Error de transporte SMTP', [
+                Log::error('ApplicationStep: Error de transporte SMTP', [
                     'error' => $e->getMessage(),
                     'code' => $e->getCode(),
                     'recipient' => $this->third_party_email,
-                    'token' => $token
+                    'token' => $token,
+                    'mail_config' => [
+                        'mailer' => config('mail.default'),
+                        'host' => config('mail.mailers.smtp.host'),
+                        'port' => config('mail.mailers.smtp.port')
+                    ]
                 ]);
                 // No lanzar excepción aquí ya que los datos ya están guardados
                 $this->dispatch('notify', [
@@ -1073,11 +1100,16 @@ class ApplicationStep extends Component
                 ]);
                 return;
             } catch (\Symfony\Component\Mailer\Exception\TransportException $e) {
-                Log::error('Error de transporte Symfony Mailer', [
+                Log::error('ApplicationStep: Error de transporte Symfony Mailer', [
                     'error' => $e->getMessage(),
                     'code' => $e->getCode(),
                     'recipient' => $this->third_party_email,
-                    'token' => $token
+                    'token' => $token,
+                    'mail_config' => [
+                        'mailer' => config('mail.default'),
+                        'host' => config('mail.mailers.smtp.host'),
+                        'port' => config('mail.mailers.smtp.port')
+                    ]
                 ]);
                 // No lanzar excepción aquí ya que los datos ya están guardados
                 $this->dispatch('notify', [
@@ -1086,12 +1118,17 @@ class ApplicationStep extends Component
                 ]);
                 return;
             } catch (\Exception $e) {
-                Log::error('Error general al enviar correo', [
+                Log::error('ApplicationStep: Error general al enviar correo', [
                     'error' => $e->getMessage(),
                     'code' => $e->getCode(),
                     'recipient' => $this->third_party_email,
                     'token' => $token,
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
+                    'mail_config' => [
+                        'mailer' => config('mail.default'),
+                        'host' => config('mail.mailers.smtp.host'),
+                        'port' => config('mail.mailers.smtp.port')
+                    ]
                 ]);
                 // No lanzar excepción aquí ya que los datos ya están guardados
                 $this->dispatch('notify', [
@@ -1101,13 +1138,14 @@ class ApplicationStep extends Component
                 return;
             }
             
+            Log::info('ApplicationStep: Proceso de envío de correo completado exitosamente');
             $this->dispatch('notify', [
                 'type' => 'success',
                 'message' => 'Vehicle information sent successfully to ' . $this->third_party_email
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error al enviar correo a tercero', [
+            Log::error('ApplicationStep: Error crítico al enviar correo a tercero', [
                 'error' => $e->getMessage(),
                 'email' => $this->third_party_email,
                 'driver_id' => $this->driverId,
@@ -1115,7 +1153,9 @@ class ApplicationStep extends Component
                 'vehicle_vin' => $this->vehicle_vin,
                 'third_party_name' => $this->third_party_name,
                 'third_party_phone' => $this->third_party_phone,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
             ]);
             
             // Mostrar mensaje de error más detallado para facilitar la depuración

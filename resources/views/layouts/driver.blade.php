@@ -19,6 +19,7 @@
 
         <!-- Styles -->
         @livewireStyles
+        @stack('styles')
 
         @stack('head-scripts')
     </head>
@@ -44,6 +45,7 @@
             </main>
         </div>
 
+        @stack('vendors')
         @stack('scripts')
 
         <!-- Los scripts de carga de archivos ahora están en el encabezado -->

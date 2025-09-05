@@ -201,6 +201,11 @@ class CarrierService
             // Validar datos requeridos
             $this->validateCarrierData($data);
 
+            // Formatear EIN antes de crear el registro
+            if (!empty($data['ein_number'])) {
+                $data['ein_number'] = $this->formatEIN($data['ein_number']);
+            }
+
             // Crear el carrier
             $carrier = Carrier::create([
                 'name' => $data['name'],
@@ -219,7 +224,7 @@ class CarrierService
 
             // Manejar el archivo de logo si se proporciona
             if ($logoFile) {
-                $carrier->addMediaFromRequest('logo_img')
+                $carrier->addMediaFromRequest('logo_carrier')
                     ->toMediaCollection('logo_carrier');
             }
 
@@ -244,7 +249,7 @@ class CarrierService
     /**
      * Actualizar un carrier con transacción
      */
-    public function updateCarrier(int $carrierId, array $data): Carrier
+    public function updateCarrier(int $carrierId, array $data, $logoFile = null): Carrier
     {
         DB::beginTransaction();
         
@@ -254,17 +259,33 @@ class CarrierService
             // Validar datos
             $this->validateCarrierData($data, $carrierId);
 
+            // Formatear EIN antes de actualizar el registro
+            if (!empty($data['ein_number'])) {
+                $data['ein_number'] = $this->formatEIN($data['ein_number']);
+            }
+
             // Actualizar carrier
             $carrier->update([
                 'name' => $data['name'] ?? $carrier->name,
                 'address' => $data['address'] ?? $carrier->address,
+                'state' => $data['state'] ?? $carrier->state,
+                'zipcode' => $data['zipcode'] ?? $carrier->zipcode,
                 'ein_number' => $data['ein_number'] ?? $carrier->ein_number,
                 'dot_number' => $data['dot_number'] ?? $carrier->dot_number,
                 'mc_number' => $data['mc_number'] ?? $carrier->mc_number,
+                'state_dot' => $data['state_dot'] ?? $carrier->state_dot,
+                'ifta_account' => $data['ifta_account'] ?? $carrier->ifta_account,
                 'id_plan' => $data['id_plan'] ?? $carrier->id_plan,
                 'status' => $data['status'] ?? $carrier->status,
-                'document_status' => $data['document_status'] ?? $carrier->document_status
+                'document_status' => $data['document_status'] ?? $carrier->document_status,
+                'referrer_token' => $data['referrer_token'] ?? $carrier->referrer_token
             ]);
+
+            // Manejar el archivo de logo si se proporciona
+            if ($logoFile) {
+                $carrier->addMediaFromRequest('logo_carrier')
+                    ->toMediaCollection('logo_carrier');
+            }
 
             DB::commit();
             Log::info('Carrier actualizado exitosamente: ' . $carrierId);
@@ -333,7 +354,7 @@ class CarrierService
     /**
      * Validar datos del carrier
      */
-    private function validateCarrierData(array $data, ?int $carrierId = null): void
+    private function validateCarrierData(array &$data, ?int $carrierId = null): void
     {
         // Validar campos requeridos
         $requiredFields = ['name', 'address', 'state', 'zipcode', 'ein_number'];
@@ -341,6 +362,11 @@ class CarrierService
             if (empty($data[$field])) {
                 throw new Exception("El campo {$field} es requerido");
             }
+        }
+
+        // Formatear EIN antes de validar
+        if (!empty($data['ein_number'])) {
+            $data['ein_number'] = $this->formatEIN($data['ein_number']);
         }
 
         // Validar formato EIN (XX-XXXXXXX)
@@ -423,5 +449,26 @@ class CarrierService
             ->exists();
 
         return $activeUsers || $activeVehicles;
+    }
+
+    /**
+     * Format EIN number to XX-XXXXXXX format
+     */
+    private function formatEIN($ein)
+    {
+        if (empty($ein)) {
+            return $ein;
+        }
+
+        // Remove all non-numeric characters
+        $cleanEin = preg_replace('/[^0-9]/', '', $ein);
+        
+        // If we have exactly 9 digits, format as XX-XXXXXXX
+        if (strlen($cleanEin) === 9) {
+            return substr($cleanEin, 0, 2) . '-' . substr($cleanEin, 2);
+        }
+        
+        // Return the cleaned value if it doesn't match expected length
+        return strtoupper(trim($ein));
     }
 }

@@ -51,10 +51,10 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Accident Date</label>
-                        <x-unified-date-picker 
+                        <input type="text" 
                             wire:model="accidents.{{ $index }}.accident_date"
-                            placeholder="Select accident date"
-                            format="MM/DD/YYYY"
+                            placeholder="MM/DD/YYYY"
+                            class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
                         />
                         @error("accidents.{$index}.accident_date")
                             <span class="text-red-500 text-sm">{{ $message }}</span>

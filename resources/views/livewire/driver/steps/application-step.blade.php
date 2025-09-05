@@ -305,13 +305,13 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
-                            <x-unified-date-picker
+                            <label class="block mb-1">Registration Expiration Date *</label>
+                            <input type="text" 
                                 name="vehicle_registration_expiration_date"
-                                label="Registration Expiration Date *"
-                                wireModel="vehicle_registration_expiration_date"
+                                wire:model="vehicle_registration_expiration_date"
+                                class="driver-datepicker w-full px-3 py-2 border rounded"
                                 placeholder="MM/DD/YYYY"
-                                :value="$vehicle_registration_expiration_date"
-                            />
+                                value="{{ $vehicle_registration_expiration_date }}" />
                             @error('vehicle_registration_expiration_date')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
@@ -656,8 +656,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
                             <label class="block mb-1">Registration Expiration Date *</label>
-                            <x-base.form-input type="text" wire:model="vehicle_registration_expiration_date"
-                                class="w-full px-3 py-2 border rounded" placeholder="MM/DD/YYYY" />
+                            <input type="text" 
+                                name="vehicle_registration_expiration_date"
+                                wire:model="vehicle_registration_expiration_date"
+                                class="driver-datepicker w-full px-3 py-2 border rounded"
+                                placeholder="MM/DD/YYYY"
+                                value="{{ $vehicle_registration_expiration_date }}" />
                             @error('vehicle_registration_expiration_date')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
@@ -772,13 +776,13 @@
                     </label>
 
                     <div x-show="$wire.has_twic_card" x-transition class="mt-2">
-                        <x-unified-date-picker
+                        <label class="block mb-1 font-medium text-gray-700">TWIC Card Expiration Date *</label>
+                        <input type="text" 
                             name="twic_expiration_date"
-                            label="TWIC Card Expiration Date *"
-                            wireModel="twic_expiration_date"
+                            wire:model="twic_expiration_date"
+                            class="driver-datepicker w-full px-3 py-2 border rounded"
                             placeholder="MM/DD/YYYY"
-                            :value="$twic_expiration_date"
-                        />
+                            value="{{ $twic_expiration_date }}" />
                         @error('twic_expiration_date')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
@@ -880,25 +884,25 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div>
-                                    <x-unified-date-picker
+                                    <label class="block mb-1 font-medium text-gray-700">Start Date *</label>
+                                    <input type="text" 
                                         name="work_histories.{{ $index }}.start_date"
-                                        label="Start Date *"
-                                        wireModel="work_histories.{{ $index }}.start_date"
+                                        wire:model="work_histories.{{ $index }}.start_date"
+                                        class="driver-datepicker w-full px-3 py-2 border rounded"
                                         placeholder="MM/DD/YYYY"
-                                        :value="$work_histories[$index]['start_date'] ?? ''"
-                                    />
+                                        value="{{ $work_histories[$index]['start_date'] ?? '' }}" />
                                     @error('work_histories.' . $index . '.start_date')
                                         <span class="text-red-500 text-sm">{{ $message }}</span>
                                     @enderror
                                 </div>
                                 <div>
-                                    <x-unified-date-picker
+                                    <label class="block mb-1 font-medium text-gray-700">End Date *</label>
+                                    <input type="text" 
                                         name="work_histories.{{ $index }}.end_date"
-                                        label="End Date *"
-                                        wireModel="work_histories.{{ $index }}.end_date"
+                                        wire:model="work_histories.{{ $index }}.end_date"
+                                        class="driver-datepicker w-full px-3 py-2 border rounded"
                                         placeholder="MM/DD/YYYY"
-                                        :value="$work_histories[$index]['end_date'] ?? ''"
-                                    />
+                                        value="{{ $work_histories[$index]['end_date'] ?? '' }}" />
                                     @error('work_histories.' . $index . '.end_date')
                                         <span class="text-red-500 text-sm">{{ $message }}</span>
                                     @enderror

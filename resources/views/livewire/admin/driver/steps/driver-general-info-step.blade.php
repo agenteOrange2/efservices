@@ -176,11 +176,8 @@
                 </div>
             </div>
             <div class="mt-3 w-full flex-1 xl:mt-0">
-                <input type="date" wire:model="date_of_birth"
-                    class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
-                @error('date_of_birth')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
+                <input type="date" wire:model="date_of_birth"s="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                @err0n                @enderror
             </div>
         </div>
 

@@ -42,28 +42,48 @@ class DateHelper
      */
     public static function toDatabase($date)
     {
-        if (!$date) return null;
-        
+        if (empty($date)) {
+            return null;
+        }
+
+        // Si ya está en formato YYYY-MM-DD, devolverlo tal como está
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            return $date;
+        }
+
         try {
-            if ($date instanceof Carbon) {
-                return $date->format(self::DATABASE_FORMAT);
-            }
-            
-            // Try to parse with multiple formats
-            foreach (self::INPUT_FORMATS as $format) {
-                try {
-                    $parsed = Carbon::createFromFormat($format, $date);
-                    return $parsed->format(self::DATABASE_FORMAT);
-                } catch (\Exception $e) {
-                    continue;
+            // Intentar diferentes formatos
+            $formats = [
+                'Y-m-d',     // 2023-12-31
+                'm/d/Y',     // 12/31/2023 (MM/DD/YYYY)
+                'd/m/Y',     // 31/12/2023 (DD/MM/YYYY)
+                'Y/m/d',     // 2023/12/31
+                'd-m-Y',     // 31-12-2023
+                'm-d-Y',     // 12-31-2023
+                'd-M-Y',     // 31-Dec-2023
+                'M d, Y',    // Dec 31, 2023
+                'F j, Y',    // December 31, 2023
+            ];
+
+            foreach ($formats as $format) {
+                $dateObj = \DateTime::createFromFormat($format, $date);
+                if ($dateObj && $dateObj->format($format) === $date) {
+                    return $dateObj->format('Y-m-d');
                 }
             }
-            
-            // Fallback to Carbon's automatic parsing
-            return Carbon::parse($date)->format(self::DATABASE_FORMAT);
-            
+
+            // Si ningún formato funciona, intentar con strtotime
+            $timestamp = strtotime($date);
+            if ($timestamp !== false) {
+                return date('Y-m-d', $timestamp);
+            }
+
+            return null;
         } catch (\Exception $e) {
-            Log::warning('Failed to parse date for database: ' . $date, ['error' => $e->getMessage()]);
+            Log::error('DateHelper::toDatabase - Exception occurred', [
+                'date' => $date,
+                'error' => $e->getMessage()
+            ]);
             return null;
         }
     }

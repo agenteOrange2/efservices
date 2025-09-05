@@ -375,6 +375,8 @@
             // Dispatch event to refresh preview in Livewire component
             if (this.modelType === 'medical_card') {
                 @this.call('refreshMedicalCardPreview');
+            } else if (['license_front', 'license_back'].includes(this.documentType)) {
+                @this.call('refreshLicensePreview');
             }
             
         } catch (error) {
@@ -466,18 +468,20 @@
 
     <!-- File Preview -->
     @if($showPreview)
-        <!-- <div x-show="files.length > 0" class="space-y-2">
+        <div x-show="files.length > 0" class="space-y-2">
             <template x-for="(file, index) in files" :key="index">
-                <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <img :src="file.url" :alt="file.name" class="h-12 w-12 object-cover rounded">
+                <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <img :src="file.url" :alt="file.name" class="h-12 w-12 object-cover rounded shadow-sm">
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-medium text-gray-900 truncate" x-text="file.name"></p>
-                        <p class="text-xs text-gray-500" x-show="file.uploaded">Uploaded</p>
+                        <p class="text-xs text-blue-600" x-show="file.uploaded">✓ Uploaded</p>
+                        <p class="text-xs text-gray-500" x-show="!file.uploaded">Ready to upload</p>
                     </div>
                     <button 
                         type="button" 
-                        class="text-red-600 hover:text-red-800"
+                        class="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100 transition-colors"
                         @click="removeFile(index)"
+                        title="Eliminar archivo"
                     >
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -485,7 +489,7 @@
                     </button>
                 </div>
             </template>
-        </div> -->
+        </div>
     @endif
 
     <!-- Upload Button -->

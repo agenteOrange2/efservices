@@ -18,13 +18,10 @@
         <!-- Hire Date -->
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Hire Date</label>
-            <x-unified-date-picker
-                name="hire_date"
-                wireModel="hire_date"
-                :value="$hire_date"
-                placeholder="MM/DD/YYYY"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
+            <input type="text" name="hire_date" wire:model="hire_date" value="{{ $hire_date }}" placeholder="MM/DD/YYYY" class="driver-datepicker w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+            @error('hire_date')
+                <span class="text-red-500 text-sm">{{ $message }}</span>
+            @enderror
         </div>
     </div>
 
@@ -47,13 +44,7 @@
             </div>
             <div x-show="isSuspended" class="mt-3">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Suspension Date</label>
-                <x-unified-date-picker
-                    name="suspension_date"
-                    wireModel="suspension_date"
-                    :value="$suspension_date"
-                    placeholder="MM/DD/YYYY"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
+                <input type="text" name="suspension_date" wire:model="suspension_date" value="{{ $suspension_date }}" placeholder="MM/DD/YYYY" class="driver-datepicker w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                 @error('suspension_date')
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                 @enderror
@@ -69,13 +60,7 @@
             </div>
             <div x-show="isTerminated" class="mt-3">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Termination Date</label>
-                <x-unified-date-picker
-                    name="termination_date"
-                    wireModel="termination_date"
-                    :value="$termination_date"
-                    placeholder="MM/DD/YYYY"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
+                <input type="text" name="termination_date" wire:model="termination_date" value="{{ $termination_date }}" placeholder="MM/DD/YYYY" class="driver-datepicker w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                 @error('termination_date')
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                 @enderror
@@ -115,13 +100,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Medical Card Expiration Date <span
                         class="text-red-500">*</span></label>
-                <x-unified-date-picker
-                    name="medical_card_expiration_date"
-                    wireModel="medical_card_expiration_date"
-                    :value="$medical_card_expiration_date"
-                    placeholder="MM/DD/YYYY"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
+                <input type="text" name="medical_card_expiration_date" wire:model="medical_card_expiration_date" value="{{ $medical_card_expiration_date }}" placeholder="MM/DD/YYYY" class="driver-datepicker w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                 @error('medical_card_expiration_date')
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                 @enderror

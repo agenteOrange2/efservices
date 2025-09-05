@@ -51,7 +51,7 @@ class CarrierStep2Request extends FormRequest
             'ein_number' => [
                 'required',
                 'string',
-                'regex:/^\d{2}-\d{7}$/', // Formato EIN: XX-XXXXXXX
+                'regex:/^(\d{2}-\d{7}|\d{9})$/', // Formato EIN: XX-XXXXXXX o XXXXXXXXX
                 Rule::unique('carriers', 'ein_number')
             ],
             'dot_number' => [
@@ -120,7 +120,7 @@ class CarrierStep2Request extends FormRequest
             'zip_code.regex' => 'Please enter a valid ZIP code (e.g., 12345 or 12345-6789).',
             
             'ein_number.required' => 'Please enter your EIN number.',
-            'ein_number.regex' => 'Please enter a valid EIN number (format: XX-XXXXXXX).',
+            'ein_number.regex' => 'Please enter a valid EIN number (9 digits, format: XX-XXXXXXX or XXXXXXXXX).',
             'ein_number.unique' => 'This EIN number is already registered.',
             
             'dot_number.regex' => 'Please enter a valid DOT number (up to 8 digits).',
@@ -250,19 +250,19 @@ class CarrierStep2Request extends FormRequest
         if (!$ein) return '';
         
         // Remove all non-digit characters
-        $ein = preg_replace('/[^\d]/', '', $ein);
+        $cleanEin = preg_replace('/[^\d]/', '', $ein);
         
         // If we have exactly 9 digits, format as XX-XXXXXXX
-        if (strlen($ein) === 9) {
-            return substr($ein, 0, 2) . '-' . substr($ein, 2);
+        if (strlen($cleanEin) === 9) {
+            return substr($cleanEin, 0, 2) . '-' . substr($cleanEin, 2);
         }
         
-        // If it's already in the correct format, return as is
-        if (preg_match('/^\d{2}-\d{7}$/', $this->ein_number ?? '')) {
-            return $this->ein_number;
+        // If it's already in the correct format XX-XXXXXXX, return as is
+        if (preg_match('/^\d{2}-\d{7}$/', $ein)) {
+            return $ein;
         }
         
-        // Return the cleaned digits (will be validated later)
+        // Return the original input for validation to handle
         return $ein;
     }
 

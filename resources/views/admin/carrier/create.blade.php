@@ -470,3 +470,74 @@
         </div>
     </div>
 @endsection
+
+@pushOnce('scripts')
+<script src="https://unpkg.com/imask"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // EIN Number mask and validation
+        const einInput = document.getElementById('ein_number');
+        
+        if (einInput) {
+            // IMask for EIN Number
+            const einMask = IMask(einInput, {
+                mask: '00-0000000',
+                prepare: function(str) {
+                    return str.replace(/[^0-9]/g, '');
+                },
+                commit: function(value, masked) {
+                    einInput.value = masked.value;
+                }
+            });
+
+            // Real-time validation
+            einInput.addEventListener('input', function() {
+                validateEINField();
+            });
+
+            einInput.addEventListener('blur', function() {
+                validateEINField();
+            });
+        }
+
+        function validateEINField() {
+            const einValue = einInput.value.trim();
+            const errorElement = einInput.parentElement.parentElement.querySelector('.text-red-500');
+            
+            // Remove existing error message
+            if (errorElement && !errorElement.textContent.includes('already registered')) {
+                errorElement.remove();
+            }
+
+            if (einValue && !isValidEIN(einValue)) {
+                showFieldError(einInput, 'EIN number must be in format XX-XXXXXXX.');
+                return false;
+            }
+            
+            return true;
+        }
+
+        function isValidEIN(ein) {
+            // Accept both formats: XX-XXXXXXX and XXXXXXXXX
+            const einPattern1 = /^\d{2}-\d{7}$/; // XX-XXXXXXX
+            const einPattern2 = /^\d{9}$/;       // XXXXXXXXX
+            
+            return einPattern1.test(ein) || einPattern2.test(ein);
+        }
+
+        function showFieldError(field, message) {
+            // Remove existing error
+            const existingError = field.parentElement.parentElement.querySelector('.text-red-500');
+            if (existingError && !existingError.textContent.includes('already registered')) {
+                existingError.remove();
+            }
+
+            // Add new error
+            const errorElement = document.createElement('p');
+            errorElement.className = 'text-red-500 text-sm mt-1';
+            errorElement.textContent = message;
+            field.parentElement.parentElement.appendChild(errorElement);
+        }
+    });
+</script>
+@endPushOnce

@@ -66,12 +66,12 @@
                 <div>
                     <label class="block text-sm font-medium mb-1">Start Date <span
                             class="text-red-500">*</span></label>
-                    <x-unified-date-picker
+                    <input type="text"
                         name="training_schools.{{ $index }}.date_start"
-                        wireModel="training_schools.{{ $index }}.date_start"
-                        value="{{ $school['date_start'] ?? '' }}"
+                        wire:model="training_schools.{{ $index }}.date_start"
+                        class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
                         placeholder="MM/DD/YYYY"
-                        class="w-full" />
+                        value="{{ $school['date_start'] ?? '' }}" />
                     @error("training_schools.{$index}.date_start")
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
@@ -79,12 +79,12 @@
                 <div>
                     <label class="block text-sm font-medium mb-1">End Date <span
                             class="text-red-500">*</span></label>
-                    <x-unified-date-picker
+                    <input type="text"
                         name="training_schools.{{ $index }}.date_end"
-                        wireModel="training_schools.{{ $index }}.date_end"
-                        value="{{ $school['date_end'] ?? '' }}"
+                        wire:model="training_schools.{{ $index }}.date_end"
+                        class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
                         placeholder="MM/DD/YYYY"
-                        class="w-full" />
+                        value="{{ $school['date_end'] ?? '' }}" />
                     @error("training_schools.{$index}.date_end")
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
@@ -427,24 +427,24 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium mb-1">Expiration Date</label>
-                    <x-unified-date-picker
+                    <input type="text" 
                         name="courses.{{ $index }}.expiration_date"
-                        wireModel="courses.{{ $index }}.expiration_date"
-                        value="{{ $course['expiration_date'] ?? '' }}"
+                        wire:model="courses.{{ $index }}.expiration_date"
+                        class="driver-datepicker w-full px-3 py-2 border rounded"
                         placeholder="MM/DD/YYYY"
-                        class="w-full" />
+                        value="{{ $course['expiration_date'] ?? '' }}" />
                     @error("courses.{$index}.expiration_date")
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1">Certification Date</label>
-                    <x-unified-date-picker
+                    <input type="text" 
                         name="courses.{{ $index }}.certification_date"
-                        wireModel="courses.{{ $index }}.certification_date"
-                        value="{{ $course['certification_date'] ?? '' }}"
+                        wire:model="courses.{{ $index }}.certification_date"
+                        class="driver-datepicker w-full px-3 py-2 border rounded"
                         placeholder="MM/DD/YYYY"
-                        class="w-full" />
+                        value="{{ $course['certification_date'] ?? '' }}" />
                     @error("courses.{$index}.certification_date")
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror

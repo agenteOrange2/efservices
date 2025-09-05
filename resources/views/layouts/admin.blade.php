@@ -14,9 +14,13 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        
+        <!-- Pikaday for date picker -->
+        <script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
 
         <!-- Styles -->
         @livewireStyles
+        @stack('styles')
     </head>
     <body class="font-sans antialiased">
         <x-banner />        

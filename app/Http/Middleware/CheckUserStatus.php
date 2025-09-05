@@ -439,6 +439,7 @@ class CheckUserStatus
         $setupRoutes = [
             'driver/complete_registration',
             'driver/registration/*',
+            'driver/registration/continue/*',
             'driver/pending',
             'driver/rejected',
             'driver/documents/*',

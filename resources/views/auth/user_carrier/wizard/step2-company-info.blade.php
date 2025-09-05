@@ -375,18 +375,24 @@
             });
 
             const einMask = IMask(document.getElementById('ein_number'), {
-                mask: '00-0000000',
+                mask: [
+                    {
+                        mask: '00-0000000'
+                    },
+                    {
+                        mask: /^\d{0,9}$/
+                    }
+                ],
                 lazy: false,
                 prepare: function (str) {
+                    // Only allow digits
                     return str.replace(/[^\d]/g, '');
                 },
                 commit: function (value, masked) {
-                    // Auto-format EIN as user types
-                    if (value.length >= 2) {
-                        const digits = value.replace(/[^\d]/g, '');
-                        if (digits.length >= 2) {
-                            return digits.substring(0, 2) + '-' + digits.substring(2, 9);
-                        }
+                    // Auto-format EIN when user finishes typing
+                    const digits = value.replace(/[^\d]/g, '');
+                    if (digits.length === 9) {
+                        return digits.substring(0, 2) + '-' + digits.substring(2);
                     }
                     return value;
                 }
@@ -505,7 +511,7 @@
                 // EIN format validation
                 if (fieldName === 'ein_number' && value && !isValidEIN(value)) {
                     isValid = false;
-                    errorMessage = 'EIN must be in format 12-3456789.';
+                    errorMessage = 'EIN must be 9 digits (format: 12-3456789 or 123456789).';
                 }
 
                 // Zip code validation
@@ -610,8 +616,10 @@
             function isValidEIN(ein) {
                 // Accept EIN with or without dash, then validate format
                 const cleanEin = ein.replace(/[^\d]/g, '');
+                // Must have exactly 9 digits
                 if (cleanEin.length === 9) {
-                    return /^\d{2}-\d{7}$/.test(ein) || /^\d{9}$/.test(cleanEin);
+                    // Accept either XX-XXXXXXX format or 9 consecutive digits
+                    return /^\d{2}-\d{7}$/.test(ein) || /^\d{9}$/.test(ein);
                 }
                 return false;
             }
