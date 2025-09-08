@@ -40,6 +40,9 @@
             @error('photo')
                 <span class="text-red-500 text-sm">{{ $message }}</span>
             @enderror
+            <div class="text-xs text-slate-500/80 text-center">
+                Upload a clear and recent profile photo. Large images will be automatically optimized to reduce file size.
+            </div>
         </div>
 
         <!-- Personal Information Fields -->

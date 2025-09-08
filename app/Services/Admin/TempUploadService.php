@@ -8,6 +8,8 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 class TempUploadService
 {
@@ -18,6 +20,9 @@ class TempUploadService
     {
         $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
         $path = $file->storeAs($folder, $filename, 'public');
+        
+        // Aplicar compresión automática si es una imagen
+        $this->compressAndResizeImage($file, $path);
         
         // Crear un token único para este archivo
         $token = Str::random(20);
@@ -144,5 +149,63 @@ class TempUploadService
         Session::put('temp_files', $cleaned);
         
         return count($tempFiles) - count($cleaned);
+    }
+
+    /**
+     * Comprime y redimensiona una imagen
+     */
+    private function compressAndResizeImage(UploadedFile $file, string $tempPath): bool
+    {
+        try {
+            // Verificar si es una imagen
+            $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $extension = strtolower($file->getClientOriginalExtension());
+            
+            if (!in_array($extension, $imageExtensions)) {
+                Log::info('Archivo no es imagen, saltando compresión', [
+                    'extension' => $extension,
+                    'file' => $file->getClientOriginalName()
+                ]);
+                return true; // No es imagen, no necesita compresión
+            }
+
+            Log::info('Iniciando compresión de imagen', [
+                'original_name' => $file->getClientOriginalName(),
+                'original_size' => $file->getSize(),
+                'temp_path' => $tempPath
+            ]);
+
+            // Crear manager de imagen
+            $manager = new ImageManager(new Driver());
+            
+            // Leer la imagen desde el archivo temporal
+            $fullPath = Storage::disk('public')->path($tempPath);
+            $image = $manager->read($fullPath);
+            
+            // Redimensionar manteniendo proporción (máximo 800px de ancho)
+            if ($image->width() > 800) {
+                $image->scaleDown(width: 800);
+            }
+            
+            // Comprimir y guardar como JPEG con 80% de calidad
+            $image->toJpeg(80)->save($fullPath);
+            
+            $newSize = filesize($fullPath);
+            
+            Log::info('Compresión completada', [
+                'original_size' => $file->getSize(),
+                'new_size' => $newSize,
+                'reduction_percentage' => round((($file->getSize() - $newSize) / $file->getSize()) * 100, 2)
+            ]);
+            
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Error al comprimir imagen', [
+                'error' => $e->getMessage(),
+                'file' => $file->getClientOriginalName(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
+        }
     }
 }

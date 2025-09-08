@@ -62,7 +62,7 @@ class DriverGeneralInfoStep extends Component
             'password' => $passwordRules,
             'password_confirmation' => 'nullable|same:password',
             'terms_accepted' => 'accepted',
-            'photo' => 'nullable|image|max:2048',
+            'photo' => 'nullable|image|max:10240',
         ];
     }
 
@@ -218,7 +218,30 @@ class DriverGeneralInfoStep extends Component
                     return;
                 }
 
-                $this->validate(['photo' => 'image|mimes:jpg,jpeg,png,webp|max:2048']);
+                $this->validate(['photo' => 'image|mimes:jpg,jpeg,png,webp|max:10240']);
+                
+                // Check if image needs compression
+                if (\App\Helpers\ImageCompressionHelper::needsCompression($this->photo)) {
+                    $originalSize = \App\Helpers\ImageCompressionHelper::formatFileSize($this->photo->getSize());
+                    
+                    // Compress the image
+                    $compressedFile = \App\Helpers\ImageCompressionHelper::compressImage($this->photo);
+                    
+                    if ($compressedFile) {
+                        $this->photo = $compressedFile;
+                        $newSize = \App\Helpers\ImageCompressionHelper::formatFileSize($this->photo->getSize());
+                        
+                        // Send flash message about compression
+                        session()->flash('photo_compressed', "Imagen optimizada automáticamente de {$originalSize} a {$newSize}");
+                        
+                        // Dispatch compression event
+                        $this->dispatch('photo-compressed', [
+                            'original_size' => $originalSize,
+                            'new_size' => $newSize
+                        ]);
+                    }
+                }
+                
             } catch (\Exception $e) {
                 $this->photo = null;
                 $this->addError('photo', 'Error al procesar la imagen: ' . $e->getMessage());

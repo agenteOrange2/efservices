@@ -10,6 +10,7 @@
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "*",
+        "intervention/image": "^3.11",
         "laravel/framework": "^11.0",
         "laravel/jetstream": "^5.3",
         "laravel/prompts": "^0.3.3",

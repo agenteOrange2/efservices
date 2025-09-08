@@ -192,8 +192,8 @@
                         for (let i = 0; i < files.length; i++) {
                             const file = files[i];
                             // Validar tamaño del archivo
-                            if (file.size > 2 * 1024 * 1024) {
-                                alert('File size must be less than 2MB');
+                            if (file.size > 10 * 1024 * 1024) {
+                                alert('File size must be less than 10MB');
                                 continue;
                             }
                             // Preparar FormData
@@ -482,8 +482,8 @@
                         for (let i = 0; i < files.length; i++) {
                             const file = files[i];
                             // Validar tamaño del archivo
-                            if (file.size > 2 * 1024 * 1024) {
-                                alert('File size must be less than 2MB');
+                            if (file.size > 10 * 1024 * 1024) {
+                                alert('File size must be less than 10MB');
                                 continue;
                             }
                             // Preparar FormData

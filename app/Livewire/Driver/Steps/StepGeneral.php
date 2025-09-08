@@ -15,6 +15,8 @@ use App\Mail\NewDriverNotification;
 use App\Models\User;
 use App\Helpers\DateHelper;
 use App\Traits\DriverValidationTrait;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 class StepGeneral extends Component
 {
@@ -136,7 +138,7 @@ class StepGeneral extends Component
 
                 // Validar el tipo de archivo
                 $this->validate([
-                    'photo' => 'image|mimes:jpg,jpeg,png,gif,webp|max:2048',
+                    'photo' => 'image|mimes:jpg,jpeg,png,gif,webp|max:10240',
                 ]);
 
                 Log::info('Foto validada correctamente', ['extension' => $extension]);
@@ -164,12 +166,15 @@ class StepGeneral extends Component
                 // Mover archivo a ubicación temporal
                 $storedPath = $this->photo->storeAs('temp', $tempFileName);
                 
-                Log::info('Foto guardada temporalmente', [
+                // Comprimir y redimensionar la imagen
+                $this->compressAndResizeImage(storage_path('app/' . $storedPath));
+                
+                Log::info('Foto guardada y comprimida temporalmente', [
                     'temp_file' => $tempFileName,
                     'temp_path' => $tempPath,
                     'stored_path' => $storedPath,
-                    'file_exists' => file_exists($tempPath),
-                    'file_size' => file_exists($tempPath) ? filesize($tempPath) : 'N/A'
+                    'file_exists' => file_exists(storage_path('app/' . $storedPath)),
+                    'file_size' => file_exists(storage_path('app/' . $storedPath)) ? filesize(storage_path('app/' . $storedPath)) : 'N/A'
                 ]);
 
                 // Generar URL temporal para previsualización
@@ -646,6 +651,35 @@ class StepGeneral extends Component
             'email' => $this->email,
             'phone' => $this->phone
         ]);
+    }
+
+    /**
+     * Comprime y redimensiona una imagen
+     */
+    private function compressAndResizeImage($imagePath)
+    {
+        try {
+            $manager = new ImageManager(new Driver());
+            $image = $manager->read($imagePath);
+            
+            // Redimensionar si es muy grande (máximo 800px de ancho)
+            if ($image->width() > 1024) {
+                $image->scale(width: 1024);
+            }
+            
+            // Comprimir con calidad del 80%
+            $image->save($imagePath, quality: 80);
+            
+            Log::info('Imagen comprimida exitosamente', [
+                'path' => $imagePath,
+                'new_size' => filesize($imagePath)
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error comprimiendo imagen', [
+                'path' => $imagePath,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     public function render()

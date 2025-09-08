@@ -87,8 +87,8 @@
                 return;
             }
             
-            if (!file.type.startsWith('image/')) {
-                this.error = `File ${file.name} is not a valid image.`;
+            if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+                this.error = `File ${file.name} is not a valid image or PDF file.`;
                 return;
             }
             
@@ -443,8 +443,8 @@
 
     <!-- Existing Image Preview -->
     @if($existingImageUrl && $showPreview)
-        <div class="mb-4">
-            <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <div class="mt-4" x-show="files.length === 0">
+            <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                 <img src="{{ $existingImageUrl }}" alt="Current image" class="h-16 w-16 object-cover rounded-lg shadow-sm">
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-medium text-gray-900">{{ $existingImageName ?: 'Imagen actual' }}</p>
@@ -471,7 +471,22 @@
         <div x-show="files.length > 0" class="space-y-2">
             <template x-for="(file, index) in files" :key="index">
                 <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <img :src="file.url" :alt="file.name" class="h-12 w-12 object-cover rounded shadow-sm">
+                    <!-- Show PDF icon for PDF files, image preview for others -->
+                    <div class="h-12 w-12 flex items-center justify-center rounded shadow-sm" 
+                         :class="file.file && file.file.type === 'application/pdf' ? 'bg-red-100' : ''">
+                        <template x-if="file.file && file.file.type === 'application/pdf'">
+                            <!-- PDF Icon -->
+                            <svg class="h-8 w-8 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                                <path d="M10.5,11.5C10.5,12.3 9.8,13 9,13H8V15H6.5V9H9C9.8,9 10.5,9.7 10.5,10.5V11.5M9,10.5H8V11.5H9V10.5Z" />
+                                <path d="M12.5,9H14.5C15.3,9 16,9.7 16,10.5V11.5C16,12.3 15.3,13 14.5,13H13V15H11.5V9H12.5M14.5,10.5H13V11.5H14.5V10.5Z" />
+                                <path d="M17.5,9H19V10.5H17.5V11.5H19V13H17.5V15H16V9H17.5Z" />
+                            </svg>
+                        </template>
+                        <template x-if="!file.file || file.file.type !== 'application/pdf'">
+                            <img :src="file.url" :alt="file.name" class="h-12 w-12 object-cover rounded shadow-sm">
+                        </template>
+                    </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-medium text-gray-900 truncate" x-text="file.name"></p>
                         <p class="text-xs text-blue-600" x-show="file.uploaded">✓ Uploaded</p>

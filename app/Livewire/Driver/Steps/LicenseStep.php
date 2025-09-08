@@ -14,6 +14,8 @@ use App\Models\Admin\Driver\DriverLicense;
 use App\Models\Admin\Driver\LicenseEndorsement;
 use App\Services\Admin\TempUploadService;
 use Carbon\Carbon;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 class LicenseStep extends Component
 {
@@ -682,6 +684,60 @@ class LicenseStep extends Component
         ];
         
         $this->validate($rules, $messages);
+    }
+
+    /**
+     * Compress and resize image to optimize file size
+     * @param string $filePath Path to the image file
+     * @return bool Success status
+     */
+    private function compressAndResizeImage($filePath)
+    {
+        try {
+            // Create image manager with GD driver
+            $manager = new ImageManager(new Driver());
+            
+            // Read the image
+            $image = $manager->read($filePath);
+            
+            // Get original dimensions
+            $originalWidth = $image->width();
+            $originalHeight = $image->height();
+            
+            // Calculate new dimensions (max width 800px, maintain aspect ratio)
+            $maxWidth = 800;
+            if ($originalWidth > $maxWidth) {
+                $ratio = $maxWidth / $originalWidth;
+                $newWidth = $maxWidth;
+                $newHeight = (int)($originalHeight * $ratio);
+                
+                // Resize the image
+                $image->resize($newWidth, $newHeight);
+                
+                Log::info('Image resized', [
+                    'original' => $originalWidth . 'x' . $originalHeight,
+                    'new' => $newWidth . 'x' . $newHeight,
+                    'file' => $filePath
+                ]);
+            }
+            
+            // Save with compression (80% quality for JPEG)
+            $image->toJpeg(80)->save($filePath);
+            
+            Log::info('Image compressed successfully', [
+                'file' => $filePath,
+                'size_after' => filesize($filePath)
+            ]);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            Log::error('Error compressing image', [
+                'file' => $filePath,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
     }
 
     // Render

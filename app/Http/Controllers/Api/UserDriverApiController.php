@@ -19,6 +19,8 @@ use App\Services\Admin\DriverStepService;
 use App\Services\Admin\TempUploadService;
 use App\Models\Admin\Driver\DriverApplication;
 use App\Models\Admin\Driver\LicenseEndorsement;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 class UserDriverApiController extends Controller
 {
@@ -1030,11 +1032,17 @@ class UserDriverApiController extends Controller
 
                     if ($tempPath && file_exists($tempPath)) {
                         $medical->clearMediaCollection('medical_card');
-                        $medical->addMedia($tempPath)->toMediaCollection('medical_card');
+                        $media = $medical->addMedia($tempPath)->toMediaCollection('medical_card');
+                        
+                        // Apply compression to the uploaded image
+                        $this->compressAndResizeImage($media->getPath());
                     }
                 } elseif ($request->hasFile('medical_card_file')) {
                     $medical->clearMediaCollection('medical_card');
-                    $medical->addMediaFromRequest('medical_card_file')->toMediaCollection('medical_card');
+                    $media = $medical->addMediaFromRequest('medical_card_file')->toMediaCollection('medical_card');
+                    
+                    // Apply compression to the uploaded image
+                    $this->compressAndResizeImage($media->getPath());
                 }
 
                 // Actualizar el paso actual
@@ -1986,5 +1994,59 @@ class UserDriverApiController extends Controller
         ];
 
         return $endorsements[$code] ?? 'Unknown Endorsement';
+    }
+
+    /**
+     * Compress and resize image to optimize file size
+     * @param string $filePath Path to the image file
+     * @return bool Success status
+     */
+    private function compressAndResizeImage($filePath)
+    {
+        try {
+            // Create image manager with GD driver
+            $manager = new ImageManager(new Driver());
+            
+            // Read the image
+            $image = $manager->read($filePath);
+            
+            // Get original dimensions
+            $originalWidth = $image->width();
+            $originalHeight = $image->height();
+            
+            // Calculate new dimensions (max width 800px, maintain aspect ratio)
+            $maxWidth = 1200;
+            if ($originalWidth > $maxWidth) {
+                $ratio = $maxWidth / $originalWidth;
+                $newWidth = $maxWidth;
+                $newHeight = (int)($originalHeight * $ratio);
+                
+                // Resize the image
+                $image->resize($newWidth, $newHeight);
+                
+                Log::info('Image resized', [
+                    'original' => $originalWidth . 'x' . $originalHeight,
+                    'new' => $newWidth . 'x' . $newHeight,
+                    'file' => $filePath
+                ]);
+            }
+            
+            // Save with compression (80% quality for JPEG)
+            $image->toJpeg(80)->save($filePath);
+            
+            Log::info('Image compressed successfully', [
+                'file' => $filePath,
+                'size_after' => filesize($filePath)
+            ]);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            Log::error('Error compressing image', [
+                'file' => $filePath,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
     }
 }

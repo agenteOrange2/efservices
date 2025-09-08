@@ -116,8 +116,8 @@
                 <x-unified-image-upload 
                     :existing-image-url="$medical_card_preview_url ?? ''"
                     :existing-image-name="$medical_card_filename ?? ''"
-                    accept="image/*" 
-                    max-size="2048" 
+                    accept="image/*,application/pdf" 
+                    max-size="10240" 
                     class="w-full"
                     :model-type="'medical_card'"
                     :model-id="$medicalQualificationId"

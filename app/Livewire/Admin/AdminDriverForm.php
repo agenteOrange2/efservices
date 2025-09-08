@@ -221,8 +221,30 @@ class AdminDriverForm extends Component
             try {
                 // Validate file type
                 $this->validate([
-                    'photo' => 'image|mimes:jpg,jpeg,png,gif,webp|max:2048',
+                    'photo' => 'image|mimes:jpg,jpeg,png,gif,webp|max:10240',
                 ]);
+
+                // Check if image needs compression
+                if (\App\Helpers\ImageCompressionHelper::needsCompression($this->photo)) {
+                    $originalSize = \App\Helpers\ImageCompressionHelper::formatFileSize($this->photo->getSize());
+                    
+                    // Compress the image
+                    $compressedFile = \App\Helpers\ImageCompressionHelper::compressImage($this->photo);
+                    
+                    if ($compressedFile) {
+                        $this->photo = $compressedFile;
+                        $newSize = \App\Helpers\ImageCompressionHelper::formatFileSize($this->photo->getSize());
+                        
+                        // Send flash message about compression
+                        session()->flash('photo_compressed', "Imagen optimizada automáticamente de {$originalSize} a {$newSize}");
+                        
+                        // Dispatch compression event
+                        $this->dispatch('photo-compressed', [
+                            'original_size' => $originalSize,
+                            'new_size' => $newSize
+                        ]);
+                    }
+                }
 
                 // Generate temporary preview URL
                 $this->photo_preview_url = $this->photo->temporaryUrl();
@@ -1372,7 +1394,7 @@ class AdminDriverForm extends Component
                         }
                     }
                 ],
-                'photo' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
+                'photo' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:10240',
             ];
             
             // Password validation only for new drivers
