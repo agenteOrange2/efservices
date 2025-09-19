@@ -186,7 +186,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Date of most recent conviction
                             identified above</label>
-                        <input type="text" wire:model="recent_conviction_date" class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" placeholder="MM/DD/YYYY">
+                        <input type="text" value="{{ $recent_conviction_date }}" onchange="@this.set('recent_conviction_date', this.value)" class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" placeholder="MM/DD/YYYY">
                         @error('recent_conviction_date')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror

@@ -188,7 +188,8 @@
                 </div>
             </div>
             <div class="mt-3 w-full flex-1 xl:mt-0">
-                <input type="text" id="date_of_birth" name="date_of_birth" wire:model="date_of_birth"
+                <input type="text" id="date_of_birth" name="date_of_birth" value="{{ $date_of_birth }}"
+                    onchange="@this.set('date_of_birth', this.value)"
                     class="driver-datepicker disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm"
                     placeholder="MM/DD/YYYY" />
                 @error('date_of_birth')

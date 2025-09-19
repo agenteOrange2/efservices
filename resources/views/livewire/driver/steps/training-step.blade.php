@@ -68,10 +68,10 @@
                             class="text-red-500">*</span></label>
                     <input type="text"
                         name="training_schools.{{ $index }}.date_start"
-                        wire:model="training_schools.{{ $index }}.date_start"
+                        value="{{ $school['date_start'] ?? '' }}"
+                        onchange="@this.set('training_schools.{{ $index }}.date_start', this.value)"
                         class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
-                        placeholder="MM/DD/YYYY"
-                        value="{{ $school['date_start'] ?? '' }}" />
+                        placeholder="MM/DD/YYYY" />
                     @error("training_schools.{$index}.date_start")
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
@@ -81,10 +81,10 @@
                             class="text-red-500">*</span></label>
                     <input type="text"
                         name="training_schools.{{ $index }}.date_end"
-                        wire:model="training_schools.{{ $index }}.date_end"
+                        value="{{ $school['date_end'] ?? '' }}"
+                        onchange="@this.set('training_schools.{{ $index }}.date_end', this.value)"
                         class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
-                        placeholder="MM/DD/YYYY"
-                        value="{{ $school['date_end'] ?? '' }}" />
+                        placeholder="MM/DD/YYYY" />
                     @error("training_schools.{$index}.date_end")
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
@@ -441,10 +441,10 @@
                     <label class="block text-sm font-medium mb-1">Certification Date</label>
                     <input type="text" 
                         name="courses.{{ $index }}.certification_date"
-                        wire:model="courses.{{ $index }}.certification_date"
+                        value="{{ $course['certification_date'] ?? '' }}"
+                        onchange="@this.set('courses.{{ $index }}.certification_date', this.value)"
                         class="driver-datepicker w-full px-3 py-2 border rounded"
-                        placeholder="MM/DD/YYYY"
-                        value="{{ $course['certification_date'] ?? '' }}" />
+                        placeholder="MM/DD/YYYY" />
                     @error("courses.{$index}.certification_date")
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror

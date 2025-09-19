@@ -163,10 +163,13 @@
                                         {{ $test->test_type }}
                                     </x-base.table.td>
                                     <x-base.table.td>
-                                        <span
-                                            class="px-2 py-1 rounded-full text-xs
-                                              {{ $test->status == 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800' }}">
-                                            {{ \App\Models\Admin\Driver\DriverTesting::getStatuses()[$test->status] }}
+                                        @php
+                                            $statuses = \App\Models\Admin\Driver\DriverTesting::getStatuses();
+                                            $statusDisplay = $statuses[$test->status] ?? ucfirst($test->status);
+                                            $statusClass = in_array($test->status, ['pending', 'Schedule', 'In Progress']) ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800';
+                                        @endphp
+                                        <span class="px-2 py-1 rounded-full text-xs {{ $statusClass }}">
+                                            {{ $statusDisplay }}
                                         </span>
                                     </x-base.table.td>
                                     <x-base.table.td>

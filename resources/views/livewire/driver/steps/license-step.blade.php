@@ -75,10 +75,10 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Expiration Date <span
                                 class="text-red-500">*</span></label>
                         <input type="text" 
-                            wire:model="licenses.{{ $index }}.expiration_date" 
                             value="{{ $license['expiration_date'] ?? '' }}"
                             placeholder="MM/DD/YYYY" 
                             class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" 
+                            onchange="@this.set('licenses.{{ $index }}.expiration_date', this.value)"
                             required />
                         @error("licenses.{$index}.expiration_date")
                             <span class="text-red-500 text-sm">{{ $message }}</span>

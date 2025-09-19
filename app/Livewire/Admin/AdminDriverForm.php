@@ -138,6 +138,13 @@ class AdminDriverForm extends Component
     
     // Medical info
     public $medical = [];
+    public $social_security_number = '';
+    
+    // Application additional fields
+    public $expected_pay_rate = '';
+    public $referral_source = '';
+    public $location_preference = '';
+    public $eligibility_information = '';
     
     // Multiple accidents
     public $accidents = [];
@@ -289,18 +296,30 @@ class AdminDriverForm extends Component
     /**
      * Mount component (based on StepGeneral.php)
      */
-    public function mount($driverId = null, $carrier = null)
+    public function mount($driverId = null, $carrier = null, $userDriverDetail = null, $mode = 'create')
     {
         $this->carriers = Carrier::all();
         $this->vehicles = Vehicle::all();
         $this->carrier = $carrier;
         $this->carrier_id = $carrier ? $carrier->id : null;
+        $this->mode = $mode;
         
         // Initialize empty arrays for multiple records
         $this->initializeArrays();
         
-        if ($driverId) {
+        // Handle edit mode - prioritize userDriverDetail parameter
+        if ($userDriverDetail) {
             $this->isEditing = true;
+            $this->mode = 'edit';
+            $this->driver = $userDriverDetail;
+            // Load the user relationship if not already loaded
+            if (!$this->driver->relationLoaded('user')) {
+                $this->driver->load('user');
+            }
+            $this->loadDriverData();
+        } elseif ($driverId) {
+            $this->isEditing = true;
+            $this->mode = 'edit';
             $this->driver = UserDriverDetail::with([
                 'user', 'addresses', 'licenses', 'application', 'accidents', 
                 'trafficConvictions', 'medicalQualification', 'trainingSchools',
@@ -315,8 +334,22 @@ class AdminDriverForm extends Component
         Log::info('AdminDriverForm mounted', [
             'mode' => $this->mode,
             'carrier_id' => $this->carrier ? $this->carrier->id : null,
-            'driver_id' => $driverId
+            'driver_id' => $driverId,
+            'userDriverDetail_id' => $userDriverDetail ? $userDriverDetail->id : null,
+            'isEditing' => $this->isEditing
         ]);
+    }
+    
+    /**
+     * Load driver data for edit mode
+     */
+    private function loadDriverData()
+    {
+        if (!$this->driver) return;
+        
+        Log::info('Loading driver data', ['driver_id' => $this->driver->id]);
+        
+        $this->loadExistingData();
     }
     
     /**
@@ -329,18 +362,18 @@ class AdminDriverForm extends Component
         // Load personal info
         $user = $this->driver->user;
         if ($user) {
-            $this->first_name = $user->first_name;
-            $this->middle_name = $user->middle_name;
-            $this->last_name = $user->last_name;
+            $this->name = $user->name;
+            $this->middle_name = $this->driver->middle_name;
+            $this->last_name = $this->driver->last_name;
             $this->email = $user->email;
-            $this->phone = $user->phone;
+            $this->phone = $this->driver->phone;
         }
         
         $this->date_of_birth = $this->formatDateForDisplay($this->driver->date_of_birth);
         $this->photo_url = $this->driver->photo_url;
         
         // Load address info
-        $currentAddress = $this->driver->addresses()->where('is_current', true)->first();
+        $currentAddress = $this->driver->addresses()->where('primary', true)->first();
         if ($currentAddress) {
             $this->current_address = [
                 'address_line1' => $currentAddress->address_line1,
@@ -365,7 +398,7 @@ class AdminDriverForm extends Component
         
         // Load previous addresses
         $this->previous_addresses = $this->driver->addresses()
-            ->where('is_current', false)
+            ->where('primary', false)
             ->orderBy('from_date', 'desc')
             ->get()
             ->map(function ($address) {
@@ -435,7 +468,7 @@ class AdminDriverForm extends Component
         }
         
         // Load work history
-        $this->work_history = $this->driver->employmentHistory
+        $this->work_history = ($this->driver->employmentHistory ?? collect())
             ->map(function ($employment) {
                 return [
                     'id' => $employment->id,
@@ -455,16 +488,28 @@ class AdminDriverForm extends Component
      */
     public function switchTab($tab)
     {
+        Log::info('AdminDriverForm: switchTab called', [
+            'from_tab' => $this->currentTab,
+            'to_tab' => $tab,
+            'is_editing' => $this->isEditing,
+            'driver_id' => $this->driver ? $this->driver->id : null
+        ]);
+        
         // Auto-save current tab data before switching
         $this->autoSaveCurrentTab();
         
         // If switching from personal to address and not editing, register user first
         if ($this->currentTab === 'personal' && $tab === 'address' && !$this->isEditing) {
+            Log::info('AdminDriverForm: Attempting to register user from personal info');
             $this->registerUserFromPersonalInfo();
         }
         
         $this->currentTab = $tab;
         $this->resetErrorBag();
+        
+        Log::info('AdminDriverForm: switchTab completed', [
+            'current_tab' => $this->currentTab
+        ]);
     }
     
     /**
@@ -472,31 +517,53 @@ class AdminDriverForm extends Component
      */
     private function autoSaveCurrentTab()
     {
+        Log::info('AdminDriverForm: autoSaveCurrentTab called', [
+            'current_tab' => $this->currentTab,
+            'is_editing' => $this->isEditing,
+            'driver_id' => $this->driver ? $this->driver->id : null
+        ]);
+        
         try {
             switch ($this->currentTab) {
                 case 'personal':
                     if ($this->isEditing) {
+                        Log::info('AdminDriverForm: Saving personal info');
                         $this->savePersonalInfo();
                         session()->flash('auto_save_message', 'Información personal guardada automáticamente.');
+                    } else {
+                        Log::info('AdminDriverForm: Skipping personal info save - not in editing mode');
                     }
                     break;
                     
                 case 'address':
                     if ($this->isEditing) {
+                        Log::info('AdminDriverForm: Saving addresses');
                         $this->saveAddresses();
                         session()->flash('auto_save_message', 'Información de direcciones guardada automáticamente.');
+                    } else {
+                        Log::info('AdminDriverForm: Skipping addresses save - not in editing mode');
                     }
                     break;
                     
                 case 'application':
                     if ($this->isEditing) {
+                        Log::info('AdminDriverForm: Saving application info');
                         $this->saveApplicationInfo();
                         session()->flash('auto_save_message', 'Información de aplicación guardada automáticamente.');
+                    } else {
+                        Log::info('AdminDriverForm: Skipping application info save - not in editing mode');
                     }
                     break;
+                    
+                default:
+                    Log::info('AdminDriverForm: Unknown tab for auto-save', ['tab' => $this->currentTab]);
             }
         } catch (\Exception $e) {
-            Log::error('Auto-save error: ' . $e->getMessage());
+            Log::error('AdminDriverForm: Auto-save error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'current_tab' => $this->currentTab
+            ]);
             session()->flash('auto_save_error', 'Error al guardar automáticamente: ' . $e->getMessage());
         }
     }
@@ -508,20 +575,18 @@ class AdminDriverForm extends Component
     {
         if (!$this->driver) return;
         
-        // Update user info
+        // Update user info (only fields that exist in users table)
         $this->driver->user->update([
-            'name' => $this->first_name,
-            'middle_name' => $this->middle_name,
-            'last_name' => $this->last_name,
+            'name' => $this->name,
             'email' => $this->email,
-            'phone' => $this->phone,
         ]);
         
-        // Update driver details
+        // Update driver details (fields that exist in user_driver_details table)
         $this->driver->update([
             'date_of_birth' => $this->formatDateForDatabase($this->date_of_birth),
             'middle_name' => $this->middle_name,
             'last_name' => $this->last_name,
+            'phone' => $this->phone,
             'status' => $this->status,
         ]);
         
@@ -559,29 +624,53 @@ class AdminDriverForm extends Component
      */
     private function registerUserFromPersonalInfo()
     {
-        // Validate personal info first
-        $this->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8',
-            'phone' => 'required|string',
-            'date_of_birth' => $this->getDateOfBirthValidationRules()
+        Log::info('AdminDriverForm: registerUserFromPersonalInfo started', [
+            'name' => $this->name,
+            'middle_name' => $this->middle_name,
+            'last_name' => $this->last_name,
+            'email' => $this->email,
+            'phone' => $this->phone,
+            'date_of_birth' => $this->date_of_birth,
+            'carrier_id' => $this->carrier ? $this->carrier->id : null
         ]);
+        
+        // Validate personal info first
+        try {
+            $this->validate([
+                'name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|min:8',
+                'phone' => 'required|string',
+                'date_of_birth' => $this->getDateOfBirthValidationRules()
+            ]);
+            
+            Log::info('AdminDriverForm: Validation passed');
+        } catch (\Exception $e) {
+            Log::error('AdminDriverForm: Validation failed', [
+                'error' => $e->getMessage(),
+                'validation_errors' => $this->getErrorBag()->toArray()
+            ]);
+            throw $e;
+        }
         
         try {
             DB::beginTransaction();
             
+            Log::info('AdminDriverForm: Creating user');
             // Create user
             $user = User::create([
-                'name' => $this->first_name,
+                'name' => $this->name,
                 'email' => $this->email,
                 'password' => Hash::make($this->password),
                 'email_verified_at' => now(),
             ]);
             
+            Log::info('AdminDriverForm: User created', ['user_id' => $user->id]);
+            
             // Assign driver role
             $user->assignRole('driver');
+            Log::info('AdminDriverForm: Driver role assigned');
             
             // Create driver detail
             $this->driver = UserDriverDetail::create([
@@ -594,56 +683,43 @@ class AdminDriverForm extends Component
                 'status' => $this->status ?? 0,
             ]);
             
+            Log::info('AdminDriverForm: Driver detail created', ['driver_id' => $this->driver->id]);
+            
             // Mark as editing mode now
             $this->isEditing = true;
             
             DB::commit();
             
+            Log::info('AdminDriverForm: Transaction committed successfully');
+            
             session()->flash('message', 'Usuario registrado exitosamente. Ahora puede continuar con la información de direcciones.');
             
             // Redirect to edit mode
-            $this->redirect(route('admin.carriers.drivers.edit', [
+            $redirectUrl = route('admin.carriers.drivers.edit', [
                 'carrier' => $this->carrier->id,
                 'driver' => $this->driver->id
-            ]));
+            ]);
+            
+            Log::info('AdminDriverForm: Redirecting to', ['url' => $redirectUrl]);
+            
+            $this->redirect($redirectUrl);
             
         } catch (\Exception $e) {
             DB::rollback();
+            Log::error('AdminDriverForm: User registration error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             session()->flash('error', 'Error al registrar usuario: ' . $e->getMessage());
-            Log::error('User registration error: ' . $e->getMessage());
             
             // Don't switch tab if registration failed
             return;
         }
     }
     
-    /**
-     * Add new address
-     */
-    /*
-    public function addAddress()
-    {
-        $this->previous_addresses[] = [
-            'address_line1' => '',
-            'address_line2' => '',
-            'city' => '',
-            'state' => '',
-            'zip_code' => '',
-            'from_date' => '',
-            'to_date' => '',
-        ];
-    }
-    */
+
     
-    /**
-     * Remove address
-     */
-    /*public function removeAddress($index)
-    {
-        unset($this->previous_addresses[$index]);
-        $this->previous_addresses = array_values($this->previous_addresses);
-    }
-    */
+
     
     /**
      * Add work history entry
@@ -670,47 +746,7 @@ class AdminDriverForm extends Component
         $this->work_history = array_values($this->work_history);
     }
     
-    /**
-     * Save driver data (main method)
-     */
-  /*  public function save()
-    {
-        try {
-            DB::beginTransaction();
-            
-            // Validate current tab
-            $this->validate();
-            
-            if ($this->mode === 'create') {
-                $this->createDriver();
-            } else {
-                $this->updateDriver();
-            }
-            
-            DB::commit();
-            
-            session()->flash('success', 'Driver information saved successfully!');
-            
-            // Redirect based on mode
-            if ($this->mode === 'create') {
-                return redirect()->route('admin.carriers.drivers.index', $this->carrier->id);
-            } else {
-                return redirect()->route('admin.carriers.drivers.show', [
-                    'carrier' => $this->carrier->id,
-                    'driver' => $this->driver->id
-                ]);
-            }
-            
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error saving driver: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            session()->flash('error', 'Error saving driver information: ' . $e->getMessage());
-        }
-    }
-    */
+
     /**
      * Create new driver (based on StepGeneral.php logic)
      */
@@ -718,7 +754,7 @@ class AdminDriverForm extends Component
     {
         // Create user first
         $user = User::create([
-            'name' => $this->first_name,
+            'name' => $this->name,
             'email' => $this->email,
             'password' => Hash::make($this->password),
             'email_verified_at' => now(),
@@ -805,10 +841,14 @@ class AdminDriverForm extends Component
     {
         // Update user info
         $this->driver->user->update([
-            'name' => $this->first_name,
+            'name' => $this->name,
+            'email' => $this->email,
+        ]);
+        
+        // Update driver details
+        $this->driver->update([
             'middle_name' => $this->middle_name,
             'last_name' => $this->last_name,
-            'email' => $this->email,
             'phone' => $this->phone,
         ]);
         
@@ -1271,66 +1311,7 @@ class AdminDriverForm extends Component
         }
     }
 
-    private function loadDriverData()
-    {
-        if ($this->driver) {
-            // Load user data
-            $this->name = $this->driver->user->name;
-            $this->email = $this->driver->user->email;
-            $this->phone = $this->driver->phone;
-            $this->date_of_birth = $this->driver->date_of_birth ? $this->driver->date_of_birth->format('m/d/Y') : null;
-            $this->social_security_number = $this->driver->social_security_number;
-            $this->carrier_id = $this->driver->carrier_id;
-            $this->vehicle_id = $this->driver->vehicle_id;
-            $this->status = $this->driver->status;
-            
-            // Load addresses
-            $this->addresses = $this->driver->addresses->map(function($address) {
-                return [
-                    'id' => $address->id,
-                    'address_line_1' => $address->address_line_1,
-                    'address_line_2' => $address->address_line_2,
-                    'city' => $address->city,
-                    'state' => $address->state,
-                    'zip_code' => $address->zip_code,
-                    'country' => $address->country,
-                    'address_type' => $address->address_type
-                ];
-            })->toArray();
-            
-            // Load licenses
-            $this->licenses = $this->driver->licenses->map(function($license) {
-                return [
-                    'id' => $license->id,
-                    'license_number' => $license->license_number,
-                    'state' => $license->state,
-                    'expiration_date' => $license->expiration_date ? $license->expiration_date->format('Y-m-d') : '',
-                    'license_class' => $license->license_class,
-                    'endorsements' => $license->endorsements,
-                    'restrictions' => $license->restrictions
-                ];
-            })->toArray();
-            
-            // Load application data
-            if ($this->driver->application) {
-                $app = $this->driver->application;
-                $this->application = [
-                    'has_traffic_convictions' => $app->has_traffic_convictions ?? false,
-                    'has_accidents' => $app->has_accidents ?? false,
-                    'has_drug_alcohol_violations' => $app->has_drug_alcohol_violations ?? false,
-                    'has_refused_drug_test' => $app->has_refused_drug_test ?? false
-                ];
-            }
-            
-            // Load other sections...
-             $this->loadAccidents();
-             $this->loadTrafficConvictions();
-             $this->loadMedicalData();
-             $this->loadTrainingSchools();
-             $this->loadEmploymentData();
-             $this->loadCriminalHistory();
-        }
-    }
+
 
     public function setActiveTab($tab)
     {
@@ -1476,63 +1457,247 @@ class AdminDriverForm extends Component
 
     public function save()
     {
-        $this->validate();
+        Log::info('AdminDriverForm: Iniciando método save', [
+            'isEditing' => $this->isEditing,
+            'currentTab' => $this->currentTab,
+            'driver_id' => $this->driver ? $this->driver->id : null,
+            'name' => $this->name,
+            'email' => $this->email
+        ]);
+        
+        try {
+            // Determine which tab-specific save method to call
+            switch ($this->currentTab) {
+                case 'personal':
+                    if (!$this->isEditing) {
+                        // For new drivers, create user and driver detail on personal tab
+                        $this->saveNewDriverPersonalInfo();
+                    } else {
+                        // For existing drivers, just update personal info
+                        $this->savePersonalInfoOnly();
+                    }
+                    break;
+                    
+                case 'address':
+                    if ($this->isEditing) {
+                        $this->saveAddressInfoOnly();
+                    } else {
+                        session()->flash('error', 'Debe completar la información personal primero.');
+                        return;
+                    }
+                    break;
+                    
+                case 'application':
+                    if ($this->isEditing) {
+                        $this->saveApplicationInfoOnly();
+                    } else {
+                        session()->flash('error', 'Debe completar la información personal primero.');
+                        return;
+                    }
+                    break;
+                    
+                default:
+                    Log::error('AdminDriverForm: Tab desconocido', ['tab' => $this->currentTab]);
+                    session()->flash('error', 'Tab no válido.');
+                    return;
+            }
+            
+            Log::info('AdminDriverForm: Guardado exitoso para tab', ['tab' => $this->currentTab]);
+            session()->flash('message', 'Información guardada exitosamente.');
+            
+        } catch (\Exception $e) {
+            Log::error('AdminDriverForm: Error en método save', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'currentTab' => $this->currentTab,
+                'isEditing' => $this->isEditing,
+                'driver_id' => $this->driver ? $this->driver->id : null
+            ]);
+            session()->flash('error', 'Error al guardar: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Save personal info for new drivers (creates User and UserDriverDetail)
+     */
+    private function saveNewDriverPersonalInfo()
+    {
+        // Validate only personal tab fields
+        $this->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:8',
+            'phone' => 'nullable|string',
+            'date_of_birth' => 'nullable|date',
+            'middle_name' => 'nullable|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+        ]);
+        
+        Log::info('AdminDriverForm: Validación personal completada');
         
         DB::beginTransaction();
         
         try {
-            // Create or update user
-            if ($this->isEditing) {
-                $user = $this->driver->user;
-                $user->update([
-                    'name' => $this->name,
-                    'email' => $this->email,
-                ]);
-            } else {
-                $user = User::create([
-                    'name' => $this->name,
-                    'email' => $this->email,
-                    'password' => Hash::make($this->password),
-                    'role' => 'driver',
-                ]);
-            }
+            // Create user with status false (pending)
+            $user = User::create([
+                'name' => $this->name,
+                'email' => $this->email,
+                'password' => Hash::make($this->password),
+                'email_verified_at' => now(),
+                'status' => false, // Mark user as pending
+            ]);
             
-            // Create or update driver detail
+            Log::info('AdminDriverForm: Usuario creado como pendiente', ['user_id' => $user->id]);
+            
+            // Assign driver role
+            $user->assignRole('user_driver');
+            
+            // Create driver detail with status 0 (pending)
             $driverData = [
-                'phone' => $this->phone,
-                'date_of_birth' => $this->date_of_birth,
-                'social_security_number' => $this->social_security_number,
-                'carrier_id' => $this->carrier_id,
-                'vehicle_id' => $this->vehicle_id,
-                'status' => $this->status,
+                'user_id' => $user->id,
+                'carrier_id' => $this->carrier->id,
+                'status' => 0, // Always set as pending for new drivers
             ];
             
-            if ($this->isEditing) {
-                $this->driver->update($driverData);
-                $driverDetail = $this->driver;
-            } else {
-                $driverDetail = UserDriverDetail::create(array_merge($driverData, [
-                    'user_id' => $user->id,
-                ]));
-            }
+            // Add optional fields only if they have values
+            if ($this->phone) $driverData['phone'] = $this->phone;
+            if ($this->date_of_birth) $driverData['date_of_birth'] = $this->formatDateForDatabase($this->date_of_birth);
+            if ($this->middle_name) $driverData['middle_name'] = $this->middle_name;
+            if ($this->last_name) $driverData['last_name'] = $this->last_name;
             
-            // Set the driver for saving methods
-            $this->driver = $driverDetail;
+            $this->driver = UserDriverDetail::create($driverData);
             
-            // Save all sections
-            $this->saveAddresses();
-            $this->saveWorkHistory();
-            // Add other save methods as needed
+            Log::info('AdminDriverForm: Driver detail creado como pendiente', ['driver_id' => $this->driver->id]);
+            
+            // Mark as editing mode
+            $this->isEditing = true;
             
             DB::commit();
             
-            session()->flash('message', $this->isEditing ? 'Driver updated successfully!' : 'Driver created successfully!');
+            Log::info('AdminDriverForm: Transacción personal completada exitosamente');
             
-            return redirect()->route('admin.drivers.index');
+            // Redirect to edit page to continue completing the driver information
+            return $this->redirect(route('admin.carrier.user_drivers.edit', [
+                'carrier' => $this->carrier->slug,
+                'userDriverDetail' => $this->driver->id
+            ]));
             
         } catch (\Exception $e) {
             DB::rollback();
-            session()->flash('error', 'An error occurred: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+    
+    /**
+     * Save personal info for existing drivers (updates only)
+     */
+    private function savePersonalInfoOnly()
+    {
+        if (!$this->driver) {
+            throw new \Exception('Driver no encontrado para actualización.');
+        }
+        
+        // Validate only personal tab fields
+        $this->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $this->driver->user->id,
+            'phone' => 'nullable|string',
+            'date_of_birth' => 'nullable|date',
+            'middle_name' => 'nullable|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+        ]);
+        
+        DB::beginTransaction();
+        
+        try {
+            // Update user info
+            $this->driver->user->update([
+                'name' => $this->name,
+                'email' => $this->email,
+            ]);
+            
+            // Update driver details
+            $updateData = [];
+            if ($this->phone !== null) $updateData['phone'] = $this->phone;
+            if ($this->date_of_birth) $updateData['date_of_birth'] = $this->formatDateForDatabase($this->date_of_birth);
+            if ($this->middle_name !== null) $updateData['middle_name'] = $this->middle_name;
+            if ($this->last_name !== null) $updateData['last_name'] = $this->last_name;
+            if ($this->status !== null) $updateData['status'] = $this->status;
+            
+            if (!empty($updateData)) {
+                $this->driver->update($updateData);
+            }
+            
+            DB::commit();
+            
+            Log::info('AdminDriverForm: Información personal actualizada exitosamente');
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            throw $e;
+        }
+    }
+    
+    /**
+     * Save address info only
+     */
+    private function saveAddressInfoOnly()
+    {
+        if (!$this->driver) {
+            throw new \Exception('Driver no encontrado para guardar direcciones.');
+        }
+        
+        Log::info('AdminDriverForm: Guardando solo información de direcciones');
+        $this->saveAddresses();
+    }
+    
+    /**
+     * Save application info only
+     */
+    private function saveApplicationInfoOnly()
+    {
+        if (!$this->driver) {
+            throw new \Exception('Driver no encontrado para guardar información de aplicación.');
+        }
+        
+        Log::info('AdminDriverForm: Guardando solo información de aplicación');
+        
+        // Validate application fields
+        $this->validate([
+            'applying_position' => 'nullable|string',
+            'expected_pay' => 'nullable|numeric',
+            'eligible_to_work' => 'nullable|boolean',
+            'can_speak_english' => 'nullable|boolean',
+            'has_twic_card' => 'nullable|boolean',
+        ]);
+        
+        DB::beginTransaction();
+        
+        try {
+            $updateData = [];
+            if ($this->applying_position !== null) $updateData['applying_position'] = $this->applying_position;
+            if ($this->applying_position_other !== null) $updateData['applying_position_other'] = $this->applying_position_other;
+            if ($this->applying_location !== null) $updateData['applying_location'] = $this->applying_location;
+            if ($this->eligible_to_work !== null) $updateData['eligible_to_work'] = $this->eligible_to_work;
+            if ($this->can_speak_english !== null) $updateData['can_speak_english'] = $this->can_speak_english;
+            if ($this->has_twic_card !== null) $updateData['has_twic_card'] = $this->has_twic_card;
+            if ($this->twic_expiration_date) $updateData['twic_expiration_date'] = $this->formatDateForDatabase($this->twic_expiration_date);
+            if ($this->expected_pay !== null) $updateData['expected_pay'] = $this->expected_pay;
+            if ($this->how_did_hear !== null) $updateData['how_did_hear'] = $this->how_did_hear;
+            if ($this->how_did_hear_other !== null) $updateData['how_did_hear_other'] = $this->how_did_hear_other;
+            if ($this->referral_employee_name !== null) $updateData['referral_employee_name'] = $this->referral_employee_name;
+            
+            if (!empty($updateData)) {
+                $this->driver->update($updateData);
+            }
+            
+            DB::commit();
+            
+            Log::info('AdminDriverForm: Información de aplicación actualizada exitosamente');
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            throw $e;
         }
     }
 
@@ -1540,8 +1705,7 @@ class AdminDriverForm extends Component
     {
         // Create user
         $user = User::create([
-            'name' => $this->first_name,
-            'last_name' => $this->last_name,
+            'name' => $this->name,
             'email' => $this->email,
             'password' => Hash::make($this->password),
             'role' => 'driver',
@@ -1574,8 +1738,7 @@ class AdminDriverForm extends Component
     {
         // Update user
         $updateData = [
-            'name' => $this->first_name,
-            'last_name' => $this->last_name,
+            'name' => $this->name,
             'email' => $this->email,
         ];
 
@@ -1802,7 +1965,7 @@ class AdminDriverForm extends Component
     {
         // Auto-fill owner fields if owner operator is selected
         if ($value === 'owner_operator') {
-            $this->owner_name = trim($this->first_name . ' ' . $this->last_name);
+            $this->owner_name = trim($this->name . ' ' . $this->last_name);
             $this->owner_email = $this->email;
             $this->owner_phone = $this->phone;
         }

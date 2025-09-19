@@ -115,4 +115,6 @@ class ImageCompressionHelper
      */
     public static function needsCompression(UploadedFile $file, $maxSizeKB = 1024)
     {
-        return ($file->getSize() /
+        return ($file->getSize() / 1024) > $maxSizeKB;
+    }
+}

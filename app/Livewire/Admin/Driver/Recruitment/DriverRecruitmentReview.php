@@ -306,7 +306,14 @@ class DriverRecruitmentReview extends Component
         // Cargar estados de los pasos pasando los valores del checklist
         $stepService = new DriverStepService();
         $this->stepsStatus = $stepService->getStepsStatus($this->driver, $checklistValues);
-        $this->completionPercentage = $stepService->calculateCompletionPercentage($this->driver);
+        
+        // Solo recalcular completion_percentage si la aplicación no está aprobada
+        // Si está aprobada, mantener el 100% establecido en approveApplication
+        if ($this->application && $this->application->status === DriverApplication::STATUS_APPROVED) {
+            $this->completionPercentage = 100;
+        } else {
+            $this->completionPercentage = $stepService->calculateCompletionPercentage($this->driver);
+        }
     }
 
     /**
@@ -2697,35 +2704,58 @@ private function loadModelMedia($model, $category, $recordType = null)
             return;
         }
 
-        // Guardar la verificación final
-        $this->saveVerification();
+        try {
+            \DB::transaction(function () {
+                // Guardar la verificación final
+                $this->saveVerification();
 
-        // Actualizar estado de la aplicación a aprobado
-        $this->application->update([
-            'status' => DriverApplication::STATUS_APPROVED,
-            'completed_at' => now()
-        ]);
+                // Actualizar estado de la aplicación a aprobado
+                $this->application->update([
+                    'status' => DriverApplication::STATUS_APPROVED,
+                    'completed_at' => now()
+                ]);
 
-        // Actualizar estado del driver y establecer porcentaje de completado a 100%
-        $this->driver->update([
-            'status' => UserDriverDetail::STATUS_ACTIVE,
-            'completion_percentage' => 100 // Establecer el porcentaje de completado a 100%
-        ]);
+                // Actualizar estado del driver y establecer porcentaje de completado a 100%
+                $this->driver->update([
+                    'status' => UserDriverDetail::STATUS_ACTIVE,
+                    'completion_percentage' => 100 // Establecer el porcentaje de completado a 100%
+                ]);
+                
+                // Refrescar el modelo desde la base de datos para asegurar que los cambios se guardaron
+                $this->driver->refresh();
+                
+                // Log para verificar que los cambios se guardaron correctamente
+                \Log::info('Driver approved successfully', [
+                    'driver_id' => $this->driver->id,
+                    'status' => $this->driver->status,
+                    'completion_percentage' => $this->driver->completion_percentage
+                ]);
+            });
 
-        // Actualizar la propiedad local para reflejar el cambio inmediatamente
-        $this->completionPercentage = 100;
+            // Actualizar la propiedad local para reflejar el cambio inmediatamente
+            $this->completionPercentage = 100;
 
-        // Opcional: Enviar notificación al conductor
-        // Notification::send($this->driver->user, new DriverApplicationApprovedNotification($this->driver));
+            // Opcional: Enviar notificación al conductor
+            // Notification::send($this->driver->user, new DriverApplicationApprovedNotification($this->driver));
 
-        // Actualizar datos locales
-        $this->loadDriverData();
+            // Actualizar datos locales
+            $this->loadDriverData();
 
-        // Notificar a otros componentes
-        $this->dispatch('applicationStatusUpdated');
+            // Notificar a otros componentes
+            $this->dispatch('applicationStatusUpdated');
 
-        // Mostrar mensaje de éxito
-        session()->flash('message', 'La solicitud ha sido aprobada correctamente.');
+            // Mostrar mensaje de éxito
+            session()->flash('message', 'La solicitud ha sido aprobada correctamente.');
+            
+        } catch (\Exception $e) {
+            \Log::error('Error approving driver application', [
+                'driver_id' => $this->driver->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            session()->flash('error', 'Error al aprobar la solicitud: ' . $e->getMessage());
+        }
     }
 
     public function rejectApplication()

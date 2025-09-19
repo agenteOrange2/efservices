@@ -84,6 +84,7 @@ class Carrier extends Model implements HasMedia
     public const STATUS_ACTIVE = 1;
     public const STATUS_PENDING = 2;
     public const STATUS_PENDING_VALIDATION = 3;
+    public const STATUS_REJECTED = 4;
 
     public const DOCUMENT_STATUS_PENDING = 'pending';
     public const DOCUMENT_STATUS_IN_PROGRESS = 'in_progress';
@@ -132,6 +133,7 @@ class Carrier extends Model implements HasMedia
             self::STATUS_INACTIVE => 'Inactive',
             self::STATUS_PENDING => 'Pending',
             self::STATUS_PENDING_VALIDATION => 'Pending Validation',
+            self::STATUS_REJECTED => 'Rejected',
             default => 'Unknown',
         };
     }

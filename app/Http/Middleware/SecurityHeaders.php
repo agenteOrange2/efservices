@@ -51,9 +51,10 @@ class SecurityHeaders
             
             // Additional security headers
             'X-Permitted-Cross-Domain-Policies' => 'none',
-            'Cross-Origin-Embedder-Policy' => 'require-corp',
-            'Cross-Origin-Opener-Policy' => 'same-origin',
-            'Cross-Origin-Resource-Policy' => 'same-origin'
+            // Temporarily disable COEP to allow external resources
+            // 'Cross-Origin-Embedder-Policy' => 'require-corp',
+            'Cross-Origin-Opener-Policy' => 'same-origin-allow-popups',
+            'Cross-Origin-Resource-Policy' => 'cross-origin'
         ];
 
         // Apply headers to response
@@ -77,6 +78,7 @@ class SecurityHeaders
     {
         $isAdmin = str_contains($request->path(), 'admin');
         $isApi = str_contains($request->path(), 'api');
+            
         
         if ($isApi) {
             // Stricter CSP for API endpoints
@@ -85,19 +87,36 @@ class SecurityHeaders
         
         if ($isAdmin) {
             // Admin panel CSP - more restrictive
-            return implode('; ', [
+            $isProduction = config('app.env') === 'production';
+            
+            // Base CSP directives
+            $cspDirectives = [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Allow inline scripts for admin functionality
-                "style-src 'self' 'unsafe-inline' fonts.googleapis.com fonts.bunny.net",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net unpkg.com", // Allow CDN scripts
+                "style-src 'self' 'unsafe-inline' fonts.googleapis.com fonts.bunny.net cdn.jsdelivr.net", // Allow CDN styles
                 "font-src 'self' fonts.gstatic.com fonts.bunny.net data:",
-                "img-src 'self' data: https:",
-                "connect-src 'self'",
-                "frame-src 'none'",
+                "img-src 'self' data: https: via.placeholder.com", // Allow placeholder images
+                "connect-src 'self' fonts.bunny.net cdn.jsdelivr.net",
                 "object-src 'none'",
                 "base-uri 'self'",
-                "form-action 'self'",
-                "frame-ancestors 'none'"
-            ]);
+                "form-action 'self'"
+            ];
+            
+            // Frame-src configuration - more permissive for video embedding
+            if ($isProduction) {
+                // Production: More explicit frame-src to ensure video loading
+                $cspDirectives[] = "frame-src 'self' https://*.youtube.com https://*.youtube-nocookie.com https://*.vimeo.com https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com";
+                $cspDirectives[] = "frame-ancestors 'self'";
+            } else {
+                // Local: Standard frame-src
+                $cspDirectives[] = "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com";
+                $cspDirectives[] = "frame-ancestors 'none'";
+            }
+            
+            $adminCSP = implode('; ', $cspDirectives);
+            
+            
+            return $adminCSP;
         }
         
         // General CSP for public pages (including driver registration)

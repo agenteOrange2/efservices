@@ -115,7 +115,8 @@
                             <div class="absolute inset-x-0 top-0 mx-auto mt-36 h-32 w-32">
                                 <div
                                     class="box image-fit h-full w-full overflow-hidden rounded-full border-[6px] border-white">
-                                    <img src="{{ Vite::asset($users[0]['photo']) }}"
+                                    <!-- <img src="{{ Vite::asset($users[0]['photo']) }}" -->
+                                     <img src="#"
                                         alt="Tailwise - Admin Dashboard Template">
                                 </div>
                                 <div

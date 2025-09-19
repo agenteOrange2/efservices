@@ -61,7 +61,7 @@ class UpdateDriverTestingRequest extends FormRequest
             ],
             'test_result' => [
                 'nullable',
-                Rule::in(['Negative', 'Positive', 'Inconclusive', 'Refused', 'Pending'])
+                Rule::in(['Positive', 'Negative', 'Refusal'])
             ],
             'substances_tested' => [
                 'nullable',
@@ -80,7 +80,20 @@ class UpdateDriverTestingRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:1000'
-            ]
+            ],
+            'status' => [
+                'nullable',
+                Rule::in(['Schedule', 'In Progress', 'Completed', 'Cancelled'])
+            ],
+            // Test Details checkboxes
+            'is_random_test' => 'nullable|boolean',
+            'is_post_accident_test' => 'nullable|boolean',
+            'is_reasonable_suspicion_test' => 'nullable|boolean',
+            'is_pre_employment_test' => 'nullable|boolean',
+            'is_follow_up_test' => 'nullable|boolean',
+            'is_return_to_duty_test' => 'nullable|boolean',
+            'is_other_reason_test' => 'nullable|boolean',
+            'other_reason_description' => 'nullable|string|max:255'
         ];
     }
 
@@ -119,7 +132,17 @@ class UpdateDriverTestingRequest extends FormRequest
             'completed_at.before_or_equal' => 'Completion date cannot be in the future.',
             'reviewed_by.exists' => 'The selected reviewer is invalid.',
             'reviewed_at.date' => 'Please provide a valid review date.',
-            'reviewed_at.before_or_equal' => 'Review date cannot be in the future.'
+            'reviewed_at.before_or_equal' => 'Review date cannot be in the future.',
+            // Test Details validation messages
+            'is_random_test.boolean' => 'Random test field must be true or false.',
+            'is_post_accident_test.boolean' => 'Post accident test field must be true or false.',
+            'is_reasonable_suspicion_test.boolean' => 'Reasonable suspicion test field must be true or false.',
+            'is_pre_employment_test.boolean' => 'Pre-employment test field must be true or false.',
+            'is_follow_up_test.boolean' => 'Follow up test field must be true or false.',
+            'is_return_to_duty_test.boolean' => 'Return to duty test field must be true or false.',
+            'is_other_reason_test.boolean' => 'Other reason test field must be true or false.',
+            'other_reason_description.string' => 'Other reason description must be text.',
+            'other_reason_description.max' => 'Other reason description cannot exceed 255 characters.'
         ];
     }
 
@@ -148,7 +171,16 @@ class UpdateDriverTestingRequest extends FormRequest
             'document_attachments' => 'document attachments',
             'completed_at' => 'completion date',
             'reviewed_by' => 'reviewer',
-            'reviewed_at' => 'review date'
+            'reviewed_at' => 'review date',
+            // Test Details attributes
+            'is_random_test' => 'random test',
+            'is_post_accident_test' => 'post accident test',
+            'is_reasonable_suspicion_test' => 'reasonable suspicion test',
+            'is_pre_employment_test' => 'pre-employment test',
+            'is_follow_up_test' => 'follow up test',
+            'is_return_to_duty_test' => 'return to duty test',
+            'is_other_reason_test' => 'other reason test',
+            'other_reason_description' => 'other reason description'
         ];
     }
 
@@ -177,6 +209,30 @@ class UpdateDriverTestingRequest extends FormRequest
                 $this->merge(['completed_at' => now()]);
             }
         }
+
+        // Procesar checkboxes de Test Details - convertir a booleanos
+        $testDetailsFields = [
+            'is_random_test',
+            'is_post_accident_test', 
+            'is_reasonable_suspicion_test',
+            'is_pre_employment_test',
+            'is_follow_up_test',
+            'is_return_to_duty_test',
+            'is_other_reason_test'
+        ];
+
+        $processedFields = [];
+        foreach ($testDetailsFields as $field) {
+            // Si el checkbox está presente en el request, convertir a boolean
+            if ($this->has($field)) {
+                $processedFields[$field] = (bool) $this->input($field);
+            } else {
+                // Si no está presente (checkbox no marcado), establecer como false
+                $processedFields[$field] = false;
+            }
+        }
+
+        $this->merge($processedFields);
     }
 
     /**

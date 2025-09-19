@@ -1096,17 +1096,17 @@
                                                 @endif
                                             </td>
                                             <td class="px-4 py-2">
-                                                @if (isset(\App\Models\Admin\Driver\DriverTesting::getStatuses()[$test->status]))
-                                                    <span
-                                                        class="px-2 py-0.5 rounded-full text-xs font-medium
-                                                        @if ($test->status == 'completed' || $test->status == 'approved') bg-green-100 text-green-800
-                                                        @elseif($test->status == 'rejected' || $test->status == 'cancelled') bg-rose-100 text-rose-800
-                                                        @else bg-yellow-100 text-yellow-800 @endif">
-                                                        {{ \App\Models\Admin\Driver\DriverTesting::getStatuses()[$test->status] }}
-                                                    </span>
-                                                @else
-                                                    {{ $test->status }}
-                                                @endif
+                                                @php
+                                                    $statuses = \App\Models\Admin\Driver\DriverTesting::getStatuses();
+                                                    $statusDisplay = $statuses[$test->status] ?? ucfirst($test->status);
+                                                @endphp
+                                                <span
+                                                    class="px-2 py-0.5 rounded-full text-xs font-medium
+                                                    @if ($test->status == 'completed' || $test->status == 'approved') bg-green-100 text-green-800
+                                                    @elseif($test->status == 'rejected' || $test->status == 'cancelled') bg-rose-100 text-rose-800
+                                                    @else bg-yellow-100 text-yellow-800 @endif">
+                                                    {{ $statusDisplay }}
+                                                </span>
                                             </td>
                                             <td class="px-4 py-2">{{ $test->administered_by }}</td>
                                             <td class="px-4 py-2">

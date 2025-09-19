@@ -21,10 +21,10 @@ class DriversController extends Controller
     {
         try {
             // Obtener conductores con paginación usando el servicio
-            $drivers = $this->driverService->getAllDrivers(10);
+            $drivers = $this->driverService->getAllDrivers([], 10);
             
             // Obtener estadísticas usando el servicio
-            $stats = $this->driverService->getDriverStatistics();
+            $stats = $this->driverService->getDriverStats();
 
             return view('admin.drivers.index', compact('drivers', 'stats'));
         } catch (\Exception $e) {

@@ -336,8 +336,12 @@ class CarrierController extends Controller
             'status' => $validated['approved'] ? CarrierDocument::STATUS_APPROVED : CarrierDocument::STATUS_PENDING,
         ]);
 
+        // Refresh the document to get the updated status
+        $document->refresh();
+
         return response()->json([
             'message' => $validated['approved'] ? 'Default document approved' : 'Default document unapproved',
+            'statusName' => $document->status_name,
         ]);
     }
 

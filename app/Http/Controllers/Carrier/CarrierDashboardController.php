@@ -62,7 +62,7 @@ class CarrierDashboardController extends Controller
             case Carrier::STATUS_ACTIVE:
                 // Verificar si los documentos están completos
                 if (!$carrier->documents_complete) {
-                    return redirect()->route('carrier.documents.index')
+                    return redirect()->route('carrier.documents.index', $carrier->slug)
                         ->with('warning', 'Debe completar la carga de documentos.');
                 }
                 break;
