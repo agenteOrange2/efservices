@@ -483,9 +483,6 @@ class EmploymentHistoryStep extends Component
 
             DB::commit();
             
-            // Send bulk verification emails after successful save
-            $this->sendBulkVerificationEmails();
-            
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
@@ -1060,9 +1057,12 @@ class EmploymentHistoryStep extends Component
         // Guardar en la base de datos
         if ($this->driverId) {
             Log::info('EmploymentHistoryStep: Iniciando next() para driver', ['driver_id' => $this->driverId]);
-            $this->saveEmploymentHistoryData();
+            $saved = $this->saveEmploymentHistoryData();
             
-
+            // Solo enviar correos si el guardado fue exitoso
+            if ($saved) {
+                $this->sendBulkVerificationEmails();
+            }
         }
 
         // Avanzar al siguiente paso

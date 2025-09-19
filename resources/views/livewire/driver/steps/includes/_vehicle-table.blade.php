@@ -71,7 +71,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-y-2">
                                 <div class="flex flex-col space-y-2">
                                     <button type="button" 
-                                            wire:click="selectVehicle({{ $vehicle->id }})" 
+                                            wire:click="{{ isset($selectMethod) ? $selectMethod : 'selectVehicle' }}({{ $vehicle->id }})" 
                                             class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150">
                                         <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>

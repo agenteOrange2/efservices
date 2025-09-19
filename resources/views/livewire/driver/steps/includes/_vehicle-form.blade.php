@@ -12,10 +12,10 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Make *</label>
             <input type="text" 
-                   wire:model="vehicle_make" 
+                   wire:model="{{ isset($wirePrefix) ? $wirePrefix . 'make' : 'vehicle_make' }}" 
                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                    placeholder="Enter vehicle make">
-            @error('vehicle_make')
+            @error('{{ isset($wirePrefix) ? $wirePrefix . "make" : "vehicle_make" }}')
                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
             @enderror
         </div>
@@ -24,10 +24,10 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Model *</label>
             <input type="text" 
-                   wire:model="vehicle_model" 
+                   wire:model="{{ isset($wirePrefix) ? $wirePrefix . 'model' : 'vehicle_model' }}" 
                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                    placeholder="Enter vehicle model">
-            @error('vehicle_model')
+            @error('{{ isset($wirePrefix) ? $wirePrefix . "model" : "vehicle_model" }}')
                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
             @enderror
         </div>
@@ -36,12 +36,12 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Year *</label>
             <input type="number" 
-                   wire:model="vehicle_year" 
+                   wire:model="{{ isset($wirePrefix) ? $wirePrefix . 'year' : 'vehicle_year' }}" 
                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                    placeholder="Enter year" 
                    min="1900" 
                    max="{{ date('Y') + 1 }}">
-            @error('vehicle_year')
+            @error('{{ isset($wirePrefix) ? $wirePrefix . "year" : "vehicle_year" }}')
                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
             @enderror
         </div>
@@ -50,11 +50,11 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">VIN *</label>
             <input type="text" 
-                   wire:model="vehicle_vin" 
+                   wire:model="{{ isset($wirePrefix) ? $wirePrefix . 'vin' : 'vehicle_vin' }}" 
                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                    placeholder="Enter VIN number" 
                    maxlength="17">
-            @error('vehicle_vin')
+            @error('{{ isset($wirePrefix) ? $wirePrefix . "vin" : "vehicle_vin" }}')
                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
             @enderror
         </div>
@@ -63,10 +63,10 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Company Unit Number</label>
             <input type="text" 
-                   wire:model="vehicle_company_unit_number" 
+                   wire:model="{{ isset($wirePrefix) ? $wirePrefix . 'company_unit_number' : 'vehicle_company_unit_number' }}" 
                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                    placeholder="Enter unit number">
-            @error('vehicle_company_unit_number')
+            @error('{{ isset($wirePrefix) ? $wirePrefix . "company_unit_number" : "vehicle_company_unit_number" }}')
                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
             @enderror
         </div>
@@ -74,14 +74,14 @@
         {{-- Type --}}
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
-            <select wire:model="vehicle_type" 
+            <select wire:model="{{ isset($wirePrefix) ? $wirePrefix . 'type' : 'vehicle_type' }}" 
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="">Select vehicle type</option>
                 <option value="truck">Truck</option>
                 <option value="trailer">Trailer</option>
                 <option value="other">Other</option>
             </select>
-            @error('vehicle_type')
+            @error('{{ isset($wirePrefix) ? $wirePrefix . "type" : "vehicle_type" }}')
                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
             @enderror
         </div>
@@ -90,10 +90,10 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">GVWR (lbs)</label>
             <input type="number" 
-                   wire:model="vehicle_gvwr" 
+                   wire:model="{{ isset($wirePrefix) ? $wirePrefix . 'gvwr' : 'vehicle_gvwr' }}" 
                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                    placeholder="Enter GVWR">
-            @error('vehicle_gvwr')
+            @error('{{ isset($wirePrefix) ? $wirePrefix . "gvwr" : "vehicle_gvwr" }}')
                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
             @enderror
         </div>
@@ -102,10 +102,10 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Tire Size</label>
             <input type="text" 
-                   wire:model="vehicle_tire_size" 
+                   wire:model="{{ isset($wirePrefix) ? $wirePrefix . 'tire_size' : 'vehicle_tire_size' }}" 
                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                    placeholder="Enter tire size">
-            @error('vehicle_tire_size')
+            @error('{{ isset($wirePrefix) ? $wirePrefix . "tire_size" : "vehicle_tire_size" }}')
                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
             @enderror
         </div>
@@ -113,7 +113,7 @@
         {{-- Fuel Type --}}
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Fuel Type</label>
-            <select wire:model="vehicle_fuel_type" 
+            <select wire:model="{{ isset($wirePrefix) ? $wirePrefix . 'fuel_type' : 'vehicle_fuel_type' }}" 
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="">Select fuel type</option>
                 <option value="diesel">Diesel</option>
@@ -121,7 +121,7 @@
                 <option value="electric">Electric</option>
                 <option value="hybrid">Hybrid</option>
             </select>
-            @error('vehicle_fuel_type')
+            @error('{{ isset($wirePrefix) ? $wirePrefix . "fuel_type" : "vehicle_fuel_type" }}')
                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
             @enderror
         </div>
@@ -131,12 +131,12 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">IRP Apportioned Plate</label>
             <div class="flex items-center">
                 <input type="checkbox" 
-                       wire:model="vehicle_irp_apportioned_plate" 
+                       wire:model="{{ isset($wirePrefix) ? $wirePrefix . 'irp_apportioned_plate' : 'vehicle_irp_apportioned_plate' }}" 
                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                        id="vehicle_irp_checkbox">
                 <label for="vehicle_irp_checkbox" class="ml-2 text-sm text-gray-700">Has IRP Apportioned Plate</label>
             </div>
-            @error('vehicle_irp_apportioned_plate')
+            @error('{{ isset($wirePrefix) ? $wirePrefix . "irp_apportioned_plate" : "vehicle_irp_apportioned_plate" }}')
                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
             @enderror
         </div>
@@ -145,7 +145,7 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Registration State *</label>
             <div class="relative">
-                <select wire:model="vehicle_registration_state" 
+                <select wire:model="{{ isset($wirePrefix) ? $wirePrefix . 'registration_state' : 'vehicle_registration_state' }}" 
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white">
                     <option value="">Select state</option>
                     <option value="AL">Alabama</option>
@@ -205,7 +205,7 @@
                     </svg>
                 </div>
             </div>
-            @error('vehicle_registration_state')
+            @error('{{ isset($wirePrefix) ? $wirePrefix . "registration_state" : "vehicle_registration_state" }}')
                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
             @enderror
         </div>
@@ -214,10 +214,10 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Registration Number *</label>
             <input type="text" 
-                   wire:model="vehicle_registration_number" 
+                   wire:model="{{ isset($wirePrefix) ? $wirePrefix . 'registration_number' : 'vehicle_registration_number' }}" 
                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                    placeholder="Enter registration number">
-            @error('vehicle_registration_number')
+            @error('{{ isset($wirePrefix) ? $wirePrefix . "registration_number" : "vehicle_registration_number" }}')
                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
             @enderror
         </div>
@@ -226,10 +226,10 @@
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Registration Expiry Date *</label>
             <x-base.litepicker 
-                wire:model="vehicle_registration_expiration_date" 
+                wire:model="{{ isset($wirePrefix) ? $wirePrefix . 'registration_expiration_date' : 'vehicle_registration_expiration_date' }}" 
                 placeholder="MM/DD/YYYY"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-            @error('vehicle_registration_expiration_date')
+            @error('{{ isset($wirePrefix) ? $wirePrefix . "registration_expiration_date" : "vehicle_registration_expiration_date" }}')
                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
             @enderror
         </div>
@@ -239,12 +239,12 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">Permanent Tag</label>
             <div class="flex items-center">
                 <input type="checkbox" 
-                       wire:model="vehicle_permanent_tag" 
+                       wire:model="{{ isset($wirePrefix) ? $wirePrefix . 'permanent_tag' : 'vehicle_permanent_tag' }}" 
                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                        id="vehicle_permanent_tag_checkbox">
                 <label for="vehicle_permanent_tag_checkbox" class="ml-2 text-sm text-gray-700">Has Permanent Tag</label>
             </div>
-            @error('vehicle_permanent_tag')
+            @error('{{ isset($wirePrefix) ? $wirePrefix . "permanent_tag" : "vehicle_permanent_tag" }}')
                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
             @enderror
         </div>
@@ -253,10 +253,10 @@
         <div class="w-full">
             <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
             <input type="text" 
-                   wire:model="vehicle_location" 
+                   wire:model="{{ isset($wirePrefix) ? $wirePrefix . 'location' : 'vehicle_location' }}" 
                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                    placeholder="Enter location">
-            @error('vehicle_location')
+            @error('{{ isset($wirePrefix) ? $wirePrefix . "location" : "vehicle_location" }}')
                 <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
             @enderror
         </div>
@@ -265,13 +265,13 @@
     {{-- Notes --}}
     <div class="mt-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-        <textarea wire:model="vehicle_notes" 
-                  rows="3" 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter any additional notes about this vehicle"></textarea>
-        @error('vehicle_notes')
-            <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
-        @enderror
+        <textarea wire:model="{{ isset($wirePrefix) ? $wirePrefix . 'notes' : 'vehicle_notes' }}" 
+                      rows="3" 
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                      placeholder="Enter any additional notes about the vehicle"></textarea>
+            @error('{{ isset($wirePrefix) ? $wirePrefix . "notes" : "vehicle_notes" }}')
+                <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+            @enderror
     </div>
 
     {{-- Action Buttons --}}

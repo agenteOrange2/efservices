@@ -47,11 +47,6 @@ class ApplicationStep extends Component
     public $third_party_fein;
     public $email_sent = false;
     
-    // State properties for record creation tracking
-    public $owner_operator_created = false;
-    public $third_party_created = false;
-    public $thirdPartyRecordCreated = false;
-    
     // Vehicle fields
     public $vehicle_id;
     public $vehicle_make;
@@ -82,19 +77,6 @@ class ApplicationStep extends Component
     // Existing vehicles
     public $existingVehicles = [];
     public $selectedVehicleId;
-    
-    /**
-     * Get existing third party vehicles
-     */
-    public function getExistingThirdPartyVehiclesProperty()
-    {
-        if (!is_array($this->existingVehicles) && !($this->existingVehicles instanceof \Illuminate\Support\Collection)) {
-            return collect();
-        }
-        
-        $vehicles = is_array($this->existingVehicles) ? collect($this->existingVehicles) : $this->existingVehicles;
-        return $vehicles->where('driver_type', 'third_party');
-    }
 
     // Validation rules
     protected function rules()
@@ -226,9 +208,6 @@ class ApplicationStep extends Component
     {
         $this->driverId = $driverId;
         
-        // Initialize vehicle properties to prevent null errors
-        $this->initializeVehicleProperties();
-        
         if ($driverId) {
             $this->loadExistingData();
             $this->loadExistingVehicles();
@@ -241,48 +220,56 @@ class ApplicationStep extends Component
     }
     
     /**
-     * Initialize vehicle properties with default values
-     */
-    protected function initializeVehicleProperties()
-    {
-        $this->vehicle_make = '';
-        $this->vehicle_model = '';
-        $this->vehicle_year = '';
-        $this->vehicle_vin = '';
-        $this->vehicle_company_unit_number = '';
-        $this->vehicle_type = 'truck';
-        $this->vehicle_gvwr = '';
-        $this->vehicle_tire_size = '';
-        $this->vehicle_fuel_type = 'diesel';
-        $this->vehicle_irp_apportioned_plate = false;
-        $this->vehicle_registration_state = '';
-        $this->vehicle_registration_number = '';
-        $this->vehicle_registration_expiration_date = '';
-        $this->vehicle_permanent_tag = false;
-        $this->vehicle_location = '';
-        $this->vehicle_notes = '';
-    }
-    
-    /**
      * Actualiza los campos cuando cambia la posición seleccionada
      */
     public function updatedApplyingPosition($value)
     {
         if ($value === 'owner_operator') {
+            // Clear third party fields
+            $this->third_party_name = null;
+            $this->third_party_phone = null;
+            $this->third_party_email = null;
+            $this->third_party_dba = null;
+            $this->third_party_address = null;
+            $this->third_party_contact = null;
+            $this->third_party_fein = null;
+            $this->email_sent = false;
+            
             // Auto-fill owner fields if driver info is available
             $this->autoFillOwnerFields();
-        } else {
-            // Clear owner fields if not owner operator
+        } elseif ($value === 'third_party_driver') {
+            // Clear owner fields
             $this->owner_name = null;
             $this->owner_phone = null;
             $this->owner_email = null;
             $this->contract_agreed = false;
+        } else {
+            // Clear both owner and third party fields for other positions
+            $this->owner_name = null;
+            $this->owner_phone = null;
+            $this->owner_email = null;
+            $this->contract_agreed = false;
+            
+            $this->third_party_name = null;
+            $this->third_party_phone = null;
+            $this->third_party_email = null;
+            $this->third_party_dba = null;
+            $this->third_party_address = null;
+            $this->third_party_contact = null;
+            $this->third_party_fein = null;
+            $this->email_sent = false;
         }
         
         // Reload existing vehicles when position changes
         if ($this->driverId && ($value === 'owner_operator' || $value === 'third_party_driver')) {
             $this->loadExistingVehicles();
         }
+        
+        Log::info('Applying position cambiado', [
+            'driver_id' => $this->driverId,
+            'new_position' => $value,
+            'previous_position' => $this->applying_position ?? 'none'
+        ]);
     }
     
     /**
@@ -630,17 +617,6 @@ class ApplicationStep extends Component
                     Log::info('Vehículo creado exitosamente', ['id' => $vehicle->id]);
                     // Set the vehicle_id property so it gets saved in the application details
                     $this->vehicle_id = $vehicle->id;
-                    
-                    // Update existing owner operator and third party records with the new vehicle_id
-                    if ($application->ownerOperatorDetail && !$application->ownerOperatorDetail->vehicle_id) {
-                        $application->ownerOperatorDetail->update(['vehicle_id' => $vehicle->id]);
-                        Log::info('Updated existing owner operator record with vehicle_id', ['vehicle_id' => $vehicle->id]);
-                    }
-                    
-                    if ($application->thirdPartyDetail && !$application->thirdPartyDetail->vehicle_id) {
-                        $application->thirdPartyDetail->update(['vehicle_id' => $vehicle->id]);
-                        Log::info('Updated existing third party record with vehicle_id', ['vehicle_id' => $vehicle->id]);
-                    }
                 }
             }
             }
@@ -671,8 +647,12 @@ class ApplicationStep extends Component
                 ]
             );
             
-            // Guardar detalles específicos de Owner Operator en la nueva tabla
+            // Limpiar detalles del tipo anterior y guardar detalles del tipo actual
             if ($this->applying_position === 'owner_operator') {
+                // Eliminar detalles de Third Party si existen
+                $application->thirdPartyDetail()->delete();
+                
+                // Guardar detalles de Owner Operator
                 $application->ownerOperatorDetail()->updateOrCreate(
                     [],
                     [
@@ -684,14 +664,15 @@ class ApplicationStep extends Component
                     ]
                 );
                 
-                Log::info('Detalles de Owner Operator guardados', [
+                Log::info('Detalles de Owner Operator guardados y Third Party eliminados', [
                     'application_id' => $application->id,
                     'owner_name' => $this->owner_name
                 ]);
-            }
-            
-            // Guardar detalles específicos de Third Party en la nueva tabla
-            if ($this->applying_position === 'third_party_driver') {
+            } elseif ($this->applying_position === 'third_party_driver') {
+                // Eliminar detalles de Owner Operator si existen
+                $application->ownerOperatorDetail()->delete();
+                
+                // Guardar detalles de Third Party
                 $application->thirdPartyDetail()->updateOrCreate(
                     [],
                     [
@@ -707,9 +688,17 @@ class ApplicationStep extends Component
                     ]
                 );
                 
-                Log::info('Detalles de Third Party guardados', [
+                Log::info('Detalles de Third Party guardados y Owner Operator eliminados', [
                     'application_id' => $application->id,
                     'third_party_name' => $this->third_party_name
+                ]);
+            } else {
+                // Si no es owner_operator ni third_party_driver, eliminar ambos tipos de detalles
+                $application->ownerOperatorDetail()->delete();
+                $application->thirdPartyDetail()->delete();
+                
+                Log::info('Detalles de Owner Operator y Third Party eliminados para tipo: ' . $this->applying_position, [
+                    'application_id' => $application->id
                 ]);
             }
 
@@ -786,187 +775,6 @@ class ApplicationStep extends Component
         }
     }
 
-    /**
-     * Create Owner Operator record immediately with validation and error handling
-     */
-    public function createOwnerOperatorRecord()
-    {
-        try {
-            // Validate owner operator specific fields
-            $this->validate([
-                'owner_name' => 'required|string|max:255',
-                'owner_phone' => 'required|string|max:20',
-                'owner_email' => 'required|email|max:255',
-                'contract_agreed' => 'accepted',
-            ]);
-
-            DB::beginTransaction();
-
-            $userDriverDetail = UserDriverDetail::find($this->driverId);
-            if (!$userDriverDetail) {
-                throw new \Exception('Driver not found');
-            }
-
-            // Get or create application
-            $application = $userDriverDetail->application;
-            if (!$application) {
-                $application = DriverApplication::create([
-                    'user_id' => $userDriverDetail->user_id,
-                    'status' => 'draft'
-                ]);
-            }
-
-            // Create or update owner operator details
-            $ownerOperatorData = [
-                'owner_name' => $this->owner_name,
-                'owner_phone' => $this->owner_phone,
-                'owner_email' => $this->owner_email,
-                'contract_agreed' => $this->contract_agreed,
-            ];
-            
-            // Only assign vehicle_id if it's not empty
-            if (!empty($this->vehicle_id)) {
-                $ownerOperatorData['vehicle_id'] = $this->vehicle_id;
-            }
-            
-            $ownerDetails = $application->ownerOperatorDetail()->updateOrCreate(
-                [],
-                $ownerOperatorData
-            );
-
-            DB::commit();
-
-            // Mark as created
-            $this->owner_operator_created = true;
-
-            $this->notifySuccess('Owner Operator record created successfully!');
-            
-            Log::info('Owner Operator record created successfully', [
-                'driver_id' => $this->driverId,
-                'application_id' => $application->id,
-                'owner_name' => $this->owner_name
-            ]);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            $this->notifyError('Please fill all required fields correctly.');
-            throw $e;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error creating Owner Operator record', [
-                'error' => $e->getMessage(),
-                'driver_id' => $this->driverId,
-                'trace' => $e->getTraceAsString()
-            ]);
-            $this->notifyError('Error creating Owner Operator record: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Create Third Party record immediately with validation and error handling
-     */
-    public function createThirdPartyRecord()
-    {
-        try {
-            // Validate third party specific fields
-            $this->validate([
-                'third_party_name' => 'required|string|max:255',
-                'third_party_phone' => 'required|string|max:20',
-                'third_party_email' => 'required|email|max:255',
-            ]);
-
-            DB::beginTransaction();
-
-            $userDriverDetail = UserDriverDetail::find($this->driverId);
-            if (!$userDriverDetail) {
-                throw new \Exception('Driver not found');
-            }
-
-            // Get or create application
-            $application = $userDriverDetail->application;
-            if (!$application) {
-                $application = DriverApplication::create([
-                    'user_id' => $userDriverDetail->user_id,
-                    'status' => 'draft'
-                ]);
-            }
-
-            // Create or update third party details
-            $thirdPartyData = [
-                'third_party_name' => $this->third_party_name,
-                'third_party_phone' => $this->third_party_phone,
-                'third_party_email' => $this->third_party_email,
-                'third_party_dba' => $this->third_party_dba,
-                'third_party_address' => $this->third_party_address,
-                'third_party_contact' => $this->third_party_contact,
-                'third_party_fein' => $this->third_party_fein,
-                'email_sent' => $this->email_sent,
-            ];
-            
-            // Only assign vehicle_id if it's not empty
-            if (!empty($this->vehicle_id)) {
-                $thirdPartyData['vehicle_id'] = $this->vehicle_id;
-            }
-            
-            $thirdPartyDetails = $application->thirdPartyDetail()->updateOrCreate(
-                [],
-                $thirdPartyData
-            );
-
-            DB::commit();
-
-            // Mark as created
-            $this->third_party_created = true;
-            $this->thirdPartyRecordCreated = true;
-
-            $this->notifySuccess('Third Party record created successfully!');
-            
-            Log::info('Third Party record created successfully', [
-                'driver_id' => $this->driverId,
-                'application_id' => $application->id,
-                'third_party_name' => $this->third_party_name
-            ]);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            $this->notifyError('Please fill all required fields correctly.');
-            throw $e;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error creating Third Party record', [
-                'error' => $e->getMessage(),
-                'driver_id' => $this->driverId,
-                'trace' => $e->getTraceAsString()
-            ]);
-            $this->notifyError('Error creating Third Party record: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Notification helper methods
-     */
-    protected function notifySuccess($message)
-    {
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => $message
-        ]);
-    }
-
-    protected function notifyError($message)
-    {
-        $this->dispatch('notify', [
-            'type' => 'error',
-            'message' => $message
-        ]);
-    }
-
-    protected function notifyWarning($message)
-    {
-        $this->dispatch('notify', [
-            'type' => 'warning',
-            'message' => $message
-        ]);
-    }
-
     // Add work history
     public function addWorkHistory()
     {
@@ -1004,26 +812,13 @@ class ApplicationStep extends Component
             return;
         }
         
-        // Validate that records are created based on position
-        if ($this->applying_position === 'owner_operator') {
-            if (!$this->owner_operator_created) {
-                $this->addError('owner_operator_created', 'You must create the Owner Operator record before proceeding to the next step.');
-                $this->notifyWarning('Please create the Owner Operator record first.');
-                return;
-            }
-        } elseif ($this->applying_position === 'third_party_driver') {
-            if (!$this->third_party_created) {
-                $this->addError('third_party_created', 'You must create the Third Party record before proceeding to the next step.');
-                $this->notifyWarning('Please create the Third Party record first.');
-                return;
-            }
+        // Verificar si es third_party_driver y no se ha enviado el correo
+        if ($this->applying_position === 'third_party_driver' && !$this->email_sent && 
+            $this->third_party_email && $this->third_party_name && $this->third_party_phone) {
             
-            // Additional validation for third party email
-            if (!$this->email_sent && $this->third_party_email && $this->third_party_name && $this->third_party_phone) {
-                $this->addError('third_party_email', 'You must send the email to the third party company representative before proceeding.');
-                $this->notifyWarning('Please send the verification email to the third party company first.');
-                return;
-            }
+            // Añadir un error de validación personalizado
+            $this->addError('third_party_email', 'You must send the email to the third party company representative before proceeding.');
+            return;
         }
         
         // Full validation using unified validation method
@@ -1073,13 +868,6 @@ class ApplicationStep extends Component
      */
     public function sendThirdPartyEmail()
     {
-        // Verificar que el registro de Third Party esté creado primero
-        if (!$this->third_party_created) {
-            $this->notifyError('You must create the Third Party record before sending the verification email.');
-            $this->addError('third_party_created', 'Please create the Third Party record first.');
-            return;
-        }
-        
         Log::info('ApplicationStep: Iniciando envío de correo a tercero', [
             'third_party_email' => $this->third_party_email,
             'driver_id' => $this->driverId,
@@ -1228,17 +1016,6 @@ class ApplicationStep extends Component
             
             // Guardar el ID del vehículo
             $this->vehicle_id = $vehicle->id;
-            
-            // Update existing owner operator and third party records with the new vehicle_id
-            if ($application->ownerOperatorDetail && !$application->ownerOperatorDetail->vehicle_id) {
-                $application->ownerOperatorDetail->update(['vehicle_id' => $vehicle->id]);
-                Log::info('Updated existing owner operator record with vehicle_id', ['vehicle_id' => $vehicle->id]);
-            }
-            
-            if ($application->thirdPartyDetail && !$application->thirdPartyDetail->vehicle_id) {
-                $application->thirdPartyDetail->update(['vehicle_id' => $vehicle->id]);
-                Log::info('Updated existing third party record with vehicle_id', ['vehicle_id' => $vehicle->id]);
-            }
             
             // Los driver_application_details se crearán cuando el usuario complete el formulario principal
             // No se crean aquí porque los campos requeridos no están disponibles en el formulario de terceros

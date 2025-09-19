@@ -42,10 +42,12 @@ class AppUrlServiceProvider extends ServiceProvider
             URL::forceRootUrl($currentUrl);
             
             // Log para depuración
+            /*
             \Illuminate\Support\Facades\Log::info('AppUrlServiceProvider: URL detectada automáticamente', [
                 'detected_url' => $currentUrl,
                 'original_app_url' => env('APP_URL')
             ]);
+            */
         }
     }
 

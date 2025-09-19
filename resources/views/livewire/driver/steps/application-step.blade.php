@@ -1,411 +1,733 @@
-<div class="w-full mx-auto px-0 md:px-4 sm:px-6 lg:px-8 py-6">
-    <!-- Header Section -->
-    <div class="py-4 mb-8">
-        <div class="flex items-center mb-6">
-            <div class="bg-blue-100 rounded-full p-3 mr-4">
-                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 0a9 9 0 1118 0a9 9 0 01-18 0z"></path>
-                </svg>
-            </div>
-            <div>
-                <h2 class="text-3xl font-bold text-gray-900">Driver Application</h2>
-                <p class="text-gray-600 mt-1">Complete your application details below</p>
-            </div>
-        </div>
+<div class="box box--stacked flex flex-col">
+    <div class="flex items-center px-5 py-5 border-b border-slate-200/60 dark:border-darkmode-400">
+        <h2 class="font-medium text-base mr-auto">Application Details</h2>
+    </div>
+    <div class="p-5">
 
         <!-- Position Applied For -->
-        <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
-            <div class="flex items-center mb-4">
-                <svg class="w-6 h-6 text-gray-700 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2V6"></path>
-                </svg>
-                <label class="text-xl font-semibold text-gray-800">Position Applied For *</label>
-                <div class="ml-3 bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Required</div>
+        <div class="mt-5 ">
+            <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
+                <div class="text-left">
+                    <div class="flex items-center">
+                        <div class="font-medium">Position Applied For</div>
+                        <div
+                            class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                            Required</div>
+                    </div>
+                    <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
+                        Select the position you are applying for.
+                    </div>
+                </div>
             </div>
-            <p class="text-gray-600 mb-4">Select the position you are applying for to see relevant sections.</p>
+            <div class="mt-3 w-full flex-1 xl:mt-0">
 
-            <select wire:model.live="applying_position" class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
-                <option value="">Select Position</option>
-                @foreach ($driverPositions as $value => $label)
-                <option value="{{ $value }}">{{ $label }}</option>
-                @endforeach
-            </select>
-            @error('applying_position')
-            <span class="text-red-500 text-sm mt-2 block">{{ $message }}</span>
-            @enderror
-
-            <div x-show="$wire.applying_position === 'other'" x-transition class="mt-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Specify Other Position *</label>
-                <input type="text" wire:model="applying_position_other" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500" placeholder="Enter position details">
-                @error('applying_position_other')
-                <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
+                <select wire:model.live="applying_position"
+                    class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
+                    <option value="">Select Position</option>
+                    @foreach ($driverPositions as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+                @error('applying_position')
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
                 @enderror
-            </div>
-        </div>
-    </div>
 
-    <!-- Owner Operator Section -->
-    <div x-show="$wire.applying_position === 'owner_operator'"
-        x-transition:enter="transition ease-out duration-500"
-        x-transition:enter-start="opacity-0 transform -translate-y-8"
-        x-transition:enter-end="opacity-100 transform translate-y-0"
-        class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg border-2 border-blue-200 p-8 mb-8">
-
-        <div class="flex items-center mb-8">
-            <div class="bg-blue-600 rounded-full p-3 mr-4">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-            </div>
-            <div>
-                <h3 class="text-2xl font-bold text-blue-900">Owner Operator Information</h3>
-                <p class="text-blue-700 mt-1">Provide your business and vehicle details</p>
-            </div>
-        </div>
-
-        <!-- Owner Information Card -->
-        <div class="bg-white rounded-xl shadow-md border border-blue-200 p-6 mb-6">
-            <div class="flex items-center mb-4">
-                <svg class="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-                <h4 class="text-xl font-semibold text-gray-800">Business Owner Details</h4>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Owner Name *</label>
-                    <input type="text" wire:model="owner_name" class="w-full px-3 py-2 border rounded" placeholder="Enter full name" disabled>
-                    @error('owner_name')
-                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                    @enderror
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
-                    <input type="tel" wire:model="owner_phone" class="w-full px-3 py-2 border rounded" placeholder="Enter phone number" disabled>
-                    @error('owner_phone')
-                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                    @enderror
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
-                    <input type="email" wire:model="owner_email" class="w-full px-3 py-2 border rounded"placeholder="Enter email address" disabled>
-                    @error('owner_email')
-                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                    @enderror
-                </div>
-            </div>
-        </div>
-
-        <!-- Vehicle Information Section -->
-        <div class="mb-6">
-            <div class="flex items-center mb-6">
-                <svg class="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
-                </svg>
-                <h4 class="text-xl font-semibold text-gray-800">Vehicle Information</h4>
-            </div>
-
-            @if ($this->existingVehicles && count($this->existingVehicles) > 0)
-            @include('livewire.driver.steps.includes._vehicle-table', [
-            'vehicles' => $this->existingVehicles,
-            'title' => 'Your Registered Vehicles',
-            'showAddButton' => true,
-            'addButtonText' => 'Register New Vehicle',
-            'addAction' => 'clearVehicleForm'
-            ])
-            @endif
-
-            @include('livewire.driver.steps.includes._vehicle-form', [
-            'wirePrefix' => 'vehicle_make',
-            'title' => ($this->existingVehicles && count($this->existingVehicles) > 0) ? 'Add New Vehicle' : 'Vehicle Details',
-            'showButtons' => false
-            ])
-        </div>
-
-        <!-- Contract Agreement -->
-        <div class="bg-white rounded-xl shadow-md border border-blue-200 p-6 mb-6">
-            <div class="flex items-center mb-4">
-                <svg class="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <h4 class="text-xl font-semibold text-gray-800">Contract Agreement</h4>
-            </div>
-
-            <div class="flex items-start">
-                <input type="checkbox" wire:model="owner_terms_accepted" class="mt-1 h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                <label class="ml-3 text-gray-700">
-                    I agree to the terms and conditions of the Owner Operator contract and understand my responsibilities as an independent contractor.
-                </label>
-            </div>
-            @error('owner_terms_accepted')
-            <span class="text-red-500 text-sm mt-2 block">{{ $message }}</span>
-            @enderror
-        </div>
-
-        <!-- Create Record Section -->
-        <div class="bg-slate-50 p-6 rounded-lg">
-            <h3 class="text-lg font-medium text-slate-900 mb-4">Owner Operator Information</h3>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <x-base.form-label for="owner_name">Owner Name *</x-base.form-label>
-                    <x-base.form-input id="owner_name" type="text" wire:model="owner_name" placeholder="Enter owner name" class="@error('owner_name') border-red-500 @enderror" />
-                    @error('owner_name')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                <div x-show="$wire.applying_position === 'other'" x-transition class="mt-2">
+                    <label class="block mb-1">Specify Other Position *</label>
+                    <x-base.form-input type="text" wire:model="applying_position_other"
+                        class="w-full px-3 py-2 border rounded" />
+                    @error('applying_position_other')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
 
-                <div>
-                    <x-base.form-label for="owner_phone">Owner Phone *</x-base.form-label>
-                    <x-base.form-input id="owner_phone" type="tel" wire:model="owner_phone" placeholder="Enter owner phone" class="@error('owner_phone') border-red-500 @enderror" />
-                    @error('owner_phone')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                    @enderror
+                <!-- Owner Operator Fields -->
+                <div x-show="$wire.applying_position === 'owner_operator'"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 transform -translate-y-4"
+                    x-transition:enter-end="opacity-100 transform translate-y-0"
+                    class="mt-6 p-6 border border-blue-100 rounded-lg bg-blue-50 shadow-inner">
+                    <h3 class="text-lg font-semibold mb-5 text-primary border-b border-blue-200 pb-3 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Owner Operator Information
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">Owner Name *</label>
+                            <x-base.form-input type="text" wire:model="owner_name"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('owner_name')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">Phone Number *</label>
+                            <x-base.form-input type="number" wire:model="owner_phone"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('owner_phone')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block mb-1">Email *</label>
+                        <x-base.form-input type="email" wire:model="owner_email"
+                            class="w-full px-3 py-2 border rounded" />
+                        @error('owner_email')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+
+
+                    <h4
+                        class="font-semibold text-lg text-primary mb-4 mt-8 border-b border-blue-200 pb-3 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                        Vehicle Information
+                    </h4>
+
+                    @if (count($existingVehicles) > 0)
+                        <div class="mb-5 p-4 bg-blue-50 rounded-lg border border-blue-100 shadow-sm">
+                            <h5 class="font-medium mb-2">Existing Vehicles</h5>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
+                                    <thead>
+                                        <tr>
+                                            <th
+                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Make</th>
+                                            <th
+                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Model</th>
+                                            <th
+                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Year</th>
+                                            <th
+                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                VIN</th>
+                                            <th
+                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Type</th>
+                                            <th
+                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($existingVehicles as $vehicle)
+                                            <tr class="{{ $selectedVehicleId == $vehicle->id ? 'bg-blue-100' : '' }}">
+                                                <td class="py-2 px-3 border-b">{{ $vehicle->make }}</td>
+                                                <td class="py-2 px-3 border-b">{{ $vehicle->model }}</td>
+                                                <td class="py-2 px-3 border-b">{{ $vehicle->year }}</td>
+                                                <td class="py-2 px-3 border-b">{{ $vehicle->vin }}</td>
+                                                <td class="py-2 px-3 border-b">{{ ucfirst($vehicle->type) }}</td>
+                                                <td class="py-2 px-3 border-b">
+                                                    <div class="flex space-x-2">
+                                                        <button type="button"
+                                                            wire:click="selectVehicle({{ $vehicle->id }})"
+                                                            class="px-2.5 py-1.5 bg-blue-500 text-white rounded-md text-sm hover:bg-primary transition duration-150 ease-in-out flex items-center">
+                                                            Select
+                                                        </button>                                                        
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3">
+                                <button type="button" wire:click="clearVehicleForm"
+                                    class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition duration-150 ease-in-out flex items-center shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                    Register New Vehicle
+                                </button>
+                            </div>
+                        </div>
+                    @endif
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">Make *</label>
+                            <x-base.form-input type="text" wire:model="vehicle_make"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('vehicle_make')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">Model *</label>
+                            <x-base.form-input type="text" wire:model="vehicle_model"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('vehicle_model')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">Year *</label>
+
+                            <x-base.form-input type="number" wire:model="vehicle_year"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('vehicle_year')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">VIN *</label>
+                            <x-base.form-input type="text" wire:model="vehicle_vin"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('vehicle_vin')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">Company Unit Number</label>
+                            <x-base.form-input type="text" wire:model="vehicle_company_unit_number"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('vehicle_company_unit_number')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">Type *</label>
+                            <select wire:model="vehicle_type"
+                                class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
+                                <option value="">Select Type</option>
+                                <option value="truck">Truck</option>
+                                <option value="trailer">Trailer</option>
+                                <option value="van">Van</option>
+                                <option value="pickup">Pickup</option>
+                                <option value="other">Other</option>
+                            </select>
+                            @error('vehicle_type')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">GVWR</label>
+                            <x-base.form-input type="text" wire:model="vehicle_gvwr"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('vehicle_gvwr')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">Tire Size</label>
+                            <x-base.form-input type="text" wire:model="vehicle_tire_size"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('vehicle_tire_size')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">Fuel Type *</label>
+                            <select wire:model="vehicle_fuel_type"
+                                class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
+                                <option value="">Select Fuel Type</option>
+                                <option value="diesel">Diesel</option>
+                                <option value="gasoline">Gasoline</option>
+                                <option value="electric">Electric</option>
+                                <option value="hybrid">Hybrid</option>
+                                <option value="other">Other</option>
+                            </select>
+                            @error('vehicle_fuel_type')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">IRP Apportioned Plate</label>
+                            <div class="flex items-center mt-2">
+                                <x-base.form-check.input class="mr-2.5 border" type="checkbox"
+                                    name="vehicle_irp_apportioned_plate" wire:model="vehicle_irp_apportioned_plate"
+                                    id="vehicle_irp_apportioned_plate_third_party" />
+                                <label for="vehicle_irp_apportioned_plate_third_party">IRP Apportioned Plate</label>
+                            </div>
+                            @error('vehicle_irp_apportioned_plate')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">Registration State *</label>
+                            <select wire:model="vehicle_registration_state"
+                                class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
+                                <option value="">Select State</option>
+                                @foreach ($usStates as $code => $name)
+                                    <option value="{{ $code }}">{{ $name }}</option>
+                                @endforeach
+                            </select>
+                            @error('vehicle_registration_state')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">Registration Number *</label>
+                            <x-base.form-input type="text" wire:model="vehicle_registration_number"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('vehicle_registration_number')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">Registration Expiration Date *</label>
+                            <input type="text" 
+                                name="vehicle_registration_expiration_date"
+                                wire:model="vehicle_registration_expiration_date"
+                                class="driver-datepicker w-full px-3 py-2 border rounded"
+                                placeholder="MM/DD/YYYY"
+                                value="{{ $vehicle_registration_expiration_date }}" />
+                            @error('vehicle_registration_expiration_date')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">Permanent Tag</label>
+                            <div class="flex items-center mt-2">
+                                <x-base.form-check.input class="mr-2.5 border" type="checkbox"
+                                    name="vehicle_permanent_tag_third_party" wire:model="vehicle_permanent_tag"
+                                    id="vehicle_permanent_tag_third_party" />
+                                <label for="vehicle_permanent_tag_third_party">Permanent Tag</label>
+                            </div>
+                            @error('vehicle_permanent_tag')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block mb-1">Location</label>
+                        <x-base.form-input type="text" wire:model="vehicle_location"
+                            class="w-full px-3 py-2 border rounded" />
+                        @error('vehicle_location')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block mb-1">Notes</label>
+                        <x-base.form-textarea wire:model="vehicle_notes" class="w-full px-3 py-2 border rounded"
+                            rows="3" />
+                        @error('vehicle_notes')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="mt-5 p-4 bg-amber-50 rounded-lg border border-amber-100 shadow-sm">
+                        <p class="mb-3">By checking this box, I agree to the terms and conditions of the contract. I
+                            understand that I am responsible for maintaining my vehicle according to company standards
+                            and complying with all applicable regulations.</p>
+                        <p class="mb-3">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor, nisl
+                            eget ultricies tincidunt, nisl nisl aliquam nisl, eget ultricies nisl nisl eget nisl. Nullam
+                            auctor, nisl eget ultricies tincidunt, nisl nisl aliquam nisl, eget ultricies nisl nisl eget
+                            nisl.</p>
+                        <p class="mb-3">Nullam auctor, nisl eget ultricies tincidunt, nisl nisl aliquam nisl, eget
+                            ultricies nisl nisl eget nisl. Nullam auctor, nisl eget ultricies tincidunt, nisl nisl
+                            aliquam nisl, eget ultricies nisl nisl eget nisl.</p>
+
+                        <div class="flex items-center">
+                            <x-base.form-check.input class="mr-2.5 border" type="checkbox" name="contract_agreed"
+                                wire:model="contract_agreed" id="contract_agreed" />
+                            <label for="contract_agreed" class="cursor-pointer">I Agree to the Terms and Conditions
+                                *</label>
+                        </div>
+                        @error('contract_agreed')
+                            <span class="text-red-500 text-sm block mt-1">{{ $message }}</span>
+                        @enderror
+                    </div>
                 </div>
 
-                <div class="md:col-span-2">
-                    <x-base.form-label for="owner_email">Owner Email *</x-base.form-label>
-                    <x-base.form-input id="owner_email" type="email" wire:model="owner_email" placeholder="Enter owner email" class="@error('owner_email') border-red-500 @enderror" />
-                    @error('owner_email')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                    @enderror
+                <!-- Third Party Company Driver Fields -->
+                <div x-show="$wire.applying_position === 'third_party_driver'" x-transition
+                    class="mt-4 p-4 border rounded bg-gray-50">
+                    <h3 class="text-lg font-medium mb-4 text-primary border-b border-gray-200 pb-2">Third Party
+                        Company Information</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">Company Representative Name *</label>
+                            <x-base.form-input type="text" wire:model="third_party_name"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('third_party_name')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">Phone Number *</label>
+                            <x-base.form-input type="number" wire:model="third_party_phone"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('third_party_phone')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block mb-1">Email *</label>
+                        <x-base.form-input type="email" wire:model="third_party_email"
+                            class="w-full px-3 py-2 border rounded" />
+                        @error('third_party_email')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">DBA (Doing Business As)</label>
+                            <x-base.form-input type="text" wire:model="third_party_dba"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('third_party_dba')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">Contact Person</label>
+                            <x-base.form-input type="text" wire:model="third_party_contact"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('third_party_contact')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">Address</label>
+                            <x-base.form-input type="text" wire:model="third_party_address"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('third_party_address')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">FEIN (Federal Employer Identification Number)</label>
+                            <x-base.form-input type="text" wire:model="third_party_fein"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('third_party_fein')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <h4 class="font-medium text-lg text-primary mb-3 mt-5 border-b border-gray-200 pb-2">Vehicle
+                        Information (will be assigned to carrier)</h4>
+
+                    @if (count($existingVehicles) > 0)
+                        <div class="mb-5 p-4 bg-blue-50 rounded-lg border border-blue-100 shadow-sm">
+                            <h5 class="font-medium mb-2">Existing Vehicles</h5>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
+                                    <thead>
+                                        <tr>
+                                            <th
+                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Make</th>
+                                            <th
+                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Model</th>
+                                            <th
+                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Year</th>
+                                            <th
+                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                VIN</th>
+                                            <th
+                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Type</th>
+                                            <th
+                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($existingVehicles as $vehicle)
+                                            <tr class="{{ $selectedVehicleId == $vehicle->id ? 'bg-blue-100' : '' }}">
+                                                <td class="py-2 px-3 border-b">{{ $vehicle->make }}</td>
+                                                <td class="py-2 px-3 border-b">{{ $vehicle->model }}</td>
+                                                <td class="py-2 px-3 border-b">{{ $vehicle->year }}</td>
+                                                <td class="py-2 px-3 border-b">{{ $vehicle->vin }}</td>
+                                                <td class="py-2 px-3 border-b">{{ ucfirst($vehicle->type) }}</td>
+                                                <td class="py-2 px-3 border-b">
+                                                    <div class="flex space-x-2">
+                                                        <button type="button"
+                                                            wire:click="selectVehicle({{ $vehicle->id }})"
+                                                            class="px-2.5 py-1.5 bg-blue-800 text-white rounded-md text-sm hover:bg-blue-800 transition duration-150 ease-in-out flex items-center">
+                                                            Select
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3">
+                                <button type="button" wire:click="clearVehicleForm"
+                                    class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition duration-150 ease-in-out flex items-center shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                    Register New Vehicle
+                                </button>
+                            </div>
+                        </div>
+                    @endif
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">Make *</label>
+                            <x-base.form-input type="text" wire:model="vehicle_make"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('vehicle_make')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">Model *</label>
+                            <x-base.form-input type="text" wire:model="vehicle_model"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('vehicle_model')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">Year *</label>
+                            <x-base.form-input type="number" wire:model="vehicle_year"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('vehicle_year')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">VIN *</label>
+                            <x-base.form-input type="text" wire:model="vehicle_vin"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('vehicle_vin')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">Company Unit Number</label>
+                            <x-base.form-input type="text" wire:model="vehicle_company_unit_number"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('vehicle_company_unit_number')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">Type *</label>
+                            <select wire:model="vehicle_type"
+                                class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
+                                <option value="">Select Type</option>
+                                <option value="truck">Truck</option>
+                                <option value="trailer">Trailer</option>
+                                <option value="van">Van</option>
+                                <option value="pickup">Pickup</option>
+                                <option value="other">Other</option>
+                            </select>
+                            @error('vehicle_type')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">GVWR</label>
+                            <x-base.form-input type="text" wire:model="vehicle_gvwr"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('vehicle_gvwr')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">Tire Size</label>
+                            <x-base.form-input type="text" wire:model="vehicle_tire_size"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('vehicle_tire_size')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">Fuel Type *</label>
+                            <select wire:model="vehicle_fuel_type"
+                                class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
+                                <option value="">Select Fuel Type</option>
+                                <option value="diesel">Diesel</option>
+                                <option value="gasoline">Gasoline</option>
+                                <option value="electric">Electric</option>
+                                <option value="hybrid">Hybrid</option>
+                                <option value="other">Other</option>
+                            </select>
+                            @error('vehicle_fuel_type')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">IRP Apportioned Plate</label>
+                            <div class="flex items-center mt-2">
+                                <x-base.form-check.input class="mr-2.5 border" type="checkbox"
+                                    name="vehicle_irp_apportioned_plate" wire:model="vehicle_irp_apportioned_plate"
+                                    id="vehicle_irp_apportioned_plate_third_party" />
+                                <label for="vehicle_irp_apportioned_plate_third_party">IRP Apportioned Plate</label>
+                            </div>
+                            @error('vehicle_irp_apportioned_plate')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">Registration State *</label>
+                            <select wire:model="vehicle_registration_state"
+                                class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
+                                <option value="">Select State</option>
+                                @foreach ($usStates as $code => $name)
+                                    <option value="{{ $code }}">{{ $name }}</option>
+                                @endforeach
+                            </select>
+                            @error('vehicle_registration_state')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">Registration Number *</label>
+                            <x-base.form-input type="text" wire:model="vehicle_registration_number"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('vehicle_registration_number')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block mb-1">Registration Expiration Date *</label>
+                            <input type="text" 
+                                name="vehicle_registration_expiration_date"
+                                wire:model="vehicle_registration_expiration_date"
+                                class="driver-datepicker w-full px-3 py-2 border rounded"
+                                placeholder="MM/DD/YYYY"
+                                value="{{ $vehicle_registration_expiration_date }}" />
+                            @error('vehicle_registration_expiration_date')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block mb-1">Permanent Tag</label>
+                            <div class="flex items-center mt-2">
+                                <x-base.form-check.input class="mr-2.5 border" type="checkbox"
+                                    name="vehicle_permanent_tag_third_party" wire:model="vehicle_permanent_tag"
+                                    id="vehicle_permanent_tag_third_party" />
+                                <label for="vehicle_permanent_tag_third_party">Permanent Tag</label>
+                            </div>
+                            @error('vehicle_permanent_tag')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block mb-1">Location</label>
+                        <x-base.form-input type="text" wire:model="vehicle_location"
+                            class="w-full px-3 py-2 border rounded" />
+                        @error('vehicle_location')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block mb-1">Notes</label>
+                        <x-base.form-textarea wire:model="vehicle_notes" class="w-full px-3 py-2 border rounded"
+                            rows="3" />
+                        @error('vehicle_notes')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="mt-4 flex space-x-4">
+                        <button type="button" wire:click="sendThirdPartyEmail"
+                            class="px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                            @if ($email_sent) disabled @endif>
+                            {{ $email_sent ? 'Email Sent' : 'Send Document Signing Request' }}
+                        </button>
+                        @if ($email_sent)
+                            <span class="text-green-500 ml-2 self-center">Email has been sent successfully</span>
+                        @endif
+
+                        <button type="button" wire:click="sendThirdPartyEmail"
+                            class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                            @if (!$email_sent) disabled @endif>
+                            Resend Email
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="text-center mt-6">
-                <button type="submit" wire:click="createOwnerOperatorRecord"
-                    class="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90">
-                    Crear Registro de Vehículo
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Third Party Driver Section -->
-    <div x-show="$wire.applying_position === 'third_party_driver'"
-        x-transition:enter="transition ease-out duration-500"
-        x-transition:enter-start="opacity-0 transform -translate-y-8"
-        x-transition:enter-end="opacity-100 transform translate-y-0"
-        class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-lg border-2 border-green-200 p-0 md:p-5 mb-8">
-
-        <div class="flex items-center mb-8">
-            <div class="bg-green-600 rounded-full p-3 mr-4">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                </svg>
-            </div>
-            <div>
-                <h3 class="text-2xl font-bold text-green-900">Third Party Company Driver</h3>
-                <p class="text-green-700 mt-1">Provide your company and vehicle information</p>
-            </div>
-        </div>
-
-        <!-- Company Information Card -->
-        <div class="bg-white rounded-xl shadow-md border border-green-200 p-6 mb-6">
-            <div class="flex items-center mb-4">
-                <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                </svg>
-                <h4 class="text-xl font-semibold text-gray-800">Company Information</h4>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Company Name *</label>
-                    <input type="text" wire:model="third_party_company_name" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter company name">
-                    @error('third_party_company_name')
-                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                    @enderror
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Company Phone *</label>
-                    <input type="tel" wire:model="third_party_company_phone" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter phone number">
-                    @error('third_party_company_phone')
-                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                    @enderror
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Company Email *</label>
-                    <input type="email" wire:model="third_party_company_email" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter email address">
-                    @error('third_party_company_email')
-                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                    @enderror
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">DBA (Doing Business As)</label>
-                    <input type="text" wire:model="third_party_dba" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter DBA name">
-                    @error('third_party_dba')
-                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                    @enderror
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">FEIN (Federal Tax ID)</label>
-                    <input type="text" wire:model="third_party_fein" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter FEIN">
-                    @error('third_party_fein')
-                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                    @enderror
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Company Address *</label>
-                    <input type="text" wire:model="third_party_address" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter complete address">
-                    @error('third_party_address')
-                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                    @enderror
-                </div>
-            </div>
-        </div>
-
-        <!-- Vehicle Information Section -->
-        <div class="mb-6">
-            <div class="flex items-center mb-6">
-                <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
-                </svg>
-                <h4 class="text-xl font-semibold text-gray-800">Company Vehicle Information</h4>
-            </div>
-
-            @if ($this->existingThirdPartyVehicles && count($this->existingThirdPartyVehicles) > 0)
-            @include('livewire.driver.steps.includes._vehicle-table', [
-            'vehicles' => $this->existingThirdPartyVehicles,
-            'title' => 'Company Vehicles',
-            'showAddButton' => true,
-            'addButtonText' => 'Register New Vehicle',
-            'addAction' => 'clearVehicleForm'
-            ])
-            @endif
-
-            @include('livewire.driver.steps.includes._vehicle-form', [
-            'wirePrefix' => 'third_party_vehicle_make',
-            'title' => ($this->existingThirdPartyVehicles && count($this->existingThirdPartyVehicles) > 0) ? 'Add New Vehicle' : 'Vehicle Details',
-            'showButtons' => false
-            ])
-        </div>
-
-        <!-- Create Record and Email Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Create Record -->
-            <div class="bg-white rounded-xl shadow-md border border-green-200 p-6">
-                <div class="flex items-center mb-4">
-                    <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    <h4 class="text-lg font-semibold text-gray-800">Crear Registro de Vehículo</h4>
-                </div>
-
-                @if($this->third_party_created)
-                <div class="flex items-center text-green-600 mb-4">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span class="font-medium">Registro Creado</span>
-                </div>
-                @else
-                <div class="flex items-center text-orange-600 mb-4">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span class="font-medium">Pending Creation</span>
-                </div>
-                @endif
-
-                <button type="submit" wire:click="createThirdPartyRecord"
-                    class="w-full px-4 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-500/20 transition-all duration-200">
-                    Crear Registro de Vehículo Third Party
-                </button>
-            </div>
-
-            <!-- Email Documents - Only show after third party record is created -->
-            @if($thirdPartyRecordCreated)
-            <div class="bg-white rounded-xl shadow-md border border-green-200 p-6">
-                <div class="flex items-center mb-4">
-                    <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                    </svg>
-                    <h4 class="text-lg font-semibold text-gray-800">Email Documents</h4>
-                </div>
-
-                <p class="text-gray-600 mb-4 text-sm">Send document signing request to the company.</p>
-
-                <button type="button" wire:click="sendThirdPartyEmail"
-                    class="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-200 flex items-center justify-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-                    </svg>
-                    Send Email Request
-                </button>
-            </div>
-            @endif
-        </div>
-    </div>
-
-    <!-- Company Driver Section -->
-    <div x-show="$wire.applying_position === 'company_driver'"
-        x-transition:enter="transition ease-out duration-500"
-        x-transition:enter-start="opacity-0 transform -translate-y-8"
-        x-transition:enter-end="opacity-100 transform translate-y-0"
-        class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-lg border-2 border-purple-200 p-8 mb-8">
-
-        <div class="flex items-center mb-6">
-            <div class="bg-purple-600 rounded-full p-3 mr-4">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                </svg>
-            </div>
-            <div>
-                <h3 class="text-2xl font-bold text-purple-900">Company Driver</h3>
-                <p class="text-purple-700 mt-1">You will be assigned a vehicle from our fleet</p>
-            </div>
-        </div>
-
-        <div class="bg-slate-50 p-6 rounded-lg">
-            <h3 class="text-lg font-medium text-slate-900 mb-4">Company Driver Information</h3>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <x-base.form-label for="driver_license_number">Driver License Number *</x-base.form-label>
-                    <x-base.form-input id="driver_license_number" type="text" wire:model="driver_license_number" placeholder="Enter license number" class="@error('driver_license_number') border-red-500 @enderror" />
-                    @error('driver_license_number')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                    @enderror
-                </div>
-
-                <div>
-                    <x-base.form-label for="driver_experience_years">Years of Experience *</x-base.form-label>
-                    <x-base.form-input id="driver_experience_years" type="number" wire:model="driver_experience_years" placeholder="Enter years" class="@error('driver_experience_years') border-red-500 @enderror" />
-                    @error('driver_experience_years')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                    @enderror
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Additional Information Sections -->
-    <div x-show="$wire.applying_position && $wire.applying_position !== ''" class="space-y-8">
-
-        <!-- Location Preferences -->
-        <div class="grid grid-cols-1 md:grid-cols-1 gap-6">
             <!-- Location Preference -->
-            <div class="mb-6 bg-gray-50 py-2 rounded-lg">
+            <div class="mb-6 bg-gray-50 p-4 rounded-lg">
                 <label class="block mb-2 font-medium text-gray-700">Location Preference <span
                         class="text-red-500">*</span></label>
                 <select wire:model="applying_location"
                     class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
                     <option value="">Select State</option>
                     @foreach ($usStates as $code => $name)
-                    <option value="{{ $code }}">{{ $name }}</option>
+                        <option value="{{ $code }}">{{ $name }}</option>
                     @endforeach
                 </select>
 
                 @error('applying_location')
-                <span class="text-red-500 text-sm">{{ $message }}</span>
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
                 @enderror
             </div>
 
             <!-- Eligibility Information -->
             <div class="p-5 border rounded-lg bg-blue-50 border-blue-100 shadow-sm mb-6">
-                <h3 class="text-lg font-medium mb-4 text-primary border-b border-blue-100 pb-2">Eligibility Information</h3>
+                <h3 class="text-lg font-medium mb-4 text-primary border-b border-blue-100 pb-2">Eligibility
+                    Information</h3>
 
                 <div class="flex items-center mt-4 mb-4">
                     <x-base.form-check.input class="mr-2.5 border" type="checkbox" name="eligible_to_work"
@@ -414,7 +736,7 @@
                         Eligible to work in the United States *
                     </span>
                     @error('eligible_to_work')
-                    <span class="text-red-500 text-sm block">{{ $message }}</span>
+                        <span class="text-red-500 text-sm block">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -425,13 +747,21 @@
                         Can speak and understand English
                     </span>
                     @error('can_speak_english')
-                    <span class="text-red-500 text-sm block">{{ $message }}</span>
+                        <span class="text-red-500 text-sm block">{{ $message }}</span>
                     @enderror
                 </div>
 
+                {{-- <div class="mb-4">
+            <label class="flex items-center">
+                <input type="checkbox" wire:model="can_speak_english" class="mr-2">
+                <span>Can speak and understand English</span>
+            </label>
+        </div> --}}
+
                 <div class="mb-4">
                     <label class="flex items-center">
-                        <x-base.form-check.input class="mr-2.5 border" type="checkbox" name="has_twic_card" wire:model="has_twic_card" />
+                        <x-base.form-check.input class="mr-2.5 border" type="checkbox" name="has_twic_card"
+                            wire:model="has_twic_card" />
                         <span>I have a TWIC Card</span>
                     </label>
 
@@ -440,7 +770,7 @@
                         <input type="text" 
                             name="twic_expiration_date"
                             wire:model="twic_expiration_date"
-                            class="driver-datepicker w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm"
+                            class="driver-datepicker w-full px-3 py-2 border rounded"
                             placeholder="MM/DD/YYYY"
                             value="{{ $twic_expiration_date }}" />
                         @error('twic_expiration_date')
@@ -451,25 +781,25 @@
             </div>
 
             <!-- Expected Pay Rate -->
-            <div class="mb-6 bg-gray-50 py-2 rounded-lg">
+            <div class="mb-6 bg-gray-50 p-4 rounded-lg">
                 <label class="block mb-2 font-medium text-gray-700">Expected Pay Rate</label>
                 <input type="input" wire:model="expected_pay" class="w-full px-3 py-2 border rounded"
                     placeholder="e.g. $25/hour">
             </div>
 
             <!-- Referral Source -->
-            <div class="mb-6 bg-gray-50 py-4 rounded-lg">
+            <div class="mb-6 bg-gray-50 p-4 rounded-lg">
                 <label class="block mb-2 font-medium text-gray-700">Referral Source <span
                         class="text-red-500">*</span></label>
                 <select wire:model="how_did_hear"
                     class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
                     <option value="">Select Source</option>
                     @foreach ($referralSources as $value => $label)
-                    <option value="{{ $value }}">{{ $label }}</option>
+                        <option value="{{ $value }}">{{ $label }}</option>
                     @endforeach
                 </select>
                 @error('how_did_hear')
-                <span class="text-red-500 text-sm">{{ $message }}</span>
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
                 @enderror
 
                 <div x-show="$wire.how_did_hear === 'employee_referral'" x-transition class="mt-2">
@@ -477,7 +807,7 @@
                     <x-base.form-input type="text" wire:model="referral_employee_name"
                         class="w-full px-3 py-2 border rounded" />
                     @error('referral_employee_name')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -486,13 +816,13 @@
                     <x-base.form-input type="text" wire:model="how_did_hear_other"
                         class="w-full px-3 py-2 border rounded" />
                     @error('how_did_hear_other')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
             </div>
 
             <!-- Work History -->
-            <div class="mb-6 bg-gray-50 py-4 rounded-lg">
+            <div class="mb-6 bg-gray-50 p-4 rounded-lg">
                 <h3 class="text-lg font-medium mb-4 text-primary border-b border-gray-200 pb-2">Work History</h3>
                 <div class="mb-4">
                     <label
@@ -505,94 +835,94 @@
 
                 <div x-show="$wire.has_work_history" x-transition>
                     @foreach ($work_histories as $index => $history)
-                    <div class="p-5 border rounded-lg bg-white shadow-sm mb-5">
-                        <div class="flex justify-between mb-2">
-                            <h4 class="font-medium">Work History #{{ $index + 1 }}</h4>
-                            @if (count($work_histories) > 1)
-                            <button type="button" wire:click="removeWorkHistory({{ $index }})"
-                                class="text-red-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                    fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                            @endif
-                        </div>
+                        <div class="p-5 border rounded-lg bg-white shadow-sm mb-5">
+                            <div class="flex justify-between mb-2">
+                                <h4 class="font-medium">Work History #{{ $index + 1 }}</h4>
+                                @if (count($work_histories) > 1)
+                                    <button type="button" wire:click="removeWorkHistory({{ $index }})"
+                                        class="text-red-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                            fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                @endif
+                            </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            <div>
-                                <label class="block mb-1">Previous Company *</label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label class="block mb-1">Previous Company *</label>
+                                    <x-base.form-input type="text"
+                                        wire:model.defer="work_histories.{{ $index }}.previous_company"
+                                        class="w-full px-3 py-2 border rounded" />
+                                    @error('work_histories.' . $index . '.previous_company')
+                                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label class="block mb-1">Position *</label>
+                                    <x-base.form-input type="text"
+                                        wire:model.defer="work_histories.{{ $index }}.position"
+                                        class="w-full px-3 py-2 border rounded" />
+                                    @error('work_histories.' . $index . '.position')
+                                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label class="block mb-1 font-medium text-gray-700">Start Date *</label>
+                                    <input type="text" 
+                                        name="work_histories.{{ $index }}.start_date"
+                                        wire:model="work_histories.{{ $index }}.start_date"
+                                        class="driver-datepicker w-full px-3 py-2 border rounded"
+                                        placeholder="MM/DD/YYYY"
+                                        value="{{ $work_histories[$index]['start_date'] ?? '' }}" />
+                                    @error('work_histories.' . $index . '.start_date')
+                                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label class="block mb-1 font-medium text-gray-700">End Date *</label>
+                                    <input type="text" 
+                                        name="work_histories.{{ $index }}.end_date"
+                                        wire:model="work_histories.{{ $index }}.end_date"
+                                        class="driver-datepicker w-full px-3 py-2 border rounded"
+                                        placeholder="MM/DD/YYYY"
+                                        value="{{ $work_histories[$index]['end_date'] ?? '' }}" />
+                                    @error('work_histories.' . $index . '.end_date')
+                                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block mb-1">Location *</label>
                                 <x-base.form-input type="text"
-                                    wire:model.defer="work_histories.{{ $index }}.previous_company"
+                                    wire:model.defer="work_histories.{{ $index }}.location"
                                     class="w-full px-3 py-2 border rounded" />
-                                @error('work_histories.' . $index . '.previous_company')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @error('work_histories.' . $index . '.location')
+                                    <span class="text-red-500 text-sm">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div>
-                                <label class="block mb-1">Position *</label>
+
+                            <div class="mb-4">
+                                <label class="block mb-1">Reason for Leaving</label>
                                 <x-base.form-input type="text"
-                                    wire:model.defer="work_histories.{{ $index }}.position"
+                                    wire:model.defer="work_histories.{{ $index }}.reason_for_leaving"
                                     class="w-full px-3 py-2 border rounded" />
-                                @error('work_histories.' . $index . '.position')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                                @enderror
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block mb-1">Reference Contact</label>
+                                <x-base.form-input type="text"
+                                    wire:model.defer="work_histories.{{ $index }}.reference_contact"
+                                    class="w-full px-3 py-2 border rounded" placeholder="Name and phone number" />
                             </div>
                         </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            <div>
-                                <label class="block mb-1 font-medium text-gray-700">Start Date *</label>
-                                <input type="text"
-                                    name="work_histories.{{ $index }}.start_date"
-                                    wire:model="work_histories.{{ $index }}.start_date"
-                                    class="driver-datepicker form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm"
-                                    placeholder="MM/DD/YYYY"
-                                    value="{{ $work_histories[$index]['start_date'] ?? '' }}" />
-                                @error('work_histories.' . $index . '.start_date')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            <div>
-                                <label class="block mb-1 font-medium text-gray-700">End Date *</label>
-                                <input type="text"
-                                    name="work_histories.{{ $index }}.end_date"
-                                    wire:model="work_histories.{{ $index }}.end_date"
-                                    class="driver-datepicker form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm"
-                                    placeholder="MM/DD/YYYY"
-                                    value="{{ $work_histories[$index]['end_date'] ?? '' }}" />
-                                @error('work_histories.' . $index . '.end_date')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="block mb-1">Location *</label>
-                            <x-base.form-input type="text"
-                                wire:model.defer="work_histories.{{ $index }}.location"
-                                class="w-full px-3 py-2 border rounded" />
-                            @error('work_histories.' . $index . '.location')
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="block mb-1">Reason for Leaving</label>
-                            <x-base.form-input type="text"
-                                wire:model.defer="work_histories.{{ $index }}.reason_for_leaving"
-                                class="w-full px-3 py-2 border rounded" />
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="block mb-1">Reference Contact</label>
-                            <x-base.form-input type="text"
-                                wire:model.defer="work_histories.{{ $index }}.reference_contact"
-                                class="w-full px-3 py-2 border rounded" placeholder="Name and phone number" />
-                        </div>
-                    </div>
                     @endforeach
 
                     <button type="button" wire:click="addWorkHistory"
@@ -608,100 +938,40 @@
                 </div>
             </div>
 
-        </div>
 
-        <!-- Navigation Buttons -->
-        <div class="flex justify-between items-center pt-8 border-t border-gray-200 mt-8">
-            <button type="button" wire:click="previous" class="px-6 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-500/20 transition-all duration-200 flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
-                Previous
-            </button>
-
-            <div class="flex space-x-4">
-                <button type="button" wire:click="saveAndExit" class="px-6 py-3 bg-yellow-600 text-white font-medium rounded-lg hover:bg-yellow-700 focus:outline-none focus:ring-4 focus:ring-yellow-500/20 transition-all duration-200 flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12"></path>
-                    </svg>
-                    Save & Exit
-                </button>
-
-                <button type="button" wire:click="next" class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-200 flex items-center">
-                    Next
-                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </button>
+            <!-- Navigation Buttons -->
+            <div class="mt-8 px-5 py-5 border-t border-slate-200/60 dark:border-darkmode-400">
+                <div class="flex flex-col sm:flex-row justify-between gap-4">
+                    <div class="w-full sm:w-auto">
+                        <x-base.button type="button" wire:click="previous" class="w-full sm:w-44"
+                            variant="secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z"
+                                    clip-rule="evenodd" />
+                            </svg> Previous
+                        </x-base.button>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                        <x-base.button type="button" wire:click="saveAndExit" class="w-full sm:w-44 text-white"
+                            variant="warning">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5L9 4H4z" />
+                            </svg>
+                            Save & Exit
+                        </x-base.button>
+                        <x-base.button type="button" wire:click="next" class="w-full sm:w-44" variant="primary">
+                            Next
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </x-base.button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Validation for Owner Operator
-            function validateOwnerOperator() {
-                const requiredFields = [
-                    'owner_name', 'owner_phone', 'owner_email',
-                    'vehicle_make', 'vehicle_model', 'vehicle_year', 'vehicle_vin', 'vehicle_type'
-                ];
-
-                let isValid = true;
-                requiredFields.forEach(field => {
-                    const element = document.querySelector(`[wire\\:model="${field}"]`);
-                    if (element && !element.value.trim()) {
-                        element.classList.add('border-red-500');
-                        isValid = false;
-                    } else if (element) {
-                        element.classList.remove('border-red-500');
-                    }
-                });
-
-                // Check terms acceptance
-                const termsCheckbox = document.querySelector('[wire\\:model="owner_terms_accepted"]');
-                if (termsCheckbox && !termsCheckbox.checked) {
-                    termsCheckbox.closest('.bg-white').classList.add('border-red-500');
-                    isValid = false;
-                } else if (termsCheckbox) {
-                    termsCheckbox.closest('.bg-white').classList.remove('border-red-500');
-                }
-
-                return isValid;
-            }
-
-            // Validation for Third Party
-            function validateThirdParty() {
-                const requiredFields = [
-                    'third_party_company_name', 'third_party_company_phone', 'third_party_company_email',
-                    'third_party_address', 'third_party_vehicle_make', 'third_party_vehicle_model',
-                    'third_party_vehicle_year', 'third_party_vehicle_vin', 'third_party_vehicle_type'
-                ];
-
-                let isValid = true;
-                requiredFields.forEach(field => {
-                    const element = document.querySelector(`[wire\\:model="${field}"]`);
-                    if (element && !element.value.trim()) {
-                        element.classList.add('border-red-500');
-                        isValid = false;
-                    } else if (element) {
-                        element.classList.remove('border-red-500');
-                    }
-                });
-
-                return isValid;
-            }
-
-            // Add event listeners for real-time validation
-            document.addEventListener('input', function(e) {
-                if (e.target.hasAttribute('wire:model')) {
-                    e.target.classList.remove('border-red-500');
-                }
-            });
-
-            document.addEventListener('change', function(e) {
-                if (e.target.hasAttribute('wire:model')) {
-                    e.target.classList.remove('border-red-500');
-                }
-            });
-        });
-    </script>
