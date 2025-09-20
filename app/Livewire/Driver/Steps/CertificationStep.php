@@ -934,7 +934,11 @@ class CertificationStep extends Component
                     'last_name' => $userDriverDetail->last_name ?? '',
                     'phone' => $userDriverDetail->phone ?? 'N/A',
                 ],
-                'vehicle' => $vehicle,
+if ($applyingPosition === 'owner_operator') {
+    $this->generateLeaseAgreementPDF($userDriverDetail, $signaturePath);
+} elseif ($applyingPosition === 'third_party_driver') {
+    $this->generateThirdPartyDocuments($userDriverDetail, $signaturePath);
+}                'vehicle' => $vehicle,
                 'date' => now()->format('F j, Y'),
                 'signaturePath' => $signaturePath,
                 'signature' => null // Para compatibilidad

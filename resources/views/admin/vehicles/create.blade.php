@@ -630,9 +630,9 @@
                                                                 @change="updateOwnerFromDriver()"
                                                                 class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
                                                                 <option value="unassigned" {{ old('ownership_type') == 'unassigned' ? 'selected' : '' }}>Unassigned</option>
-                                                                <option value="leased" {{ old('ownership_type') == 'leased' ? 'selected' : '' }}>Company Driver</option>
                                                                 <option value="owned" {{ old('ownership_type') == 'owned' ? 'selected' : '' }}>Owner Operator</option>
-                                                                <option value="third-party" {{ old('ownership_type') == 'third-party' ? 'selected' : '' }}>Third Party Company Driver</option>
+                                                                <option value="leased" {{ old('ownership_type') == 'leased' ? 'selected' : '' }}>Company Driver</option>
+                                                                <option value="third_party" {{ old('ownership_type') == 'third_party' ? 'selected' : '' }}>Third Party Driver</option>
                                                             </select>
                                                             @error('ownership_type')
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>

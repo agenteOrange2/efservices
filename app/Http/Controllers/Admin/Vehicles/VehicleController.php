@@ -811,4 +811,78 @@ class VehicleController extends Controller
             return false;
         }
     }
+
+    /**
+     * Map applying_position to ownership_type using Constants helper
+     */
+    public function mapApplyingPositionToOwnership($applyingPosition)
+    {
+        return Constants::mapApplyingPositionToOwnership($applyingPosition);
+    }
+
+    /**
+     * Map ownership_type to applying_position using Constants helper
+     */
+    public function mapOwnershipToApplyingPosition($ownershipType)
+    {
+        return Constants::mapOwnershipToApplyingPosition($ownershipType);
+    }
+
+    /**
+     * Synchronize ownership_type with applying_position in driver application
+     */
+    public function syncOwnershipWithApplyingPosition($vehicleId, $newOwnershipType)
+    {
+        try {
+            $vehicle = Vehicle::find($vehicleId);
+            if (!$vehicle) {
+                return false;
+            }
+
+            // Get corresponding applying_position
+            $applyingPosition = $this->mapOwnershipToApplyingPosition($newOwnershipType);
+
+            // Find and update driver application details
+            $applicationDetail = \App\Models\Admin\Driver\DriverApplicationDetail::where('vehicle_id', $vehicleId)->first();
+            if ($applicationDetail) {
+                $applicationDetail->applying_position = $applyingPosition;
+                $applicationDetail->save();
+
+                Log::info('Synchronized ownership_type with applying_position', [
+                    'vehicle_id' => $vehicleId,
+                    'ownership_type' => $newOwnershipType,
+                    'applying_position' => $applyingPosition
+                ]);
+
+                return true;
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            Log::error('Error synchronizing ownership with applying position', [
+                'vehicle_id' => $vehicleId,
+                'ownership_type' => $newOwnershipType,
+                'error' => $e->getMessage()
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Validate consistency between ownership_type and applying_position
+     */
+    public function validateOwnershipConsistency($ownershipType, $applyingPosition)
+    {
+        $expectedApplyingPosition = $this->mapOwnershipToApplyingPosition($ownershipType);
+        $expectedOwnershipType = $this->mapApplyingPositionToOwnership($applyingPosition);
+
+        return [
+            'is_consistent' => ($expectedApplyingPosition === $applyingPosition && $expectedOwnershipType === $ownershipType),
+            'expected_applying_position' => $expectedApplyingPosition,
+            'expected_ownership_type' => $expectedOwnershipType,
+            'current_applying_position' => $applyingPosition,
+            'current_ownership_type' => $ownershipType
+        ];
+    }
 }

@@ -552,7 +552,7 @@
                                                                 <option value="unassigned" {{ $vehicle->ownership_type == 'unassigned' ? 'selected' : '' }}>Unassigned</option>
                                                                 <option value="owned" {{ $vehicle->ownership_type == 'owned' ? 'selected' : '' }}>Owner Operator</option>
                                                                 <option value="leased" {{ $vehicle->ownership_type == 'leased' ? 'selected' : '' }}>Company Driver</option>
-                                                                <option value="third-party" {{ $vehicle->ownership_type == 'third-party' ? 'selected' : '' }}>Third Party Company Driver</option>
+                                                                <option value="third_party" {{ $vehicle->ownership_type == 'third_party' ? 'selected' : '' }}>Third Party Driver</option>
                                                             </select>
                                                             @error('ownership_type')
                                                                 <span class="text-red-500 text-sm">{{ $message }}</span>
