@@ -301,15 +301,12 @@
                                     <label for="test_result" class="form-label">Test Result</label>
                                     <select id="test_result" name="test_result"
                                         class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 @error('test_result') is-invalid @enderror">
-                                        <option value="pending"
-                                            {{ old('test_result', $driverTesting->test_result) == 'pending' ? 'selected' : '' }}>
-                                            Pending</option>
-                                        <option value="passed"
-                                            {{ old('test_result', $driverTesting->test_result) == 'passed' ? 'selected' : '' }}>
-                                            Passed</option>
-                                        <option value="failed"
-                                            {{ old('test_result', $driverTesting->test_result) == 'failed' ? 'selected' : '' }}>
-                                            Failed</option>
+                                        @foreach (\App\Models\Admin\Driver\DriverTesting::getTestResults() as $key => $value)
+                                            <option value="{{ $key }}"
+                                                {{ old('test_result', $driverTesting->test_result) == $key ? 'selected' : '' }}>
+                                                {{ $value }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                     @error('test_result')
                                         <div class="text-danger mt-1 text-sm">{{ $message }}</div>
@@ -487,10 +484,14 @@
                             </div>
 
                             <div class="mt-6 flex justify-end">
-                                <button type="submit" class="btn btn-primary">
+                                {{-- <button type="submit" class="btn btn-primary">
                                     <x-base.lucide icon="save" class="w-4 h-4 mr-2" />
                                     Update Drug Test
-                                </button>
+                                </button> --}}
+                                <x-base.button type="submit" variant="primary" class="flex items-center">
+                                    <x-base.lucide icon="save" class="w-4 h-4 mr-2" />
+                                    Update Drug Test
+                                </x-base.button>
                             </div>
                         </form>
                     </div>
@@ -504,6 +505,8 @@
                 document.addEventListener('DOMContentLoaded', function() {
                     // Inicializar el formulario de driver testing
                     const driverTestingForm = new DriverTestingForm({
+                        isEditMode: true,
+                        currentDriverId: '{{ $driverTesting->user_driver_detail_id }}',
                         carrierId: 'carrier_id',
                         driverSelectId: 'user_driver_detail_id',
                         driverLoadingId: 'driver-loading',
@@ -519,8 +522,7 @@
                         formId: 'edit-test-form',
                         otherReasonCheckboxId: 'is_other_reason_test',
                         otherReasonContainerId: 'other_reason_container',
-                        filesInputId: 'driver_testing_files_input',
-                        oldDriverId: '{{ $driverTesting->user_driver_detail_id }}'
+                        filesInputId: 'driver_testing_files_input'
                     });
                 });
             </script>

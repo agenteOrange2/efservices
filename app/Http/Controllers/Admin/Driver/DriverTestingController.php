@@ -217,6 +217,23 @@ class DriverTestingController extends Controller
         // Ruta relativa para el PDF si existe
         $pdfUrl = $driverTesting->getFirstMediaUrl('drug_test_pdf');
         
+        // Debug logs para diagnosticar el problema del iframe
+        Log::info('DriverTesting Show - Debug Info', [
+            'testing_id' => $driverTesting->id,
+            'pdf_url' => $pdfUrl,
+            'media_count' => $driverTesting->getMedia('drug_test_pdf')->count(),
+            'has_pdf_media' => $driverTesting->hasMedia('drug_test_pdf'),
+            'pdf_media_info' => $driverTesting->getFirstMedia('drug_test_pdf') ? [
+                'id' => $driverTesting->getFirstMedia('drug_test_pdf')->id,
+                'file_name' => $driverTesting->getFirstMedia('drug_test_pdf')->file_name,
+                'mime_type' => $driverTesting->getFirstMedia('drug_test_pdf')->mime_type,
+                'size' => $driverTesting->getFirstMedia('drug_test_pdf')->size,
+                'disk' => $driverTesting->getFirstMedia('drug_test_pdf')->disk,
+                'path' => $driverTesting->getFirstMedia('drug_test_pdf')->getPath(),
+                'url' => $driverTesting->getFirstMedia('drug_test_pdf')->getUrl()
+            ] : null
+        ]);
+        
         return view('admin.driver-testings.show', compact('driverTesting', 'pdfUrl'));
     }
 
@@ -323,6 +340,9 @@ class DriverTestingController extends Controller
             // Status changed, might want to notify relevant parties here
             // TODO: Implementar notificación por cambio de estatus
         }
+        
+        // Refrescar el modelo desde la base de datos para asegurar que tiene los datos más recientes
+        $driverTesting->refresh();
         
         // Regenerar el PDF con la información actualizada
         $pdf = $this->generatePDF($driverTesting);
@@ -432,6 +452,9 @@ class DriverTestingController extends Controller
      */
     public function regeneratePdf(DriverTesting $driverTesting)
     {
+        // Refrescar el modelo desde la base de datos para asegurar que tiene los datos más recientes
+        $driverTesting->refresh();
+        
         // Regenerar el PDF con la información actualizada
         $pdf = $this->generatePDF($driverTesting);
         $testingId = $driverTesting->getKey();

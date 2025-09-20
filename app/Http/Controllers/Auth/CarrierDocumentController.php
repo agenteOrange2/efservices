@@ -69,10 +69,12 @@ class CarrierDocumentController extends Controller
         ]);
 
         try {
+            $documentType = \App\Models\DocumentType::findOrFail($request->input('document_type_id'));
+            
             $result = $this->carrierDocumentService->uploadDocument(
                 $carrier,
-                $request->file('file'),
-                $request->input('document_type_id')
+                $documentType,
+                $request->file('file')
             );
 
             Log::info('Documento subido exitosamente', [
@@ -104,9 +106,9 @@ class CarrierDocumentController extends Controller
     }
 
     /**
-     * Cambiar el estado de un documento por defecto.
+     * Acepta un documento por defecto para el carrier.
      */
-    public function toggleDefaultDocument(Request $request, $carrierSlug)
+    public function toggleDefaultDocument(Request $request, $carrierSlug, $documentType)
     {
         $carrier = $this->findCarrierBySlug($carrierSlug);
         
@@ -117,42 +119,35 @@ class CarrierDocumentController extends Controller
             ], 403);
         }
 
-        $request->validate([
-            'document_type_id' => 'required|exists:document_types,id',
-            'media_id' => 'required|exists:media,id',
-        ]);
-
         try {
             $result = $this->carrierDocumentService->toggleDefaultDocument(
                 $carrier,
-                $request->input('document_type_id'),
-                $request->input('media_id')
+                $documentType
             );
 
-            Log::info('Estado de documento cambiado', [
+            Log::info('Documento por defecto aceptado', [
                 'user_id' => Auth::id(),
                 'carrier_id' => $carrier->id,
-                'document_type_id' => $request->input('document_type_id'),
-                'media_id' => $request->input('media_id'),
-                'new_status' => $result['is_default']
+                'document_type_id' => $documentType
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => $result['message'],
-                'is_default' => $result['is_default']
+                'document' => $result['document']
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error al cambiar estado de documento', [
+            Log::error('Error al aceptar documento por defecto', [
                 'user_id' => Auth::id(),
                 'carrier_id' => $carrier->id,
+                'document_type_id' => $documentType,
                 'error' => $e->getMessage()
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating document status: ' . $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }

@@ -92,6 +92,8 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/documents/upload/{documentType}', [CarrierDocumentController::class, 'upload'])->name('documents.upload');
             Route::post('/documents/toggle-default/{documentType}', [CarrierDocumentController::class, 'toggleDefaultDocument'])
                 ->name('documents.toggle-default');
+            Route::post('/documents/accept-default/{documentType}', [CarrierDocumentController::class, 'toggleDefaultDocument'])
+                ->name('documents.accept-default');
             Route::delete('/documents/{documentType}', [CarrierDocumentController::class, 'deleteDocument'])
                 ->name('documents.delete');
             Route::get('/documents/progress', [CarrierDocumentController::class, 'getDocumentProgress'])

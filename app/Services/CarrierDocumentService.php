@@ -58,7 +58,8 @@ class CarrierDocumentService
                 ->usingFileName(strtolower(str_replace(' ', '_', $documentType->name)) . '.pdf')
                 ->toMediaCollection('carrier_documents');
 
-            $carrierDocument->update(['status' => CarrierDocument::STATUS_IN_PROCCESS]);
+            // Mantener el estado como PENDING para que el admin pueda revisar y aprobar
+            $carrierDocument->update(['status' => CarrierDocument::STATUS_PENDING]);
         }
 
         return $carrierDocument;
@@ -132,5 +133,160 @@ class CarrierDocumentService
                 }
             }
         });
+    }
+
+    /**
+     * Acepta un documento por defecto para un carrier
+     */
+    public function toggleDefaultDocument(Carrier $carrier, int $documentTypeId)
+    {
+        $documentType = DocumentType::findOrFail($documentTypeId);
+        
+        // Verificar si existe un documento por defecto
+        $defaultMedia = $documentType->getFirstMedia('default_documents');
+        if (!$defaultMedia) {
+            throw new \Exception('No default document available for this document type.');
+        }
+        
+        // Buscar o crear el documento del carrier
+        $carrierDocument = CarrierDocument::firstOrCreate(
+            [
+                'carrier_id' => $carrier->id,
+                'document_type_id' => $documentTypeId,
+            ],
+            [
+                'status' => CarrierDocument::STATUS_PENDING,
+                'date' => now(),
+            ]
+        );
+        
+        // Verificar si el carrier ya tiene un documento personalizado
+        $hasCustomDocument = $carrierDocument->getFirstMedia('carrier_documents');
+        
+        if ($hasCustomDocument) {
+            // Si ya tiene un documento personalizado, no permitir aceptar el predeterminado
+            throw new \Exception('You already have a custom document uploaded. Please delete it first if you want to use the default document.');
+        }
+        
+        // Copiar el documento por defecto al carrier
+        $carrierDocument->copyMedia($defaultMedia->getPath())
+            ->usingFileName($defaultMedia->file_name)
+            ->toMediaCollection('carrier_documents');
+        
+        // Actualizar el estado a pendiente para revisión del admin
+        $carrierDocument->update([
+            'status' => CarrierDocument::STATUS_PENDING,
+            'notes' => 'Default document accepted by carrier on ' . now()->format('Y-m-d H:i:s')
+        ]);
+        
+        return [
+            'success' => true,
+            'message' => 'Default document accepted successfully. It will be reviewed by the administrator.',
+            'document' => $carrierDocument
+        ];
+    }
+
+    /**
+     * Elimina un documento de un carrier
+     */
+    public function deleteDocument(Carrier $carrier, int $mediaId)
+    {
+        // Buscar el media en los documentos del carrier
+        $media = null;
+        foreach ($carrier->documents as $document) {
+            $media = $document->media()->where('id', $mediaId)->first();
+            if ($media) {
+                break;
+            }
+        }
+        
+        if (!$media) {
+            throw new \Exception('Document not found or you do not have permission to delete it.');
+        }
+        
+        // Eliminar el archivo
+        $media->delete();
+        
+        // Actualizar el estado del documento a pendiente si no tiene más archivos
+        $carrierDocument = $media->model;
+        if ($carrierDocument && !$carrierDocument->getFirstMedia('carrier_documents')) {
+            $carrierDocument->update(['status' => CarrierDocument::STATUS_PENDING]);
+        }
+        
+        return true;
+    }
+
+    /**
+     * Obtiene el progreso de documentos de un carrier
+     */
+    public function getDocumentProgress(Carrier $carrier)
+    {
+        $documentTypes = DocumentType::all();
+        $carrierDocuments = $carrier->documents()->with('documentType')->get();
+        
+        $totalDocuments = $documentTypes->count();
+        $completedDocuments = 0;
+        $pendingDocuments = 0;
+        $approvedDocuments = 0;
+        $rejectedDocuments = 0;
+        
+        foreach ($documentTypes as $type) {
+            $carrierDocument = $carrierDocuments->where('document_type_id', $type->id)->first();
+            
+            if ($carrierDocument) {
+                switch ($carrierDocument->status) {
+                    case CarrierDocument::STATUS_APPROVED:
+                        $approvedDocuments++;
+                        $completedDocuments++;
+                        break;
+                    case CarrierDocument::STATUS_REJECTED:
+                        $rejectedDocuments++;
+                        break;
+                    case CarrierDocument::STATUS_IN_PROCCESS:
+                    case CarrierDocument::STATUS_PENDING:
+                    default:
+                        $pendingDocuments++;
+                        break;
+                }
+            } else {
+                $pendingDocuments++;
+            }
+        }
+        
+        $progressPercentage = $totalDocuments > 0 ? round(($completedDocuments / $totalDocuments) * 100, 2) : 0;
+        
+        return [
+            'total' => $totalDocuments,
+            'completed' => $completedDocuments,
+            'pending' => $pendingDocuments,
+            'approved' => $approvedDocuments,
+            'rejected' => $rejectedDocuments,
+            'progress_percentage' => $progressPercentage
+        ];
+    }
+
+    /**
+     * Obtiene los documentos mapeados de un carrier
+     */
+    public function getMappedDocuments(Carrier $carrier)
+    {
+        $documentTypes = DocumentType::all();
+        $carrierDocuments = $carrier->documents()->with('documentType')->get();
+        
+        $mappedDocuments = [];
+        
+        foreach ($documentTypes as $type) {
+            $carrierDocument = $carrierDocuments->where('document_type_id', $type->id)->first();
+            
+            $mappedDocuments[] = [
+                'type' => $type,
+                'document' => $carrierDocument,
+                'status' => $carrierDocument ? $carrierDocument->status : 'pending',
+                'has_file' => $carrierDocument && $carrierDocument->file_path,
+                'has_default' => $type->default_document_path !== null,
+            ];
+        }
+        
+        return $mappedDocuments;
     }
 }

@@ -16,7 +16,7 @@ class DriverService
     /**
      * Obtener todos los conductores con eager loading optimizado
      */
-    public function getAllDrivers(array $filters = []): Collection
+    public function getAllDrivers(array $filters = [], int $perPage = null)
     {
         try {
             $query = UserDriverDetail::with([
@@ -44,7 +44,10 @@ class DriverService
                 $query->where('license_status', $filters['license_status']);
             }
 
-            return $query->orderBy('created_at', 'desc')->get();
+            $query->orderBy('created_at', 'desc');
+            
+            // Retornar paginado o colección completa
+            return $perPage ? $query->paginate($perPage) : $query->get();
         } catch (Exception $e) {
             Log::error('Error al obtener conductores: ' . $e->getMessage());
             throw new Exception('Error al obtener la lista de conductores');
@@ -80,7 +83,7 @@ class DriverService
                 'vehicles:id,driver_id,make,model,year,status'
             ])
             ->where('carrier_id', $carrierId)
-            ->where('status', 'active')
+            ->where('status', UserDriverDetail::STATUS_ACTIVE)
             ->orderBy('created_at', 'desc')
             ->get();
         } catch (Exception $e) {
@@ -121,7 +124,7 @@ class DriverService
                 'emergency_contact' => $data['emergency_contact'] ?? null,
                 'emergency_phone' => $data['emergency_phone'] ?? null,
                 'hire_date' => $data['hire_date'] ?? now(),
-                'status' => $data['status'] ?? 'active'
+                'status' => $data['status'] ?? UserDriverDetail::STATUS_ACTIVE
             ]);
 
             // Actualizar tipo de acceso del usuario
@@ -201,7 +204,7 @@ class DriverService
             }
 
             // Soft delete
-            $driver->update(['status' => 'inactive']);
+            $driver->update(['status' => UserDriverDetail::STATUS_INACTIVE]);
             $driver->user->update(['status' => 'inactive']);
             
             DB::commit();
@@ -212,6 +215,27 @@ class DriverService
             DB::rollBack();
             Log::error('Error al eliminar conductor: ' . $e->getMessage());
             throw new Exception('Error al eliminar el conductor: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Actualizar el status de un conductor
+     */
+    public function updateDriverStatus(int $driverId, int $status): bool
+    {
+        try {
+            $driver = UserDriverDetail::findOrFail($driverId);
+            $driver->update(['status' => $status]);
+            
+            Log::info('Status del conductor actualizado', [
+                'driver_id' => $driverId,
+                'new_status' => $status
+            ]);
+            
+            return true;
+        } catch (Exception $e) {
+            Log::error('Error al actualizar status del conductor: ' . $e->getMessage());
+            throw new Exception('Error al actualizar el status del conductor');
         }
     }
 
@@ -231,9 +255,9 @@ class DriverService
 
             return [
                 'total' => $baseQuery->count(),
-                'active' => (clone $query)->where('status', 'active')->count(),
-                'inactive' => (clone $query)->where('status', 'inactive')->count(),
-                'suspended' => (clone $query)->where('status', 'suspended')->count(),
+                'active' => (clone $query)->where('status', UserDriverDetail::STATUS_ACTIVE)->count(),
+                'inactive' => (clone $query)->where('status', UserDriverDetail::STATUS_INACTIVE)->count(),
+                'suspended' => (clone $query)->where('status', UserDriverDetail::STATUS_PENDING)->count(),
                 'license_expired' => (clone $query)->where('license_expiry', '<', now())->count(),
                 'license_expiring_soon' => (clone $query)
                     ->whereBetween('license_expiry', [now(), now()->addDays(30)])
@@ -258,7 +282,7 @@ class DriverService
                 'user:id,name,email',
                 'carrier:id,name'
             ])
-            ->where('status', 'active')
+            ->where('status', UserDriverDetail::STATUS_ACTIVE)
             ->whereBetween('license_expiry', [now(), now()->addDays($days)])
             ->orderBy('license_expiry', 'asc')
             ->get();

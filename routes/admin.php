@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\TempUploadController;
 use App\Http\Controllers\Admin\UserDriverController;
 use App\Http\Controllers\Admin\UserCarrierController;
+use App\Http\Controllers\Api\UserDriverApiController;
 use App\Http\Controllers\Admin\DocumentTypeController;
 use App\Http\Controllers\Admin\NotificationsController;
 use App\Http\Controllers\Admin\Driver\CoursesController;
@@ -553,7 +554,7 @@ Route::prefix('carrier/{carrier}/drivers')->name('carrier.user_drivers.')->group
 });
 
 Route::post('carrier/{carrier}/drivers/autosave/{userDriverDetail?}', [
-    UserDriverController::class,
+    UserDriverApiController::class,
     'autosave'
 ])->name('carrier.user_drivers.autosave');
 

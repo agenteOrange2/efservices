@@ -18,8 +18,10 @@
         <!-- Hire Date -->
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Hire Date</label>
-            <input type="date" wire:model="hire_date"
-                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+            <input type="text" name="hire_date" wire:model="hire_date" value="{{ $hire_date }}" placeholder="MM/DD/YYYY" class="driver-datepicker w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+            @error('hire_date')
+                <span class="text-red-500 text-sm">{{ $message }}</span>
+            @enderror
         </div>
     </div>
 
@@ -42,8 +44,7 @@
             </div>
             <div x-show="isSuspended" class="mt-3">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Suspension Date</label>
-                <input type="date" wire:model="suspension_date"
-                    class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                <input type="text" name="suspension_date" wire:model="suspension_date" value="{{ $suspension_date }}" placeholder="MM/DD/YYYY" class="driver-datepicker w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                 @error('suspension_date')
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                 @enderror
@@ -59,8 +60,7 @@
             </div>
             <div x-show="isTerminated" class="mt-3">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Termination Date</label>
-                <input type="date" wire:model="termination_date"
-                    class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                <input type="text" name="termination_date" wire:model="termination_date" value="{{ $termination_date }}" placeholder="MM/DD/YYYY" class="driver-datepicker w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                 @error('termination_date')
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                 @enderror
@@ -100,8 +100,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Medical Card Expiration Date <span
                         class="text-red-500">*</span></label>
-                <input type="date" wire:model="medical_card_expiration_date"
-                    class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                <input type="text" name="medical_card_expiration_date" wire:model="medical_card_expiration_date" value="{{ $medical_card_expiration_date }}" placeholder="MM/DD/YYYY" class="driver-datepicker w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                 @error('medical_card_expiration_date')
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                 @enderror
@@ -109,118 +108,52 @@
         </div>
 
         <!-- Medical Card Upload -->
-        <div class="mb-6" x-data="{
-            preview: '{{ $medical_card_preview_url ?? null }}',
-            filename: '{{ $medical_card_filename ?? '' }}',
-            loading: false,
-            error: '',
-            uploadMedicalCard(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                if (file.size > 2 * 1024 * 1024) {
-                    this.error = 'File size must be less than 2MB';
-                    event.target.value = '';
-                    return;
-                }
-                this.loading = true;
-                this.filename = file.name;
-                // Set local preview
-                if (file.type === 'application/pdf') {
-                    this.preview = 'document.pdf';
-                } else if (file.type.startsWith('image/')) {
-                    this.preview = URL.createObjectURL(file);
-                }
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('type', 'medical_card');
-                fetch('{{ route('admin.temp.upload') }}', {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Accept': 'application/json'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(result => {
-                        @this.set('temp_medical_card_token', result.token);
-                        this.loading = false;
-                        this.error = '';
-                    })
-                    .catch(error => {
-                        console.error('Error uploading file:', error);
-                        this.loading = false;
-                        this.error = 'Failed to upload file. Please try again.';
-                    });
-            },
-            removeFile() {
-                this.filename = '';
-                this.preview = null;
-                @this.set('temp_medical_card_token', '');
-                document.getElementById('medical_card_file').value = '';
-                this.error = '';
-            }
-        }">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Upload Medical Card <span
-                    class="text-red-500">*</span></label>
-            <div class="flex flex-col items-center justify-center w-full">
-                <label for="medical_card_file"
-                    class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
-                    :class="{ 'bg-blue-50 border-blue-300': preview }">
-                    <div class="flex flex-col items-center justify-center pt-5 pb-6" x-show="!preview && !loading">
-                        <svg class="w-8 h-8 mb-3 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                            fill="none" viewBox="0 0 20 16">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
+        <div class="mb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Medical Card Upload</h3>
+            
+            @if(!empty($medicalQualificationId))
+                <!-- Show upload component only when medical qualification record exists -->
+                <x-unified-image-upload 
+                    :existing-image-url="$medical_card_preview_url ?? ''"
+                    :existing-image-name="$medical_card_filename ?? ''"
+                    accept="image/*,application/pdf" 
+                    max-size="10240" 
+                    class="w-full"
+                    :model-type="'medical_card'"
+                    :model-id="$medicalQualificationId"
+                    :driver-id="$driverId"
+                    collection="medical_card"
+                    document-type="medical_card"
+                    path="driver/{{ $driverId }}/medical/"
+                    remove-method="removeMedicalCard"
+                    wire:key="medical-card-{{ $medicalQualificationId }}"
+                />
+            @else
+                <!-- Show message when no medical qualification record exists yet -->
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                    <div class="text-center">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
-                        <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to upload</span> or
-                            drag and drop</p>
-                        <p class="text-xs text-gray-500">PDF, PNG, JPG or JPEG (MAX. 2MB)</p>
-                    </div>
-                    <div x-show="loading" class="flex items-center justify-center pt-5 pb-6">
-                        <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg"
-                            fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                            </path>
-                        </svg>
-                        <span class="text-sm text-gray-700">Uploading...</span>
-                    </div>
-                    <div x-show="preview && !loading" class="w-full h-full flex items-center justify-center">
-                        <template x-if="preview === 'document.pdf'">
-                            <div class="flex items-center">
-                                <svg class="w-8 h-8 text-red-500" xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                    <polyline points="10 9 9 9 8 9"></polyline>
+                        <div class="mt-4">
+                            <span class="mt-2 block text-sm font-medium text-gray-600">
+                                Please save medical information first to enable image upload
+                            </span>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">
+                            Medical card upload will be available after saving the form
+                        </p>
+                        <div class="mt-4">
+                            <x-base.button type="button" wire:click="saveMedicalInfo" class="px-6 py-2" variant="primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5L9 4H4z" />
                                 </svg>
-                                <span class="ml-2 text-sm font-medium text-gray-700" x-text="filename"></span>
-                            </div>
-                        </template>
-                        <template x-if="preview && preview !== 'document.pdf'">
-                            <img :src="preview" class="max-h-28 max-w-full object-contain" />
-                        </template>
+                                Save Medical Information
+                            </x-base.button>
+                        </div>
                     </div>
-                </label>
-                <input id="medical_card_file" type="file" class="hidden" accept=".pdf,.png,.jpg,.jpeg"
-                    @change="uploadMedicalCard" />
-            </div>
-            <div x-show="filename && !loading" class="mt-2 flex items-center justify-between">
-                <p class="text-sm text-gray-500">Selected file: <span x-text="filename"></span></p>
-                <button type="button" @click="removeFile" class="text-sm text-red-500 hover:text-red-700">
-                    Remove
-                </button>
-            </div>
-            <p x-show="error" x-text="error" class="text-red-500 text-sm mt-1"></p>
-            @error('temp_medical_card_token')
-                <span class="text-red-500 text-sm">{{ $message }}</span>
-            @enderror
+                </div>
+            @endif
         </div>
     </div>
 

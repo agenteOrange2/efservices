@@ -52,9 +52,10 @@
                     <div>
                         <label class="block text-sm font-medium mb-1">Accident Date</label>
                         <input type="text" 
-                            wire:model="accidents.{{ $index }}.accident_date"
+                            value="{{ $accident['accident_date'] ?? '' }}"
                             placeholder="MM/DD/YYYY"
                             class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3"
+                            onchange="@this.set('accidents.{{ $index }}.accident_date', this.value)"
                         />
                         @error("accidents.{$index}.accident_date")
                             <span class="text-red-500 text-sm">{{ $message }}</span>

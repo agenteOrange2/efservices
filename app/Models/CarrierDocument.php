@@ -29,7 +29,7 @@ class CarrierDocument extends Model implements HasMedia
     public const STATUS_PENDING = 0;
     public const STATUS_APPROVED = 1;
     public const STATUS_REJECTED = 2;
-    public const STATUS_IN_PROCCESS = 3;
+    public const STATUS_IN_PROCESS = 3;
 
     // Relación con el transportista
     public function carrier()
@@ -57,7 +57,7 @@ class CarrierDocument extends Model implements HasMedia
             self::STATUS_APPROVED => 'Approved',
             self::STATUS_REJECTED => 'Rejected',
             self::STATUS_PENDING => 'Pending',
-            self::STATUS_IN_PROCCESS => 'In Process',
+            self::STATUS_IN_PROCESS => 'In Process',
             default => 'Pending', // Por defecto, asumimos que está pendiente en lugar de Unknown
         };
     }

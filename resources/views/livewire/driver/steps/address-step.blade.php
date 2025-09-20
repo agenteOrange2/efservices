@@ -78,12 +78,12 @@
                             <label class="block mb-2 text-sm font-medium text-gray-700">From Date <span
                                     class="text-red-500">*</span></label>
                             <input type="text"
-                                wire:model="from_date"
                                 id="from_date"
                                 name="from_date"
                                 value="{{ $from_date }}"
                                 placeholder="MM/DD/YYYY"
                                 class="driver-datepicker form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm"
+                                onchange="@this.set('from_date', this.value)"
                                 required
                             />
                             @error('from_date')
@@ -93,12 +93,12 @@
                         <div>
                             <label class="block mb-2 text-sm font-medium text-gray-700">To Date</label>
                             <input type="text"
-                                wire:model="to_date"
                                 id="to_date"
                                 name="to_date"
                                 value="{{ $to_date }}"
                                 placeholder="MM/DD/YYYY"
                                 class="driver-datepicker form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm"
+                                onchange="@this.set('to_date', this.value)"
                             />
                             @error('to_date')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
@@ -213,12 +213,12 @@
                                     <label class="block mb-2 text-sm font-medium text-gray-700">From Date <span
                                             class="text-red-500">*</span></label>
                                     <input type="text"
-                                        wire:model="previous_addresses.{{ $index }}.from_date"
                                         id="prev_from_date_{{ $index }}"
                                         name="previous_addresses[{{ $index }}][from_date]"
                                         value="{{ $address['from_date'] ?? '' }}"
                                         placeholder="MM/DD/YYYY"
                                         class="driver-datepicker form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm"
+                                        onchange="@this.set('previous_addresses.{{ $index }}.from_date', this.value)"
                                         required
                                     />
                                     @error('previous_addresses.' . $index . '.from_date')
@@ -229,12 +229,12 @@
                                     <label class="block mb-2 text-sm font-medium text-gray-700">To Date <span
                                             class="text-red-500">*</span></label>
                                     <input type="text"
-                                        wire:model="previous_addresses.{{ $index }}.to_date"
                                         id="prev_to_date_{{ $index }}"
                                         name="previous_addresses[{{ $index }}][to_date]"
                                         value="{{ $address['to_date'] ?? '' }}"
                                         placeholder="MM/DD/YYYY"
                                         class="driver-datepicker form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm"
+                                        onchange="@this.set('previous_addresses.{{ $index }}.to_date', this.value)"
                                         required
                                     />
                                     @error('previous_addresses.' . $index . '.to_date')

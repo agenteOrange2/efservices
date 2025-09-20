@@ -137,12 +137,7 @@
                                                             wire:click="selectVehicle({{ $vehicle->id }})"
                                                             class="px-2.5 py-1.5 bg-blue-500 text-white rounded-md text-sm hover:bg-primary transition duration-150 ease-in-out flex items-center">
                                                             Select
-                                                        </button>
-                                                        <a href="{{ route('admin.vehicles.show', $vehicle->id) }}"
-                                                            target="_blank"
-                                                            class="px-2.5 py-1.5 bg-gray-500 text-white rounded-md text-sm hover:bg-gray-600 transition duration-150 ease-in-out flex items-center">
-                                                            View
-                                                        </a>
+                                                        </button>                                                        
                                                     </div>
                                                 </td>
                                             </tr>
@@ -489,11 +484,6 @@
                                                             class="px-2.5 py-1.5 bg-blue-800 text-white rounded-md text-sm hover:bg-blue-800 transition duration-150 ease-in-out flex items-center">
                                                             Select
                                                         </button>
-                                                        <a href="{{ route('admin.vehicles.show', $vehicle->id) }}"
-                                                            target="_blank"
-                                                            class="px-2.5 py-1.5 bg-gray-500 text-white rounded-md text-sm hover:bg-gray-600 transition duration-150 ease-in-out flex items-center">
-                                                            View
-                                                        </a>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -985,5 +975,3 @@
                 </div>
             </div>
         </div>
-
-

@@ -64,7 +64,7 @@ class StoreDriverTestingRequest extends FormRequest
             ],
             'test_result' => [
                 'nullable',
-                Rule::in(['Negative', 'Positive', 'Inconclusive', 'Refused', 'Pending'])
+                Rule::in(['Positive', 'Negative', 'Refusal'])
             ],
             'substances_tested' => [
                 'nullable',
@@ -84,6 +84,10 @@ class StoreDriverTestingRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:1000'
+            ],
+            'status' => [
+                'nullable',
+                Rule::in(['Schedule', 'In Progress', 'Completed', 'Cancelled'])
             ]
         ];
     }

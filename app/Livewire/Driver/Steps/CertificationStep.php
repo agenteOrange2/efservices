@@ -470,34 +470,42 @@ class CertificationStep extends Component
             ]);
         }
         
-        // Generar contrato de arrendamiento para propietarios-operadores si corresponde
+        // Generar documentos específicos según el tipo de conductor
         $application = $userDriverDetail->application;
         
-        // Verificar si es propietario-operador y registrar información para diagnóstico
-        if ($application && $application->details) {
-            $applyingPosition = $application->details->applying_position ?? 'unknown';
-            Log::info('Verificando tipo de conductor para contrato', [
+        // Obtener los detalles de la aplicación para verificar el tipo
+        $applicationDetails = $application ? $application->details : null;
+        if (!$applicationDetails) {
+            Log::error('No se encontraron detalles de aplicación para generar contrato', [
+                'driver_id' => $userDriverDetail->id,
+                'application_id' => $application ? $application->id : 'null'
+            ]);
+        } else {
+            $applyingPosition = $applicationDetails->applying_position ?? 'unknown';
+            Log::info('Verificando tipo de conductor para generar documentos específicos', [
                 'driver_id' => $userDriverDetail->id,
                 'applying_position' => $applyingPosition
             ]);
             
+            // Verificar el tipo de aplicación y generar el documento correspondiente
             if ($applyingPosition === 'owner_operator') {
-                Log::info('Generando contrato de arrendamiento para propietario-operador', [
-                    'driver_id' => $userDriverDetail->id
+                Log::info('Generando contrato de lease agreement para owner operator', [
+                    'driver_id' => $userDriverDetail->id,
+                    'applying_position' => $applyingPosition
                 ]);
                 $this->generateLeaseAgreementPDF($userDriverDetail, $signaturePath);
+            } elseif ($applyingPosition === 'third_party_driver') {
+                Log::info('Generando documentos para third party driver', [
+                    'driver_id' => $userDriverDetail->id,
+                    'applying_position' => $applyingPosition
+                ]);
+                $this->generateThirdPartyDocuments($userDriverDetail, $signaturePath);
             } else {
-                Log::info('No se genera contrato de propietario-operador porque el conductor no es de ese tipo', [
+                Log::warning('Tipo de aplicación no reconocido o no especificado para generar contrato', [
                     'driver_id' => $userDriverDetail->id,
                     'applying_position' => $applyingPosition
                 ]);
             }
-        } else {
-            Log::warning('No se puede determinar si es propietario-operador, faltan datos de aplicación', [
-                'driver_id' => $userDriverDetail->id,
-                'has_application' => $application ? 'yes' : 'no',
-                'has_details' => ($application && $application->details) ? 'yes' : 'no'
-            ]);
         }
         
         // Limpiar archivo temporal de firma
@@ -846,6 +854,198 @@ class CertificationStep extends Component
                 'trace' => $e->getTraceAsString()
             ]);
             return null;
+        }
+    }
+    
+    /**
+     * Genera documentos específicos para conductores third-party
+     * @param UserDriverDetail $userDriverDetail
+     * @param string $signaturePath Ruta al archivo de firma
+     */
+    private function generateThirdPartyDocuments($userDriverDetail, $signaturePath)
+    {
+        try {
+            // Cargar todas las relaciones necesarias para asegurar que tenemos los datos completos
+            $userDriverDetail->load([
+                'application.details', 
+                'application.thirdPartyDetail', 
+                'user',
+                'carrier'
+            ]);
+            
+            // Verificar cada relación individualmente y registrar qué datos faltan
+            $missingData = [];
+            
+            if (!$userDriverDetail->application) {
+                $missingData[] = 'application';
+            } elseif (!$userDriverDetail->application->details) {
+                $missingData[] = 'application.details';
+            }
+            
+            // Intentar obtener el vehículo a través de la aplicación o buscar por driver_id
+            $vehicle = null;
+            if ($userDriverDetail->application && method_exists($userDriverDetail->application, 'vehicle')) {
+                $vehicle = $userDriverDetail->application->vehicle;
+            }
+            
+            // Si no se encuentra, buscar en la tabla de vehículos directamente
+            if (!$vehicle) {
+                $vehicle = Vehicle::where('user_driver_detail_id', $userDriverDetail->id)->first();
+            }
+            
+            if (!$userDriverDetail->carrier) {
+                $missingData[] = 'carrier';
+            }
+            
+            if (!$userDriverDetail->user) {
+                $missingData[] = 'user';
+            }
+            
+            // Si faltan datos críticos, registrar el error y salir
+            if (!empty($missingData)) {
+                Log::error('Datos insuficientes para generar documentos de third-party', [
+                    'driver_id' => $userDriverDetail->id,
+                    'missing_data' => $missingData
+                ]);
+                return;
+            }
+            
+            $application = $userDriverDetail->application;
+            $carrier = $userDriverDetail->carrier;
+            $user = $userDriverDetail->user;
+            $thirdPartyDetails = $application->thirdPartyDetail;
+            $applicationDetails = $application->details;
+            
+            // Preparar los datos para el PDF de consentimiento de terceros
+            // La plantilla third-party-consent.blade.php espera $verification, $driverDetails, $vehicle, $date, $signatureData
+            $consentData = [
+                'verification' => (object) [
+                    'third_party_name' => $thirdPartyDetails->third_party_name ?? '',
+                    'third_party_phone' => $thirdPartyDetails->third_party_phone ?? '',
+                    'third_party_email' => $thirdPartyDetails->third_party_email ?? '',
+                    'token' => 'TP-' . $userDriverDetail->id . '-' . time()
+                ],
+                'driverDetails' => (object) [
+                    'user' => (object) [
+                        'name' => $userDriverDetail->user->name,
+                        'email' => $userDriverDetail->user->email,
+                    ],
+                    'middle_name' => $userDriverDetail->middle_name ?? '',
+                    'last_name' => $userDriverDetail->last_name ?? '',
+                    'phone' => $userDriverDetail->phone ?? 'N/A',
+                ],
+if ($applyingPosition === 'owner_operator') {
+    $this->generateLeaseAgreementPDF($userDriverDetail, $signaturePath);
+} elseif ($applyingPosition === 'third_party_driver') {
+    $this->generateThirdPartyDocuments($userDriverDetail, $signaturePath);
+}                'vehicle' => $vehicle,
+                'date' => now()->format('F j, Y'),
+                'signaturePath' => $signaturePath,
+                'signature' => null // Para compatibilidad
+            ];
+            
+            // Generar el PDF de consentimiento de terceros
+            try {
+                Log::info('Intentando cargar vista de consentimiento de terceros', [
+                    'driver_id' => $userDriverDetail->id,
+                    'view' => 'pdfs.third-party-consent',
+                    'data_keys' => array_keys($consentData)
+                ]);
+                
+                // Cargar la vista del consentimiento de terceros
+                $pdf = App::make('dompdf.wrapper')->loadView('pdfs.third-party-consent', $consentData);
+                
+                // Asegurarnos de que estamos usando el ID correcto
+                $driverId = $userDriverDetail->id;
+                $dirPath = 'driver/' . $driverId . '/vehicle_verifications';
+                $filePath = $dirPath . '/third_party_consent.pdf';
+                
+                Log::info('Guardando PDF de consentimiento de terceros', [
+                    'driver_id' => $driverId,
+                    'file_path' => $filePath
+                ]);
+                
+                // Asegurarnos de que el directorio existe
+                Storage::disk('public')->makeDirectory($dirPath);
+                
+                // Guardar el PDF
+                $pdfContent = $pdf->output();
+                Storage::disk('public')->put($filePath, $pdfContent);
+                
+            } catch (\Exception $e) {
+                Log::error('Error al generar PDF de consentimiento de terceros', [
+                    'driver_id' => $userDriverDetail->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+            
+            // Preparar los datos para el PDF de contrato de arrendamiento para third-party
+            // La plantilla lease-agreement.blade.php espera variables específicas para third-party
+            $leaseData = [
+                'carrierName' => $carrier->name ?? 'EF Services',
+                'carrierAddress' => $carrier->address ?? '',
+                'carrierMc' => $carrier->mc_number ?? '',
+                'carrierUsdot' => $carrier->state_dot ?? '',
+                // Para third-party, el "owner" es la empresa third-party
+                'ownerName' => $thirdPartyDetails->third_party_name ?? '',
+                'ownerDba' => $thirdPartyDetails->third_party_dba ?? '',
+                'ownerAddress' => $thirdPartyDetails->third_party_address ?? '',
+                'ownerPhone' => $thirdPartyDetails->third_party_phone ?? '',
+                'ownerContact' => $thirdPartyDetails->third_party_contact ?? '',
+                'ownerFein' => $thirdPartyDetails->third_party_fein ?? '',
+                // Datos del vehículo
+                'vehicleYear' => $vehicle->year ?? '',
+                'vehicleMake' => $vehicle->make ?? '',
+                'vehicleVin' => $vehicle->vin ?? '',
+                'vehicleUnit' => $vehicle->company_unit_number ?? '',
+                'signedDate' => now()->format('m/d/Y'),
+                'signaturePath' => $signaturePath,
+                'signature' => null // Para compatibilidad
+            ];
+            
+            // Generar el PDF de contrato de arrendamiento para third-party
+            try {
+                Log::info('Intentando cargar vista de contrato de arrendamiento para third-party', [
+                    'driver_id' => $userDriverDetail->id,
+                    'view' => 'pdfs.lease-agreement',
+                    'data_keys' => array_keys($leaseData)
+                ]);
+                
+                // Cargar la vista del contrato de arrendamiento para third-party
+                $pdf = App::make('dompdf.wrapper')->loadView('pdfs.lease-agreement', $leaseData);
+                
+                // Asegurarnos de que estamos usando el ID correcto
+                $driverId = $userDriverDetail->id;
+                $dirPath = 'driver/' . $driverId . '/vehicle_verifications';
+                $filePath = $dirPath . '/lease_agreement_third_party.pdf';
+                
+                Log::info('Guardando PDF de contrato de arrendamiento para third-party', [
+                    'driver_id' => $driverId,
+                    'file_path' => $filePath
+                ]);
+                
+                // Asegurarnos de que el directorio existe
+                Storage::disk('public')->makeDirectory($dirPath);
+                
+                // Guardar el PDF
+                $pdfContent = $pdf->output();
+                Storage::disk('public')->put($filePath, $pdfContent);
+                
+            } catch (\Exception $e) {
+                Log::error('Error al generar PDF de contrato de arrendamiento para third-party', [
+                    'driver_id' => $userDriverDetail->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Error al generar documentos de third-party', [
+                'driver_id' => $userDriverDetail->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
     

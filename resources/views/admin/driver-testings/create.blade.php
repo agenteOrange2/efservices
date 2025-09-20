@@ -332,18 +332,12 @@
                                     <select id="test_result" name="test_result"
                                         class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 @error('test_result') is-invalid @enderror">
                                         <option value="">-- Select result --</option>
-                                        <option value="Negative" {{ old('test_result') == 'Negative' ? 'selected' : '' }}>
-                                            Negative</option>
-                                        <option value="Positive" {{ old('test_result') == 'Positive' ? 'selected' : '' }}>
-                                            Positive</option>
-                                        <option value="Inconclusive"
-                                            {{ old('test_result') == 'Inconclusive' ? 'selected' : '' }}>Inconclusive
-                                        </option>
-                                        <option value="Refused" {{ old('test_result') == 'Refused' ? 'selected' : '' }}>
-                                            Refused</option>
-                                        <option value="Pending"
-                                            {{ old('test_result', 'Pending') == 'Pending' ? 'selected' : '' }}>Pending
-                                        </option>
+                                        @foreach (\App\Models\Admin\Driver\DriverTesting::getTestResults() as $key => $value)
+                                            <option value="{{ $key }}"
+                                                {{ old('test_result') == $key ? 'selected' : '' }}>
+                                                {{ $value }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                     @error('test_result')
                                         <div class="text-danger mt-1 text-sm">{{ $message }}</div>
@@ -404,46 +398,53 @@
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div class="flex items-center">
                                         <input type="checkbox" id="is_random_test" name="is_random_test" value="1"
-                                            class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2" {{ old('is_random_test') ? 'checked' : '' }}>
+                                            class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2"
+                                            {{ old('is_random_test') ? 'checked' : '' }}>
                                         <label for="is_random_test" class="cursor-pointer">Random Test</label>
                                     </div>
                                     <div class="flex items-center">
                                         <input type="checkbox" id="is_post_accident_test" name="is_post_accident_test"
-                                            value="1" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2"
+                                            value="1"
+                                            class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2"
                                             {{ old('is_post_accident_test') ? 'checked' : '' }}>
                                         <label for="is_post_accident_test" class="cursor-pointer">Post-Accident
                                             Test</label>
                                     </div>
                                     <div class="flex items-center">
                                         <input type="checkbox" id="is_reasonable_suspicion_test"
-                                            name="is_reasonable_suspicion_test" value="1" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2"
+                                            name="is_reasonable_suspicion_test" value="1"
+                                            class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2"
                                             {{ old('is_reasonable_suspicion_test') ? 'checked' : '' }}>
                                         <label for="is_reasonable_suspicion_test" class="cursor-pointer">Reasonable
                                             Suspicion Test</label>
                                     </div>
                                     <div class="flex items-center">
                                         <input type="checkbox" id="is_pre_employment_test" name="is_pre_employment_test"
-                                            value="1" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2"
+                                            value="1"
+                                            class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2"
                                             {{ old('is_pre_employment_test') ? 'checked' : '' }}>
                                         <label for="is_pre_employment_test" class="cursor-pointer">Pre-Employment
                                             Test</label>
                                     </div>
                                     <div class="flex items-center">
                                         <input type="checkbox" id="is_follow_up_test" name="is_follow_up_test"
-                                            value="1" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2"
+                                            value="1"
+                                            class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2"
                                             {{ old('is_follow_up_test') ? 'checked' : '' }}>
                                         <label for="is_follow_up_test" class="cursor-pointer">Follow-Up Test</label>
                                     </div>
                                     <div class="flex items-center">
                                         <input type="checkbox" id="is_return_to_duty_test" name="is_return_to_duty_test"
-                                            value="1" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2"
+                                            value="1"
+                                            class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2"
                                             {{ old('is_return_to_duty_test') ? 'checked' : '' }}>
                                         <label for="is_return_to_duty_test" class="cursor-pointer">Return-To-Duty
                                             Test</label>
                                     </div>
                                     <div class="flex items-center">
                                         <input type="checkbox" id="is_other_reason_test" name="is_other_reason_test"
-                                            value="1" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2"
+                                            value="1"
+                                            class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2"
                                             {{ old('is_other_reason_test') ? 'checked' : '' }}>
                                         <label for="is_other_reason_test" class="cursor-pointer">Other Reason</label>
                                     </div>
@@ -480,10 +481,13 @@
                             </div>
 
                             <div class="mt-6 flex justify-end">
-                                <button type="submit" class="btn btn-primary">
-                                    <x-base.lucide icon="save" class="w-4 h-4 mr-2" />
+                                {{-- <button type="submit" class="btn btn-primary">
                                     Create Drug Test
-                                </button>
+                                </button> --}}
+                                <x-base.button type="submit" variant="primary" class="flex items-center">
+                                    <x-base.lucide icon="save" class="w-4 h-4 mr-2" />                                    
+                                    Create Drug Test
+                                </x-base.button>
                             </div>
                         </form>
                     </div>

@@ -181,6 +181,20 @@ class CheckUserStatus
                         ->with('info', 'Your payment is being validated. Please wait for confirmation.');
                 }
 
+                // Si el carrier está ACTIVO, verificar si necesita subir documentos
+                if ($carrier->status === Carrier::STATUS_ACTIVE) {
+                    // Si intenta acceder al dashboard pero no ha completado documentos, redirigir a documentos
+                    if ($request->is('carrier/dashboard') && ($carrier->document_status === 'in_progress' || $carrier->document_status === null)) {
+                        Log::info('Carrier activo redirigido a documentos desde dashboard', [
+                            'user_id' => $user->id,
+                            'carrier_id' => $carrier->id,
+                            'document_status' => $carrier->document_status
+                        ]);
+                        return redirect()->route('carrier.documents.index', $carrier->slug)
+                            ->with('info', 'Please upload your carrier documents. You can skip documents you don\'t have ready and complete them later.');
+                    }
+                }
+
                 // Si el carrier está inactivo (no pending, no active, no inactive, no pending_validation) y NO está en la ruta de documentos, wizard o logout
                 if ($carrier->status !== Carrier::STATUS_ACTIVE && $carrier->status !== Carrier::STATUS_PENDING && $carrier->status !== Carrier::STATUS_INACTIVE && $carrier->status !== Carrier::STATUS_PENDING_VALIDATION && !$request->is('carrier/*/documents*') && !$request->is('carrier/confirmation') && !$request->is('carrier/wizard*') && !$request->is('logout')) {
                     Log::info('Redirigiendo a confirmation (carrier not active)', [
@@ -191,8 +205,8 @@ class CheckUserStatus
                         ->with('warning', 'Your carrier account is pending approval.');
                 }
 
-                // Si necesita subir documentos y no está en la ruta de documentos
-                if ($carrier->document_status === 'in_progress' && !$request->is('carrier/*/documents*')) {
+                // Si necesita subir documentos y no está en la ruta de documentos (solo para carriers no activos)
+                if ($carrier->status !== Carrier::STATUS_ACTIVE && $carrier->document_status === 'in_progress' && !$request->is('carrier/*/documents*')) {
                     return redirect()->route('carrier.documents.index', $carrier->slug)
                         ->with('warning', 'Please complete your document submission before proceeding.');
                 }

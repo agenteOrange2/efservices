@@ -25,11 +25,11 @@
                     class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
                     <option value="">Select Position</option>
                     @foreach ($driverPositions as $value => $label)
-                        <option value="{{ $value }}">{{ $label }}</option>
+                    <option value="{{ $value }}">{{ $label }}</option>
                     @endforeach
                 </select>
                 @error('applying_position')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                <span class="text-red-500 text-sm">{{ $message }}</span>
                 @enderror
 
                 <div x-show="$wire.applying_position === 'other'" x-transition class="mt-2">
@@ -37,7 +37,7 @@
                     <x-base.form-input type="text" wire:model="applying_position_other"
                         class="w-full px-3 py-2 border rounded" />
                     @error('applying_position_other')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -60,32 +60,29 @@
                         <div>
                             <label class="block mb-1">Owner Name *</label>
                             <x-base.form-input type="text" wire:model="owner_name"
-                                class="w-full px-3 py-2 border rounded" />
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                             @error('owner_name')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
                             <label class="block mb-1">Phone Number *</label>
                             <x-base.form-input type="number" wire:model="owner_phone"
-                                class="w-full px-3 py-2 border rounded" />
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                             @error('owner_phone')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror                            
                         </div>
                     </div>
 
                     <div class="mb-4">
                         <label class="block mb-1">Email *</label>
                         <x-base.form-input type="email" wire:model="owner_email"
-                            class="w-full px-3 py-2 border rounded" />
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                         @error('owner_email')
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
-
-
-
                     <h4
                         class="font-semibold text-lg text-primary mb-4 mt-8 border-b border-blue-200 pb-3 flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
@@ -97,72 +94,72 @@
                     </h4>
 
                     @if (count($existingVehicles) > 0)
-                        <div class="mb-5 p-4 bg-blue-50 rounded-lg border border-blue-100 shadow-sm">
-                            <h5 class="font-medium mb-2">Existing Vehicles</h5>
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
-                                    <thead>
-                                        <tr>
-                                            <th
-                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Make</th>
-                                            <th
-                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Model</th>
-                                            <th
-                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Year</th>
-                                            <th
-                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                VIN</th>
-                                            <th
-                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Type</th>
-                                            <th
-                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($existingVehicles as $vehicle)
-                                            <tr class="{{ $selectedVehicleId == $vehicle->id ? 'bg-blue-100' : '' }}">
-                                                <td class="py-2 px-3 border-b">{{ $vehicle->make }}</td>
-                                                <td class="py-2 px-3 border-b">{{ $vehicle->model }}</td>
-                                                <td class="py-2 px-3 border-b">{{ $vehicle->year }}</td>
-                                                <td class="py-2 px-3 border-b">{{ $vehicle->vin }}</td>
-                                                <td class="py-2 px-3 border-b">{{ ucfirst($vehicle->type) }}</td>
-                                                <td class="py-2 px-3 border-b">
-                                                    <div class="flex space-x-2">
-                                                        <button type="button"
-                                                            wire:click="selectVehicle({{ $vehicle->id }})"
-                                                            class="px-2.5 py-1.5 bg-blue-500 text-white rounded-md text-sm hover:bg-primary transition duration-150 ease-in-out flex items-center">
-                                                            Select
-                                                        </button>
-                                                        <a href="{{ route('admin.vehicles.show', $vehicle->id) }}"
-                                                            target="_blank"
-                                                            class="px-2.5 py-1.5 bg-gray-500 text-white rounded-md text-sm hover:bg-gray-600 transition duration-150 ease-in-out flex items-center">
-                                                            View
-                                                        </a>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-3">
-                                <button type="button" wire:click="clearVehicleForm"
-                                    class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition duration-150 ease-in-out flex items-center shadow-sm">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20"
-                                        fill="currentColor">
-                                        <path fill-rule="evenodd"
-                                            d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                    Register New Vehicle
-                                </button>
-                            </div>
+                    <div class="mb-5 p-4 bg-blue-50 rounded-lg border border-blue-100 shadow-sm">
+                        <h5 class="font-medium mb-2">Existing Vehicles</h5>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
+                                <thead>
+                                    <tr>
+                                        <th
+                                            class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Make</th>
+                                        <th
+                                            class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Model</th>
+                                        <th
+                                            class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Year</th>
+                                        <th
+                                            class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            VIN</th>
+                                        <th
+                                            class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Type</th>
+                                        <th
+                                            class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($existingVehicles as $vehicle)
+                                    <tr class="{{ $selectedVehicleId == $vehicle->id ? 'bg-blue-100' : '' }}">
+                                        <td class="py-2 px-3 border-b">{{ $vehicle->make }}</td>
+                                        <td class="py-2 px-3 border-b">{{ $vehicle->model }}</td>
+                                        <td class="py-2 px-3 border-b">{{ $vehicle->year }}</td>
+                                        <td class="py-2 px-3 border-b">{{ $vehicle->vin }}</td>
+                                        <td class="py-2 px-3 border-b">{{ ucfirst($vehicle->type) }}</td>
+                                        <td class="py-2 px-3 border-b">
+                                            <div class="flex space-x-2">
+                                                <button type="button"
+                                                    wire:click="selectVehicle({{ $vehicle->id }})"
+                                                    class="px-2.5 py-1.5 bg-blue-500 text-white rounded-md text-sm hover:bg-primary transition duration-150 ease-in-out flex items-center">
+                                                    Select
+                                                </button>
+                                                <a href="{{ route('admin.vehicles.show', $vehicle->id) }}"
+                                                    target="_blank"
+                                                    class="px-2.5 py-1.5 bg-gray-500 text-white rounded-md text-sm hover:bg-gray-600 transition duration-150 ease-in-out flex items-center">
+                                                    View
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
+                        <div class="mt-3">
+                            <button type="button" wire:click="clearVehicleForm"
+                                class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition duration-150 ease-in-out flex items-center shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20"
+                                    fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                Register New Vehicle
+                            </button>
+                        </div>
+                    </div>
                     @endif
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -171,7 +168,7 @@
                             <x-base.form-input type="text" wire:model="vehicle_make"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_make')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -179,7 +176,7 @@
                             <x-base.form-input type="text" wire:model="vehicle_model"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_model')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -191,7 +188,7 @@
                             <x-base.form-input type="number" wire:model="vehicle_year"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_year')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -199,7 +196,7 @@
                             <x-base.form-input type="text" wire:model="vehicle_vin"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_vin')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -210,7 +207,7 @@
                             <x-base.form-input type="text" wire:model="vehicle_company_unit_number"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_company_unit_number')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -225,7 +222,7 @@
                                 <option value="other">Other</option>
                             </select>
                             @error('vehicle_type')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -236,7 +233,7 @@
                             <x-base.form-input type="text" wire:model="vehicle_gvwr"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_gvwr')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -244,7 +241,7 @@
                             <x-base.form-input type="text" wire:model="vehicle_tire_size"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_tire_size')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -262,7 +259,7 @@
                                 <option value="other">Other</option>
                             </select>
                             @error('vehicle_fuel_type')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -274,7 +271,7 @@
                                 <label for="vehicle_irp_apportioned_plate_third_party">IRP Apportioned Plate</label>
                             </div>
                             @error('vehicle_irp_apportioned_plate')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -286,11 +283,11 @@
                                 class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
                                 <option value="">Select State</option>
                                 @foreach ($usStates as $code => $name)
-                                    <option value="{{ $code }}">{{ $name }}</option>
+                                <option value="{{ $code }}">{{ $name }}</option>
                                 @endforeach
                             </select>
                             @error('vehicle_registration_state')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -298,7 +295,7 @@
                             <x-base.form-input type="text" wire:model="vehicle_registration_number"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_registration_number')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -309,7 +306,7 @@
                             <input type="date" wire:model="vehicle_registration_expiration_date"
                                 class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
                             @error('vehicle_registration_expiration_date')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -321,7 +318,7 @@
                                 <label for="vehicle_permanent_tag_third_party">Permanent Tag</label>
                             </div>
                             @error('vehicle_permanent_tag')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -331,7 +328,7 @@
                         <x-base.form-input type="text" wire:model="vehicle_location"
                             class="w-full px-3 py-2 border rounded" />
                         @error('vehicle_location')
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
 
@@ -340,7 +337,7 @@
                         <x-base.form-textarea wire:model="vehicle_notes" class="w-full px-3 py-2 border rounded"
                             rows="3" />
                         @error('vehicle_notes')
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
 
@@ -363,7 +360,7 @@
                                 *</label>
                         </div>
                         @error('contract_agreed')
-                            <span class="text-red-500 text-sm block mt-1">{{ $message }}</span>
+                        <span class="text-red-500 text-sm block mt-1">{{ $message }}</span>
                         @enderror
                     </div>
                 </div>
@@ -380,7 +377,7 @@
                             <x-base.form-input type="text" wire:model="third_party_name"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('third_party_name')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -388,7 +385,7 @@
                             <x-base.form-input type="number" wire:model="third_party_phone"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('third_party_phone')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -398,7 +395,7 @@
                         <x-base.form-input type="email" wire:model="third_party_email"
                             class="w-full px-3 py-2 border rounded" />
                         @error('third_party_email')
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
 
@@ -408,7 +405,7 @@
                             <x-base.form-input type="text" wire:model="third_party_dba"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('third_party_dba')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -416,7 +413,7 @@
                             <x-base.form-input type="text" wire:model="third_party_contact"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('third_party_contact')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -427,7 +424,7 @@
                             <x-base.form-input type="text" wire:model="third_party_address"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('third_party_address')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -435,7 +432,7 @@
                             <x-base.form-input type="text" wire:model="third_party_fein"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('third_party_fein')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -444,72 +441,72 @@
                         Information (will be assigned to carrier)</h4>
 
                     @if (count($existingVehicles) > 0)
-                        <div class="mb-5 p-4 bg-blue-50 rounded-lg border border-blue-100 shadow-sm">
-                            <h5 class="font-medium mb-2">Existing Vehicles</h5>
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
-                                    <thead>
-                                        <tr>
-                                            <th
-                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Make</th>
-                                            <th
-                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Model</th>
-                                            <th
-                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Year</th>
-                                            <th
-                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                VIN</th>
-                                            <th
-                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Type</th>
-                                            <th
-                                                class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($existingVehicles as $vehicle)
-                                            <tr class="{{ $selectedVehicleId == $vehicle->id ? 'bg-blue-100' : '' }}">
-                                                <td class="py-2 px-3 border-b">{{ $vehicle->make }}</td>
-                                                <td class="py-2 px-3 border-b">{{ $vehicle->model }}</td>
-                                                <td class="py-2 px-3 border-b">{{ $vehicle->year }}</td>
-                                                <td class="py-2 px-3 border-b">{{ $vehicle->vin }}</td>
-                                                <td class="py-2 px-3 border-b">{{ ucfirst($vehicle->type) }}</td>
-                                                <td class="py-2 px-3 border-b">
-                                                    <div class="flex space-x-2">
-                                                        <button type="button"
-                                                            wire:click="selectVehicle({{ $vehicle->id }})"
-                                                            class="px-2.5 py-1.5 bg-blue-800 text-white rounded-md text-sm hover:bg-blue-800 transition duration-150 ease-in-out flex items-center">
-                                                            Select
-                                                        </button>
-                                                        <a href="{{ route('admin.vehicles.show', $vehicle->id) }}"
-                                                            target="_blank"
-                                                            class="px-2.5 py-1.5 bg-gray-500 text-white rounded-md text-sm hover:bg-gray-600 transition duration-150 ease-in-out flex items-center">
-                                                            View
-                                                        </a>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-3">
-                                <button type="button" wire:click="clearVehicleForm"
-                                    class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition duration-150 ease-in-out flex items-center shadow-sm">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20"
-                                        fill="currentColor">
-                                        <path fill-rule="evenodd"
-                                            d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                    Register New Vehicle
-                                </button>
-                            </div>
+                    <div class="mb-5 p-4 bg-blue-50 rounded-lg border border-blue-100 shadow-sm">
+                        <h5 class="font-medium mb-2">Existing Vehicles</h5>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
+                                <thead>
+                                    <tr>
+                                        <th
+                                            class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Make</th>
+                                        <th
+                                            class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Model</th>
+                                        <th
+                                            class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Year</th>
+                                        <th
+                                            class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            VIN</th>
+                                        <th
+                                            class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Type</th>
+                                        <th
+                                            class="py-2.5 px-4 border-b bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($existingVehicles as $vehicle)
+                                    <tr class="{{ $selectedVehicleId == $vehicle->id ? 'bg-blue-100' : '' }}">
+                                        <td class="py-2 px-3 border-b">{{ $vehicle->make }}</td>
+                                        <td class="py-2 px-3 border-b">{{ $vehicle->model }}</td>
+                                        <td class="py-2 px-3 border-b">{{ $vehicle->year }}</td>
+                                        <td class="py-2 px-3 border-b">{{ $vehicle->vin }}</td>
+                                        <td class="py-2 px-3 border-b">{{ ucfirst($vehicle->type) }}</td>
+                                        <td class="py-2 px-3 border-b">
+                                            <div class="flex space-x-2">
+                                                <button type="button"
+                                                    wire:click="selectVehicle({{ $vehicle->id }})"
+                                                    class="px-2.5 py-1.5 bg-blue-800 text-white rounded-md text-sm hover:bg-blue-800 transition duration-150 ease-in-out flex items-center">
+                                                    Select
+                                                </button>
+                                                <a href="{{ route('admin.vehicles.show', $vehicle->id) }}"
+                                                    target="_blank"
+                                                    class="px-2.5 py-1.5 bg-gray-500 text-white rounded-md text-sm hover:bg-gray-600 transition duration-150 ease-in-out flex items-center">
+                                                    View
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
+                        <div class="mt-3">
+                            <button type="button" wire:click="clearVehicleForm"
+                                class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition duration-150 ease-in-out flex items-center shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20"
+                                    fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                Register New Vehicle
+                            </button>
+                        </div>
+                    </div>
                     @endif
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -518,7 +515,7 @@
                             <x-base.form-input type="text" wire:model="vehicle_make"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_make')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -526,7 +523,7 @@
                             <x-base.form-input type="text" wire:model="vehicle_model"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_model')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -537,7 +534,7 @@
                             <x-base.form-input type="number" wire:model="vehicle_year"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_year')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -545,7 +542,7 @@
                             <x-base.form-input type="text" wire:model="vehicle_vin"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_vin')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -556,7 +553,7 @@
                             <x-base.form-input type="text" wire:model="vehicle_company_unit_number"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_company_unit_number')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -571,7 +568,7 @@
                                 <option value="other">Other</option>
                             </select>
                             @error('vehicle_type')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -582,7 +579,7 @@
                             <x-base.form-input type="text" wire:model="vehicle_gvwr"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_gvwr')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -590,7 +587,7 @@
                             <x-base.form-input type="text" wire:model="vehicle_tire_size"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_tire_size')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -608,7 +605,7 @@
                                 <option value="other">Other</option>
                             </select>
                             @error('vehicle_fuel_type')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -620,7 +617,7 @@
                                 <label for="vehicle_irp_apportioned_plate_third_party">IRP Apportioned Plate</label>
                             </div>
                             @error('vehicle_irp_apportioned_plate')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -632,11 +629,11 @@
                                 class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
                                 <option value="">Select State</option>
                                 @foreach ($usStates as $code => $name)
-                                    <option value="{{ $code }}">{{ $name }}</option>
+                                <option value="{{ $code }}">{{ $name }}</option>
                                 @endforeach
                             </select>
                             @error('vehicle_registration_state')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -644,7 +641,7 @@
                             <x-base.form-input type="text" wire:model="vehicle_registration_number"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_registration_number')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -655,7 +652,7 @@
                             <input type="date" wire:model="vehicle_registration_expiration_date"
                                 class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
                             @error('vehicle_registration_expiration_date')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -667,7 +664,7 @@
                                 <label for="vehicle_permanent_tag_third_party">Permanent Tag</label>
                             </div>
                             @error('vehicle_permanent_tag')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -677,7 +674,7 @@
                         <x-base.form-input type="text" wire:model="vehicle_location"
                             class="w-full px-3 py-2 border rounded" />
                         @error('vehicle_location')
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
 
@@ -686,7 +683,7 @@
                         <x-base.form-textarea wire:model="vehicle_notes" class="w-full px-3 py-2 border rounded"
                             rows="3" />
                         @error('vehicle_notes')
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
 
@@ -697,7 +694,7 @@
                             {{ $email_sent ? 'Email Sent' : 'Send Document Signing Request' }}
                         </button>
                         @if ($email_sent)
-                            <span class="text-green-500 ml-2 self-center">Email has been sent successfully</span>
+                        <span class="text-green-500 ml-2 self-center">Email has been sent successfully</span>
                         @endif
 
                         <button type="button" wire:click="sendThirdPartyEmail"
@@ -717,12 +714,12 @@
                     class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
                     <option value="">Select State</option>
                     @foreach ($usStates as $code => $name)
-                        <option value="{{ $code }}">{{ $name }}</option>
+                    <option value="{{ $code }}">{{ $name }}</option>
                     @endforeach
                 </select>
 
                 @error('applying_location')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                <span class="text-red-500 text-sm">{{ $message }}</span>
                 @enderror
             </div>
 
@@ -738,7 +735,7 @@
                         Eligible to work in the United States *
                     </span>
                     @error('eligible_to_work')
-                        <span class="text-red-500 text-sm block">{{ $message }}</span>
+                    <span class="text-red-500 text-sm block">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -749,16 +746,9 @@
                         Can speak and understand English
                     </span>
                     @error('can_speak_english')
-                        <span class="text-red-500 text-sm block">{{ $message }}</span>
+                    <span class="text-red-500 text-sm block">{{ $message }}</span>
                     @enderror
-                </div>
-
-                {{-- <div class="mb-4">
-            <label class="flex items-center">
-                <input type="checkbox" wire:model="can_speak_english" class="mr-2">
-                <span>Can speak and understand English</span>
-            </label>
-        </div> --}}
+                </div>                
 
                 <div class="mb-4">
                     <label class="flex items-center">
@@ -772,7 +762,7 @@
                         <input type="date" wire:model="twic_expiration_date"
                             class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
                         @error('twic_expiration_date')
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
                 </div>
@@ -793,11 +783,11 @@
                     class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
                     <option value="">Select Source</option>
                     @foreach ($referralSources as $value => $label)
-                        <option value="{{ $value }}">{{ $label }}</option>
+                    <option value="{{ $value }}">{{ $label }}</option>
                     @endforeach
                 </select>
                 @error('how_did_hear')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                <span class="text-red-500 text-sm">{{ $message }}</span>
                 @enderror
 
                 <div x-show="$wire.how_did_hear === 'employee_referral'" x-transition class="mt-2">
@@ -805,7 +795,7 @@
                     <x-base.form-input type="text" wire:model="referral_employee_name"
                         class="w-full px-3 py-2 border rounded" />
                     @error('referral_employee_name')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -814,7 +804,7 @@
                     <x-base.form-input type="text" wire:model="how_did_hear_other"
                         class="w-full px-3 py-2 border rounded" />
                     @error('how_did_hear_other')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
             </div>
@@ -833,88 +823,88 @@
 
                 <div x-show="$wire.has_work_history" x-transition>
                     @foreach ($work_histories as $index => $history)
-                        <div class="p-5 border rounded-lg bg-white shadow-sm mb-5">
-                            <div class="flex justify-between mb-2">
-                                <h4 class="font-medium">Work History #{{ $index + 1 }}</h4>
-                                @if (count($work_histories) > 1)
-                                    <button type="button" wire:click="removeWorkHistory({{ $index }})"
-                                        class="text-red-500">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                            fill="currentColor">
-                                            <path fill-rule="evenodd"
-                                                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
-                                @endif
-                            </div>
+                    <div class="p-5 border rounded-lg bg-white shadow-sm mb-5">
+                        <div class="flex justify-between mb-2">
+                            <h4 class="font-medium">Work History #{{ $index + 1 }}</h4>
+                            @if (count($work_histories) > 1)
+                            <button type="button" wire:click="removeWorkHistory({{ $index }})"
+                                class="text-red-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                    fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            @endif
+                        </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                <div>
-                                    <label class="block mb-1">Previous Company *</label>
-                                    <x-base.form-input type="text"
-                                        wire:model.defer="work_histories.{{ $index }}.previous_company"
-                                        class="w-full px-3 py-2 border rounded" />
-                                    @error('work_histories.' . $index . '.previous_company')
-                                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                                <div>
-                                    <label class="block mb-1">Position *</label>
-                                    <x-base.form-input type="text"
-                                        wire:model.defer="work_histories.{{ $index }}.position"
-                                        class="w-full px-3 py-2 border rounded" />
-                                    @error('work_histories.' . $index . '.position')
-                                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                <div>
-                                    <label class="block mb-1">Start Date *</label>
-                                    <input type="date"
-                                        wire:model.defer="work_histories.{{ $index }}.start_date"
-                                        class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
-                                    @error('work_histories.' . $index . '.start_date')
-                                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                                <div>
-                                    <label class="block mb-1">End Date *</label>
-                                    <input type="date"
-                                        wire:model.defer="work_histories.{{ $index }}.end_date"
-                                        class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
-                                    @error('work_histories.' . $index . '.end_date')
-                                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="block mb-1">Location *</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block mb-1">Previous Company *</label>
                                 <x-base.form-input type="text"
-                                    wire:model.defer="work_histories.{{ $index }}.location"
+                                    wire:model.defer="work_histories.{{ $index }}.previous_company"
                                     class="w-full px-3 py-2 border rounded" />
-                                @error('work_histories.' . $index . '.location')
-                                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @error('work_histories.' . $index . '.previous_company')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
                                 @enderror
                             </div>
-
-                            <div class="mb-4">
-                                <label class="block mb-1">Reason for Leaving</label>
+                            <div>
+                                <label class="block mb-1">Position *</label>
                                 <x-base.form-input type="text"
-                                    wire:model.defer="work_histories.{{ $index }}.reason_for_leaving"
+                                    wire:model.defer="work_histories.{{ $index }}.position"
                                     class="w-full px-3 py-2 border rounded" />
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="block mb-1">Reference Contact</label>
-                                <x-base.form-input type="text"
-                                    wire:model.defer="work_histories.{{ $index }}.reference_contact"
-                                    class="w-full px-3 py-2 border rounded" placeholder="Name and phone number" />
+                                @error('work_histories.' . $index . '.position')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
                             </div>
                         </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block mb-1">Start Date *</label>
+                                <input type="date"
+                                    wire:model.defer="work_histories.{{ $index }}.start_date"
+                                    class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                                @error('work_histories.' . $index . '.start_date')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div>
+                                <label class="block mb-1">End Date *</label>
+                                <input type="date"
+                                    wire:model.defer="work_histories.{{ $index }}.end_date"
+                                    class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                                @error('work_histories.' . $index . '.end_date')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block mb-1">Location *</label>
+                            <x-base.form-input type="text"
+                                wire:model.defer="work_histories.{{ $index }}.location"
+                                class="w-full px-3 py-2 border rounded" />
+                            @error('work_histories.' . $index . '.location')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block mb-1">Reason for Leaving</label>
+                            <x-base.form-input type="text"
+                                wire:model.defer="work_histories.{{ $index }}.reason_for_leaving"
+                                class="w-full px-3 py-2 border rounded" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block mb-1">Reference Contact</label>
+                            <x-base.form-input type="text"
+                                wire:model.defer="work_histories.{{ $index }}.reference_contact"
+                                class="w-full px-3 py-2 border rounded" placeholder="Name and phone number" />
+                        </div>
+                    </div>
                     @endforeach
 
                     <button type="button" wire:click="addWorkHistory"

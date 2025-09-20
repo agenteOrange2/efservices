@@ -131,13 +131,10 @@ class DriverTesting extends Model implements HasMedia
     public static function getStatuses(): array
     {
         return [
-            'pending' => 'Pending',
-            'scheduled' => 'Scheduled',
-            'in_progress' => 'In Progress',
-            'completed' => 'Completed',
-            'approved' => 'Approved',
-            'rejected' => 'Rejected',
-            'cancelled' => 'Cancelled',
+            'Schedule' => 'Schedule',
+            'In Progress' => 'In Progress', 
+            'Completed' => 'Completed',
+            'Cancelled' => 'Cancelled',
         ];
     }
 
@@ -166,13 +163,9 @@ class DriverTesting extends Model implements HasMedia
     public static function getTestResults(): array
     {
         return [
-            'negative' => 'Negative',
-            'positive' => 'Positive',
-            'inconclusive' => 'Inconclusive',
-            'diluted' => 'Diluted',
-            'refusal' => 'Refusal to Test',
-            'canceled' => 'Canceled',
-            'pending' => 'Pending'
+            'Positive' => 'Positive',
+            'Negative' => 'Negative', 
+            'Refusal' => 'Refusal',
         ];
     }
     

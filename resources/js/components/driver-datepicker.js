@@ -189,6 +189,13 @@ import { Litepicker } from "litepicker";
                     },
                     setup: (picker) => {
                         picker.on('selected', (date1, date2) => {
+                            // Prevenir bucles infinitos
+                            if (picker.options.element._updating) {
+                                return;
+                            }
+                            
+                            picker.options.element._updating = true;
+                            
                             // FORZAR formato MM/DD/YYYY específicamente para drivers
                             const month = String(date1.getMonth() + 1).padStart(2, '0');
                             const day = String(date1.getDate()).padStart(2, '0');
@@ -198,11 +205,18 @@ import { Litepicker } from "litepicker";
                             // Actualizar el input con el formato correcto
                             picker.options.element.value = formattedDate;
                             
-                            // Disparar eventos para Livewire
-                            const inputEvent = new Event('input', { bubbles: true });
-                            const changeEvent = new Event('change', { bubbles: true });
-                            picker.options.element.dispatchEvent(inputEvent);
-                            picker.options.element.dispatchEvent(changeEvent);
+                            // Disparar eventos para Livewire con un pequeño delay
+                            setTimeout(() => {
+                                const inputEvent = new Event('input', { bubbles: true });
+                                const changeEvent = new Event('change', { bubbles: true });
+                                picker.options.element.dispatchEvent(inputEvent);
+                                picker.options.element.dispatchEvent(changeEvent);
+                                
+                                // Limpiar flag después de los eventos
+                                setTimeout(() => {
+                                    picker.options.element._updating = false;
+                                }, 50);
+                            }, 10);
                             
                             console.log('Driver Datepicker: Fecha seleccionada:', formattedDate);
                         });

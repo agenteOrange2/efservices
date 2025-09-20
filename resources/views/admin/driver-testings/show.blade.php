@@ -80,7 +80,11 @@
                                             @elseif($driverTesting->status == 'rejected') bg-danger text-white
                                             @else bg-warning text-white @endif shadow-sm">
                                             <i class="fas @if ($driverTesting->status == 'approved') fa-check-circle @elseif($driverTesting->status == 'rejected') fa-times-circle @else fa-hourglass-half @endif mr-2"></i>
-                                            {{ \App\Models\Admin\Driver\DriverTesting::getStatuses()[$driverTesting->status] }}
+                                            @php
+                                                $statuses = \App\Models\Admin\Driver\DriverTesting::getStatuses();
+                                                $statusDisplay = $statuses[$driverTesting->status] ?? ucfirst($driverTesting->status);
+                                            @endphp
+                                            {{ $statusDisplay }}
                                         </span>
                                     </div>
                                     
@@ -271,17 +275,33 @@
                                         @php
                                             $pdfUrl = $driverTesting->getFirstMediaUrl('drug_test_pdf');
                                         @endphp
+                                        <script>
+                                            console.log('PDF Debug Info:', {
+                                                'media_count': {{ $driverTesting->getMedia('drug_test_pdf')->count() }},
+                                                'pdf_url': '{{ $pdfUrl }}',
+                                                'has_media': {{ $driverTesting->hasMedia('drug_test_pdf') ? 'true' : 'false' }},
+                                                'testing_id': {{ $driverTesting->id }}
+                                            });
+                                        </script>
                                         <div class="w-full border border-slate-200 rounded-md overflow-hidden bg-gray-50">
                                             <!-- PDF Viewer con fallbacks -->
                                             <div class="pdf-viewer-container" style="height: 700px;">
-                                                <iframe 
-                                                    src="{{ $pdfUrl }}#toolbar=1&navpanes=1&scrollbar=1" 
-                                                    class="w-full h-full border-0" 
-                                                    title="PDF Preview"
-                                                    onload="this.style.opacity=1"
-                                                    style="opacity:0; transition: opacity 0.3s;"
-                                                    onerror="handlePdfError(this)">
-                                                </iframe>
+                                                @if($pdfUrl)
+                                                    <iframe 
+                                                        src="{{ $pdfUrl }}#toolbar=1&navpanes=1&scrollbar=1&view=FitH" 
+                                                        class="w-full h-full border-0" 
+                                                        title="PDF Preview"
+                                                        onload="console.log('PDF iframe loaded successfully'); this.style.opacity=1;"
+                                                        style="opacity:0; transition: opacity 0.3s;"
+                                                        onerror="console.error('PDF iframe failed to load'); handlePdfError(this);">
+                                                    </iframe>
+                                                @else
+                                                    <div class="text-center py-10">
+                                                        <x-base.lucide class="w-16 h-16 mx-auto text-gray-500 mb-4" icon="file-x" />
+                                                        <p class="text-gray-700 mb-4">No PDF available</p>
+                                                        <p class="text-sm text-gray-500">The PDF will be generated when the test is created or updated.</p>
+                                                    </div>
+                                                @endif
                                                 
                                                 <!-- Fallback para navegadores que no soportan iframe con PDF -->
                                                 <div id="pdf-fallback" class="hidden text-center py-10">
@@ -544,6 +564,7 @@
         // Función para manejar errores del PDF viewer
         function handlePdfError(iframe) {
             console.warn('PDF iframe failed to load, showing fallback');
+            console.log('PDF URL:', iframe.src);
             
             // Ocultar el iframe
             iframe.style.display = 'none';
@@ -554,9 +575,33 @@
                 fallback.classList.remove('hidden');
             }
         }
+        
+        // Función para verificar si el PDF se puede cargar
+        function checkPdfAccess(url) {
+            fetch(url, { method: 'HEAD' })
+                .then(response => {
+                    console.log('PDF accessibility check:', {
+                        status: response.status,
+                        contentType: response.headers.get('content-type'),
+                        url: url
+                    });
+                    
+                    if (!response.ok) {
+                        console.error('PDF not accessible:', response.status, response.statusText);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking PDF accessibility:', error);
+                });
+        }
 
         // Verificar si el PDF se cargó correctamente después de un tiempo
         document.addEventListener('DOMContentLoaded', function() {
+            // Verificar acceso al PDF cuando se carga la página
+            @if($pdfUrl)
+                checkPdfAccess('{{ $pdfUrl }}');
+            @endif
+            
             const iframe = document.querySelector('.pdf-viewer-container iframe');
             if (iframe) {
                 // Timeout para verificar si el PDF se cargó

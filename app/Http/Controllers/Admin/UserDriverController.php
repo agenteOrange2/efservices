@@ -66,26 +66,30 @@ class UserDriverController extends Controller
      */
     public function edit(Carrier $carrier, UserDriverDetail $userDriverDetail)
     {
-        // Verify that the driver belongs to the carrier
-        $driverCarrierId = (int)$userDriverDetail->carrier_id;
-        $requestedCarrierId = (int)$carrier->id;
-        
-        if ($driverCarrierId !== $requestedCarrierId) {
-            Log::warning('UserDriverController@edit - Driver does not belong to carrier', [
-                'driver_carrier_id' => $driverCarrierId,
-                'requested_carrier_id' => $requestedCarrierId
-            ]);
-            
-            return redirect()
-                ->route('admin.carrier.user_drivers.index', $carrier)
-                ->with('error', 'El conductor no pertenece a este transportista');
+        // Ensure the driver belongs to the carrier
+        if ($userDriverDetail->carrier_id !== $carrier->id) {
+            abort(404);
         }
-        
-        // Return the new component-based edit form
-        return view('admin.user_driver.edit', [
-            'carrier' => $carrier,
-            'userDriverDetail' => $userDriverDetail
+
+        // Load necessary relationships for the edit form
+        $userDriverDetail->load([
+            'user',
+            /*
+            'addresses',
+            'licenses',
+            'application',
+            'accidents',
+            'trafficConvictions',
+            'medicalQualification',
+            'trainingSchools',
+            'relatedEmployments',
+            'employmentCompanies',
+            'criminalHistory',
+            'employmentHistory'
+            */
         ]);
+
+        return view('admin.user_driver.edit', compact('carrier', 'userDriverDetail'));
     }
     
     /**

@@ -179,7 +179,7 @@ class SideMenu
                         'icon' => "alert-circle",
                         'route_name' => "admin.vehicles.emergency-repairs.index",
                         'params' => [],
-                        'title' => "Emergency Repairs",
+                        'title' => "Repairs",
                     ],
                 ],
             ],

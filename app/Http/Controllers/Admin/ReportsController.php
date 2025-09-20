@@ -686,7 +686,7 @@ class ReportsController extends Controller
         $drivers = UserDriverDetail::with('user')
             ->where('carrier_id', $carrierId)
             ->whereHas('user', function ($query) {
-                $query->where('status', 'active');
+                $query->where('status', 1);
             })
             ->get();
 

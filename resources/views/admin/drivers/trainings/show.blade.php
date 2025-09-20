@@ -101,24 +101,71 @@
                                         @php
                                             // Extraer el ID del video de YouTube si es una URL de YouTube
                                             $videoId = null;
-                                            if (strpos($training->video_url, 'youtube.com') !== false) {
-                                                parse_str(parse_url($training->video_url, PHP_URL_QUERY), $params);
-                                                $videoId = $params['v'] ?? null;
-                                            } elseif (strpos($training->video_url, 'youtu.be') !== false) {
-                                                $videoId = substr(parse_url($training->video_url, PHP_URL_PATH), 1);
+                                            $videoUrl = trim($training->video_url);
+                                            
+                                            // Validar que la URL no esté vacía
+                                            if (empty($videoUrl)) {
+                                                $videoId = null;
+                                            } elseif (strpos($videoUrl, 'youtube.com') !== false) {
+                                                $parsedUrl = parse_url($videoUrl);
+                                                if (isset($parsedUrl['query'])) {
+                                                    parse_str($parsedUrl['query'], $params);
+                                                    $videoId = $params['v'] ?? null;
+                                                }
+                                            } elseif (strpos($videoUrl, 'youtu.be') !== false) {
+                                                $parsedUrl = parse_url($videoUrl);
+                                                if (isset($parsedUrl['path'])) {
+                                                    $videoId = trim(substr($parsedUrl['path'], 1));
+                                                    // Remover parámetros adicionales si existen
+                                                    $videoId = explode('?', $videoId)[0];
+                                                }
+                                            }
+                                            
+                                            // Validar que el videoId sea válido (solo caracteres alfanuméricos, guiones y guiones bajos)
+                                            if ($videoId && !preg_match('/^[a-zA-Z0-9_-]+$/', $videoId)) {
+                                                $videoId = null;
                                             }
                                         @endphp
 
                                         @if ($videoId)
-                                            <!-- Contenedor con aspect ratio responsive -->
+                                            <!-- Contenedor con aspect ratio responsive y manejo de errores -->
                                             <div class="relative w-full"
                                                 style="padding-bottom: 56.25%; /* 16:9 aspect ratio */">
-                                                <iframe src="https://www.youtube.com/embed/{{ $videoId }}"
+                                                <!-- Loading state -->
+                                                <div id="video-loading-{{ $videoId }}" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
+                                                    <div class="flex flex-col items-center">
+                                                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+                                                        <p class="text-sm text-gray-600">Loading video...</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Error state (hidden by default) -->
+                                                <div id="video-error-{{ $videoId }}" class="absolute inset-0 flex items-center justify-center bg-red-50 rounded-lg border-2 border-red-200 hidden">
+                                                    <div class="flex flex-col items-center text-center p-4">
+                                                        <x-base.lucide class="w-12 h-12 text-red-500 mb-2" icon="alert-circle" />
+                                                        <h3 class="text-lg font-medium text-red-800 mb-2">Video Load Error</h3>
+                                                        <p class="text-sm text-red-600 mb-4">The video could not be loaded. This might be due to network restrictions or content policies.</p>
+                                                        <button onclick="retryVideoLoad('{{ $videoId }}')" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors">
+                                                            Try Again
+                                                        </button>
+                                                        <a href="https://www.youtube.com/watch?v={{ $videoId }}" target="_blank" rel="noopener noreferrer" class="mt-2 text-red-600 hover:underline text-sm">
+                                                            Watch on YouTube
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- YouTube iframe con dominio nocookie para evitar CSP -->
+                                                <iframe id="video-iframe-{{ $videoId }}" 
+                                                    src="https://www.youtube-nocookie.com/embed/{{ $videoId }}?rel=0&modestbranding=1&showinfo=0"
                                                     frameborder="0"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                                     allowfullscreen
                                                     class="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg border-0"
-                                                    loading="lazy" title="Training Video"></iframe>
+                                                    loading="lazy" 
+                                                    title="Training Video"
+                                                    onload="handleVideoLoad('{{ $videoId }}')"
+                                                    onerror="handleVideoError('{{ $videoId }}')">
+                                                </iframe>
                                             </div>
                                         @else
                                             <!-- Opción alternativa: detectar otros tipos de video -->
@@ -133,11 +180,40 @@
 
                                             @if ($isVimeo && $vimeoId)
                                                 <div class="relative w-full" style="padding-bottom: 56.25%;">
-                                                    <iframe src="https://player.vimeo.com/video/{{ $vimeoId }}"
-                                                        frameborder="0" allow="autoplay; fullscreen; picture-in-picture"
+                                                    <!-- Loading state for Vimeo -->
+                                                    <div id="video-loading-vimeo-{{ $vimeoId }}" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
+                                                        <div class="flex flex-col items-center">
+                                                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+                                                            <p class="text-sm text-gray-600">Loading video...</p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Error state for Vimeo -->
+                                                    <div id="video-error-vimeo-{{ $vimeoId }}" class="absolute inset-0 flex items-center justify-center bg-red-50 rounded-lg border-2 border-red-200 hidden">
+                                                        <div class="flex flex-col items-center text-center p-4">
+                                                            <x-base.lucide class="w-12 h-12 text-red-500 mb-2" icon="alert-circle" />
+                                                            <h3 class="text-lg font-medium text-red-800 mb-2">Video Load Error</h3>
+                                                            <p class="text-sm text-red-600 mb-4">The Vimeo video could not be loaded. This might be due to network restrictions or content policies.</p>
+                                                            <button onclick="retryVimeoLoad('{{ $vimeoId }}')" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors">
+                                                                Try Again
+                                                            </button>
+                                                            <a href="https://vimeo.com/{{ $vimeoId }}" target="_blank" rel="noopener noreferrer" class="mt-2 text-red-600 hover:underline text-sm">
+                                                                Watch on Vimeo
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <iframe id="video-iframe-vimeo-{{ $vimeoId }}" 
+                                                        src="https://player.vimeo.com/video/{{ $vimeoId }}?dnt=1&quality_selector=1"
+                                                        frameborder="0" 
+                                                        allow="autoplay; fullscreen; picture-in-picture"
                                                         allowfullscreen
                                                         class="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg border-0"
-                                                        loading="lazy" title="Training Video"></iframe>
+                                                        loading="lazy" 
+                                                        title="Training Video"
+                                                        onload="handleVimeoLoad('{{ $vimeoId }}')"
+                                                        onerror="handleVimeoError('{{ $vimeoId }}')">
+                                                    </iframe>
                                                 </div>
                                             @else
                                                 <!-- Video HTML5 nativo o enlace externo -->
@@ -361,4 +437,244 @@
             </div>
         </div>
     </div>
+
+    <!-- JavaScript para manejo de videos -->
+    <script>
+        // Handle video loading states and errors
+        function handleVideoLoad(videoId) {
+            console.log('✅ YouTube video loaded successfully:', videoId);
+            const loadingEl = document.getElementById('video-loading-' + videoId);
+            if (loadingEl) {
+                loadingEl.style.display = 'none';
+            }
+        }
+
+        function handleVideoError(videoId) {
+            console.error('❌ YouTube video failed to load:', videoId);
+            const loadingEl = document.getElementById('video-loading-' + videoId);
+            const errorEl = document.getElementById('video-error-' + videoId);
+            
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (errorEl) errorEl.classList.remove('hidden');
+        }
+
+        function retryVideoLoad(videoId) {
+            console.log('🔄 Retrying YouTube video load:', videoId);
+            const iframe = document.getElementById('video-iframe-' + videoId);
+            const errorEl = document.getElementById('video-error-' + videoId);
+            const loadingEl = document.getElementById('video-loading-' + videoId);
+            
+            if (errorEl) errorEl.classList.add('hidden');
+            if (loadingEl) loadingEl.style.display = 'flex';
+            
+            if (iframe) {
+                const currentSrc = iframe.src;
+                iframe.src = '';
+                setTimeout(() => {
+                    iframe.src = currentSrc + (currentSrc.includes('?') ? '&' : '?') + 'retry=' + Date.now();
+                }, 100);
+            }
+        }
+
+        // Handle Vimeo video loading states and errors
+        function handleVimeoLoad(videoId) {
+            console.log('✅ Vimeo video loaded successfully:', videoId);
+            const loadingEl = document.getElementById('video-loading-vimeo-' + videoId);
+            if (loadingEl) {
+                loadingEl.style.display = 'none';
+            }
+        }
+
+        function handleVimeoError(videoId) {
+            console.error('❌ Vimeo video failed to load:', videoId);
+            const loadingEl = document.getElementById('video-loading-vimeo-' + videoId);
+            const errorEl = document.getElementById('video-error-vimeo-' + videoId);
+            
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (errorEl) errorEl.classList.remove('hidden');
+        }
+
+        function retryVimeoLoad(videoId) {
+            console.log('🔄 Retrying Vimeo video load:', videoId);
+            const iframe = document.getElementById('video-iframe-vimeo-' + videoId);
+            const errorEl = document.getElementById('video-error-vimeo-' + videoId);
+            const loadingEl = document.getElementById('video-loading-vimeo-' + videoId);
+            
+            if (errorEl) errorEl.classList.add('hidden');
+            if (loadingEl) loadingEl.style.display = 'flex';
+            
+            if (iframe) {
+                const currentSrc = iframe.src;
+                iframe.src = '';
+                setTimeout(() => {
+                    iframe.src = currentSrc + (currentSrc.includes('?') ? '&' : '?') + 'retry=' + Date.now();
+                }, 100);
+            }
+        }
+
+        // Detectar problemas de CSP y mixed content
+        window.addEventListener('securitypolicyviolation', function(e) {
+            console.error('CSP Violation detected:', {
+                blockedURI: e.blockedURI,
+                violatedDirective: e.violatedDirective,
+                originalPolicy: e.originalPolicy
+            });
+            
+            // Si es un problema con YouTube, mostrar mensaje específico
+            if (e.blockedURI && e.blockedURI.includes('youtube')) {
+                console.warn('YouTube video blocked by CSP. Consider updating Content Security Policy.');
+            }
+        });
+
+        // Detectar errores de mixed content
+        window.addEventListener('error', function(e) {
+            if (e.target && e.target.tagName === 'IFRAME' && e.target.src.includes('youtube')) {
+                console.error('YouTube iframe error:', e);
+                const videoId = e.target.id.replace('video-iframe-', '');
+                if (videoId) {
+                    handleVideoError(videoId);
+                }
+            }
+        }, true);
+
+        // Función para verificar el estado de la red
+        function checkNetworkStatus() {
+            if (!navigator.onLine) {
+                console.warn('Network is offline. Videos may not load properly.');
+                return false;
+            }
+            return true;
+        }
+
+        // Verificar estado de la red al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            checkNetworkStatus();
+            
+            // Agregar listeners para cambios en el estado de la red
+            window.addEventListener('online', function() {
+                console.log('Network is back online');
+            });
+            
+            window.addEventListener('offline', function() {
+                console.warn('Network went offline');
+            });
+        });
+
+        // Debug and logging functions
+        function logVideoDebugInfo(platform, videoId) {
+            console.group(`🔍 ${platform.toUpperCase()} Video Debug Info for:`, videoId);
+            console.log('User Agent:', navigator.userAgent);
+            console.log('Online Status:', navigator.onLine);
+            console.log('Protocol:', window.location.protocol);
+            console.log('Platform:', platform);
+            console.log('Video ID:', videoId);
+            console.log('CSP Violations:', getCSPViolations());
+            console.log('Mixed Content:', checkMixedContent());
+            console.log('Network Status:', getNetworkStatus());
+            console.log('Video URL Validation:', validateVideoUrl(platform, videoId));
+            console.groupEnd();
+        }
+
+        function validateVideoUrl(platform, videoId) {
+            const validations = {
+                youtube: {
+                    idPattern: /^[a-zA-Z0-9_-]{11}$/,
+                    isValid: /^[a-zA-Z0-9_-]{11}$/.test(videoId),
+                    expectedLength: 11
+                },
+                vimeo: {
+                    idPattern: /^[0-9]+$/,
+                    isValid: /^[0-9]+$/.test(videoId),
+                    expectedLength: 'variable (numeric)'
+                }
+            };
+            
+            const validation = validations[platform];
+            if (!validation) {
+                return { error: 'Unknown platform: ' + platform };
+            }
+            
+            return {
+                platform: platform,
+                videoId: videoId,
+                isValidFormat: validation.isValid,
+                pattern: validation.idPattern.toString(),
+                expectedLength: validation.expectedLength,
+                actualLength: videoId.length
+            };
+        }
+
+        function getCSPViolations() {
+            // Check for common CSP issues
+            const violations = [];
+            
+            // Check if we're on HTTPS but trying to load HTTP content
+            if (window.location.protocol === 'https:') {
+                violations.push('HTTPS site - ensure all video sources use HTTPS');
+            }
+            
+            // Check for common CSP headers that might block embeds
+            if (document.querySelector('meta[http-equiv="Content-Security-Policy"]')) {
+                violations.push('CSP meta tag detected - check frame-src and media-src directives');
+            }
+            
+            return violations.length > 0 ? violations : 'No obvious CSP violations detected';
+        }
+
+        function checkMixedContent() {
+            const protocol = window.location.protocol;
+            const isSecure = protocol === 'https:';
+            
+            return {
+                pageProtocol: protocol,
+                isSecurePage: isSecure,
+                recommendation: isSecure ? 'Use HTTPS video sources (nocookie domains recommended)' : 'HTTP page - mixed content less likely',
+                youtubeRecommendation: isSecure ? 'Use youtube-nocookie.com for better CSP compliance' : 'Standard youtube.com should work',
+                vimeoRecommendation: 'Use dnt=1 parameter for privacy compliance'
+            };
+        }
+
+        function getNetworkStatus() {
+            return {
+                online: navigator.onLine,
+                connection: navigator.connection ? {
+                    effectiveType: navigator.connection.effectiveType,
+                    downlink: navigator.connection.downlink,
+                    rtt: navigator.connection.rtt,
+                    saveData: navigator.connection.saveData
+                } : 'Connection API not supported',
+                timestamp: new Date().toISOString()
+            };
+        }
+
+        // Timeout handling for slow loading videos
+        function setupVideoTimeout(platform, videoId, timeoutMs = 15000) {
+            const elementId = platform === 'vimeo' ? `video-loading-vimeo-${videoId}` : `video-loading-${videoId}`;
+            
+            setTimeout(() => {
+                const loadingEl = document.getElementById(elementId);
+                if (loadingEl && loadingEl.style.display !== 'none') {
+                    console.warn(`⏰ ${platform.toUpperCase()} video loading timeout for:`, videoId);
+                    if (platform === 'vimeo') {
+                        handleVimeoError(videoId);
+                    } else {
+                        handleVideoError(videoId);
+                    }
+                }
+            }, timeoutMs);
+        }
+
+        // Timeout para videos que tardan mucho en cargar
+        document.addEventListener('DOMContentLoaded', function() {
+            const iframes = document.querySelectorAll('iframe[id^="video-iframe-"]');
+            
+            iframes.forEach(function(iframe) {
+                const videoId = iframe.id.replace('video-iframe-', '').replace('vimeo-', '');
+                const platform = iframe.id.includes('vimeo') ? 'vimeo' : 'youtube';
+                
+                // Setup timeout for each video
+                setupVideoTimeout(platform, videoId, 10000);
+            });
+        });
+    </script>
 @endsection

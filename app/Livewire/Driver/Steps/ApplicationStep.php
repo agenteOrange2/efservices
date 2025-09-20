@@ -225,20 +225,54 @@ class ApplicationStep extends Component
     public function updatedApplyingPosition($value)
     {
         if ($value === 'owner_operator') {
+            // Clear third party fields
+            $this->third_party_name = null;
+            $this->third_party_phone = null;
+            $this->third_party_email = null;
+            $this->third_party_dba = null;
+            $this->third_party_address = null;
+            $this->third_party_contact = null;
+            $this->third_party_fein = null;
+            $this->email_sent = false;
+            
             // Auto-fill owner fields if driver info is available
             $this->autoFillOwnerFields();
-        } else {
-            // Clear owner fields if not owner operator
+        } elseif ($value === 'third_party_driver') {
+            // Clear owner fields
             $this->owner_name = null;
             $this->owner_phone = null;
             $this->owner_email = null;
             $this->contract_agreed = false;
+        } else {
+            // Clear both owner and third party fields for other positions
+            $this->owner_name = null;
+            $this->owner_phone = null;
+            $this->owner_email = null;
+            $this->contract_agreed = false;
+            
+            $this->third_party_name = null;
+            $this->third_party_phone = null;
+            $this->third_party_email = null;
+            $this->third_party_dba = null;
+            $this->third_party_address = null;
+            $this->third_party_contact = null;
+            $this->third_party_fein = null;
+            $this->email_sent = false;
         }
+        
+        // Synchronize with vehicle ownership_type using Constants mapping
+        $this->syncApplyingPositionWithOwnership($value);
         
         // Reload existing vehicles when position changes
         if ($this->driverId && ($value === 'owner_operator' || $value === 'third_party_driver')) {
             $this->loadExistingVehicles();
         }
+        
+        Log::info('Applying position cambiado', [
+            'driver_id' => $this->driverId,
+            'new_position' => $value,
+            'previous_position' => $this->applying_position ?? 'none'
+        ]);
     }
     
     /**
@@ -616,8 +650,12 @@ class ApplicationStep extends Component
                 ]
             );
             
-            // Guardar detalles específicos de Owner Operator en la nueva tabla
+            // Limpiar detalles del tipo anterior y guardar detalles del tipo actual
             if ($this->applying_position === 'owner_operator') {
+                // Eliminar detalles de Third Party si existen
+                $application->thirdPartyDetail()->delete();
+                
+                // Guardar detalles de Owner Operator
                 $application->ownerOperatorDetail()->updateOrCreate(
                     [],
                     [
@@ -629,14 +667,15 @@ class ApplicationStep extends Component
                     ]
                 );
                 
-                Log::info('Detalles de Owner Operator guardados', [
+                Log::info('Detalles de Owner Operator guardados y Third Party eliminados', [
                     'application_id' => $application->id,
                     'owner_name' => $this->owner_name
                 ]);
-            }
-            
-            // Guardar detalles específicos de Third Party en la nueva tabla
-            if ($this->applying_position === 'third_party_driver') {
+            } elseif ($this->applying_position === 'third_party_driver') {
+                // Eliminar detalles de Owner Operator si existen
+                $application->ownerOperatorDetail()->delete();
+                
+                // Guardar detalles de Third Party
                 $application->thirdPartyDetail()->updateOrCreate(
                     [],
                     [
@@ -652,9 +691,17 @@ class ApplicationStep extends Component
                     ]
                 );
                 
-                Log::info('Detalles de Third Party guardados', [
+                Log::info('Detalles de Third Party guardados y Owner Operator eliminados', [
                     'application_id' => $application->id,
                     'third_party_name' => $this->third_party_name
+                ]);
+            } else {
+                // Si no es owner_operator ni third_party_driver, eliminar ambos tipos de detalles
+                $application->ownerOperatorDetail()->delete();
+                $application->thirdPartyDetail()->delete();
+                
+                Log::info('Detalles de Owner Operator y Third Party eliminados para tipo: ' . $this->applying_position, [
+                    'application_id' => $application->id
                 ]);
             }
 
@@ -1178,6 +1225,101 @@ class ApplicationStep extends Component
             ]);
         }
     }
+    /**
+     * Synchronize applying_position with vehicle ownership_type
+     */
+    protected function syncApplyingPositionWithOwnership($applyingPosition)
+    {
+        try {
+            // Get corresponding ownership_type using Constants mapping
+            $ownershipType = Constants::mapApplyingPositionToOwnership($applyingPosition);
+            
+            // If there's a vehicle associated, update its ownership_type
+            if ($this->vehicle_id) {
+                $vehicle = \App\Models\Admin\Vehicle\Vehicle::find($this->vehicle_id);
+                if ($vehicle && $vehicle->ownership_type !== $ownershipType) {
+                    $vehicle->ownership_type = $ownershipType;
+                    $vehicle->save();
+                    
+                    Log::info('Vehicle ownership_type synchronized with applying_position', [
+                        'vehicle_id' => $this->vehicle_id,
+                        'applying_position' => $applyingPosition,
+                        'ownership_type' => $ownershipType
+                    ]);
+                }
+            }
+            
+            // Update all vehicles associated with this driver if no specific vehicle is selected
+            if (!$this->vehicle_id && $this->driverId) {
+                $vehicles = \App\Models\Admin\Vehicle\Vehicle::where('user_driver_detail_id', $this->driverId)->get();
+                foreach ($vehicles as $vehicle) {
+                    if ($vehicle->ownership_type !== $ownershipType) {
+                        $vehicle->ownership_type = $ownershipType;
+                        $vehicle->save();
+                        
+                        Log::info('Driver vehicle ownership_type synchronized', [
+                            'vehicle_id' => $vehicle->id,
+                            'driver_id' => $this->driverId,
+                            'applying_position' => $applyingPosition,
+                            'ownership_type' => $ownershipType
+                        ]);
+                    }
+                }
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Error synchronizing applying_position with ownership_type', [
+                'applying_position' => $applyingPosition,
+                'vehicle_id' => $this->vehicle_id,
+                'driver_id' => $this->driverId,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * Map applying_position to ownership_type using Constants helper
+     */
+    public function mapApplyingPositionToOwnership($applyingPosition)
+    {
+        return Constants::mapApplyingPositionToOwnership($applyingPosition);
+    }
+    
+    /**
+     * Map ownership_type to applying_position using Constants helper
+     */
+    public function mapOwnershipToApplyingPosition($ownershipType)
+    {
+        return Constants::mapOwnershipToApplyingPosition($ownershipType);
+    }
+    
+    /**
+     * Validate consistency between ownership_type and applying_position
+     */
+    public function validateOwnershipConsistency($ownershipType = null, $applyingPosition = null)
+    {
+        $ownershipType = $ownershipType ?? ($this->vehicle_id ? \App\Models\Admin\Vehicle\Vehicle::find($this->vehicle_id)->ownership_type ?? null : null);
+        $applyingPosition = $applyingPosition ?? $this->applying_position;
+        
+        if (!$ownershipType || !$applyingPosition) {
+            return [
+                'is_consistent' => false,
+                'error' => 'Missing ownership_type or applying_position for validation'
+            ];
+        }
+        
+        $expectedApplyingPosition = Constants::mapOwnershipToApplyingPosition($ownershipType);
+        $expectedOwnershipType = Constants::mapApplyingPositionToOwnership($applyingPosition);
+        
+        return [
+            'is_consistent' => ($expectedApplyingPosition === $applyingPosition && $expectedOwnershipType === $ownershipType),
+            'expected_applying_position' => $expectedApplyingPosition,
+            'expected_ownership_type' => $expectedOwnershipType,
+            'current_applying_position' => $applyingPosition,
+            'current_ownership_type' => $ownershipType
+        ];
+    }
+
     // Render
     public function render()
     {

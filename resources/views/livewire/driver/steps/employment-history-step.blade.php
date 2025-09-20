@@ -247,7 +247,8 @@
                     <div>
                         <x-base.form-label for="unemployment_form.start_date">Start Date*</x-base.form-label>   
                         <input type="text" 
-                            wire:model="unemployment_form.start_date" 
+                            value="{{ $unemployment_form['start_date'] ?? '' }}" 
+                            onchange="@this.set('unemployment_form.start_date', this.value)" 
                             placeholder="MM/DD/YYYY" 
                             class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                         @error('unemployment_form.start_date')
@@ -257,7 +258,8 @@
                     <div>
                         <x-base.form-label for="unemployment_form.end_date">End Date*</x-base.form-label>   
                         <input type="text" 
-                            wire:model="unemployment_form.end_date" 
+                            value="{{ $unemployment_form['end_date'] ?? '' }}" 
+                            onchange="@this.set('unemployment_form.end_date', this.value)" 
                             placeholder="MM/DD/YYYY" 
                             class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                         @error('unemployment_form.end_date')
@@ -395,7 +397,8 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Employed From*</label>
                             <input type="text" 
-                                wire:model="company_form.employed_from" 
+                                value="{{ $company_form['employed_from'] ?? '' }}" 
+                                onchange="@this.set('company_form.employed_from', this.value)" 
                                 placeholder="MM/DD/YYYY" 
                                 class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                             @error('company_form.employed_from')
@@ -405,7 +408,8 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Employed To*</label>
                             <input type="text" 
-                                wire:model="company_form.employed_to" 
+                                value="{{ $company_form['employed_to'] ?? '' }}" 
+                                onchange="@this.set('company_form.employed_to', this.value)" 
                                 placeholder="MM/DD/YYYY" 
                                 class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                             @error('company_form.employed_to')
@@ -605,7 +609,8 @@
                     <div class="mt-3 w-full flex-1 xl:mt-0">
                         <x-base.form-label for="related_employment_form.start_date">Start Date*</x-base.form-label>                        
                         <input type="text" 
-                            wire:model="related_employment_form.start_date" 
+                            value="{{ $related_employment_form['start_date'] ?? '' }}" 
+                            onchange="@this.set('related_employment_form.start_date', this.value)" 
                             placeholder="MM/DD/YYYY" 
                             class="driver-datepicker form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
                         @error('related_employment_form.start_date')
@@ -615,7 +620,8 @@
                     <div>
                         <x-base.form-label for="related_employment_form.end_date">End Date*</x-base.form-label>
                         <input type="text" 
-                            wire:model="related_employment_form.end_date" 
+                            value="{{ $related_employment_form['end_date'] ?? '' }}" 
+                            onchange="@this.set('related_employment_form.end_date', this.value)" 
                             placeholder="MM/DD/YYYY" 
                             class="driver-datepicker form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
                         @error('related_employment_form.end_date')

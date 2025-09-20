@@ -70,7 +70,7 @@
         <p class="text-base mb-4">By signing below, I agree to use an electronic signature and acknowledge that an electronic signature is as legally binding as an ink signature.</p>
         
         <!-- Include SignaturePad library -->
-        <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
+        <script src="{{ asset('js/signature_pad.umd.min.js') }}"></script>
 
         <div x-data="{ 
             showModal: false,

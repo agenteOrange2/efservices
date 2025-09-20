@@ -126,7 +126,7 @@ class CarrierDocumentController extends Controller
     public function update(Request $request, Carrier $carrier, CarrierDocument $document)
     {
         $validated = $request->validate([
-            'status' => 'required|integer|in:0,1,2',
+            'status' => 'required|integer|in:0,1,2,3',
             'document' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
             'notes' => 'nullable|string',
             'date' => 'nullable|date',

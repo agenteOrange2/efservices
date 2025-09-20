@@ -49,9 +49,9 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- First Name -->
             <div>
-                <x-base.form-label for="first_name">First Name *</x-base.form-label>
-                <x-base.form-input id="first_name" type="text" wire:model="first_name" placeholder="Enter first name" class="@error('first_name') border-red-500 @enderror" />
-                @error('first_name')
+                <x-base.form-label for="name">First Name *</x-base.form-label>
+                <x-base.form-input id="name" type="text" wire:model="name" placeholder="Enter first name" class="@error('name') border-red-500 @enderror" />
+                @error('name')
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                 @enderror
             </div>
