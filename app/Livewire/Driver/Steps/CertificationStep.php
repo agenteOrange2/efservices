@@ -79,6 +79,40 @@ class CertificationStep extends Component
         }
     }
     
+    /**
+     * Load criminal history data for PDF generation
+     * @param UserDriverDetail $userDriverDetail
+     * @return array
+     */
+    protected function loadCriminalHistoryData($userDriverDetail = null)
+    {
+        // If no parameter provided, use the current driver
+        if (!$userDriverDetail) {
+            $userDriverDetail = UserDriverDetail::find($this->driverId);
+        }
+        
+        $criminalData = [
+            'has_criminal_charges' => false,
+            'has_felony_conviction' => false,
+            'has_minister_permit' => false,
+            'fcra_consent' => false,
+            'background_info_consent' => false
+        ];
+
+        if ($userDriverDetail && $userDriverDetail->criminalHistory) {
+            $criminal = $userDriverDetail->criminalHistory;
+            $criminalData = [
+                'has_criminal_charges' => $criminal->has_criminal_charges ?? false,
+                'has_felony_conviction' => $criminal->has_felony_conviction ?? false,
+                'has_minister_permit' => $criminal->has_minister_permit ?? false,
+                'fcra_consent' => $criminal->fcra_consent ?? false,
+                'background_info_consent' => $criminal->background_info_consent ?? false
+            ];
+        }
+
+        return $criminalData;
+    }
+    
     // Guardar certificación
     public function saveCertification()
     {
@@ -390,6 +424,7 @@ class CertificationStep extends Component
             ['view' => 'pdf.driver.courses', 'filename' => 'driver_courses.pdf', 'title' => 'Driver Courses'], // AGREGADO: PDF para cursos de driver_courses
             ['view' => 'pdf.driver.traffic', 'filename' => 'traffic_violations.pdf', 'title' => 'Traffic Violations'],
             ['view' => 'pdf.driver.accident', 'filename' => 'accident_record.pdf', 'title' => 'Accident Record'],
+            ['view' => 'pdf.driver.criminal_history', 'filename' => 'criminal_history_investigation.pdf', 'title' => 'Criminal History Investigation'], // AGREGADO: PDF para criminal history
             ['view' => 'pdf.driver.fmcsr', 'filename' => 'fmcsr_requirements.pdf', 'title' => 'FMCSR Requirements'],
             ['view' => 'pdf.driver.employment', 'filename' => 'employment_history.pdf', 'title' => 'Employment History'],
             ['view' => 'pdf.driver.certification', 'filename' => 'certification.pdf', 'title' => 'Certification'],
@@ -412,11 +447,20 @@ class CertificationStep extends Component
                 }
                 
                 // CORRECCIÓN 5: Preparar datos formateados para el PDF
+                // Construir el nombre completo usando la misma lógica que general.blade.php
+                $fullName = ($userDriverDetail->user->name ?? 'N/A') . ' ' . 
+                           ($userDriverDetail->middle_name ?? '') . ' ' . 
+                           ($userDriverDetail->last_name ?? 'N/A');
+                $fullName = trim(preg_replace('/\s+/', ' ', $fullName)); // Limpiar espacios extra
+                
                 $pdfData = [
                     'userDriverDetail' => $userDriverDetail,
                     'signaturePath' => $signaturePath,
+                    'signature' => $signaturePath,
+                    'fullName' => $fullName, // AGREGADO: Nombre completo construido correctamente
                     'title' => $step['title'],
                     'date' => now()->format('d/m/Y'),
+                    'currentDate' => now()->format('m/d/Y'),
                     // Formatear fechas específicas para PDFs
                     'formatted_dates' => [
                         'date_of_birth' => $userDriverDetail->date_of_birth ? $userDriverDetail->date_of_birth->format('m/d/Y') : '',
@@ -426,7 +470,16 @@ class CertificationStep extends Component
                     // Datos adicionales para evitar errores en vistas
                     'user_name' => $userDriverDetail->user->name ?? 'N/A',
                     'user_email' => $userDriverDetail->user->email ?? 'N/A',
-                    'carrier_name' => $userDriverDetail->carrier->name ?? 'N/A'
+                    'carrier_name' => $userDriverDetail->carrier->name ?? 'N/A',
+                    // Datos para criminal history
+                    'criminalHistory' => [
+                        'has_criminal_charges' => $userDriverDetail->has_criminal_charges ?? false,
+                        'has_felony_conviction' => $userDriverDetail->has_felony_conviction ?? false,
+                        'has_minister_permit' => $userDriverDetail->has_minister_permit ?? false,
+                        'fcra_consent' => $userDriverDetail->fcra_consent ?? false,
+                        'background_info_consent' => $userDriverDetail->background_info_consent ?? false
+                    ],
+                    'carrier' => $userDriverDetail->carrier
                 ];
                 
                 $pdf = App::make('dompdf.wrapper')->loadView($step['view'], $pdfData);
@@ -698,9 +751,16 @@ class CertificationStep extends Component
     private function generateCombinedPDF(UserDriverDetail $userDriverDetail, $signatureImage)
     {
         try {
+            // Construir el nombre completo usando la misma lógica que general.blade.php
+            $fullName = ($userDriverDetail->user->name ?? 'N/A') . ' ' . 
+                       ($userDriverDetail->middle_name ?? '') . ' ' . 
+                       ($userDriverDetail->last_name ?? 'N/A');
+            $fullName = trim(preg_replace('/\s+/', ' ', $fullName)); // Limpiar espacios extra
+            
             $pdf = App::make('dompdf.wrapper')->loadView('pdf.driver.complete_application', [
                 'userDriverDetail' => $userDriverDetail,
                 'signature' => $signatureImage,
+                'fullName' => $fullName,
                 'date' => now()->format('m/d/Y')
             ]);
             
@@ -934,11 +994,7 @@ class CertificationStep extends Component
                     'last_name' => $userDriverDetail->last_name ?? '',
                     'phone' => $userDriverDetail->phone ?? 'N/A',
                 ],
-if ($applyingPosition === 'owner_operator') {
-    $this->generateLeaseAgreementPDF($userDriverDetail, $signaturePath);
-} elseif ($applyingPosition === 'third_party_driver') {
-    $this->generateThirdPartyDocuments($userDriverDetail, $signaturePath);
-}                'vehicle' => $vehicle,
+                'vehicle' => $vehicle,
                 'date' => now()->format('F j, Y'),
                 'signaturePath' => $signaturePath,
                 'signature' => null // Para compatibilidad
