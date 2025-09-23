@@ -214,8 +214,13 @@ class DriverCertificationStep extends Component
                 try {
                     DB::beginTransaction();
                     
-                    // Obtener el driver detail
-                    $userDriverDetail = UserDriverDetail::find($this->driverId);
+                    // Obtener el driver detail con todas las relaciones necesarias
+                    $userDriverDetail = UserDriverDetail::with([
+                        'criminalHistory',
+                        'carrier',
+                        'user',
+                        'application.details'
+                    ])->find($this->driverId);
                     if (!$userDriverDetail) {
                         throw new \Exception('Driver not found');
                     }
@@ -315,6 +320,7 @@ class DriverCertificationStep extends Component
             ['view' => 'pdf.driver.training', 'filename' => 'training_schools.pdf', 'title' => 'Training Schools'],
             ['view' => 'pdf.driver.traffic', 'filename' => 'traffic_violations.pdf', 'title' => 'Traffic Violations'],
             ['view' => 'pdf.driver.accident', 'filename' => 'accident_record.pdf', 'title' => 'Accident Record '],
+            ['view' => 'pdf.driver.criminal_history', 'filename' => 'criminal_history_investigation.pdf', 'title' => 'Criminal History Investigation'],
             ['view' => 'pdf.driver.fmcsr', 'filename' => 'fmcsr_requirements.pdf', 'title' => 'FMCSR Requirements'],
             ['view' => 'pdf.driver.employment', 'filename' => 'employment_history.pdf', 'title' => 'Employment History'],
             ['view' => 'pdf.driver.certification', 'filename' => 'certification.pdf', 'title' => 'Certification'],
@@ -352,6 +358,15 @@ class DriverCertificationStep extends Component
             $this->generateCombinedPDF($userDriverDetail, $signaturePath);
         } else {
             Log::info('No se generó el PDF combinado porque la vista no existe', [
+                'driver_id' => $userDriverDetail->id
+            ]);
+        }
+        
+        // Generar el PDF separado de Criminal History Investigation
+        if (view()->exists('pdf.driver.criminal_history')) {
+            $this->generateCriminalHistoryPDF($userDriverDetail, $signaturePath);
+        } else {
+            Log::info('No se generó el PDF de Criminal History porque la vista no existe', [
                 'driver_id' => $userDriverDetail->id
             ]);
         }
@@ -581,10 +596,30 @@ class DriverCertificationStep extends Component
     private function generateCombinedPDF(UserDriverDetail $userDriverDetail, $signatureImage)
     {
         try {
+            // Cargar los datos del Criminal History Investigation
+            $criminalHistory = null;
+            if ($userDriverDetail->criminalHistory) {
+                $criminalHistory = [
+                    'has_criminal_charges' => $userDriverDetail->criminalHistory->has_criminal_charges ?? false,
+                    'has_felony_conviction' => $userDriverDetail->criminalHistory->has_felony_conviction ?? false,
+                    'has_minister_permit' => $userDriverDetail->criminalHistory->has_minister_permit ?? false,
+                    'fcra_consent' => $userDriverDetail->criminalHistory->fcra_consent ?? false,
+                    'background_info_consent' => $userDriverDetail->criminalHistory->background_info_consent ?? false,
+                ];
+            }
+            
+            // Preparar el nombre completo del usuario
+            $fullName = trim(($userDriverDetail->user->name ?? 'N/A') . ' ' . 
+                            ($userDriverDetail->middle_name ?? '') . ' ' . 
+                            ($userDriverDetail->last_name ?? 'N/A'));
+            
             $pdf = App::make('dompdf.wrapper')->loadView('pdf.driver.complete_application', [
                 'userDriverDetail' => $userDriverDetail,
                 'signature' => $signatureImage,
-                'date' => now()->format('m/d/Y')
+                'date' => now()->format('m/d/Y'),
+                'criminalHistory' => $criminalHistory,
+                'carrier' => $userDriverDetail->carrier,
+                'fullName' => $fullName
             ]);
             
             // Asegurarnos de que estamos usando el ID correcto
@@ -634,6 +669,85 @@ class DriverCertificationStep extends Component
             }
         } catch (\Exception $e) {
             Log::error('Error generando PDF combinado', [
+                'driver_id' => $userDriverDetail->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+    
+    /**
+     * Generar un PDF específico para Criminal History Investigation
+     */
+    private function generateCriminalHistoryPDF(UserDriverDetail $userDriverDetail, $signatureImage)
+    {
+        try {
+            // Cargar los datos del Criminal History Investigation
+            $criminalHistory = null;
+            if ($userDriverDetail->criminalHistory) {
+                $criminalHistory = [
+                    'has_criminal_charges' => $userDriverDetail->criminalHistory->has_criminal_charges ?? false,
+                    'has_felony_conviction' => $userDriverDetail->criminalHistory->has_felony_conviction ?? false,
+                    'has_minister_permit' => $userDriverDetail->criminalHistory->has_minister_permit ?? false,
+                    'fcra_consent' => $userDriverDetail->criminalHistory->fcra_consent ?? false,
+                    'background_info_consent' => $userDriverDetail->criminalHistory->background_info_consent ?? false,
+                ];
+            }
+            
+            // Preparar el nombre completo del usuario
+            $fullName = trim(($userDriverDetail->user->name ?? 'N/A') . ' ' . 
+                            ($userDriverDetail->middle_name ?? '') . ' ' . 
+                            ($userDriverDetail->last_name ?? 'N/A'));
+            
+            $pdf = App::make('dompdf.wrapper')->loadView('pdf.driver.criminal_history', [
+                'userDriverDetail' => $userDriverDetail,
+                'signature' => $signatureImage,
+                'date' => now()->format('m/d/Y'),
+                'criminalHistory' => $criminalHistory,
+                'carrier' => $userDriverDetail->carrier,
+                'fullName' => $fullName
+            ]);
+            
+            // Asegurarnos de que estamos usando el ID correcto
+            $driverId = $userDriverDetail->id;
+            $filePath = 'driver/' . $driverId . '/criminal_history_investigation.pdf';
+            
+            Log::info('Guardando PDF de Criminal History Investigation para conductor', ['driver_id' => $driverId, 'file_path' => $filePath]);
+            
+            // Guardar el PDF usando Storage
+            $pdfContent = $pdf->output();
+            Storage::disk('public')->put($filePath, $pdfContent);
+            
+            // Guardar PDF temporalmente para adjuntarlo a MediaLibrary
+            $tempPath = tempnam(sys_get_temp_dir(), 'criminal_history_') . '.pdf';
+            file_put_contents($tempPath, $pdfContent);
+            
+            // Adjuntar el PDF a la aplicación
+            if ($userDriverDetail->application) {
+                try {
+                    // Agregar el archivo a la colección de criminal history
+                    $userDriverDetail->application->addMedia($tempPath)
+                        ->toMediaCollection('criminal_history_pdf');
+                        
+                    // Registrar información para confirmar
+                    Log::info('PDF de Criminal History agregado a Media Library', [
+                        'driver_id' => $driverId,
+                        'application_id' => $userDriverDetail->application->id
+                    ]);
+                    
+                } catch (\Exception $e) {
+                    // Si falla, registrar error
+                    Log::error('Error adding criminal history media to application', [
+                        'error' => $e->getMessage(),
+                        'driver_id' => $driverId
+                    ]);
+                }
+                
+                // Limpiar archivo temporal
+                @unlink($tempPath);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error generando PDF de Criminal History Investigation', [
                 'driver_id' => $userDriverDetail->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
