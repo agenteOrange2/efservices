@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('state')->nullable();
             $table->date('certification_date')->nullable();
             $table->text('experience')->nullable();
+            $table->decimal('years_experience', 4, 2)->nullable();
             $table->date('expiration_date')->nullable();
             $table->string('status')->default('Active')->nullable();
             $table->timestamps();

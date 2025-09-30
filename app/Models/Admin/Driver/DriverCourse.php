@@ -22,6 +22,7 @@ class DriverCourse extends Model implements HasMedia
         'state',
         'certification_date',
         'experience',
+        'years_experience',
         'expiration_date',
     ];
 

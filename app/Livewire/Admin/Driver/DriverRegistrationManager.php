@@ -32,20 +32,42 @@ class DriverRegistrationManager extends Component
     ];
 
     // Mounting the component
-    public function mount(Carrier $carrier, $userDriverDetail = null)
+    public function mount(Carrier $carrier, UserDriverDetail $userDriverDetail = null)
     {
+        Log::info('DriverRegistrationManager::mount - Componente iniciado', [
+            'carrier_id' => $carrier->id,
+            'carrier_name' => $carrier->name ?? 'N/A',
+            'driver_id' => $userDriverDetail->id ?? 'null',
+            'is_edit_mode' => !is_null($userDriverDetail)
+        ]);
+        
         $this->carrier = $carrier;
-
-        // Check if we're in edit mode
-        if ($userDriverDetail) {
-            $this->driverId = $userDriverDetail->id;
-            $this->userDriverDetail = $userDriverDetail;
-
-            // If the driver has a current step, use it
-            if ($userDriverDetail->current_step) {
-                $this->currentStep = $userDriverDetail->current_step;
-            }
+        $this->userDriverDetail = $userDriverDetail;
+        $this->isEditMode = !is_null($userDriverDetail);
+        
+        Log::info('DriverRegistrationManager::mount - Modo de edición detectado', [
+            'is_edit_mode' => $this->isEditMode,
+            'driver_user_id' => $userDriverDetail->user_id ?? 'null'
+        ]);
+        
+        // Set current step based on edit mode
+        $this->currentStep = $this->isEditMode ? 'personal' : 'personal';
+        
+        Log::info('DriverRegistrationManager::mount - Step actual configurado', [
+            'current_step' => $this->currentStep
+        ]);
+        
+        // Initialize step service
+        $this->stepService = app(DriverStepService::class);
+        
+        // If editing, load existing data
+        if ($this->isEditMode) {
+            Log::info('DriverRegistrationManager::mount - Cargando datos existentes para edición');
+            $this->loadExistingData();
+            Log::info('DriverRegistrationManager::mount - Datos existentes cargados exitosamente');
         }
+        
+        Log::info('DriverRegistrationManager::mount - Componente montado exitosamente');
     }
 
     // Go to the next step

@@ -31,14 +31,25 @@ class CriminalHistoryStep extends Component
     protected function rules()
     {
         $rules = [
-            'has_criminal_charges' => 'required|boolean',
-            'has_felony_conviction' => 'required|boolean',
+            'has_criminal_charges' => 'required|accepted',
+            'has_felony_conviction' => 'required|accepted',
             'has_minister_permit' => 'required|boolean',
             'fcra_consent' => 'accepted',
             'background_info_consent' => 'accepted'
         ];
         
         return $rules;
+    }
+    
+    // Mensajes de validación personalizados
+    protected function messages()
+    {
+        return [
+            'has_criminal_charges.accepted' => 'You must mark "Yes" in the criminal charges field to consent.',
+            'has_felony_conviction.accepted' => 'You must mark "Yes" in the felony convictions field to consent.',
+            'fcra_consent.accepted' => 'You must accept the FCRA consent to continue.',
+            'background_info_consent.accepted' => 'You must accept the background information consent to continue.'
+        ];
     }
     
     // Inicialización

@@ -100,8 +100,6 @@
     <div class="mb-6 border-b pb-4">
         <div x-data="{ hasPositiveTest: @entangle('has_positive_drug_test') }">
             <div class="flex items-center mb-2">
-                <input type="checkbox" id="has_positive_drug_test" wire:model="has_positive_drug_test"
-                    x-model="hasPositiveTest" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded mr-2">
                     <div class="flex items-center">
                         <span class="mr-2 text-sm {{ $has_positive_drug_test ? 'text-gray-400' : 'text-gray-700 font-medium' }}">No</span>
                         <label class="inline-flex items-center cursor-pointer">                            

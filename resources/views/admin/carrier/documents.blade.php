@@ -3,7 +3,7 @@
 @php
     $breadcrumbLinks = [
         ['label' => 'App', 'url' => route('admin.dashboard')],
-        ['label' => 'Carriers', 'url' => route('admin.carrier.user_carriers.index', $carrier->slug)],
+        ['label' => 'Carriers', 'url' => route('admin.carrier.index')],
         ['label' => 'Documents for ' . $carrier->name, 'active' => true],
     ];
 @endphp
@@ -34,8 +34,23 @@
         </div>
     </div>
 
-    <h1 class="text-xl font-semibold">
-        Documents for {{ $carrier->name }}</h1>
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-xl font-semibold">
+            Documents for {{ $carrier->name }}
+        </h1>
+        
+        <!-- Botón para generar documentos faltantes -->
+        <form action="{{ route('admin.carrier.generate-missing-documents', $carrier->slug) }}" method="POST" class="inline">
+            @csrf
+            <button type="submit" 
+                class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Generar Documentos Faltantes
+            </button>
+        </form>
+    </div>
 
     <div class="col-span-12">
         <div class="mt-2 overflow-auto lg:overflow-visible">

@@ -472,13 +472,7 @@ class CertificationStep extends Component
                     'user_email' => $userDriverDetail->user->email ?? 'N/A',
                     'carrier_name' => $userDriverDetail->carrier->name ?? 'N/A',
                     // Datos para criminal history
-                    'criminalHistory' => [
-                        'has_criminal_charges' => $userDriverDetail->has_criminal_charges ?? false,
-                        'has_felony_conviction' => $userDriverDetail->has_felony_conviction ?? false,
-                        'has_minister_permit' => $userDriverDetail->has_minister_permit ?? false,
-                        'fcra_consent' => $userDriverDetail->fcra_consent ?? false,
-                        'background_info_consent' => $userDriverDetail->background_info_consent ?? false
-                    ],
+                    'criminalHistory' => $this->loadCriminalHistoryData($userDriverDetail),
                     'carrier' => $userDriverDetail->carrier
                 ];
                 
@@ -761,7 +755,9 @@ class CertificationStep extends Component
                 'userDriverDetail' => $userDriverDetail,
                 'signature' => $signatureImage,
                 'fullName' => $fullName,
-                'date' => now()->format('m/d/Y')
+                'date' => now()->format('m/d/Y'),
+                'carrier' => $userDriverDetail->carrier,
+                'criminalHistory' => $this->loadCriminalHistoryData($userDriverDetail)
             ]);
             
             // Asegurarnos de que estamos usando el ID correcto

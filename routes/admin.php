@@ -510,13 +510,9 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
 
     // Ruta para gestionar documentos del carrier
     Route::get('/{carrier:slug}/documents', [CarrierController::class, 'documents'])->name('documents');
+    Route::post('/{carrier:slug}/generate-missing-documents', [CarrierController::class, 'generateMissingDocuments'])->name('generate-missing-documents');
     Route::put('/document/{document}/update-status', [CarrierController::class, 'updateDocumentStatus'])->name('document.update-status');
     Route::post('/{carrier}/delete-photo', [CarrierController::class, 'deletePhoto'])->name('delete-photo');
-    
-    // Rutas para gestionar información bancaria
-    Route::post('/{carrier}/banking/approve', [CarrierController::class, 'approveBanking'])->name('banking.approve');
-    Route::post('/{carrier}/banking/reject', [CarrierController::class, 'rejectBanking'])->name('banking.reject');
-    Route::put('/{carrier}/banking/update', [CarrierController::class, 'updateBanking'])->name('banking.update');
 
     // Rutas anidadas para UserCarriers
     Route::prefix('{carrier:slug}/user-carriers')->name('user_carriers.')->group(function () {
@@ -532,6 +528,16 @@ Route::prefix('carrier')->name('carrier.')->group(function () {
             ->name('delete-photo');
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS PARA GESTIONAR INFORMACIÓN BANCARIA DE CARRIERS
+|--------------------------------------------------------------------------
+*/
+Route::post('/carrier/{carrier:slug}/banking/store', [CarrierController::class, 'storeBanking'])->name('carrier.banking.store');
+Route::post('/carrier/{carrier:slug}/banking/approve', [CarrierController::class, 'approveBanking'])->name('carrier.banking.approve');
+Route::post('/carrier/{carrier:slug}/banking/reject', [CarrierController::class, 'rejectBanking'])->name('carrier.banking.reject');
+Route::put('/carrier/{carrier:slug}/banking/update', [CarrierController::class, 'updateBanking'])->name('carrier.banking.update');
 
 /*
 |--------------------------------------------------------------------------

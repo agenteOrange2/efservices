@@ -60,6 +60,7 @@ class TrainingStep extends Component
                 $rules["courses.{$index}.city"] = 'required|string|max:255';
                 $rules["courses.{$index}.state"] = 'required|string|max:255';
                 $rules["courses.{$index}.certification_date"] = 'required|date';
+                $rules["courses.{$index}.years_experience"] = 'nullable|numeric|min:0|max:99.99';
             }
         }
 
@@ -175,6 +176,7 @@ class TrainingStep extends Component
                     'state' => $course->state ?? '',
                     'certification_date' => $course->certification_date ? $course->certification_date->format('Y-m-d') : null,
                     'experience' => $course->experience ?? '',
+                    'years_experience' => $course->years_experience ?? '',
                     'expiration_date' => $course->expiration_date ? $course->expiration_date->format('Y-m-d') : null,
                     'certificates' => $certificates,
                     'temp_certificate_tokens' => []
@@ -310,6 +312,7 @@ class TrainingStep extends Component
                                 'state' => $courseData['state'] ?? null,
                                 'certification_date' => $courseData['certification_date'] ?? null,
                                 'experience' => $courseData['experience'] ?? null,
+                                'years_experience' => $courseData['years_experience'] ?? null,
                                 'expiration_date' => !empty($courseData['expiration_date']) ? $courseData['expiration_date'] : null,
                                 'status' => 'Active',
                             ]);
@@ -340,6 +343,7 @@ class TrainingStep extends Component
                             'state' => $courseData['state'] ?? null,
                             'certification_date' => $courseData['certification_date'] ?? null,
                             'experience' => $courseData['experience'] ?? null,
+                            'years_experience' => $courseData['years_experience'] ?? null,
                             'expiration_date' => !empty($courseData['expiration_date']) ? $courseData['expiration_date'] : null,
                             'status' => 'Active',
                         ]);

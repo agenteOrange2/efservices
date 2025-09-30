@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use App\Models\DocumentType;
 use Illuminate\Http\Request;
 use App\Models\CarrierDocument;
+use App\Models\CarrierBankingDetail;
 use App\Models\UserDriverDetail;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
@@ -151,6 +152,68 @@ class CarrierController extends Controller
         $documentTypes = DocumentType::all(); // Aquí cargamos los tipos de documentos
 
         return view('admin.carrier.documents', compact('carrier', 'documents', 'documentTypes'));
+    }
+
+    /**
+     * Generar documentos faltantes para un carrier específico.
+     */
+    public function generateMissingDocuments(Carrier $carrier)
+    {
+        try {
+            // Obtener todos los tipos de documentos
+            $allDocumentTypes = DocumentType::all();
+            
+            // Obtener los tipos de documentos que ya existen para este carrier
+            $existingDocumentTypeIds = CarrierDocument::where('carrier_id', $carrier->id)
+                ->pluck('document_type_id')
+                ->toArray();
+            
+            // Filtrar los tipos de documentos que faltan
+            $missingDocumentTypes = $allDocumentTypes->whereNotIn('id', $existingDocumentTypeIds);
+            
+            $createdCount = 0;
+            
+            // Crear los documentos faltantes
+            foreach ($missingDocumentTypes as $type) {
+                CarrierDocument::create([
+                    'carrier_id' => $carrier->id,
+                    'document_type_id' => $type->id,
+                    'status' => CarrierDocument::STATUS_PENDING,
+                    'date' => now(),
+                ]);
+                $createdCount++;
+            }
+            
+            if ($createdCount > 0) {
+                return redirect()
+                    ->back()
+                    ->with($this->sendNotification(
+                        'success',
+                        "Se generaron {$createdCount} documentos faltantes exitosamente."
+                    ));
+            } else {
+                return redirect()
+                    ->back()
+                    ->with($this->sendNotification(
+                        'info',
+                        'No hay documentos faltantes para generar. Todos los tipos de documentos ya están creados.'
+                    ));
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Error generating missing documents', [
+                'carrier_id' => $carrier->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()
+                ->back()
+                ->with($this->sendNotification(
+                    'error',
+                    'Error al generar documentos faltantes: ' . $e->getMessage()
+                ));
+        }
     }
     
     /**
@@ -489,11 +552,9 @@ class CarrierController extends Controller
     public function updateBanking(Request $request, Carrier $carrier)
     {
         $request->validate([
-            'bank_name' => 'required|string|max:255',
             'account_holder_name' => 'required|string|max:255',
             'account_number' => 'required|string|max:50',
-            'routing_number' => 'required|string|max:20',
-            'account_type' => 'required|in:checking,savings',
+            'country_code' => 'required|string|max:3',
             'status' => 'required|in:pending,approved,rejected',
             'rejection_reason' => 'nullable|string|max:500'
         ]);
@@ -510,11 +571,9 @@ class CarrierController extends Controller
             
             // Actualizar información bancaria
             $bankingDetails->update([
-                'bank_name' => $request->bank_name,
                 'account_holder_name' => $request->account_holder_name,
                 'account_number' => $request->account_number,
-                'routing_number' => $request->routing_number,
-                'account_type' => $request->account_type,
+                'country_code' => $request->country_code,
                 'status' => $newStatus,
                 'rejection_reason' => $request->rejection_reason
             ]);
@@ -614,6 +673,66 @@ class CarrierController extends Controller
             ]);
             
             return back()->with('error', 'Error updating banking information: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Crear nueva información bancaria para el carrier.
+     */
+    public function storeBanking(Request $request, Carrier $carrier)
+    {
+
+        $request->validate([
+            'account_holder_name' => 'required|string|max:255',
+            'account_number' => 'required|string|max:50',
+            'country_code' => 'required|string|max:3',
+            'status' => 'required|in:pending,approved,rejected',
+            'rejection_reason' => 'nullable|string|max:1000|required_if:status,rejected'
+        ]);
+
+        try {
+            // Verificar que no exista información bancaria previa
+            if ($carrier->bankingDetails) {
+                Log::warning('Attempt to create banking info for carrier that already has it', [
+                    'carrier_id' => $carrier->id,
+                    'existing_banking_id' => $carrier->bankingDetails->id
+                ]);
+                return back()->with('error', 'This carrier already has banking information. Use the edit function instead.');
+            }
+
+            // Crear nueva información bancaria
+            $bankingDetail = CarrierBankingDetail::create([
+                'carrier_id' => $carrier->id,
+                'account_holder_name' => $request->account_holder_name,
+                'account_number' => $request->account_number,
+                'country_code' => $request->country_code,
+                'status' => $request->status,
+                'rejection_reason' => $request->rejection_reason
+            ]);
+
+            Log::info('Banking information created successfully by admin', [
+                'carrier_id' => $carrier->id,
+                'banking_detail_id' => $bankingDetail->id,
+                'admin_user_id' => auth()->id(),
+                'country_code' => $request->country_code,
+                'status' => $request->status
+            ]);
+
+            return back()->with($this->sendNotification(
+                'success',
+                'Banking information created successfully.',
+                'The banking details have been added and are pending validation.'
+            ));
+
+        } catch (\Exception $e) {
+            Log::error('Error creating banking information', [
+                'carrier_id' => $carrier->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+
+            return back()->with('error', 'Error creating banking information: ' . $e->getMessage());
         }
     }
 

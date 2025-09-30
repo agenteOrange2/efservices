@@ -932,13 +932,8 @@
                                     </h3>
                                     
                                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <!-- Left Column -->
+                                        <!-- Single Column Layout -->
                                         <div class="space-y-4">
-                                            <div>
-                                                <label for="bank_name" class="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>
-                                                <input type="text" id="bank_name" name="bank_name" value="{{ old('bank_name', $carrier->bankingDetails->bank_name) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                                            </div>
-                                            
                                             <div>
                                                 <label for="account_holder_name" class="block text-sm font-medium text-gray-700 mb-2">Account Holder Name</label>
                                                 <input type="text" id="account_holder_name" name="account_holder_name" value="{{ old('account_holder_name', $carrier->bankingDetails->account_holder_name) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
@@ -948,20 +943,13 @@
                                                 <label for="account_number" class="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
                                                 <input type="text" id="account_number" name="account_number" value="{{ old('account_number', $carrier->bankingDetails->account_number) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
                                             </div>
-                                        </div>
-                                        
-                                        <!-- Right Column -->
-                                        <div class="space-y-4">
-                                            <div>
-                                                <label for="routing_number" class="block text-sm font-medium text-gray-700 mb-2">Routing Number</label>
-                                                <input type="text" id="routing_number" name="routing_number" value="{{ old('routing_number', $carrier->bankingDetails->routing_number) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                                            </div>
                                             
                                             <div>
-                                                <label for="account_type" class="block text-sm font-medium text-gray-700 mb-2">Account Type</label>
-                                                <select id="account_type" name="account_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                                                    <option value="checking" {{ old('account_type', $carrier->bankingDetails->account_type) === 'checking' ? 'selected' : '' }}>Checking</option>
-                                                    <option value="savings" {{ old('account_type', $carrier->bankingDetails->account_type) === 'savings' ? 'selected' : '' }}>Savings</option>
+                                                <label for="country_code" class="block text-sm font-medium text-gray-700 mb-2">Country</label>
+                                                <select id="country_code" name="country_code" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                                    <option value="US" {{ old('country_code', $carrier->bankingDetails->country_code) === 'US' ? 'selected' : '' }}>United States</option>
+                                                    <option value="CA" {{ old('country_code', $carrier->bankingDetails->country_code) === 'CA' ? 'selected' : '' }}>Canada</option>
+                                                    <option value="MX" {{ old('country_code', $carrier->bankingDetails->country_code) === 'MX' ? 'selected' : '' }}>Mexico</option>
                                                 </select>
                                             </div>
                                             
@@ -1010,15 +998,94 @@
                                     <p class="text-sm text-red-800 font-medium">Información bancaria requerida para pagos</p>
                                 </div>
                             </div>
+                            
+                            <!-- Botón para agregar información bancaria -->
+                            <div class="mb-6">
+                                <button type="button" onclick="showAddBankingForm()" class="px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                                    <i data-lucide="plus" class="w-4 h-4 mr-2 inline"></i>
+                                    Add Banking Information
+                                </button>
+                            </div>
+
                             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-lg mx-auto">
                                 <div class="flex items-start gap-3">
                                     <i data-lucide="info" class="w-5 h-5 text-blue-600 mt-0.5"></i>
                                     <div class="text-sm text-blue-800">
                                         <p class="font-medium mb-1">¿Cómo agregar información bancaria?</p>
-                                        <p>El transportista debe proporcionar los detalles bancarios a través de su portal de usuario.</p>
+                                        <p>Puedes agregar la información bancaria directamente desde aquí o el transportista puede proporcionarla a través de su portal de usuario.</p>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Formulario para agregar información bancaria (oculto por defecto) -->
+                        <div id="addBankingForm" class="hidden mt-8 border-t pt-8">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-6 text-center">Add Banking Information</h4>
+                            <form action="{{ route('admin.carrier.banking.store', $carrier->slug) }}" method="POST" class="max-w-2xl mx-auto">
+                                @csrf
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Account Holder Name -->
+                                    <div class="md:col-span-2">
+                                        <label for="account_holder_name" class="block text-sm font-medium text-gray-700 mb-2">Account Holder Name *</label>
+                                        <input type="text" id="account_holder_name" name="account_holder_name" required
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="Enter account holder name">
+                                    </div>
+
+                                    <!-- Account Number -->
+                                    <div class="md:col-span-2">
+                                        <label for="account_number" class="block text-sm font-medium text-gray-700 mb-2">Account Number *</label>
+                                        <input type="text" id="account_number" name="account_number" required
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="Enter account number">
+                                    </div>
+
+                                    <!-- Country Code -->
+                                    <div>
+                                        <label for="country_code" class="block text-sm font-medium text-gray-700 mb-2">Country *</label>
+                                        <select id="country_code" name="country_code" required
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="">Select country</option>
+                                            <option value="US" selected>United States</option>
+                                            <option value="CA">Canada</option>
+                                            <option value="MX">Mexico</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Status -->
+                                    <div>
+                                        <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status *</label>
+                                        <select id="status" name="status" required
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            onchange="toggleRejectionReason(this.value)">
+                                            <option value="pending" selected>Pending</option>
+                                            <option value="approved">Approved</option>
+                                            <option value="rejected">Rejected</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Rejection Reason (hidden by default) -->
+                                    <div id="rejection_reason_container" class="md:col-span-2 hidden">
+                                        <label for="rejection_reason" class="block text-sm font-medium text-gray-700 mb-2">Rejection Reason</label>
+                                        <textarea id="rejection_reason" name="rejection_reason" rows="3"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="Enter reason for rejection..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Form Actions -->
+                                <div class="flex justify-center gap-4 mt-8">
+                                    <button type="button" onclick="hideAddBankingForm()" 
+                                        class="px-6 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                        Cancel
+                                    </button>
+                                    <button type="submit" 
+                                        class="px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        <i data-lucide="save" class="w-4 h-4 mr-2 inline"></i>
+                                        Save Banking Information
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 @endif
@@ -1173,6 +1240,20 @@
                         lucide.createIcons();
                     }
                 });
+
+                // Funciones para mostrar/ocultar el formulario de banking
+                function showAddBankingForm() {
+                    document.getElementById('addBankingForm').classList.remove('hidden');
+                    // Scroll suave hacia el formulario
+                    document.getElementById('addBankingForm').scrollIntoView({ 
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+
+                function hideAddBankingForm() {
+                    document.getElementById('addBankingForm').classList.add('hidden');
+                }
                 
                 // Función para abrir el modal de rechazo
                 function openRejectModal() {
@@ -1204,14 +1285,27 @@
                 }
                 
                 // Función para mostrar/ocultar el campo de razón de rechazo
-                function toggleRejectionReason() {
+                function toggleRejectionReason(statusValue) {
+                    // Para el formulario de edición
                     const statusSelect = document.getElementById('banking_status');
                     const rejectionReasonDiv = document.getElementById('rejectionReasonDiv');
                     
-                    if (statusSelect.value === 'rejected') {
-                        rejectionReasonDiv.classList.remove('hidden');
-                    } else {
-                        rejectionReasonDiv.classList.add('hidden');
+                    if (statusSelect && rejectionReasonDiv) {
+                        if (statusSelect.value === 'rejected') {
+                            rejectionReasonDiv.classList.remove('hidden');
+                        } else {
+                            rejectionReasonDiv.classList.add('hidden');
+                        }
+                    }
+                    
+                    // Para el formulario de creación
+                    const rejectionReasonContainer = document.getElementById('rejection_reason_container');
+                    if (rejectionReasonContainer) {
+                        if (statusValue === 'rejected') {
+                            rejectionReasonContainer.classList.remove('hidden');
+                        } else {
+                            rejectionReasonContainer.classList.add('hidden');
+                        }
                     }
                 }
             </script>

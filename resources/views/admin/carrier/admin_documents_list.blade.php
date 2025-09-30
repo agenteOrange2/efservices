@@ -5,6 +5,7 @@
 @php
     $breadcrumbLinks = [
         ['label' => 'App', 'url' => route('admin.dashboard')],        
+        ['label' => 'Carriers', 'url' => route('admin.carrier.index')],
         ['label' => 'Carriers Documents', 'active' => true],
     ];
 @endphp

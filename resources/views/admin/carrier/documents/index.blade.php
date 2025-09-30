@@ -3,7 +3,7 @@
 @php
     $breadcrumbLinks = [
         ['label' => 'App', 'url' => route('admin.dashboard')],
-        ['label' => 'Carriers', 'url' => route('admin.carrier.user_carriers.index', $carrier->slug)],
+        ['label' => 'Carriers', 'url' => route('admin.carrier.index')],
         ['label' => 'Documents for ' . $carrier->name, 'active' => true],
     ];
 @endphp

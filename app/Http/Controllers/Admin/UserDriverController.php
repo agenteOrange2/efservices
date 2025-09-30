@@ -66,30 +66,82 @@ class UserDriverController extends Controller
      */
     public function edit(Carrier $carrier, UserDriverDetail $userDriverDetail)
     {
-        // Ensure the driver belongs to the carrier
-        if ($userDriverDetail->carrier_id !== $carrier->id) {
-            abort(404);
+        try {
+            Log::info('UserDriverController::edit - Método iniciado', [
+                'carrier_id' => $carrier->id,
+                'driver_id' => $userDriverDetail->id,
+                'user_id' => $userDriverDetail->user_id ?? 'null'
+            ]);
+
+            // Ensure the driver belongs to the carrier
+            Log::info('UserDriverController::edit - Validando ownership del driver', [
+                'carrier_id' => $carrier->id,
+                'carrier_id_type' => gettype($carrier->id),
+                'driver_carrier_id' => $userDriverDetail->carrier_id,
+                'driver_carrier_id_type' => gettype($userDriverDetail->carrier_id),
+                'driver_id' => $userDriverDetail->id,
+                'comparison_result' => ($userDriverDetail->carrier_id === $carrier->id)
+            ]);
+            
+            // Fixed: Using loose comparison (==) instead of strict (===) to handle type differences
+            if ($userDriverDetail->carrier_id != $carrier->id) {
+                Log::error('UserDriverController::edit - Driver no pertenece al carrier', [
+                    'carrier_id' => $carrier->id,
+                    'driver_carrier_id' => $userDriverDetail->carrier_id,
+                    'driver_id' => $userDriverDetail->id,
+                    'strict_comparison' => ($userDriverDetail->carrier_id === $carrier->id),
+                    'loose_comparison' => ($userDriverDetail->carrier_id == $carrier->id),
+                    'fix_applied' => 'Changed to loose comparison to handle type differences'
+                ]);
+                
+                return redirect()->route('admin.carrier.user_drivers.index', $carrier)
+                    ->with('error', 'Driver no pertenece a este carrier.');
+            }
+
+            Log::info('UserDriverController::edit - Validación de ownership completada exitosamente', [
+                'carrier_id' => $carrier->id,
+                'driver_carrier_id' => $userDriverDetail->carrier_id,
+                'fix_applied' => 'Using loose comparison (==) to handle type differences between integer and string'
+            ]);
+
+            Log::info('UserDriverController::edit - Cargando relaciones del driver');
+            // Load necessary relationships for the edit form
+            $userDriverDetail->load([
+                'user',
+                /*
+                'addresses',
+                'licenses',
+                'application',
+                'accidents',
+                'trafficConvictions',
+                'medicalQualification',
+                'trainingSchools',
+                'relatedEmployments',
+                'employmentCompanies',
+                'criminalHistory',
+                'employmentHistory'
+                */
+            ]);
+
+            Log::info('UserDriverController::edit - Relaciones cargadas, retornando vista', [
+                'view' => 'admin.user_driver.edit',
+                'carrier_name' => $carrier->name ?? 'N/A',
+                'driver_user_name' => $userDriverDetail->user->name ?? 'N/A'
+            ]);
+
+            return view('admin.user_driver.edit', compact('carrier', 'userDriverDetail'));
+            
+        } catch (\Exception $e) {
+            Log::error('UserDriverController::edit - Error en el método', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'carrier_id' => $carrier->id ?? 'null',
+                'driver_id' => $userDriverDetail->id ?? 'null'
+            ]);
+            
+            throw $e;
         }
-
-        // Load necessary relationships for the edit form
-        $userDriverDetail->load([
-            'user',
-            /*
-            'addresses',
-            'licenses',
-            'application',
-            'accidents',
-            'trafficConvictions',
-            'medicalQualification',
-            'trainingSchools',
-            'relatedEmployments',
-            'employmentCompanies',
-            'criminalHistory',
-            'employmentHistory'
-            */
-        ]);
-
-        return view('admin.user_driver.edit', compact('carrier', 'userDriverDetail'));
     }
     
     /**
