@@ -106,34 +106,34 @@
         <div class="section-title">Traffic Violations Information</div>
         <table>
             <tr>
-                <td colspan="2"><strong>Have you had any traffic violations in the last three years?</strong><br>{{ $userDriverDetail->trafficConvictions && $userDriverDetail->trafficConvictions->count() > 0 ? 'Yes' : 'No' }}</td>                
+                <td colspan="2"><strong>Have you had any traffic violations in the last three years?</strong><br>{{ $userDriverDetail->trafficConvictions && $userDriverDetail->trafficConvictions->count() > 0 ? 'Yes' : 'No' }}</td>
             </tr>
         </table>
     </div>
 
     @if($userDriverDetail->trafficConvictions && $userDriverDetail->trafficConvictions->count() > 0)
-        <div class="section">
-            <div class="section-title">Traffic Violations</div>
-            @foreach($userDriverDetail->trafficConvictions as $index => $conviction)
-                <div class="conviction-item">
-                    <h4>Violation #{{ $index + 1 }}</h4>
-                    <table>
-                        <tr>
-                            <td style="width: 50%"><strong>Violation Date</strong><br>{{ $conviction->conviction_date ? date('m/d/Y', strtotime($conviction->conviction_date)) : 'N/A' }}</td>
-                            <td style="width: 50%"><strong>Location</strong><br>{{ $conviction->location ?? 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td style="width: 50%"><strong>Charge</strong><br>{{ $conviction->charge ?? 'N/A' }}</td>
-                            <td style="width: 50%"><strong>Penalty</strong><br>{{ $conviction->penalty ?? 'N/A' }}</td>
-                        </tr>
-                    </table>
-                </div>
-            @endforeach
+    <div class="section">
+        <div class="section-title">Traffic Violations</div>
+        @foreach($userDriverDetail->trafficConvictions as $index => $conviction)
+        <div class="conviction-item">
+            <h4>Violation #{{ $index + 1 }}</h4>
+            <table>
+                <tr>
+                    <td style="width: 50%"><strong>Violation Date</strong><br>{{ $conviction->conviction_date ? date('m/d/Y', strtotime($conviction->conviction_date)) : 'N/A' }}</td>
+                    <td style="width: 50%"><strong>Location</strong><br>{{ $conviction->location ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td style="width: 50%"><strong>Charge</strong><br>{{ $conviction->charge ?? 'N/A' }}</td>
+                    <td style="width: 50%"><strong>Penalty</strong><br>{{ $conviction->penalty ?? 'N/A' }}</td>
+                </tr>
+            </table>
         </div>
+        @endforeach
+    </div>
     @elseif($userDriverDetail->application && $userDriverDetail->application->details && $userDriverDetail->application->details->has_traffic_convictions)
-        <div class="section">
-            <p>No traffic violation data found.</p>
-        </div>
+    <div class="section">
+        <p>No traffic violation data found.</p>
+    </div>
     @endif
 
     <div class="signature-box">
@@ -141,15 +141,26 @@
             <span class="label">Signature:</span>
             <div>
                 @if (!empty($signaturePath) && file_exists($signaturePath))
-                    <img src="{{ $signaturePath }}" alt="Signature" style="max-width: 300px; max-height: 100px;" />
+                <img src="{{ $signaturePath }}" alt="Signature" style="max-width: 300px; max-height: 100px;" />
                 @else
-                    <p style="font-style: italic; color: #999;">Signature not available</p>
+                <p style="font-style: italic; color: #999;">Signature not available</p>
                 @endif
             </div>
         </div>
-        <div class="date">
+        <!-- <div class="date">
             <span class="label">Date:</span>
             <span class="value">{{ $date }}</span>
+        </div> -->
+        <!-- Document Information -->
+        <div class="section">
+            <div class="section-title">Document Information</div>
+            <table>
+                <tr>
+                    <td style="width: 33.33%"><strong>Creation Date</strong><br>{{ isset($formatted_dates['created_at']) ? $formatted_dates['created_at'] : ($created_at ? $created_at->format('m/d/Y') : 'N/A') }}</td>
+                    <td style="width: 33.33%"><strong>Last Updated</strong><br>{{ isset($formatted_dates['updated_at']) ? $formatted_dates['updated_at'] : ($updated_at ? $updated_at->format('m/d/Y') : 'N/A') }}</td>
+                    <td style="width: 33.33%"><strong>Document Date</strong><br>{{ $date }}</td>
+                </tr>
+            </table>
         </div>
     </div>
 </body>

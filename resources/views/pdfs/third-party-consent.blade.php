@@ -133,15 +133,15 @@
         <table class="details-table">
             <tr>
                 <th>Name</th>
-                <td>{{ $verification->third_party_name }}</td>
+                <td>{{ $thirdPartyName }}</td>
             </tr>
             <tr>
                 <th>Phone</th>
-                <td>{{ $verification->third_party_phone }}</td>
+                <td>{{ $thirdPartyPhone }}</td>
             </tr>
             <tr>
                 <th>Email</th>
-                <td>{{ $verification->third_party_email }}</td>
+                <td>{{ $thirdPartyEmail }}</td>
             </tr>
         </table>
     </div>
@@ -151,21 +151,16 @@
         <table class="details-table">
             <tr>
                 <th>Name</th>
-                <td>{{ $driverDetails->user->name }} {{ $driverDetails->middle_name }} {{ $driverDetails->last_name }}
-                </td>
+                <td>{{ $driverName }}</td>
             </tr>
             <tr>
                 <th>Email</th>
-                <td>{{ $driverDetails->user->email }}</td>
+                <td>{{ $driverEmail }}</td>
             </tr>
             <tr>
                 <th>Phone</th>
-                <td>{{ $driverDetails->phone ?? 'No disponible' }}</td>
+                <td>{{ $driverPhone ?? 'No disponible' }}</td>
             </tr>
-            {{-- <tr>
-                <th>ID de Conductor</th>
-                <td>{{ $driverDetails->id }}</td>
-            </tr> --}} 
         </table>
     </div>
 
@@ -206,9 +201,8 @@
     <div class="section">
         <h2>Statement of Consent</h2>
         <div class="consent-text">
-            <p>I, <strong>{{ $verification->third_party_name }}</strong>, declare that I am the lawful owner of the vehicle described at
-                    this document and authorize <strong>{{ $driverDetails->user->name }}
-                    {{ $driverDetails->middle_name }} {{ $driverDetails->last_name }}</strong>  to use this vehicle on the EF Services TCP platform
+            <p>I, <strong>{{ $thirdPartyName }}</strong>, declare that I am the lawful owner of the vehicle described at
+                    this document and authorize <strong>{{ $driverName }}</strong> to use this vehicle on the EF Services TCP platform
                      for transportation purposes.</p>
             <p>I understand that this authorization will remain in effect until revoked by in writing.</p>
             <p>I confirm that the vehicle complies with all legal and safety requirements necessary for operation on the EF Services TCP platform.</p>
@@ -254,7 +248,7 @@
         </div>
         <div class="signature-info">
             <div class="signature-name">
-                <p><strong>Name:</strong> {{ $verification->third_party_name }}</p>
+                <p><strong>Name:</strong> {{ $thirdPartyName }}</p>
             </div>
             <div class="signature-date">
                 <p><strong>Date:</strong> {{ $date }}</p>
@@ -264,7 +258,7 @@
 
     <div class="footer">
         <p>This document was generated electronically and is valid without a handwritten signature.</p>
-        <p>Verification ID: {{ $verification->token }}</p>
+        <p>Generated on: {{ $signedDate }}</p>
         <p>&copy; {{ date('Y') }} EF Services. All rights reserved.</p>
     </div>
 </body>

@@ -108,41 +108,41 @@
     </div>
 
     @if($userDriverDetail->courses && $userDriverDetail->courses->count() > 0)
-        <div class="section">
-            <div class="section-title">Driver Courses</div>
-            @foreach($userDriverDetail->courses as $index => $course)
-                <div class="course-item">
-                    <h4>Course #{{ $index + 1 }}</h4>
-                    <table>
-                        <tr>
-                            <td colspan="2"><strong>Organization Name</strong><br>{{ $course->organization_name ?? 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td style="width: 33.33%"><strong>City</strong><br>{{ $course->city ?? 'N/A' }}</td>
-                            <td style="width: 33.33%"><strong>State</strong><br>{{ $course->state ?? 'N/A' }}</td>
-                            <td style="width: 33.33%"><strong>Status</strong><br>{{ $course->status ?? 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td style="width: 50%"><strong>Certification Date</strong><br>{{ $course->certification_date ? date('m/d/Y', strtotime($course->certification_date)) : 'N/A' }}</td>
-                            <td style="width: 50%"><strong>Expiration Date</strong><br>{{ $course->expiration_date ? date('m/d/Y', strtotime($course->expiration_date)) : 'N/A' }}</td>
-                        </tr>
-                        @if($course->experience)
-                            <tr>
-                                <td colspan="2">
-                                    <strong>Experience</strong><br>
-                                    {{ $course->experience }}
-                                </td>
-                            </tr>
-                        @endif
-                    </table>
-                </div>
-            @endforeach
+    <div class="section">
+        <div class="section-title">Driver Courses</div>
+        @foreach($userDriverDetail->courses as $index => $course)
+        <div class="course-item">
+            <h4>Course #{{ $index + 1 }}</h4>
+            <table>
+                <tr>
+                    <td colspan="2"><strong>Organization Name</strong><br>{{ $course->organization_name ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td style="width: 33.33%"><strong>City</strong><br>{{ $course->city ?? 'N/A' }}</td>
+                    <td style="width: 33.33%"><strong>State</strong><br>{{ $course->state ?? 'N/A' }}</td>
+                    <td style="width: 33.33%"><strong>Status</strong><br>{{ $course->status ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td style="width: 50%"><strong>Certification Date</strong><br>{{ $course->certification_date ? date('m/d/Y', strtotime($course->certification_date)) : 'N/A' }}</td>
+                    <td style="width: 50%"><strong>Expiration Date</strong><br>{{ $course->expiration_date ? date('m/d/Y', strtotime($course->expiration_date)) : 'N/A' }}</td>
+                </tr>
+                @if($course->experience)
+                <tr>
+                    <td colspan="2">
+                        <strong>Experience</strong><br>
+                        {{ $course->experience }}
+                    </td>
+                </tr>
+                @endif
+            </table>
         </div>
+        @endforeach
+    </div>
     @else
-        <div class="section">
-            <div class="section-title">Driver Courses</div>
-            <p>No driver courses found.</p>
-        </div>
+    <div class="section">
+        <div class="section-title">Driver Courses</div>
+        <p>No driver courses found.</p>
+    </div>
     @endif
 
     <div class="signature-box">
@@ -150,15 +150,26 @@
             <span class="label">Signature:</span>
             <div>
                 @if (!empty($signaturePath) && file_exists($signaturePath))
-                    <img src="{{ $signaturePath }}" alt="Signature" style="max-width: 300px; max-height: 100px;" />
+                <img src="{{ $signaturePath }}" alt="Signature" style="max-width: 300px; max-height: 100px;" />
                 @else
-                    <p style="font-style: italic; color: #999;">Signature not available</p>
+                <p style="font-style: italic; color: #999;">Signature not available</p>
                 @endif
             </div>
         </div>
-        <div class="date">
+        <!-- <div class="date">
             <span class="label">Date:</span>
             <span class="value">{{ $date }}</span>
+        </div> -->
+        <!-- Document Information -->
+        <div class="section">
+            <div class="section-title">Document Information</div>
+            <table>
+                <tr>
+                    <td style="width: 33.33%"><strong>Creation Date</strong><br>{{ isset($formatted_dates['created_at']) ? $formatted_dates['created_at'] : ($created_at ? $created_at->format('m/d/Y') : 'N/A') }}</td>
+                    <td style="width: 33.33%"><strong>Last Updated</strong><br>{{ isset($formatted_dates['updated_at']) ? $formatted_dates['updated_at'] : ($updated_at ? $updated_at->format('m/d/Y') : 'N/A') }}</td>
+                    <td style="width: 33.33%"><strong>Document Date</strong><br>{{ $date }}</td>
+                </tr>
+            </table>
         </div>
     </div>
 </body>

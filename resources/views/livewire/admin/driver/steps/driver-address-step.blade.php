@@ -77,16 +77,29 @@
                         <div>
                             <label class="block mb-2 text-sm font-medium text-gray-700">From Date <span
                                     class="text-red-500">*</span></label>
-                            <input type="date" wire:model="from_date"
-                                class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                            <input type="text"
+                                id="from_date"
+                                name="from_date"
+                                value="{{ $from_date }}"
+                                placeholder="MM/DD/YYYY"
+                                class="driver-datepicker form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm"
+                                onchange="@this.set('from_date', this.value)"
+                                required
+                            />
                             @error('from_date')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
                             <label class="block mb-2 text-sm font-medium text-gray-700">To Date</label>
-                            <input type="date" wire:model="to_date"
-                                class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                            <input type="text"
+                                id="to_date"
+                                name="to_date"
+                                value="{{ $to_date }}"
+                                placeholder="MM/DD/YYYY"
+                                class="driver-datepicker form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm"
+                                onchange="@this.set('to_date', this.value)"
+                            />
                             @error('to_date')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror

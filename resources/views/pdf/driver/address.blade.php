@@ -105,61 +105,61 @@
     <div class="section">
         <div class="section-title">Current Address</div>
         @if($userDriverDetail->application && $userDriverDetail->application->addresses)
-            @php
-                $primaryAddress = $userDriverDetail->application->addresses->where('primary', true)->first();
-            @endphp
-            @if($primaryAddress)
-                <table>
-                    <tr>
-                        <td style="width: 50%"><strong>Address Line 1</strong><br>{{ $primaryAddress->address_line1 ?? 'N/A' }}</td>
-                        <td style="width: 50%"><strong>Address Line 2</strong><br>{{ $primaryAddress->address_line2 ?? 'N/A' }}</td>
-                    </tr>
-                    <tr>
-                        <td style="width: 33.33%"><strong>City</strong><br>{{ $primaryAddress->city ?? 'N/A' }}</td>
-                        <td style="width: 33.33%"><strong>State</strong><br>{{ $primaryAddress->state ?? 'N/A' }}</td>
-                        <td style="width: 33.33%"><strong>Zip Code</strong><br>{{ $primaryAddress->zip_code ?? 'N/A' }}</td>
-                    </tr>
-                    <tr>
-                        <td style="width: 33.33%"><strong>From Date</strong><br>{{ $primaryAddress->from_date ? date('m/d/Y', strtotime($primaryAddress->from_date)) : 'N/A' }}</td>
-                        <td style="width: 33.33%"><strong>To Date</strong><br>{{ $primaryAddress->to_date ? date('m/d/Y', strtotime($primaryAddress->to_date)) : 'Present' }}</td>
-                        <td style="width: 33.33%"><strong>Lived Here 3+ Years</strong><br>{{ $primaryAddress->lived_three_years ? 'Yes' : 'No' }}</td>
-                    </tr>
-                </table>
-            @else
-                <p>No primary address information found.</p>
-            @endif
+        @php
+        $primaryAddress = $userDriverDetail->application->addresses->where('primary', true)->first();
+        @endphp
+        @if($primaryAddress)
+        <table>
+            <tr>
+                <td style="width: 50%"><strong>Address Line 1</strong><br>{{ $primaryAddress->address_line1 ?? 'N/A' }}</td>
+                <td style="width: 50%"><strong>Address Line 2</strong><br>{{ $primaryAddress->address_line2 ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td style="width: 33.33%"><strong>City</strong><br>{{ $primaryAddress->city ?? 'N/A' }}</td>
+                <td style="width: 33.33%"><strong>State</strong><br>{{ $primaryAddress->state ?? 'N/A' }}</td>
+                <td style="width: 33.33%"><strong>Zip Code</strong><br>{{ $primaryAddress->zip_code ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+                <td style="width: 33.33%"><strong>From Date</strong><br>{{ $primaryAddress->from_date ? date('m/d/Y', strtotime($primaryAddress->from_date)) : 'N/A' }}</td>
+                <td style="width: 33.33%"><strong>To Date</strong><br>{{ $primaryAddress->to_date ? date('m/d/Y', strtotime($primaryAddress->to_date)) : 'Present' }}</td>
+                <td style="width: 33.33%"><strong>Lived Here 3+ Years</strong><br>{{ $primaryAddress->lived_three_years ? 'Yes' : 'No' }}</td>
+            </tr>
+        </table>
+        @else
+        <p>No primary address information found.</p>
+        @endif
         @endif
     </div>
 
     @if($userDriverDetail->application && $userDriverDetail->application->addresses)
-        @php
-            $previousAddresses = $userDriverDetail->application->addresses->where('primary', false);
-        @endphp
-        @if(count($previousAddresses) > 0)
-            <div class="section">
-                <div class="section-title">Previous Addresses</div>
-                @foreach($previousAddresses as $index => $address)
-                    <div class="previous-address">
-                        <h4>Previous Address #{{ $index + 1 }}</h4>
-                        <table>
-                            <tr>
-                                <td style="width: 50%"><strong>Address Line 1</strong><br>{{ $address->address_line1 ?? 'N/A' }}</td>
-                                <td style="width: 50%"><strong>Address Line 2</strong><br>{{ $address->address_line2 ?? 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <td style="width: 33.33%"><strong>City</strong><br>{{ $address->city ?? 'N/A' }}</td>
-                                <td style="width: 33.33%"><strong>State</strong><br>{{ $address->state ?? 'N/A' }}</td>
-                                <td style="width: 33.33%"><strong>Zip Code</strong><br>{{ $address->zip_code ?? 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <td style="width: 50%"><strong>From Date</strong><br>{{ $address->from_date ? date('m/d/Y', strtotime($address->from_date)) : 'N/A' }}</td>
-                                <td style="width: 50%"><strong>To Date</strong><br>{{ $address->to_date ? date('m/d/Y', strtotime($address->to_date)) : 'Present' }}</td>
-                            </tr>
-                        </table>
-                    </div>
-                @endforeach
-            </div>
-        @endif
+    @php
+    $previousAddresses = $userDriverDetail->application->addresses->where('primary', false);
+    @endphp
+    @if(count($previousAddresses) > 0)
+    <div class="section">
+        <div class="section-title">Previous Addresses</div>
+        @foreach($previousAddresses as $index => $address)
+        <div class="previous-address">
+            <h4>Previous Address #{{ $index + 1 }}</h4>
+            <table>
+                <tr>
+                    <td style="width: 50%"><strong>Address Line 1</strong><br>{{ $address->address_line1 ?? 'N/A' }}</td>
+                    <td style="width: 50%"><strong>Address Line 2</strong><br>{{ $address->address_line2 ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td style="width: 33.33%"><strong>City</strong><br>{{ $address->city ?? 'N/A' }}</td>
+                    <td style="width: 33.33%"><strong>State</strong><br>{{ $address->state ?? 'N/A' }}</td>
+                    <td style="width: 33.33%"><strong>Zip Code</strong><br>{{ $address->zip_code ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td style="width: 50%"><strong>From Date</strong><br>{{ $address->from_date ? date('m/d/Y', strtotime($address->from_date)) : 'N/A' }}</td>
+                    <td style="width: 50%"><strong>To Date</strong><br>{{ $address->to_date ? date('m/d/Y', strtotime($address->to_date)) : 'Present' }}</td>
+                </tr>
+            </table>
+        </div>
+        @endforeach
+    </div>
+    @endif
     @endif
 
     <div class="signature-box">
@@ -167,16 +167,28 @@
             <span class="label">Signature:</span>
             <div>
                 @if (!empty($signaturePath) && file_exists($signaturePath))
-                    <img src="{{ $signaturePath }}" alt="Signature" style="max-width: 300px; max-height: 100px;" />
+                <img src="{{ $signaturePath }}" alt="Signature" style="max-width: 300px; max-height: 100px;" />
                 @else
-                    <p style="font-style: italic; color: #999;">Signature not available</p>
+                <p style="font-style: italic; color: #999;">Signature not available</p>
                 @endif
             </div>
         </div>
-        <div class="date">
+
+        <!-- Document Information -->
+        <div class="section">
+            <div class="section-title">Document Information</div>
+            <table>
+                <tr>
+                    <td style="width: 33.33%"><strong>Creation Date</strong><br>{{ isset($formatted_dates['created_at']) ? $formatted_dates['created_at'] : ($created_at ? $created_at->format('m/d/Y') : 'N/A') }}</td>
+                    <td style="width: 33.33%"><strong>Last Updated</strong><br>{{ isset($formatted_dates['updated_at']) ? $formatted_dates['updated_at'] : ($updated_at ? $updated_at->format('m/d/Y') : 'N/A') }}</td>
+                    <td style="width: 33.33%"><strong>Document Date</strong><br>{{ $date }}</td>
+                </tr>
+            </table>
+        </div>
+        <!-- <div class="date">
             <span class="label">Date:</span>
             <span class="value">{{ $date }}</span>
-        </div>
+        </div> -->
     </div>
 </body>
 

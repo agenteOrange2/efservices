@@ -311,6 +311,7 @@ class DriverCertificationStep extends Component
         Storage::disk('public')->makeDirectory($appSubPath);
         
         // Configuraciones de pasos - definir la vista y nombre de archivo para cada paso
+        // NOTA: criminal_history se maneja por separado para evitar duplicados
         $steps = [
             ['view' => 'pdf.driver.general', 'filename' => 'general_information.pdf', 'title' => 'General Information'],
             ['view' => 'pdf.driver.address', 'filename' => 'address_information.pdf', 'title' => 'Address Information'],
@@ -320,11 +321,24 @@ class DriverCertificationStep extends Component
             ['view' => 'pdf.driver.training', 'filename' => 'training_schools.pdf', 'title' => 'Training Schools'],
             ['view' => 'pdf.driver.traffic', 'filename' => 'traffic_violations.pdf', 'title' => 'Traffic Violations'],
             ['view' => 'pdf.driver.accident', 'filename' => 'accident_record.pdf', 'title' => 'Accident Record '],
-            ['view' => 'pdf.driver.criminal_history', 'filename' => 'criminal_history_investigation.pdf', 'title' => 'Criminal History Investigation'],
             ['view' => 'pdf.driver.fmcsr', 'filename' => 'fmcsr_requirements.pdf', 'title' => 'FMCSR Requirements'],
             ['view' => 'pdf.driver.employment', 'filename' => 'employment_history.pdf', 'title' => 'Employment History'],
             ['view' => 'pdf.driver.certification', 'filename' => 'certification.pdf', 'title' => 'Certification'],
         ];
+        
+        // Obtener fechas efectivas (personalizadas o del modelo)
+        $effectiveDates = $this->getEffectiveDates($userDriverDetail->id);
+        
+        // Cargar todas las relaciones necesarias para los PDFs
+        $userDriverDetail->load([
+            'addresses',
+            'licenses',
+            'medicalQualification',
+            'criminalHistory',
+            'carrier',
+            'user',
+            'application.details'
+        ]);
         
         // Generar PDF para cada paso
         foreach ($steps as $step) {
@@ -333,7 +347,15 @@ class DriverCertificationStep extends Component
                     'userDriverDetail' => $userDriverDetail,
                     'signaturePath' => $signaturePath, // Usamos la ruta del archivo, no base64
                     'title' => $step['title'],
-                    'date' => now()->format('d/m/Y')
+                    'date' => now()->format('d/m/Y'),
+                    'created_at' => $effectiveDates['created_at'],
+                    'updated_at' => $effectiveDates['updated_at'],
+                    'formatted_dates' => [
+                        'created_at' => $effectiveDates['created_at']->format('m/d/Y'),
+                        'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
+                        'created_at_long' => $effectiveDates['created_at']->format('F j, Y'),
+                        'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
+                    ]
                 ]);
                 
                 // Guardar PDF usando Storage para evitar problemas de permisos
@@ -484,6 +506,9 @@ class DriverCertificationStep extends Component
             $ownerDetails = $application->ownerOperatorDetail;
             $applicationDetails = $application->details;
             
+            // Obtener fechas efectivas (personalizadas o del modelo)
+            $effectiveDates = $this->getEffectiveDates($userDriverDetail->id);
+            
             $data = [
                 'carrierName' => $carrier->name ?? 'EF Services',
                 'carrierAddress' => $carrier->address ?? '',
@@ -503,7 +528,15 @@ class DriverCertificationStep extends Component
                 'carrierMc' => $carrier->mc_number ?? '',
                 'carrierUsdot' => $carrier->state_dot ?? '',
                 'signaturePath' => $signaturePath, // Usar la ruta del archivo de firma
-                'signature' => null // Mantenemos este campo como NULL para compatibilidad
+                'signature' => null, // Mantenemos este campo como NULL para compatibilidad
+                'created_at' => $effectiveDates['created_at'],
+                'updated_at' => $effectiveDates['updated_at'],
+                'formatted_dates' => [
+                    'created_at' => $effectiveDates['created_at']->format('m/d/Y'),
+                    'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
+                    'created_at_long' => $effectiveDates['created_at']->format('F j, Y'),
+                    'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
+                ]
             ];
             
             try {
@@ -613,13 +646,24 @@ class DriverCertificationStep extends Component
                             ($userDriverDetail->middle_name ?? '') . ' ' . 
                             ($userDriverDetail->last_name ?? 'N/A'));
             
+            // Obtener fechas efectivas (personalizadas o del modelo)
+            $effectiveDates = $this->getEffectiveDates($userDriverDetail->id);
+            
             $pdf = App::make('dompdf.wrapper')->loadView('pdf.driver.complete_application', [
                 'userDriverDetail' => $userDriverDetail,
                 'signature' => $signatureImage,
                 'date' => now()->format('m/d/Y'),
                 'criminalHistory' => $criminalHistory,
                 'carrier' => $userDriverDetail->carrier,
-                'fullName' => $fullName
+                'fullName' => $fullName,
+                'created_at' => $effectiveDates['created_at'],
+                'updated_at' => $effectiveDates['updated_at'],
+                'formatted_dates' => [
+                    'created_at' => $effectiveDates['created_at']->format('m/d/Y'),
+                    'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
+                    'created_at_long' => $effectiveDates['created_at']->format('F j, Y'),
+                    'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
+                ]
             ]);
             
             // Asegurarnos de que estamos usando el ID correcto
@@ -699,18 +743,35 @@ class DriverCertificationStep extends Component
                             ($userDriverDetail->middle_name ?? '') . ' ' . 
                             ($userDriverDetail->last_name ?? 'N/A'));
             
+            // Obtener fechas efectivas (personalizadas o del modelo)
+            $effectiveDates = $this->getEffectiveDates($userDriverDetail->id);
+            
             $pdf = App::make('dompdf.wrapper')->loadView('pdf.driver.criminal_history', [
                 'userDriverDetail' => $userDriverDetail,
                 'signature' => $signatureImage,
                 'date' => now()->format('m/d/Y'),
                 'criminalHistory' => $criminalHistory,
                 'carrier' => $userDriverDetail->carrier,
-                'fullName' => $fullName
+                'fullName' => $fullName,
+                'created_at' => $effectiveDates['created_at'],
+                'updated_at' => $effectiveDates['updated_at'],
+                'formatted_dates' => [
+                    'created_at' => $effectiveDates['created_at']->format('m/d/Y'),
+                    'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
+                    'created_at_long' => $effectiveDates['created_at']->format('F j, Y'),
+                    'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
+                ]
             ]);
             
-            // Asegurarnos de que estamos usando el ID correcto
+            // Asegurarnos de que estamos usando el ID correcto y la ruta correcta
             $driverId = $userDriverDetail->id;
-            $filePath = 'driver/' . $driverId . '/criminal_history_investigation.pdf';
+            $driverPath = 'driver/' . $driverId;
+            $appSubPath = $driverPath . '/driver_applications';
+            $filePath = $appSubPath . '/criminal_history_investigation.pdf';
+            
+            // Asegurar que los directorios existen
+            Storage::disk('public')->makeDirectory($driverPath);
+            Storage::disk('public')->makeDirectory($appSubPath);
             
             Log::info('Guardando PDF de Criminal History Investigation para conductor', ['driver_id' => $driverId, 'file_path' => $filePath]);
             
@@ -814,6 +875,9 @@ class DriverCertificationStep extends Component
             $thirdPartyDetails = $application->thirdPartyDetail;
             $applicationDetails = $application->details;
             
+            // Obtener fechas efectivas (personalizadas o del modelo)
+            $effectiveDates = $this->getEffectiveDates($userDriverDetail->id);
+            
             // Preparar los datos para el PDF de consentimiento de terceros
             $consentData = [
                 'carrierName' => $carrier->name ?? 'EF Services',
@@ -829,9 +893,19 @@ class DriverCertificationStep extends Component
                 'thirdPartyEmail' => $thirdPartyDetails->third_party_email ?? '',
                 'thirdPartyContact' => $thirdPartyDetails->third_party_contact ?? '',
                 'thirdPartyFein' => $thirdPartyDetails->third_party_fein ?? '',
+                'vehicle' => $vehicle,
+                'date' => now()->format('m/d/Y'),
                 'signedDate' => now()->format('m/d/Y'),
                 'signaturePath' => $signaturePath,
-                'signature' => null // Mantenemos este campo como NULL para compatibilidad
+                'signature' => null, // Mantenemos este campo como NULL para compatibilidad
+                'created_at' => $effectiveDates['created_at'],
+                'updated_at' => $effectiveDates['updated_at'],
+                'formatted_dates' => [
+                    'created_at' => $effectiveDates['created_at']->format('m/d/Y'),
+                    'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
+                    'created_at_long' => $effectiveDates['created_at']->format('F j, Y'),
+                    'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
+                ]
             ];
             
             // Generar el PDF de consentimiento de terceros
@@ -872,28 +946,33 @@ class DriverCertificationStep extends Component
             
             // Preparar los datos para el PDF de contrato de arrendamiento para third-party
             $leaseData = [
-                'carrierName' => $carrier->name ?? 'EF Services',
+                'carrierName' => $carrier->name ?? 'ECTS Services',
                 'carrierAddress' => $carrier->address ?? '',
-                'driverName' => $user->name ?? '',
-                'driverAddress' => $userDriverDetail->current_address ?? '',
-                'driverPhone' => $userDriverDetail->phone ?? '',
-                'driverEmail' => $user->email ?? '',
-                'thirdPartyName' => $thirdPartyDetails->third_party_name ?? '',
-                'thirdPartyDba' => $thirdPartyDetails->third_party_dba ?? '',
-                'thirdPartyAddress' => $thirdPartyDetails->third_party_address ?? '',
-                'thirdPartyPhone' => $thirdPartyDetails->third_party_phone ?? '',
-                'thirdPartyEmail' => $thirdPartyDetails->third_party_email ?? '',
-                'thirdPartyContact' => $thirdPartyDetails->third_party_contact ?? '',
-                'thirdPartyFein' => $thirdPartyDetails->third_party_fein ?? '',
+                'carrierMc' => $carrier->mc_number ?? '',
+                'carrierUsdot' => $carrier->state_dot ?? '',
+                // Para third-party, el "owner" es la empresa third-party
+                'ownerName' => $thirdPartyDetails->third_party_name ?? '',
+                'ownerDba' => $thirdPartyDetails->third_party_dba ?? '',
+                'ownerAddress' => $thirdPartyDetails->third_party_address ?? '',
+                'ownerPhone' => $thirdPartyDetails->third_party_phone ?? '',
+                'ownerContact' => $thirdPartyDetails->third_party_contact ?? '',
+                'ownerFein' => $thirdPartyDetails->third_party_fein ?? '',
+                // Datos del vehículo
                 'vehicleYear' => $vehicle->year ?? '',
                 'vehicleMake' => $vehicle->make ?? '',
                 'vehicleVin' => $vehicle->vin ?? '',
                 'vehicleUnit' => $vehicle->company_unit_number ?? '',
                 'signedDate' => now()->format('m/d/Y'),
-                'carrierMc' => $carrier->mc_number ?? '',
-                'carrierUsdot' => $carrier->state_dot ?? '',
                 'signaturePath' => $signaturePath,
-                'signature' => null // Mantenemos este campo como NULL para compatibilidad
+                'signature' => null, // Mantenemos este campo como NULL para compatibilidad
+                'created_at' => $effectiveDates['created_at'],
+                'updated_at' => $effectiveDates['updated_at'],
+                'formatted_dates' => [
+                    'created_at' => $effectiveDates['created_at']->format('m/d/Y'),
+                    'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
+                    'created_at_long' => $effectiveDates['created_at']->format('F j, Y'),
+                    'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
+                ]
             ];
             
             // Generar el PDF de contrato de arrendamiento para third-party

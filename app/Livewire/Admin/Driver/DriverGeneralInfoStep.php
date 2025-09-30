@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
+
 class DriverGeneralInfoStep extends Component
 {
     use WithFileUploads;
@@ -27,6 +28,10 @@ class DriverGeneralInfoStep extends Component
     public $status = 1;
     public $terms_accepted = false;
     public $photo_preview_url;
+
+    // Custom Dates for Historical Drivers
+    public $use_custom_dates = false;
+    public $custom_date;
 
     // References
     public $driverId;
@@ -49,7 +54,7 @@ class DriverGeneralInfoStep extends Component
             $emailRule .= '|unique:users,email';
         }
 
-        return [
+        $rules = [
             'name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => $emailRule,
@@ -63,7 +68,15 @@ class DriverGeneralInfoStep extends Component
             'password_confirmation' => 'nullable|same:password',
             'terms_accepted' => 'accepted',
             'photo' => 'nullable|image|max:10240',
+            'use_custom_dates' => 'boolean',
         ];
+
+        // Add custom dates validation if enabled
+        if ($this->use_custom_dates) {
+            $rules['custom_date'] = 'nullable|date';
+        }
+
+        return $rules;
     }
 
     // Rules for partial saves
@@ -93,6 +106,8 @@ class DriverGeneralInfoStep extends Component
         }
     }
 
+
+
     // Load existing data
     protected function loadExistingData()
     {
@@ -111,6 +126,11 @@ class DriverGeneralInfoStep extends Component
         $this->status = $userDriverDetail->status;
         $this->terms_accepted = $userDriverDetail->terms_accepted;
 
+        // For existing records, we'll assume custom dates are not being used
+        // since we're transitioning to use created_at directly
+        $this->use_custom_dates = false;
+        $this->custom_date = null;
+
         // Get profile photo URL
         if ($userDriverDetail->hasMedia('profile_photo_driver')) {
             $this->photo_preview_url = $userDriverDetail->getFirstMediaUrl('profile_photo_driver');
@@ -125,6 +145,8 @@ class DriverGeneralInfoStep extends Component
         try {
             DB::beginTransaction();
 
+            // We'll handle custom dates by modifying created_at after creation
+
             // Create user
             $user = User::create([
                 'name' => $this->name,
@@ -137,7 +159,7 @@ class DriverGeneralInfoStep extends Component
             $user->assignRole('user_driver');
 
             // Create driver detail
-            $userDriverDetail = UserDriverDetail::create([
+            $driverData = [
                 'user_id' => $user->id,
                 'carrier_id' => $this->carrier->id,
                 'middle_name' => $this->middle_name,
@@ -148,7 +170,15 @@ class DriverGeneralInfoStep extends Component
                 'terms_accepted' => $this->terms_accepted,
                 'confirmation_token' => Str::random(60),
                 'current_step' => 1,
-            ]);
+            ];
+            
+            $userDriverDetail = UserDriverDetail::create($driverData);
+            
+            // If using custom date, update the created_at timestamp
+            if ($this->use_custom_dates && $this->custom_date) {
+                $userDriverDetail->created_at = $this->custom_date;
+                $userDriverDetail->save();
+            }
 
             // Upload photo if provided
             if ($this->photo) {
@@ -211,6 +241,20 @@ class DriverGeneralInfoStep extends Component
         // Validar el archivo antes de intentar previsualizarlo
         if ($this->photo) {
             try {
+                // Verificar que el archivo temporal existe y es válido
+                if (!$this->photo->isValid()) {
+                    $this->photo = null;
+                    $this->addError('photo', 'El archivo subido no es válido. Por favor, intente nuevamente.');
+                    return;
+                }
+
+                // Verificar que el archivo temporal existe físicamente
+                if (!file_exists($this->photo->getRealPath())) {
+                    $this->photo = null;
+                    $this->addError('photo', 'El archivo temporal no se encuentra disponible. Por favor, intente subir el archivo nuevamente.');
+                    return;
+                }
+
                 $extension = $this->photo->getClientOriginalExtension();
                 if (empty($extension)) {
                     $this->photo = null;
@@ -220,31 +264,59 @@ class DriverGeneralInfoStep extends Component
 
                 $this->validate(['photo' => 'image|mimes:jpg,jpeg,png,webp|max:10240']);
                 
-                // Check if image needs compression
-                if (\App\Helpers\ImageCompressionHelper::needsCompression($this->photo)) {
-                    $originalSize = \App\Helpers\ImageCompressionHelper::formatFileSize($this->photo->getSize());
-                    
-                    // Compress the image
-                    $compressedFile = \App\Helpers\ImageCompressionHelper::compressImage($this->photo);
-                    
-                    if ($compressedFile) {
-                        $this->photo = $compressedFile;
-                        $newSize = \App\Helpers\ImageCompressionHelper::formatFileSize($this->photo->getSize());
-                        
-                        // Send flash message about compression
-                        session()->flash('photo_compressed', "Imagen optimizada automáticamente de {$originalSize} a {$newSize}");
-                        
-                        // Dispatch compression event
-                        $this->dispatch('photo-compressed', [
-                            'original_size' => $originalSize,
-                            'new_size' => $newSize
-                        ]);
+                // Check if image needs compression with additional validation
+                try {
+                    // Verificar que podemos obtener el tamaño del archivo
+                    $fileSize = $this->photo->getSize();
+                    if ($fileSize === false || $fileSize === null) {
+                        throw new \Exception('No se pudo obtener el tamaño del archivo');
                     }
+
+                    if (\App\Helpers\ImageCompressionHelper::needsCompression($this->photo)) {
+                        $originalSize = \App\Helpers\ImageCompressionHelper::formatFileSize($fileSize);
+                        
+                        // Compress the image
+                        $compressedFile = \App\Helpers\ImageCompressionHelper::compressImage($this->photo);
+                        
+                        if ($compressedFile) {
+                            // Verificar que el archivo comprimido es válido
+                            if (file_exists($compressedFile)) {
+                                $this->photo = new \Illuminate\Http\UploadedFile(
+                                    $compressedFile,
+                                    $this->photo->getClientOriginalName(),
+                                    $this->photo->getClientMimeType(),
+                                    null,
+                                    true
+                                );
+                                
+                                $newSize = \App\Helpers\ImageCompressionHelper::formatFileSize(filesize($compressedFile));
+                                
+                                // Send flash message about compression
+                                session()->flash('photo_compressed', "Imagen optimizada automáticamente de {$originalSize} a {$newSize}");
+                                
+                                // Dispatch compression event
+                                $this->dispatch('photo-compressed', [
+                                    'original_size' => $originalSize,
+                                    'new_size' => $newSize
+                                ]);
+                            }
+                        }
+                    }
+                } catch (\Exception $compressionError) {
+                    // Si falla la compresión, continuar con el archivo original
+                    \Illuminate\Support\Facades\Log::warning('Error en compresión de imagen', [
+                        'error' => $compressionError->getMessage(),
+                        'file' => $this->photo->getClientOriginalName()
+                    ]);
                 }
                 
             } catch (\Exception $e) {
                 $this->photo = null;
                 $this->addError('photo', 'Error al procesar la imagen: ' . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error('Error en updatedPhoto', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
             }
         }
     }
@@ -254,6 +326,8 @@ class DriverGeneralInfoStep extends Component
     {
         try {
             DB::beginTransaction();
+
+            // We'll handle custom dates by modifying created_at after update
 
             $userDriverDetail = UserDriverDetail::find($this->driverId);
             $user = $userDriverDetail->user;
@@ -270,14 +344,22 @@ class DriverGeneralInfoStep extends Component
             }
 
             // Update driver details
-            $userDriverDetail->update([
+            $updateData = [
                 'middle_name' => $this->middle_name,
                 'last_name' => $this->last_name,
                 'phone' => $this->phone,
                 'date_of_birth' => $this->date_of_birth,
                 'status' => $this->status,
                 'terms_accepted' => $this->terms_accepted,
-            ]);
+            ];
+            
+            $userDriverDetail->update($updateData);
+            
+            // If using custom date, update the created_at timestamp
+            if ($this->use_custom_dates && $this->custom_date) {
+                $userDriverDetail->created_at = $this->custom_date;
+                $userDriverDetail->save();
+            }
 
             // Update photo if provided
             if ($this->photo) {
@@ -304,16 +386,26 @@ class DriverGeneralInfoStep extends Component
         // Validate data
         $this->validate($this->rules());
 
+        $success = false;
+
         // If we have a driver ID, update it
         if ($this->driverId) {
-            $this->updateDriver();
+            $success = $this->updateDriver();
         } else {
             // Otherwise create a new one
-            $this->createDriver();
+            $success = $this->createDriver();
         }
 
-        // Move to next step
-        $this->dispatch('nextStep');
+        // Only proceed to next step if operation was successful
+        if ($success) {
+            // Move to next step
+            $this->dispatch('nextStep');
+        } else {
+            // Show error message if not already set
+            if (!session()->has('error')) {
+                session()->flash('error', 'Error al guardar la información del conductor. Por favor, intente nuevamente.');
+            }
+        }
     }
 
     // Save and exit
@@ -322,14 +414,24 @@ class DriverGeneralInfoStep extends Component
         // Basic validation
         $this->validate($this->partialRules());
 
+        $success = false;
+
         // Create or update
         if ($this->driverId) {
-            $this->updateDriver();
+            $success = $this->updateDriver();
         } else {
-            $this->createDriver();
+            $success = $this->createDriver();
         }
 
-        $this->dispatch('saveAndExit');
+        // Only dispatch saveAndExit if operation was successful
+        if ($success) {
+            $this->dispatch('saveAndExit');
+        } else {
+            // Show error message if not already set
+            if (!session()->has('error')) {
+                session()->flash('error', 'Error al guardar la información del conductor. Por favor, intente nuevamente.');
+            }
+        }
     }
 
     // Render

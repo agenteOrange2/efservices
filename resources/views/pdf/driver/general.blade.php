@@ -99,7 +99,7 @@
         <h2>{{ $title }}</h2>
     </div>
 
-    <div class="section">        
+    <div class="section">
         <table>
             <tr>
                 <td style="width: 75%"><strong>Applicant's Legal Name</strong><br>{{ $userDriverDetail->user->name ?? 'N/A' }} {{ $userDriverDetail->middle_name ?? '' }} {{ $userDriverDetail->last_name ?? 'N/A' }}</td>
@@ -107,12 +107,20 @@
             </tr>
             <tr>
                 @php
-                    $currentAddress = $userDriverDetail->addresses->where('primary', 1)->first() ?? $userDriverDetail->addresses->first();
+                $currentAddress = $userDriverDetail->addresses->where('primary', 1)->first() ?? $userDriverDetail->addresses->first();
                 @endphp
-                <td style="width: 50%"><strong>Current Address</strong><br>{{ $currentAddress->address_line1 ?? 'N/A' }}</td>
-                <td style="width: 16.66%"><strong>City</strong><br>{{ $currentAddress->city ?? 'N/A' }}</td>
-                <td style="width: 16.66%"><strong>State</strong><br>{{ $currentAddress->state ?? 'N/A' }}</td>
-                <td style="width: 16.66%"><strong>Zip</strong><br>{{ $currentAddress->zip_code ?? 'N/A' }}</td>
+                <td style="width: 50%"><strong>Current
+                        Address</strong><br>{{ $userDriverDetail->application && $userDriverDetail->application->addresses ? $userDriverDetail->application->addresses->where('primary', true)->first()->address_line1 ?? 'N/A' : 'N/A' }}
+                </td>
+                <td style="width: 16.66%">
+                    <strong>City</strong><br>{{ $userDriverDetail->application && $userDriverDetail->application->addresses ? $userDriverDetail->application->addresses->where('primary', true)->first()->city ?? 'N/A' : 'N/A' }}
+                </td>
+                <td style="width: 16.66%">
+                    <strong>State</strong><br>{{ $userDriverDetail->application && $userDriverDetail->application->addresses ? $userDriverDetail->application->addresses->where('primary', true)->first()->state ?? 'N/A' : 'N/A' }}
+                </td>
+                <td style="width: 16.66%">
+                    <strong>ZIP</strong><br>{{ $userDriverDetail->application && $userDriverDetail->application->addresses ? $userDriverDetail->application->addresses->where('primary', true)->first()->zip_code ?? 'N/A' : 'N/A' }}
+                </td>
             </tr>
             <tr>
                 <td style="width: 50%"><strong>Email Address</strong><br>{{ $userDriverDetail->user->email ?? 'N/A' }}</td>
@@ -131,45 +139,33 @@
             <span class="label">Signature:</span>
             <div>
                 @if (!empty($signaturePath) && file_exists($signaturePath))
-                    <img src="{{ $signaturePath }}" alt="Firma" style="max-width: 300px; max-height: 100px;" />
+                <img src="{{ $signaturePath }}" alt="Firma" style="max-width: 300px; max-height: 100px;" />
                 @else
-                    <p style="font-style: italic; color: #999;">Signature not available</p>
+                <p style="font-style: italic; color: #999;">Signature not available</p>
                 @endif
             </div>
         </div>
-        <div class="date">
+        <!-- <div class="date">
             <span class="label">Date:</span>
             <span class="value">{{ $date }}</span>
+        </div> -->
+        <!-- Información adicional del conductor -->
+        <div class="section">
+            <div class="section-title">Additional Driver Information</div>
+            <table>
+                <tr>
+                    <td style="width: 50%"><strong>Legal Name</strong><br>{{ $userDriverDetail->user->name ?? 'N/A' }} {{ $userDriverDetail->middle_name ?? '' }} {{ $userDriverDetail->last_name ?? '' }}</td>
+                    <td style="width: 50%"><strong>Carrier</strong><br>{{ $userDriverDetail->carrier->name ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td style="width: 33.33%"><strong>Creation Date</strong><br>{{ isset($formatted_dates['created_at']) ? $formatted_dates['created_at'] : ($created_at ? $created_at->format('m/d/Y') : 'N/A') }}</td>
+                    <td style="width: 33.33%"><strong>Last Updated</strong><br>{{ isset($formatted_dates['updated_at']) ? $formatted_dates['updated_at'] : ($updated_at ? $updated_at->format('m/d/Y') : 'N/A') }}</td>
+                    <td style="width: 33.33%"><strong>Document Date</strong><br>{{ $date }}</td>
+                </tr>
+            </table>
         </div>
     </div>
-    <!-- Ejemplo de corrección en vista general -->
-    <div class="field">
-        <label>Fecha de Nacimiento:</label>
-        <span>
-            @if($userDriverDetail->date_of_birth)
-                {{ $userDriverDetail->date_of_birth->format('m/d/Y') }}
-            @elseif(isset($formatted_dates['date_of_birth']) && !empty($formatted_dates['date_of_birth']))
-                {{ $formatted_dates['date_of_birth'] }}
-            @else
-                N/A
-            @endif
-        </span>
-    </div>
-    
-    <div class="field">
-        <label>Nombre Legal:</label>
-        <span>{{ $user_name }} {{ $userDriverDetail->middle_name ?? '' }} {{ $userDriverDetail->last_name ?? '' }}</span>
-    </div>
-    
-    <div class="field">
-        <label>Email:</label>
-        <span>{{ $user_email }}</span>
-    </div>
-    
-    <div class="field">
-        <label>Carrier:</label>
-        <span>{{ $carrier_name }}</span>
-    </div>
+
 </body>
 
 </html>

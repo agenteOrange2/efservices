@@ -54,6 +54,7 @@ class UserDriverDetail extends Model implements HasMedia
         'created_by_admin',
         'updated_by_admin',
         'completion_percentage',
+        'use_custom_dates',
     ];
 
     protected $casts = [
@@ -68,6 +69,7 @@ class UserDriverDetail extends Model implements HasMedia
         'created_by_admin' => 'integer',
         'updated_by_admin' => 'integer',
         'completion_percentage' => 'integer',
+        'use_custom_dates' => 'boolean',
     ];
 
     public function hasRequiredDocuments(): bool

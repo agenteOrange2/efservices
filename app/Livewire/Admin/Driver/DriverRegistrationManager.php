@@ -32,10 +32,10 @@ class DriverRegistrationManager extends Component
 
     // Event listeners
     protected $listeners = [
-        'nextStep',
-        'prevStep',
         'driverCreated' => 'handleDriverCreated',
         'saveAndExit' => 'handleSaveAndExit',
+        'nextStep' => 'nextStep',
+        'prevStep' => 'prevStep',
     ];
 
     // Mounting the component
@@ -77,39 +77,63 @@ class DriverRegistrationManager extends Component
         Log::info('DriverRegistrationManager::mount - Componente montado exitosamente');
     }
 
-    // Go to the next step
+
+
+    public function goToTab($tabNumber)
+    {
+        if ($tabNumber >= 1 && $tabNumber <= $this->totalSteps) {
+            $this->currentStep = $tabNumber;
+        }
+    }
+
+    // Navigate to next step with validation
     public function nextStep()
     {
-        if ($this->currentStep < $this->totalSteps) {
-            $this->currentStep++;
-
-
-            if ($this->driverId) {
-                $this->updateCurrentStep($this->currentStep);
+        // Check if we can move to next step
+        if ($this->canMoveToNextStep()) {
+            if ($this->currentStep < $this->totalSteps) {
+                $this->currentStep++;
             }
         }
     }
 
-    private function updateCurrentStep($step)
-    {
-        if ($this->driverId) {
-            $driver = UserDriverDetail::find($this->driverId);
-            if ($driver && $driver->current_step < $step) {
-                $driver->update(['current_step' => $step]);
-                Log::info('Current step updated by manager', [
-                    'driver_id' => $this->driverId,
-                    'step' => $step
-                ]);
-            }
-        }
-    }
-
-    // Go to the previous step
+    // Navigate to previous step
     public function prevStep()
     {
         if ($this->currentStep > 1) {
             $this->currentStep--;
         }
+    }
+
+    // Check if we can move to next step (with intelligent validation)
+    private function canMoveToNextStep()
+    {
+        // Always allow navigation if no content or in edit mode
+        if ($this->isEditMode || !$this->hasContentInCurrentStep()) {
+            return true;
+        }
+
+        // Validate current step if it has content
+        return $this->validateCurrentStep();
+    }
+
+    // Check if current step has content that needs validation
+    private function hasContentInCurrentStep()
+    {
+        // This is a simplified check - you can expand this based on your needs
+        // For now, we'll assume steps always allow navigation unless there are validation errors
+        return false; // Allow free navigation by default
+    }
+
+    // Validate current step
+    private function validateCurrentStep()
+    {
+        // Emit validation event to current step component
+        $this->dispatch('validateStep', $this->currentStep);
+        
+        // For now, return true to allow navigation
+        // You can implement specific validation logic here
+        return true;
     }
 
     // When a driver is created in first step

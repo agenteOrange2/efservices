@@ -163,7 +163,6 @@
             <p>No training school data found.</p>
         </div>
     @endif
-
     <div class="signature-box">
         <div class="field">
             <span class="label">Signature:</span>
@@ -175,10 +174,21 @@
                 @endif
             </div>
         </div>
-        <div class="date">
+        <!-- <div class="date">
             <span class="label">Date:</span>
             <span class="value">{{ $date }}</span>
-        </div>
+        </div> -->
+            <!-- Document Information -->
+    <div class="section">
+        <div class="section-title">Document Information</div>
+        <table>
+            <tr>
+                <td style="width: 33.33%"><strong>Creation Date</strong><br>{{ isset($formatted_dates['created_at']) ? $formatted_dates['created_at'] : ($created_at ? $created_at->format('m/d/Y') : 'N/A') }}</td>
+                <td style="width: 33.33%"><strong>Last Updated</strong><br>{{ isset($formatted_dates['updated_at']) ? $formatted_dates['updated_at'] : ($updated_at ? $updated_at->format('m/d/Y') : 'N/A') }}</td>
+                <td style="width: 33.33%"><strong>Document Date</strong><br>{{ $date }}</td>
+            </tr>
+        </table>
+    </div>
     </div>
 </body>
 

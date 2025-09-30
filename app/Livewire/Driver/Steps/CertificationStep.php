@@ -465,7 +465,11 @@ class CertificationStep extends Component
                     'formatted_dates' => [
                         'date_of_birth' => $userDriverDetail->date_of_birth ? $userDriverDetail->date_of_birth->format('m/d/Y') : '',
                         'hire_date' => optional($userDriverDetail->application->details)->hire_date ?? '',
-                        'medical_expiry' => optional($userDriverDetail->medicalQualification)->expiration_date ?? '' // CORREGIDO: era medicalQualifications->first()
+                        'medical_expiry' => optional($userDriverDetail->medicalQualification)->expiration_date ?? '', // CORREGIDO: era medicalQualifications->first()
+                        'created_at' => $userDriverDetail->created_at ? $userDriverDetail->created_at->format('m/d/Y') : 'N/A',
+                        'updated_at' => $userDriverDetail->updated_at ? $userDriverDetail->updated_at->format('m/d/Y') : 'N/A',
+                        'created_at_long' => $userDriverDetail->created_at ? $userDriverDetail->created_at->format('F j, Y') : 'N/A',
+                        'updated_at_long' => $userDriverDetail->updated_at ? $userDriverDetail->updated_at->format('F j, Y') : 'N/A'
                     ],
                     // Datos adicionales para evitar errores en vistas
                     'user_name' => $userDriverDetail->user->name ?? 'N/A',
@@ -473,7 +477,9 @@ class CertificationStep extends Component
                     'carrier_name' => $userDriverDetail->carrier->name ?? 'N/A',
                     // Datos para criminal history
                     'criminalHistory' => $this->loadCriminalHistoryData($userDriverDetail),
-                    'carrier' => $userDriverDetail->carrier
+                    'carrier' => $userDriverDetail->carrier,
+                    'created_at' => $userDriverDetail->created_at,
+                    'updated_at' => $userDriverDetail->updated_at
                 ];
                 
                 $pdf = App::make('dompdf.wrapper')->loadView($step['view'], $pdfData);
@@ -751,13 +757,22 @@ class CertificationStep extends Component
                        ($userDriverDetail->last_name ?? 'N/A');
             $fullName = trim(preg_replace('/\s+/', ' ', $fullName)); // Limpiar espacios extra
             
+            // Preparar fechas formateadas
+            $formatted_dates = [
+                'created_at' => $userDriverDetail->created_at ? $userDriverDetail->created_at->format('m/d/Y') : 'N/A',
+                'updated_at' => $userDriverDetail->updated_at ? $userDriverDetail->updated_at->format('m/d/Y') : 'N/A'
+            ];
+            
             $pdf = App::make('dompdf.wrapper')->loadView('pdf.driver.complete_application', [
                 'userDriverDetail' => $userDriverDetail,
                 'signature' => $signatureImage,
                 'fullName' => $fullName,
                 'date' => now()->format('m/d/Y'),
                 'carrier' => $userDriverDetail->carrier,
-                'criminalHistory' => $this->loadCriminalHistoryData($userDriverDetail)
+                'criminalHistory' => $this->loadCriminalHistoryData($userDriverDetail),
+                'created_at' => $userDriverDetail->created_at,
+                'updated_at' => $userDriverDetail->updated_at,
+                'formatted_dates' => $formatted_dates
             ]);
             
             // Asegurarnos de que estamos usando el ID correcto
@@ -973,25 +988,22 @@ class CertificationStep extends Component
             $applicationDetails = $application->details;
             
             // Preparar los datos para el PDF de consentimiento de terceros
-            // La plantilla third-party-consent.blade.php espera $verification, $driverDetails, $vehicle, $date, $signatureData
+            // La plantilla third-party-consent.blade.php espera variables directas
             $consentData = [
-                'verification' => (object) [
-                    'third_party_name' => $thirdPartyDetails->third_party_name ?? '',
-                    'third_party_phone' => $thirdPartyDetails->third_party_phone ?? '',
-                    'third_party_email' => $thirdPartyDetails->third_party_email ?? '',
-                    'token' => 'TP-' . $userDriverDetail->id . '-' . time()
-                ],
-                'driverDetails' => (object) [
-                    'user' => (object) [
-                        'name' => $userDriverDetail->user->name,
-                        'email' => $userDriverDetail->user->email,
-                    ],
-                    'middle_name' => $userDriverDetail->middle_name ?? '',
-                    'last_name' => $userDriverDetail->last_name ?? '',
-                    'phone' => $userDriverDetail->phone ?? 'N/A',
-                ],
+                // Variables de terceros
+                'thirdPartyName' => $thirdPartyDetails->third_party_name ?? '',
+                'thirdPartyPhone' => $thirdPartyDetails->third_party_phone ?? '',
+                'thirdPartyEmail' => $thirdPartyDetails->third_party_email ?? '',
+                
+                // Variables del conductor
+                'driverName' => trim(($userDriverDetail->user->name ?? '') . ' ' . ($userDriverDetail->middle_name ?? '') . ' ' . ($userDriverDetail->last_name ?? '')),
+                'driverEmail' => $userDriverDetail->user->email ?? '',
+                'driverPhone' => $userDriverDetail->phone ?? 'N/A',
+                
+                // Otras variables
                 'vehicle' => $vehicle,
                 'date' => now()->format('F j, Y'),
+                'signedDate' => now()->format('F j, Y'),
                 'signaturePath' => $signaturePath,
                 'signature' => null // Para compatibilidad
             ];

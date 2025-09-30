@@ -24,6 +24,7 @@ return new class extends Migration
             $table->decimal('cost', 10, 2)->default(0);
             $table->integer('odometer')->nullable();
             $table->boolean('status')->default(false);
+            $table->boolean('is_historical')->default(false);
             $table->timestamps();
         });
     }

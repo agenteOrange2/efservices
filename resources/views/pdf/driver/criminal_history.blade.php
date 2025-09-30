@@ -124,7 +124,7 @@
         <table>
             <tr>
                 <td><strong>Do you have any pending criminal charges?</strong></td>
-                <td>{{ $criminalHistory['has_criminal_charges'] ? 'Yes' : 'No' }}</td>
+                <td>{{ $userDriverDetail->criminalHistory->has_criminal_charges ?? false ? 'Yes' : 'No' }}</td>
             </tr>
         </table>
     </div>
@@ -134,11 +134,11 @@
         <table>
             <tr>
                 <td><strong>Have you ever been convicted of a felony?</strong></td>
-                <td>{{ $criminalHistory['has_felony_conviction'] ? 'Yes' : 'No' }}</td>
+                <td>{{ $userDriverDetail->criminalHistory->has_felony_conviction ?? false ? 'Yes' : 'No' }}</td>
             </tr>
             <tr>
                 <td><strong>Do you have a minister's permit to enter/exit Canada?</strong></td>
-                <td>{{ $criminalHistory['has_minister_permit'] ? 'Yes' : 'No' }}</td>
+                <td>{{ $userDriverDetail->criminalHistory->has_minister_permit ?? false ? 'Yes' : 'No' }}</td>
             </tr>
         </table>
     </div>
@@ -186,16 +186,15 @@
             <table style="border: none;">
                 <tr style="border: none;">
                     <td style="border: none; width: 50%;">
-                        <strong>FCRA Consent:</strong> {{ $criminalHistory['fcra_consent'] ? 'Yes' : 'No' }}
+                        <strong>FCRA Consent:</strong> {{ $userDriverDetail->criminalHistory->fcra_consent ?? false ? 'Yes' : 'No' }}
                     </td>
                     <td style="border: none; width: 50%;">
-                        <strong>Background Info Consent:</strong> {{ $criminalHistory['background_info_consent'] ? 'Yes' : 'No' }}
+                        <strong>Background Info Consent:</strong> {{ $userDriverDetail->criminalHistory->background_info_consent ?? false ? 'Yes' : 'No' }}
                     </td>
                 </tr>
             </table>
         </div>
     </div>
-
     <div class="signature-box">
         <div class="field">
             <span class="label">Signature:</span>
@@ -209,9 +208,24 @@
                 @endif
             </div>
         </div>
-        <div class="date">
+        <!-- <div class="date">
             <span class="label">Date:</span>
             <span class="value">{{ $date }}</span>
+        </div> -->
+        <!-- Información adicional del conductor -->
+        <div class="section">
+            <div class="section-title">Additional Driver Information</div>
+            <table>
+                <tr>
+                    <td style="width: 50%"><strong>Legal Name</strong><br>{{ $userDriverDetail->user->name ?? 'N/A' }} {{ $userDriverDetail->middle_name ?? '' }} {{ $userDriverDetail->last_name ?? '' }}</td>
+                    <td style="width: 50%"><strong>Carrier</strong><br>{{ $userDriverDetail->carrier->name ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td style="width: 33.33%"><strong>Creation Date</strong><br>{{ isset($formatted_dates['created_at']) ? $formatted_dates['created_at'] : ($created_at ? $created_at->format('m/d/Y') : 'N/A') }}</td>
+                    <td style="width: 33.33%"><strong>Last Updated</strong><br>{{ isset($formatted_dates['updated_at']) ? $formatted_dates['updated_at'] : ($updated_at ? $updated_at->format('m/d/Y') : 'N/A') }}</td>
+                    <td style="width: 33.33%"><strong>Document Date</strong><br>{{ $date }}</td>
+                </tr>
+            </table>
         </div>
     </div>
 </body>
