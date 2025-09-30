@@ -7,6 +7,7 @@ use Livewire\Component;
 use App\Helpers\Constants;
 use Illuminate\Support\Facades\Log;
 use App\Models\UserDriverDetail;
+use App\Services\Admin\DriverStepService;
 use Livewire\Livewire;
 
 class DriverRegistrationManager extends Component
@@ -22,6 +23,12 @@ class DriverRegistrationManager extends Component
     // Driver ID for edit mode
     public $driverId = null;
     public $userDriverDetail = null;
+    
+    // Edit mode flag
+    public $isEditMode = false;
+    
+    // Step service
+    protected $stepService;
 
     // Event listeners
     protected $listeners = [
@@ -51,7 +58,7 @@ class DriverRegistrationManager extends Component
         ]);
         
         // Set current step based on edit mode
-        $this->currentStep = $this->isEditMode ? 'personal' : 'personal';
+        $this->currentStep = $this->isEditMode ? 1 : 1;
         
         Log::info('DriverRegistrationManager::mount - Step actual configurado', [
             'current_step' => $this->currentStep
@@ -126,6 +133,16 @@ class DriverRegistrationManager extends Component
     public function handleSaveAndExit()
     {
         return redirect()->route('admin.carrier.user_drivers.index', $this->carrier);
+    }
+
+    // Load existing data for edit mode
+    private function loadExistingData()
+    {
+        if ($this->userDriverDetail) {
+            $this->driverId = $this->userDriverDetail->id;
+            // Load any additional data needed for editing
+            // This method can be expanded as needed
+        }
     }
 
     // Submit form on the final step
