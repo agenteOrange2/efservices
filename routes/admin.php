@@ -35,6 +35,7 @@ use App\Http\Controllers\Admin\Vehicles\VehicleTypeController;
 use App\Http\Controllers\Admin\Vehicles\MaintenanceReportController;
 use App\Http\Controllers\Admin\Vehicles\MaintenanceCalendarController;
 use App\Http\Controllers\Admin\Driver\TrainingSchoolsController;
+use App\Http\Controllers\Admin\Driver\DriverLicensesController;
 use App\Http\Controllers\Admin\Driver\DriverRecruitmentController;
 use App\Http\Controllers\Admin\Vehicles\VehicleDocumentController;
 use App\Http\Controllers\Admin\Driver\TrafficConvictionsController;
@@ -163,6 +164,9 @@ Route::delete('traffic/documents/{document}', [TrafficConvictionsController::cla
 // Ruta para eliminar documentos de training schools (usada por el formulario)
 Route::delete('training-schools/documents/{document}', [TrainingSchoolsController::class, 'destroyDocument'])->name('training-schools.documents.delete');
 
+// Ruta para eliminar documentos de licenses (usada por el formulario)
+Route::delete('licenses/documents/{document}', [DriverLicensesController::class, 'destroyDocument'])->name('licenses.documents.delete');
+
 // Ruta para cargas temporales de archivos
 Route::post('/upload-temp', function (\Illuminate\Http\Request $request) {
     if ($request->hasFile('file')) {
@@ -237,6 +241,18 @@ Route::prefix('maintenance-notifications')->name('maintenance-notifications.')->
 // Rutas estándar de recursos para escuelas de entrenamiento
 Route::resource('training-schools', TrainingSchoolsController::class);
 
+/*
+    |--------------------------------------------------------------------------
+    | RUTAS PARA LICENCIAS DE CONDUCTORES
+    |--------------------------------------------------------------------------    
+*/
+
+// Rutas estándar de recursos para licencias
+Route::resource('licenses', DriverLicensesController::class);
+
+// Ruta temporal para debug de endorsements
+Route::get('licenses/{license}/debug-endorsements', [DriverLicensesController::class, 'debugEndorsements'])->name('licenses.debug-endorsements');
+
 // Rutas para el nuevo módulo de entrenamientos
 Route::resource('trainings', \App\Http\Controllers\Admin\TrainingsController::class);
 
@@ -290,6 +306,33 @@ Route::prefix('training-schools')->name('training-schools.')->group(function () 
     // Rutas originales - renombradas para evitar duplicados
     Route::delete('document/{id}', [TrainingSchoolsController::class, 'destroyDocument'])->name('doc.delete');
     Route::delete('document/{id}/ajax', [TrainingSchoolsController::class, 'ajaxDestroyDocument'])->name('doc.ajax-delete');
+});
+
+/*
+    |--------------------------------------------------------------------------
+    | RUTAS PARA GESTION DE DOCUMENTOS DE LICENCIAS
+    |--------------------------------------------------------------------------    
+*/
+
+Route::prefix('licenses')->name('licenses.')->group(function () {
+    // Vista de todos los documentos
+    Route::get('all/documents', [DriverLicensesController::class, 'documents'])->name('docs.all');
+
+    // Rutas para documentos de una licencia específica
+    Route::get('{license}/documents', [DriverLicensesController::class, 'showDocuments'])->name('docs.show');
+
+    // Rutas para operaciones con documentos individuales
+    Route::get('document/{id}/preview', [DriverLicensesController::class, 'previewDocument'])->name('doc.preview');
+    // Rutas adicionales con los nombres que se usan en las vistas para compatibilidad
+    Route::get('documents/{id}/preview', [DriverLicensesController::class, 'previewDocument'])->name('docs.preview');
+    Route::delete('documents/{id}', [DriverLicensesController::class, 'destroyDocument'])->name('docs.delete');
+
+    // Rutas originales - renombradas para evitar duplicados
+    Route::delete('document/{id}', [DriverLicensesController::class, 'destroyDocument'])->name('doc.delete');
+    Route::delete('document/{id}/ajax', [DriverLicensesController::class, 'ajaxDestroyDocument'])->name('doc.ajax-delete');
+
+    // Ruta para obtener conductores por transportista
+    Route::get('carrier/{carrier}/drivers', [DriverLicensesController::class, 'getDriversByCarrier'])->name('drivers.by.carrier');
 });
 
 /*

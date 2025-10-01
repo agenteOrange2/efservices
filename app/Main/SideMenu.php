@@ -58,16 +58,22 @@ class SideMenu
                 'title' => "Drivers",
                 'sub_menu' => [
                     [
+                        'icon' => "user-check",
+                        'route_name' => "admin.driver-recruitment.index",
+                        'params' => [],
+                        'title' => "Recruitment",
+                    ],
+                    [
                         'icon' => "user-plus",
                         'route_name' => "admin.drivers.index",
                         'params' => [],
                         'title' => "Drivers",
                     ],
                     [
-                        'icon' => "user-check",
-                        'route_name' => "admin.driver-recruitment.index",
+                        'icon' => "user-plus",
+                        'route_name' => "admin.licenses.index",
                         'params' => [],
-                        'title' => "Recruitment",
+                        'title' => "Drivers Licenses",
                     ],
                     [
                         'icon' => "file-warning",

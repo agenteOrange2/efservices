@@ -189,12 +189,12 @@ class UserDriverDetail extends Model implements HasMedia
     //Licencias
     public function licenses()
     {
-        return $this->hasMany(DriverLicense::class);
+        return $this->hasMany(DriverLicense::class, 'user_driver_detail_id');
     }
 
     public function primaryLicense()
     {
-        return $this->hasOne(DriverLicense::class)->where('is_primary', true);
+        return $this->hasOne(DriverLicense::class, 'user_driver_detail_id');
     }
 
     // Experiencia de conducción

@@ -6,6 +6,64 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\VehicleVerificationController;
 use App\Http\Controllers\EmploymentVerificationController;
 use App\Http\Controllers\Admin\NotificationRecipientsController;
+use App\Http\Controllers\Admin\Driver\DriverLicensesController as AdminDriverLicensesController;
+
+// Ruta temporal para debug de endorsements (sin autenticación)
+Route::get('/debug-license/{license}', function($licenseId) {
+    $license = \App\Models\DriverLicense::with('driverDetail.carrier')->find($licenseId);
+    
+    if (!$license) {
+        return response()->json(['error' => 'License not found'], 404);
+    }
+    
+    return response()->json([
+        'license_id' => $license->id,
+        'is_cdl' => $license->is_cdl,
+        'is_cdl_type' => gettype($license->is_cdl),
+        'is_cdl_raw' => $license->getRawOriginal('is_cdl'),
+        'endorsements' => [
+            'endorsement_n' => [
+                'value' => $license->endorsement_n,
+                'type' => gettype($license->endorsement_n),
+                'raw' => $license->getRawOriginal('endorsement_n')
+            ],
+            'endorsement_h' => [
+                'value' => $license->endorsement_h,
+                'type' => gettype($license->endorsement_h),
+                'raw' => $license->getRawOriginal('endorsement_h')
+            ],
+            'endorsement_x' => [
+                'value' => $license->endorsement_x,
+                'type' => gettype($license->endorsement_x),
+                'raw' => $license->getRawOriginal('endorsement_x')
+            ],
+            'endorsement_t' => [
+                'value' => $license->endorsement_t,
+                'type' => gettype($license->endorsement_t),
+                'raw' => $license->getRawOriginal('endorsement_t')
+            ],
+            'endorsement_p' => [
+                'value' => $license->endorsement_p,
+                'type' => gettype($license->endorsement_p),
+                'raw' => $license->getRawOriginal('endorsement_p')
+            ],
+            'endorsement_s' => [
+                'value' => $license->endorsement_s,
+                'type' => gettype($license->endorsement_s),
+                'raw' => $license->getRawOriginal('endorsement_s')
+            ]
+        ],
+        'old_simulation' => [
+            'is_cdl' => old('is_cdl', $license->is_cdl),
+            'endorsement_n' => old('endorsement_n', $license->endorsement_n),
+            'endorsement_h' => old('endorsement_h', $license->endorsement_h),
+            'endorsement_x' => old('endorsement_x', $license->endorsement_x),
+            'endorsement_t' => old('endorsement_t', $license->endorsement_t),
+            'endorsement_p' => old('endorsement_p', $license->endorsement_p),
+            'endorsement_s' => old('endorsement_s', $license->endorsement_s)
+        ]
+    ]);
+});
 
 // Rutas públicas (sin autenticación)
 /*

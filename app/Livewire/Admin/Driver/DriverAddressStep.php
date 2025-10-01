@@ -54,6 +54,8 @@ class DriverAddressStep extends Component
             'city' => 'required|string|max:255',
             'state' => 'required|string|max:255',
             'zip_code' => 'required|string|max:255',
+            'from_date' => 'nullable|date',
+            'to_date' => 'nullable|date',
         ];
     }
     
@@ -168,6 +170,32 @@ class DriverAddressStep extends Component
                 ]);
             }
             
+            // Normalize date formats to Y-m-d
+            $normalizedFromDate = null;
+            $normalizedToDate = null;
+            
+            if (!empty($this->from_date)) {
+                try {
+                    $normalizedFromDate = \Carbon\Carbon::parse($this->from_date)->format('Y-m-d');
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning('Invalid from_date format', [
+                        'from_date' => $this->from_date,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+            
+            if (!empty($this->to_date)) {
+                try {
+                    $normalizedToDate = \Carbon\Carbon::parse($this->to_date)->format('Y-m-d');
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning('Invalid to_date format', [
+                        'to_date' => $this->to_date,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+            
             // Update primary address
             $mainAddress = $application->addresses()->updateOrCreate(
                 ['primary' => true],
@@ -178,8 +206,8 @@ class DriverAddressStep extends Component
                     'state' => $this->state,
                     'zip_code' => $this->zip_code,
                     'lived_three_years' => $this->lived_three_years,
-                    'from_date' => $this->from_date,
-                    'to_date' => $this->to_date,
+                    'from_date' => $normalizedFromDate,
+                    'to_date' => $normalizedToDate,
                 ]
             );
             
@@ -190,6 +218,32 @@ class DriverAddressStep extends Component
                 
                 foreach ($this->previous_addresses as $prevAddressData) {
                     if (empty($prevAddressData['address_line1'])) continue;
+                    
+                    // Normalize previous address dates
+                    $prevFromDate = null;
+                    $prevToDate = null;
+                    
+                    if (!empty($prevAddressData['from_date'])) {
+                        try {
+                            $prevFromDate = \Carbon\Carbon::parse($prevAddressData['from_date'])->format('Y-m-d');
+                        } catch (\Exception $e) {
+                            \Illuminate\Support\Facades\Log::warning('Invalid previous address from_date format', [
+                                'from_date' => $prevAddressData['from_date'],
+                                'error' => $e->getMessage()
+                            ]);
+                        }
+                    }
+                    
+                    if (!empty($prevAddressData['to_date'])) {
+                        try {
+                            $prevToDate = \Carbon\Carbon::parse($prevAddressData['to_date'])->format('Y-m-d');
+                        } catch (\Exception $e) {
+                            \Illuminate\Support\Facades\Log::warning('Invalid previous address to_date format', [
+                                'to_date' => $prevAddressData['to_date'],
+                                'error' => $e->getMessage()
+                            ]);
+                        }
+                    }
                     
                     $addressId = $prevAddressData['id'] ?? null;
                     if ($addressId) {
@@ -202,8 +256,8 @@ class DriverAddressStep extends Component
                                 'city' => $prevAddressData['city'],
                                 'state' => $prevAddressData['state'],
                                 'zip_code' => $prevAddressData['zip_code'],
-                                'from_date' => $prevAddressData['from_date'],
-                                'to_date' => $prevAddressData['to_date'],
+                                'from_date' => $prevFromDate,
+                                'to_date' => $prevToDate,
                             ]);
                             $updatedAddressIds[] = $address->id;
                         }
@@ -216,8 +270,8 @@ class DriverAddressStep extends Component
                             'city' => $prevAddressData['city'],
                             'state' => $prevAddressData['state'],
                             'zip_code' => $prevAddressData['zip_code'],
-                            'from_date' => $prevAddressData['from_date'],
-                            'to_date' => $prevAddressData['to_date'],
+                            'from_date' => $prevFromDate,
+                            'to_date' => $prevToDate,
                             'lived_three_years' => false
                         ]);
                         $updatedAddressIds[] = $address->id;
@@ -303,12 +357,15 @@ class DriverAddressStep extends Component
     // Previous step
     public function previous()
     {
-        // Basic save before going back
+        // Partial validation
+        $this->validate($this->partialRules());
+        
+        // Save to database
         if ($this->driverId) {
-            $this->validate($this->partialRules());
             $this->saveAddresses();
         }
         
+        // Move to previous step
         $this->dispatch('prevStep');
     }
     

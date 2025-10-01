@@ -25,7 +25,7 @@
                             <x-base.form-input type="text" wire:model="address_line1"
                                 class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
                             @error('address_line1')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -33,7 +33,7 @@
                             <x-base.form-input type="text" wire:model="address_line2"
                                 class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
                             @error('address_line2')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -45,7 +45,7 @@
                             <x-base.form-input type="text" wire:model="city"
                                 class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
                             @error('city')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -55,11 +55,11 @@
                                 class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
                                 <option value="">Select State</option>
                                 @foreach ($usStates as $code => $name)
-                                    <option value="{{ $code }}">{{ $name }}</option>
+                                <option value="{{ $code }}">{{ $name }}</option>
                                 @endforeach
                             </select>
                             @error('state')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -68,7 +68,7 @@
                             <x-base.form-input type="text" wire:model="zip_code"
                                 class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
                             @error('zip_code')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -84,10 +84,9 @@
                                 placeholder="MM/DD/YYYY"
                                 class="driver-datepicker form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm"
                                 onchange="@this.set('from_date', this.value)"
-                                required
-                            />
+                                required />
                             @error('from_date')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
@@ -98,10 +97,9 @@
                                 value="{{ $to_date }}"
                                 placeholder="MM/DD/YYYY"
                                 class="driver-datepicker form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm"
-                                onchange="@this.set('to_date', this.value)"
-                            />
+                                onchange="@this.set('to_date', this.value)" />
                             @error('to_date')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -135,101 +133,109 @@
                 <div class="mt-3 w-full flex-1 xl:mt-0">
 
                     @foreach ($previous_addresses as $index => $address)
-                        <div class="p-5 border rounded-md bg-slate-50/50 shadow-sm mb-5">
-                            <div class="flex justify-between items-center mb-3 border-b border-slate-200/60 pb-3">
-                                <h4 class="font-medium text-slate-600">Previous Address #{{ $index + 1 }}</h4>
-                                @if (count($previous_addresses) > 1)
-                                    <button type="button" wire:click="removePreviousAddress({{ $index }})"
-                                        class="text-red-500 hover:text-red-600 transition duration-150 ease-in-out">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                            fill="currentColor">
-                                            <path fill-rule="evenodd"
-                                                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
-                                @endif
-                            </div>
+                    <div class="p-5 border rounded-md bg-slate-50/50 shadow-sm mb-5">
+                        <div class="flex justify-between items-center mb-3 border-b border-slate-200/60 pb-3">
+                            <h4 class="font-medium text-slate-600">Previous Address #{{ $index + 1 }}</h4>
+                            @if (count($previous_addresses) > 1)
+                            <button type="button" wire:click="removePreviousAddress({{ $index }})"
+                                class="text-red-500 hover:text-red-600 transition duration-150 ease-in-out">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                    fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            @endif
+                        </div>
 
-                            <!-- Previous Address Fields -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label class="block mb-2 text-sm font-medium text-gray-700">Address Line 1 <span
-                                            class="text-red-500">*</span></label>
-                                    <x-base.form-input type="text"
-                                        wire:model="previous_addresses.{{ $index }}.address_line1"
-                                        class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
-                                    @error('previous_addresses.' . $index . '.address_line1')
-                                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                                <div>
-                                    <label class="block mb-2 text-sm font-medium text-gray-700">Address Line 2</label>
-                                    <x-base.form-input type="text"
-                                        wire:model="previous_addresses.{{ $index }}.address_line2"
-                                        class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
-                                </div>
+                        <!-- Previous Address Fields -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-700">Address Line 1 <span
+                                        class="text-red-500">*</span></label>
+                                <x-base.form-input type="text"
+                                    wire:model="previous_addresses.{{ $index }}.address_line1"
+                                    class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
+                                @error('previous_addresses.' . $index . '.address_line1')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
                             </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                <div>
-                                    <label class="block mb-2 text-sm font-medium text-gray-700">City <span
-                                            class="text-red-500">*</span></label>
-                                    <x-base.form-input type="text"
-                                        wire:model="previous_addresses.{{ $index }}.city"
-                                        class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
-                                    @error('previous_addresses.' . $index . '.city')
-                                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                                <div>
-                                    <label class="block mb-2 text-sm font-medium text-gray-700">State <span
-                                            class="text-red-500">*</span></label>
-                                    <select wire:model="previous_addresses.{{ $index }}.state"
-                                        class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
-                                        <option value="">Select State</option>
-                                        @foreach ($usStates as $code => $name)
-                                            <option value="{{ $code }}">{{ $name }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('previous_addresses.' . $index . '.state')
-                                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                                <div>
-                                    <label class="block mb-2 text-sm font-medium text-gray-700">ZIP Code <span
-                                            class="text-red-500">*</span></label>
-                                    <x-base.form-input type="text"
-                                        wire:model="previous_addresses.{{ $index }}.zip_code"
-                                        class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
-                                    @error('previous_addresses.' . $index . '.zip_code')
-                                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block mb-2 text-sm font-medium text-gray-700">From Date <span
-                                            class="text-red-500">*</span></label>
-                                    <input type="date"
-                                        wire:model="previous_addresses.{{ $index }}.from_date"
-                                        class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
-                                    @error('previous_addresses.' . $index . '.from_date')
-                                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                                <div>
-                                    <label class="block mb-2 text-sm font-medium text-gray-700">To Date <span
-                                            class="text-red-500">*</span></label>
-                                    <input type="date" wire:model="previous_addresses.{{ $index }}.to_date"
-                                        class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
-                                    @error('previous_addresses.' . $index . '.to_date')
-                                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-700">Address Line 2</label>
+                                <x-base.form-input type="text"
+                                    wire:model="previous_addresses.{{ $index }}.address_line2"
+                                    class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
                             </div>
                         </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-700">City <span
+                                        class="text-red-500">*</span></label>
+                                <x-base.form-input type="text"
+                                    wire:model="previous_addresses.{{ $index }}.city"
+                                    class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
+                                @error('previous_addresses.' . $index . '.city')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-700">State <span
+                                        class="text-red-500">*</span></label>
+                                <select wire:model="previous_addresses.{{ $index }}.state"
+                                    class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
+                                    <option value="">Select State</option>
+                                    @foreach ($usStates as $code => $name)
+                                    <option value="{{ $code }}">{{ $name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('previous_addresses.' . $index . '.state')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-700">ZIP Code <span
+                                        class="text-red-500">*</span></label>
+                                <x-base.form-input type="text"
+                                    wire:model="previous_addresses.{{ $index }}.zip_code"
+                                    class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
+                                @error('previous_addresses.' . $index . '.zip_code')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-700">From Date <span
+                                        class="text-red-500">*</span></label>
+                                <!-- <input type="date"
+                                    wire:model="previous_addresses.{{ $index }}.from_date"
+                                    class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm"> -->
+                                <input type="text"
+                                wire:model="previous_addresses.{{ $index }}.from_date"                                                                
+                                placeholder="MM/DD/YYYY"
+                                class="driver-datepicker form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm"/>
+                                @error('previous_addresses.' . $index . '.from_date')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-700">To Date <span
+                                        class="text-red-500">*</span></label>
+                                <!-- <input type="date" wire:model="previous_addresses.{{ $index }}.to_date"
+                                    class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm"> -->
+                                <input type="text"
+                                wire:model="previous_addresses.{{ $index }}.to_date"
+                                placeholder="MM/DD/YYYY"
+                                class="driver-datepicker form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm"/>
+                                @error('previous_addresses.' . $index . '.to_date')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
                     @endforeach
 
                     <div class="mt-4">

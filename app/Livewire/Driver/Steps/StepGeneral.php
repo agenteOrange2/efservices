@@ -332,6 +332,29 @@ class StepGeneral extends Component
                     'confirmation_token' => \Illuminate\Support\Str::random(32),
                 ]);
 
+                // Guardar la foto si se subió una
+                if ($this->photo) {
+                    try {
+                        // Limpiar fotos existentes
+                        $driver->clearMediaCollection('profile_photo_driver');
+                        
+                        // Guardar la nueva foto
+                        $driver->addMedia($this->photo->getRealPath())
+                            ->usingFileName($this->photo->getClientOriginalName())
+                            ->toMediaCollection('profile_photo_driver');
+                            
+                        Log::info('Foto de perfil guardada en saveAndExit', [
+                            'driver_id' => $driver->id,
+                            'photo_name' => $this->photo->getClientOriginalName()
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Error guardando foto en saveAndExit', [
+                            'driver_id' => $driver->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+
                 $this->driverId = $driver->id;
                 $this->dispatch('driverCreated', $driver->id);
             } else {
@@ -408,7 +431,28 @@ class StepGeneral extends Component
                     'status' => 'draft'
                 ]);
 
-                // Nota: La foto se procesará después del registro cuando tengamos el ID del driver
+                // Guardar la foto si se subió una
+                if ($this->photo) {
+                    try {
+                        // Limpiar fotos existentes
+                        $driver->clearMediaCollection('profile_photo_driver');
+                        
+                        // Guardar la nueva foto
+                        $driver->addMedia($this->photo->getRealPath())
+                            ->usingFileName($this->photo->getClientOriginalName())
+                            ->toMediaCollection('profile_photo_driver');
+                            
+                        Log::info('Foto de perfil guardada exitosamente', [
+                            'driver_id' => $driver->id,
+                            'photo_name' => $this->photo->getClientOriginalName()
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Error guardando foto de perfil', [
+                            'driver_id' => $driver->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
 
                 // Restablecer el driverId y despachar evento
                 $this->driverId = $driver->id;
@@ -598,7 +642,27 @@ class StepGeneral extends Component
             // No actualizamos carrier_id aquí para evitar cambios inesperados
         ]);
 
-        // Nota: La foto se procesará en un paso posterior del registro
+        // Guardar la foto si se subió una nueva
+        if ($this->photo) {
+            try {
+                // Limpiar fotos existentes
+                $driver->clearMediaCollection('profile_photo_driver');
+                
+                // Guardar la nueva foto
+                $driver->addMediaFromRequest('photo')
+                    ->toMediaCollection('profile_photo_driver');
+                    
+                Log::info('Foto de perfil actualizada exitosamente', [
+                    'driver_id' => $driver->id,
+                    'photo_name' => $this->photo->getClientOriginalName()
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Error actualizando foto de perfil', [
+                    'driver_id' => $driver->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
 
         Log::info('Driver actualizado', ['driver_id' => $driver->id]);
     }

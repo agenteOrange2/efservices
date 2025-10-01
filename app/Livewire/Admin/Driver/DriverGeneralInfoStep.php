@@ -31,7 +31,8 @@ class DriverGeneralInfoStep extends Component
 
     // Custom Dates for Historical Drivers
     public $use_custom_dates = false;
-    public $custom_date;
+    public $custom_created_at;
+    public $custom_updated_at;
 
     // References
     public $driverId;
@@ -73,7 +74,8 @@ class DriverGeneralInfoStep extends Component
 
         // Add custom dates validation if enabled
         if ($this->use_custom_dates) {
-            $rules['custom_date'] = 'nullable|date';
+            $rules['custom_created_at'] = 'nullable|date';
+            $rules['custom_updated_at'] = 'nullable|date';
         }
 
         return $rules;
@@ -126,10 +128,10 @@ class DriverGeneralInfoStep extends Component
         $this->status = $userDriverDetail->status;
         $this->terms_accepted = $userDriverDetail->terms_accepted;
 
-        // For existing records, we'll assume custom dates are not being used
-        // since we're transitioning to use created_at directly
-        $this->use_custom_dates = false;
-        $this->custom_date = null;
+        // Load custom dates if they exist
+        $this->use_custom_dates = $userDriverDetail->use_custom_dates ?? false;
+        $this->custom_created_at = $userDriverDetail->custom_created_at ? $userDriverDetail->custom_created_at->format('Y-m-d\TH:i') : null;
+        $this->custom_updated_at = $userDriverDetail->custom_updated_at ? $userDriverDetail->custom_updated_at->format('Y-m-d\TH:i') : null;
 
         // Get profile photo URL
         if ($userDriverDetail->hasMedia('profile_photo_driver')) {
@@ -170,15 +172,20 @@ class DriverGeneralInfoStep extends Component
                 'terms_accepted' => $this->terms_accepted,
                 'confirmation_token' => Str::random(60),
                 'current_step' => 1,
+                'use_custom_dates' => $this->use_custom_dates,
             ];
             
-            $userDriverDetail = UserDriverDetail::create($driverData);
-            
-            // If using custom date, update the created_at timestamp
-            if ($this->use_custom_dates && $this->custom_date) {
-                $userDriverDetail->created_at = $this->custom_date;
-                $userDriverDetail->save();
+            // Add custom dates if enabled
+            if ($this->use_custom_dates) {
+                if ($this->custom_created_at) {
+                    $driverData['custom_created_at'] = $this->custom_created_at;
+                }
+                if ($this->custom_updated_at) {
+                    $driverData['custom_updated_at'] = $this->custom_updated_at;
+                }
             }
+            
+            $userDriverDetail = UserDriverDetail::create($driverData);
 
             // Upload photo if provided
             if ($this->photo) {
@@ -266,9 +273,14 @@ class DriverGeneralInfoStep extends Component
                 
                 // Check if image needs compression with additional validation
                 try {
-                    // Verificar que podemos obtener el tamaño del archivo
-                    $fileSize = $this->photo->getSize();
-                    if ($fileSize === false || $fileSize === null) {
+                    // Verificar que el archivo existe y obtener su tamaño de forma robusta
+                    $filePath = $this->photo->getRealPath();
+                    if (!file_exists($filePath)) {
+                        throw new \Exception('El archivo temporal no existe');
+                    }
+                    
+                    $fileSize = filesize($filePath);
+                    if ($fileSize === false || $fileSize === null || $fileSize === 0) {
                         throw new \Exception('No se pudo obtener el tamaño del archivo');
                     }
 
@@ -351,15 +363,20 @@ class DriverGeneralInfoStep extends Component
                 'date_of_birth' => $this->date_of_birth,
                 'status' => $this->status,
                 'terms_accepted' => $this->terms_accepted,
+                'use_custom_dates' => $this->use_custom_dates,
             ];
             
-            $userDriverDetail->update($updateData);
-            
-            // If using custom date, update the created_at timestamp
-            if ($this->use_custom_dates && $this->custom_date) {
-                $userDriverDetail->created_at = $this->custom_date;
-                $userDriverDetail->save();
+            // Add custom dates if enabled
+            if ($this->use_custom_dates) {
+                $updateData['custom_created_at'] = $this->custom_created_at;
+                $updateData['custom_updated_at'] = $this->custom_updated_at;
+            } else {
+                // Clear custom dates if not using them
+                $updateData['custom_created_at'] = null;
+                $updateData['custom_updated_at'] = null;
             }
+            
+            $userDriverDetail->update($updateData);
 
             // Update photo if provided
             if ($this->photo) {

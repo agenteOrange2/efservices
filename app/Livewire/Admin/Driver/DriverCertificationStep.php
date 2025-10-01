@@ -261,6 +261,52 @@ class DriverCertificationStep extends Component
         }
     }
     
+    /**
+     * Generar PDFs durante la edición (llamado desde otros pasos)
+     * @param int $driverId
+     * @param string|null $signature
+     */
+    public function generatePDFsForEdit($driverId, $signature = null)
+    {
+        try {
+            // Obtener el driver detail con todas las relaciones necesarias
+            $userDriverDetail = UserDriverDetail::with([
+                'criminalHistory',
+                'carrier',
+                'user',
+                'application.details'
+            ])->find($driverId);
+            
+            if (!$userDriverDetail) {
+                Log::error('Driver no encontrado para generar PDFs en edición', ['driver_id' => $driverId]);
+                return false;
+            }
+            
+            // Si no se proporciona firma, intentar usar la firma guardada
+            if (empty($signature) && !empty($this->signature)) {
+                $signature = $this->signature;
+            }
+            
+            // Generar PDFs solo si existe alguna firma
+            if (!empty($signature)) {
+                $this->generateApplicationPDFs($userDriverDetail, $signature);
+                Log::info('PDFs generados exitosamente durante edición', ['driver_id' => $driverId]);
+                return true;
+            } else {
+                Log::warning('No se puede generar PDFs sin firma', ['driver_id' => $driverId]);
+                return false;
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Error al generar PDFs durante edición', [
+                'driver_id' => $driverId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
+        }
+    }
+    
     // Métodos de navegación
     public function previous()
     {
@@ -279,16 +325,20 @@ class DriverCertificationStep extends Component
     /**
      * Generar archivos PDF para cada paso de la aplicación
      * @param UserDriverDetail $userDriverDetail
+     * @param string|null $signature Firma opcional para usar en los PDFs
      */
-    private function generateApplicationPDFs(UserDriverDetail $userDriverDetail)
+    private function generateApplicationPDFs(UserDriverDetail $userDriverDetail, $signature = null)
     {
+        // Usar la firma pasada como parámetro o la firma de la instancia
+        $signatureToUse = $signature ?? $this->signature;
+        
         // Primero, asegurémonos de que tenemos la firma
-        if (empty($this->signature)) {
+        if (empty($signatureToUse)) {
             return;
         }
         
         // Preparar la firma una sola vez para todos los PDFs
-        $signaturePath = $this->prepareSignatureForPDF($this->signature);
+        $signaturePath = $this->prepareSignatureForPDF($signatureToUse);
 
         if (!$signaturePath) {
             Log::error('No se pudo preparar la firma para PDFs', [
@@ -1018,6 +1068,38 @@ class DriverCertificationStep extends Component
                 'trace' => $e->getTraceAsString()
             ]);
         }
+    }
+    
+    /**
+     * Obtiene las fechas efectivas (personalizadas o del modelo)
+     * @param int $driverId
+     * @return array
+     */
+    private function getEffectiveDates($driverId)
+    {
+        $userDriverDetail = UserDriverDetail::find($driverId);
+        
+        if (!$userDriverDetail) {
+            return [
+                'created_at' => now(),
+                'updated_at' => now()
+            ];
+        }
+        
+        // Si use_custom_dates está habilitado y hay fechas personalizadas, usarlas
+        if ($userDriverDetail->use_custom_dates) {
+            $createdAt = $userDriverDetail->custom_created_at ?? $userDriverDetail->created_at;
+            $updatedAt = $userDriverDetail->custom_updated_at ?? $userDriverDetail->updated_at;
+        } else {
+            // Usar las fechas normales del modelo
+            $createdAt = $userDriverDetail->created_at;
+            $updatedAt = $userDriverDetail->updated_at;
+        }
+        
+        return [
+            'created_at' => $createdAt,
+            'updated_at' => $updatedAt
+        ];
     }
     
     /**

@@ -25,8 +25,10 @@ class DriverAddress extends Model
 
     protected $casts = [
         'lived_three_years' => 'boolean',
-        'from_date' => 'date',
-        'to_date' => 'date'        
+        'from_date' => 'date:Y-m-d',
+        'to_date' => 'date:Y-m-d'        
+        // 'from_date' => 'date',
+        // 'to_date' => 'date'
     ];
 
     public function application()
