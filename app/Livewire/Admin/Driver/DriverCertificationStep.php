@@ -393,20 +393,39 @@ class DriverCertificationStep extends Component
         // Generar PDF para cada paso
         foreach ($steps as $step) {
             try {
-                $pdf = App::make('dompdf.wrapper')->loadView($step['view'], [
+                // Preparar datos para el PDF
+                $pdfData = [
                     'userDriverDetail' => $userDriverDetail,
                     'signaturePath' => $signaturePath, // Usamos la ruta del archivo, no base64
                     'title' => $step['title'],
                     'date' => now()->format('d/m/Y'),
                     'created_at' => $effectiveDates['created_at'],
                     'updated_at' => $effectiveDates['updated_at'],
-                    'formatted_dates' => [
-                        'created_at' => $effectiveDates['created_at']->format('m/d/Y'),
-                        'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
-                        'created_at_long' => $effectiveDates['created_at']->format('F j, Y'),
-                        'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
-                    ]
-                ]);
+                    'custom_created_at' => $effectiveDates['custom_created_at']
+                ];
+                
+                // Preparar formatted_dates con ambas fechas cuando corresponda
+                $formattedDates = [
+                    'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
+                    'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
+                ];
+                
+                // Siempre incluir created_at (fecha de registro normal)
+                if ($effectiveDates['show_created_at'] && $effectiveDates['created_at']) {
+                    $formattedDates['created_at'] = $effectiveDates['created_at']->format('m/d/Y');
+                    $formattedDates['created_at_long'] = $effectiveDates['created_at']->format('F j, Y');
+                }
+                
+                // Incluir custom_created_at solo si está habilitado y tiene valor
+                if ($effectiveDates['show_custom_created_at'] && $effectiveDates['custom_created_at']) {
+                    $formattedDates['custom_created_at'] = $effectiveDates['custom_created_at']->format('m/d/Y');
+                    $formattedDates['custom_created_at_long'] = $effectiveDates['custom_created_at']->format('F j, Y');
+                }
+                
+                $pdfData['formatted_dates'] = $formattedDates;
+                $pdfData['use_custom_dates'] = $effectiveDates['show_custom_created_at'];
+                
+                $pdf = App::make('dompdf.wrapper')->loadView($step['view'], $pdfData);
                 
                 // Guardar PDF usando Storage para evitar problemas de permisos
                 $pdfContent = $pdf->output();
@@ -581,13 +600,29 @@ class DriverCertificationStep extends Component
                 'signature' => null, // Mantenemos este campo como NULL para compatibilidad
                 'created_at' => $effectiveDates['created_at'],
                 'updated_at' => $effectiveDates['updated_at'],
-                'formatted_dates' => [
-                    'created_at' => $effectiveDates['created_at']->format('m/d/Y'),
-                    'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
-                    'created_at_long' => $effectiveDates['created_at']->format('F j, Y'),
-                    'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
-                ]
+                'custom_created_at' => $effectiveDates['custom_created_at']
             ];
+            
+            // Preparar formatted_dates con ambas fechas cuando corresponda
+            $formattedDates = [
+                'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
+                'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
+            ];
+            
+            // Siempre incluir created_at (fecha de registro normal)
+            if ($effectiveDates['show_created_at'] && $effectiveDates['created_at']) {
+                $formattedDates['created_at'] = $effectiveDates['created_at']->format('m/d/Y');
+                $formattedDates['created_at_long'] = $effectiveDates['created_at']->format('F j, Y');
+            }
+            
+            // Incluir custom_created_at solo si está habilitado y tiene valor
+            if ($effectiveDates['show_custom_created_at'] && $effectiveDates['custom_created_at']) {
+                $formattedDates['custom_created_at'] = $effectiveDates['custom_created_at']->format('m/d/Y');
+                $formattedDates['custom_created_at_long'] = $effectiveDates['custom_created_at']->format('F j, Y');
+            }
+            
+            $data['formatted_dates'] = $formattedDates;
+            $data['use_custom_dates'] = $effectiveDates['show_custom_created_at'];
             
             try {
                 Log::info('Intentando cargar vista de contrato de propietario-operador', [
@@ -699,7 +734,8 @@ class DriverCertificationStep extends Component
             // Obtener fechas efectivas (personalizadas o del modelo)
             $effectiveDates = $this->getEffectiveDates($userDriverDetail->id);
             
-            $pdf = App::make('dompdf.wrapper')->loadView('pdf.driver.complete_application', [
+            // Preparar datos para el PDF
+            $pdfData = [
                 'userDriverDetail' => $userDriverDetail,
                 'signature' => $signatureImage,
                 'date' => now()->format('m/d/Y'),
@@ -708,13 +744,31 @@ class DriverCertificationStep extends Component
                 'fullName' => $fullName,
                 'created_at' => $effectiveDates['created_at'],
                 'updated_at' => $effectiveDates['updated_at'],
-                'formatted_dates' => [
-                    'created_at' => $effectiveDates['created_at']->format('m/d/Y'),
-                    'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
-                    'created_at_long' => $effectiveDates['created_at']->format('F j, Y'),
-                    'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
-                ]
-            ]);
+                'custom_created_at' => $effectiveDates['custom_created_at']
+            ];
+            
+            // Preparar formatted_dates con ambas fechas cuando corresponda
+            $formattedDates = [
+                'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
+                'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
+            ];
+            
+            // Siempre incluir created_at (fecha de registro normal)
+            if ($effectiveDates['show_created_at'] && $effectiveDates['created_at']) {
+                $formattedDates['created_at'] = $effectiveDates['created_at']->format('m/d/Y');
+                $formattedDates['created_at_long'] = $effectiveDates['created_at']->format('F j, Y');
+            }
+            
+            // Incluir custom_created_at solo si está habilitado y tiene valor
+            if ($effectiveDates['show_custom_created_at'] && $effectiveDates['custom_created_at']) {
+                $formattedDates['custom_created_at'] = $effectiveDates['custom_created_at']->format('m/d/Y');
+                $formattedDates['custom_created_at_long'] = $effectiveDates['custom_created_at']->format('F j, Y');
+            }
+            
+            $pdfData['formatted_dates'] = $formattedDates;
+            $pdfData['use_custom_dates'] = $effectiveDates['show_custom_created_at'];
+            
+            $pdf = App::make('dompdf.wrapper')->loadView('pdf.driver.complete_application', $pdfData);
             
             // Asegurarnos de que estamos usando el ID correcto
             $driverId = $userDriverDetail->id;
@@ -796,7 +850,8 @@ class DriverCertificationStep extends Component
             // Obtener fechas efectivas (personalizadas o del modelo)
             $effectiveDates = $this->getEffectiveDates($userDriverDetail->id);
             
-            $pdf = App::make('dompdf.wrapper')->loadView('pdf.driver.criminal_history', [
+            // Preparar datos para el PDF
+            $pdfData = [
                 'userDriverDetail' => $userDriverDetail,
                 'signature' => $signatureImage,
                 'date' => now()->format('m/d/Y'),
@@ -805,13 +860,31 @@ class DriverCertificationStep extends Component
                 'fullName' => $fullName,
                 'created_at' => $effectiveDates['created_at'],
                 'updated_at' => $effectiveDates['updated_at'],
-                'formatted_dates' => [
-                    'created_at' => $effectiveDates['created_at']->format('m/d/Y'),
-                    'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
-                    'created_at_long' => $effectiveDates['created_at']->format('F j, Y'),
-                    'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
-                ]
-            ]);
+                'custom_created_at' => $effectiveDates['custom_created_at']
+            ];
+            
+            // Preparar formatted_dates con ambas fechas cuando corresponda
+            $formattedDates = [
+                'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
+                'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
+            ];
+            
+            // Siempre incluir created_at (fecha de registro normal)
+            if ($effectiveDates['show_created_at'] && $effectiveDates['created_at']) {
+                $formattedDates['created_at'] = $effectiveDates['created_at']->format('m/d/Y');
+                $formattedDates['created_at_long'] = $effectiveDates['created_at']->format('F j, Y');
+            }
+            
+            // Incluir custom_created_at solo si está habilitado y tiene valor
+            if ($effectiveDates['show_custom_created_at'] && $effectiveDates['custom_created_at']) {
+                $formattedDates['custom_created_at'] = $effectiveDates['custom_created_at']->format('m/d/Y');
+                $formattedDates['custom_created_at_long'] = $effectiveDates['custom_created_at']->format('F j, Y');
+            }
+            
+            $pdfData['formatted_dates'] = $formattedDates;
+            $pdfData['use_custom_dates'] = $effectiveDates['show_custom_created_at'];
+            
+            $pdf = App::make('dompdf.wrapper')->loadView('pdf.driver.criminal_history', $pdfData);
             
             // Asegurarnos de que estamos usando el ID correcto y la ruta correcta
             $driverId = $userDriverDetail->id;
@@ -928,6 +1001,24 @@ class DriverCertificationStep extends Component
             // Obtener fechas efectivas (personalizadas o del modelo)
             $effectiveDates = $this->getEffectiveDates($userDriverDetail->id);
             
+            // Preparar formatted_dates con la nueva lógica
+            $formattedDates = [
+                'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
+                'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
+            ];
+            
+            // Siempre incluir created_at si show_created_at es true
+            if ($effectiveDates['show_created_at']) {
+                $formattedDates['created_at'] = $effectiveDates['created_at']->format('m/d/Y');
+                $formattedDates['created_at_long'] = $effectiveDates['created_at']->format('F j, Y');
+            }
+            
+            // Incluir custom_created_at solo si show_custom_created_at es true y tiene valor
+            if ($effectiveDates['show_custom_created_at'] && $effectiveDates['custom_created_at']) {
+                $formattedDates['custom_created_at'] = $effectiveDates['custom_created_at']->format('m/d/Y');
+                $formattedDates['custom_created_at_long'] = $effectiveDates['custom_created_at']->format('F j, Y');
+            }
+
             // Preparar los datos para el PDF de consentimiento de terceros
             $consentData = [
                 'carrierName' => $carrier->name ?? 'EF Services',
@@ -950,12 +1041,9 @@ class DriverCertificationStep extends Component
                 'signature' => null, // Mantenemos este campo como NULL para compatibilidad
                 'created_at' => $effectiveDates['created_at'],
                 'updated_at' => $effectiveDates['updated_at'],
-                'formatted_dates' => [
-                    'created_at' => $effectiveDates['created_at']->format('m/d/Y'),
-                    'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
-                    'created_at_long' => $effectiveDates['created_at']->format('F j, Y'),
-                    'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
-                ]
+                'custom_created_at' => $effectiveDates['custom_created_at'],
+                'formatted_dates' => $formattedDates,
+                'use_custom_dates' => $effectiveDates['show_custom_created_at']
             ];
             
             // Generar el PDF de consentimiento de terceros
@@ -1017,12 +1105,9 @@ class DriverCertificationStep extends Component
                 'signature' => null, // Mantenemos este campo como NULL para compatibilidad
                 'created_at' => $effectiveDates['created_at'],
                 'updated_at' => $effectiveDates['updated_at'],
-                'formatted_dates' => [
-                    'created_at' => $effectiveDates['created_at']->format('m/d/Y'),
-                    'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
-                    'created_at_long' => $effectiveDates['created_at']->format('F j, Y'),
-                    'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
-                ]
+                'custom_created_at' => $effectiveDates['custom_created_at'],
+                'formatted_dates' => $formattedDates,
+                'use_custom_dates' => $effectiveDates['show_custom_created_at']
             ];
             
             // Generar el PDF de contrato de arrendamiento para third-party
@@ -1082,23 +1167,31 @@ class DriverCertificationStep extends Component
         if (!$userDriverDetail) {
             return [
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
+                'custom_created_at' => null,
+                'show_created_at' => true,
+                'show_custom_created_at' => false
             ];
         }
         
-        // Si use_custom_dates está habilitado y hay fechas personalizadas, usarlas
-        if ($userDriverDetail->use_custom_dates) {
-            $createdAt = $userDriverDetail->custom_created_at ?? $userDriverDetail->created_at;
-            $updatedAt = $userDriverDetail->custom_updated_at ?? $userDriverDetail->updated_at;
-        } else {
-            // Usar las fechas normales del modelo
-            $createdAt = $userDriverDetail->created_at;
-            $updatedAt = $userDriverDetail->updated_at;
+        // Lógica correcta:
+        // 1. created_at siempre visible (fecha de registro normal)
+        // 2. custom_created_at solo visible si use_custom_dates=true Y custom_created_at tiene valor
+        
+        $showCustomCreatedAt = false;
+        $customCreatedAt = null;
+        
+        if ($userDriverDetail->use_custom_dates && $userDriverDetail->custom_created_at) {
+            $showCustomCreatedAt = true;
+            $customCreatedAt = $userDriverDetail->custom_created_at;
         }
         
         return [
-            'created_at' => $createdAt,
-            'updated_at' => $updatedAt
+            'created_at' => $userDriverDetail->created_at,
+            'updated_at' => $userDriverDetail->updated_at,
+            'custom_created_at' => $customCreatedAt,
+            'show_created_at' => true, // Siempre visible
+            'show_custom_created_at' => $showCustomCreatedAt
         ];
     }
     

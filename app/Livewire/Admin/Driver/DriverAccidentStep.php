@@ -253,6 +253,63 @@ class DriverAccidentStep extends Component
             $this->accidents = array_values($this->accidents);
         }
     }
+
+    // Create accident in database
+    public function createAccident($index)
+    {
+        try {
+            // Validar que el índice existe
+            if (!isset($this->accidents[$index])) {
+                session()->flash('error', 'Accident not found.');
+                return;
+            }
+
+            $accident = $this->accidents[$index];
+
+            // Validar que los campos requeridos estén completos
+            if (empty($accident['accident_date']) || empty($accident['nature_of_accident'])) {
+                session()->flash('error', 'Please complete the accident date and nature of accident before creating the record.');
+                return;
+            }
+
+            // Crear el accidente en la base de datos
+            $driverAccident = \App\Models\Admin\Driver\DriverAccident::create([
+                'user_driver_detail_id' => $this->driverId,
+                'accident_date' => $accident['accident_date'],
+                'nature_of_accident' => $accident['nature_of_accident'],
+                'had_injuries' => $accident['had_injuries'] ?? false,
+                'number_of_injuries' => $accident['number_of_injuries'] ?? 0,
+                'had_fatalities' => $accident['had_fatalities'] ?? false,
+                'number_of_fatalities' => $accident['number_of_fatalities'] ?? 0,
+                'comments' => $accident['comments'] ?? '',
+            ]);
+
+            // Actualizar el array local con el ID
+            $this->accidents[$index]['id'] = $driverAccident->id;
+
+            // Actualizar has_accidents en driver_details
+            $userDriverDetail = \App\Models\UserDriverDetail::where('driver_id', $this->driverId)->first();
+            if ($userDriverDetail) {
+                $userDriverDetail->update(['has_accidents' => true]);
+            }
+
+            session()->flash('success', 'Accident record created successfully. You can now upload documents.');
+            
+            \Log::info('Accident created successfully', [
+                'driver_id' => $this->driverId,
+                'accident_id' => $driverAccident->id,
+                'accident_index' => $index
+            ]);
+
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error creating accident record: ' . $e->getMessage());
+            \Log::error('Error creating accident: ' . $e->getMessage(), [
+                'driver_id' => $this->driverId,
+                'accident_index' => $index,
+                'exception' => $e
+            ]);
+        }
+    }
     
     // Get empty accident structure
     protected function getEmptyAccident()
@@ -740,9 +797,10 @@ class DriverAccidentStep extends Component
         $this->dispatch('saveAndExit');
     }
     
+    
     // Render
     public function render()
     {
-        return view('livewire.admin.driver.steps.driver-accident-step');
+        return view('livewire.driver.steps.accident-step');
     }
 }

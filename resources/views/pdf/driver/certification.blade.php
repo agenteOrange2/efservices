@@ -175,9 +175,12 @@
             <div class="section-title">Document Information</div>
             <table>
                 <tr>
-                    <td style="width: 33.33%"><strong>Creation Date</strong><br>{{ isset($formatted_dates['created_at']) ? $formatted_dates['created_at'] : ($created_at ? $created_at->format('m/d/Y') : 'N/A') }}</td>
-                    <td style="width: 33.33%"><strong>Last Updated</strong><br>{{ isset($formatted_dates['updated_at']) ? $formatted_dates['updated_at'] : ($updated_at ? $updated_at->format('m/d/Y') : 'N/A') }}</td>
-                    <td style="width: 33.33%"><strong>Document Date</strong><br>{{ $date }}</td>
+                    <td style="width: 25%"><strong>Registration Date</strong><br>{{ isset($formatted_dates['created_at']) ? $formatted_dates['created_at'] : (isset($created_at) && $created_at ? $created_at->format('m/d/Y') : '') }}</td>
+                    @if(isset($use_custom_dates) && $use_custom_dates && isset($formatted_dates['custom_created_at']) && $formatted_dates['custom_created_at'])
+                    <td style="width: 25%"><strong>Custom Registration Date</strong><br>{{ $formatted_dates['custom_created_at'] }}</td>
+                    @endif
+                    <td style="width: 25%"><strong>Last Updated</strong><br>{{ isset($formatted_dates['updated_at']) ? $formatted_dates['updated_at'] : ($updated_at ? $updated_at->format('m/d/Y') : 'N/A') }}</td>
+                    <td style="width: 25%"><strong>Document Date</strong><br>{{ $date }}</td>
                 </tr>
             </table>
         </div>

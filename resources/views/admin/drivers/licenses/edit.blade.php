@@ -45,8 +45,9 @@ $breadcrumbLinks = [
     <!-- Contenido principal -->
     <div class="box box--stacked mt-5">
         <div class="box-body p-5">
-            <form id="licenseForm" action="{{ route('admin.licenses.store') }}" method="POST" enctype="multipart/form-data">
+            <form id="licenseForm" action="{{ route('admin.licenses.update', $license) }}" method="POST" enctype="multipart/form-data">
                 @csrf
+                @method('PUT')
 
                 <!-- Sección 1: Información Básica -->
                 <div class="mb-8">

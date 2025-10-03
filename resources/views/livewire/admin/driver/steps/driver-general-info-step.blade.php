@@ -291,31 +291,6 @@
                     @enderror
                 </div>
             </div>
-
-            <!-- Custom Updated At Date -->
-            <div class="mt-5 block flex-col pt-5 first:mt-0 first:pt-0 sm:flex xl:flex-row xl:items-center">
-                <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
-                    <div class="text-left">
-                        <div class="flex items-center">
-                            <div class="font-medium">Custom Update Date</div>
-                            <div class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                                Required</div>
-                        </div>
-                        <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
-                            Date when the driver information was last updated (for PDF generation).
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-3 w-full flex-1 xl:mt-0">
-                    <input type="text" id="custom_updated_at" name="custom_updated_at" value="{{ $custom_updated_at }}"
-                        onchange="@this.set('custom_updated_at', this.value)"
-                        class="driver-datepicker disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm"
-                        placeholder="MM/DD/YYYY" />
-                    @error('custom_updated_at')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                    @enderror
-                </div>
-            </div>
             @endif
         </div>
 

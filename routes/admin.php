@@ -36,6 +36,7 @@ use App\Http\Controllers\Admin\Vehicles\MaintenanceReportController;
 use App\Http\Controllers\Admin\Vehicles\MaintenanceCalendarController;
 use App\Http\Controllers\Admin\Driver\TrainingSchoolsController;
 use App\Http\Controllers\Admin\Driver\DriverLicensesController;
+use App\Http\Controllers\Admin\Driver\MedicalRecordsController;
 use App\Http\Controllers\Admin\Driver\DriverRecruitmentController;
 use App\Http\Controllers\Admin\Vehicles\VehicleDocumentController;
 use App\Http\Controllers\Admin\Driver\TrafficConvictionsController;
@@ -253,6 +254,15 @@ Route::resource('licenses', DriverLicensesController::class);
 // Ruta temporal para debug de endorsements
 Route::get('licenses/{license}/debug-endorsements', [DriverLicensesController::class, 'debugEndorsements'])->name('licenses.debug-endorsements');
 
+/*
+    |--------------------------------------------------------------------------
+    | RUTAS PARA REGISTROS MÉDICOS DE CONDUCTORES
+    |--------------------------------------------------------------------------    
+*/
+
+// Rutas estándar de recursos para registros médicos
+Route::resource('medical-records', MedicalRecordsController::class);
+
 // Rutas para el nuevo módulo de entrenamientos
 Route::resource('trainings', \App\Http\Controllers\Admin\TrainingsController::class);
 
@@ -320,6 +330,7 @@ Route::prefix('licenses')->name('licenses.')->group(function () {
 
     // Rutas para documentos de una licencia específica
     Route::get('{license}/documents', [DriverLicensesController::class, 'showDocuments'])->name('docs.show');
+    Route::post('{license}/upload-documents', [DriverLicensesController::class, 'uploadDocument'])->name('upload.documents');
 
     // Rutas para operaciones con documentos individuales
     Route::get('document/{id}/preview', [DriverLicensesController::class, 'previewDocument'])->name('doc.preview');
@@ -333,6 +344,37 @@ Route::prefix('licenses')->name('licenses.')->group(function () {
 
     // Ruta para obtener conductores por transportista
     Route::get('carrier/{carrier}/drivers', [DriverLicensesController::class, 'getDriversByCarrier'])->name('drivers.by.carrier');
+});
+
+/*
+    |--------------------------------------------------------------------------
+    | RUTAS PARA GESTION DE DOCUMENTOS DE REGISTROS MÉDICOS
+    |--------------------------------------------------------------------------    
+*/
+
+Route::prefix('medical-records')->name('medical-records.')->group(function () {
+    // Vista de todos los documentos
+    Route::get('all/documents', [MedicalRecordsController::class, 'documents'])->name('docs.all');
+
+    // Rutas para documentos de un registro médico específico
+    Route::get('{medicalRecord}/documents', [MedicalRecordsController::class, 'showDocuments'])->name('docs.show');
+    Route::post('{medicalRecord}/upload-documents', [MedicalRecordsController::class, 'uploadDocument'])->name('upload.documents');
+
+    // Rutas para operaciones con documentos individuales
+    Route::get('document/{id}/preview', [MedicalRecordsController::class, 'previewDocument'])->name('doc.preview');
+    // Rutas adicionales con los nombres que se usan en las vistas para compatibilidad
+    Route::get('documents/{id}/preview', [MedicalRecordsController::class, 'previewDocument'])->name('docs.preview');
+    Route::delete('documents/{id}', [MedicalRecordsController::class, 'destroyDocument'])->name('docs.delete');
+
+    // Rutas originales - renombradas para evitar duplicados
+    Route::delete('document/{id}', [MedicalRecordsController::class, 'destroyDocument'])->name('doc.delete');
+    Route::delete('document/{id}/ajax', [MedicalRecordsController::class, 'ajaxDestroyDocument'])->name('doc.ajax-delete');
+
+    // Ruta para obtener conductores por transportista
+    Route::get('carrier/{carrier}/drivers', [MedicalRecordsController::class, 'getDriversByCarrier'])->name('drivers.by.carrier');
+    
+    // Ruta para eliminar medical card
+    Route::delete('{medicalRecord}/delete-medical-card', [MedicalRecordsController::class, 'deleteMedicalCard'])->name('delete-medical-card');
 });
 
 /*

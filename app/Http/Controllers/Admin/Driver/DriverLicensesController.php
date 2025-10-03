@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use App\Livewire\Admin\Driver\DriverCertificationStep;
+use Illuminate\Support\Facades\App;
 
 class DriverLicensesController extends Controller
 {
@@ -195,6 +197,9 @@ class DriverLicensesController extends Controller
             }
             
             DB::commit();
+            
+            // Regenerar el PDF de drivers_licenses.pdf después de crear la licencia
+            $this->regenerateDriverLicensesPDF($license->user_driver_detail_id);
             
             return redirect()->route('admin.licenses.index')
                 ->with('success', 'License created successfully');
@@ -405,6 +410,9 @@ class DriverLicensesController extends Controller
             
             DB::commit();
             
+            // Regenerar el PDF de drivers_licenses.pdf después de actualizar la licencia
+            $this->regenerateDriverLicensesPDF($license->user_driver_detail_id);
+            
             return redirect()->route('admin.licenses.index')
                 ->with('success', 'License updated successfully');
         } catch (\Exception $e) {
@@ -454,26 +462,68 @@ class DriverLicensesController extends Controller
      * Muestra los documentos de una licencia específica
      * Utilizando Spatie Media Library
      */
-    public function showDocuments(DriverLicense $license)
+    public function showDocuments(DriverLicense $license, Request $request)
     {
-        $license->load('userDriverDetail.user');
+        $license->load('driverDetail.user');
         
-        // Obtener documentos asociados usando Spatie Media Library
-        $documents = Media::where('model_type', DriverLicense::class)
-            ->where('model_id', $license->id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+        // Construir la consulta base para los documentos de esta licencia
+        $query = Media::where('model_type', DriverLicense::class)
+            ->where('model_id', $license->id);
         
-        // Obtener todas las licencias y conductores para los filtros
-        $licenses = DriverLicense::orderBy('current_license_number')->get();
-        $drivers = UserDriverDetail::with('user')->get();
+        // Aplicar filtro de collection (para las tarjetas clickeables)
+        if ($request->filled('collection') && $request->collection !== 'all') {
+            if ($request->collection === 'additional') {
+                $query->whereNotIn('collection_name', ['license_front', 'license_back']);
+            } else {
+                $query->where('collection_name', $request->collection);
+            }
+        }
         
-        $debugInfo = [
-            'documents_count' => $documents->total(),
-            'license_id' => $license->id
+        // Aplicar filtros de fecha
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+        
+        // Aplicar filtro de tipo de documento
+        if ($request->filled('document_type')) {
+            $query->where('collection_name', $request->document_type);
+        }
+        
+        // Obtener documentos paginados
+        $documents = $query->orderBy('created_at', 'desc')->paginate(15);
+        
+        // Calcular estadísticas de documentos para esta licencia
+        $baseConditions = ['model_type' => DriverLicense::class, 'model_id' => $license->id];
+            
+        $totalDocuments = Media::where($baseConditions)->count();
+        $licenseFrontImages = Media::where($baseConditions)->where('collection_name', 'license_front')->count();
+        $licenseBackImages = Media::where($baseConditions)->where('collection_name', 'license_back')->count();
+        $additionalDocuments = Media::where($baseConditions)->whereNotIn('collection_name', ['license_front', 'license_back'])->count();
+        
+        // Determinar la collection actual basada en el filtro
+        $currentCollection = $request->get('collection', 'all');
+        
+        // Tipos de documentos disponibles para el filtro
+        $documentTypes = [
+            'license_front' => 'License Front',
+            'license_back' => 'License Back',
+            'license_documents' => 'Additional Documents'
         ];
         
-        return view('admin.drivers.licenses.documents', compact('license', 'licenses', 'drivers', 'documents', 'debugInfo'));
+        return view('admin.drivers.licenses.documents', compact(
+            'license', 
+            'documents', 
+            'totalDocuments',
+            'licenseFrontImages',
+            'licenseBackImages', 
+            'additionalDocuments',
+            'currentCollection',
+            'documentTypes'
+        ));
     }
 
     /**
@@ -742,6 +792,108 @@ class DriverLicensesController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             return redirect()->back()->with('error', 'Error al acceder al documento: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Regenera el PDF de drivers_licenses.pdf para un conductor específico
+     * 
+     * @param int $driverId ID del conductor
+     * @return bool True si se regeneró exitosamente, false en caso contrario
+     */
+    private function regenerateDriverLicensesPDF($driverId)
+    {
+        try {
+            Log::info('Iniciando regeneración de drivers_licenses.pdf', ['driver_id' => $driverId]);
+            
+            // Obtener el UserDriverDetail con todas las relaciones necesarias
+            $userDriverDetail = UserDriverDetail::with([
+                'addresses',
+                'licenses',
+                'medicalQualification',
+                'criminalHistory',
+                'carrier',
+                'user',
+                'application.details'
+            ])->find($driverId);
+            
+            if (!$userDriverDetail) {
+                Log::error('UserDriverDetail no encontrado', ['driver_id' => $driverId]);
+                return false;
+            }
+            
+            // Crear instancia de DriverCertificationStep para acceder a métodos privados
+            $certificationStep = new DriverCertificationStep();
+            
+            // Obtener fechas efectivas usando reflexión para acceder al método privado
+            $reflection = new \ReflectionClass($certificationStep);
+            $getEffectiveDatesMethod = $reflection->getMethod('getEffectiveDates');
+            $getEffectiveDatesMethod->setAccessible(true);
+            $effectiveDates = $getEffectiveDatesMethod->invoke($certificationStep, $driverId);
+            
+            // Preparar la ruta de almacenamiento
+            $driverPath = 'driver/' . $userDriverDetail->id;
+            $appSubPath = $driverPath . '/driver_applications';
+            
+            // Asegurar que los directorios existen
+            Storage::disk('public')->makeDirectory($driverPath);
+            Storage::disk('public')->makeDirectory($appSubPath);
+            
+            // Preparar datos para el PDF
+            $pdfData = [
+                'userDriverDetail' => $userDriverDetail,
+                'signaturePath' => null, // No necesitamos firma para este PDF específico
+                'title' => 'Drivers Licenses',
+                'date' => now()->format('d/m/Y'),
+                'created_at' => $effectiveDates['created_at'],
+                'updated_at' => $effectiveDates['updated_at'],
+                'custom_created_at' => $effectiveDates['custom_created_at']
+            ];
+            
+            // Preparar formatted_dates con ambas fechas cuando corresponda
+            $formattedDates = [
+                'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
+                'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
+            ];
+            
+            // Siempre incluir created_at (fecha de registro normal)
+            if ($effectiveDates['show_created_at'] && $effectiveDates['created_at']) {
+                $formattedDates['created_at'] = $effectiveDates['created_at']->format('m/d/Y');
+                $formattedDates['created_at_long'] = $effectiveDates['created_at']->format('F j, Y');
+            }
+            
+            // Incluir custom_created_at solo si está habilitado y tiene valor
+            if ($effectiveDates['show_custom_created_at'] && $effectiveDates['custom_created_at']) {
+                $formattedDates['custom_created_at'] = $effectiveDates['custom_created_at']->format('m/d/Y');
+                $formattedDates['custom_created_at_long'] = $effectiveDates['custom_created_at']->format('F j, Y');
+            }
+            
+            $pdfData['formatted_dates'] = $formattedDates;
+            $pdfData['use_custom_dates'] = $effectiveDates['show_custom_created_at'];
+            
+            // Generar el PDF
+            $pdf = App::make('dompdf.wrapper')->loadView('pdf.driver.licenses', $pdfData);
+            
+            // Guardar PDF
+            $pdfContent = $pdf->output();
+            $filename = 'drivers_licenses.pdf';
+            Storage::disk('public')->put($appSubPath . '/' . $filename, $pdfContent);
+            
+            Log::info('PDF drivers_licenses.pdf regenerado exitosamente', [
+                'driver_id' => $driverId,
+                'filename' => $filename,
+                'path' => $appSubPath . '/' . $filename
+            ]);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            Log::error('Error regenerando drivers_licenses.pdf', [
+                'driver_id' => $driverId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
         }
     }
 }

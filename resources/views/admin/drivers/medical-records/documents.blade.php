@@ -1,10 +1,10 @@
 @extends('../themes/' . $activeTheme)
-@section('title', 'License DetailsDocuments')
+@section('title', 'Medical Record Documents')
 @php
 $breadcrumbLinks = [
 ['label' => 'App', 'url' => route('admin.dashboard')],
-['label' => 'Licenses', 'url' => route('admin.licenses.index')],
-['label' => 'License Details', 'active' => true],
+['label' => 'Medical Records', 'url' => route('admin.medical-records.index')],
+['label' => 'Medical Record Documents', 'active' => true],
 ];
 @endphp
 
@@ -26,24 +26,24 @@ $breadcrumbLinks = [
     <div class="mb-6">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-2xl font-semibold text-slate-800">License Documents</h2>
-                <p class="text-slate-600 mt-1">Manage documents for License #{{ $license->current_license_number }}</p>
+                <h2 class="text-2xl font-semibold text-slate-800">Medical Record Documents</h2>
+                <p class="text-slate-600 mt-1">Manage documents for {{ $medicalRecord->driver->first_name }} {{ $medicalRecord->driver->last_name }}</p>
             </div>
             <div class="flex items-center space-x-3">
-                <a href="{{ route('admin.licenses.index') }}" 
+                <a href="{{ route('admin.medical-records.show', $medicalRecord->id) }}" 
                    class="flex items-center px-4 py-2 text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
                     <x-base.lucide class="w-4 h-4 mr-2" icon="ArrowLeft" />
-                    Back to Licenses
+                    Back to Medical Record
                 </a>
             </div>
         </div>
     </div>
 
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-4 gap-5 mb-6">
+    <div class="grid grid-cols-3 gap-5 mb-6">
         <!-- Total Documents -->
-        <a href="{{ route('admin.licenses.docs.show', ['license' => $license->id, 'collection' => 'all'] + request()->except('collection', 'page')) }}"
-           class="box col-span-4 rounded-[0.6rem] border border-dashed {{ $currentCollection == 'all' ? 'border-primary/80 bg-primary/5' : 'border-slate-300/80' }} p-5 shadow-sm md:col-span-2 xl:col-span-1 hover:border-primary/60 hover:bg-primary/5 transition-all duration-150 ease-in-out cursor-pointer">
+        <a href="{{ route('admin.medical-records.docs.show', ['medicalRecord' => $medicalRecord->id, 'collection' => 'all'] + request()->except('collection', 'page')) }}"
+           class="box col-span-3 rounded-[0.6rem] border border-dashed {{ $currentCollection == 'all' ? 'border-primary/80 bg-primary/5' : 'border-slate-300/80' }} p-5 shadow-sm md:col-span-1 hover:border-primary/60 hover:bg-primary/5 transition-all duration-150 ease-in-out cursor-pointer">
             <div class="text-base {{ $currentCollection == 'all' ? 'text-primary' : 'text-slate-500' }}">Total Documents</div>
             <div class="mt-1.5 text-2xl font-medium">{{ $totalDocuments }}</div>
             <div class="absolute inset-y-0 right-0 mr-5 flex flex-col justify-center">
@@ -52,43 +52,30 @@ $breadcrumbLinks = [
                     All
                 </div>
             </div>
-        </a>
+        </a>            
         
-        <!-- License Front Images -->
-        <a href="{{ route('admin.licenses.docs.show', ['license' => $license->id, 'collection' => 'license_front'] + request()->except('collection', 'page')) }}"
-           class="box col-span-4 rounded-[0.6rem] border border-dashed {{ $currentCollection == 'license_front' ? 'border-primary/80 bg-primary/5' : 'border-slate-300/80' }} p-5 shadow-sm md:col-span-2 xl:col-span-1 hover:border-primary/60 hover:bg-primary/5 transition-all duration-150 ease-in-out cursor-pointer">
-            <div class="text-base {{ $currentCollection == 'license_front' ? 'text-primary' : 'text-slate-500' }}">License Front Images</div>
-            <div class="mt-1.5 text-2xl font-medium">{{ $licenseFrontImages }}</div>
-            <div class="absolute inset-y-0 right-0 mr-5 flex flex-col justify-center">
-                <div class="flex items-center rounded-full border border-info/10 bg-info/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-info">
-                    <x-base.lucide class="ml-px h-4 w-4 stroke-[1.5] mr-1" icon="CreditCard" />
-                    Front
-                </div>
-            </div>
-        </a>
-        
-        <!-- License Back Images -->
-        <a href="{{ route('admin.licenses.docs.show', ['license' => $license->id, 'collection' => 'license_back'] + request()->except('collection', 'page')) }}"
-           class="box col-span-4 rounded-[0.6rem] border border-dashed {{ $currentCollection == 'license_back' ? 'border-primary/80 bg-primary/5' : 'border-slate-300/80' }} p-5 shadow-sm md:col-span-2 xl:col-span-1 hover:border-primary/60 hover:bg-primary/5 transition-all duration-150 ease-in-out cursor-pointer">
-            <div class="text-base {{ $currentCollection == 'license_back' ? 'text-primary' : 'text-slate-500' }}">License Back Images</div>
-            <div class="mt-1.5 text-2xl font-medium">{{ $licenseBackImages }}</div>
-            <div class="absolute inset-y-0 right-0 mr-5 flex flex-col justify-center">
-                <div class="flex items-center rounded-full border border-info/10 bg-info/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-info">
-                    <x-base.lucide class="ml-px h-4 w-4 stroke-[1.5] mr-1" icon="CreditCard" />
-                    Back
-                </div>
-            </div>
-        </a>
-        
-        <!-- Additional Documents -->
-        <a href="{{ route('admin.licenses.docs.show', ['license' => $license->id, 'collection' => 'additional'] + request()->except('collection', 'page')) }}"
-           class="box col-span-4 rounded-[0.6rem] border border-dashed {{ $currentCollection == 'additional' ? 'border-primary/80 bg-primary/5' : 'border-slate-300/80' }} p-5 shadow-sm md:col-span-2 xl:col-span-1 hover:border-primary/60 hover:bg-primary/5 transition-all duration-150 ease-in-out cursor-pointer">
-            <div class="text-base {{ $currentCollection == 'additional' ? 'text-primary' : 'text-slate-500' }}">Additional Documents</div>
-            <div class="mt-1.5 text-2xl font-medium">{{ $additionalDocuments }}</div>
+        <!-- Medical Card -->
+        <a href="{{ route('admin.medical-records.docs.show', ['medicalRecord' => $medicalRecord->id, 'collection' => 'medical_card'] + request()->except('collection', 'page')) }}"
+           class="box col-span-3 rounded-[0.6rem] border border-dashed {{ $currentCollection == 'medical_card' ? 'border-primary/80 bg-primary/5' : 'border-slate-300/80' }} p-5 shadow-sm md:col-span-1 hover:border-primary/60 hover:bg-primary/5 transition-all duration-150 ease-in-out cursor-pointer">
+            <div class="text-base {{ $currentCollection == 'medical_card' ? 'text-primary' : 'text-slate-500' }}">Medical Card</div>
+            <div class="mt-1.5 text-2xl font-medium">{{ $medicalCardDocuments }}</div>
             <div class="absolute inset-y-0 right-0 mr-5 flex flex-col justify-center">
                 <div class="flex items-center rounded-full border border-warning/10 bg-warning/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-warning">
+                    <x-base.lucide class="ml-px h-4 w-4 stroke-[1.5] mr-1" icon="CreditCard" />
+                    Card
+                </div>
+            </div>
+        </a>
+        
+        <!-- Medical Documents -->
+        <a href="{{ route('admin.medical-records.docs.show', ['medicalRecord' => $medicalRecord->id, 'collection' => 'medical_documents'] + request()->except('collection', 'page')) }}"
+           class="box col-span-3 rounded-[0.6rem] border border-dashed {{ $currentCollection == 'medical_documents' ? 'border-primary/80 bg-primary/5' : 'border-slate-300/80' }} p-5 shadow-sm md:col-span-1 hover:border-primary/60 hover:bg-primary/5 transition-all duration-150 ease-in-out cursor-pointer">
+            <div class="text-base {{ $currentCollection == 'medical_documents' ? 'text-primary' : 'text-slate-500' }}">Medical Documents</div>
+            <div class="mt-1.5 text-2xl font-medium">{{ $additionalDocuments }}</div>
+            <div class="absolute inset-y-0 right-0 mr-5 flex flex-col justify-center">
+                <div class="flex items-center rounded-full border border-secondary/10 bg-secondary/10 py-[2px] pl-[7px] pr-1 text-xs font-medium text-secondary">
                     <x-base.lucide class="ml-px h-4 w-4 stroke-[1.5] mr-1" icon="FileText" />
-                    Extra
+                    Docs
                 </div>
             </div>
         </a>
@@ -96,7 +83,7 @@ $breadcrumbLinks = [
 
     <!-- Simplified Filters -->
     <div class="box p-5 mb-6">
-        <form method="GET" action="{{ route('admin.licenses.docs.show', $license->id) }}" class="flex flex-col gap-4 lg:flex-row lg:items-end">
+        <form method="GET" action="{{ route('admin.medical-records.docs.show', $medicalRecord->id) }}" class="flex flex-col gap-4 lg:flex-row lg:items-end">
             <!-- Preserve current tab -->
             @if(request('tab'))
                 <input type="hidden" name="tab" value="{{ request('tab') }}">
@@ -132,10 +119,9 @@ $breadcrumbLinks = [
                         name="document_type"
                         data-placeholder="All Types"
                     >
-                        <option value="">All Types</option>
-                        <option value="license_front" {{ request('document_type') == 'license_front' ? 'selected' : '' }}>License Front</option>
-                        <option value="license_back" {{ request('document_type') == 'license_back' ? 'selected' : '' }}>License Back</option>
-                        <option value="license_documents" {{ request('document_type') == 'license_documents' ? 'selected' : '' }}>Additional Documents</option>
+                        <option value="">All Types</option>                        
+                        <option value="medical_card" {{ request('document_type') == 'medical_card' ? 'selected' : '' }}>Medical Card</option>
+                        <option value="medical_documents" {{ request('document_type') == 'medical_documents' ? 'selected' : '' }}>Medical Documents</option>
                     </x-base.tom-select>
                     </div>
                 </div>
@@ -154,7 +140,7 @@ $breadcrumbLinks = [
                     class="flex items-center px-4 py-2 text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
                     variant="outline-secondary"
                     type="button"
-                    onclick="window.location.href='{{ route('admin.licenses.docs.show', $license->id) }}'"
+                    onclick="window.location.href='{{ route('admin.medical-records.docs.show', $medicalRecord->id) }}'"
                 >
                     <x-base.lucide class="w-4 h-4 mr-2" icon="RotateCcw" />
                     Clear
@@ -196,7 +182,7 @@ $breadcrumbLinks = [
                                 <div class="flex items-center">
                                     <div class="image-fit zoom-in h-10 w-10 overflow-hidden rounded-lg border border-slate-200/70">
                                         @if(in_array(strtolower(pathinfo($document->file_name, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif', 'webp']))
-                                            <img alt="Document" class="tooltip cursor-pointer rounded-lg" src="{{ route('admin.licenses.docs.preview', $document->id) }}" title="{{ $document->file_name }}">
+                                            <img alt="Document" class="tooltip cursor-pointer rounded-lg" src="{{ route('admin.medical-records.doc.preview', $document->id) }}" title="{{ $document->file_name }}">
                                         @else
                                             <div class="flex h-full w-full items-center justify-center bg-slate-100">
                                                 <x-base.lucide class="h-5 w-5 text-slate-500" icon="FileText" />
@@ -251,17 +237,17 @@ $breadcrumbLinks = [
                             </x-base.table.td>
                             <x-base.table.td class="border-dashed py-4">
                                 <div class="flex items-center justify-center gap-2">
-                                    <a href="{{ route('admin.licenses.docs.preview', $document->id) }}" target="_blank" 
+                                    <a href="{{ route('admin.medical-records.doc.preview', $document->id) }}" target="_blank" 
                                        class="flex items-center justify-center w-8 h-8 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" 
                                        title="View Document">
                                         <x-base.lucide class="h-4 w-4" icon="Eye" />
                                     </a>
-                                    <a href="{{ route('admin.licenses.docs.preview', $document->id) }}" download 
+                                    <a href="{{ route('admin.medical-records.doc.preview', $document->id) }}" download 
                                        class="flex items-center justify-center w-8 h-8 text-slate-500 hover:text-success hover:bg-success/10 rounded-lg transition-colors" 
                                        title="Download Document">
                                         <x-base.lucide class="h-4 w-4" icon="Download" />
                                     </a>
-                                    <form method="POST" action="{{ route('admin.licenses.docs.delete', $document->id) }}" class="inline" onsubmit="return confirm('Are you sure you want to delete this document?')">
+                                    <form method="POST" action="{{ route('admin.medical-records.doc.delete', $document->id) }}" class="inline" onsubmit="return confirm('Are you sure you want to delete this document?')">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 
@@ -288,36 +274,20 @@ $breadcrumbLinks = [
             </x-base.table>
         </div>
         
-        <!-- Pagination -->
+        <!-- Document Count -->
         @if($documents->count() > 0)
-            <div class="mt-5 pt-5 border-t border-dashed border-slate-300/70">
-                {{ $documents->appends(request()->query())->links() }}
+            <div class="py-5 border-t border-dashed border-slate-300/70 text-center">
+                <p class="text-sm text-slate-500">Showing {{ $documents->count() }} document(s)</p>
             </div>
         @endif
     </div>
-    </div>
+    
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                // Inicializar tom-select para selectores
-                if (document.querySelector('#license_filter')) {
-                    new TomSelect('#license_filter', {
-                        plugins: {
-                            'dropdown_input': {}
-                        }
-                    });
-                }
-
-                if (document.querySelector('#driver_filter')) {
-                    new TomSelect('#driver_filter', {
-                        plugins: {
-                            'dropdown_input': {}
-                        }
-                    });
-                }
-
-                if (document.querySelector('#file_type_filter')) {
-                    new TomSelect('#file_type_filter');
+                // Initialize tom-select for selectors
+                if (document.querySelector('#document-type-filter')) {
+                    new TomSelect('#document-type-filter');
                 }
             });
         </script>

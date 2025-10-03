@@ -76,6 +76,12 @@ class SideMenu
                         'title' => "Drivers Licenses",
                     ],
                     [
+                        'icon' => "heart-pulse",
+                        'route_name' => "admin.medical-records.index",
+                        'params' => [],
+                        'title' => "Medical Records",
+                    ],
+                    [
                         'icon' => "file-warning",
                         'route_name' => "admin.drivers.employment-verification.index",
                         'params' => [],

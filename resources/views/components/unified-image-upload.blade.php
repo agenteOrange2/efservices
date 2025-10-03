@@ -372,11 +372,16 @@
             
             this.success = 'Files uploaded and stored successfully!';
             
-            // Dispatch event to refresh preview in Livewire component
-            if (this.modelType === 'medical_card') {
-                @this.call('refreshMedicalCardPreview');
-            } else if (['license_front', 'license_back'].includes(this.documentType)) {
-                @this.call('refreshLicensePreview');
+            // Dispatch event to refresh preview in Livewire component (only if in Livewire context)
+            if (typeof window.Livewire !== 'undefined' && window.Livewire.find && window.Livewire.find(this.$el.closest('[wire\\:id]')?.getAttribute('wire:id'))) {
+                const component = window.Livewire.find(this.$el.closest('[wire\\:id]')?.getAttribute('wire:id'));
+                if (component) {
+                    if (this.modelType === 'medical_card') {
+                        component.call('refreshMedicalCardPreview');
+                    } else if (['license_front', 'license_back'].includes(this.documentType)) {
+                        component.call('refreshLicensePreview');
+                    }
+                }
             }
             
         } catch (error) {
@@ -454,7 +459,13 @@
                     type="button" 
                     class="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100 transition-colors"
                     onclick="if(confirm('¿Estás seguro de que quieres eliminar esta imagen?')) { 
-                        @this.call('{{ $removeMethod }}', '{{ $uniqueId }}', '{{ $side }}');
+                        if (typeof window.Livewire !== 'undefined' && window.Livewire.find) {
+                            const wireId = this.closest('[wire\\:id]')?.getAttribute('wire:id');
+                            const component = wireId ? window.Livewire.find(wireId) : null;
+                            if (component) {
+                                component.call('{{ $removeMethod }}', '{{ $uniqueId }}', '{{ $side }}');
+                            }
+                        }
                     }"
                     title="Eliminar imagen"
                 >

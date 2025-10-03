@@ -66,12 +66,12 @@
                     <div>
                         <div class="grid grid-cols-2 gap-2">
                             <div>
-                                <x-base.form-label for="date_from">Issue Date (from)</x-base.form-label>
-                                <x-base.litepicker name="date_from" value="{{ request('date_from') }}" />
+                                <x-base.form-label for="date_from">Date (from)</x-base.form-label>
+                                <x-base.litepicker name="date_from" value="{{ request('date_from') }}" placeholder="Select a date" />
                             </div>
                             <div>
                                 <x-base.form-label for="date_to">Expiration Date (to)</x-base.form-label>
-                                <x-base.litepicker name="date_to" value="{{ request('date_to') }}" />
+                                <x-base.litepicker name="date_to" value="{{ request('date_to') }}" placeholder="Select a date" />
                             </div>
                         </div>
                     </div>

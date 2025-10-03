@@ -120,7 +120,7 @@ class DriverTrafficStep extends Component
     }
     
     // Save traffic data to database
-    protected function saveTrafficData($saveFiles = false)
+    protected function saveTrafficData($processTemporaryFiles = true)
     {
         try {
             DB::beginTransaction();
@@ -179,7 +179,7 @@ class DriverTrafficStep extends Component
                 }
                 
                 // Upload ticket files solo si se solicita explícitamente
-                if ($saveFiles) {
+                if ($processTemporaryFiles) {
                     Log::info('Guardando archivos permanentemente', [
                         'driver_id' => $this->driverId,
                         'conviction_count' => count($this->traffic_convictions)
@@ -207,9 +207,21 @@ class DriverTrafficStep extends Component
             $userDriverDetail->update(['current_step' => 7]);
             
             DB::commit();
+            
+            Log::info('Traffic data saved successfully', [
+                'driver_id' => $this->driverId,
+                'has_convictions' => $this->has_traffic_convictions,
+                'convictions_count' => count($this->traffic_convictions),
+                'processed_temp_files' => $processTemporaryFiles
+            ]);
+            
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Error saving traffic data: ' . $e->getMessage(), [
+                'driver_id' => $this->driverId,
+                'exception' => $e
+            ]);
             session()->flash('error', 'Error saving traffic conviction information: ' . $e->getMessage());
             return false;
         }
@@ -236,6 +248,83 @@ class DriverTrafficStep extends Component
                 unset($this->ticket_files[$index]);
                 $this->ticket_files = array_values($this->ticket_files);
             }
+        }
+    }
+    
+    // Create traffic conviction
+    public function createTrafficConviction($index)
+    {
+        try {
+            // Validar que el índice existe
+            if (!isset($this->traffic_convictions[$index])) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'Traffic conviction not found.'
+                ]);
+                return;
+            }
+            
+            $conviction = $this->traffic_convictions[$index];
+            
+            // Validar que los campos requeridos estén completos
+            if (empty($conviction['conviction_date']) || empty($conviction['location']) || 
+                empty($conviction['charge']) || empty($conviction['penalty'])) {
+                $this->dispatch('notify', [
+                    'type' => 'warning',
+                    'message' => 'Please complete all required fields (date, location, charge, penalty) before creating the traffic conviction.'
+                ]);
+                return;
+            }
+            
+            // Crear la convicción en la base de datos
+            $userDriverDetail = UserDriverDetail::find($this->driverId);
+            if (!$userDriverDetail) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'Driver not found.'
+                ]);
+                return;
+            }
+            
+            $trafficConviction = $userDriverDetail->trafficConvictions()->create([
+                'conviction_date' => $conviction['conviction_date'],
+                'location' => $conviction['location'],
+                'charge' => $conviction['charge'],
+                'penalty' => $conviction['penalty'],
+            ]);
+            
+            // Actualizar el ID en el array local
+            $this->traffic_convictions[$index]['id'] = $trafficConviction->id;
+            
+            // Actualizar el flag has_traffic_convictions en application details
+            if ($userDriverDetail->application && $userDriverDetail->application->details) {
+                $userDriverDetail->application->details->update([
+                    'has_traffic_convictions' => true
+                ]);
+            }
+            
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => 'Traffic conviction created successfully. You can now upload documents.'
+            ]);
+            
+            Log::info('Traffic conviction created', [
+                'driver_id' => $this->driverId,
+                'conviction_id' => $trafficConviction->id,
+                'conviction_data' => $conviction
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error creating traffic conviction', [
+                'error' => $e->getMessage(),
+                'driver_id' => $this->driverId,
+                'conviction_index' => $index
+            ]);
+            
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Error creating traffic conviction: ' . $e->getMessage()
+            ]);
         }
     }
     
@@ -274,7 +363,21 @@ class DriverTrafficStep extends Component
         ]);
         
         // Verificar que el modelo y el índice sean correctos
-        if ($modelName === 'traffic_images' && isset($this->traffic_convictions[$modelIndex])) {
+        if ($modelName === 'ticket_files' && isset($this->traffic_convictions[$modelIndex])) {
+            // Primero, asegurar que la convicción tenga datos básicos antes de permitir subir archivos
+            $conviction = $this->traffic_convictions[$modelIndex];
+            if (empty($conviction['conviction_date']) || empty($conviction['location']) || 
+                empty($conviction['charge']) || empty($conviction['penalty'])) {
+                
+                // Mostrar mensaje al usuario indicando que debe completar los datos primero
+                $this->dispatch('notify', [
+                    'type' => 'warning',
+                    'message' => 'Por favor, complete primero los datos de la convicción (fecha, ubicación, cargo y penalidad) antes de subir archivos.'
+                ]);
+                
+                return;
+            }
+            
             // Inicializar el array de documentos si no existe
             if (!isset($this->traffic_convictions[$modelIndex]['documents'])) {
                 $this->traffic_convictions[$modelIndex]['documents'] = [];
@@ -314,6 +417,12 @@ class DriverTrafficStep extends Component
                 'temp_files_count' => count($this->traffic_convictions[$modelIndex]['temp_files']),
                 'documents_count' => count($this->traffic_convictions[$modelIndex]['documents'])
             ]);
+            
+            // Mostrar mensaje de éxito
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'message' => 'Archivo subido correctamente. Se guardará permanentemente al navegar al siguiente paso.'
+            ]);
         }
     }
     
@@ -340,101 +449,125 @@ class DriverTrafficStep extends Component
     /**
      * Procesa un archivo temporal y lo guarda permanentemente
      */
-    protected function processTemporaryFile($tempFile, $index)
+    private function processTemporaryFile($tempFileData, $convictionIndex)
     {
         try {
-            $tempPath = $tempFile['temp_path'];
-            $originalName = $tempFile['original_name'];
-            $mimeType = $tempFile['mime_type'];
-            $size = $tempFile['size'];
-            $tempId = $tempFile['temp_id'];
+            $tempPath = $tempFileData['temp_path'];
+            $originalName = $tempFileData['original_name'];
+            $mimeType = $tempFileData['mime_type'];
+            $tempId = $tempFileData['temp_id'];
+            $conviction = $this->traffic_convictions[$convictionIndex];
             
             Log::info('Procesando archivo temporal', [
                 'temp_path' => $tempPath,
                 'original_name' => $originalName,
-                'conviction_index' => $index
+                'conviction_index' => $convictionIndex
             ]);
             
-            // Obtener el ID de la convicción
-            $convictionId = isset($this->traffic_convictions[$index]['id']) ? $this->traffic_convictions[$index]['id'] : null;
+            // Verificar que el archivo temporal existe
+            if (!\Illuminate\Support\Facades\Storage::disk('local')->exists($tempPath)) {
+                Log::warning('Archivo temporal no encontrado', ['temp_path' => $tempPath]);
+                return false;
+            }
             
-            if (!$convictionId) {
-                // Verificar si ya existe una convicción con datos similares para evitar duplicados
-                $userDriverDetail = UserDriverDetail::find($this->driverId);
-                if ($userDriverDetail && isset($this->traffic_convictions[$index]['conviction_date'])) {
-                    $existingConviction = $userDriverDetail->trafficConvictions()
-                        ->where('conviction_date', $this->traffic_convictions[$index]['conviction_date'])
-                        ->where('location', $this->traffic_convictions[$index]['location'] ?? '')
-                        ->where('charge', $this->traffic_convictions[$index]['charge'] ?? '')
-                        ->first();
+            // Buscar la convicción en la base de datos
+            $trafficConviction = \App\Models\Admin\Driver\DriverTrafficConviction::where('user_driver_detail_id', $this->driverId)
+                ->where('conviction_date', $conviction['conviction_date'])
+                ->where('location', $conviction['location'])
+                ->where('charge', $conviction['charge'])
+                ->where('penalty', $conviction['penalty'])
+                ->first();
+            
+            if (!$trafficConviction) {
+                Log::warning('No se encontró la convicción de tráfico para procesar archivo', [
+                    'conviction_index' => $convictionIndex,
+                    'conviction_data' => $conviction
+                ]);
+                return false;
+            }
+            
+            // Leer el contenido del archivo temporal
+            $fileContent = \Illuminate\Support\Facades\Storage::disk('local')->get($tempPath);
+            
+            // Guardar el archivo usando Spatie Media Library
+            $mediaItem = $trafficConviction
+                ->addMediaFromString($fileContent)
+                ->usingName($originalName)
+                ->usingFileName($originalName)
+                ->toMediaCollection('traffic_images');
+            
+            // Eliminar el archivo temporal
+            \Illuminate\Support\Facades\Storage::disk('local')->delete($tempPath);
+            
+            Log::info('Archivo procesado exitosamente', [
+                'media_id' => $mediaItem->id,
+                'traffic_conviction_id' => $trafficConviction->id
+            ]);
+            
+            // Actualizar el documento en la lista para que ya no sea temporal
+            foreach ($this->traffic_convictions[$convictionIndex]['documents'] as $key => $doc) {
+                if (isset($doc['id']) && $doc['id'] === $tempId) {
+                    $this->traffic_convictions[$convictionIndex]['documents'][$key]['id'] = $mediaItem->id;
+                    $this->traffic_convictions[$convictionIndex]['documents'][$key]['is_temp'] = false;
+                    $this->traffic_convictions[$convictionIndex]['documents'][$key]['url'] = $mediaItem->getUrl();
+                    break;
+                }
+            }
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            Log::error('Error procesando archivo temporal', [
+                'error' => $e->getMessage(),
+                'temp_file_data' => $tempFileData,
+                'conviction_index' => $convictionIndex
+            ]);
+            return false;
+        }
+    }
+    
+    /**
+     * Procesa todos los archivos temporales de todas las convicciones
+     */
+    protected function processAllTemporaryFiles()
+    {
+        try {
+            Log::info('Iniciando procesamiento de todos los archivos temporales');
+            
+            foreach ($this->traffic_convictions as $index => $conviction) {
+                // Verificar si hay archivos temporales para esta convicción
+                if (!isset($conviction['temp_files']) || empty($conviction['temp_files'])) {
+                    continue;
+                }
+                
+                // Procesar cada archivo temporal
+                foreach ($conviction['temp_files'] as $tempFileData) {
+                    $processed = $this->processTemporaryFile($tempFileData, $index);
                     
-                    if ($existingConviction) {
-                        // Si ya existe, usamos ese ID
-                        $convictionId = $existingConviction->id;
-                        // Actualizar el ID en el array local
-                        $this->traffic_convictions[$index]['id'] = $convictionId;
-                        
-                        Log::info('Se encontró una convicción existente para evitar duplicados', [
-                            'conviction_id' => $convictionId,
-                            'date' => $this->traffic_convictions[$index]['conviction_date'],
-                            'location' => $this->traffic_convictions[$index]['location'] ?? ''
+                    if ($processed) {
+                        Log::info('Archivo temporal procesado exitosamente', [
+                            'conviction_index' => $index,
+                            'file_name' => $tempFileData['original_name']
                         ]);
                     } else {
-                        // Si no existe, crear una nueva
-                        $convictionId = $this->saveTrafficConviction($index);
-                    }
-                } else {
-                    // Si no hay suficiente información, crear una nueva convicción
-                    $convictionId = $this->saveTrafficConviction($index);
-                }
-            }
-            
-            // Buscar el modelo de convicción
-            $conviction = \App\Models\Admin\Driver\DriverTrafficConviction::find($convictionId);
-            
-            if ($conviction) {
-                // Obtener la ruta completa del archivo temporal
-                $fullPath = storage_path('app/' . $tempPath);
-                
-                // Verificar que el archivo existe
-                if (!file_exists($fullPath)) {
-                    throw new \Exception("El archivo temporal no existe: {$fullPath}");
-                }
-                
-                // Subir el archivo a la convicción usando fromFile
-                $media = $conviction->addMediaFromDisk($tempPath, 'local')
-                    ->usingName($originalName)
-                    ->usingFileName($originalName)
-                    ->toMediaCollection('traffic_images');
-                
-                Log::info('Archivo guardado permanentemente', [
-                    'media_id' => $media->id,
-                    'conviction_id' => $convictionId,
-                    'original_name' => $originalName
-                ]);
-                
-                // Actualizar el documento en la lista para que ya no sea temporal
-                foreach ($this->traffic_convictions[$index]['documents'] as $key => $doc) {
-                    if (isset($doc['id']) && $doc['id'] === $tempId) {
-                        $this->traffic_convictions[$index]['documents'][$key]['id'] = $media->id;
-                        $this->traffic_convictions[$index]['documents'][$key]['is_temp'] = false;
-                        $this->traffic_convictions[$index]['documents'][$key]['url'] = $media->getUrl();
-                        break;
+                        Log::error('Error procesando archivo temporal', [
+                            'conviction_index' => $index,
+                            'file_name' => $tempFileData['original_name']
+                        ]);
                     }
                 }
                 
-                return $media->id;
+                // Limpiar los archivos temporales de la convicción después de procesarlos
+                $this->traffic_convictions[$index]['temp_files'] = [];
             }
             
-            return null;
+            Log::info('Procesamiento de archivos temporales completado');
+            
         } catch (\Exception $e) {
-            Log::error('Error al procesar archivo temporal: ' . $e->getMessage(), [
-                'exception' => $e,
-                'temp_path' => $tempFile['temp_path'] ?? null,
-                'conviction_index' => $index,
+            Log::error('Error en processAllTemporaryFiles', [
+                'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return null;
         }
     }
     
@@ -581,7 +714,7 @@ class DriverTrafficStep extends Component
     }
     
     /**
-     * Next step
+     * Next step - Implementa el flujo: primero crear traffic, después subir fotos
      */
     public function next()
     {
@@ -590,8 +723,28 @@ class DriverTrafficStep extends Component
         
         // Save to database
         if ($this->driverId) {
-            // Guardar los datos de tráfico, incluyendo los archivos temporales
-            $this->saveTrafficData(true);
+            // Paso 1: Guardar primero los datos de tráfico (sin archivos)
+            Log::info('Paso 1: Guardando datos de tráfico sin archivos');
+            $trafficSaved = $this->saveTrafficData(false);
+            
+            if ($trafficSaved) {
+                // Paso 2: Procesar y guardar los archivos permanentemente
+                Log::info('Paso 2: Procesando archivos temporales');
+                $this->processAllTemporaryFiles();
+                
+                // Mostrar mensaje de éxito
+                $this->dispatch('notify', [
+                    'type' => 'success',
+                    'message' => 'Información de tráfico y archivos guardados correctamente.'
+                ]);
+            } else {
+                // Si hay error al guardar los datos, no continuar
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'Error al guardar la información de tráfico. Por favor, inténtelo de nuevo.'
+                ]);
+                return;
+            }
         }
         
         // Move to next step
@@ -644,22 +797,28 @@ class DriverTrafficStep extends Component
     }
     
     /**
-     * Go to previous step
+     * Go to previous step - Guarda datos y archivos antes de retroceder
      */
-    // Previous step
     public function previous()
     {
         // Basic save before going back
         if ($this->driverId) {
             $this->validate($this->partialRules());
-            $this->saveTrafficData(true);
+            
+            // Guardar datos de tráfico
+            $trafficSaved = $this->saveTrafficData(false);
+            
+            if ($trafficSaved) {
+                // Procesar archivos temporales si existen
+                $this->processAllTemporaryFiles();
+            }
         }
 
         $this->dispatch('prevStep');
     }
     
     /**
-     * Save and exit
+     * Save and exit - Implementa el flujo: primero crear traffic, después subir fotos
      */
     public function saveAndExit()
     {
@@ -668,18 +827,27 @@ class DriverTrafficStep extends Component
         
         // Save to database
         if ($this->driverId) {
-            // Guardar los datos y los archivos permanentemente
-            $this->saveTrafficData(true);
+            // Paso 1: Guardar los datos de tráfico
+            $trafficSaved = $this->saveTrafficData(false);
+            
+            if ($trafficSaved) {
+                // Paso 2: Procesar archivos temporales
+                $this->processAllTemporaryFiles();
+                
+                // Mostrar mensaje de éxito
+                $this->dispatch('notify', [
+                    'type' => 'success',
+                    'message' => 'Información guardada correctamente.'
+                ]);
+            }
         }
         
         $this->dispatch('saveAndExit');
     }
     
-    /**
-     * Render
-     */
+    // Render
     public function render()
     {
-        return view('livewire.admin.driver.steps.driver-traffic-step');
+        return view('livewire.driver.steps.traffic-step');
     }
 }

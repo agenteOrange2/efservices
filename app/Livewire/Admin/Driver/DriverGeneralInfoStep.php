@@ -32,7 +32,6 @@ class DriverGeneralInfoStep extends Component
     // Custom Dates for Historical Drivers
     public $use_custom_dates = false;
     public $custom_created_at;
-    public $custom_updated_at;
 
     // References
     public $driverId;
@@ -74,8 +73,7 @@ class DriverGeneralInfoStep extends Component
 
         // Add custom dates validation if enabled
         if ($this->use_custom_dates) {
-            $rules['custom_created_at'] = 'nullable|date';
-            $rules['custom_updated_at'] = 'nullable|date';
+            $rules['custom_created_at'] = 'nullable|date';            
         }
 
         return $rules;
@@ -130,8 +128,7 @@ class DriverGeneralInfoStep extends Component
 
         // Load custom dates if they exist
         $this->use_custom_dates = $userDriverDetail->use_custom_dates ?? false;
-        $this->custom_created_at = $userDriverDetail->custom_created_at ? $userDriverDetail->custom_created_at->format('Y-m-d\TH:i') : null;
-        $this->custom_updated_at = $userDriverDetail->custom_updated_at ? $userDriverDetail->custom_updated_at->format('Y-m-d\TH:i') : null;
+        $this->custom_created_at = $userDriverDetail->custom_created_at ? $userDriverDetail->custom_created_at->format('Y-m-d\TH:i') : null;        
 
         // Get profile photo URL
         if ($userDriverDetail->hasMedia('profile_photo_driver')) {
@@ -179,10 +176,7 @@ class DriverGeneralInfoStep extends Component
             if ($this->use_custom_dates) {
                 if ($this->custom_created_at) {
                     $driverData['custom_created_at'] = $this->custom_created_at;
-                }
-                if ($this->custom_updated_at) {
-                    $driverData['custom_updated_at'] = $this->custom_updated_at;
-                }
+                }                
             }
             
             $userDriverDetail = UserDriverDetail::create($driverData);
@@ -368,12 +362,10 @@ class DriverGeneralInfoStep extends Component
             
             // Add custom dates if enabled
             if ($this->use_custom_dates) {
-                $updateData['custom_created_at'] = $this->custom_created_at;
-                $updateData['custom_updated_at'] = $this->custom_updated_at;
+                $updateData['custom_created_at'] = $this->custom_created_at;                
             } else {
                 // Clear custom dates if not using them
-                $updateData['custom_created_at'] = null;
-                $updateData['custom_updated_at'] = null;
+                $updateData['custom_created_at'] = null;                
             }
             
             $userDriverDetail->update($updateData);

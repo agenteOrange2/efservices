@@ -244,18 +244,24 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>                        
+                    <div>
                         <x-base.form-label for="unemployment_form.start_date">Start Date*</x-base.form-label>   
-                        <input type="date" wire:model="unemployment_form.start_date"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                        <input type="text" 
+                            value="{{ $unemployment_form['start_date'] ?? '' }}" 
+                            onchange="@this.set('unemployment_form.start_date', this.value)" 
+                            placeholder="MM/DD/YYYY" 
+                            class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                         @error('unemployment_form.start_date')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
-                    <div>                        
-                        <x-base.form-label for="unemployment_form.end_date">Start Date*</x-base.form-label>   
-                        <input type="date" wire:model="unemployment_form.end_date"
-                            class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                    <div>
+                        <x-base.form-label for="unemployment_form.end_date">End Date*</x-base.form-label>   
+                        <input type="text" 
+                            value="{{ $unemployment_form['end_date'] ?? '' }}" 
+                            onchange="@this.set('unemployment_form.end_date', this.value)" 
+                            placeholder="MM/DD/YYYY" 
+                            class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                         @error('unemployment_form.end_date')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
@@ -280,7 +286,7 @@
     @endif
 
     <!-- Modal para Employment Companies -->
-    @if ($showCompanyForm)
+    @if ($showCompanyForm && !$showSearchCompanyModal)
         <div class="modal group bg-gradient-to-b from-theme-1/50 via-theme-2/50 to-black/50 transition-[visibility,opacity] w-screen h-screen fixed left-0 top-0 [&:not(.show)]:duration-[0s,0.2s] [&:not(.show)]:delay-[0.2s,0s] [&:not(.show)]:invisible [&:not(.show)]:opacity-0 [&.show]:visible [&.show]:opacity-100 [&.show]:duration-[0s,0.4s] overflow-y-auto show">
             <div class="w-[90%] mx-auto bg-white relative rounded-md shadow-md transition-[margin-top,transform] duration-[0.4s,0.3s] -mt-4 group-[.show]:mt-4 group-[.modal-static]:scale-[1.05] sm:w-[750px] p-4">
                 <div class="flex justify-between items-center mb-4">
@@ -390,16 +396,22 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Employed From*</label>
-                            <input type="date" wire:model="company_form.employed_from"
-                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                            <input type="text" 
+                                value="{{ $company_form['employed_from'] ?? '' }}" 
+                                onchange="@this.set('company_form.employed_from', this.value)" 
+                                placeholder="MM/DD/YYYY" 
+                                class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                             @error('company_form.employed_from')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Employed To*</label>
-                            <input type="date" wire:model="company_form.employed_to"
-                                class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3">
+                            <input type="text" 
+                                value="{{ $company_form['employed_to'] ?? '' }}" 
+                                onchange="@this.set('company_form.employed_to', this.value)" 
+                                placeholder="MM/DD/YYYY" 
+                                class="driver-datepicker w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3" />
                             @error('company_form.employed_to')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
@@ -491,7 +503,7 @@
     @endif
 
     <!-- Modal para Búsqueda de Empresas -->
-    @if ($showSearchCompanyModal)
+    @if ($showSearchCompanyModal && !$showCompanyForm)
         <div class="modal group bg-gradient-to-b from-theme-1/50 via-theme-2/50 to-black/50 transition-[visibility,opacity] w-screen h-screen fixed left-0 top-0 [&:not(.show)]:duration-[0s,0.2s] [&:not(.show)]:delay-[0.2s,0s] [&:not(.show)]:invisible [&:not(.show)]:opacity-0 [&.show]:visible [&.show]:opacity-100 [&.show]:duration-[0s,0.4s] overflow-y-auto show">
             <div class="w-[90%] mx-auto bg-white relative rounded-md shadow-md transition-[margin-top,transform] duration-[0.4s,0.3s] -mt-4 group-[.show]:mt-40 group-[.modal-static]:scale-[1.05] sm:w-[750px] p-4">
                 <div class="flex justify-between items-center mb-4">
@@ -596,16 +608,22 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div class="mt-3 w-full flex-1 xl:mt-0">
                         <x-base.form-label for="related_employment_form.start_date">Start Date*</x-base.form-label>                        
-                        <input type="date" wire:model="related_employment_form.start_date"
-                            class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                        <input type="text" 
+                            value="{{ $related_employment_form['start_date'] ?? '' }}" 
+                            onchange="@this.set('related_employment_form.start_date', this.value)" 
+                            placeholder="MM/DD/YYYY" 
+                            class="driver-datepicker form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
                         @error('related_employment_form.start_date')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
                     </div>
-                    <div>                        
+                    <div>
                         <x-base.form-label for="related_employment_form.end_date">End Date*</x-base.form-label>
-                        <input type="date" wire:model="related_employment_form.end_date"
-                            class="form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm">
+                        <input type="text" 
+                            value="{{ $related_employment_form['end_date'] ?? '' }}" 
+                            onchange="@this.set('related_employment_form.end_date', this.value)" 
+                            placeholder="MM/DD/YYYY" 
+                            class="driver-datepicker form-control w-full rounded-md border border-slate-300/60 px-3 py-2 shadow-sm" />
                         @error('related_employment_form.end_date')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror

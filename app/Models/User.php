@@ -120,6 +120,12 @@ class User extends Authenticatable implements HasMedia
         return $this->hasOne(UserDriverDetail::class);
     }
 
+    // Relación singular para compatibilidad con controladores
+    public function driverDetail()
+    {
+        return $this->hasOne(UserDriverDetail::class);
+    }
+
     //Registro de Media Library
     public function getProfilePhotoUrlAttribute()
     {

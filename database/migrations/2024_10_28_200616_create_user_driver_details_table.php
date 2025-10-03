@@ -26,8 +26,7 @@ return new class extends Migration
             $table->integer('current_step')->default(1);
             $table->integer('completion_percentage')->default(0);
             $table->boolean('use_custom_dates')->default(false);     
-            $table->datetime('custom_created_at')->nullable();
-            $table->datetime('custom_updated_at')->nullable();       
+            $table->datetime('custom_created_at')->nullable();            
             $table->timestamps();
         });
     }
