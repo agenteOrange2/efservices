@@ -312,6 +312,7 @@ class DriverTrainingStep extends Component
                                 'state' => $courseData['state'] ?? null,
                                 'certification_date' => $courseData['certification_date'] ?? null,
                                 'experience' => $courseData['experience'] ?? null,
+                                'years_experience' => $courseData['years_experience'] ?? null,
                                 'expiration_date' => !empty($courseData['expiration_date']) ? $courseData['expiration_date'] : null,
                                 'status' => 'Active',
                             ]);
@@ -342,6 +343,7 @@ class DriverTrainingStep extends Component
                             'state' => $courseData['state'] ?? null,
                             'certification_date' => $courseData['certification_date'] ?? null,
                             'experience' => $courseData['experience'] ?? null,
+                            'years_experience' => $courseData['years_experience'] ?? null,
                             'expiration_date' => !empty($courseData['expiration_date']) ? $courseData['expiration_date'] : null,
                             'status' => 'Active',
                         ]);

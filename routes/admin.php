@@ -83,6 +83,10 @@ Route::prefix('vehicles')->name('vehicles.')->group(function () {
 // 2. Rutas básicas para vehículos (RESOURCE AL FINAL)
 Route::resource('vehicles', VehicleController::class);
 
+// Ruta para asignación de tipo de conductor
+Route::get('vehicles/{vehicle}/assign-driver-type', [VehicleController::class, 'assignDriverType'])->name('vehicles.assign-driver-type');
+Route::post('vehicles/{vehicle}/assign-driver-type', [VehicleController::class, 'storeDriverType'])->name('vehicles.store-driver-type');
+
 // 2. Rutas para maintenances como recurso anidado
 Route::resource('vehicles.maintenances', VehicleMaintenanceController::class);
 
@@ -209,7 +213,7 @@ Route::prefix('traffic')->name('traffic.')->group(function () {
     Route::post('{conviction}/documents', [TrafficConvictionsController::class, 'storeDocuments'])->name('docs.store');
     Route::delete('documents/{media}', [TrafficConvictionsController::class, 'destroyDocument'])->name('docs.destroy');
     Route::get('documents/{media}/preview', [TrafficConvictionsController::class, 'previewDocument'])->name('docs.preview');
-    Route::delete('ajax-destroy-document/{media}', [TrafficConvictionsController::class, 'ajaxDestroyDocument'])->name('ajax-destroy-doc');
+    Route::delete('ajax-destroy-document/{media}', [TrafficConvictionsController::class, 'ajaxDestroyDocument'])->name('ajax-destroy-document');
 });
 
 // Rutas para gestión de documentos de pruebas de conductores

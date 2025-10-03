@@ -17,6 +17,9 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Validation\Rule;
 use App\Models\Admin\Driver\DriverTrafficConviction;
+use App\Livewire\Admin\Driver\DriverCertificationStep;
+use Barryvdh\DomPDF\Facade\Pdf;
+use ReflectionClass;
 
 class TrafficConvictionsController extends Controller
 {
@@ -240,6 +243,9 @@ class TrafficConvictionsController extends Controller
                 }
             }
 
+            // Regenerar PDF después de crear la infracción
+            $this->regenerateTrafficPDF($conviction->user_driver_detail_id);
+            
             DB::commit();
             
             Log::info('Traffic conviction created successfully', [
@@ -378,6 +384,9 @@ class TrafficConvictionsController extends Controller
                 }
             }
             
+            // Regenerar PDF después de actualizar la infracción
+            $this->regenerateTrafficPDF($conviction->user_driver_detail_id);
+            
             DB::commit();
 
             return redirect()->route('admin.traffic.index')
@@ -475,10 +484,7 @@ class TrafficConvictionsController extends Controller
      * Previsualiza un documento relacionado con infracciones de tráfico.
      * 
      * @param int $documentId ID del documento a previsualizar
-        }
-        
-        // Si es un PDF, abrirlo en el navegador
-        if ($mime === 'application/pdf') {
+                        
      */
     public function previewDocument($documentId)
     {
@@ -949,5 +955,106 @@ class TrafficConvictionsController extends Controller
             
             return redirect()->back()->with('error', 'Error al eliminar documento: ' . $e->getMessage());
         }
-    }    
+    }
+
+    /**
+     * Regenera el PDF de infracciones de tráfico para un conductor específico
+     *
+     * @param int $driverId
+     * @return void
+     */
+    private function regenerateTrafficPDF($driverId)
+    {
+        try {
+            // Cargar el detalle del conductor con todas las relaciones necesarias
+            $userDriverDetail = UserDriverDetail::with([
+                'user',
+                'carrier',
+                'certification',
+                'trafficConvictions' => function ($query) {
+                    $query->orderBy('conviction_date', 'desc');
+                }
+            ])->findOrFail($driverId);
+
+            // Obtener la ruta de la firma usando el mismo patrón que DriverLicensesController
+            $signaturePath = null;
+            if ($userDriverDetail->certification) {
+                $signatureMedia = $userDriverDetail->certification->getMedia('signature')->first();
+                if ($signatureMedia) {
+                    $signaturePath = $signatureMedia->getPath();
+                } else {
+                    $signaturePath = null;
+                }
+            } else {
+                $signaturePath = null;
+            }
+
+            // Usar reflexión para obtener las fechas efectivas desde DriverCertificationStep
+            $driverCertificationStep = new DriverCertificationStep();
+            $reflection = new ReflectionClass($driverCertificationStep);
+            $method = $reflection->getMethod('getEffectiveDates');
+            $method->setAccessible(true);
+            $effectiveDates = $method->invoke($driverCertificationStep, $driverId);
+
+            // Preparar formatted_dates con ambas fechas cuando corresponda
+            $formattedDates = [
+                'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
+                'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
+            ];
+            
+            // Siempre incluir created_at (fecha de registro normal)
+            if ($effectiveDates['show_created_at'] && $effectiveDates['created_at']) {
+                $formattedDates['created_at'] = $effectiveDates['created_at']->format('m/d/Y');
+                $formattedDates['created_at_long'] = $effectiveDates['created_at']->format('F j, Y');
+            }
+            
+            // Incluir custom_created_at solo si está habilitado y tiene valor
+            if ($effectiveDates['show_custom_created_at'] && $effectiveDates['custom_created_at']) {
+                $formattedDates['custom_created_at'] = $effectiveDates['custom_created_at']->format('m/d/Y');
+                $formattedDates['custom_created_at_long'] = $effectiveDates['custom_created_at']->format('F j, Y');
+            }
+
+            // Preparar los datos para el PDF
+            $pdfData = [
+                'userDriverDetail' => $userDriverDetail,
+                'signaturePath' => $signaturePath,
+                'title' => 'Traffic Violations',
+                'date' => now()->format('m/d/Y H:i'),
+                'created_at' => $effectiveDates['created_at'],
+                'updated_at' => $effectiveDates['updated_at'],
+                'custom_created_at' => $effectiveDates['custom_created_at'],
+                'formatted_dates' => $formattedDates,
+                'use_custom_dates' => $effectiveDates['show_custom_created_at']
+            ];
+
+            // Generar el PDF
+            $pdf = Pdf::loadView('pdf.driver.traffic', $pdfData);
+            $pdf->setPaper('A4', 'portrait');
+
+            // Definir la estructura de directorios siguiendo el patrón de DriverCertificationStep
+            $driverPath = 'driver/' . $driverId;
+            $appSubPath = $driverPath . '/driver_applications';
+            $fileName = 'traffic_violations.pdf';
+            $fullPath = $appSubPath . '/' . $fileName;
+
+            // Crear los directorios si no existen
+            Storage::disk('public')->makeDirectory($driverPath);
+            Storage::disk('public')->makeDirectory($appSubPath);
+
+            // Guardar el PDF
+            Storage::disk('public')->put($fullPath, $pdf->output());
+
+            Log::info('PDF de infracciones de tráfico regenerado exitosamente', [
+                'driver_id' => $driverId,
+                'file_path' => $fullPath
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al regenerar PDF de infracciones de tráfico', [
+                'driver_id' => $driverId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
 }

@@ -82,18 +82,8 @@ class VehicleController extends Controller
             'registration_number' => 'required|string|max:255',
             'registration_state' => 'required|string|max:255',
             'registration_expiration_date' => 'required|date|after:today',
-            'ownership_type' => 'required|in:owned,leased,third-party,unassigned',
+            'fuel_type' => 'required|string|in:Diesel,Gasoline,CNG,LNG,Electric,Hybrid',
             'user_driver_detail_id' => 'nullable|exists:user_driver_details,id',
-            'owner_name' => 'nullable|required_if:ownership_type,owned|string|max:255',
-            'owner_phone' => 'nullable|required_if:ownership_type,owned|string|max:255',
-            'owner_email' => 'nullable|required_if:ownership_type,owned|email|max:255',
-            'third_party_name' => 'nullable|required_if:ownership_type,third-party|string|max:255',
-            'third_party_phone' => 'nullable|required_if:ownership_type,third-party|string|max:255',
-            'third_party_email' => 'nullable|required_if:ownership_type,third-party|email|max:255',
-            'third_party_dba' => 'nullable|string|max:255',
-            'third_party_address' => 'nullable|string|max:255',
-            'third_party_contact' => 'nullable|string|max:255',
-            'third_party_fein' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -102,13 +92,13 @@ class VehicleController extends Controller
                 ->withInput();
         }
 
-        // Create the vehicle (sólo campos del vehículo, no incluir owner_name, etc)
+        // Create the vehicle (sólo campos básicos del vehículo)
         $vehicleData = $request->only([
             'carrier_id', 'make', 'model', 'type', 'year', 'vin', 'color',
             'company_unit_number', 'gvwr', 'tire_size', 'fuel_type',
             'irp_apportioned_plate', 'registration_state', 'registration_number',
             'registration_expiration_date', 'permanent_tag', 'location', 'notes',
-            'user_driver_detail_id', 'ownership_type', 'out_of_service', 'out_of_service_date',
+            'user_driver_detail_id', 'out_of_service', 'out_of_service_date',
             'suspended', 'suspended_date'
         ]);
         
@@ -146,140 +136,9 @@ class VehicleController extends Controller
             }
         }
 
-        // Create or update driver_application_details record based on ownership type
-        // Exactamente como en DriverApplicationStep
-        if ($request->ownership_type === 'owned' || $request->ownership_type === 'third-party') {
-            // Get the user_id from the selected driver if available
-            $userId = null;
-            
-            // First, try to get the user_id from the user_driver_detail_id if it exists
-            if ($vehicle->user_driver_detail_id) {
-                $userDriverDetail = UserDriverDetail::find($vehicle->user_driver_detail_id);
-                if ($userDriverDetail && $userDriverDetail->user_id) {
-                    $userId = $userDriverDetail->user_id;
-                    Log::info('Found user_id from user_driver_detail', [
-                        'user_driver_detail_id' => $vehicle->user_driver_detail_id,
-                        'user_id' => $userId
-                    ]);
-                }
-            }
-            
-            // If no user_id is available from the driver, use the current authenticated user
-            if (!$userId) {
-                $userId = Auth::id();
-                Log::info('Using authenticated user_id', ['user_id' => $userId]);
-            }
-            
-            // If still no user_id, use the first admin user as fallback
-            if (!$userId) {
-                $adminUser = \App\Models\User::where('is_admin', true)->first();
-                $userId = $adminUser ? $adminUser->id : 1;
-                Log::info('Using fallback admin user_id', ['user_id' => $userId]);
-            }
-            
-            // Create a new driver application with the user_id
-            $driverApplication = new \App\Models\Admin\Driver\DriverApplication();
-            $driverApplication->user_id = $userId;
-            $driverApplication->status = 'pending';
-            $driverApplication->save();
-            
-            Log::info('Created driver application', [
-                'driver_application_id' => $driverApplication->id,
-                'user_id' => $userId,
-                'vehicle_id' => $vehicle->id
-            ]);
-            
-            // Create a new driver_application_details record with all required fields
-            $detailData = [
-                'driver_application_id' => $driverApplication->id,
-                'vehicle_id' => $vehicle->id,
-                'applying_position' => $request->ownership_type === 'owned' ? 'owner_operator' : 'third_party_driver',
-                'applying_location' => $request->location ?? 'Unknown',
-                'eligible_to_work' => true,
-                'can_speak_english' => true,
-                'has_twic_card' => false,
-                'how_did_hear' => 'other',
-                'expected_pay' => 0.00,
-                'has_work_history' => false,
-                'has_unemployment_periods' => false,
-                'has_completed_employment_history' => false,
-            ];
-            
-            // Create the record using mass assignment - solo campos básicos
-            $driverApplicationDetail = \App\Models\Admin\Driver\DriverApplicationDetail::create($detailData);
-            
-            // Ahora guardar los campos específicos en sus tablas correspondientes
-            if ($request->ownership_type === 'owned') {
-                // Guardar en la tabla owner_operator_details
-                $ownerDetails = new OwnerOperatorDetail([
-                    'driver_application_id' => $driverApplication->id,
-                    'owner_name' => $request->owner_name,
-                    'owner_phone' => $request->owner_phone,
-                    'owner_email' => $request->owner_email,
-                    'contract_agreed' => true,
-                    'vehicle_id' => $vehicle->id
-                ]);
-                $ownerDetails->save();
-                
-                Log::info('Owner operator details saved', [
-                    'driver_application_id' => $driverApplication->id,
-                    'owner_name' => $request->owner_name
-                ]);
-            } 
-            else if ($request->ownership_type === 'third-party') {
-                // Guardar en la tabla third_party_details
-                $thirdPartyDetails = new ThirdPartyDetail([
-                    'driver_application_id' => $driverApplication->id,
-                    'third_party_name' => $request->third_party_name,
-                    'third_party_phone' => $request->third_party_phone,
-                    'third_party_email' => $request->third_party_email,
-                    'third_party_dba' => $request->third_party_dba ?? '',
-                    'third_party_address' => $request->third_party_address ?? '',
-                    'third_party_contact' => $request->third_party_contact ?? '',
-                    'third_party_fein' => $request->third_party_fein ?? '',
-                    'email_sent' => 0,
-                    'vehicle_id' => $vehicle->id
-                ]);
-                $thirdPartyDetails->save();
-                
-                Log::info('Third party details saved', [
-                    'driver_application_id' => $driverApplication->id,
-                    'third_party_name' => $request->third_party_name
-                ]);
-            }
-            
-            // Send verification email for third-party company driver
-            if ($request->ownership_type === 'third-party') {
-                $emailSent = $this->sendThirdPartyVerificationEmail(
-                    $vehicle,
-                    $request->third_party_name,
-                    $request->third_party_email,
-                    $request->third_party_phone,
-                    $driverApplication->id
-                );
-                
-                // Update email_sent field in third_party_details
-                if ($emailSent) {
-                    // Obtenemos el registro de ThirdPartyDetail
-                    $thirdPartyDetail = ThirdPartyDetail::where('driver_application_id', $driverApplication->id)->first();
-                    
-                    if ($thirdPartyDetail) {
-                        $thirdPartyDetail->email_sent = 1;
-                        $thirdPartyDetail->save();
-                        
-                        Log::info('Email sent to third party', [
-                            'third_party_email' => $request->third_party_email,
-                            'vehicle_id' => $vehicle->id,
-                            'driver_application_id' => $driverApplication->id
-                        ]);
-                    }
-                }
-            }
-        }
-        
-        // Redirect to the vehicle details page
-        return redirect()->route('admin.vehicles.show', $vehicle->id)
-            ->with('success', 'Vehicle created successfully');
+        // Redirect to driver type assignment page
+        return redirect()->route('admin.vehicles.assign-driver-type', $vehicle->id)
+            ->with('success', 'Vehicle created successfully. Please assign a driver type.');
     }
 
     /**
@@ -884,5 +743,94 @@ class VehicleController extends Controller
             'current_applying_position' => $applyingPosition,
             'current_ownership_type' => $ownershipType
         ];
+    }
+
+    /**
+     * Mostrar formulario para asignar tipo de conductor
+     */
+    public function assignDriverType(Vehicle $vehicle)
+    {
+        return view('admin.vehicles.assign-driver-type', compact('vehicle'));
+    }
+
+    /**
+     * Procesar la asignación de tipo de conductor
+     */
+    public function storeDriverType(Request $request, Vehicle $vehicle)
+    {
+        $request->validate([
+            'ownership_type' => 'required|in:company_driver,owner_operator,third_party,other',
+            'owner_name' => 'required_if:ownership_type,owner_operator|string|max:255',
+            'owner_phone' => 'required_if:ownership_type,owner_operator|string|max:20',
+            'owner_email' => 'required_if:ownership_type,owner_operator|email|max:255',
+            'third_party_name' => 'required_if:ownership_type,third_party|string|max:255',
+            'third_party_phone' => 'required_if:ownership_type,third_party|string|max:20',
+            'third_party_email' => 'required_if:ownership_type,third_party|email|max:255',
+            'third_party_dba' => 'nullable|string|max:255',
+            'third_party_fein' => 'nullable|string|max:50',
+            'third_party_address' => 'nullable|string|max:500',
+            'third_party_contact' => 'nullable|string|max:255',
+        ]);
+
+        // Actualizar el ownership_type del vehículo
+        $vehicle->ownership_type = $request->ownership_type;
+        $vehicle->save();
+
+        // Crear aplicación de conductor si no existe
+        $driverApplication = \App\Models\Admin\Driver\DriverApplication::create([
+            'user_id' => auth()->id(), // Usuario actual como placeholder
+            'status' => 'pending',
+            'submitted_at' => now(),
+        ]);
+
+        // Crear detalles de la aplicación
+        $applyingPosition = $this->mapOwnershipToApplyingPosition($request->ownership_type);
+        $driverApplicationDetail = \App\Models\Admin\Driver\DriverApplicationDetail::create([
+            'driver_application_id' => $driverApplication->id,
+            'vehicle_id' => $vehicle->id,
+            'applying_position' => $applyingPosition,
+        ]);
+
+        // Crear registros específicos según el tipo
+        if ($request->ownership_type === 'owner_operator') {
+            \App\Models\Admin\Driver\OwnerOperatorDetail::create([
+                'driver_application_id' => $driverApplication->id,
+                'owner_name' => $request->owner_name,
+                'owner_phone' => $request->owner_phone,
+                'owner_email' => $request->owner_email,
+                'contract_agreed' => true,
+                'vehicle_id' => $vehicle->id
+            ]);
+        } elseif ($request->ownership_type === 'third_party') {
+            $thirdPartyDetail = \App\Models\Admin\Driver\ThirdPartyDetail::create([
+                'driver_application_id' => $driverApplication->id,
+                'third_party_name' => $request->third_party_name,
+                'third_party_phone' => $request->third_party_phone,
+                'third_party_email' => $request->third_party_email,
+                'third_party_dba' => $request->third_party_dba ?? '',
+                'third_party_address' => $request->third_party_address ?? '',
+                'third_party_contact' => $request->third_party_contact ?? '',
+                'third_party_fein' => $request->third_party_fein ?? '',
+                'email_sent' => false,
+                'vehicle_id' => $vehicle->id
+            ]);
+
+            // Enviar correo de verificación
+            $emailSent = $this->sendThirdPartyVerificationEmail(
+                $vehicle,
+                $request->third_party_name,
+                $request->third_party_email,
+                $request->third_party_phone,
+                $driverApplication->id
+            );
+
+            if ($emailSent) {
+                $thirdPartyDetail->email_sent = true;
+                $thirdPartyDetail->save();
+            }
+        }
+
+        return redirect()->route('admin.vehicles.show', $vehicle->id)
+            ->with('success', 'Tipo de conductor asignado exitosamente');
     }
 }

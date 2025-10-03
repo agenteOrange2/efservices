@@ -43,19 +43,19 @@
         </div>
 
         <!-- Formulario -->
-        <div class="box box--stacked mt-5">
+        <div class="box box--stacked mt-5 p-3">
             <div class="box-header">
-                <h3 class="box-title">Training School Information</h3>
+                <h3 class="box-title">Edit Training School Information</h3>
             </div>
             <div class="box-body p-5">
                 <form action="{{ route('admin.training-schools.update', $trainingSchool->id) }}" method="post" enctype="multipart/form-data" id="schoolForm">
                     @csrf
                     @method('PUT')
 
-                    <!-- Información Básica -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Columna Izquierda -->
-                        <div class="space-y-4">
+                    <!-- Carrier and Driver Information -->
+                    <div class="mb-8">
+                        <h4 class="font-medium text-lg mb-4">Carrier & Driver Information</h4>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <!-- Carrier -->
                             <div>
                                 <x-base.form-label for="carrier_id" required>Carrier</x-base.form-label>
@@ -63,7 +63,7 @@
                                     class="tom-select w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 @error('carrier_id') border-danger @enderror" required>
                                     <option value="">Select Carrier</option>
                                     @foreach ($carriers as $carrier)
-                                        <option value="{{ $carrier->id }}" {{ $carrierId == $carrier->id ? 'selected' : '' }}>
+                                        <option value="{{ $carrier->id }}" {{ (old('carrier_id', $carrierId) == $carrier->id) ? 'selected' : '' }}>
                                             {{ $carrier->name }} (DOT: {{ $carrier->dot_number }})
                                         </option>
                                     @endforeach
@@ -72,6 +72,7 @@
                                     <div class="text-danger mt-1">{{ $message }}</div>
                                 @enderror
                             </div>
+                            
 
                             <!-- Conductor -->
                             <div>
@@ -79,17 +80,25 @@
                                 <select id="user_driver_detail_id" name="user_driver_detail_id" 
                                     class="tom-select w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 @error('user_driver_detail_id') border-danger @enderror" required>
                                     <option value="">Select Driver</option>
-                                    @foreach ($drivers as $driver)
-                                        <option value="{{ $driver->id }}" {{ old('user_driver_detail_id', $trainingSchool->user_driver_detail_id) == $driver->id ? 'selected' : '' }}>
-                                            {{ $driver->user->name }} {{ $driver->user->last_name ?? '' }}
-                                        </option>
-                                    @endforeach
+                                    @if(isset($drivers))
+                                        @foreach ($drivers as $driver)
+                                            <option value="{{ $driver->id }}" {{ (old('user_driver_detail_id', $trainingSchool->user_driver_detail_id) == $driver->id) ? 'selected' : '' }}>
+                                                {{ $driver->user->name }} {{ $driver->user->last_name }}
+                                            </option>
+                                        @endforeach
+                                    @endif
                                 </select>
                                 @error('user_driver_detail_id')
                                     <div class="text-danger mt-1">{{ $message }}</div>
                                 @enderror
                             </div>
+                        </div>
+                    </div>
 
+                    <!-- School Information -->
+                    <div class="mb-8">
+                        <h4 class="font-medium text-lg mb-4">School Details</h4>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <!-- Nombre de la escuela -->
                             <div>
                                 <x-base.form-label for="school_name" required>School Name</x-base.form-label>
@@ -114,7 +123,7 @@
                                 <select id="state" name="state" class="form-select block w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 @error('state') border-danger @enderror" required>
                                     <option value="">Select State</option>
                                     @foreach(\App\Helpers\Constants::usStates() as $code => $name)
-                                        <option value="{{ $code }}" {{ (old('state', $trainingSchool->state) == $code) ? 'selected' : '' }}>{{ $name }}</option>
+                                        <option value="{{ $code }}" {{ old('state', $trainingSchool->state) == $code ? 'selected' : '' }}>{{ $name }}</option>
                                     @endforeach
                                 </select>
                                 @error('state')
@@ -122,13 +131,16 @@
                                 @enderror
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Columna Derecha -->
-                        <div class="space-y-4">                            
+                    <!-- Training Period -->
+                    <div class="mb-8">
+                        <h4 class="font-medium text-lg mb-4">Training Period</h4>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <!-- Fecha de inicio -->
                             <div>
                                 <x-base.form-label for="date_start" required>Start Date</x-base.form-label>
-                                <x-base.litepicker id="date_start" name="date_start" value="{{ old('date_start', $trainingSchool->date_start) }}" class="@error('date_start') border-danger @enderror" placeholder="MM/DD/YYYY" required />
+                                <x-base.litepicker id="date_start" name="date_start" value="{{ old('date_start', $trainingSchool->date_start ? $trainingSchool->date_start->format('m/d/Y') : '') }}" class="@error('date_start') border-danger @enderror" placeholder="MM/DD/YYYY" required />
                                 @error('date_start')
                                     <div class="text-danger mt-1">{{ $message }}</div>
                                 @enderror
@@ -137,63 +149,64 @@
                             <!-- Fecha de finalización -->
                             <div>
                                 <x-base.form-label for="date_end" required>End Date</x-base.form-label>
-                                <x-base.litepicker id="date_end" name="date_end" value="{{ old('date_end', $trainingSchool->date_end) }}" class="@error('date_end') border-danger @enderror" placeholder="MM/DD/YYYY" required />
+                                <x-base.litepicker id="date_end" name="date_end" value="{{ old('date_end', $trainingSchool->date_end ? $trainingSchool->date_end->format('m/d/Y') : '') }}" class="@error('date_end') border-danger @enderror" placeholder="MM/DD/YYYY" required />
                                 @error('date_end')
                                     <div class="text-danger mt-1">{{ $message }}</div>
                                 @enderror
                             </div>
+                        </div>
+                    </div>
 
-                            <!-- Checkboxes -->
-                            <div class="mt-4">
-                                <div class="form-check">
-                                    <input type="checkbox" id="graduated" name="graduated" class="form-check-input" value="1" {{ old('graduated', $trainingSchool->graduated) ? 'checked' : '' }}>
-                                    <x-base.form-label for="graduated" class="form-check-label">Graduated</x-base.form-label>
-                                </div>
-                                <div class="form-check mt-2">
-                                    <input type="checkbox" id="subject_to_safety_regulations" name="subject_to_safety_regulations" class="form-check-input" value="1" {{ old('subject_to_safety_regulations', $trainingSchool->subject_to_safety_regulations) ? 'checked' : '' }}>
-                                    <x-base.form-label for="subject_to_safety_regulations" class="form-check-label">Subject to Safety Regulations</x-base.form-label>
-                                </div>
-                                <div class="form-check mt-2">
-                                    <input type="checkbox" id="performed_safety_functions" name="performed_safety_functions" class="form-check-input" value="1" {{ old('performed_safety_functions', $trainingSchool->performed_safety_functions) ? 'checked' : '' }}>
-                                    <x-base.form-label for="performed_safety_functions" class="form-check-label">Performed Safety Functions</x-base.form-label>
-                                </div>
+                    <!-- Training Status -->
+                    <div class="mb-8">
+                        <h4 class="font-medium text-lg mb-4">Training Status</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="form-check">
+                                <input type="checkbox" id="graduated" name="graduated" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="1" {{ old('graduated', $trainingSchool->graduated) ? 'checked' : '' }}>
+                                <x-base.form-label for="graduated" class="form-check-label">Graduated</x-base.form-label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" id="subject_to_safety_regulations" name="subject_to_safety_regulations" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="1" {{ old('subject_to_safety_regulations', $trainingSchool->subject_to_safety_regulations) ? 'checked' : '' }}>
+                                <x-base.form-label for="subject_to_safety_regulations" class="form-check-label">Subject to Safety Regulations</x-base.form-label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" id="performed_safety_functions" name="performed_safety_functions" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="1" {{ old('performed_safety_functions', $trainingSchool->performed_safety_functions) ? 'checked' : '' }}>
+                                <x-base.form-label for="performed_safety_functions" class="form-check-label">Performed Safety Functions</x-base.form-label>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Sección de Habilidades -->
-                    <div class="mt-8">
-                        <h4 class="font-medium">Training Skills</h4>
+                    <!-- Training Skills -->
+                    <div class="mb-8">
+                        <h4 class="font-medium text-lg mb-4">Training Skills</h4>
                         @php
-                            $trainingSkills = old('training_skills', $trainingSchool->training_skills ?? []);
-                            if (is_string($trainingSkills)) {
-                                $trainingSkills = json_decode($trainingSkills, true) ?? [];
-                            }
+                            $currentTrainingSkills = old('training_skills', $trainingSkills ?? []);
                         @endphp
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
                             <div class="form-check">
-                                <input type="checkbox" id="skill_driving" name="training_skills[]" class="form-check-input" value="driving" {{ in_array('driving', $trainingSkills) ? 'checked' : '' }}>
-                                <x-base.form-label for="skill_driving" class="form-check-label">Driving</x-base.form-label>
+                                <input type="checkbox" id="double_trailer" name="training_skills[]" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="double_trailer" {{ in_array('double_trailer', $currentTrainingSkills) ? 'checked' : '' }}>
+                                <x-base.form-label for="double_trailer" class="form-check-label">Double Trailer</x-base.form-label>
                             </div>
                             <div class="form-check">
-                                <input type="checkbox" id="skill_safety" name="training_skills[]" class="form-check-input" value="safety" {{ in_array('safety', $trainingSkills) ? 'checked' : '' }}>
-                                <x-base.form-label for="skill_safety" class="form-check-label">Safety Procedures</x-base.form-label>
+                                <input type="checkbox" id="passenger" name="training_skills[]" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="passenger" {{ in_array('passenger', $currentTrainingSkills) ? 'checked' : '' }}>
+                                <x-base.form-label for="passenger" class="form-check-label">Passenger</x-base.form-label>
                             </div>
                             <div class="form-check">
-                                <input type="checkbox" id="skill_maintenance" name="training_skills[]" class="form-check-input" value="maintenance" {{ in_array('maintenance', $trainingSkills) ? 'checked' : '' }}>
-                                <x-base.form-label for="skill_maintenance" class="form-check-label">Vehicle Maintenance</x-base.form-label>
+                                <input type="checkbox" id="tank_vehicle" name="training_skills[]" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="tank_vehicle" {{ in_array('tank_vehicle', $currentTrainingSkills) ? 'checked' : '' }}>
+                                <x-base.form-label for="tank_vehicle" class="form-check-label">Tank Vehicle</x-base.form-label>
                             </div>
                             <div class="form-check">
-                                <input type="checkbox" id="skill_loading" name="training_skills[]" class="form-check-input" value="loading" {{ in_array('loading', $trainingSkills) ? 'checked' : '' }}>
-                                <x-base.form-label for="skill_loading" class="form-check-label">Loading/Unloading</x-base.form-label>
+                                <input type="checkbox" id="hazardous_material" name="training_skills[]" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="hazardous_material" {{ in_array('hazardous_material', $currentTrainingSkills) ? 'checked' : '' }}>
+                                <x-base.form-label for="hazardous_material" class="form-check-label">Hazardous Material</x-base.form-label>
                             </div>
                             <div class="form-check">
-                                <input type="checkbox" id="skill_regulations" name="training_skills[]" class="form-check-input" value="regulations" {{ in_array('regulations', $trainingSkills) ? 'checked' : '' }}>
-                                <x-base.form-label for="skill_regulations" class="form-check-label">DOT Regulations</x-base.form-label>
+                                <input type="checkbox" id="combination_vehicle" name="training_skills[]" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="combination_vehicle" {{ in_array('combination_vehicle', $currentTrainingSkills) ? 'checked' : '' }}>
+                                <x-base.form-label for="combination_vehicle" class="form-check-label">Combination Vehicle</x-base.form-label>
                             </div>
                             <div class="form-check">
-                                <input type="checkbox" id="skill_emergency" name="training_skills[]" class="form-check-input" value="emergency" {{ in_array('emergency', $trainingSkills) ? 'checked' : '' }}>
-                                <x-base.form-label for="skill_emergency" class="form-check-label">Emergency Procedures</x-base.form-label>
+                                <input type="checkbox" id="air_brakes" name="training_skills[]" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="air_brakes" {{ in_array('air_brakes', $currentTrainingSkills) ? 'checked' : '' }}>
+                                <x-base.form-label for="air_brakes" class="form-check-label">Air Brakes</x-base.form-label>
                             </div>
                         </div>
                     </div>

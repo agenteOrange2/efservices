@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Livewire\Admin\Driver\DriverCertificationStep;
 use Illuminate\Validation\Rule;
 
 class MedicalRecordsController extends Controller
@@ -144,6 +145,9 @@ class MedicalRecordsController extends Controller
                 ->toMediaCollection('medical_card');
         }
 
+        // Regenerar el PDF médico después de crear el registro
+        $this->regenerateMedicalPDF($medicalRecord->user_driver_detail_id);
+
         return redirect()->route('admin.medical-records.index')
             ->with('success', 'Medical record created successfully.');
     }
@@ -204,7 +208,7 @@ class MedicalRecordsController extends Controller
 
         $medicalRecord->update($validated);
 
-        // Handle medical card file upload if provided
+        // Handle medical card upload using Spatie Media Library
         if ($request->hasFile('medical_card')) {
             // Clear existing medical card
             $medicalRecord->clearMediaCollection('medical_card');
@@ -213,6 +217,9 @@ class MedicalRecordsController extends Controller
             $medicalRecord->addMediaFromRequest('medical_card')
                 ->toMediaCollection('medical_card');
         }
+
+        // Regenerar el PDF médico después de actualizar el registro
+        $this->regenerateMedicalPDF($medicalRecord->user_driver_detail_id);
 
         return redirect()->route('admin.medical-records.index')
             ->with('success', 'Medical record updated successfully.');
@@ -569,6 +576,133 @@ class MedicalRecordsController extends Controller
                 'success' => false,
                 'message' => 'Error deleting document: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Regenera el PDF de calificacion_medica.pdf para un conductor específico
+     * 
+     * @param int $driverId ID del conductor
+     * @return bool True si se regeneró exitosamente, false en caso contrario
+     */
+    private function regenerateMedicalPDF($driverId)
+    {
+        try {
+            \Illuminate\Support\Facades\Log::info('Iniciando regeneración de calificacion_medica.pdf', ['driver_id' => $driverId]);
+            
+            // Obtener el UserDriverDetail con todas las relaciones necesarias
+            $userDriverDetail = UserDriverDetail::with([
+                'addresses',
+                'licenses',
+                'medicalQualification',
+                'criminalHistory',
+                'carrier',
+                'user',
+                'application.details',
+                'certification'
+            ])->find($driverId);
+            
+            if (!$userDriverDetail) {
+                \Illuminate\Support\Facades\Log::error('UserDriverDetail no encontrado', ['driver_id' => $driverId]);
+                return false;
+            }
+            
+            // Verificar que tenga calificación médica
+            if (!$userDriverDetail->medicalQualification) {
+                \Illuminate\Support\Facades\Log::warning('No se encontró calificación médica para el conductor', ['driver_id' => $driverId]);
+                return false;
+            }
+            
+            // Obtener la firma desde la certificación
+            $signaturePath = null;
+            if ($userDriverDetail->certification) {
+                $signatureMedia = $userDriverDetail->certification->getMedia('signature')->first();
+                if ($signatureMedia) {
+                    $signaturePath = $signatureMedia->getPath();
+                    \Illuminate\Support\Facades\Log::info('Signature found for medical PDF regeneration', [
+                        'driver_id' => $driverId,
+                        'signature_path' => $signaturePath
+                    ]);
+                } else {
+                    \Illuminate\Support\Facades\Log::warning('No signature media found for driver', ['driver_id' => $driverId]);
+                }
+            } else {
+                \Illuminate\Support\Facades\Log::warning('No certification found for driver', ['driver_id' => $driverId]);
+            }
+            
+            // Crear instancia de DriverCertificationStep para acceder a métodos privados
+            $certificationStep = new \App\Livewire\Admin\Driver\DriverCertificationStep();
+            
+            // Obtener fechas efectivas usando reflexión para acceder al método privado
+            $reflection = new \ReflectionClass($certificationStep);
+            $getEffectiveDatesMethod = $reflection->getMethod('getEffectiveDates');
+            $getEffectiveDatesMethod->setAccessible(true);
+            $effectiveDates = $getEffectiveDatesMethod->invoke($certificationStep, $driverId);
+            
+            // Preparar la ruta de almacenamiento
+            $driverPath = 'driver/' . $userDriverDetail->id;
+            $appSubPath = $driverPath . '/driver_applications';
+            
+            // Asegurar que los directorios existen
+            Storage::disk('public')->makeDirectory($driverPath);
+            Storage::disk('public')->makeDirectory($appSubPath);
+            
+            // Preparar datos para el PDF
+            $pdfData = [
+                'userDriverDetail' => $userDriverDetail,
+                'signaturePath' => $signaturePath, // Incluir la firma del conductor
+                'title' => 'Medical Qualification',
+                'date' => now()->format('d/m/Y'),
+                'created_at' => $effectiveDates['created_at'],
+                'updated_at' => $effectiveDates['updated_at'],
+                'custom_created_at' => $effectiveDates['custom_created_at']
+            ];
+            
+            // Preparar formatted_dates con ambas fechas cuando corresponda
+            $formattedDates = [
+                'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
+                'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
+            ];
+            
+            // Siempre incluir created_at (fecha de registro normal)
+            if ($effectiveDates['show_created_at'] && $effectiveDates['created_at']) {
+                $formattedDates['created_at'] = $effectiveDates['created_at']->format('m/d/Y');
+                $formattedDates['created_at_long'] = $effectiveDates['created_at']->format('F j, Y');
+            }
+            
+            // Incluir custom_created_at solo si está habilitado y tiene valor
+            if ($effectiveDates['show_custom_created_at'] && $effectiveDates['custom_created_at']) {
+                $formattedDates['custom_created_at'] = $effectiveDates['custom_created_at']->format('m/d/Y');
+                $formattedDates['custom_created_at_long'] = $effectiveDates['custom_created_at']->format('F j, Y');
+            }
+            
+            $pdfData['formatted_dates'] = $formattedDates;
+            $pdfData['use_custom_dates'] = $effectiveDates['show_custom_created_at'];
+            
+            // Generar el PDF
+            $pdf = \Illuminate\Support\Facades\App::make('dompdf.wrapper')->loadView('pdf.driver.medical', $pdfData);
+            
+            // Guardar PDF
+            $pdfContent = $pdf->output();
+            $filename = 'calificacion_medica.pdf';
+            Storage::disk('public')->put($appSubPath . '/' . $filename, $pdfContent);
+            
+            \Illuminate\Support\Facades\Log::info('PDF calificacion_medica.pdf regenerado exitosamente con firma', [
+                'driver_id' => $driverId,
+                'filename' => $filename,
+                'path' => $appSubPath . '/' . $filename,
+                'has_signature' => $signaturePath !== null
+            ]);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error regenerando calificacion_medica.pdf', [
+                'driver_id' => $driverId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
         }
     }
 }

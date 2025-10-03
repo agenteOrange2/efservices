@@ -148,20 +148,21 @@
                     @if(empty($license['id']))
                         <button type="button" wire:click="createLicense({{ $index }})"
                             class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm">
-                            <i class="fas fa-save mr-1"></i> Crear Licencia
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.75" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-id-card-icon lucide-id-card"><path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/></svg>
+                            Create New Licencia hola
                         </button>
                         <p class="text-sm text-gray-600 mt-2">
-                            <i class="fas fa-info-circle mr-1"></i> 
-                            Debe crear la licencia antes de poder subir las imágenes.
+                            <i class="fas fa-info-circle mr-1"></i>                             
+                            You must create the license before you can upload images.
                         </p>
                     @else
                         <button type="button" wire:click="updateLicense({{ $index }})"
                             class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
-                            <i class="fas fa-edit mr-1"></i> Actualizar Licencia
+                            <i class="fas fa-edit mr-1"></i> Update License
                         </button>
                         <p class="text-sm text-green-600 mt-2">
                             <i class="fas fa-check-circle mr-1"></i> 
-                            Licencia creada. Ahora puede subir las imágenes.
+                            License created. You can now upload images.
                         </p>
                     @endif
                 </div>

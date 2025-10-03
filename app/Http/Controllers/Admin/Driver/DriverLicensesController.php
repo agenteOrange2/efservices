@@ -814,12 +814,30 @@ class DriverLicensesController extends Controller
                 'criminalHistory',
                 'carrier',
                 'user',
-                'application.details'
+                'application.details',
+                'certification'
             ])->find($driverId);
             
             if (!$userDriverDetail) {
                 Log::error('UserDriverDetail no encontrado', ['driver_id' => $driverId]);
                 return false;
+            }
+            
+            // Obtener la firma desde la certificación
+            $signaturePath = null;
+            if ($userDriverDetail->certification) {
+                $signatureMedia = $userDriverDetail->certification->getMedia('signature')->first();
+                if ($signatureMedia) {
+                    $signaturePath = $signatureMedia->getPath();
+                    Log::info('Signature found for PDF regeneration', [
+                        'driver_id' => $driverId,
+                        'signature_path' => $signaturePath
+                    ]);
+                } else {
+                    Log::warning('No signature media found for driver', ['driver_id' => $driverId]);
+                }
+            } else {
+                Log::warning('No certification found for driver', ['driver_id' => $driverId]);
             }
             
             // Crear instancia de DriverCertificationStep para acceder a métodos privados
@@ -842,7 +860,7 @@ class DriverLicensesController extends Controller
             // Preparar datos para el PDF
             $pdfData = [
                 'userDriverDetail' => $userDriverDetail,
-                'signaturePath' => null, // No necesitamos firma para este PDF específico
+                'signaturePath' => $signaturePath, // Incluir la firma del conductor
                 'title' => 'Drivers Licenses',
                 'date' => now()->format('d/m/Y'),
                 'created_at' => $effectiveDates['created_at'],
@@ -879,10 +897,11 @@ class DriverLicensesController extends Controller
             $filename = 'drivers_licenses.pdf';
             Storage::disk('public')->put($appSubPath . '/' . $filename, $pdfContent);
             
-            Log::info('PDF drivers_licenses.pdf regenerado exitosamente', [
+            Log::info('PDF drivers_licenses.pdf regenerado exitosamente con firma', [
                 'driver_id' => $driverId,
                 'filename' => $filename,
-                'path' => $appSubPath . '/' . $filename
+                'path' => $appSubPath . '/' . $filename,
+                'has_signature' => $signaturePath !== null
             ]);
             
             return true;

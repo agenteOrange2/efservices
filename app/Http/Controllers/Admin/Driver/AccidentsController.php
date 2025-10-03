@@ -12,6 +12,7 @@ use App\Models\Vehicle;
 use App\Models\Company;
 use App\Models\Document;
 use App\Models\DocumentAttachment;
+use App\Livewire\Admin\Driver\DriverCertificationStep;
 use App\Rules\NotOldThan;
 use App\Traits\HasDocuments;
 use Carbon\Carbon;
@@ -228,6 +229,9 @@ class AccidentsController extends Controller
                 }
             }
             
+            // Regenerar PDF de accidente
+            $this->regenerateAccidentPDF($accident->userDriverDetail->id);
+            
             DB::commit();
             return redirect()->route('admin.accidents.index')
                 ->with('success', 'Accident record created successfully.');
@@ -392,6 +396,9 @@ class AccidentsController extends Controller
                     }
                 }
             }
+            
+            // Regenerar PDF de accidente
+            $this->regenerateAccidentPDF($accident->userDriverDetail->id);
             
             DB::commit();
             return redirect()->route('admin.accidents.index')
@@ -1141,6 +1148,109 @@ class AccidentsController extends Controller
             ]);
 
             return redirect()->back()->with('error', 'Error al subir documentos: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Regenera el PDF de accidente con la información actualizada
+     * 
+     * @param int $driverId
+     * @return void
+     */
+    private function regenerateAccidentPDF($driverId)
+    {
+        try {
+            // Cargar UserDriverDetail con las mismas relaciones que en DriverLicensesController
+            $userDriverDetail = UserDriverDetail::with([
+                'user',
+                'carrier',
+                'certification',
+                'accidents'
+            ])->find($driverId);
+
+            if (!$userDriverDetail) {
+                Log::warning('UserDriverDetail not found for accident PDF regeneration', ['driver_id' => $driverId]);
+                return;
+            }
+
+            // Obtener firma del conductor desde su certificación (mismo patrón que DriverLicensesController)
+            $signaturePath = null;
+            if ($userDriverDetail->certification) {
+                $signatureMedia = $userDriverDetail->certification->getMedia('signature')->first();
+                if ($signatureMedia) {
+                    $signaturePath = $signatureMedia->getPath();
+                }
+            }
+
+            // Crear instancia de DriverCertificationStep para acceder a métodos privados
+            $certificationStep = new \App\Livewire\Admin\Driver\DriverCertificationStep();
+            
+            // Obtener fechas efectivas usando reflexión para acceder al método privado
+            $reflection = new \ReflectionClass($certificationStep);
+            $getEffectiveDatesMethod = $reflection->getMethod('getEffectiveDates');
+            $getEffectiveDatesMethod->setAccessible(true);
+            $effectiveDates = $getEffectiveDatesMethod->invoke($certificationStep, $driverId);
+            
+            // Preparar formatted_dates con ambas fechas cuando corresponda
+            $formattedDates = [
+                'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
+                'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
+            ];
+            
+            // Siempre incluir created_at (fecha de registro normal)
+            if ($effectiveDates['show_created_at'] && $effectiveDates['created_at']) {
+                $formattedDates['created_at'] = $effectiveDates['created_at']->format('m/d/Y');
+                $formattedDates['created_at_long'] = $effectiveDates['created_at']->format('F j, Y');
+            }
+            
+            // Incluir custom_created_at solo si está habilitado y tiene valor
+            if ($effectiveDates['show_custom_created_at'] && $effectiveDates['custom_created_at']) {
+                $formattedDates['custom_created_at'] = $effectiveDates['custom_created_at']->format('m/d/Y');
+                $formattedDates['custom_created_at_long'] = $effectiveDates['custom_created_at']->format('F j, Y');
+            }
+
+            // Preparar datos para el PDF
+            $pdfData = [
+                'userDriverDetail' => $userDriverDetail,
+                'signaturePath' => $signaturePath,
+                'title' => 'Accident Record ',
+                'date' => now()->format('d/m/Y'),
+                'created_at' => $effectiveDates['created_at'],
+                'updated_at' => $effectiveDates['updated_at'],
+                'custom_created_at' => $effectiveDates['custom_created_at'],
+                'formatted_dates' => $formattedDates,
+                'use_custom_dates' => $effectiveDates['show_custom_created_at']
+            ];
+
+            // Generar el PDF usando el mismo patrón que DriverLicensesController
+            $pdf = \Illuminate\Support\Facades\App::make('dompdf.wrapper')->loadView('pdf.driver.accident', $pdfData);
+            
+            // Guardar el PDF en el sistema de archivos (mismo patrón)
+            $fileName = 'accident_record.pdf';
+            $driverPath = 'driver/' . $userDriverDetail->id;
+            $appSubPath = $driverPath . '/driver_applications';
+            
+            // Asegurar que los directorios existen
+            Storage::disk('public')->makeDirectory($driverPath);
+            Storage::disk('public')->makeDirectory($appSubPath);
+            
+            // Guardar PDF
+            $pdfContent = $pdf->output();
+            Storage::disk('public')->put($appSubPath . '/' . $fileName, $pdfContent);
+
+            Log::info('PDF de accidente regenerado exitosamente', [
+                'driver_id' => $driverId,
+                'file_path' => $appSubPath . '/' . $fileName,
+                'has_signature' => $signaturePath !== null
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error al regenerar PDF de accidente', [
+                'driver_id' => $driverId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // No lanzamos la excepción para no interrumpir el flujo principal
         }
     }
 }

@@ -13,7 +13,7 @@
             <div class="mt-7">
                 <div class="box box--stacked flex flex-col">
                     <div class="box-body">
-                        <form action="{{ route('admin.vehicles.store') }}" method="POST" enctype="multipart/form-data" @submit="event.preventDefault(); if(validateOwnershipData()) event.target.submit();">
+                        <form action="{{ route('admin.vehicles.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             <x-validation-errors class="my-4" />
                             {{-- Contenedor Alpine con toda la lógica --}}
@@ -35,58 +35,10 @@
                                 outOfServiceDate: '{{ old('out_of_service_date', '') }}',
                                 suspended: {{ old('suspended', 'false') }},
                                 suspendedDate: '{{ old('suspended_date', '') }}',
-                                // Propiedad
-                                ownershipType: '{{ old('ownership_type', 'owned') }}',
-                                // Información del propietario
-                                ownerName: '{{ old('owner_name', '') }}',
-                                ownerPhone: '{{ old('owner_phone', '') }}',
-                                ownerEmail: '{{ old('owner_email', '') }}',
-                                // Información del tercero
-                                thirdPartyName: '{{ old('third_party_name', '') }}',
-                                thirdPartyPhone: '{{ old('third_party_phone', '') }}',
-                                thirdPartyEmail: '{{ old('third_party_email', '') }}',
-                                thirdPartyDba: '{{ old('third_party_dba', '') }}',
-                                thirdPartyAddress: '{{ old('third_party_address', '') }}',
-                                thirdPartyContact: '{{ old('third_party_contact', '') }}',
-                                thirdPartyFein: '{{ old('third_party_fein', '') }}',
-                                emailSent: false,
+
                                 selectedDriverId: '',
                             
-                                // Método para autocompletar datos del Owner Operator desde el driver seleccionado
-                                updateOwnerFromDriver() {
-                                    if (this.ownershipType === 'owned' && this.selectedDriverId) {
-                                        // Get driver details via AJAX to auto-fill owner operator fields
-                                        fetch(`/admin/vehicles/driver-details/${this.selectedDriverId}`)
-                                            .then(response => response.json())
-                                            .then(data => {
-                                                if (data.success) {
-                                                    // Auto-fill owner operator fields
-                                                    this.ownerName = data.driver.name || '';
-                                                    this.ownerPhone = data.driver.phone || '';
-                                                    this.ownerEmail = data.driver.email || '';
-                                                }
-                                            })
-                                            .catch(error => console.error('Error fetching driver details:', error));
-                                    }
-                                },
-                                
-                                // Method to send verification email to third party company
-                                sendVerificationEmail() {
-                                    // Validate required fields
-                                    if (!this.thirdPartyName || !this.thirdPartyEmail) {
-                                        alert('Please fill in the required Third Party Company information before sending the email.');
-                                        return;
-                                    }
-                                    
-                                    // Set email_sent to true to indicate email will be sent on save
-                                    this.emailSent = true;
-                                    alert('The verification email will be sent when you save the vehicle.');
-                                },
-                                
-                                // Method to reset email sent status
-                                resetEmailSent() {
-                                    this.emailSent = false;
-                                },
+
                                 
                                 // Service Items
                                 serviceItems: [{
@@ -122,21 +74,7 @@
                                     }
                                 },
                                 
-                                // Method to validate ownership data before form submission
-                                validateOwnershipData() {
-                                    if (this.ownershipType === 'owned') {
-                                        if (!this.ownerName || !this.ownerPhone || !this.ownerEmail) {
-                                            alert('Please fill in all required Owner Operator information.');
-                                            return false;
-                                        }
-                                    } else if (this.ownershipType === 'third-party') {
-                                        if (!this.thirdPartyName || !this.thirdPartyPhone || !this.thirdPartyEmail) {
-                                            alert('Please fill in all required Third Party Company information.');
-                                            return false;
-                                        }
-                                    }
-                                    return true;
-                                },
+
                                 
                                 // Servicio
                                 serviceItems: [{
@@ -303,6 +241,31 @@
                                                         @endforeach
                                                     </select>
                                                     @error('carrier_id')
+                                                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                            {{-- Assigned Driver --}}
+                                            <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
+                                                <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
+                                                    <div class="text-left">
+                                                        <div class="flex items-center">
+                                                            <div class="font-medium">Assigned Driver</div>
+                                                            <div class="text-xs text-gray-500 ml-2">(Select a carrier
+                                                                first)</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3 w-full flex-1 xl:mt-0">
+                                                    <select id="user_driver_detail_id" name="user_driver_detail_id" class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
+                                                        x-model="selectedDriverId" @change="updateOwnerFromDriver()">
+                                                        <option value="">None (Unassigned)</option>
+                                                        <!-- Los drivers se cargarán dinámicamente vía JavaScript -->
+                                                    </select>
+                                                    <div class="text-xs text-gray-500 mt-1">
+                                                        Only active drivers for the selected carrier will be shown
+                                                    </div>
+                                                    @error('user_driver_detail_id')
                                                         <span class="text-red-500 text-sm">{{ $message }}</span>
                                                     @enderror
                                                 </div>
@@ -584,250 +547,7 @@
                                                         </label>
                                                     </div>
                                                 </div>
-                                            </div>
-
-                                            {{-- Assigned Driver --}}
-                                            <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
-                                                <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
-                                                    <div class="text-left">
-                                                        <div class="flex items-center">
-                                                            <div class="font-medium">Assigned Driver</div>
-                                                            <div class="text-xs text-gray-500 ml-2">(Select a carrier
-                                                                first)</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="mt-3 w-full flex-1 xl:mt-0">
-                                                    <select id="user_driver_detail_id" name="user_driver_detail_id" class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                        x-model="selectedDriverId" @change="updateOwnerFromDriver()">
-                                                        <option value="">None (Unassigned)</option>
-                                                        <!-- Los drivers se cargarán dinámicamente vía JavaScript -->
-                                                    </select>
-                                                    <div class="text-xs text-gray-500 mt-1">
-                                                        Only active drivers for the selected carrier will be shown
-                                                    </div>
-                                                    @error('user_driver_detail_id')
-                                                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                                                    @enderror
-                                                </div>
-                                            </div>
-
-                                            {{-- Ownership and Location --}}
-                                            <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
-                                                <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
-                                                    <div class="text-left">
-                                                        <div class="flex items-center">
-                                                            <div class="font-medium">Ownership & Location</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="mt-3 w-full flex-1 xl:mt-0">
-                                                    <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
-                                                        {{-- Ownership Type --}}
-                                                        <div>
-                                                            <label class="block text-sm mb-1">Ownership Type</label>
-                                                            <select name="ownership_type" x-model="ownershipType"
-                                                                @change="updateOwnerFromDriver()"
-                                                                class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
-                                                                <option value="unassigned" {{ old('ownership_type') == 'unassigned' ? 'selected' : '' }}>Unassigned</option>
-                                                                <option value="owned" {{ old('ownership_type') == 'owned' ? 'selected' : '' }}>Owner Operator</option>
-                                                                <option value="leased" {{ old('ownership_type') == 'leased' ? 'selected' : '' }}>Company Driver</option>
-                                                                <option value="third_party" {{ old('ownership_type') == 'third_party' ? 'selected' : '' }}>Third Party Driver</option>
-                                                            </select>
-                                                            @error('ownership_type')
-                                                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                                                            @enderror
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Owner Operator Information (shown when ownership_type is "owned") -->
-                                                    <div class="mt-4" x-show="ownershipType === 'owned'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform -translate-y-4" x-transition:enter-end="opacity-100 transform translate-y-0">
-                                                        <div class="p-4 border border-blue-200 rounded-md bg-blue-50 shadow-sm">
-                                                            <h4 class="font-medium mb-3 text-primary border-b border-blue-200 pb-2 flex items-center">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                                </svg>
-                                                                Owner Operator Information
-                                                            </h4>
-                                                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                                <!-- Nombre del propietario -->
-                                                                <div>
-                                                                    <label class="block text-sm mb-1">Name</label>
-                                                                    <input type="text" name="owner_name"
-                                                                        x-model="ownerName"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Owner's name">
-                                                                    @error('owner_name')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
-                                                                    @enderror
-                                                                </div>
-                                                                <!-- Teléfono del propietario -->
-                                                                <div>
-                                                                    <label class="block text-sm mb-1">Phone</label>
-                                                                    <input type="text" name="owner_phone"
-                                                                        x-model="ownerPhone"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Owner's phone number">
-                                                                    @error('owner_phone')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
-                                                                    @enderror
-                                                                </div>
-                                                                <!-- Email del propietario -->
-                                                                <div>
-                                                                    <label class="block text-sm mb-1">Email</label>
-                                                                    <input type="email" name="owner_email"
-                                                                        x-model="ownerEmail"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Owner's email">
-                                                                    @error('owner_email')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
-                                                                    @enderror
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Third Party Company Information (shown when ownership_type is "third-party") -->
-                                                    <div class="mt-4" x-show="ownershipType === 'third-party'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform -translate-y-4" x-transition:enter-end="opacity-100 transform translate-y-0">
-                                                        <div class="p-4 border border-amber-200 rounded-md bg-amber-50 shadow-sm">
-                                                            <h4 class="font-medium mb-3 text-amber-700 border-b border-amber-200 pb-2 flex items-center">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                                </svg>
-                                                                Third Party Company Information
-                                                            </h4>
-                                                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                                                <!-- Nombre del tercero -->
-                                                                <div>
-                                                                    <label class="block text-sm mb-1">Name</label>
-                                                                    <input type="text" name="third_party_name"
-                                                                        x-model="thirdPartyName"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Third party name">
-                                                                    @error('third_party_name')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
-                                                                    @enderror
-                                                                </div>
-                                                                <!-- Teléfono del tercero -->
-                                                                <div>
-                                                                    <label class="block text-sm mb-1">Phone</label>
-                                                                    <input type="text" name="third_party_phone"
-                                                                        x-model="thirdPartyPhone"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Third party phone number">
-                                                                    @error('third_party_phone')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
-                                                                    @enderror
-                                                                </div>
-                                                                <!-- Email del tercero -->
-                                                                <div>
-                                                                    <label class="block text-sm mb-1">Email</label>
-                                                                    <input type="email" name="third_party_email"
-                                                                        x-model="thirdPartyEmail"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Third party email">
-                                                                    @error('third_party_email')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
-                                                                    @enderror
-                                                                </div>
-                                                            </div>
-
-                                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                                                <!-- DBA -->
-                                                                <div>
-                                                                    <label class="block text-sm mb-1">DBA (Doing Business
-                                                                        As)</label>
-                                                                    <input type="text" name="third_party_dba"
-                                                                        x-model="thirdPartyDba"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Nombre comercial">
-                                                                    @error('third_party_dba')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
-                                                                    @enderror
-                                                                </div>
-                                                                <!-- FEIN -->
-                                                                <div>
-                                                                    <label class="block text-sm mb-1">FEIN (Federal
-                                                                        Employer Identification Number)</label>
-                                                                    <input type="text" name="third_party_fein"
-                                                                        x-model="thirdPartyFein"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="XX-XXXXXXX">
-                                                                    @error('third_party_fein')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
-                                                                    @enderror
-                                                                </div>
-                                                            </div>
-
-                                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                                                <!-- Dirección -->
-                                                                <div>
-                                                                    <label class="block text-sm mb-1">Address</label>
-                                                                    <input type="text" name="third_party_address"
-                                                                        x-model="thirdPartyAddress"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Complete address">
-                                                                    @error('third_party_address')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
-                                                                    @enderror
-                                                                </div>
-                                                                <!-- Contacto -->
-                                                                <div>
-                                                                    <label class="block text-sm mb-1">Contact</label>
-                                                                    <input type="text" name="third_party_contact"
-                                                                        x-model="thirdPartyContact"
-                                                                        class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
-                                                                        placeholder="Contact name">
-                                                                    @error('third_party_contact')
-                                                                        <span
-                                                                            class="text-red-500 text-sm">{{ $message }}</span>
-                                                                    @enderror
-                                                                </div>
-                                                            </div>
-
-                                                            <!-- Email verification button for third party -->                                                            
-                                                            <div class="mt-5 p-4 bg-amber-100 rounded-lg border border-amber-200 shadow-sm">
-                                                                <h5 class="font-medium mb-2 text-amber-800">Document Verification</h5>
-                                                                <p class="mb-3 text-sm text-amber-700">An email will be sent to the third party company representative to verify and sign the required documents.</p>
-                                                                
-                                                                <div class="flex items-center">
-                                                                    <input type="hidden" name="email_sent" x-model="emailSent">
-                                                                    <button type="button" 
-                                                                        class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition duration-150 ease-in-out flex items-center shadow-sm"
-                                                                        @click="sendVerificationEmail()">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                                        </svg>
-                                                                        <span x-text="emailSent ? 'Email Will Be Sent When Saved' : 'Send Verification Email'"></span>
-                                                                    </button>
-                                                                    <button type="button" 
-                                                                        x-show="emailSent"
-                                                                        class="ml-2 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150 ease-in-out flex items-center shadow-sm"
-                                                                        @click="resetEmailSent()">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                                        </svg>
-                                                                        Cancel
-                                                                    </button>
-                                                                </div>
-                                                                <div class="mt-2 text-xs text-amber-600" x-show="emailSent">
-                                                                    The verification email will be sent when you save this vehicle.
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
+                                            </div>                                            
 
                                             {{-- Annual Inspection --}}
                                             <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
@@ -1066,102 +786,98 @@
 @endsection
 
 @push('scripts')
-    <script>
-        // Script para manejar la carga dinámica de drivers filtrados por carrier
-        document.addEventListener('DOMContentLoaded', function() {
-            // Obtener referencias a los elementos select
-            const carrierSelect = document.getElementById('carrier_id');
-            const driverSelect = document.getElementById('user_driver_detail_id');
+<script>
+    // Script para manejar la carga dinámica de drivers filtrados por carrier
+    document.addEventListener('DOMContentLoaded', function() {
+        // Obtener referencias a los elementos select
+        const carrierSelect = document.getElementById('carrier_id');
+        const driverSelect = document.getElementById('user_driver_detail_id');
 
-            // Si no existen los elementos, salir
-            if (!carrierSelect || !driverSelect) return;
+        // Si no existen los elementos, salir
+        if (!carrierSelect || !driverSelect) return;
 
-            // Función para cargar los drivers según el carrier seleccionado
-            function loadDriversByCarrier() {
-                const carrierId = carrierSelect.value;
+        // Función para cargar los drivers según el carrier seleccionado
+        function loadDriversByCarrier() {
+            const carrierId = carrierSelect.value;
 
-                // Limpiar el dropdown de drivers
-                driverSelect.innerHTML = '<option value="">None (Unassigned)</option>';
+            // Limpiar el dropdown de drivers
+            driverSelect.innerHTML = '<option value="">None (Unassigned)</option>';
 
-                // Si no hay carrier seleccionado, no hacemos nada más
-                if (!carrierId) return;
+            // Si no hay carrier seleccionado, no hacemos nada más
+            if (!carrierId) return;
 
-                // Mostrar indicador de carga
-                driverSelect.disabled = true;
-                driverSelect.innerHTML = '<option value="">Loading drivers...</option>';
+            // Mostrar indicador de carga
+            driverSelect.disabled = true;
+            driverSelect.innerHTML = '<option value="">Loading drivers...</option>';
 
-                // Hacer la petición AJAX
-                fetch(`/admin/vehicles/drivers-by-carrier/${carrierId}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
+            // Hacer la petición AJAX
+            fetch(`/admin/vehicles/drivers-by-carrier/${carrierId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(drivers => {
+                    // Limpiar dropdown
+                    driverSelect.innerHTML = '<option value="">None (Unassigned)</option>';
+
+                    // Añadir las nuevas opciones
+                    drivers.forEach(driver => {
+                        const option = document.createElement('option');
+                        option.value = driver.id;
+
+                        // Construir el nombre del driver con el formato adecuado
+                        let driverName = driver.user.name;
+                        if (driver.middle_name) {
+                            driverName += ' ' + driver.middle_name;
                         }
-                        return response.json();
-                    })
-                    .then(drivers => {
-                        // Limpiar dropdown
-                        driverSelect.innerHTML = '<option value="">None (Unassigned)</option>';
+                        driverName += ' ' + driver.last_name;
 
-                        // Añadir las nuevas opciones
-                        drivers.forEach(driver => {
-                            const option = document.createElement('option');
-                            option.value = driver.id;
-
-                            // Construir el nombre del driver con el formato adecuado
-                            let driverName = driver.user.name;
-                            if (driver.middle_name) {
-                                driverName += ' ' + driver.middle_name;
-                            }
-                            driverName += ' ' + driver.last_name;
-
-                            option.textContent = driverName;
-                            driverSelect.appendChild(option);
-                        });
-
-                        // Si no hay drivers, mostrar mensaje
-                        if (drivers.length === 0) {
-                            const option = document.createElement('option');
-                            option.value = "";
-                            option.textContent = "No active drivers found for this carrier";
-                            driverSelect.appendChild(option);
-                        }
-
-                        // Restaurar la selección anterior si existe
-                        const oldValue = "{{ old('user_driver_detail_id') }}";
-                        if (oldValue) {
-                            driverSelect.value = oldValue;
-                        }
-
-                        // Actualizar el Alpine.js selectedDriverId
-                        if (typeof Alpine !== 'undefined') {
-                            const vehicleForm = document.querySelector('[x-data]');
-                            if (vehicleForm && vehicleForm.__x) {
-                                vehicleForm.__x.updateData('selectedDriverId', driverSelect.value);
-                                // Si el tipo de propiedad es 'owned', actualizar los datos del propietario
-                                if (vehicleForm.__x.getUnobservedData().ownershipType === 'owned') {
-                                    vehicleForm.__x.updateOwnerFromDriver();
-                                }
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error loading drivers:', error);
-                        // Opción de error
-                        driverSelect.innerHTML = '<option value="">Error loading drivers</option>';
-                    })
-                    .finally(() => {
-                        // Habilitar el select de drivers
-                        driverSelect.disabled = false;
+                        option.textContent = driverName;
+                        driverSelect.appendChild(option);
                     });
-            }
 
-            // Asignar el evento al cambio de carrier
-            carrierSelect.addEventListener('change', loadDriversByCarrier);
+                    // Si no hay drivers, mostrar mensaje
+                    if (drivers.length === 0) {
+                        const option = document.createElement('option');
+                        option.value = "";
+                        option.textContent = "No active drivers found for this carrier";
+                        driverSelect.appendChild(option);
+                    }
 
-            // Cargar drivers inicialmente si hay un carrier seleccionado (útil para volver con errores)
-            if (carrierSelect.value) {
-                loadDriversByCarrier();
-            }
-        });
-    </script>
+                    // Restaurar la selección anterior si existe
+                    const oldValue = "{{ old('user_driver_detail_id') }}";
+                    if (oldValue) {
+                        driverSelect.value = oldValue;
+                    }
+
+                    // Actualizar el Alpine.js selectedDriverId
+                    if (typeof Alpine !== 'undefined') {
+                        const vehicleForm = document.querySelector('[x-data]');
+                        if (vehicleForm && vehicleForm.__x) {
+                            vehicleForm.__x.updateData('selectedDriverId', driverSelect.value);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading drivers:', error);
+                    // Opción de error
+                    driverSelect.innerHTML = '<option value="">Error loading drivers</option>';
+                })
+                .finally(() => {
+                    // Habilitar el select de drivers
+                    driverSelect.disabled = false;
+                });
+        }
+
+        // Asignar el evento al cambio de carrier
+        carrierSelect.addEventListener('change', loadDriversByCarrier);
+
+        // Cargar drivers inicialmente si hay un carrier seleccionado (útil para volver con errores)
+        if (carrierSelect.value) {
+            loadDriversByCarrier();
+        }
+    });
+</script>
 @endpush

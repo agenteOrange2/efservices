@@ -742,7 +742,7 @@ class DriverLicenseStep extends Component
     // Render
     public function render()
     {
-        return view('livewire.driver.steps.license-step', [
+        return view('livewire.admin.driver.steps.driver-license-step', [
             'usStates' => Constants::usStates()
         ]);
     }

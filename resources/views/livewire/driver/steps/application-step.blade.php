@@ -708,7 +708,7 @@
             </div>
 
             <!-- Location Preference -->
-            <div class="mb-6 bg-gray-50 p-4 rounded-lg">
+            <div class="mb-6 bg-gray-50 py-4 rounded-lg">
                 <label class="block mb-2 font-medium text-gray-700">Location Preference <span
                         class="text-red-500">*</span></label>
                 <select wire:model="applying_location"

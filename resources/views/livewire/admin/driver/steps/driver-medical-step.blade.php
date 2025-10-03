@@ -144,7 +144,7 @@
                             Medical card upload will be available after saving the form
                         </p>
                         <div class="mt-4">
-                            <x-base.button type="button" wire:click="saveMedicalInfo" class="px-6 py-2" variant="primary">
+                            <x-base.button type="button" wire:click="saveMedicalInfo" class="inline-block" variant="primary">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5L9 4H4z" />
                                 </svg>

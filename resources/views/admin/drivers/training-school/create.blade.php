@@ -39,18 +39,18 @@
         </div>
 
         <!-- Formulario -->
-        <div class="box box--stacked mt-5">            
-            <div class="box-body p-5">
-                <div class="box-header mb-5">
-                <h3 class="box-title text-2xl font-bold">Training School Information</h3>
+        <div class="box box--stacked mt-5">
+            <div class="box-header">
+                <h3 class="box-title">Training School Information</h3>
             </div>
+            <div class="box-body p-5">
                 <form action="{{ route('admin.training-schools.store') }}" method="post" enctype="multipart/form-data" id="schoolForm">
                     @csrf
 
-                    <!-- Información Básica -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Columna Izquierda -->
-                        <div class="space-y-4">
+                    <!-- Carrier and Driver Information -->
+                    <div class="mb-8">
+                        <h4 class="font-medium text-lg mb-4">Carrier & Driver Information</h4>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <!-- Carrier -->
                             <div>
                                 <x-base.form-label for="carrier_id" required>Carrier</x-base.form-label>
@@ -86,7 +86,13 @@
                                     <div class="text-danger mt-1">{{ $message }}</div>
                                 @enderror
                             </div>
+                        </div>
+                    </div>
 
+                    <!-- School Information -->
+                    <div class="mb-8">
+                        <h4 class="font-medium text-lg mb-4">School Details</h4>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <!-- Nombre de la escuela -->
                             <div>
                                 <x-base.form-label for="school_name" required>School Name</x-base.form-label>
@@ -119,10 +125,12 @@
                                 @enderror
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Columna Derecha -->
-                        <div class="space-y-4">
-
+                    <!-- Training Period -->
+                    <div class="mb-8">
+                        <h4 class="font-medium text-lg mb-4">Training Period</h4>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <!-- Fecha de inicio -->
                             <div>
                                 <x-base.form-label for="date_start" required>Start Date</x-base.form-label>
@@ -140,52 +148,57 @@
                                     <div class="text-danger mt-1">{{ $message }}</div>
                                 @enderror
                             </div>
-
-                            <!-- Checkboxes -->
-                            <div class="mt-4">
-                                <div class="form-check">
-                                    <input type="checkbox" id="graduated" name="graduated" class="form-check-input" value="1" {{ old('graduated') ? 'checked' : '' }}>
-                                    <x-base.form-label for="graduated" class="form-check-label">Graduated</x-base.form-label>
-                                </div>
-                                <div class="form-check mt-2">
-                                    <input type="checkbox" id="subject_to_safety_regulations" name="subject_to_safety_regulations" class="form-check-input" value="1" {{ old('subject_to_safety_regulations') ? 'checked' : '' }}>
-                                    <x-base.form-label for="subject_to_safety_regulations" class="form-check-label">Subject to Safety Regulations</x-base.form-label>
-                                </div>
-                                <div class="form-check mt-2">
-                                    <input type="checkbox" id="performed_safety_functions" name="performed_safety_functions" class="form-check-input" value="1" {{ old('performed_safety_functions') ? 'checked' : '' }}>
-                                    <x-base.form-label for="performed_safety_functions" class="form-check-label">Performed Safety Functions</x-base.form-label>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
-                    <!-- Sección de Habilidades -->
-                    <div class="mt-8">
-                        <h4 class="font-medium">Training Skills</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                    <!-- Training Status -->
+                    <div class="mb-8">
+                        <h4 class="font-medium text-lg mb-4">Training Status</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div class="form-check">
-                                <input type="checkbox" id="skill_driving" name="training_skills[]" class="form-check-input" value="driving" {{ old('training_skills') && in_array('driving', old('training_skills')) ? 'checked' : '' }}>
-                                <x-base.form-label for="skill_driving" class="form-check-label">Driving</x-base.form-label>
+                                <input type="checkbox" id="graduated" name="graduated" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="1" {{ old('graduated') ? 'checked' : '' }}>
+                                <x-base.form-label for="graduated" class="form-check-label">Graduated</x-base.form-label>
                             </div>
                             <div class="form-check">
-                                <input type="checkbox" id="skill_safety" name="training_skills[]" class="form-check-input" value="safety" {{ old('training_skills') && in_array('safety', old('training_skills')) ? 'checked' : '' }}>
-                                <x-base.form-label for="skill_safety" class="form-check-label">Safety Procedures</x-base.form-label>
+                                <input type="checkbox" id="subject_to_safety_regulations" name="subject_to_safety_regulations" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="1" {{ old('subject_to_safety_regulations') ? 'checked' : '' }}>
+                                <x-base.form-label for="subject_to_safety_regulations" class="form-check-label">Subject to Safety Regulations</x-base.form-label>
                             </div>
                             <div class="form-check">
-                                <input type="checkbox" id="skill_maintenance" name="training_skills[]" class="form-check-input" value="maintenance" {{ old('training_skills') && in_array('maintenance', old('training_skills')) ? 'checked' : '' }}>
-                                <x-base.form-label for="skill_maintenance" class="form-check-label">Vehicle Maintenance</x-base.form-label>
+                                <input type="checkbox" id="performed_safety_functions" name="performed_safety_functions" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="1" {{ old('performed_safety_functions') ? 'checked' : '' }}>
+                                <x-base.form-label for="performed_safety_functions" class="form-check-label">Performed Safety Functions</x-base.form-label>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Training Skills -->
+                    <div class="mb-8">
+                        <h4 class="font-medium text-lg mb-4">Training Skills</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            @php
+                                $currentTrainingSkills = old('training_skills', []);
+                            @endphp                            
+                            <div class="form-check">
+                                <input type="checkbox" id="double_trailer" name="training_skills[]" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="double_trailer" {{ in_array('double_trailer', $currentTrainingSkills) ? 'checked' : '' }}>
+                                <x-base.form-label for="double_trailer" class="form-check-label">Double Trailer</x-base.form-label>
                             </div>
                             <div class="form-check">
-                                <input type="checkbox" id="skill_loading" name="training_skills[]" class="form-check-input" value="loading" {{ old('training_skills') && in_array('loading', old('training_skills')) ? 'checked' : '' }}>
-                                <x-base.form-label for="skill_loading" class="form-check-label">Loading/Unloading</x-base.form-label>
+                                <input type="checkbox" id="passenger" name="training_skills[]" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="passenger" {{ in_array('passenger', $currentTrainingSkills) ? 'checked' : '' }}>
+                                <x-base.form-label for="passenger" class="form-check-label">Passenger</x-base.form-label>
                             </div>
                             <div class="form-check">
-                                <input type="checkbox" id="skill_regulations" name="training_skills[]" class="form-check-input" value="regulations" {{ old('training_skills') && in_array('regulations', old('training_skills')) ? 'checked' : '' }}>
-                                <x-base.form-label for="skill_regulations" class="form-check-label">DOT Regulations</x-base.form-label>
+                                <input type="checkbox" id="tank_vehicle" name="training_skills[]" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="tank_vehicle" {{ in_array('tank_vehicle', $currentTrainingSkills) ? 'checked' : '' }}>
+                                <x-base.form-label for="tank_vehicle" class="form-check-label">Tank Vehicle</x-base.form-label>
                             </div>
                             <div class="form-check">
-                                <input type="checkbox" id="skill_emergency" name="training_skills[]" class="form-check-input" value="emergency" {{ old('training_skills') && in_array('emergency', old('training_skills')) ? 'checked' : '' }}>
-                                <x-base.form-label for="skill_emergency" class="form-check-label">Emergency Procedures</x-base.form-label>
+                                <input type="checkbox" id="hazardous_material" name="training_skills[]" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="hazardous_material" {{ in_array('hazardous_material', $currentTrainingSkills) ? 'checked' : '' }}>
+                                <x-base.form-label for="hazardous_material" class="form-check-label">Hazardous Material</x-base.form-label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" id="combination_vehicle" name="training_skills[]" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="combination_vehicle" {{ in_array('combination_vehicle', $currentTrainingSkills) ? 'checked' : '' }}>
+                                <x-base.form-label for="combination_vehicle" class="form-check-label">Combination Vehicle</x-base.form-label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" id="air_brakes" name="training_skills[]" class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded" value="air_brakes" {{ in_array('air_brakes', $currentTrainingSkills) ? 'checked' : '' }}>
+                                <x-base.form-label for="air_brakes" class="form-check-label">Air Brakes</x-base.form-label>
                             </div>
                         </div>
                     </div>

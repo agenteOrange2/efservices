@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin\Driver\DriverTrainingSchool;
 use App\Models\DocumentAttachment;
 use App\Models\UserDriverDetail;
+use App\Livewire\Admin\Driver\DriverCertificationStep;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\App;
+use ReflectionClass;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class TrainingSchoolsController extends Controller
@@ -171,6 +174,10 @@ class TrainingSchoolsController extends Controller
             }
 
             DB::commit();
+            
+            // Regenerar el PDF de training schools después de crear
+            $this->regenerateTrainingSchoolsPDF($request->user_driver_detail_id);
+            
             return redirect()->route('admin.training-schools.index')
                 ->with('success', 'Training school created successfully');
         } catch (\Exception $e) {
@@ -205,7 +212,7 @@ class TrainingSchoolsController extends Controller
         // Obtener el transportista actual para preseleccionarlo
         $carrierId = optional($trainingSchool->userDriverDetail)->carrier_id;
         $carriers = \App\Models\Carrier::where('status', 1)->orderBy('name')->get();
-        
+                
         // Obtener conductores del transportista actual para el select
         $drivers = collect();
         if ($carrierId) {
@@ -240,12 +247,18 @@ class TrainingSchoolsController extends Controller
             ];
         }
         
+        // Decodificar training_skills para los checkboxes
+        $trainingSkills = is_array($trainingSchool->training_skills) 
+            ? $trainingSchool->training_skills 
+            : (json_decode($trainingSchool->training_skills) ?: []);
+        
         return view('admin.drivers.training-school.edit', compact(
             'trainingSchool', 
             'carriers', 
             'drivers', 
             'carrierId',
-            'existingFilesArray'
+            'existingFilesArray',
+            'trainingSkills'
         ));
     }
 
@@ -360,6 +373,10 @@ class TrainingSchoolsController extends Controller
             }
             
             DB::commit();
+            
+            // Regenerar el PDF de training schools después de actualizar
+            $this->regenerateTrainingSchoolsPDF($trainingSchool->user_driver_detail_id);
+            
             return redirect()->route('admin.training-schools.index')
                 ->with('success', 'Training school updated successfully');
         } catch (\Exception $e) {
@@ -701,6 +718,127 @@ class TrainingSchoolsController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             return redirect()->back()->with('error', 'Error al acceder al documento: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Regenera el PDF de training_schools.pdf para un conductor específico
+     * 
+     * @param int $driverId ID del conductor
+     * @return bool True si se regeneró exitosamente, false en caso contrario
+     */
+    private function regenerateTrainingSchoolsPDF($driverId)
+    {
+        try {
+            Log::info('Iniciando regeneración de training_schools.pdf', ['driver_id' => $driverId]);
+            
+            // Obtener el UserDriverDetail con todas las relaciones necesarias
+            $userDriverDetail = UserDriverDetail::with([
+                'addresses',
+                'trainingSchools',
+                'medicalQualification',
+                'criminalHistory',
+                'carrier',
+                'user',
+                'application.details',
+                'certification'
+            ])->find($driverId);
+            
+            if (!$userDriverDetail) {
+                Log::error('UserDriverDetail no encontrado', ['driver_id' => $driverId]);
+                return false;
+            }
+            
+            // Obtener la firma desde la certificación
+            $signaturePath = null;
+            if ($userDriverDetail->certification) {
+                $signatureMedia = $userDriverDetail->certification->getMedia('signature')->first();
+                if ($signatureMedia) {
+                    $signaturePath = $signatureMedia->getPath();
+                    Log::info('Signature found for PDF regeneration', [
+                        'driver_id' => $driverId,
+                        'signature_path' => $signaturePath
+                    ]);
+                } else {
+                    Log::warning('No signature media found for driver', ['driver_id' => $driverId]);
+                }
+            } else {
+                Log::warning('No certification found for driver', ['driver_id' => $driverId]);
+            }
+            
+            // Crear instancia de DriverCertificationStep para acceder a métodos privados
+            $certificationStep = new DriverCertificationStep();
+            
+            // Obtener fechas efectivas usando reflexión para acceder al método privado
+            $reflection = new \ReflectionClass($certificationStep);
+            $getEffectiveDatesMethod = $reflection->getMethod('getEffectiveDates');
+            $getEffectiveDatesMethod->setAccessible(true);
+            $effectiveDates = $getEffectiveDatesMethod->invoke($certificationStep, $driverId);
+            
+            // Preparar la ruta de almacenamiento
+            $driverPath = 'driver/' . $userDriverDetail->id;
+            $appSubPath = $driverPath . '/driver_applications';
+            
+            // Asegurar que los directorios existen
+            Storage::disk('public')->makeDirectory($driverPath);
+            Storage::disk('public')->makeDirectory($appSubPath);
+            
+            // Preparar datos para el PDF
+            $pdfData = [
+                'userDriverDetail' => $userDriverDetail,
+                'signaturePath' => $signaturePath, // Incluir la firma del conductor
+                'title' => 'Training Schools',
+                'date' => now()->format('d/m/Y'),
+                'created_at' => $effectiveDates['created_at'],
+                'updated_at' => $effectiveDates['updated_at'],
+                'custom_created_at' => $effectiveDates['custom_created_at']
+            ];
+            
+            // Preparar formatted_dates con ambas fechas cuando corresponda
+            $formattedDates = [
+                'updated_at' => $effectiveDates['updated_at']->format('m/d/Y'),
+                'updated_at_long' => $effectiveDates['updated_at']->format('F j, Y')
+            ];
+            
+            // Siempre incluir created_at (fecha de registro normal)
+            if ($effectiveDates['show_created_at'] && $effectiveDates['created_at']) {
+                $formattedDates['created_at'] = $effectiveDates['created_at']->format('m/d/Y');
+                $formattedDates['created_at_long'] = $effectiveDates['created_at']->format('F j, Y');
+            }
+            
+            // Incluir custom_created_at solo si está habilitado y tiene valor
+            if ($effectiveDates['show_custom_created_at'] && $effectiveDates['custom_created_at']) {
+                $formattedDates['custom_created_at'] = $effectiveDates['custom_created_at']->format('m/d/Y');
+                $formattedDates['custom_created_at_long'] = $effectiveDates['custom_created_at']->format('F j, Y');
+            }
+            
+            $pdfData['formatted_dates'] = $formattedDates;
+            $pdfData['use_custom_dates'] = $effectiveDates['show_custom_created_at'];
+            
+            // Generar el PDF
+            $pdf = App::make('dompdf.wrapper')->loadView('pdf.driver.training', $pdfData);
+            
+            // Guardar PDF
+            $pdfContent = $pdf->output();
+            $filename = 'training_schools.pdf';
+            Storage::disk('public')->put($appSubPath . '/' . $filename, $pdfContent);
+            
+            Log::info('PDF training_schools.pdf regenerado exitosamente con firma', [
+                'driver_id' => $driverId,
+                'filename' => $filename,
+                'path' => $appSubPath . '/' . $filename,
+                'has_signature' => $signaturePath !== null
+            ]);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            Log::error('Error regenerando training_schools.pdf', [
+                'driver_id' => $driverId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
         }
     }
 }

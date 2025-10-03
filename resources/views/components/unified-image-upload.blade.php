@@ -522,7 +522,7 @@
     <div x-show="files.length > 0 && !uploading">
         <button 
             type="button" 
-            class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+            class="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary-dark transition-colors"
             @click="uploadFiles()"
         >
             Upload Files
