@@ -50,7 +50,7 @@ class DriverApplication extends Model implements HasMedia
     
     public function details()
     {
-        return $this->hasOne(DriverApplicationDetail::class);
+        return $this->hasOne(DriverApplicationDetail::class, 'driver_application_id');
     }
     
     /**
@@ -58,7 +58,7 @@ class DriverApplication extends Model implements HasMedia
      */
     public function ownerOperatorDetail(): HasOne
     {
-        return $this->hasOne(OwnerOperatorDetail::class);
+        return $this->hasOne(OwnerOperatorDetail::class, 'driver_application_id');
     }
     
     /**
@@ -66,7 +66,7 @@ class DriverApplication extends Model implements HasMedia
      */
     public function thirdPartyDetail(): HasOne
     {
-        return $this->hasOne(ThirdPartyDetail::class);
+        return $this->hasOne(ThirdPartyDetail::class, 'driver_application_id');
     }
     
     /**

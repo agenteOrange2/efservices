@@ -87,6 +87,22 @@ Route::resource('vehicles', VehicleController::class);
 Route::get('vehicles/{vehicle}/assign-driver-type', [VehicleController::class, 'assignDriverType'])->name('vehicles.assign-driver-type');
 Route::post('vehicles/{vehicle}/assign-driver-type', [VehicleController::class, 'storeDriverType'])->name('vehicles.store-driver-type');
 
+/*
+    |--------------------------------------------------------------------------
+    | RUTAS PARA GESTIÓN DE DRIVER TYPES (CRUD)
+    |--------------------------------------------------------------------------    
+*/
+
+// Rutas para gestión de Driver Types (sin create - solo listado y edición)
+Route::prefix('driver-types')->name('driver-types.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\DriverTypeController::class, 'index'])->name('index');
+    Route::get('/data', [\App\Http\Controllers\Admin\DriverTypeController::class, 'getData'])->name('data');
+    Route::get('/{driverApplication}/edit', [\App\Http\Controllers\Admin\DriverTypeController::class, 'edit'])->name('edit');
+    Route::put('/{driverApplication}', [\App\Http\Controllers\Admin\DriverTypeController::class, 'update'])->name('update');
+    Route::delete('/{driverApplication}', [\App\Http\Controllers\Admin\DriverTypeController::class, 'destroy'])->name('destroy');
+    Route::get('/{driverApplication}', [\App\Http\Controllers\Admin\DriverTypeController::class, 'show'])->name('show');
+});
+
 // 2. Rutas para maintenances como recurso anidado
 Route::resource('vehicles.maintenances', VehicleMaintenanceController::class);
 

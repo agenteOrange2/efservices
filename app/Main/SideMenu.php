@@ -174,6 +174,12 @@ class SideMenu
                         'params' => [],
                         'title' => "Vehicle Type",
                     ],
+                    [
+                        'icon' => "users",
+                        'route_name' => "admin.driver-types.index",
+                        'params' => [],
+                        'title' => "Driver Types",
+                    ],
 
                     [
                         'icon' => "file-text",
