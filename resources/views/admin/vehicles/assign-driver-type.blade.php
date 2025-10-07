@@ -11,7 +11,7 @@
     <!-- Contenido principal -->
     <div class="box box--stacked mt-5">
         <div class="box-body p-5">
-            <form action="{{ route('admin.vehicles.store-driver-type', $vehicle) }}" method="POST">
+            <form action="{{ route('admin.vehicles.store-driver-type', $vehicle) }}" method="POST" x-data="{ ownershipType: '{{ old('ownership_type', $driverData['ownership_type'] ?? '') }}' }">
                 @csrf
 
                 <!-- Sección 1: Información del Vehículo -->
@@ -52,10 +52,10 @@
                                 x-model="ownershipType"
                             >
                                 <option value="">Select a driver type</option>
-                                <option value="company_driver" {{ old('ownership_type') == 'company_driver' ? 'selected' : '' }}>Company Driver</option>
-                                <option value="owner_operator" {{ old('ownership_type') == 'owner_operator' ? 'selected' : '' }}>Owner Operator</option>
-                                <option value="third_party" {{ old('ownership_type') == 'third_party' ? 'selected' : '' }}>Third Party</option>
-                                <option value="other" {{ old('ownership_type') == 'other' ? 'selected' : '' }}>Other</option>
+                                <option value="company_driver" {{ old('ownership_type', $driverData['ownership_type'] ?? '') == 'company_driver' ? 'selected' : '' }}>Company Driver</option>
+                                <option value="owner_operator" {{ old('ownership_type', $driverData['ownership_type'] ?? '') == 'owner_operator' ? 'selected' : '' }}>Owner Operator</option>
+                                <option value="third_party" {{ old('ownership_type', $driverData['ownership_type'] ?? '') == 'third_party' ? 'selected' : '' }}>Third Party</option>
+                                <option value="other" {{ old('ownership_type', $driverData['ownership_type'] ?? '') == 'other' ? 'selected' : '' }}>Other</option>
                             </x-base.form-select>
                             <small class="form-text text-muted">Select the driver type that best describes the relationship with the vehicle.</small>
                             @error('ownership_type')

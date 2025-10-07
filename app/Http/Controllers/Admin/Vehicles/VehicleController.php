@@ -759,7 +759,43 @@ class VehicleController extends Controller
             'user_driver_detail_id' => $vehicle->user_driver_detail_id
         ]);
         
-        if ($vehicle->user_driver_detail_id) {
+        // Primero, verificar si ya existe un owner operator para este vehículo
+        $existingOwnerOperator = \App\Models\OwnerOperatorDetail::where('vehicle_id', $vehicle->id)->first();
+        
+        if ($existingOwnerOperator) {
+            Log::info('AssignDriverType - Owner Operator existente encontrado', [
+                'owner_operator_id' => $existingOwnerOperator->id,
+                'owner_name' => $existingOwnerOperator->owner_name,
+                'owner_phone' => $existingOwnerOperator->owner_phone,
+                'owner_email' => $existingOwnerOperator->owner_email
+            ]);
+            
+            // Formatear fecha de expiración de licencia si existe
+            $licenseExpiration = '';
+            if ($existingOwnerOperator->owner_license_expiry) {
+                try {
+                    $licenseExpiration = \Carbon\Carbon::parse($existingOwnerOperator->owner_license_expiry)->format('m/d/Y');
+                } catch (\Exception $e) {
+                    $licenseExpiration = $existingOwnerOperator->owner_license_expiry;
+                }
+            }
+            
+            $driverData = [
+                'first_name' => $existingOwnerOperator->owner_name ? explode(' ', $existingOwnerOperator->owner_name, 2)[0] : '',
+                'last_name' => $existingOwnerOperator->owner_name && strpos($existingOwnerOperator->owner_name, ' ') !== false ? 
+                    explode(' ', $existingOwnerOperator->owner_name, 2)[1] : '',
+                'phone' => $existingOwnerOperator->owner_phone ?? '',
+                'email' => $existingOwnerOperator->owner_email ?? '',
+                'license_number' => $existingOwnerOperator->owner_license_number ?? '',
+                'license_class' => '', // No se almacena en owner_operator_details
+                'license_state' => $existingOwnerOperator->owner_license_state ?? '',
+                'license_expiration' => $licenseExpiration,
+                'ownership_type' => 'owner_operator' // Indicar que es owner operator
+            ];
+            
+            Log::info('AssignDriverType - Datos de Owner Operator cargados', $driverData);
+        }
+        elseif ($vehicle->user_driver_detail_id) {
             $driver = \App\Models\UserDriverDetail::with(['user', 'licenses'])
                 ->find($vehicle->user_driver_detail_id);
             
@@ -825,7 +861,7 @@ class VehicleController extends Controller
                 Log::info('AssignDriverType - Datos finales del conductor', $driverData);
             }
         } else {
-            Log::info('AssignDriverType - No hay user_driver_detail_id asignado al vehículo');
+            Log::info('AssignDriverType - No hay user_driver_detail_id asignado al vehículo ni owner operator existente');
         }
         
         return view('admin.vehicles.assign-driver-type', compact('vehicle', 'driverData'));
@@ -911,7 +947,6 @@ class VehicleController extends Controller
             $driverApplication = \App\Models\Admin\Driver\DriverApplication::create([
                 'user_id' => $userId,
                 'status' => 'pending',
-                'completed_at' => now(),
             ]);
             
             Log::info('StoreDriverType - Nueva DriverApplication creada', [

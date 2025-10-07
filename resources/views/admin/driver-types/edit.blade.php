@@ -1,8 +1,12 @@
-@extends('../layout/' . $layout)
+@extends('../themes/' . $activeTheme)
+@section('title', 'Driver Types')
+@php
+    $breadcrumbLinks = [
+        ['label' => 'App', 'url' => route('admin.dashboard')],
+        ['label' => 'Driver Types', 'active' => true],
+    ];
+@endphp
 
-@section('subhead')
-    <title>Editar Driver Type - {{ config('app.name') }}</title>
-@endsection
 
 @section('subcontent')
     <div class="intro-y flex items-center mt-8">
