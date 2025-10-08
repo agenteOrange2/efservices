@@ -2,7 +2,7 @@
 
 namespace App\Observers;
 
-use App\Models\Vehicle;
+use App\Models\Admin\Vehicle\Vehicle;
 use App\Services\CacheInvalidationService;
 
 class VehicleObserver

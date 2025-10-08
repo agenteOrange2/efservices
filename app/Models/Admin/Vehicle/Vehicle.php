@@ -6,6 +6,7 @@ use App\Models\Admin\Driver\DriverApplicationDetail;
 use App\Models\UserDriverDetail;
 use App\Models\Admin\Driver\DriverInspection;
 use App\Models\EmergencyRepair;
+use App\Models\VehicleDriverAssignment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,6 +17,16 @@ use App\Models\Admin\Vehicle\VehicleMaintenance;
 class Vehicle extends Model
 {
     use HasFactory;
+    
+    /**
+     * Create a new factory instance for the model.
+     *
+     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     */
+    protected static function newFactory()
+    {
+        return \Database\Factories\VehicleFactory::new();
+    }
 
     protected $fillable = [
         'carrier_id',
@@ -114,6 +125,38 @@ class Vehicle extends Model
     public function driverApplicationDetail(): HasOne
     {
         return $this->hasOne(\App\Models\Admin\Driver\DriverApplicationDetail::class);
+    }
+    
+    /**
+     * Relación con todas las asignaciones de conductores del vehículo.
+     */
+    public function driverAssignments(): HasMany
+    {
+        return $this->hasMany(VehicleDriverAssignment::class);
+    }
+    
+    /**
+     * Relación con la asignación activa de conductor del vehículo.
+     */
+    public function activeDriverAssignment(): HasOne
+    {
+        return $this->hasOne(VehicleDriverAssignment::class)->where('status', 'active');
+    }
+    
+    /**
+     * Alias para activeDriverAssignment para compatibilidad con tests.
+     */
+    public function currentDriverAssignment(): HasOne
+    {
+        return $this->activeDriverAssignment();
+    }
+    
+    /**
+     * Obtener el conductor actualmente asignado al vehículo.
+     */
+    public function currentDriver()
+    {
+        return $this->activeDriverAssignment()?->user();
     }
     
     /**

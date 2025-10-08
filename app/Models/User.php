@@ -181,6 +181,20 @@ class User extends Authenticatable implements HasMedia
         return $this->belongsToMany(Carrier::class, 'user_carrier_access');
     }
 
-    
+    /**
+     * Relación con las asignaciones de conductor del usuario.
+     */
+    public function driverAssignments()
+    {
+        return $this->hasMany(VehicleDriverAssignment::class);
+    }
+
+    /**
+     * Relación con la asignación activa actual del conductor.
+     */
+    public function currentDriverAssignment()
+    {
+        return $this->hasOne(VehicleDriverAssignment::class)->where('status', 'active');
+    }
 
 }

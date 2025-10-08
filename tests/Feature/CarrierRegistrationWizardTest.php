@@ -108,7 +108,7 @@ class CarrierRegistrationWizardTest extends TestCase
         $this->assertDatabaseHas('users', [
             'name' => 'John Doe',
             'email' => 'john.doe@gmail.com',
-            'status' => false
+            'status' => 1
         ]);
         
         // Verificar que UserCarrierDetail fue creado

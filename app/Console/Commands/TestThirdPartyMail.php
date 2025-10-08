@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 use App\Mail\ThirdPartyVehicleVerification;
 use App\Models\VehicleVerificationToken;
 use App\Models\ApplicationStep;
-use App\Models\Vehicle;
+use App\Models\Admin\Vehicle\Vehicle;
 use App\Models\ThirdParty;
 
 class TestThirdPartyMail extends Command

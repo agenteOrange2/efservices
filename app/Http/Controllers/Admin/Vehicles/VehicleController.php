@@ -25,7 +25,7 @@ class VehicleController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Vehicle::with(['carrier', 'driver']);
+        $query = Vehicle::with(['carrier', 'currentDriverAssignment.user']);
         
         // Filtros
         if ($request->has('carrier_id')) {
@@ -57,13 +57,11 @@ class VehicleController extends Controller
     public function create()
     {
         $carriers = Carrier::where('status', 1)->get();
-        // No cargamos drivers inicialmente, se cargarán por AJAX según el carrier seleccionado
-        $drivers = collect(); 
         $vehicleMakes = VehicleMake::all();
         $vehicleTypes = VehicleType::all();
         $usStates = Constants::usStates();
 
-        return view('admin.vehicles.create', compact('carriers', 'drivers', 'vehicleMakes', 'vehicleTypes', 'usStates'));
+        return view('admin.vehicles.create', compact('carriers', 'vehicleMakes', 'vehicleTypes', 'usStates'));
     }
 
     /**
@@ -84,7 +82,6 @@ class VehicleController extends Controller
             'registration_state' => 'required|string|max:255',
             'registration_expiration_date' => 'required|date|after:today',
             'fuel_type' => 'required|string|in:Diesel,Gasoline,CNG,LNG,Electric,Hybrid',
-            'user_driver_detail_id' => 'nullable|exists:user_driver_details,id',
         ]);
 
         if ($validator->fails()) {
@@ -99,8 +96,7 @@ class VehicleController extends Controller
             'company_unit_number', 'gvwr', 'tire_size', 'fuel_type',
             'irp_apportioned_plate', 'registration_state', 'registration_number',
             'registration_expiration_date', 'permanent_tag', 'location', 'notes',
-            'user_driver_detail_id', 'out_of_service', 'out_of_service_date',
-            'suspended', 'suspended_date'
+            'out_of_service', 'out_of_service_date', 'suspended', 'suspended_date'
         ]);
         
         $vehicle = Vehicle::create($vehicleData);
@@ -149,8 +145,9 @@ class VehicleController extends Controller
     {
         $vehicle->load([
             'carrier', 
-            'driver', 
             'maintenances',
+            'currentDriverAssignment.user',
+            'assignmentHistory.user',
             'driverApplicationDetail.application.ownerOperatorDetail',
             'driverApplicationDetail.application.thirdPartyDetail'
         ]);
@@ -163,18 +160,10 @@ class VehicleController extends Controller
      */
     public function edit(Vehicle $vehicle)
     {
+        // Load current driver assignment relationship
+        $vehicle->load('currentDriverAssignment.user');
+        
         $carriers = Carrier::where('status', 1)->get();
-        
-        // Si ya hay un carrier seleccionado, cargar sus drivers
-        if ($vehicle->carrier_id) {
-            $drivers = UserDriverDetail::with('user')
-                ->where('carrier_id', $vehicle->carrier_id)
-                ->where('status', 1)
-                ->get();
-        } else {
-            $drivers = collect();
-        }
-        
         $vehicleMakes = VehicleMake::all();
         $vehicleTypes = VehicleType::all();
         $usStates = Constants::usStates();
@@ -214,7 +203,6 @@ class VehicleController extends Controller
         return view('admin.vehicles.edit', compact(
             'vehicle', 
             'carriers', 
-            'drivers', 
             'vehicleMakes', 
             'vehicleTypes', 
             'usStates',
@@ -238,7 +226,7 @@ class VehicleController extends Controller
             'registration_state' => 'required|string|max:255',
             'registration_expiration_date' => 'required|date|after:today',
             'ownership_type' => 'required|in:owned,leased,third-party,unassigned',
-            'user_driver_detail_id' => 'nullable|exists:user_driver_details,id',
+
             'owner_name' => 'nullable|required_if:ownership_type,owned|string|max:255',
             'owner_phone' => 'nullable|required_if:ownership_type,owned|string|max:255',
             'owner_email' => 'nullable|required_if:ownership_type,owned|email|max:255',
@@ -315,39 +303,16 @@ class VehicleController extends Controller
                 $applicationDetail = \App\Models\Admin\Driver\DriverApplicationDetail::where('vehicle_id', $vehicle->id)->first();
                 
                 if (!$applicationDetail) {
-                    // Get the user_id from the selected driver if available
-                    $userId = null;
+                    // Use the current authenticated user for driver applications
+                    $userId = \Illuminate\Support\Facades\Auth::id();
                     
-                    // First, try to get the user_id from the user_driver_detail_id if it exists
-                    if ($vehicle->user_driver_detail_id) {
-                        try {
-                            $userDriverDetail = \App\Models\UserDriverDetail::find($vehicle->user_driver_detail_id);
-                            if ($userDriverDetail && $userDriverDetail->user_id) {
-                                $userId = $userDriverDetail->user_id;
-                                \Illuminate\Support\Facades\Log::info('Found user_id from user_driver_detail (update)', [
-                                    'user_driver_detail_id' => $vehicle->user_driver_detail_id,
-                                    'user_id' => $userId
-                                ]);
-                            }
-                        } catch (\Exception $e) {
-                            \Illuminate\Support\Facades\Log::error('Error finding user_driver_detail (update)', [
-                                'error' => $e->getMessage(),
-                                'user_driver_detail_id' => $vehicle->user_driver_detail_id
-                            ]);
-                        }
-                    }
-                    
-                    // If no user_id is available from the driver, use the current authenticated user
-                    if (!$userId) {
-                        $userId = \Illuminate\Support\Facades\Auth::id();
-                        \Illuminate\Support\Facades\Log::info('Using authenticated user_id (update)', ['user_id' => $userId]);
-                    }
-                    
-                    // If still no user_id, use the first admin user as fallback
+                    // If no authenticated user, use the first admin user as fallback
                     if (!$userId) {
                         $adminUser = \App\Models\User::where('is_admin', true)->first();
                         $userId = $adminUser ? $adminUser->id : 1;
                         \Illuminate\Support\Facades\Log::info('Using fallback admin user_id (update)', ['user_id' => $userId]);
+                    } else {
+                        \Illuminate\Support\Facades\Log::info('Using authenticated user_id (update)', ['user_id' => $userId]);
                     }
                     
                     // Create a new driver application with the user_id
@@ -759,6 +724,16 @@ class VehicleController extends Controller
             'user_driver_detail_id' => $vehicle->user_driver_detail_id
         ]);
         
+        // Get available users for driver selection
+        $availableUsers = \App\Models\User::with('userDriverDetail')
+            ->whereHas('userDriverDetail')
+            ->select('id', 'name', 'email')
+            ->orderBy('name')
+            ->get();
+        
+        // Get current driver assignment if exists
+        $currentAssignment = $vehicle->currentDriverAssignment();
+        
         // Primero, verificar si ya existe un owner operator para este vehículo
         $existingOwnerOperator = \App\Models\OwnerOperatorDetail::where('vehicle_id', $vehicle->id)->first();
         
@@ -864,7 +839,7 @@ class VehicleController extends Controller
             Log::info('AssignDriverType - No hay user_driver_detail_id asignado al vehículo ni owner operator existente');
         }
         
-        return view('admin.vehicles.assign-driver-type', compact('vehicle', 'driverData'));
+        return view('admin.vehicles.assign-driver-type', compact('vehicle', 'driverData', 'availableUsers', 'currentAssignment'));
     }
 
     /**
@@ -1082,5 +1057,23 @@ class VehicleController extends Controller
 
         return redirect()->route('admin.vehicles.show', $vehicle->id)
             ->with('success', 'Tipo de conductor asignado exitosamente');
+    }
+
+    /**
+     * Assign a driver to a vehicle using the new decoupled system
+     */
+    public function assignDriver(Request $request, Vehicle $vehicle)
+    {
+        $assignmentController = new \App\Http\Controllers\Admin\VehicleDriverAssignmentController();
+        return $assignmentController->store($request, $vehicle);
+    }
+
+    /**
+     * Remove a driver assignment from a vehicle
+     */
+    public function removeDriver(Vehicle $vehicle, $assignmentId)
+    {
+        $assignmentController = new \App\Http\Controllers\Admin\VehicleDriverAssignmentController();
+        return $assignmentController->destroy($vehicle, $assignmentId);
     }
 }

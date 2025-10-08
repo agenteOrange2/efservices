@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Checkboxes</title>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body>
+    <div x-data="{
+        vehicleTypeCheckboxes: {
+            'owner_operator': false,
+            'third_party_driver': false,
+            'company_driver': false
+        },
+        updateCheckbox(type, value) {
+            this.vehicleTypeCheckboxes[type] = value;
+            console.log('Checkbox updated:', type, value);
+            console.log('Current state:', this.vehicleTypeCheckboxes);
+        }
+    }">
+        <h2>Test Vehicle Type Checkboxes</h2>
+        
+        <div>
+            <label>
+                <input type="checkbox" 
+                       x-model="vehicleTypeCheckboxes.owner_operator"
+                       @change="updateCheckbox('owner_operator', $event.target.checked)">
+                Owner Operator
+            </label>
+        </div>
+        
+        <div>
+            <label>
+                <input type="checkbox" 
+                       x-model="vehicleTypeCheckboxes.third_party_driver"
+                       @change="updateCheckbox('third_party_driver', $event.target.checked)">
+                Third Party Driver
+            </label>
+        </div>
+        
+        <div>
+            <label>
+                <input type="checkbox" 
+                       x-model="vehicleTypeCheckboxes.company_driver"
+                       @change="updateCheckbox('company_driver', $event.target.checked)">
+                Company Driver
+            </label>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 10px; background: #f0f0f0;">
+            <h3>Debug Info:</h3>
+            <pre x-text="JSON.stringify(vehicleTypeCheckboxes, null, 2)"></pre>
+        </div>
+    </div>
+</body>
+</html>

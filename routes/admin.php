@@ -87,6 +87,22 @@ Route::resource('vehicles', VehicleController::class);
 Route::get('vehicles/{vehicle}/assign-driver-type', [VehicleController::class, 'assignDriverType'])->name('vehicles.assign-driver-type');
 Route::post('vehicles/{vehicle}/assign-driver-type', [VehicleController::class, 'storeDriverType'])->name('vehicles.store-driver-type');
 
+// New decoupled vehicle driver assignment routes
+Route::post('vehicles/{vehicle}/assign-driver', [VehicleController::class, 'assignDriver'])->name('vehicles.assign-driver');
+Route::delete('vehicles/{vehicle}/remove-driver/{assignmentId}', [VehicleController::class, 'removeDriver'])->name('vehicles.remove-driver');
+
+// Direct routes to VehicleDriverAssignmentController
+Route::prefix('vehicle-driver-assignments')->name('vehicle-driver-assignments.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\VehicleDriverAssignmentController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\Admin\VehicleDriverAssignmentController::class, 'store'])->name('store');
+    Route::get('/{assignment}', [\App\Http\Controllers\Admin\VehicleDriverAssignmentController::class, 'show'])->name('show');
+    Route::put('/{assignment}', [\App\Http\Controllers\Admin\VehicleDriverAssignmentController::class, 'update'])->name('update');
+    Route::delete('/{assignment}', [\App\Http\Controllers\Admin\VehicleDriverAssignmentController::class, 'destroy'])->name('destroy');
+    Route::post('/bulk-terminate', [\App\Http\Controllers\Admin\VehicleDriverAssignmentController::class, 'bulkTerminate'])->name('bulk-terminate');
+    Route::get('/history/{vehicle}', [\App\Http\Controllers\Admin\VehicleDriverAssignmentController::class, 'history'])->name('history');
+    Route::get('/user/{user}', [\App\Http\Controllers\Admin\VehicleDriverAssignmentController::class, 'userAssignments'])->name('user-assignments');
+});
+
 /*
     |--------------------------------------------------------------------------
     | RUTAS PARA GESTIÓN DE DRIVER TYPES (CRUD)

@@ -40,7 +40,7 @@ class DriverApplication extends Model implements HasMedia
     
     public function userDriverDetail()
     {
-        return $this->belongsTo(UserDriverDetail::class, 'user_id', 'user_id');
+        return $this->hasOne(UserDriverDetail::class, 'user_id', 'user_id');
     }
     
     public function addresses()
@@ -63,9 +63,12 @@ class DriverApplication extends Model implements HasMedia
     
     /**
      * Obtener los detalles de Third Party asociados a esta aplicación.
+     * Note: ThirdPartyDetail now uses assignment_id instead of driver_application_id
      */
     public function thirdPartyDetail(): HasOne
     {
+        // This relationship is deprecated as ThirdPartyDetail now uses assignment_id
+        // Use the assignment relationship instead
         return $this->hasOne(ThirdPartyDetail::class, 'driver_application_id');
     }
     

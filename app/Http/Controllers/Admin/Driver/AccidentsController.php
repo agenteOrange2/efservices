@@ -8,7 +8,7 @@ use App\Models\UserDriverDetail;
 use App\Models\Admin\Driver\DriverAccident;
 use App\Models\DriverAccidentReport;
 use App\Models\Carrier;
-use App\Models\Vehicle;
+use App\Models\Admin\Vehicle\Vehicle;
 use App\Models\Company;
 use App\Models\Document;
 use App\Models\DocumentAttachment;

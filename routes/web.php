@@ -127,9 +127,39 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+// Ruta dashboard genérica que redirige según el rol del usuario
+Route::get('/dashboard', function () {
+    $user = auth()->user();
+    
+    if (!$user) {
+        return redirect()->route('login');
+    }
+    
+    // Redirigir según el rol del usuario
+    if ($user->hasRole('superadmin') || $user->hasRole('admin')) {
+        return redirect()->route('admin.dashboard');
+    }
+    
+    if ($user->hasRole('user_carrier')) {
+        return redirect()->route('carrier.dashboard');
+    }
+    
+    if ($user->hasRole('user_driver')) {
+        return redirect()->route('driver.dashboard');
+    }
+    
+    // Por defecto, redirigir al login
+    return redirect()->route('login');
+})->middleware('auth')->name('dashboard');
+
 // Debug route for calendar
 Route::get('/debug-calendar', function() {
     return view('debug.calendar');
+});
+
+// Test route for driver form
+Route::get('/test-driver-form', function () {
+    return view('test-driver-form');
 });
 
 // Ruta personalizada para cierre de sesión

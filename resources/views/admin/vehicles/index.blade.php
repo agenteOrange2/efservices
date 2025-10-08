@@ -198,8 +198,11 @@
                                         </x-base.table.td>
                                         <x-base.table.td class="border-dashed py-4">
                                             <div class="whitespace-nowrap">
-                                                @if ($vehicle->driver)
-                                                    {{ $vehicle->driver->user->name }}
+                                                @if ($vehicle->currentDriverAssignment && $vehicle->currentDriverAssignment->user)
+                                                    <div class="font-medium">{{ $vehicle->currentDriverAssignment->user->name }}</div>
+                                                    <div class="text-xs text-slate-500 mt-0.5">
+                                                        {{ ucfirst(str_replace('_', ' ', $vehicle->currentDriverAssignment->assignment_type)) }}
+                                                    </div>
                                                 @else
                                                     <span class="text-slate-400">Not assigned</span>
                                                 @endif

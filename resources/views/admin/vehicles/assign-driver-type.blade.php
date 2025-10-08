@@ -11,8 +11,10 @@
     <!-- Contenido principal -->
     <div class="box box--stacked mt-5">
         <div class="box-body p-5">
-            <form action="{{ route('admin.vehicles.store-driver-type', $vehicle) }}" method="POST" x-data="{ ownershipType: '{{ old('ownership_type', $driverData['ownership_type'] ?? '') }}' }">
+            <form id="assign-driver-form" action="{{ route('admin.vehicle-driver-assignments.store') }}" method="POST" x-data="{ ownershipType: '{{ old('ownership_type', $driverData['ownership_type'] ?? '') }}' }" class="space-y-6">
                 @csrf
+                <input type="hidden" name="vehicle_id" value="{{ $vehicle->id }}">
+                <input type="hidden" name="effective_date" value="{{ date('Y-m-d') }}">
 
                 <!-- Sección 1: Información del Vehículo -->
                 <div class="mb-8">
@@ -45,27 +47,50 @@
                         <div>
                             <x-base.form-label for="ownership_type" class="form-label required">Driver Type</x-base.form-label>
                             <x-base.form-select 
-                                id="ownership_type" 
-                                name="ownership_type" 
-                                class="form-select @error('ownership_type') is-invalid @enderror" 
+                                id="assignment_type" 
+                                name="assignment_type" 
+                                class="form-select @error('assignment_type') is-invalid @enderror" 
                                 required
                                 x-model="ownershipType"
                             >
-                                <option value="">Select a driver type</option>
-                                <option value="company_driver" {{ old('ownership_type', $driverData['ownership_type'] ?? '') == 'company_driver' ? 'selected' : '' }}>Company Driver</option>
-                                <option value="owner_operator" {{ old('ownership_type', $driverData['ownership_type'] ?? '') == 'owner_operator' ? 'selected' : '' }}>Owner Operator</option>
-                                <option value="third_party" {{ old('ownership_type', $driverData['ownership_type'] ?? '') == 'third_party' ? 'selected' : '' }}>Third Party</option>
-                                <option value="other" {{ old('ownership_type', $driverData['ownership_type'] ?? '') == 'other' ? 'selected' : '' }}>Other</option>
+                                <option value="">Select Driver Type</option>
+                                <option value="company_driver" {{ old('assignment_type') == 'company_driver' ? 'selected' : '' }}>Company Driver</option>
+                                <option value="owner_operator" {{ old('assignment_type') == 'owner_operator' ? 'selected' : '' }}>Owner Operator</option>
+                                <option value="third_party" {{ old('assignment_type') == 'third_party' ? 'selected' : '' }}>Third Party</option>
                             </x-base.form-select>
                             <small class="form-text text-muted">Select the driver type that best describes the relationship with the vehicle.</small>
-                            @error('ownership_type')
+                            @error('assignment_type')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
-                </div>
+                    </div>
 
-                <!-- Sección 3: Owner Operator Information -->
+                    <!-- Sección 2.5: Driver Selection -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">Driver Selection</h4>
+                        <div class="grid grid-cols-1 gap-6">
+                            <div>
+                                <x-base.form-label for="user_id" class="form-label required">Select Driver</x-base.form-label>
+                                <x-base.form-select id="user_id" name="user_id" class="form-select @error('user_id') is-invalid @enderror" required>
+                                    <option value="">Select a driver</option>
+                                    @if(isset($availableDrivers))
+                                        @foreach($availableDrivers as $driver)
+                                            <option value="{{ $driver->id }}" {{ old('user_id') == $driver->id ? 'selected' : '' }}>
+                                                {{ $driver->name }} ({{ $driver->email }})
+                                            </option>
+                                        @endforeach
+                                    @endif
+                                </x-base.form-select>
+                                <small class="form-text text-muted">Select the driver who will be assigned to this vehicle.</small>
+                                @error('user_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección 3: Owner Operator Information -->
                 <div x-show="ownershipType === 'owner_operator'" class="mb-8" style="display: none;">
                     <h4 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">Owner Operator Information</h4>
                     
@@ -253,36 +278,7 @@
                     </div>
                 </div>
 
-                <!-- Sección 6: Other Driver Type Information -->
-                <div x-show="ownershipType === 'other'" class="mb-8" style="display: none;">
-                    <h4 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">Other Driver Type Information</h4>
-                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <div class="ml-4">
-                                <h5 class="text-lg font-medium text-gray-900">Custom Driver Type</h5>
-                                <p class="text-gray-700">A custom driver type has been selected. You may proceed with the assignment or contact the administrator for more details.</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Other Driver Type Details -->
-                    <div class="mb-6">
-                        <div class="grid grid-cols-1 gap-6">
-                            <div>
-                                <x-base.form-label for="applying_position_other" class="form-label required">Driver Type Description</x-base.form-label>
-                                <x-base.form-input type="text" id="applying_position_other" name="applying_position_other" class="form-control @error('applying_position_other') is-invalid @enderror" value="{{ old('applying_position_other') }}" placeholder="Please describe the driver type (e.g., Lease Operator, Independent Contractor, etc.)" />
-                                @error('applying_position_other')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
 
                 <!-- Sección 7: Action Buttons -->
                 <div class="flex justify-between items-center pt-6 border-t border-gray-200">
@@ -312,19 +308,18 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const ownershipTypeSelect = document.getElementById('ownership_type');
+        const assignmentTypeSelect = document.getElementById('assignment_type');
         
         function toggleSections() {
-            const selectedValue = ownershipTypeSelect.value;
+            const selectedValue = assignmentTypeSelect.value;
             
             // Obtener todas las secciones condicionales
             const ownerOperatorSection = document.querySelector('[x-show="ownershipType === \'owner_operator\'"]');
             const thirdPartySection = document.querySelector('[x-show="ownershipType === \'third_party\'"]');
             const companyDriverSection = document.querySelector('[x-show="ownershipType === \'company_driver\'"]');
-            const otherSection = document.querySelector('[x-show="ownershipType === \'other\'"]');
             
             // Ocultar todas las secciones
-            [ownerOperatorSection, thirdPartySection, companyDriverSection, otherSection].forEach(section => {
+            [ownerOperatorSection, thirdPartySection, companyDriverSection].forEach(section => {
                 if (section) {
                     section.style.display = 'none';
                 }
@@ -335,7 +330,6 @@
                 case 'owner_operator':
                     if (ownerOperatorSection) {
                         ownerOperatorSection.style.display = 'block';
-                        // Validar campos requeridos para Owner Operator
                         validateOwnerOperatorFields();
                     }
                     break;
@@ -344,23 +338,6 @@
                     break;
                 case 'company_driver':
                     if (companyDriverSection) companyDriverSection.style.display = 'block';
-                    break;
-                case 'other':
-                    if (otherSection) {
-                        otherSection.style.display = 'block';
-                        // Hacer requerido el campo applying_position_other
-                        const otherField = document.getElementById('applying_position_other');
-                        if (otherField) {
-                            otherField.setAttribute('required', 'required');
-                        }
-                    }
-                    break;
-                default:
-                    // Remover required del campo other si no está seleccionado
-                    const otherField = document.getElementById('applying_position_other');
-                    if (otherField) {
-                        otherField.removeAttribute('required');
-                    }
                     break;
             }
         }
@@ -379,7 +356,7 @@
             }
         }
 
-        ownershipTypeSelect.addEventListener('change', toggleSections);
+        assignmentTypeSelect.addEventListener('change', toggleSections);
         
         // Ejecutar al cargar la página
         toggleSections();
@@ -388,17 +365,14 @@
         const form = document.getElementById('assign-driver-form');
         if (form) {
             form.addEventListener('submit', function(e) {
-                const selectedType = ownershipTypeSelect.value;
+                const selectedType = assignmentTypeSelect.value;
                 
-                // Validación adicional para 'other' type
-                if (selectedType === 'other') {
-                    const otherField = document.getElementById('applying_position_other');
-                    if (otherField && !otherField.value.trim()) {
-                        e.preventDefault();
-                        alert('Please specify the driver type description.');
-                        otherField.focus();
-                        return false;
-                    }
+                // Validación básica
+                if (!selectedType) {
+                    e.preventDefault();
+                    alert('Please select a driver type.');
+                    assignmentTypeSelect.focus();
+                    return false;
                 }
             });
         }

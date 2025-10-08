@@ -1816,10 +1816,22 @@ class AdminDriverForm extends Component
             }
         }
 
-        // Update vehicle assignment
+        // Update vehicle assignment using new VehicleDriverAssignmentController
         if ($this->assigned_vehicle_id) {
-            Vehicle::where('user_driver_detail_id', $driverDetail->id)->update(['user_driver_detail_id' => null]);
-            Vehicle::where('id', $this->assigned_vehicle_id)->update(['user_driver_detail_id' => $driverDetail->id]);
+            // Remove any existing assignments for this driver
+            \App\Models\VehicleDriverAssignment::where('user_id', $driverDetail->user_id)
+                ->where('status', 'active')
+                ->update(['status' => 'inactive', 'end_date' => now()]);
+            
+            // Create new assignment
+            \App\Models\VehicleDriverAssignment::create([
+                'vehicle_id' => $this->assigned_vehicle_id,
+                'user_id' => $driverDetail->user_id,
+                'assignment_type' => 'company_driver', // Default type, can be adjusted based on applying_position
+                'start_date' => now(),
+                'status' => 'active',
+                'assigned_by' => auth()->id()
+            ]);
         }
     }
     

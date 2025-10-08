@@ -24,7 +24,10 @@ use App\Models\Admin\Driver\DriverUnemploymentPeriod;
 use App\Models\Admin\Driver\DriverTesting;
 use App\Models\Admin\Driver\DriverInspection;
 use App\Models\Admin\Driver\DriverTraining;
+use App\Models\VehicleDriverAssignment;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Models\Admin\Driver\DriverMedicalQualification;
 
@@ -56,6 +59,8 @@ class UserDriverDetail extends Model implements HasMedia
         'completion_percentage',
         'use_custom_dates',
         'custom_created_at',
+        'custom_registration_date',
+        'custom_completion_date',
     ];
 
     protected $casts = [
@@ -72,6 +77,8 @@ class UserDriverDetail extends Model implements HasMedia
         'completion_percentage' => 'integer',
         'use_custom_dates' => 'boolean',
         'custom_created_at' => 'datetime',
+        'custom_registration_date' => 'date',
+        'custom_completion_date' => 'date',
     ];
 
     public function hasRequiredDocuments(): bool
@@ -321,5 +328,37 @@ class UserDriverDetail extends Model implements HasMedia
     public function driverTrainings()
     {
         return $this->hasMany(DriverTraining::class, 'user_driver_detail_id');
+    }
+
+    /**
+     * Relación con todas las asignaciones de vehículos del conductor.
+     */
+    public function vehicleAssignments(): HasMany
+    {
+        return $this->hasMany(VehicleDriverAssignment::class);
+    }
+
+    /**
+     * Relación con la asignación activa de vehículo del conductor.
+     */
+    public function activeVehicleAssignment(): HasOne
+    {
+        return $this->hasOne(VehicleDriverAssignment::class)->where('status', 'active');
+    }
+
+    /**
+     * Alias para activeVehicleAssignment para compatibilidad.
+     */
+    public function currentVehicleAssignment(): HasOne
+    {
+        return $this->activeVehicleAssignment();
+    }
+
+    /**
+     * Obtener el vehículo actualmente asignado al conductor.
+     */
+    public function currentVehicle()
+    {
+        return $this->activeVehicleAssignment()?->vehicle();
     }
 }

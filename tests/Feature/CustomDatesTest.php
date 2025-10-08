@@ -16,9 +16,12 @@ class CustomDatesTest extends TestCase
     {
         parent::setUp();
         
+        // Seed roles and permissions
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        
         // Crear un usuario admin para las pruebas
         $this->admin = User::factory()->create();
-        $this->admin->assignRole('admin');
+        $this->admin->assignRole('superadmin');
     }
 
     /** @test */

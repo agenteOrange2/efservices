@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Admin\Vehicle\Vehicle;
 use App\Models\OwnerOperatorDetail;
 use App\Models\ThirdPartyDetail;
+use App\Models\VehicleDriverAssignment;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -16,6 +17,7 @@ class DriverApplicationDetail extends Model
 
     protected $fillable = [
         'driver_application_id',
+        'vehicle_driver_assignment_id',
         'applying_position',
         'applying_position_other',
         'applying_location',
@@ -89,9 +91,12 @@ class DriverApplicationDetail extends Model
     
     /**
      * Relación con los detalles de Third Party
+     * Note: ThirdPartyDetail now uses assignment_id instead of driver_application_id
      */
     public function thirdPartyDetail(): HasOne
     {
+        // This relationship is deprecated as ThirdPartyDetail now uses assignment_id
+        // Use the assignment relationship instead
         return $this->hasOne(ThirdPartyDetail::class, 'driver_application_id', 'driver_application_id');
     }
     
@@ -109,5 +114,13 @@ class DriverApplicationDetail extends Model
     public function isThirdPartyDriver(): bool
     {
         return $this->applying_position === 'third_party_driver';
+    }
+    
+    /**
+     * Relación con VehicleDriverAssignment
+     */
+    public function vehicleDriverAssignment(): BelongsTo
+    {
+        return $this->belongsTo(VehicleDriverAssignment::class, 'vehicle_driver_assignment_id');
     }
 }

@@ -39,7 +39,7 @@ $breadcrumbLinks = [
                                 suspended: {{ old('suspended', $vehicle->suspended ? 'true' : 'false') }},
                                 suspendedDate: '{{ old('suspended_date', $vehicle->suspended_date ? $vehicle->suspended_date->format('Y-m-d') : '') }}',
 
-                                selectedDriverId: '{{ old('user_driver_detail_id', $vehicle->user_driver_detail_id) }}',
+
                                 // Validation variables
                                 vinError: '',
                                 registrationDateError: '',
@@ -200,36 +200,53 @@ $breadcrumbLinks = [
                                             </div>
                                         </div>
 
-                                        {{-- Assigned Driver --}}
+                                        {{-- Current Driver Assignment --}}
                                         <div class="mt-5 block flex-col pt-5 sm:flex xl:flex-row xl:items-center">
                                             <div class="mb-2 sm:mb-0 sm:mr-5 xl:mr-14 xl:w-60">
                                                 <div class="text-left">
                                                     <div class="flex items-center">
-                                                        <div class="font-medium">Assigned Driver</div>
-                                                        <div class="text-xs text-gray-500 ml-2">(Optional)</div>
+                                                        <div class="font-medium">Driver Assignment</div>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="mt-3 w-full flex-1 xl:mt-0">
-                                                <select id="user_driver_detail_id" name="user_driver_detail_id"
-                                                    x-model="selectedDriverId"
-                                                    @change="updateOwnerFromDriver()"
-                                                    class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm">
-                                                    <option value="">None (Unassigned)</option>
-                                                    <!-- Los drivers se cargarán dinámicamente vía JavaScript -->
-                                                    @foreach ($drivers as $driver)
-                                                    <option value="{{ $driver->id }}"
-                                                        {{ old('user_driver_detail_id', $vehicle->user_driver_detail_id) == $driver->id ? 'selected' : '' }}>
-                                                        {{ $driver->user->name }} {{ $driver->last_name }}
-                                                    </option>
-                                                    @endforeach
-                                                </select>
-                                                <div class="text-xs text-gray-500 mt-1">
-                                                    Only active drivers for the selected carrier will be shown
-                                                </div>
-                                                @error('user_driver_detail_id')
-                                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                                                @enderror
+                                                @if($vehicle->currentDriverAssignment)
+                                                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                                                        <div class="flex items-center justify-between">
+                                                            <div>
+                                                                <h4 class="font-medium text-green-800">Currently Assigned</h4>
+                                                                <p class="text-sm text-green-700 mt-1">
+                                                                    <strong>Type:</strong> {{ ucfirst(str_replace('_', ' ', $vehicle->currentDriverAssignment->assignment_type)) }}<br>
+                                                                    @if($vehicle->currentDriverAssignment->user)
+                                                                        <strong>Driver:</strong> {{ $vehicle->currentDriverAssignment->user->name }}<br>
+                                                                    @endif
+                                                                    <strong>Effective:</strong> {{ $vehicle->currentDriverAssignment->effective_date->format('M d, Y') }}
+                                                                </p>
+                                                            </div>
+                                                            <div class="flex space-x-2">
+                                                                <a href="{{ route('admin.vehicles.assign-driver-type', $vehicle->id) }}"
+                                                                   class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded text-xs">
+                                                                    Change Driver
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @else
+                                                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                                        <div class="flex items-center justify-between">
+                                                            <div>
+                                                                <h4 class="font-medium text-yellow-800">No Driver Assigned</h4>
+                                                                <p class="text-sm text-yellow-700 mt-1">
+                                                                    This vehicle does not have a current driver assignment.
+                                                                </p>
+                                                            </div>
+                                                            <a href="{{ route('admin.vehicles.assign-driver-type', $vehicle->id) }}"
+                                                               class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-3 rounded text-xs">
+                                                                Assign Driver
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                @endif
                                             </div>
                                         </div>
 
@@ -756,97 +773,7 @@ $breadcrumbLinks = [
         }
     }
 
-    // Script para manejar la carga dinámica de drivers filtrados por carrier
-    document.addEventListener('DOMContentLoaded', function() {
-        // Obtener referencias a los elementos select
-        const carrierSelect = document.getElementById('carrier_id');
-        const driverSelect = document.getElementById('user_driver_detail_id');
-
-        // Si no existen los elementos, salir
-        if (!carrierSelect || !driverSelect) return;
-
-        // Función para cargar los drivers según el carrier seleccionado
-        function loadDriversByCarrier() {
-            const carrierId = carrierSelect.value;
-
-            // Limpiar el dropdown de drivers
-            driverSelect.innerHTML = '<option value="">None (Unassigned)</option>';
-
-            // Si no hay carrier seleccionado, no hacemos nada más
-            if (!carrierId) return;
-
-            // Mostrar indicador de carga
-            driverSelect.disabled = true;
-            driverSelect.innerHTML = '<option value="">Loading drivers...</option>';
-
-            // Hacer la petición AJAX
-            fetch(`/admin/vehicles/drivers-by-carrier/${carrierId}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(drivers => {
-                    // Limpiar dropdown
-                    driverSelect.innerHTML = '<option value="">None (Unassigned)</option>';
-
-                    // Añadir las nuevas opciones
-                    drivers.forEach(driver => {
-                        const option = document.createElement('option');
-                        option.value = driver.id;
-
-                        // Construir el nombre del driver con el formato adecuado
-                        let driverName = driver.user.name;
-                        if (driver.middle_name) {
-                            driverName += ' ' + driver.middle_name;
-                        }
-                        driverName += ' ' + driver.last_name;
-
-                        option.textContent = driverName;
-                        driverSelect.appendChild(option);
-                    });
-
-                    // Si no hay drivers, mostrar mensaje
-                    if (drivers.length === 0) {
-                        const option = document.createElement('option');
-                        option.value = "";
-                        option.textContent = "No active drivers found for this carrier";
-                        driverSelect.appendChild(option);
-                    }
-
-                    // Restaurar la selección anterior si existe
-                    const oldValue = "{{ old('user_driver_detail_id', $vehicle->user_driver_detail_id) }}";
-                    if (oldValue) {
-                        driverSelect.value = oldValue;
-                    }
-
-                    // Actualizar el Alpine.js selectedDriverId
-                    if (typeof Alpine !== 'undefined') {
-                        const vehicleForm = document.querySelector('[x-data]');
-                        if (vehicleForm && vehicleForm.__x) {
-                            vehicleForm.__x.updateData('selectedDriverId', driverSelect.value);
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading drivers:', error);
-                    // Opción de error
-                    driverSelect.innerHTML = '<option value="">Error loading drivers</option>';
-                })
-                .finally(() => {
-                    // Habilitar el select de drivers
-                    driverSelect.disabled = false;
-                });
-        }
-
-        // Asignar el evento al cambio de carrier
-        carrierSelect.addEventListener('change', loadDriversByCarrier);
-
-        // Cargar drivers inicialmente si hay un carrier seleccionado (útil para volver con errores)
-        if (carrierSelect.value) {
-            loadDriversByCarrier();
-        }
-    });
+    // Driver assignment functionality has been moved to separate assignment forms
+    // No dynamic driver loading needed in edit form anymore
 </script>
 @endpush
