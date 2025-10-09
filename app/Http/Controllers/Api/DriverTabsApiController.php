@@ -277,8 +277,8 @@ class DriverTabsApiController extends Controller
 
             $userDriverDetail = UserDriverDetail::with([
                 'user',
-                'addresses' => function($query) {
-                    $query->where('is_current', true);
+                'application.addresses' => function($query) {
+                    $query->where('primary', true);
                 },
                 'user.driverApplication.applicationDetail'
             ])->find($driverId);
@@ -304,8 +304,8 @@ class DriverTabsApiController extends Controller
             ];
 
             // Add address data
-            if ($userDriverDetail->addresses->isNotEmpty()) {
-                $address = $userDriverDetail->addresses->first();
+            if ($userDriverDetail->application && $userDriverDetail->application->addresses->isNotEmpty()) {
+                $address = $userDriverDetail->application->addresses->first();
                 $data['address'] = $address->address;
                 $data['city'] = $address->city;
                 $data['state'] = $address->state;

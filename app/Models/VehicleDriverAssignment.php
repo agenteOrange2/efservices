@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\Admin\Vehicle\Vehicle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Carbon\Carbon;
 
 class VehicleDriverAssignment extends Model
@@ -39,6 +41,30 @@ class VehicleDriverAssignment extends Model
     public function driver(): BelongsTo
     {
         return $this->belongsTo(UserDriverDetail::class, 'user_driver_detail_id');
+    }
+
+    /**
+     * Get the owner operator detail for this assignment.
+     */
+    public function ownerOperatorDetail(): HasOne
+    {
+        return $this->hasOne(OwnerOperatorDetail::class, 'vehicle_driver_assignment_id');
+    }
+
+    /**
+     * Get the third party detail for this assignment.
+     */
+    public function thirdPartyDetail(): HasOne
+    {
+        return $this->hasOne(ThirdPartyDetail::class, 'vehicle_driver_assignment_id');
+    }
+
+    /**
+     * Get the company driver detail for this assignment.
+     */
+    public function companyDriverDetail(): HasOne
+    {
+        return $this->hasOne(CompanyDriverDetail::class, 'vehicle_driver_assignment_id');
     }
 
     /**

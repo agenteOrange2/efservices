@@ -381,13 +381,15 @@ class DriverCertificationStep extends Component
         
         // Cargar todas las relaciones necesarias para los PDFs
         $userDriverDetail->load([
-            'addresses',
+            'application.addresses',
             'licenses',
             'medicalQualification',
             'criminalHistory',
             'carrier',
             'user',
-            'application.details'
+            'application.details',
+            'activeVehicleAssignment.vehicle',
+            'vehicleAssignments.vehicle'
         ]);
         
         // Generar PDF para cada paso
@@ -532,15 +534,19 @@ class DriverCertificationStep extends Component
                 $missingData[] = 'application.details';
             }
             
-            // Intentar obtener el vehículo a través de la aplicación o buscar por driver_id
+            // Obtener el vehículo a través de la asignación activa
             $vehicle = null;
-            if ($userDriverDetail->application && method_exists($userDriverDetail->application, 'vehicle')) {
-                $vehicle = $userDriverDetail->application->vehicle;
+            $activeAssignment = $userDriverDetail->activeVehicleAssignment;
+            if ($activeAssignment) {
+                $vehicle = $activeAssignment->vehicle;
             }
             
-            // Si no se encuentra, buscar en la tabla de vehículos directamente
+            // Si no hay asignación activa, buscar la más reciente
             if (!$vehicle) {
-                $vehicle = Vehicle::where('user_driver_detail_id', $userDriverDetail->id)->first();
+                $latestAssignment = $userDriverDetail->vehicleAssignments()->latest()->first();
+                if ($latestAssignment) {
+                    $vehicle = $latestAssignment->vehicle;
+                }
             }
             
             if (!$vehicle) {
@@ -952,7 +958,9 @@ class DriverCertificationStep extends Component
                 'application.details', 
                 'application.thirdPartyDetail', 
                 'user',
-                'carrier'
+                'carrier',
+                'activeVehicleAssignment.vehicle',
+                'vehicleAssignments.vehicle'
             ]);
             
             // Verificar cada relación individualmente y registrar qué datos faltan
@@ -964,16 +972,28 @@ class DriverCertificationStep extends Component
                 $missingData[] = 'application.details';
             }
             
-            // Intentar obtener el vehículo a través de la aplicación o buscar por driver_id
-            $vehicle = null;
-            if ($userDriverDetail->application && method_exists($userDriverDetail->application, 'vehicle')) {
-                $vehicle = $userDriverDetail->application->vehicle;
+            // Obtener el vehículo a través de activeVehicleAssignment
+            $vehicle = $userDriverDetail->activeVehicleAssignment?->vehicle;
+            
+            // Si no hay asignación activa, intentar obtener la más reciente
+            if (!$vehicle) {
+                $recentAssignment = $userDriverDetail->vehicleAssignments()->with('vehicle')->latest()->first();
+                $vehicle = $recentAssignment?->vehicle;
             }
             
-            // Si no se encuentra, buscar en la tabla de vehículos directamente
-            if (!$vehicle) {
-                $vehicle = Vehicle::where('user_driver_detail_id', $userDriverDetail->id)->first();
-            }
+            // Log para debugging
+            Log::info('Vehicle data retrieval for third-party consent', [
+                'driver_id' => $userDriverDetail->id,
+                'has_active_assignment' => $userDriverDetail->activeVehicleAssignment !== null,
+                'vehicle_found' => $vehicle !== null,
+                'vehicle_data' => $vehicle ? [
+                    'id' => $vehicle->id,
+                    'make' => $vehicle->make,
+                    'model' => $vehicle->model,
+                    'year' => $vehicle->year,
+                    'vin' => $vehicle->vin
+                ] : null
+            ]);
             
             if (!$userDriverDetail->carrier) {
                 $missingData[] = 'carrier';

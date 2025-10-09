@@ -177,13 +177,13 @@ class VehicleController extends Controller
         $ownerDetails = null;
         $thirdPartyDetails = null;
         
-        // Buscar el driver application detail asociado al vehículo
-        $applicationDetail = \App\Models\Admin\Driver\DriverApplicationDetail::where('vehicle_id', $vehicle->id)->first();
+        // Buscar el vehicle driver assignment asociado al vehículo
+        $vehicleAssignment = \App\Models\Admin\Driver\VehicleDriverAssignment::where('vehicle_id', $vehicle->id)->first();
         
-        if ($applicationDetail) {
+        if ($vehicleAssignment) {
             // Cargar detalles según el tipo de propiedad
             if ($vehicle->ownership_type === 'owned') {
-                $ownerDetails = OwnerOperatorDetail::where('driver_application_id', $applicationDetail->driver_application_id)->first();
+                $ownerDetails = OwnerOperatorDetail::where('vehicle_driver_assignment_id', $vehicleAssignment->id)->first();
                 
                 Log::info('Cargando detalles de owner operator para edición', [
                     'vehicle_id' => $vehicle->id,
@@ -191,7 +191,7 @@ class VehicleController extends Controller
                 ]);
             } 
             else if ($vehicle->ownership_type === 'third-party') {
-                $thirdPartyDetails = ThirdPartyDetail::where('driver_application_id', $applicationDetail->driver_application_id)->first();
+                $thirdPartyDetails = ThirdPartyDetail::where('vehicle_driver_assignment_id', $vehicleAssignment->id)->first();
                 
                 Log::info('Cargando detalles de third party para edición', [
                     'vehicle_id' => $vehicle->id,
@@ -296,13 +296,13 @@ class VehicleController extends Controller
             }
         }
         
-        // Create or update driver_application_details record based on ownership type
-        if ($request->ownership_type === 'owned' || $originalOwnershipType === 'third-party') {
+        // Create or update vehicle driver assignment based on ownership type
+        if ($request->ownership_type === 'owned' || $request->ownership_type === 'third-party') {
             try {
-                // Get the driver application detail
-                $applicationDetail = \App\Models\Admin\Driver\DriverApplicationDetail::where('vehicle_id', $vehicle->id)->first();
+                // Get or create vehicle driver assignment
+                $vehicleAssignment = \App\Models\Admin\Driver\VehicleDriverAssignment::where('vehicle_id', $vehicle->id)->first();
                 
-                if (!$applicationDetail) {
+                if (!$vehicleAssignment) {
                     // Use the current authenticated user for driver applications
                     $userId = \Illuminate\Support\Facades\Auth::id();
                     
@@ -321,53 +321,45 @@ class VehicleController extends Controller
                     $driverApplication->status = 'pending';
                     $driverApplication->save();
                     
-                    \Illuminate\Support\Facades\Log::info('Created driver application (update)', [
-                        'driver_application_id' => $driverApplication->id,
-                        'user_id' => $userId,
-                        'vehicle_id' => $vehicle->id
-                    ]);
-                    
-                    // Create a new driver_application_details record with all required fields
-                    $detailData = [
+                    // Create vehicle driver assignment
+                    $vehicleAssignment = \App\Models\Admin\Driver\VehicleDriverAssignment::create([
                         'driver_application_id' => $driverApplication->id,
                         'vehicle_id' => $vehicle->id,
-                        'applying_position' => $request->ownership_type === 'owned' ? 'owner_operator' : 'third_party_driver',
-                        'applying_location' => $request->location ?? 'Unknown',
-                        'eligible_to_work' => true,
-                        'can_speak_english' => true,
-                        'has_twic_card' => false,
-                        'how_did_hear' => 'other',
-                        'expected_pay' => 0.00,
-                        'has_work_history' => false,
-                        'has_unemployment_periods' => false,
-                        'has_completed_employment_history' => false,
-                    ];
+                        'assignment_type' => $request->ownership_type === 'owned' ? 'owner_operator' : 'third_party',
+                        'status' => 'pending',
+                        'assigned_at' => now()
+                    ]);
                     
-                    // Create the basic record using mass assignment
-                    $driverApplicationDetail = \App\Models\Admin\Driver\DriverApplicationDetail::create($detailData);
-                    
-                    // Ahora guardar los campos específicos en sus respectivas tablas
-                    if ($request->ownership_type === 'owned') {
-                        // Guardar en la tabla owner_operator_details
-                        $ownerDetails = new OwnerOperatorDetail([
-                            'driver_application_id' => $driverApplication->id,
+                    \Illuminate\Support\Facades\Log::info('Created vehicle driver assignment (update)', [
+                        'assignment_id' => $vehicleAssignment->id,
+                        'vehicle_id' => $vehicle->id,
+                        'assignment_type' => $vehicleAssignment->assignment_type
+                    ]);
+                }
+                
+                // Update assignment details based on ownership type
+                if ($request->ownership_type === 'owned') {
+                    // Update or create owner operator details
+                    $ownerDetails = OwnerOperatorDetail::updateOrCreate(
+                        ['vehicle_driver_assignment_id' => $vehicleAssignment->id],
+                        [
                             'owner_name' => $request->owner_name,
                             'owner_phone' => $request->owner_phone,
                             'owner_email' => $request->owner_email,
-                            'contract_agreed' => true,
-                            'vehicle_id' => $vehicle->id
-                        ]);
-                        $ownerDetails->save();
-                        
-                        Log::info('Owner operator details saved (update)', [
-                            'driver_application_id' => $driverApplication->id,
-                            'owner_name' => $request->owner_name
-                        ]);
-                    } 
-                    else if ($request->ownership_type === 'third-party') {
-                        // Guardar en la tabla third_party_details
-                        $thirdPartyDetails = new ThirdPartyDetail([
-                            'driver_application_id' => $driverApplication->id,
+                            'contract_agreed' => true
+                        ]
+                    );
+                    
+                    Log::info('Owner operator details updated', [
+                        'assignment_id' => $vehicleAssignment->id,
+                        'owner_name' => $request->owner_name
+                    ]);
+                } 
+                else if ($request->ownership_type === 'third-party') {
+                    // Update or create third party details
+                    $thirdPartyDetails = ThirdPartyDetail::updateOrCreate(
+                        ['vehicle_driver_assignment_id' => $vehicleAssignment->id],
+                        [
                             'third_party_name' => $request->third_party_name,
                             'third_party_phone' => $request->third_party_phone,
                             'third_party_email' => $request->third_party_email,
@@ -375,103 +367,25 @@ class VehicleController extends Controller
                             'third_party_address' => $request->third_party_address ?? '',
                             'third_party_contact' => $request->third_party_contact ?? '',
                             'third_party_fein' => $request->third_party_fein ?? '',
-                            'email_sent' => false,
-                            'vehicle_id' => $vehicle->id
-                        ]);
-                        $thirdPartyDetails->save();
-                        
-                        Log::info('Third party details saved (update)', [
-                            'driver_application_id' => $driverApplication->id,
-                            'third_party_name' => $request->third_party_name
-                        ]);
-                    }
+                            'email_sent' => $request->has('email_sent') && $request->email_sent ? 1 : 0
+                        ]
+                    );
                     
-                    // Send verification email for third-party company driver
-                    if ($request->ownership_type === 'third-party') {
-                        $emailSent = $this->sendThirdPartyVerificationEmail(
-                            $vehicle,
-                            $request->third_party_name,
-                            $request->third_party_email,
-                            $request->third_party_phone,
-                            $driverApplication->id
-                        );
-                        
-                        // Update email_sent field in driver_application_details
-                        if ($emailSent) {
-                            $driverApplicationDetail->email_sent = true;
-                            $driverApplicationDetail->save();
-                            
-                            \Illuminate\Support\Facades\Log::info('Email sent to third party (update)', [
-                                'third_party_email' => $request->third_party_email,
-                                'vehicle_id' => $vehicle->id,
-                                'driver_application_id' => $driverApplication->id
-                            ]);
-                        }
-                    }
-                    
-                    // Log success
-                    \Illuminate\Support\Facades\Log::info('Successfully created driver application details for vehicle (update)', [
-                        'vehicle_id' => $vehicle->id,
-                        'driver_application_id' => $driverApplication->id,
-                        'ownership_type' => $request->ownership_type
-                    ]);
-                } else {
-                    // Solo actualizamos campos básicos en la tabla driver_application_details
-                    $applicationDetail->applying_position = $request->ownership_type === 'owned' ? 'owner_operator' : 'third_party_driver';
-                    $applicationDetail->save();
-                    
-                    // Ahora actualizar los campos específicos en sus respectivas tablas
-                    if ($request->ownership_type === 'owned') {
-                        // Actualizar o crear en la tabla owner_operator_details
-                        $ownerDetails = OwnerOperatorDetail::updateOrCreate(
-                            ['driver_application_id' => $applicationDetail->driver_application_id],
-                            [
-                                'owner_name' => $request->owner_name,
-                                'owner_phone' => $request->owner_phone,
-                                'owner_email' => $request->owner_email,
-                                'contract_agreed' => true,
-                                'vehicle_id' => $vehicle->id
-                            ]
-                        );
-                        
-                        Log::info('Owner operator details updated', [
-                            'driver_application_id' => $applicationDetail->driver_application_id,
-                            'owner_name' => $request->owner_name
-                        ]);
-                    } 
-                    else if ($request->ownership_type === 'third-party') {
-                        // Actualizar o crear en la tabla third_party_details
-                        $thirdPartyDetails = ThirdPartyDetail::updateOrCreate(
-                            ['driver_application_id' => $applicationDetail->driver_application_id],
-                            [
-                                'third_party_name' => $request->third_party_name,
-                                'third_party_phone' => $request->third_party_phone,
-                                'third_party_email' => $request->third_party_email,
-                                'third_party_dba' => $request->third_party_dba ?? '',
-                                'third_party_address' => $request->third_party_address ?? '',
-                                'third_party_contact' => $request->third_party_contact ?? '',
-                                'third_party_fein' => $request->third_party_fein ?? '',
-                                'email_sent' => $request->has('email_sent') && $request->email_sent ? 1 : 0,
-                                'vehicle_id' => $vehicle->id
-                            ]
-                        );
-                        
-                        Log::info('Third party details updated', [
-                            'driver_application_id' => $applicationDetail->driver_application_id,
-                            'third_party_name' => $request->third_party_name
-                        ]);
-                    }
-                    
-                    // Log success
-                    \Illuminate\Support\Facades\Log::info('Successfully updated driver application details for vehicle', [
-                        'vehicle_id' => $vehicle->id,
-                        'driver_application_id' => $applicationDetail->driver_application_id,
-                        'ownership_type' => $request->ownership_type
+                    Log::info('Third party details updated', [
+                        'assignment_id' => $vehicleAssignment->id,
+                        'third_party_name' => $request->third_party_name
                     ]);
                 }
+                
+                // Log success
+                \Illuminate\Support\Facades\Log::info('Successfully updated vehicle assignment details', [
+                    'vehicle_id' => $vehicle->id,
+                    'assignment_id' => $vehicleAssignment->id,
+                    'ownership_type' => $request->ownership_type
+                ]);
             } catch (\Exception $e) {
                 // Log the error
-                \Illuminate\Support\Facades\Log::error('Error updating driver application details for vehicle', [
+                \Illuminate\Support\Facades\Log::error('Error updating vehicle assignment details', [
                     'vehicle_id' => $vehicle->id,
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString()
@@ -541,21 +455,21 @@ class VehicleController extends Controller
     /**
      * Enviar correo de verificación a third party company driver
      */
-    private function sendThirdPartyVerificationEmail($vehicle, $thirdPartyName, $thirdPartyEmail, $thirdPartyPhone, $driverApplicationId)
+    private function sendThirdPartyVerificationEmail($vehicle, $thirdPartyName, $thirdPartyEmail, $thirdPartyPhone, $vehicleAssignmentId)
     {
         try {
-            // Obtener datos del driver desde la aplicación del conductor
+            // Obtener datos del driver desde el vehicle assignment
             $driverName = '';
             $driverId = 0;
             
-            // Obtener la aplicación del conductor
-            $driverApplication = \App\Models\Admin\Driver\DriverApplication::find($driverApplicationId);
-            if ($driverApplication && $driverApplication->user) {
+            // Obtener el vehicle assignment
+            $vehicleAssignment = \App\Models\Admin\Driver\VehicleDriverAssignment::find($vehicleAssignmentId);
+            if ($vehicleAssignment && $vehicleAssignment->driverApplication && $vehicleAssignment->driverApplication->user) {
                 // Obtener el UserDriverDetail asociado al usuario de la aplicación
-                $userDriverDetail = \App\Models\UserDriverDetail::where('user_id', $driverApplication->user_id)->first();
+                $userDriverDetail = \App\Models\UserDriverDetail::where('user_id', $vehicleAssignment->driverApplication->user_id)->first();
                 
                 if ($userDriverDetail) {
-                    $driverName = $driverApplication->user->name;
+                    $driverName = $vehicleAssignment->driverApplication->user->name;
                     $driverId = $userDriverDetail->id;
                     
                     // Actualizar el user_driver_detail_id del vehículo para que el CustomPathGenerator funcione correctamente
@@ -577,7 +491,7 @@ class VehicleController extends Controller
             // Guardar el token de verificación en la base de datos
             $verification = \App\Models\VehicleVerificationToken::create([
                 'token' => $token,
-                'driver_application_id' => $driverApplicationId,
+                'vehicle_driver_assignment_id' => $vehicleAssignmentId,
                 'vehicle_id' => $vehicle->id,
                 'third_party_name' => $thirdPartyName,
                 'third_party_email' => $thirdPartyEmail,
@@ -613,7 +527,7 @@ class VehicleController extends Controller
                     $vehicleData,
                     $token,
                     $driverId, // Este es el ID del conductor (user_driver_detail_id)
-                    $driverApplicationId
+                    $vehicleAssignmentId
                 ));
             
             // Registrar en el log
@@ -654,7 +568,7 @@ class VehicleController extends Controller
     }
 
     /**
-     * Synchronize ownership_type with applying_position in driver application
+     * Synchronize ownership_type with assignment_type in vehicle driver assignment
      */
     public function syncOwnershipWithApplyingPosition($vehicleId, $newOwnershipType)
     {
@@ -664,19 +578,19 @@ class VehicleController extends Controller
                 return false;
             }
 
-            // Get corresponding applying_position
-            $applyingPosition = $this->mapOwnershipToApplyingPosition($newOwnershipType);
+            // Get corresponding assignment_type
+            $assignmentType = $newOwnershipType === 'owned' ? 'owner_operator' : 'third_party';
 
-            // Find and update driver application details
-            $applicationDetail = \App\Models\Admin\Driver\DriverApplicationDetail::where('vehicle_id', $vehicleId)->first();
-            if ($applicationDetail) {
-                $applicationDetail->applying_position = $applyingPosition;
-                $applicationDetail->save();
+            // Find and update vehicle driver assignment
+            $vehicleAssignment = \App\Models\Admin\Driver\VehicleDriverAssignment::where('vehicle_id', $vehicleId)->first();
+            if ($vehicleAssignment) {
+                $vehicleAssignment->assignment_type = $assignmentType;
+                $vehicleAssignment->save();
 
-                Log::info('Synchronized ownership_type with applying_position', [
+                Log::info('Synchronized ownership_type with assignment_type', [
                     'vehicle_id' => $vehicleId,
                     'ownership_type' => $newOwnershipType,
-                    'applying_position' => $applyingPosition
+                    'assignment_type' => $assignmentType
                 ]);
 
                 return true;
@@ -684,7 +598,7 @@ class VehicleController extends Controller
 
             return false;
         } catch (\Exception $e) {
-            Log::error('Error synchronizing ownership with applying position', [
+            Log::error('Error synchronizing ownership with assignment type', [
                 'vehicle_id' => $vehicleId,
                 'ownership_type' => $newOwnershipType,
                 'error' => $e->getMessage()

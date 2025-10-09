@@ -70,7 +70,7 @@ class VehicleDriverAssignmentControllerTest extends TestCase
 
         $assignment = VehicleDriverAssignment::where('vehicle_id', $this->vehicle->id)->first();
         $this->assertDatabaseHas('company_driver_details', [
-            'assignment_id' => $assignment->id,
+            'vehicle_driver_assignment_id' => $assignment->id,
             'employee_id' => 'EMP001',
             'department' => 'Transportation',
             'salary_type' => 'hourly',
@@ -407,7 +407,7 @@ class VehicleDriverAssignmentControllerTest extends TestCase
         ]);
 
         $companyDetail = CompanyDriverDetail::factory()->create([
-            'assignment_id' => $assignment->id,
+            'vehicle_driver_assignment_id' => $assignment->id,
             'employee_id' => 'EMP001',
             'department' => 'Transportation'
         ]);
@@ -543,7 +543,7 @@ class VehicleDriverAssignmentControllerTest extends TestCase
         $response->assertSessionHas('success');
 
         $assignment = VehicleDriverAssignment::where('vehicle_id', $this->vehicle->id)->first();
-        $companyDetail = CompanyDriverDetail::where('assignment_id', $assignment->id)->first();
+        $companyDetail = CompanyDriverDetail::where('vehicle_driver_assignment_id', $assignment->id)->first();
 
         $this->assertEquals($driverApplication->id, $companyDetail->driver_application_id);
         $this->assertInstanceOf(DriverApplication::class, $companyDetail->driverApplication);

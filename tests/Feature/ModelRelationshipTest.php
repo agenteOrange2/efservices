@@ -117,7 +117,7 @@ class ModelRelationshipTest extends TestCase
     public function vehicle_driver_assignment_has_one_company_driver_detail()
     {
         $companyDetail = CompanyDriverDetail::factory()->create([
-            'assignment_id' => $this->assignment->id,
+            'vehicle_driver_assignment_id' => $this->assignment->id,
             'employee_id' => 'EMP001',
             'department' => 'Transportation'
         ]);
@@ -159,7 +159,7 @@ class ModelRelationshipTest extends TestCase
     public function company_driver_detail_belongs_to_vehicle_driver_assignment()
     {
         $companyDetail = CompanyDriverDetail::factory()->create([
-            'assignment_id' => $this->assignment->id
+            'vehicle_driver_assignment_id' => $this->assignment->id
         ]);
 
         $this->assertInstanceOf(VehicleDriverAssignment::class, $companyDetail->assignment);
@@ -194,7 +194,7 @@ class ModelRelationshipTest extends TestCase
         // Test company driver
         $companyAssignment = VehicleDriverAssignment::factory()->companyDriver()->create();
         $companyDetail = CompanyDriverDetail::factory()->create([
-            'assignment_id' => $companyAssignment->id,
+            'vehicle_driver_assignment_id' => $companyAssignment->id,
             'employee_id' => 'EMP001'
         ]);
         
@@ -230,7 +230,7 @@ class ModelRelationshipTest extends TestCase
     {
         // Create details for the assignment
         $companyDetail = CompanyDriverDetail::factory()->create([
-            'assignment_id' => $this->assignment->id
+            'vehicle_driver_assignment_id' => $this->assignment->id
         ]);
         
         $ownerDetail = OwnerOperatorDetail::factory()->create([
@@ -260,7 +260,7 @@ class ModelRelationshipTest extends TestCase
     {
         // Create details
         CompanyDriverDetail::factory()->create([
-            'assignment_id' => $this->assignment->id
+            'vehicle_driver_assignment_id' => $this->assignment->id
         ]);
 
         // Test eager loading of vehicle and user
@@ -301,7 +301,7 @@ class ModelRelationshipTest extends TestCase
         // Create different types of assignments with their details
         $companyAssignment = VehicleDriverAssignment::factory()->companyDriver()->create();
         CompanyDriverDetail::factory()->create([
-            'assignment_id' => $companyAssignment->id,
+            'vehicle_driver_assignment_id' => $companyAssignment->id,
             'employee_id' => 'EMP001'
         ]);
 

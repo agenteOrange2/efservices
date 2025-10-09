@@ -107,7 +107,7 @@
             </tr>
             <tr>
                 @php
-                $currentAddress = $userDriverDetail->addresses->where('primary', 1)->first() ?? $userDriverDetail->addresses->first();
+                $currentAddress = $userDriverDetail->application->addresses->where('primary', 1)->first() ?? $userDriverDetail->application->addresses->first();
                 @endphp
                 <td style="width: 50%"><strong>Current
                         Address</strong><br>{{ $userDriverDetail->application && $userDriverDetail->application->addresses ? $userDriverDetail->application->addresses->where('primary', true)->first()->address_line1 ?? 'N/A' : 'N/A' }}

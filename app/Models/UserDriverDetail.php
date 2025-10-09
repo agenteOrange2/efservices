@@ -189,11 +189,8 @@ class UserDriverDetail extends Model implements HasMedia
         }
     }
 
-    // Relación con direcciones
-    public function addresses()
-    {
-        return $this->hasMany(DriverAddress::class, 'driver_application_id', 'id');
-    }
+    // Relación con direcciones eliminada - las direcciones pertenecen a DriverApplication
+    // Usar $userDriverDetail->application->addresses en su lugar
 
     //Licencias
     public function licenses()

@@ -5,8 +5,11 @@ use App\Models\User;
 use App\Models\UserDriverDetail;
 use App\Models\OwnerOperatorDetail;
 use App\Models\ThirdPartyDetail;
+use App\Models\CompanyDriverDetail;
+use App\Models\VehicleDriverAssignment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -45,7 +48,7 @@ class DriverApplication extends Model implements HasMedia
     
     public function addresses()
     {
-        return $this->hasMany(DriverAddress::class);
+        return $this->hasMany(DriverAddress::class, 'driver_application_id');
     }
     
     public function details()
@@ -54,22 +57,51 @@ class DriverApplication extends Model implements HasMedia
     }
     
     /**
-     * Obtener los detalles de Owner Operator asociados a esta aplicación.
+     * Get Owner Operator details through DriverApplicationDetail and VehicleDriverAssignment
+     * Chain: DriverApplication -> DriverApplicationDetail -> VehicleDriverAssignment -> OwnerOperatorDetail
      */
-    public function ownerOperatorDetail(): HasOne
+    public function ownerOperatorDetail(): HasOneThrough
     {
-        return $this->hasOne(OwnerOperatorDetail::class, 'driver_application_id');
+        return $this->hasOneThrough(
+            OwnerOperatorDetail::class,
+            DriverApplicationDetail::class,
+            'driver_application_id', // Foreign key on DriverApplicationDetail table
+            'vehicle_driver_assignment_id', // Foreign key on OwnerOperatorDetail table
+            'id', // Local key on DriverApplication table
+            'vehicle_driver_assignment_id' // Local key on DriverApplicationDetail table
+        );
     }
     
     /**
-     * Obtener los detalles de Third Party asociados a esta aplicación.
-     * Note: ThirdPartyDetail now uses assignment_id instead of driver_application_id
+     * Get Third Party details through DriverApplicationDetail and VehicleDriverAssignment
+     * Chain: DriverApplication -> DriverApplicationDetail -> VehicleDriverAssignment -> ThirdPartyDetail
      */
-    public function thirdPartyDetail(): HasOne
+    public function thirdPartyDetail(): HasOneThrough
     {
-        // This relationship is deprecated as ThirdPartyDetail now uses assignment_id
-        // Use the assignment relationship instead
-        return $this->hasOne(ThirdPartyDetail::class, 'driver_application_id');
+        return $this->hasOneThrough(
+            ThirdPartyDetail::class,
+            DriverApplicationDetail::class,
+            'driver_application_id', // Foreign key on DriverApplicationDetail table
+            'vehicle_driver_assignment_id', // Foreign key on ThirdPartyDetail table
+            'id', // Local key on DriverApplication table
+            'vehicle_driver_assignment_id' // Local key on DriverApplicationDetail table
+        );
+    }
+
+    /**
+     * Get Company Driver details through DriverApplicationDetail and VehicleDriverAssignment
+     * Chain: DriverApplication -> DriverApplicationDetail -> VehicleDriverAssignment -> CompanyDriverDetail
+     */
+    public function companyDriverDetail(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            CompanyDriverDetail::class,
+            DriverApplicationDetail::class,
+            'driver_application_id', // Foreign key on DriverApplicationDetail table
+            'vehicle_driver_assignment_id', // Foreign key on CompanyDriverDetail table
+            'id', // Local key on DriverApplication table
+            'vehicle_driver_assignment_id' // Local key on DriverApplicationDetail table
+        );
     }
     
     /**

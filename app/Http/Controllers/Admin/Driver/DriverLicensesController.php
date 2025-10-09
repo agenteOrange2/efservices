@@ -808,7 +808,7 @@ class DriverLicensesController extends Controller
             
             // Obtener el UserDriverDetail con todas las relaciones necesarias
             $userDriverDetail = UserDriverDetail::with([
-                'addresses',
+                'application.addresses',
                 'licenses',
                 'medicalQualification',
                 'criminalHistory',

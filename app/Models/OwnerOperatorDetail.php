@@ -14,7 +14,7 @@ class OwnerOperatorDetail extends Model
     use HasFactory;
     
     protected $fillable = [
-        'assignment_id',
+        'vehicle_driver_assignment_id',
         'owner_name',
         'owner_phone',
         'owner_email',
@@ -33,7 +33,7 @@ class OwnerOperatorDetail extends Model
      */
     public function assignment(): BelongsTo
     {
-        return $this->belongsTo(VehicleDriverAssignment::class, 'assignment_id');
+        return $this->belongsTo(VehicleDriverAssignment::class, 'vehicle_driver_assignment_id');
     }
     
     /**

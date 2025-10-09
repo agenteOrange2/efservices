@@ -5,13 +5,12 @@
     <div class="p-5">
 
         <!-- Position Applied For -->
-        <div class="mt-5 ">
+        <div class="mt-5">
             <div class="mb-2 inline-block sm:mb-0 sm:mr-5 sm:text-right xl:mr-14 xl:w-60">
                 <div class="text-left">
                     <div class="flex items-center">
                         <div class="font-medium">Position Applied For</div>
-                        <div
-                            class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                        <div class="ml-2.5 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
                             Required</div>
                     </div>
                     <div class="mt-1.5 text-xs leading-relaxed text-slate-500/80 xl:mt-3">
@@ -20,41 +19,70 @@
                 </div>
             </div>
             <div class="mt-3 w-full flex-1 xl:mt-0">
-
-                <select wire:model.live="applying_position"
-                    class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
-                    <option value="">Select Position</option>
-                    @foreach ($driverPositions as $value => $label)
-                        <option value="{{ $value }}">{{ $label }}</option>
-                    @endforeach
-                </select>
-                @error('applying_position')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-
-                <div x-show="$wire.applying_position === 'other'" x-transition class="mt-2">
-                    <label class="block mb-1">Specify Other Position *</label>
-                    <x-base.form-input type="text" wire:model="applying_position_other"
-                        class="w-full px-3 py-2 border rounded" />
-                    @error('applying_position_other')
+                <!-- Position Select -->
+                <div class="mb-6">
+                    <select wire:model="applying_position" class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
+                        <option value="">Select Position</option>
+                        @foreach($positionOptions as $value => $label)
+                            <option value="{{ $value }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    @error('applying_position')
                         <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
+                    
+                    <!-- Other Position Input -->
+                    <div x-show="$wire.applying_position === 'other'" x-transition class="mt-2">
+                        <label class="block mb-1">Specify Position *</label>
+                        <x-base.form-input type="text" wire:model="applying_position_other" class="w-full px-3 py-2 border rounded" placeholder="Enter position" />
+                        @error('applying_position_other')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
+                    </div>
                 </div>
 
-                <!-- Owner Operator Fields -->
-                <div x-show="$wire.applying_position === 'owner_operator'"
-                    x-transition:enter="transition ease-out duration-300"
-                    x-transition:enter-start="opacity-0 transform -translate-y-4"
-                    x-transition:enter-end="opacity-100 transform translate-y-0"
-                    class="mt-6 p-6 border border-blue-100 rounded-lg bg-blue-50 shadow-inner">
-                    <h3 class="text-lg font-semibold mb-5 text-primary border-b border-blue-200 pb-3 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        Owner Operator Information
-                    </h3>
+                <!-- Vehicle Type Selection (Single Choice) -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium mb-4 text-primary border-b border-gray-200 pb-2">Vehicle Assignment Type</h3>
+                    <div class="text-sm text-gray-600 mb-4">Select ONE vehicle type you want to be assigned to:</div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <label class="flex items-center p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-300 cursor-pointer transition-colors duration-200">
+                            <input type="radio" wire:model="selectedDriverType" value="owner_operator" class="mr-3 h-4 w-4 text-blue-600">
+                            <div class="flex-1">
+                                <div class="font-medium text-gray-900">Owner Operator Vehicles</div>
+                                <div class="text-sm text-gray-500">Manage owner operator assignments</div>
+                            </div>
+                        </label>
+                        
+                        <label class="flex items-center p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-300 cursor-pointer transition-colors duration-200">
+                            <input type="radio" wire:model="selectedDriverType" value="third_party_driver" class="mr-3 h-4 w-4 text-blue-600">
+                            <div class="flex-1">
+                                <div class="font-medium text-gray-900">Third Party Vehicles</div>
+                                <div class="text-sm text-gray-500">Manage third party assignments</div>
+                            </div>
+                        </label>
+                        
+                        <label class="flex items-center p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-300 cursor-pointer transition-colors duration-200">
+                            <input type="radio" wire:model="selectedDriverType" value="company_driver" class="mr-3 h-4 w-4 text-blue-600">
+                            <div class="flex-1">
+                                <div class="font-medium text-gray-900">Company Vehicles</div>
+                                <div class="text-sm text-gray-500">Manage company vehicle assignments</div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <!-- Debug Info -->
+                    <div class="mt-4 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm">
+                        <strong>Debug:</strong> selectedDriverType = {{ $selectedDriverType }}
+                    </div>
+                </div>
+
+                <!-- Owner Operator Information -->
+                <div x-show="$wire.selectedDriverType === 'owner_operator'" x-transition
+                    class="mt-4 p-4 border rounded bg-gray-50">
+                    <h3 class="text-lg font-medium mb-4 text-primary border-b border-gray-200 pb-2">Owner Operator
+                        Information</h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
@@ -67,7 +95,7 @@
                         </div>
                         <div>
                             <label class="block mb-1">Phone Number *</label>
-                            <x-base.form-input type="number" wire:model="owner_phone"
+                            <x-base.form-input type="tel" wire:model="owner_phone"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('owner_phone')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
@@ -84,17 +112,8 @@
                         @enderror
                     </div>
 
-
-
-                    <h4
-                        class="font-semibold text-lg text-primary mb-4 mt-8 border-b border-blue-200 pb-3 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                        </svg>
-                        Vehicle Information
-                    </h4>
+                    <h4 class="font-medium text-lg text-primary mb-3 mt-5 border-b border-gray-200 pb-2">Vehicle
+                        Information (will be assigned to carrier)</h4>
 
                     @if (count($existingVehicles) > 0)
                         <div class="mb-5 p-4 bg-blue-50 rounded-lg border border-blue-100 shadow-sm">
@@ -135,9 +154,9 @@
                                                     <div class="flex space-x-2">
                                                         <button type="button"
                                                             wire:click="selectVehicle({{ $vehicle->id }})"
-                                                            class="px-2.5 py-1.5 bg-blue-500 text-white rounded-md text-sm hover:bg-primary transition duration-150 ease-in-out flex items-center">
+                                                            class="px-2.5 py-1.5 bg-blue-800 text-white rounded-md text-sm hover:bg-blue-800 transition duration-150 ease-in-out flex items-center">
                                                             Select
-                                                        </button>                                                        
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -182,7 +201,6 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
                             <label class="block mb-1">Year *</label>
-
                             <x-base.form-input type="number" wire:model="vehicle_year"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('vehicle_year')
@@ -367,11 +385,10 @@
                     </div>
                 </div>
 
-                <!-- Third Party Company Driver Fields -->
-                <div x-show="$wire.applying_position === 'third_party_driver'" x-transition
+                <!-- Third Party Driver Information -->
+                <div x-show="$wire.selectedDriverType === 'third_party_driver'" x-transition
                     class="mt-4 p-4 border rounded bg-gray-50">
-                    <h3 class="text-lg font-medium mb-4 text-primary border-b border-gray-200 pb-2">Third Party
-                        Company Information</h3>
+                    <h3 class="text-lg font-medium mb-4 text-primary border-b border-gray-200 pb-2">Third Party Company Information</h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
@@ -384,7 +401,7 @@
                         </div>
                         <div>
                             <label class="block mb-1">Phone Number *</label>
-                            <x-base.form-input type="number" wire:model="third_party_phone"
+                            <x-base.form-input type="tel" wire:model="third_party_phone"
                                 class="w-full px-3 py-2 border rounded" />
                             @error('third_party_phone')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
@@ -703,6 +720,24 @@
                             @if (!$email_sent) disabled @endif>
                             Resend Email
                         </button>
+                    </div>
+                </div>
+
+                <!-- Company Driver Fields -->
+                <div x-show="$wire.selectedDriverType === 'company_driver'" x-transition
+                    class="mt-4 p-4 border rounded bg-gray-50">
+                    <h3 class="text-lg font-medium mb-4 text-primary border-b border-gray-200 pb-2">Company Driver Information</h3>
+
+                    <!-- Company Driver Notes -->
+                    <div class="mb-6">
+                        <label class="block mb-1 font-medium text-gray-700">Company Driver Information</label>
+                        <textarea wire:model="company_driver_notes" 
+                            class="w-full px-3 py-2 border rounded" 
+                            rows="6" 
+                            placeholder="Please provide any relevant information about your company driver application, including experience level, schedule preferences, preferred routes, additional certifications, or any other details that would be helpful for your application..."></textarea>
+                        @error('company_driver_notes')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
                 </div>
             </div>

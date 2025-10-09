@@ -166,36 +166,42 @@
 
     <div class="section">
         <h2>Vehicle Details</h2>
-        <table class="details-table">
-            <tr>
-                <th>Brand</th>
-                <td>{{ $vehicle->make }}</td>
-            </tr>
-            <tr>
-                <th>Model</th>
-                <td>{{ $vehicle->model }}</td>
-            </tr>
-            <tr>
-                <th>Year</th>
-                <td>{{ $vehicle->year }}</td>
-            </tr>
-            <tr>
-                <th>VIN</th>
-                <td>{{ $vehicle->vin }}</td>
-            </tr>
-            <tr>
-                <th>Type</th>
-                <td>{{ ucfirst($vehicle->type) }}</td>
-            </tr>
-            <tr>
-                <th>Registration Status</th>
-                <td>{{ $vehicle->registration_state }}</td>
-            </tr>
-            <tr>
-                <th>Registration Number</th>
-                <td>{{ $vehicle->registration_number }}</td>
-            </tr>
-        </table>
+        @if($vehicle)
+            <table class="details-table">
+                <tr>
+                    <th>Brand</th>
+                    <td>{{ $vehicle->make ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <th>Model</th>
+                    <td>{{ $vehicle->model ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <th>Year</th>
+                    <td>{{ $vehicle->year ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <th>VIN</th>
+                    <td>{{ $vehicle->vin ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <th>Type</th>
+                    <td>{{ $vehicle ? ucfirst($vehicle->type) : 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <th>Registration Status</th>
+                    <td>{{ $vehicle->registration_state ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <th>Registration Number</th>
+                    <td>{{ $vehicle->registration_number ?? 'N/A' }}</td>
+                </tr>
+            </table>
+        @else
+            <div class="consent-text">
+                <p><em>No vehicle information available for this driver.</em></p>
+            </div>
+        @endif
     </div>
 
     <div class="section">

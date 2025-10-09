@@ -189,11 +189,14 @@ class AdminDriverApiController extends Controller
             DB::beginTransaction();
 
             // Delete existing addresses
-            $driver->addresses()->delete();
+            if ($driver->application) {
+                $driver->application->addresses()->delete();
+            }
 
             // Save current address
             $currentAddress = $request->input('current_address');
-            $driver->addresses()->create([
+            if ($driver->application) {
+                $driver->application->addresses()->create([
                 'address_line_1' => $currentAddress['address_line1'],
                 'address_line_2' => $currentAddress['address_line2'] ?? '',
                 'city' => $currentAddress['city'],
@@ -204,12 +207,14 @@ class AdminDriverApiController extends Controller
                 'from_date' => DateHelper::toDatabase($currentAddress['from_date']),
                 'to_date' => null,
                 'lived_3_years' => $currentAddress['lived_3_years'] ?? false
-            ]);
+                ]);
+            }
 
             // Save previous addresses if any
             if ($request->has('previous_addresses')) {
                 foreach ($request->input('previous_addresses') as $prevAddress) {
-                    $driver->addresses()->create([
+                    if ($driver->application) {
+                        $driver->application->addresses()->create([
                         'address_line_1' => $prevAddress['address_line1'],
                         'address_line_2' => $prevAddress['address_line2'] ?? '',
                         'city' => $prevAddress['city'],
@@ -219,7 +224,8 @@ class AdminDriverApiController extends Controller
                         'address_type' => 'previous',
                         'from_date' => DateHelper::toDatabase($prevAddress['from_date']),
                         'to_date' => DateHelper::toDatabase($prevAddress['to_date'])
-                    ]);
+                        ]);
+                    }
                 }
             }
 
@@ -325,7 +331,7 @@ class AdminDriverApiController extends Controller
         try {
             $driver = UserDriverDetail::with([
                 'user',
-                'addresses',
+                'application.addresses',
                 'application',
                 'carrier'
             ])->findOrFail($driverId);
@@ -359,7 +365,8 @@ class AdminDriverApiController extends Controller
             ];
 
             // Process addresses
-            foreach ($driver->addresses as $address) {
+            if ($driver->application && $driver->application->addresses) {
+                foreach ($driver->application->addresses as $address) {
                 $addressData = [
                     'address_line1' => $address->address_line_1,
                     'address_line2' => $address->address_line_2,
@@ -375,6 +382,7 @@ class AdminDriverApiController extends Controller
                     $data['addresses']['current'] = $addressData;
                 } else {
                     $data['addresses']['previous'][] = $addressData;
+                }
                 }
             }
 

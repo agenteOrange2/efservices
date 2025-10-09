@@ -4,9 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\Admin\Driver\DriverApplication;
+use App\Models\Admin\Driver\VehicleDriverAssignment;
 use App\Models\Admin\Vehicle\Vehicle;
 use App\Models\UserDriverDetail;
+use App\Models\DriverApplication;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -18,6 +19,7 @@ class VehicleVerificationToken extends Model implements HasMedia
     protected $fillable = [
         'token',
         'driver_application_id',
+        'vehicle_driver_assignment_id',
         'vehicle_id',
         'third_party_name',
         'third_party_email',
@@ -44,6 +46,15 @@ class VehicleVerificationToken extends Model implements HasMedia
     public function driverApplication(): BelongsTo
     {
         return $this->belongsTo(DriverApplication::class);
+    }
+
+    /**
+     * Get the vehicle driver assignment that owns the token.
+     * @deprecated Use driverApplication() instead
+     */
+    public function vehicleDriverAssignment(): BelongsTo
+    {
+        return $this->belongsTo(VehicleDriverAssignment::class);
     }
 
     /**

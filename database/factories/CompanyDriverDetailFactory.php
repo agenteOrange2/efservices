@@ -28,7 +28,7 @@ class CompanyDriverDetailFactory extends Factory
     public function definition(): array
     {
         return [
-            'assignment_id' => VehicleDriverAssignment::factory(),
+            'vehicle_driver_assignment_id' => VehicleDriverAssignment::factory(),
             'driver_application_id' => DriverApplication::factory(),
             'employee_id' => $this->faker->numerify('EMP####'),
             'department' => $this->faker->randomElement(['Operations', 'Logistics', 'Maintenance', 'Administration']),
@@ -47,7 +47,7 @@ class CompanyDriverDetailFactory extends Factory
     public function forAssignment($assignment): static
     {
         return $this->state(fn (array $attributes) => [
-            'assignment_id' => is_object($assignment) ? $assignment->id : $assignment,
+            'vehicle_driver_assignment_id' => is_object($assignment) ? $assignment->id : $assignment,
         ]);
     }
 

@@ -41,14 +41,14 @@
                     </div>
                 </div>
 
-                <!-- Vehicle Type Checkboxes (Independent) -->
+                <!-- Vehicle Type Selection (Single Choice) -->
                 <div class="mb-6">
-                    <h3 class="text-lg font-medium mb-4 text-primary border-b border-gray-200 pb-2">Vehicle Assignment Types</h3>
-                    <div class="text-sm text-gray-600 mb-4">Select the vehicle types you want to be assigned to (independent of position):</div>
+                    <h3 class="text-lg font-medium mb-4 text-primary border-b border-gray-200 pb-2">Vehicle Assignment Type</h3>
+                    <div class="text-sm text-gray-600 mb-4">Select ONE vehicle type you want to be assigned to:</div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <label class="flex items-center p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-300 cursor-pointer transition-colors duration-200">
-                            <input type="checkbox" wire:model="vehicleTypeCheckboxes.owner_operator" class="mr-3 h-4 w-4 text-blue-600">
+                            <input type="radio" wire:model="selectedDriverType" value="owner_operator" class="mr-3 h-4 w-4 text-blue-600">
                             <div class="flex-1">
                                 <div class="font-medium text-gray-900">Owner Operator Vehicles</div>
                                 <div class="text-sm text-gray-500">Manage owner operator assignments</div>
@@ -56,7 +56,7 @@
                         </label>
                         
                         <label class="flex items-center p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-300 cursor-pointer transition-colors duration-200">
-                            <input type="checkbox" wire:model="vehicleTypeCheckboxes.third_party_driver" class="mr-3 h-4 w-4 text-blue-600">
+                            <input type="radio" wire:model="selectedDriverType" value="third_party_driver" class="mr-3 h-4 w-4 text-blue-600">
                             <div class="flex-1">
                                 <div class="font-medium text-gray-900">Third Party Vehicles</div>
                                 <div class="text-sm text-gray-500">Manage third party assignments</div>
@@ -64,7 +64,7 @@
                         </label>
                         
                         <label class="flex items-center p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-300 cursor-pointer transition-colors duration-200">
-                            <input type="checkbox" wire:model="vehicleTypeCheckboxes.company_driver" class="mr-3 h-4 w-4 text-blue-600">
+                            <input type="radio" wire:model="selectedDriverType" value="company_driver" class="mr-3 h-4 w-4 text-blue-600">
                             <div class="flex-1">
                                 <div class="font-medium text-gray-900">Company Vehicles</div>
                                 <div class="text-sm text-gray-500">Manage company vehicle assignments</div>
@@ -74,12 +74,12 @@
                     
                     <!-- Debug Info -->
                     <div class="mt-4 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm">
-                        <strong>Debug:</strong> vehicleTypeCheckboxes = {{ json_encode($vehicleTypeCheckboxes) }}
+                        <strong>Debug:</strong> selectedDriverType = {{ $selectedDriverType }}
                     </div>
                 </div>
 
                 <!-- Owner Operator Information -->
-                <div x-show="$wire.vehicleTypeCheckboxes.owner_operator" x-transition
+                <div x-show="$wire.selectedDriverType === 'owner_operator'" x-transition
                     class="mt-4 p-4 border rounded bg-gray-50">
                     <h3 class="text-lg font-medium mb-4 text-primary border-b border-gray-200 pb-2">Owner Operator
                         Information</h3>
@@ -386,7 +386,7 @@
                 </div>
 
                 <!-- Third Party Driver Information -->
-                <div x-show="$wire.vehicleTypeCheckboxes.third_party_driver" x-transition
+                <div x-show="$wire.selectedDriverType === 'third_party_driver'" x-transition
                     class="mt-4 p-4 border rounded bg-gray-50">
                     <h3 class="text-lg font-medium mb-4 text-primary border-b border-gray-200 pb-2">Third Party Company Information</h3>
 
@@ -724,190 +724,20 @@
                 </div>
 
                 <!-- Company Driver Fields -->
-                <div x-show="$wire.vehicleTypeCheckboxes.company_driver" x-transition
+                <div x-show="$wire.selectedDriverType === 'company_driver'" x-transition
                     class="mt-4 p-4 border rounded bg-gray-50">
                     <h3 class="text-lg font-medium mb-4 text-primary border-b border-gray-200 pb-2">Company Driver Information</h3>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                            <label class="block mb-1 font-medium text-gray-700">Years of Experience *</label>
-                            <select wire:model="company_driver_experience_years" class="w-full px-3 py-2 border rounded">
-                                <option value="">Select Experience</option>
-                                <option value="0-1">0-1 years</option>
-                                <option value="2-5">2-5 years</option>
-                                <option value="6-10">6-10 years</option>
-                                <option value="11-15">11-15 years</option>
-                                <option value="16+">16+ years</option>
-                            </select>
-                            @error('company_driver_experience_years')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
-                        </div>
-                        <div>
-                            <label class="block mb-1 font-medium text-gray-700">Schedule Preference *</label>
-                            <select wire:model="company_driver_schedule_preference" class="w-full px-3 py-2 border rounded">
-                                <option value="">Select Schedule</option>
-                                <option value="local">Local (Home Daily)</option>
-                                <option value="regional">Regional (Home Weekly)</option>
-                                <option value="otr">OTR (Over The Road)</option>
-                                <option value="dedicated">Dedicated Routes</option>
-                            </select>
-                            @error('company_driver_schedule_preference')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-
+                    <!-- Company Driver Notes -->
                     <div class="mb-6">
-                        <label class="block mb-1 font-medium text-gray-700">Preferred Routes/Areas</label>
-                        <textarea wire:model="company_driver_preferred_routes" 
+                        <label class="block mb-1 font-medium text-gray-700">Company Driver Information</label>
+                        <textarea wire:model="company_driver_notes" 
                             class="w-full px-3 py-2 border rounded" 
-                            rows="3" 
-                            placeholder="Describe your preferred routes or areas you'd like to work in..."></textarea>
-                        @error('company_driver_preferred_routes')
+                            rows="6" 
+                            placeholder="Please provide any relevant information about your company driver application, including experience level, schedule preferences, preferred routes, additional certifications, or any other details that would be helpful for your application..."></textarea>
+                        @error('company_driver_notes')
                             <span class="text-red-500 text-sm">{{ $message }}</span>
                         @enderror
-                    </div>
-
-                    <div class="mb-6">
-                        <label class="block mb-1 font-medium text-gray-700">Additional Certifications</label>
-                        <textarea wire:model="company_driver_additional_certifications" 
-                            class="w-full px-3 py-2 border rounded" 
-                            rows="3" 
-                            placeholder="List any additional certifications (HAZMAT, TWIC, etc.)"></textarea>
-                        @error('company_driver_additional_certifications')
-                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <!-- Company Vehicle Information -->
-                    <div class="bg-green-50 p-4 rounded-lg mb-6">
-                        <h4 class="font-semibold text-green-800 mb-3 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"></path>
-                                <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1V8a1 1 0 00-.293-.707L15 4.586A1 1 0 0014.414 4H14v3z"></path>
-                            </svg>
-                            Company Vehicle Fleet
-                        </h4>
-                        <div class="text-sm text-green-700 mb-4">
-                            <p class="mb-3">As a company driver, you'll have access to our modern, well-maintained fleet of vehicles. All vehicles are regularly serviced and equipped with the latest safety features.</p>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-green-700">
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                Late Model Trucks (2018+)
-                            </div>
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                GPS & ELD Systems
-                            </div>
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                Regular Maintenance
-                            </div>
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                24/7 Roadside Assistance
-                            </div>
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                Fuel Cards Provided
-                            </div>
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                Safety Equipment Included
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Company Driver Benefits -->
-                    <div class="bg-blue-50 p-4 rounded-lg mb-6">
-                        <h4 class="font-semibold text-blue-800 mb-3">Company Driver Benefits</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-700">
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                Competitive Pay
-                            </div>
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                Health Insurance
-                            </div>
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                Paid Time Off
-                            </div>
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                Retirement Plan
-                            </div>
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                Modern Equipment
-                            </div>
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                </svg>
-                                Performance Bonuses
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Experience Level Guide -->
-                    <div class="bg-gray-100 p-4 rounded-lg mb-6">
-                        <h4 class="font-semibold text-gray-800 mb-3">Experience Level Guide</h4>
-                        <div class="text-sm text-gray-600 space-y-2">
-                            <div><strong>0-1 years:</strong> New to commercial driving or recent CDL graduate</div>
-                            <div><strong>2-5 years:</strong> Some commercial driving experience, familiar with basic operations</div>
-                            <div><strong>6-10 years:</strong> Experienced driver with good safety record</div>
-                            <div><strong>11-15 years:</strong> Veteran driver with extensive experience</div>
-                            <div><strong>16+ years:</strong> Highly experienced professional driver</div>
-                        </div>
-                    </div>
-
-                    <!-- Important Requirements -->
-                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <h3 class="text-sm font-medium text-yellow-800">Important Requirements</h3>
-                                <div class="mt-2 text-sm text-yellow-700">
-                                    <ul class="list-disc list-inside space-y-1">
-                                        <li>Valid CDL Class A license required</li>
-                                        <li>Clean driving record (last 3 years)</li>
-                                        <li>Pass DOT physical and drug screening</li>
-                                        <li>Minimum age requirement may apply</li>
-                                        <li>Background check required</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>

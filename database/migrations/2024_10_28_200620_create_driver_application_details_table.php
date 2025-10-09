@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('driver_application_details', function (Blueprint $table) {
             $table->id();
             $table->foreignId('driver_application_id')->constrained()->onDelete('cascade');
-            $table->foreignId('vehicle_id')->nullable()->constrained('vehicles')->nullOnDelete();
+            // $table->foreignId('vehicle_id')->nullable()->constrained('vehicles')->nullOnDelete();
             $table->string('applying_position');
             $table->string('applying_position_other')->nullable();
             $table->string('applying_location');

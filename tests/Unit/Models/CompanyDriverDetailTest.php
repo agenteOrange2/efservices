@@ -17,12 +17,12 @@ class CompanyDriverDetailTest extends TestCase
     public function it_belongs_to_a_vehicle_driver_assignment()
     {
         $assignment = VehicleDriverAssignment::factory()->create();
-        $detail = CompanyDriverDetail::factory()->create([
-            'assignment_id' => $assignment->id
+        $companyDetail = CompanyDriverDetail::factory()->create([
+            'vehicle_driver_assignment_id' => $assignment->id
         ]);
 
-        $this->assertInstanceOf(VehicleDriverAssignment::class, $detail->assignment);
-        $this->assertEquals($assignment->id, $detail->assignment->id);
+        $this->assertInstanceOf(VehicleDriverAssignment::class, $companyDetail->assignment);
+        $this->assertEquals($assignment->id, $companyDetail->assignment->id);
     }
 
     /** @test */
@@ -77,7 +77,7 @@ class CompanyDriverDetailTest extends TestCase
     public function it_has_fillable_attributes()
     {
         $fillable = [
-            'assignment_id',
+            'vehicle_driver_assignment_id',
             'driver_application_id',
             'employee_id',
             'department',

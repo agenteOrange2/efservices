@@ -24,24 +24,20 @@ class MigrationTest extends TestCase
         $this->assertTrue(Schema::hasTable('vehicle_driver_assignments'));
         
         $this->assertTrue(Schema::hasColumns('vehicle_driver_assignments', [
-            'id', 'vehicle_id', 'user_id', 'assignment_type', 'status', 
-            'assigned_by', 'assigned_at', 'effective_date', 'termination_date', 
-            'notes', 'created_at', 'updated_at'
+            'id', 'vehicle_id', 'user_driver_detail_id', 'start_date', 'end_date', 
+            'status', 'notes', 'created_at', 'updated_at'
         ]));
         
         // Check foreign key constraints
         $this->assertTrue(Schema::hasColumn('vehicle_driver_assignments', 'vehicle_id'));
-        $this->assertTrue(Schema::hasColumn('vehicle_driver_assignments', 'user_id'));
+        $this->assertTrue(Schema::hasColumn('vehicle_driver_assignments', 'user_driver_detail_id'));
         
         // Test enum values for assignment_type
         $assignment = new VehicleDriverAssignment();
         $assignment->vehicle_id = 1;
-        $assignment->user_id = 1;
-        $assignment->assignment_type = 'company_driver';
+        $assignment->user_driver_detail_id = 1;
+        $assignment->start_date = now()->toDateString();
         $assignment->status = 'active';
-        $assignment->assigned_by = 1;
-        $assignment->assigned_at = now();
-        $assignment->effective_date = now()->toDateString();
         
         $this->assertTrue(true); // If we get here, enum is working
     }
@@ -52,13 +48,13 @@ class MigrationTest extends TestCase
         $this->assertTrue(Schema::hasTable('company_driver_details'));
         
         $this->assertTrue(Schema::hasColumns('company_driver_details', [
-            'id', 'assignment_id', 'employee_id', 'department',
+            'id', 'vehicle_driver_assignment_id', 'employee_id', 'department',
             'supervisor_name', 'supervisor_phone', 'salary_type', 'base_rate',
             'overtime_rate', 'benefits_eligible', 'notes', 'created_at', 'updated_at'
         ]));
         
         // Check foreign key constraint
-        $this->assertTrue(Schema::hasColumn('company_driver_details', 'assignment_id'));
+        $this->assertTrue(Schema::hasColumn('company_driver_details', 'vehicle_driver_assignment_id'));
     }
 
     /** @test */
@@ -97,27 +93,25 @@ class MigrationTest extends TestCase
         // Create test data
         $vehicle = Vehicle::factory()->create();
         $user = User::factory()->create();
+        $userDriverDetail = UserDriverDetail::factory()->create(['user_id' => $user->id]);
         
         // Test vehicle_driver_assignments foreign keys
         $assignment = VehicleDriverAssignment::create([
             'vehicle_id' => $vehicle->id,
-            'user_id' => $user->id,
-            'assignment_type' => 'company_driver',
-            'effective_date' => now(),
-            'status' => 'active',
-            'assigned_by' => $user->id,
-            'assigned_at' => now()
+            'user_driver_detail_id' => $userDriverDetail->id,
+            'start_date' => now(),
+            'status' => 'active'
         ]);
         
         $this->assertDatabaseHas('vehicle_driver_assignments', [
             'id' => $assignment->id,
             'vehicle_id' => $vehicle->id,
-            'user_id' => $user->id
+            'user_driver_detail_id' => $userDriverDetail->id
         ]);
         
         // Test company_driver_details foreign key
         $companyDetail = CompanyDriverDetail::create([
-            'assignment_id' => $assignment->id,
+            'vehicle_driver_assignment_id' => $assignment->id,
             'employee_id' => 'EMP001',
             'department' => 'Transportation',
             'salary_type' => 'hourly',
@@ -125,14 +119,14 @@ class MigrationTest extends TestCase
         ]);
         
         $this->assertDatabaseHas('company_driver_details', [
-            'assignment_id' => $assignment->id,
+            'vehicle_driver_assignment_id' => $assignment->id,
             'employee_id' => 'EMP001'
         ]);
         
         // Test cascade delete
         $assignment->delete();
         $this->assertDatabaseMissing('company_driver_details', [
-            'assignment_id' => $assignment->id
+            'vehicle_driver_assignment_id' => $assignment->id
         ]);
     }
 
@@ -161,15 +155,15 @@ class MigrationTest extends TestCase
         }
         $this->assertTrue($vehicleIndexExists, 'vehicle_id index does not exist');
         
-        // Check for user_id index
+        // Check for user_driver_detail_id index
         $userIndexExists = false;
         foreach ($indexes as $index) {
-            if (in_array('user_id', $index->getColumns())) {
+            if (in_array('user_driver_detail_id', $index->getColumns())) {
                 $userIndexExists = true;
                 break;
             }
         }
-        $this->assertTrue($userIndexExists, 'user_id index does not exist');
+        $this->assertTrue($userIndexExists, 'user_driver_detail_id index does not exist');
     }
 
     /** @test */
@@ -177,22 +171,20 @@ class MigrationTest extends TestCase
     {
         $vehicle = Vehicle::factory()->create();
         $user = User::factory()->create();
+        $userDriverDetail = UserDriverDetail::factory()->create(['user_id' => $user->id]);
         
         $assignment = VehicleDriverAssignment::create([
             'vehicle_id' => $vehicle->id,
-            'user_id' => $user->id,
-            'assignment_type' => 'company_driver',
-            'effective_date' => now(),
-            'status' => 'active',
-            'assigned_by' => $user->id,
-            'assigned_at' => now()
+            'user_driver_detail_id' => $userDriverDetail->id,
+            'start_date' => now(),
+            'status' => 'active'
         ]);
         
         // Check default status is 'active'
         $this->assertEquals('active', $assignment->status);
         
-        // Check that termination_date is null by default
-        $this->assertNull($assignment->termination_date);
+        // Check that end_date is null by default
+        $this->assertNull($assignment->end_date);
         
         // Check that notes can be null
         $this->assertNull($assignment->notes);
@@ -203,25 +195,23 @@ class MigrationTest extends TestCase
     {
         $vehicle = Vehicle::factory()->create();
         $user = User::factory()->create();
+        $userDriverDetail = UserDriverDetail::factory()->create(['user_id' => $user->id]);
         
         $assignment = VehicleDriverAssignment::create([
             'vehicle_id' => $vehicle->id,
-            'user_id' => $user->id,
-            'assignment_type' => 'company_driver',
-            'effective_date' => now(),
-            'status' => 'active',
-            'assigned_by' => $user->id,
-            'assigned_at' => now()
+            'user_driver_detail_id' => $userDriverDetail->id,
+            'start_date' => now(),
+            'status' => 'active'
         ]);
         
         // Test that dates are properly cast
-        $this->assertInstanceOf(\Carbon\Carbon::class, $assignment->effective_date);
+        $this->assertInstanceOf(\Carbon\Carbon::class, $assignment->start_date);
         $this->assertInstanceOf(\Carbon\Carbon::class, $assignment->created_at);
         $this->assertInstanceOf(\Carbon\Carbon::class, $assignment->updated_at);
         
         // Create company driver detail with decimal values
         $companyDetail = CompanyDriverDetail::create([
-            'assignment_id' => $assignment->id,
+            'vehicle_driver_assignment_id' => $assignment->id,
             'employee_id' => 'EMP001',
             'department' => 'Transportation',
             'salary_type' => 'hourly',
@@ -244,33 +234,29 @@ class MigrationTest extends TestCase
         $vehicle = Vehicle::factory()->create();
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
+        $userDriverDetail1 = UserDriverDetail::factory()->create(['user_id' => $user1->id]);
+        $userDriverDetail2 = UserDriverDetail::factory()->create(['user_id' => $user2->id]);
         
         // Create first active assignment
         VehicleDriverAssignment::create([
             'vehicle_id' => $vehicle->id,
-            'user_id' => $user1->id,
-            'assignment_type' => 'company_driver',
-            'effective_date' => now(),
-            'status' => 'active',
-            'assigned_by' => $user1->id,
-            'assigned_at' => now()
+            'user_driver_detail_id' => $userDriverDetail1->id,
+            'start_date' => now(),
+            'status' => 'active'
         ]);
         
         // Should be able to create another assignment for same vehicle if first is terminated
         $firstAssignment = VehicleDriverAssignment::where('vehicle_id', $vehicle->id)->first();
         $firstAssignment->update([
             'status' => 'terminated',
-            'termination_date' => now()
+            'end_date' => now()
         ]);
         
         $secondAssignment = VehicleDriverAssignment::create([
             'vehicle_id' => $vehicle->id,
-            'user_id' => $user2->id,
-            'assignment_type' => 'owner_operator',
-            'effective_date' => now(),
-            'status' => 'active',
-            'assigned_by' => $user2->id,
-            'assigned_at' => now()
+            'user_driver_detail_id' => $userDriverDetail2->id,
+            'start_date' => now(),
+            'status' => 'active'
         ]);
         
         $this->assertDatabaseHas('vehicle_driver_assignments', [
@@ -308,8 +294,8 @@ class MigrationTest extends TestCase
     /** @test */
     public function all_detail_tables_have_assignment_id_column()
     {
-        // Verify that all detail tables have the new assignment_id column
-        $this->assertTrue(Schema::hasColumn('company_driver_details', 'assignment_id'));
+        // Verify that all detail tables have the assignment reference column
+        $this->assertTrue(Schema::hasColumn('company_driver_details', 'vehicle_driver_assignment_id'));
         $this->assertTrue(Schema::hasColumn('owner_operator_details', 'assignment_id'));
         $this->assertTrue(Schema::hasColumn('third_party_details', 'assignment_id'));
     }
@@ -329,19 +315,18 @@ class MigrationTest extends TestCase
         $user = User::factory()->create();
         $driverApplication = DriverApplication::factory()->create();
         
+        $userDriverDetail = UserDriverDetail::factory()->create(['user_id' => $user->id]);
+        
         // Test company driver assignment with details
         $companyAssignment = VehicleDriverAssignment::create([
             'vehicle_id' => $vehicle->id,
-            'user_id' => $user->id,
-            'assignment_type' => 'company_driver',
-            'effective_date' => now(),
-            'status' => 'active',
-            'assigned_by' => $user->id,
-            'assigned_at' => now()
+            'user_driver_detail_id' => $userDriverDetail->id,
+            'start_date' => now(),
+            'status' => 'active'
         ]);
         
         $companyDetail = CompanyDriverDetail::create([
-            'assignment_id' => $companyAssignment->id,
+            'vehicle_driver_assignment_id' => $companyAssignment->id,
             'driver_application_id' => $driverApplication->id,
             'employee_id' => 'EMP001',
             'department' => 'Transportation',
@@ -350,7 +335,7 @@ class MigrationTest extends TestCase
         ]);
         
         $this->assertDatabaseHas('company_driver_details', [
-            'assignment_id' => $companyAssignment->id,
+            'vehicle_driver_assignment_id' => $companyAssignment->id,
             'employee_id' => 'EMP001'
         ]);
         
@@ -358,12 +343,9 @@ class MigrationTest extends TestCase
         $vehicle2 = Vehicle::factory()->create();
         $ownerAssignment = VehicleDriverAssignment::create([
             'vehicle_id' => $vehicle2->id,
-            'user_id' => $user->id,
-            'assignment_type' => 'owner_operator',
-            'effective_date' => now(),
-            'status' => 'active',
-            'assigned_by' => $user->id,
-            'assigned_at' => now()
+            'user_driver_detail_id' => $userDriverDetail->id,
+            'start_date' => now(),
+            'status' => 'active'
         ]);
         
         $ownerDetail = OwnerOperatorDetail::create([
@@ -385,12 +367,9 @@ class MigrationTest extends TestCase
         $vehicle3 = Vehicle::factory()->create();
         $thirdPartyAssignment = VehicleDriverAssignment::create([
             'vehicle_id' => $vehicle3->id,
-            'user_id' => $user->id,
-            'assignment_type' => 'third_party',
-            'effective_date' => now(),
-            'status' => 'active',
-            'assigned_by' => $user->id,
-            'assigned_at' => now()
+            'user_driver_detail_id' => $userDriverDetail->id,
+            'start_date' => now(),
+            'status' => 'active'
         ]);
         
         $thirdPartyDetail = ThirdPartyDetail::create([
@@ -417,21 +396,19 @@ class MigrationTest extends TestCase
         $vehicle = Vehicle::factory()->create();
         $user = User::factory()->create();
         $driverApplication = DriverApplication::factory()->create();
+        $userDriverDetail = UserDriverDetail::factory()->create(['user_id' => $user->id]);
         
         // Create assignment
         $assignment = VehicleDriverAssignment::create([
             'vehicle_id' => $vehicle->id,
-            'user_id' => $user->id,
-            'assignment_type' => 'company_driver',
-            'effective_date' => now(),
-            'status' => 'active',
-            'assigned_by' => $user->id,
-            'assigned_at' => now()
+            'user_driver_detail_id' => $userDriverDetail->id,
+            'start_date' => now(),
+            'status' => 'active'
         ]);
         
         // Create details for all types
         $companyDetail = CompanyDriverDetail::create([
-            'assignment_id' => $assignment->id,
+            'vehicle_driver_assignment_id' => $assignment->id,
             'driver_application_id' => $driverApplication->id,
             'employee_id' => 'EMP001',
             'department' => 'Transportation',

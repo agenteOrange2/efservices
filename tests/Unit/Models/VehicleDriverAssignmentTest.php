@@ -36,7 +36,7 @@ class VehicleDriverAssignmentTest extends TestCase
         ]);
         
         $companyDetail = CompanyDriverDetail::factory()->create([
-            'assignment_id' => $assignment->id
+            'vehicle_driver_assignment_id' => $assignment->id
         ]);
 
         $this->assertInstanceOf(CompanyDriverDetail::class, $assignment->companyDriverDetail);
@@ -96,7 +96,7 @@ class VehicleDriverAssignmentTest extends TestCase
             'assignment_type' => 'company_driver'
         ]);
         $companyDriver = CompanyDriverDetail::factory()->create([
-            'assignment_id' => $companyAssignment->id
+            'vehicle_driver_assignment_id' => $companyAssignment->id
         ]);
 
         $this->assertEquals($companyDriver->id, $companyAssignment->getDriverDetails()->id);

@@ -82,22 +82,21 @@ class DriverApplicationDetail extends Model
     }
     
     /**
-     * Relación con los detalles de Owner Operator
+     * Get Owner Operator details through VehicleDriverAssignment
+     * Note: OwnerOperatorDetail now uses vehicle_driver_assignment_id instead of driver_application_id
      */
-    public function ownerOperatorDetail(): HasOne
+    public function ownerOperatorDetail()
     {
-        return $this->hasOne(OwnerOperatorDetail::class, 'driver_application_id', 'driver_application_id');
+        return $this->vehicleDriverAssignment ? $this->vehicleDriverAssignment->ownerOperatorDetail : null;
     }
     
     /**
-     * Relación con los detalles de Third Party
-     * Note: ThirdPartyDetail now uses assignment_id instead of driver_application_id
+     * Get Third Party details through VehicleDriverAssignment
+     * Note: ThirdPartyDetail now uses vehicle_driver_assignment_id instead of driver_application_id
      */
-    public function thirdPartyDetail(): HasOne
+    public function thirdPartyDetail()
     {
-        // This relationship is deprecated as ThirdPartyDetail now uses assignment_id
-        // Use the assignment relationship instead
-        return $this->hasOne(ThirdPartyDetail::class, 'driver_application_id', 'driver_application_id');
+        return $this->vehicleDriverAssignment ? $this->vehicleDriverAssignment->thirdPartyDetail : null;
     }
     
     /**

@@ -373,7 +373,10 @@ class AdminDriverForm extends Component
         $this->photo_url = $this->driver->photo_url;
         
         // Load address info
-        $currentAddress = $this->driver->addresses()->where('primary', true)->first();
+        $currentAddress = null;
+        if ($this->driver->application && $this->driver->application->addresses()) {
+            $currentAddress = $this->driver->application->addresses()->where('primary', true)->first();
+        }
         if ($currentAddress) {
             $this->current_address = [
                 'address_line1' => $currentAddress->address_line1,
@@ -397,22 +400,25 @@ class AdminDriverForm extends Component
         }
         
         // Load previous addresses
-        $this->previous_addresses = $this->driver->addresses()
-            ->where('primary', false)
-            ->orderBy('from_date', 'desc')
-            ->get()
-            ->map(function ($address) {
-                return [
-                    'id' => $address->id,
-                    'address_line1' => $address->address_line1,
-                    'address_line2' => $address->address_line2,
-                    'city' => $address->city,
-                    'state' => $address->state,
-                    'zip_code' => $address->zip_code,
-                    'from_date' => $this->formatDateForDisplay($address->from_date),
-                    'to_date' => $this->formatDateForDisplay($address->to_date),
-                ];
-            })->toArray();
+        $this->previous_addresses = [];
+        if ($this->driver->application && $this->driver->application->addresses()) {
+            $this->previous_addresses = $this->driver->application->addresses()
+                ->where('primary', false)
+                ->orderBy('from_date', 'desc')
+                ->get()
+                ->map(function ($address) {
+                    return [
+                        'id' => $address->id,
+                        'address_line1' => $address->address_line1,
+                        'address_line2' => $address->address_line2,
+                        'city' => $address->city,
+                        'state' => $address->state,
+                        'zip_code' => $address->zip_code,
+                        'from_date' => $this->formatDateForDisplay($address->from_date),
+                        'to_date' => $this->formatDateForDisplay($address->to_date),
+                    ];
+                })->toArray();
+        }
         
         // Load application info
         $this->applying_position = $this->driver->applying_position ?? '';
@@ -929,9 +935,14 @@ class AdminDriverForm extends Component
      */
     private function saveAddresses()
     {
+        // Ensure driver has an application
+        if (!$this->driver->application) {
+            return;
+        }
+        
         // Delete existing addresses if editing
         if ($this->isEditing) {
-            $this->driver->addresses()->delete();
+            $this->driver->application->addresses()->delete();
         }
         
         // Save current address
@@ -948,7 +959,7 @@ class AdminDriverForm extends Component
                 'type' => 'current'
             ];
             
-            $this->driver->addresses()->create($addressData);
+            $this->driver->application->addresses()->create($addressData);
         }
         
         // Save previous addresses
@@ -966,7 +977,7 @@ class AdminDriverForm extends Component
                     'type' => 'previous'
                 ];
                 
-                $this->driver->addresses()->create($addressData);
+                $this->driver->application->addresses()->create($addressData);
             }
         }
         
@@ -1112,14 +1123,16 @@ class AdminDriverForm extends Component
      /*private function saveAddresses($driverDetail)
      {
          // Delete existing addresses if editing
-         if ($this->isEditing) {
-             $driverDetail->addresses()->delete();
+         if ($this->isEditing && $driverDetail->application) {
+             $driverDetail->application->addresses()->delete();
          }
          
          // Save new addresses
-         foreach ($this->addresses as $addressData) {
-             if (!empty($addressData['address_line_1'])) {
-                 $driverDetail->addresses()->create($addressData);
+         if ($driverDetail->application) {
+             foreach ($this->addresses as $addressData) {
+                 if (!empty($addressData['address_line_1'])) {
+                     $driverDetail->application->addresses()->create($addressData);
+                 }
              }
          }
      }
@@ -1788,11 +1801,13 @@ class AdminDriverForm extends Component
                 'country' => $this->country,
             ];
 
-            $address = $driverDetail->addresses()->first();
-            if ($address) {
-                $address->update($addressData);
-            } else {
-                $driverDetail->addresses()->create($addressData);
+            if ($driverDetail->application) {
+                $address = $driverDetail->application->addresses()->first();
+                if ($address) {
+                    $address->update($addressData);
+                } else {
+                    $driverDetail->application->addresses()->create($addressData);
+                }
             }
         }
 
