@@ -47,32 +47,32 @@
                         <div>
                             <x-base.form-label for="ownership_type" class="form-label required">Driver Type</x-base.form-label>
                             <x-base.form-select 
-                                id="assignment_type" 
-                                name="assignment_type" 
-                                class="form-select @error('assignment_type') is-invalid @enderror" 
+                                id="ownership_type" 
+                                name="ownership_type" 
+                                class="form-select @error('ownership_type') is-invalid @enderror" 
                                 required
                                 x-model="ownershipType"
                             >
                                 <option value="">Select Driver Type</option>
-                                <option value="company_driver" {{ old('assignment_type') == 'company_driver' ? 'selected' : '' }}>Company Driver</option>
-                                <option value="owner_operator" {{ old('assignment_type') == 'owner_operator' ? 'selected' : '' }}>Owner Operator</option>
-                                <option value="third_party" {{ old('assignment_type') == 'third_party' ? 'selected' : '' }}>Third Party</option>
+                                <option value="company_driver" {{ old('ownership_type') == 'company_driver' ? 'selected' : '' }}>Company Driver</option>
+                                <option value="owner_operator" {{ old('ownership_type') == 'owner_operator' ? 'selected' : '' }}>Owner Operator</option>
+                                <option value="third_party" {{ old('ownership_type') == 'third_party' ? 'selected' : '' }}>Third Party</option>
                             </x-base.form-select>
                             <small class="form-text text-muted">Select the driver type that best describes the relationship with the vehicle.</small>
-                            @error('assignment_type')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                            @error('ownership_type')
+                                 <div class="invalid-feedback">{{ $message }}</div>
+                             @enderror
                         </div>
                     </div>
                     </div>
 
                     <!-- Sección 2.5: Driver Selection -->
-                    <div class="mb-8">
+                    <div class="mb-8" x-show="ownershipType !== ''">
                         <h4 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">Driver Selection</h4>
                         <div class="grid grid-cols-1 gap-6">
                             <div>
-                                <x-base.form-label for="user_id" class="form-label required">Select Driver</x-base.form-label>
-                                <x-base.form-select id="user_id" name="user_id" class="form-select @error('user_id') is-invalid @enderror" required>
+                                <x-base.form-label for="user_id" class="form-label" x-bind:class="ownershipType !== 'company_driver' ? 'required' : ''">Select Driver</x-base.form-label>
+                                <x-base.form-select id="user_id" name="user_id" class="form-select @error('user_id') is-invalid @enderror" x-bind:required="ownershipType !== 'company_driver'">
                                     <option value="">Select a driver</option>
                                     @if(isset($availableDrivers))
                                         @foreach($availableDrivers as $driver)
@@ -82,7 +82,7 @@
                                         @endforeach
                                     @endif
                                 </x-base.form-select>
-                                <small class="form-text text-muted">Select the driver who will be assigned to this vehicle.</small>
+                                <small class="form-text text-muted" x-text="ownershipType === 'company_driver' ? 'For Company Driver, you can leave unassigned or select a specific driver.' : 'Select the driver who will be assigned to this vehicle.'"></small>
                                 @error('user_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -308,15 +308,163 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const assignmentTypeSelect = document.getElementById('assignment_type');
+        const ownershipTypeSelect = document.getElementById('ownership_type');
+        const userIdSelect = document.getElementById('user_id');
+        
+        // Función para obtener información del driver via AJAX
+        // Función para verificar si los campos ya están llenos
+        function areOwnerOperatorFieldsFilled() {
+            const fieldIds = [
+                'owner_first_name', 'owner_last_name', 'owner_phone', 'owner_email',
+                'owner_license_number'
+            ];
+            
+            return fieldIds.some(fieldId => {
+                const field = document.getElementById(fieldId);
+                return field && field.value.trim() !== '';
+            });
+        }
+        
+        // Función para mostrar indicador de carga
+        function showLoadingIndicator() {
+            const userIdSelect = document.getElementById('user_id');
+            if (userIdSelect) {
+                userIdSelect.disabled = true;
+                // Crear o mostrar indicador de carga
+                let loadingDiv = document.getElementById('driver-loading');
+                if (!loadingDiv) {
+                    loadingDiv = document.createElement('div');
+                    loadingDiv.id = 'driver-loading';
+                    loadingDiv.className = 'text-sm text-blue-600 mt-2';
+                    loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando información del conductor...';
+                    userIdSelect.parentNode.appendChild(loadingDiv);
+                } else {
+                    loadingDiv.style.display = 'block';
+                }
+            }
+        }
+        
+        // Función para enviar formulario automáticamente cuando se selecciona un conductor
+        function submitFormWithSelectedDriver(driverId) {
+            const form = document.getElementById('assign-driver-form');
+            if (form && driverId && driverId !== 'unassigned') {
+                // Mostrar indicador de carga
+                showLoadingIndicator();
+                
+                // Crear un input hidden para el driver seleccionado
+                let selectedDriverInput = document.getElementById('selected_driver_input');
+                if (!selectedDriverInput) {
+                    selectedDriverInput = document.createElement('input');
+                    selectedDriverInput.type = 'hidden';
+                    selectedDriverInput.name = 'selected_driver';
+                    selectedDriverInput.id = 'selected_driver_input';
+                    form.appendChild(selectedDriverInput);
+                }
+                selectedDriverInput.value = driverId;
+                
+                // Pequeño delay para que el usuario vea lo que está pasando
+                setTimeout(() => {
+                    form.submit();
+                }, 500);
+            }
+        }
+        
+        // Función mejorada para manejar la selección de conductor
+        function handleDriverSelection() {
+            const selectedDriverId = userIdSelect.value;
+            const ownershipType = ownershipTypeSelect.value;
+            
+            // Solo proceder si es Owner Operator
+            if (ownershipType === 'owner_operator') {
+                if (selectedDriverId && selectedDriverId !== 'unassigned') {
+                    // Verificar si los campos ya están llenos para evitar recargas innecesarias
+                    if (!areOwnerOperatorFieldsFilled()) {
+                        // Solo enviar formulario si los campos están vacíos
+                        submitFormWithSelectedDriver(selectedDriverId);
+                    } else {
+                        // Los campos ya están llenos, mostrar mensaje informativo
+                        console.log('Driver information already loaded, skipping reload');
+                        
+                        // Opcional: mostrar mensaje al usuario
+                        const existingMessage = document.getElementById('driver-info-message');
+                        if (!existingMessage) {
+                            const messageDiv = document.createElement('div');
+                            messageDiv.id = 'driver-info-message';
+                            messageDiv.className = 'text-sm text-green-600 mt-2';
+                            messageDiv.innerHTML = '<i class="fas fa-check-circle"></i> Información del conductor ya cargada';
+                            userIdSelect.parentNode.appendChild(messageDiv);
+                            
+                            // Remover mensaje después de 3 segundos
+                            setTimeout(() => {
+                                messageDiv.remove();
+                            }, 3000);
+                        }
+                    }
+                } else {
+                    // Limpiar campos si no hay selección válida
+                    clearOwnerOperatorFields();
+                }
+            } else {
+                // Para Company Driver y Third Party, solo limpiar campos sin recargar
+                clearOwnerOperatorFields();
+            }
+        }
+        
+        // Función para ocultar indicador de carga y limpiar mensajes
+        function hideLoadingAndMessages() {
+            // Ocultar indicador de carga
+            const loadingDiv = document.getElementById('driver-loading');
+            if (loadingDiv) {
+                loadingDiv.style.display = 'none';
+            }
+            
+            // Remover mensajes informativos
+            const messageDiv = document.getElementById('driver-info-message');
+            if (messageDiv) {
+                messageDiv.remove();
+            }
+            
+            // Rehabilitar el select
+            const userIdSelect = document.getElementById('user_id');
+            if (userIdSelect) {
+                userIdSelect.disabled = false;
+            }
+        }
+        
+        // Función para limpiar los campos de Owner Operator
+        function clearOwnerOperatorFields() {
+            const fieldIds = [
+                'owner_first_name', 'owner_last_name', 'owner_phone', 'owner_email',
+                'owner_license_number', 'owner_license_state', 'owner_license_expiry'
+            ];
+            
+            fieldIds.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.value = '';
+                    field.classList.remove('auto-filled');
+                    field.style.backgroundColor = '';
+                    field.removeAttribute('readonly');
+                }
+            });
+            
+            // Limpiar indicadores y mensajes
+            hideLoadingAndMessages();
+        }
+        
+
         
         function toggleSections() {
-            const selectedValue = assignmentTypeSelect.value;
+            const selectedValue = ownershipTypeSelect.value;
+            
+            // Limpiar indicadores y mensajes al cambiar tipo de ownership
+            hideLoadingAndMessages();
             
             // Obtener todas las secciones condicionales
             const ownerOperatorSection = document.querySelector('[x-show="ownershipType === \'owner_operator\'"]');
             const thirdPartySection = document.querySelector('[x-show="ownershipType === \'third_party\'"]');
             const companyDriverSection = document.querySelector('[x-show="ownershipType === \'company_driver\'"]');
+            const driverSelectionSection = document.querySelector('.mb-8[x-show="ownershipType !== \'\'"]');
             
             // Ocultar todas las secciones
             [ownerOperatorSection, thirdPartySection, companyDriverSection].forEach(section => {
@@ -324,6 +472,14 @@
                     section.style.display = 'none';
                 }
             });
+            
+            // Mostrar/ocultar sección de selección de driver
+            if (driverSelectionSection) {
+                driverSelectionSection.style.display = selectedValue ? 'block' : 'none';
+            }
+            
+            // Manejar opciones del select de driver
+            updateDriverOptions(selectedValue);
             
             // Mostrar la sección correspondiente
             switch(selectedValue) {
@@ -342,6 +498,30 @@
             }
         }
         
+        function updateDriverOptions(selectedType) {
+            if (!userIdSelect) return;
+            
+            // Remover opción 'unassigned' si existe
+            const unassignedOption = userIdSelect.querySelector('option[value="unassigned"]');
+            if (unassignedOption) {
+                unassignedOption.remove();
+            }
+            
+            // Agregar opción 'unassigned' para company_driver
+            if (selectedType === 'company_driver') {
+                const unassignedOption = document.createElement('option');
+                unassignedOption.value = 'unassigned';
+                unassignedOption.textContent = 'Sin asignar (Unassigned)';
+                userIdSelect.insertBefore(unassignedOption, userIdSelect.children[1]);
+                
+                // Hacer el campo opcional
+                userIdSelect.removeAttribute('required');
+            } else {
+                // Hacer el campo requerido para owner_operator y third_party
+                userIdSelect.setAttribute('required', 'required');
+            }
+        }
+        
         function validateOwnerOperatorFields() {
             // Verificar si hay datos del conductor auto-rellenados
             const firstNameField = document.getElementById('owner_first_name');
@@ -356,7 +536,12 @@
             }
         }
 
-        assignmentTypeSelect.addEventListener('change', toggleSections);
+        ownershipTypeSelect.addEventListener('change', toggleSections);
+        
+        // Manejar cambios en la selección de driver para Owner Operator
+        if (userIdSelect) {
+            userIdSelect.addEventListener('change', handleDriverSelection);
+        }
         
         // Ejecutar al cargar la página
         toggleSections();
@@ -365,13 +550,13 @@
         const form = document.getElementById('assign-driver-form');
         if (form) {
             form.addEventListener('submit', function(e) {
-                const selectedType = assignmentTypeSelect.value;
+                const selectedType = ownershipTypeSelect.value;
                 
                 // Validación básica
                 if (!selectedType) {
                     e.preventDefault();
                     alert('Please select a driver type.');
-                    assignmentTypeSelect.focus();
+                    ownershipTypeSelect.focus();
                     return false;
                 }
             });

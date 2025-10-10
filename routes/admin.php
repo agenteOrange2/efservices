@@ -83,9 +83,21 @@ Route::prefix('vehicles')->name('vehicles.')->group(function () {
 // 2. Rutas básicas para vehículos (RESOURCE AL FINAL)
 Route::resource('vehicles', VehicleController::class);
 
+// Rutas AJAX para crear makes y types dinámicamente
+Route::post('vehicles/create-make', [VehicleController::class, 'createMake'])->name('vehicles.create-make');
+Route::post('vehicles/create-type', [VehicleController::class, 'createType'])->name('vehicles.create-type');
+
+// Ruta para vehículos sin asignar
+Route::get('vehicles/unassigned', [VehicleController::class, 'unassignedVehicles'])->name('vehicles.unassigned');
+
 // Ruta para asignación de tipo de conductor
 Route::get('vehicles/{vehicle}/assign-driver-type', [VehicleController::class, 'assignDriverType'])->name('vehicles.assign-driver-type');
 Route::post('vehicles/{vehicle}/assign-driver-type', [VehicleController::class, 'storeDriverType'])->name('vehicles.store-driver-type');
+
+// New routes for driver selection
+Route::get('vehicles/{vehicle}/select-owner-operator', [VehicleController::class, 'selectOwnerOperator'])->name('vehicles.select-owner-operator');
+Route::get('vehicles/{vehicle}/select-third-party', [VehicleController::class, 'selectThirdParty'])->name('vehicles.select-third-party');
+Route::post('vehicles/assign-to-driver', [VehicleController::class, 'assignToDriver'])->name('vehicles.assign-to-driver');
 
 // New decoupled vehicle driver assignment routes
 Route::post('vehicles/{vehicle}/assign-driver', [VehicleController::class, 'assignDriver'])->name('vehicles.assign-driver');
@@ -914,6 +926,7 @@ Route::prefix('admin-vehicles')->name('admin-vehicles.')->group(function () {
     // API para obtener conductores por carrier
     Route::get('/driver-details/{userDriverDetail}', [VehicleController::class, 'getDriverDetails'])->name('driver-details');
     Route::get('/drivers-by-carrier/{carrierId}', [VehicleController::class, 'getDriversByCarrier'])->name('drivers-by-carrier');
+    Route::get('/get-driver-info/{userDriverDetailId}', [VehicleController::class, 'getDriverInfo'])->name('get-driver-info');
     
     // Rutas para documentos de vehículos
     Route::get('/{vehicle}/documents', [VehicleDocumentController::class, 'index'])->name('documents.index');

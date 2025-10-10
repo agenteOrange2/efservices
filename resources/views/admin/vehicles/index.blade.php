@@ -121,10 +121,6 @@
                             <x-base.table.thead>
                                 <x-base.table.tr>
                                     <x-base.table.td
-                                        class="w-5 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                                        <x-base.form-check.input type="checkbox" />
-                                    </x-base.table.td>
-                                    <x-base.table.td
                                         class="border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
                                         Unit
                                     </x-base.table.td>
@@ -161,9 +157,6 @@
                             <x-base.table.tbody>
                                 @foreach ($vehicles as $vehicle)
                                     <x-base.table.tr class="[&_td]:last:border-b-0">
-                                        <x-base.table.td class="border-dashed py-4">
-                                            <x-base.form-check.input type="checkbox" />
-                                        </x-base.table.td>
                                         <x-base.table.td class="border-dashed py-4">
                                             <div class="font-medium">{{ $vehicle->company_unit_number }}</div>
                                         </x-base.table.td>

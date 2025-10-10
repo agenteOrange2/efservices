@@ -14,7 +14,7 @@ class ThirdPartyDetail extends Model
     use HasFactory;
     
     protected $fillable = [
-        'vehicle_driver_assignment_id',
+        'assignment_id',
         'third_party_name',
         'third_party_phone',
         'third_party_email',
@@ -37,6 +37,6 @@ class ThirdPartyDetail extends Model
      */
     public function assignment(): BelongsTo
     {
-        return $this->belongsTo(VehicleDriverAssignment::class, 'vehicle_driver_assignment_id');
+        return $this->belongsTo(VehicleDriverAssignment::class, 'assignment_id');
     }
 }

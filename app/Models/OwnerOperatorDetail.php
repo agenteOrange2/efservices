@@ -14,7 +14,8 @@ class OwnerOperatorDetail extends Model
     use HasFactory;
     
     protected $fillable = [
-        'vehicle_driver_assignment_id',
+        'driver_application_id',
+        'assignment_id',
         'owner_name',
         'owner_phone',
         'owner_email',
@@ -31,9 +32,17 @@ class OwnerOperatorDetail extends Model
     /**
      * Obtener la asignación de conductor asociada a este detalle.
      */
-    public function assignment(): BelongsTo
+    public function vehicleDriverAssignment()
     {
-        return $this->belongsTo(VehicleDriverAssignment::class, 'vehicle_driver_assignment_id');
+        return $this->belongsTo(VehicleDriverAssignment::class, 'assignment_id');
+    }
+    
+    /**
+     * Alias para vehicleDriverAssignment - usado en VehicleController.
+     */
+    public function assignment()
+    {
+        return $this->belongsTo(VehicleDriverAssignment::class, 'assignment_id');
     }
     
     /**

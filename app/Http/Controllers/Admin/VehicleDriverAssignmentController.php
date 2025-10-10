@@ -158,11 +158,21 @@ class VehicleDriverAssignmentController extends Controller
     {
         $validated = $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
-            'user_id' => 'required|exists:users,id',
             'assignment_type' => 'required|in:company_driver,owner_operator,third_party',
             'effective_date' => 'required|date',
             'termination_date' => 'nullable|date|after:effective_date',
             'notes' => 'nullable|string|max:1000',
+            
+            // Custom validation for user_id based on assignment type
+            'user_id' => [
+                'nullable',
+                'exists:users,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    if (in_array($request->assignment_type, ['owner_operator', 'third_party']) && empty($value)) {
+                        $fail('El campo conductor es requerido para asignaciones de tipo Owner Operator y Third Party.');
+                    }
+                }
+            ],
             
             // Owner Operator fields
             'owner_name' => 'required_if:assignment_type,owner_operator|string|max:255',
@@ -205,7 +215,7 @@ class VehicleDriverAssignmentController extends Controller
                 // Create new assignment
                 $assignment = VehicleDriverAssignment::create([
                     'vehicle_id' => $validated['vehicle_id'],
-                    'user_id' => $validated['user_id'],
+                    'user_id' => $validated['user_id'] ?? null, // Allow null for unassigned company drivers
                     'assignment_type' => $validated['assignment_type'],
                     'status' => 'active',
                     'assigned_by' => auth()->id(),

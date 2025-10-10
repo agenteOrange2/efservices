@@ -7,10 +7,12 @@ use Illuminate\Http\Request;
 use App\Models\ThirdPartyDetail;
 use App\Models\UserDriverDetail;
 use App\Models\OwnerOperatorDetail;
+use App\Models\VehicleDriverAssignment;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
 use App\Models\Admin\Vehicle\Vehicle;
 use App\Models\Admin\Vehicle\VehicleMake;
 use App\Models\Admin\Vehicle\VehicleType;
@@ -65,6 +67,44 @@ class VehicleController extends Controller
     }
 
     /**
+     * Crear un nuevo Vehicle Make via AJAX
+     */
+    public function createMake(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:vehicle_makes,name'
+        ]);
+
+        $make = VehicleMake::create([
+            'name' => $request->name
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'make' => $make
+        ]);
+    }
+
+    /**
+     * Crear un nuevo Vehicle Type via AJAX
+     */
+    public function createType(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:vehicle_types,name'
+        ]);
+
+        $type = VehicleType::create([
+            'name' => $request->name
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'type' => $type
+        ]);
+    }
+
+    /**
      * Almacenar un vehículo recién creado.
      */
     public function store(Request $request)
@@ -81,6 +121,7 @@ class VehicleController extends Controller
             'registration_number' => 'required|string|max:255',
             'registration_state' => 'required|string|max:255',
             'registration_expiration_date' => 'required|date|after:today',
+            'annual_inspection_expiration_date' => 'required|date|after:today',
             'fuel_type' => 'required|string|in:Diesel,Gasoline,CNG,LNG,Electric,Hybrid',
         ]);
 
@@ -95,7 +136,7 @@ class VehicleController extends Controller
             'carrier_id', 'make', 'model', 'type', 'year', 'vin', 'color',
             'company_unit_number', 'gvwr', 'tire_size', 'fuel_type',
             'irp_apportioned_plate', 'registration_state', 'registration_number',
-            'registration_expiration_date', 'permanent_tag', 'location', 'notes',
+            'registration_expiration_date', 'annual_inspection_expiration_date', 'permanent_tag', 'location', 'notes',
             'out_of_service', 'out_of_service_date', 'suspended', 'suspended_date'
         ]);
         
@@ -178,7 +219,7 @@ class VehicleController extends Controller
         $thirdPartyDetails = null;
         
         // Buscar el vehicle driver assignment asociado al vehículo
-        $vehicleAssignment = \App\Models\Admin\Driver\VehicleDriverAssignment::where('vehicle_id', $vehicle->id)->first();
+        $vehicleAssignment = VehicleDriverAssignment::where('vehicle_id', $vehicle->id)->first();
         
         if ($vehicleAssignment) {
             // Cargar detalles según el tipo de propiedad
@@ -225,6 +266,8 @@ class VehicleController extends Controller
             'registration_number' => 'required|string|max:255',
             'registration_state' => 'required|string|max:255',
             'registration_expiration_date' => 'required|date|after:today',
+            'fuel_type' => 'required|string|in:Diesel,Gasoline,CNG,LNG,Electric,Hybrid',
+            'location' => 'nullable|string|max:255',
             'ownership_type' => 'required|in:owned,leased,third-party,unassigned',
 
             'owner_name' => 'nullable|required_if:ownership_type,owned|string|max:255',
@@ -626,65 +669,152 @@ class VehicleController extends Controller
     }
 
     /**
+     * Show unassigned vehicles.
+     */
+    public function unassignedVehicles()
+    {
+        Log::info('UnassignedVehicles - Iniciando consulta de vehículos sin asignar');
+        
+        // Obtener vehículos que no tienen asignaciones activas
+        $unassignedVehicles = Vehicle::with(['make', 'vehicle_type', 'carrier'])
+            ->whereDoesntHave('driverAssignments', function ($query) {
+                $query->where('status', 'active');
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+        
+        Log::info('UnassignedVehicles - Encontrados ' . $unassignedVehicles->total() . ' vehículos sin asignar');
+        
+        return view('admin.vehicles.unassigned-vehicles', compact('unassignedVehicles'));
+    }
+    
+    /**
      * Mostrar formulario para asignar tipo de conductor
      */
-    public function assignDriverType(Vehicle $vehicle)
+    public function assignDriverType(Request $request, Vehicle $vehicle)
     {
         // Cargar datos del conductor asignado si existe
         $driverData = null;
         
         Log::info('AssignDriverType - Iniciando carga de datos', [
             'vehicle_id' => $vehicle->id,
-            'user_driver_detail_id' => $vehicle->user_driver_detail_id
+            'user_driver_detail_id' => $vehicle->user_driver_detail_id,
+            'selected_driver' => $request->get('selected_driver')
         ]);
         
-        // Get available users for driver selection
-        $availableUsers = \App\Models\User::with('userDriverDetail')
-            ->whereHas('userDriverDetail')
-            ->select('id', 'name', 'email')
-            ->orderBy('name')
-            ->get();
+        // Si hay un conductor seleccionado, cargar sus datos
+        $selectedDriverId = $request->get('selected_driver');
+        if ($selectedDriverId) {
+            $selectedDriver = \App\Models\UserDriverDetail::with(['user', 'licenses'])
+                ->whereHas('user', function($query) use ($selectedDriverId) {
+                    $query->where('id', $selectedDriverId);
+                })
+                ->where('carrier_id', $vehicle->carrier_id)
+                ->first();
+                
+            if ($selectedDriver && $selectedDriver->user) {
+                $primaryLicense = $selectedDriver->licenses()->first();
+                
+                // Construir nombre completo
+                $fullName = trim($selectedDriver->user->name ?? '');
+                if ($selectedDriver->middle_name) {
+                    $fullName .= ' ' . trim($selectedDriver->middle_name);
+                }
+                if ($selectedDriver->last_name) {
+                    $fullName .= ' ' . trim($selectedDriver->last_name);
+                }
+                
+                // Separar nombre y apellido
+                $nameParts = explode(' ', $fullName, 2);
+                $firstName = $nameParts[0] ?? '';
+                $lastName = $nameParts[1] ?? '';
+                
+                // Formatear fecha de expiración
+                $licenseExpiration = '';
+                if ($primaryLicense && $primaryLicense->expiration_date) {
+                    try {
+                        $licenseExpiration = \Carbon\Carbon::parse($primaryLicense->expiration_date)->format('m/d/Y');
+                    } catch (\Exception $e) {
+                        $licenseExpiration = $primaryLicense->expiration_date;
+                    }
+                }
+                
+                $driverData = [
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'phone' => $selectedDriver->phone ?? '',
+                    'email' => $selectedDriver->user->email ?? '',
+                    'license_number' => $primaryLicense ? ($primaryLicense->license_number ?? '') : '',
+                    'license_class' => $primaryLicense ? ($primaryLicense->license_class ?? '') : '',
+                    'license_state' => $primaryLicense ? ($primaryLicense->state_of_issue ?? '') : '',
+                    'license_expiration' => $licenseExpiration,
+                    'selected_driver_id' => $selectedDriverId
+                ];
+                
+                Log::info('AssignDriverType - Datos del conductor seleccionado cargados', $driverData);
+            }
+        }
+        
+        // Get ALL available drivers for this vehicle's carrier (company, owner operator, third party)
+        $availableDrivers = \App\Models\UserDriverDetail::with(['user'])
+            ->where('carrier_id', $vehicle->carrier_id)
+            ->where('application_completed', 1)
+            ->whereHas('user', function($query) {
+                $query->where('status', 1);
+            })
+            ->get()
+            ->map(function($driverDetail) {
+                return (object) [
+                    'id' => $driverDetail->user->id,
+                    'name' => $driverDetail->user->name,
+                    'email' => $driverDetail->user->email
+                ];
+            });
         
         // Get current driver assignment if exists
         $currentAssignment = $vehicle->currentDriverAssignment();
         
-        // Primero, verificar si ya existe un owner operator para este vehículo
-        $existingOwnerOperator = \App\Models\OwnerOperatorDetail::where('vehicle_id', $vehicle->id)->first();
-        
-        if ($existingOwnerOperator) {
-            Log::info('AssignDriverType - Owner Operator existente encontrado', [
-                'owner_operator_id' => $existingOwnerOperator->id,
-                'owner_name' => $existingOwnerOperator->owner_name,
-                'owner_phone' => $existingOwnerOperator->owner_phone,
-                'owner_email' => $existingOwnerOperator->owner_email
-            ]);
+        // Si no hay conductor seleccionado, cargar datos existentes
+        if (!$selectedDriverId) {
+            // Primero, verificar si ya existe un owner operator para este vehículo
+            // Buscar a través de vehicle_driver_assignments ya que owner_operator_details no tiene vehicle_id directo
+            $existingOwnerOperator = \App\Models\OwnerOperatorDetail::whereHas('assignment', function($query) use ($vehicle) {
+                $query->where('vehicle_id', $vehicle->id);
+            })->first();
             
-            // Formatear fecha de expiración de licencia si existe
-            $licenseExpiration = '';
-            if ($existingOwnerOperator->owner_license_expiry) {
-                try {
-                    $licenseExpiration = \Carbon\Carbon::parse($existingOwnerOperator->owner_license_expiry)->format('m/d/Y');
-                } catch (\Exception $e) {
-                    $licenseExpiration = $existingOwnerOperator->owner_license_expiry;
+            if ($existingOwnerOperator) {
+                Log::info('AssignDriverType - Owner Operator existente encontrado', [
+                    'owner_operator_id' => $existingOwnerOperator->id,
+                    'owner_name' => $existingOwnerOperator->owner_name,
+                    'owner_phone' => $existingOwnerOperator->owner_phone,
+                    'owner_email' => $existingOwnerOperator->owner_email
+                ]);
+                
+                // Formatear fecha de expiración de licencia si existe
+                $licenseExpiration = '';
+                if ($existingOwnerOperator->owner_license_expiry) {
+                    try {
+                        $licenseExpiration = \Carbon\Carbon::parse($existingOwnerOperator->owner_license_expiry)->format('m/d/Y');
+                    } catch (\Exception $e) {
+                        $licenseExpiration = $existingOwnerOperator->owner_license_expiry;
+                    }
                 }
-            }
-            
-            $driverData = [
-                'first_name' => $existingOwnerOperator->owner_name ? explode(' ', $existingOwnerOperator->owner_name, 2)[0] : '',
-                'last_name' => $existingOwnerOperator->owner_name && strpos($existingOwnerOperator->owner_name, ' ') !== false ? 
-                    explode(' ', $existingOwnerOperator->owner_name, 2)[1] : '',
-                'phone' => $existingOwnerOperator->owner_phone ?? '',
-                'email' => $existingOwnerOperator->owner_email ?? '',
-                'license_number' => $existingOwnerOperator->owner_license_number ?? '',
-                'license_class' => '', // No se almacena en owner_operator_details
-                'license_state' => $existingOwnerOperator->owner_license_state ?? '',
-                'license_expiration' => $licenseExpiration,
-                'ownership_type' => 'owner_operator' // Indicar que es owner operator
-            ];
-            
-            Log::info('AssignDriverType - Datos de Owner Operator cargados', $driverData);
-        }
-        elseif ($vehicle->user_driver_detail_id) {
+                
+                $driverData = [
+                    'first_name' => $existingOwnerOperator->owner_name ? explode(' ', $existingOwnerOperator->owner_name, 2)[0] : '',
+                    'last_name' => $existingOwnerOperator->owner_name && strpos($existingOwnerOperator->owner_name, ' ') !== false ? 
+                        explode(' ', $existingOwnerOperator->owner_name, 2)[1] : '',
+                    'phone' => $existingOwnerOperator->owner_phone ?? '',
+                    'email' => $existingOwnerOperator->owner_email ?? '',
+                    'license_number' => $existingOwnerOperator->owner_license_number ?? '',
+                    'license_class' => '', // No se almacena en owner_operator_details
+                    'license_state' => $existingOwnerOperator->owner_license_state ?? '',
+                    'license_expiration' => $licenseExpiration,
+                    'ownership_type' => 'owner_operator' // Indicar que es owner operator
+                ];
+                
+                Log::info('AssignDriverType - Datos de Owner Operator cargados', $driverData);
+            } elseif ($vehicle->user_driver_detail_id) {
             $driver = \App\Models\UserDriverDetail::with(['user', 'licenses'])
                 ->find($vehicle->user_driver_detail_id);
             
@@ -752,8 +882,9 @@ class VehicleController extends Controller
         } else {
             Log::info('AssignDriverType - No hay user_driver_detail_id asignado al vehículo ni owner operator existente');
         }
+        }
         
-        return view('admin.vehicles.assign-driver-type', compact('vehicle', 'driverData', 'availableUsers', 'currentAssignment'));
+        return view('admin.vehicles.assign-driver-type', compact('vehicle', 'driverData', 'availableDrivers', 'currentAssignment'));
     }
 
     /**
@@ -962,15 +1093,33 @@ class VehicleController extends Controller
             }
         }
         
-        Log::info('StoreDriverType - Proceso completado exitosamente', [
+        // Store the ownership type and redirect to driver selection
+        Log::info('StoreDriverType - Redirecting to driver selection', [
             'vehicle_id' => $vehicle->id,
             'ownership_type' => $request->ownership_type,
             'driver_application_id' => $driverApplication->id,
             'driver_application_detail_id' => $driverApplicationDetail->id
         ]);
 
+        // Redirect based on ownership type to select specific driver
+        if ($request->ownership_type === 'company_driver') {
+            // For company drivers, redirect to vehicle show page with success message
+            // since company drivers are already assigned via user_driver_detail_id
+            return redirect()->route('admin.vehicles.show', $vehicle->id)
+                ->with('success', 'Company driver type set successfully. Vehicle is ready for assignment.');
+        } elseif ($request->ownership_type === 'owner_operator') {
+            // Redirect to owner operator selection page
+            return redirect()->route('admin.vehicles.select-owner-operator', $vehicle->id)
+                ->with('info', 'Please select an owner operator for this vehicle.');
+        } elseif ($request->ownership_type === 'third_party') {
+            // Redirect to third party selection page
+            return redirect()->route('admin.vehicles.select-third-party', $vehicle->id)
+                ->with('info', 'Please select a third party driver for this vehicle.');
+        }
+
+        // Default fallback
         return redirect()->route('admin.vehicles.show', $vehicle->id)
-            ->with('success', 'Tipo de conductor asignado exitosamente');
+            ->with('success', 'Driver type configuration completed successfully.');
     }
 
     /**
@@ -989,5 +1138,295 @@ class VehicleController extends Controller
     {
         $assignmentController = new \App\Http\Controllers\Admin\VehicleDriverAssignmentController();
         return $assignmentController->destroy($vehicle, $assignmentId);
+    }
+
+    // API Methods for Vehicle Management
+    
+    /**
+     * API: Create a new Vehicle Make
+     */
+    public function apiCreateMake(Request $request)
+    {
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255|unique:vehicle_makes,name'
+            ]);
+
+            $make = VehicleMake::create([
+                'name' => trim($request->name)
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Vehicle make created successfully',
+                'data' => [
+                    'id' => $make->id,
+                    'name' => $make->name
+                ]
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error creating vehicle make: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while creating the vehicle make'
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Create a new Vehicle Type
+     */
+    public function apiCreateType(Request $request)
+    {
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255|unique:vehicle_types,name'
+            ]);
+
+            $type = VehicleType::create([
+                'name' => trim($request->name)
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Vehicle type created successfully',
+                'data' => [
+                    'id' => $type->id,
+                    'name' => $type->name
+                ]
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error creating vehicle type: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while creating the vehicle type'
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Get all Vehicle Makes
+     */
+    public function apiGetMakes()
+    {
+        try {
+            $makes = VehicleMake::orderBy('name')->get(['id', 'name']);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $makes
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching vehicle makes: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while fetching vehicle makes'
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Get all Vehicle Types
+     */
+    public function apiGetTypes()
+    {
+        try {
+            $types = VehicleType::orderBy('name')->get(['id', 'name']);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $types
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching vehicle types: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while fetching vehicle types'
+            ], 500);
+        }
+    }
+
+    /**
+     * Show available owner operators for vehicle assignment
+     */
+    public function selectOwnerOperator(Vehicle $vehicle)
+    {
+        // Get all users with owner operator details filtered by carrier and completed application
+        $ownerOperators = UserDriverDetail::with(['user', 'ownerOperatorDetail'])
+            ->where('carrier_id', $vehicle->carrier_id)
+            ->where('application_completed', 1)
+            ->whereHas('ownerOperatorDetail')
+            ->whereHas('user', function($query) {
+                $query->where('status', 'active');
+            })
+            ->get();
+
+        return view('admin.vehicles.select-owner-operator', compact('vehicle', 'ownerOperators'));
+    }
+
+    /**
+     * Show available third party drivers for vehicle assignment
+     */
+    public function selectThirdParty(Vehicle $vehicle)
+    {
+        // Get all users with third party details filtered by carrier and completed application
+        $thirdPartyDrivers = UserDriverDetail::with(['user', 'thirdPartyDetail'])
+            ->where('carrier_id', $vehicle->carrier_id)
+            ->where('application_completed', 1)
+            ->whereHas('thirdPartyDetail')
+            ->whereHas('user', function($query) {
+                $query->where('status', 'active');
+            })
+            ->get();
+
+        return view('admin.vehicles.select-third-party', compact('vehicle', 'thirdPartyDrivers'));
+    }
+
+    /**
+     * Show available company drivers for vehicle assignment
+     */
+    public function selectCompanyDriver(Vehicle $vehicle)
+    {
+        // Get all users with company driver details filtered by carrier and completed application
+        $companyDrivers = UserDriverDetail::with(['user'])
+            ->where('carrier_id', $vehicle->carrier_id)
+            ->where('application_completed', 1)
+            ->whereHas('user', function($query) {
+                $query->where('status', 'active');
+            })
+            // Exclude drivers who already have owner operator or third party details
+            ->whereDoesntHave('ownerOperatorDetail')
+            ->whereDoesntHave('thirdPartyDetail')
+            ->get();
+
+        return view('admin.vehicles.select-company-driver', compact('vehicle', 'companyDrivers'));
+    }
+
+    /**
+     * Get driver information for AJAX request
+     */
+    public function getDriverInfo($userDriverDetailId)
+    {
+        try {
+            if (!$userDriverDetailId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Driver ID is required'
+                ], 400);
+            }
+
+            $driver = \App\Models\UserDriverDetail::with(['user', 'primaryLicense'])
+                ->find($userDriverDetailId);
+
+            if (!$driver) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Driver not found'
+                ], 404);
+            }
+
+            $driverInfo = [
+                'first_name' => $driver->user->name ?? '',
+                'last_name' => $driver->last_name ?? '',
+                'phone' => $driver->phone ?? '',
+                'email' => $driver->user->email ?? '',
+                'license_number' => $driver->primaryLicense->license_number ?? '',
+                'state_of_issue' => $driver->primaryLicense->state_of_issue ?? '',
+                'expiration_date' => $driver->primaryLicense->expiration_date ? $driver->primaryLicense->expiration_date->format('m/d/Y') : ''
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $driverInfo
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error getting driver info: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while fetching driver information'
+            ], 500);
+        }
+    }
+
+    /**
+     * Complete the driver assignment to vehicle
+     */
+    public function assignToDriver(Request $request, Vehicle $vehicle)
+    {
+        $request->validate([
+            'user_driver_detail_id' => 'required|exists:user_driver_details,id',
+            'driver_type' => 'required|in:owner_operator,third_party'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Terminate any existing active assignments
+            VehicleDriverAssignment::where('vehicle_id', $vehicle->id)
+                ->where('status', 'active')
+                ->update([
+                    'status' => 'inactive',
+                    'end_date' => now(),
+                    'unassigned_by' => auth()->id()
+                ]);
+
+            // Get the user driver detail
+            $userDriverDetail = UserDriverDetail::with(['user', 'ownerOperatorDetail', 'thirdPartyDetail'])
+                ->findOrFail($request->user_driver_detail_id);
+
+            // Create new assignment
+            $assignment = VehicleDriverAssignment::create([
+                'vehicle_id' => $vehicle->id,
+                'user_driver_detail_id' => $request->user_driver_detail_id,
+                'driver_type' => $request->driver_type,
+                'start_date' => now(),
+                'status' => 'active',
+                'assigned_by' => auth()->id()
+            ]);
+
+            // Update vehicle ownership type based on driver type
+            $ownershipTypeMap = [
+                'owner_operator' => 'owned',
+                'third_party' => 'third_party'
+            ];
+
+            $vehicle->update([
+                'ownership_type' => $ownershipTypeMap[$request->driver_type],
+                'user_driver_detail_id' => $request->user_driver_detail_id
+            ]);
+
+            DB::commit();
+
+            Log::info('Vehicle assignment completed', [
+                'vehicle_id' => $vehicle->id,
+                'user_driver_detail_id' => $request->user_driver_detail_id,
+                'driver_type' => $request->driver_type,
+                'assignment_id' => $assignment->id
+            ]);
+
+            return redirect()->route('admin.vehicles.show', $vehicle->id)
+                ->with('success', 'Vehicle successfully assigned to ' . $userDriverDetail->user->name);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error assigning vehicle to driver: ' . $e->getMessage());
+            
+            return back()->withErrors([
+                'assignment' => 'An error occurred while assigning the vehicle. Please try again.'
+            ]);
+        }
     }
 }

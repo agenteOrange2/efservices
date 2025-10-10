@@ -25,9 +25,13 @@ use App\Models\Admin\Driver\DriverTesting;
 use App\Models\Admin\Driver\DriverInspection;
 use App\Models\Admin\Driver\DriverTraining;
 use App\Models\VehicleDriverAssignment;
+use App\Models\OwnerOperatorDetail;
+use App\Models\ThirdPartyDetail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Models\Admin\Driver\DriverMedicalQualification;
 
@@ -357,5 +361,35 @@ class UserDriverDetail extends Model implements HasMedia
     public function currentVehicle()
     {
         return $this->activeVehicleAssignment()?->vehicle();
+    }
+
+    /**
+     * Relación con los detalles de owner operator a través de las asignaciones de vehículos.
+     */
+    public function ownerOperatorDetail(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            OwnerOperatorDetail::class,
+            VehicleDriverAssignment::class,
+            'user_driver_detail_id', // Foreign key on VehicleDriverAssignment table
+            'assignment_id', // Foreign key on OwnerOperatorDetail table
+            'id', // Local key on UserDriverDetail table
+            'id' // Local key on VehicleDriverAssignment table
+        );
+    }
+
+    /**
+     * Relación con los detalles de third party a través de las asignaciones de vehículos.
+     */
+    public function thirdPartyDetail(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            ThirdPartyDetail::class,
+            VehicleDriverAssignment::class,
+            'user_driver_detail_id', // Foreign key on VehicleDriverAssignment table
+            'assignment_id', // Foreign key on ThirdPartyDetail table
+            'id', // Local key on UserDriverDetail table
+            'id' // Local key on VehicleDriverAssignment table
+        );
     }
 }

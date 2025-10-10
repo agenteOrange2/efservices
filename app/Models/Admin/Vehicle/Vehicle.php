@@ -152,6 +152,14 @@ class Vehicle extends Model
     }
     
     /**
+     * Relación con el historial de asignaciones de conductores del vehículo.
+     */
+    public function assignmentHistory(): HasMany
+    {
+        return $this->hasMany(VehicleDriverAssignment::class)->orderBy('created_at', 'desc');
+    }
+    
+    /**
      * Obtener el conductor actualmente asignado al vehículo.
      */
     public function currentDriver()

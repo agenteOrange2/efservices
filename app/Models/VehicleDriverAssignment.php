@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\User;
+use App\Models\UserDriverDetail;
 use App\Models\Admin\Vehicle\Vehicle;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
 
 class VehicleDriverAssignment extends Model
@@ -41,6 +44,21 @@ class VehicleDriverAssignment extends Model
     public function driver(): BelongsTo
     {
         return $this->belongsTo(UserDriverDetail::class, 'user_driver_detail_id');
+    }
+
+    /**
+     * Get the user that owns the assignment through the driver detail.
+     */
+    public function user(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            User::class,
+            UserDriverDetail::class,
+            'id', // Foreign key on UserDriverDetail table
+            'id', // Foreign key on User table
+            'user_driver_detail_id', // Local key on VehicleDriverAssignment table
+            'user_id' // Local key on UserDriverDetail table
+        );
     }
 
     /**

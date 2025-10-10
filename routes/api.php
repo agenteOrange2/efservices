@@ -103,3 +103,18 @@ Route::prefix('documents')->group(function () {
     // Ruta para obtener documentos de un modelo
     Route::get('/model/{type}/{id}', [UploadController::class, 'getDocuments']);
 });
+
+// API Routes for Vehicle Management
+Route::prefix('vehicles')->group(function () {
+    // Vehicle Makes API
+    Route::post('/makes', [\App\Http\Controllers\Admin\Vehicles\VehicleController::class, 'apiCreateMake'])
+        ->name('api.vehicles.makes.store');
+    Route::get('/makes', [\App\Http\Controllers\Admin\Vehicles\VehicleController::class, 'apiGetMakes'])
+        ->name('api.vehicles.makes.index');
+    
+    // Vehicle Types API
+    Route::post('/types', [\App\Http\Controllers\Admin\Vehicles\VehicleController::class, 'apiCreateType'])
+        ->name('api.vehicles.types.store');
+    Route::get('/types', [\App\Http\Controllers\Admin\Vehicles\VehicleController::class, 'apiGetTypes'])
+        ->name('api.vehicles.types.index');
+});
