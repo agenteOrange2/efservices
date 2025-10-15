@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('vehicle_verification_tokens', function (Blueprint $table) {
-            $table->unsignedBigInteger('vehicle_driver_assignment_id')->nullable()->after('driver_application_id');
-            $table->foreign('vehicle_driver_assignment_id')
-                  ->references('id')
-                  ->on('vehicle_driver_assignments')
-                  ->onDelete('set null');
+            // $table->unsignedBigInteger('vehicle_driver_assignment_id')->nullable()->after('driver_application_id');
+            // $table->foreign('vehicle_driver_assignment_id')
+            //       ->references('id')
+            //       ->on('vehicle_driver_assignments')
+            //       ->onDelete('set null');
         });
     }
 

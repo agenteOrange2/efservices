@@ -15,7 +15,7 @@ class OwnerOperatorDetail extends Model
     
     protected $fillable = [
         'driver_application_id',
-        'assignment_id',
+        'vehicle_driver_assignment_id',
         'owner_name',
         'owner_phone',
         'owner_email',
@@ -34,7 +34,7 @@ class OwnerOperatorDetail extends Model
      */
     public function vehicleDriverAssignment()
     {
-        return $this->belongsTo(VehicleDriverAssignment::class, 'assignment_id');
+        return $this->belongsTo(VehicleDriverAssignment::class, 'vehicle_driver_assignment_id');
     }
     
     /**
@@ -42,7 +42,7 @@ class OwnerOperatorDetail extends Model
      */
     public function assignment()
     {
-        return $this->belongsTo(VehicleDriverAssignment::class, 'assignment_id');
+        return $this->belongsTo(VehicleDriverAssignment::class, 'vehicle_driver_assignment_id');
     }
     
     /**
@@ -82,7 +82,7 @@ class OwnerOperatorDetail extends Model
      */
     public function scopeActive($query)
     {
-        return $query->whereHas('assignment', function ($q) {
+        return $query->whereHas('vehicleDriverAssignment', function ($q) {
             $q->where('status', 'active');
         });
     }

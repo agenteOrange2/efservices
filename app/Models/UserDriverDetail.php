@@ -372,7 +372,7 @@ class UserDriverDetail extends Model implements HasMedia
             OwnerOperatorDetail::class,
             VehicleDriverAssignment::class,
             'user_driver_detail_id', // Foreign key on VehicleDriverAssignment table
-            'assignment_id', // Foreign key on OwnerOperatorDetail table
+            'vehicle_driver_assignment_id', // Foreign key on OwnerOperatorDetail table
             'id', // Local key on UserDriverDetail table
             'id' // Local key on VehicleDriverAssignment table
         );
@@ -387,7 +387,7 @@ class UserDriverDetail extends Model implements HasMedia
             ThirdPartyDetail::class,
             VehicleDriverAssignment::class,
             'user_driver_detail_id', // Foreign key on VehicleDriverAssignment table
-            'assignment_id', // Foreign key on ThirdPartyDetail table
+            'vehicle_driver_assignment_id', // Foreign key on ThirdPartyDetail table
             'id', // Local key on UserDriverDetail table
             'id' // Local key on VehicleDriverAssignment table
         );

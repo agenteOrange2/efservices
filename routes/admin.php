@@ -93,6 +93,8 @@ Route::get('vehicles/unassigned', [VehicleController::class, 'unassignedVehicles
 // Ruta para asignación de tipo de conductor
 Route::get('vehicles/{vehicle}/assign-driver-type', [VehicleController::class, 'assignDriverType'])->name('vehicles.assign-driver-type');
 Route::post('vehicles/{vehicle}/assign-driver-type', [VehicleController::class, 'storeDriverType'])->name('vehicles.store-driver-type');
+// Ruta AJAX para cargar datos del conductor
+Route::get('vehicles/{vehicle}/get-driver-data', [VehicleController::class, 'getDriverData'])->name('vehicles.get-driver-data');
 
 // New routes for driver selection
 Route::get('vehicles/{vehicle}/select-owner-operator', [VehicleController::class, 'selectOwnerOperator'])->name('vehicles.select-owner-operator');

@@ -11,7 +11,7 @@
     <!-- Contenido principal -->
     <div class="box box--stacked mt-5">
         <div class="box-body p-5">
-            <form id="assign-driver-form" action="{{ route('admin.vehicle-driver-assignments.store') }}" method="POST" x-data="{ ownershipType: '{{ old('ownership_type', $driverData['ownership_type'] ?? '') }}' }" class="space-y-6">
+            <form id="assign-driver-form" action="{{ route('admin.vehicles.store-driver-type', $vehicle->id) }}" method="POST" x-data="{ ownershipType: '{{ old('ownership_type', $driverData['ownership_type'] ?? '') }}' }" class="space-y-6">
                 @csrf
                 <input type="hidden" name="vehicle_id" value="{{ $vehicle->id }}">
                 <input type="hidden" name="effective_date" value="{{ date('Y-m-d') }}">
@@ -99,7 +99,7 @@
                         <h5 class="text-md font-medium mb-3 text-gray-700">Personal Information</h5>
                         @if($driverData)
                             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                                <p class="text-sm text-blue-700 mb-2"><i class="fas fa-info-circle mr-1"></i> Information auto-filled from assigned driver</p>
+                                <p class="text-sm text-blue-700 mb-2"><i class="fas fa-info-circle mr-1"></i> Information preview from selected driver (read-only)</p>
                             </div>
                         @endif
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -344,28 +344,119 @@
             }
         }
         
-        // Función para enviar formulario automáticamente cuando se selecciona un conductor
-        function submitFormWithSelectedDriver(driverId) {
-            const form = document.getElementById('assign-driver-form');
-            if (form && driverId && driverId !== 'unassigned') {
+        // Función para cargar datos del conductor via AJAX sin recargar página
+        function loadDriverDataForPreview(driverId) {
+            if (driverId && driverId !== 'unassigned') {
                 // Mostrar indicador de carga
                 showLoadingIndicator();
                 
-                // Crear un input hidden para el driver seleccionado
-                let selectedDriverInput = document.getElementById('selected_driver_input');
-                if (!selectedDriverInput) {
-                    selectedDriverInput = document.createElement('input');
-                    selectedDriverInput.type = 'hidden';
-                    selectedDriverInput.name = 'selected_driver';
-                    selectedDriverInput.id = 'selected_driver_input';
-                    form.appendChild(selectedDriverInput);
-                }
-                selectedDriverInput.value = driverId;
+                // Construir URL para el endpoint AJAX
+                const ajaxUrl = `{{ route('admin.vehicles.get-driver-data', $vehicle->id) }}?driver_id=${driverId}`;
                 
-                // Pequeño delay para que el usuario vea lo que está pasando
+                // Realizar petición AJAX
+                fetch(ajaxUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        // Llenar los campos con los datos del conductor
+                        fillOwnerOperatorFields(data.data);
+                        
+                        // Mantener el estado de Owner Operator seleccionado
+                        const ownershipTypeSelect = document.getElementById('ownership_type');
+                        if (ownershipTypeSelect) {
+                            ownershipTypeSelect.value = 'owner_operator';
+                            ownershipTypeSelect.dispatchEvent(new Event('change'));
+                        }
+                        
+                        // Mostrar mensaje de éxito
+                        showSuccessMessage('Información del conductor cargada correctamente');
+                    } else {
+                        showErrorMessage(data.error || 'Error al cargar los datos del conductor');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showErrorMessage('Error de conexión al cargar los datos del conductor');
+                })
+                .finally(() => {
+                    hideLoadingAndMessages();
+                });
+            }
+        }
+        
+        // Función para llenar los campos de Owner Operator
+        function fillOwnerOperatorFields(driverData) {
+            const fieldMapping = {
+                'owner_first_name': driverData.first_name,
+                'owner_last_name': driverData.last_name,
+                'owner_phone': driverData.phone,
+                'owner_email': driverData.email,
+                'owner_license_number': driverData.license_number,
+                'owner_license_state': driverData.license_state,
+                'owner_license_expiry': driverData.license_expiration
+            };
+            
+            Object.keys(fieldMapping).forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field && fieldMapping[fieldId]) {
+                    field.value = fieldMapping[fieldId];
+                    field.classList.add('auto-filled');
+                    field.style.backgroundColor = '#f0f9ff';
+                    field.setAttribute('readonly', true);
+                }
+            });
+        }
+        
+        // Función para mostrar mensaje de éxito
+        function showSuccessMessage(message) {
+            const existingMessage = document.getElementById('driver-success-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.id = 'driver-success-message';
+            messageDiv.className = 'text-sm text-green-600 mt-2 p-2 bg-green-50 border border-green-200 rounded';
+            messageDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            
+            const userIdSelect = document.getElementById('user_id');
+            if (userIdSelect) {
+                userIdSelect.parentNode.appendChild(messageDiv);
+                
+                // Remover mensaje después de 5 segundos
                 setTimeout(() => {
-                    form.submit();
-                }, 500);
+                    messageDiv.remove();
+                }, 5000);
+            }
+        }
+        
+        // Función para mostrar mensaje de error
+        function showErrorMessage(message) {
+            const existingMessage = document.getElementById('driver-error-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.id = 'driver-error-message';
+            messageDiv.className = 'text-sm text-red-600 mt-2 p-2 bg-red-50 border border-red-200 rounded';
+            messageDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+            
+            const userIdSelect = document.getElementById('user_id');
+            if (userIdSelect) {
+                userIdSelect.parentNode.appendChild(messageDiv);
+                
+                // Remover mensaje después de 5 segundos
+                setTimeout(() => {
+                    messageDiv.remove();
+                }, 5000);
             }
         }
         
@@ -377,36 +468,12 @@
             // Solo proceder si es Owner Operator
             if (ownershipType === 'owner_operator') {
                 if (selectedDriverId && selectedDriverId !== 'unassigned') {
-                    // Verificar si los campos ya están llenos para evitar recargas innecesarias
-                    if (!areOwnerOperatorFieldsFilled()) {
-                        // Solo enviar formulario si los campos están vacíos
-                        submitFormWithSelectedDriver(selectedDriverId);
-                    } else {
-                        // Los campos ya están llenos, mostrar mensaje informativo
-                        console.log('Driver information already loaded, skipping reload');
-                        
-                        // Opcional: mostrar mensaje al usuario
-                        const existingMessage = document.getElementById('driver-info-message');
-                        if (!existingMessage) {
-                            const messageDiv = document.createElement('div');
-                            messageDiv.id = 'driver-info-message';
-                            messageDiv.className = 'text-sm text-green-600 mt-2';
-                            messageDiv.innerHTML = '<i class="fas fa-check-circle"></i> Información del conductor ya cargada';
-                            userIdSelect.parentNode.appendChild(messageDiv);
-                            
-                            // Remover mensaje después de 3 segundos
-                            setTimeout(() => {
-                                messageDiv.remove();
-                            }, 3000);
-                        }
-                    }
+                    // Siempre cargar datos del conductor seleccionado
+                    loadDriverDataForPreview(selectedDriverId);
                 } else {
                     // Limpiar campos si no hay selección válida
                     clearOwnerOperatorFields();
                 }
-            } else {
-                // Para Company Driver y Third Party, solo limpiar campos sin recargar
-                clearOwnerOperatorFields();
             }
         }
         

@@ -22,6 +22,9 @@ class DatabaseSeeder extends Seeder
         $this->call(CarrierSeeder::class);
         $this->call(NotificationTypeSeeder::class);
         $this->call(LicenseEndorsementSeeder::class);
+        $this->call(VehicleMakeSeeder::class);
+        $this->call(VehicleTypeSeeder::class);
+        $this->call(UserDriverSeeder::class);
         
         $frontendUser = \App\Models\User::factory()->create([
             'name' => 'Elliot Alderson',

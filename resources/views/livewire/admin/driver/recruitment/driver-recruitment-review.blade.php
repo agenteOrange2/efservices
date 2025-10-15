@@ -56,7 +56,7 @@
 
             <div class="flex items-center">
                 @php
-                    $status = $application->status ?? 'draft';
+                    $status = $application ? $application->status : 'draft';
                     $statusClass = [
                         'draft' => 'text-slate-500 bg-slate-100',
                         'pending' => 'text-amber-500 bg-amber-100',
@@ -2177,12 +2177,12 @@
                     }
                 @endphp
                 {{ implode(', ', $uncheckedItems) }}<br>
-                <strong>Estado de la aplicación:</strong> {{ $application->status }}<br>
-                <strong>Condición del botón:</strong> {{ $this->isChecklistComplete() && ($application->status === 'pending' || $application->status === 'draft') ? 'Debería mostrarse' : 'No se mostrará' }}
+                <strong>Estado de la aplicación:</strong> {{ $application ? $application->status : 'No application' }}<br>
+                <strong>Condición del botón:</strong> {{ $this->isChecklistComplete() && ($application && ($application->status === 'pending' || $application->status === 'draft')) ? 'Debería mostrarse' : 'No se mostrará' }}
             </div> --}}
 
                 <!-- Actions based on application status -->
-                @if ($application->status === 'pending' || $application->status === 'draft')
+                @if ($application && ($application->status === 'pending' || $application->status === 'draft'))
                     <div class="border border-slate-200 rounded-lg overflow-hidden">
                         <div class="bg-slate-50 px-4 py-2 font-medium text-sm border-b border-slate-200">Available
                             Actions</div>
@@ -2219,7 +2219,7 @@
                             </div>
                         </div>
                     </div>
-                @elseif($application->status === 'approved')
+                @elseif($application && $application->status === 'approved')
                     <div class="border border-success/30 rounded-lg overflow-hidden">
                         <div class="bg-success/10 px-4 py-2 font-medium text-success border-b border-success/30">
                             Application Approved</div>
@@ -2241,7 +2241,7 @@
                             </div>
                         </div>
                     </div>
-                @elseif($application->status === 'rejected')
+                @elseif($application && $application->status === 'rejected')
                     <div class="border border-danger/30 rounded-lg overflow-hidden">
                         <div class="bg-danger/10 px-4 py-2 font-medium text-danger border-b border-danger/30">
                             Application Rejected</div>
@@ -2258,9 +2258,13 @@
                                 <div>
                                     <div class="font-medium text-danger">This application has been rejected</div>
                                     <div class="text-sm text-slate-600 mt-1">Rejection Date:
-                                        {{ is_string($application->completed_at)
-                                            ? \Carbon\Carbon::parse($application->completed_at)->format('m/d/Y')
-                                            : $application->completed_at->format('m/d/Y') }}
+                                        @if(!$application->completed_at)
+                                            N/A
+                                        @else
+                                            {{ is_string($application->completed_at)
+                                                ? \Carbon\Carbon::parse($application->completed_at)->format('m/d/Y')
+                                                : $application->completed_at->format('m/d/Y') }}
+                                        @endif
                                     </div>
 
                                     @if ($application->rejection_reason)

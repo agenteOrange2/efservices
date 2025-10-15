@@ -689,6 +689,80 @@ class VehicleController extends Controller
     }
     
     /**
+     * Endpoint AJAX para cargar datos del conductor sin recargar página
+     */
+    public function getDriverData(Request $request, Vehicle $vehicle)
+    {
+        try {
+            $selectedDriverId = $request->get('driver_id');
+            
+            if (!$selectedDriverId) {
+                return response()->json(['error' => 'Driver ID is required'], 400);
+            }
+            
+            $selectedDriver = \App\Models\UserDriverDetail::with(['user', 'licenses'])
+                ->whereHas('user', function($query) use ($selectedDriverId) {
+                    $query->where('id', $selectedDriverId);
+                })
+                ->where('carrier_id', $vehicle->carrier_id)
+                ->first();
+                
+            if (!$selectedDriver || !$selectedDriver->user) {
+                return response()->json(['error' => 'Driver not found'], 404);
+            }
+            
+            $primaryLicense = $selectedDriver->licenses()->first();
+            
+            // Construir nombre completo
+            $fullName = trim($selectedDriver->user->name ?? '');
+            if ($selectedDriver->middle_name) {
+                $fullName .= ' ' . trim($selectedDriver->middle_name);
+            }
+            if ($selectedDriver->last_name) {
+                $fullName .= ' ' . trim($selectedDriver->last_name);
+            }
+            
+            // Separar nombre y apellido
+            $nameParts = explode(' ', $fullName, 2);
+            $firstName = $nameParts[0] ?? '';
+            $lastName = $nameParts[1] ?? '';
+            
+            // Formatear fecha de expiración
+            $licenseExpiration = '';
+            if ($primaryLicense && $primaryLicense->expiration_date) {
+                try {
+                    $licenseExpiration = \Carbon\Carbon::parse($primaryLicense->expiration_date)->format('m/d/Y');
+                } catch (\Exception $e) {
+                    $licenseExpiration = $primaryLicense->expiration_date;
+                }
+            }
+            
+            $driverData = [
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'phone' => $selectedDriver->phone ?? '',
+                'email' => $selectedDriver->user->email ?? '',
+                'license_number' => $primaryLicense ? ($primaryLicense->license_number ?? '') : '',
+                'license_class' => $primaryLicense ? ($primaryLicense->license_class ?? '') : '',
+                'license_state' => $primaryLicense ? ($primaryLicense->state_of_issue ?? '') : '',
+                'license_expiration' => $licenseExpiration,
+                'ownership_type' => 'owner_operator'
+            ];
+            
+            return response()->json(['success' => true, 'data' => $driverData]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error loading driver data via AJAX', [
+                'error' => $e->getMessage(),
+                'vehicle_id' => $vehicle->id,
+                'driver_id' => $selectedDriverId ?? null
+            ]);
+            
+            return response()->json(['error' => 'Error loading driver data'], 500);
+        }
+    }
+
+    /**
      * Mostrar formulario para asignar tipo de conductor
      */
     public function assignDriverType(Request $request, Vehicle $vehicle)
@@ -1101,20 +1175,19 @@ class VehicleController extends Controller
             'driver_application_detail_id' => $driverApplicationDetail->id
         ]);
 
-        // Redirect based on ownership type to select specific driver
+        // Redirect based on ownership type
         if ($request->ownership_type === 'company_driver') {
             // For company drivers, redirect to vehicle show page with success message
-            // since company drivers are already assigned via user_driver_detail_id
             return redirect()->route('admin.vehicles.show', $vehicle->id)
                 ->with('success', 'Company driver type set successfully. Vehicle is ready for assignment.');
         } elseif ($request->ownership_type === 'owner_operator') {
-            // Redirect to owner operator selection page
-            return redirect()->route('admin.vehicles.select-owner-operator', $vehicle->id)
-                ->with('info', 'Please select an owner operator for this vehicle.');
+            // For owner operator, redirect back to assign-driver-type page with success message
+            return redirect()->route('admin.vehicles.assign-driver-type', $vehicle->id)
+                ->with('success', 'Owner operator information saved successfully.');
         } elseif ($request->ownership_type === 'third_party') {
-            // Redirect to third party selection page
-            return redirect()->route('admin.vehicles.select-third-party', $vehicle->id)
-                ->with('info', 'Please select a third party driver for this vehicle.');
+            // For third party, redirect back to assign-driver-type page with success message
+            return redirect()->route('admin.vehicles.assign-driver-type', $vehicle->id)
+                ->with('success', 'Third party information saved successfully.');
         }
 
         // Default fallback
