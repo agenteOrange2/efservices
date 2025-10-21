@@ -13,6 +13,7 @@ use App\Models\Admin\Driver\DriverLicense;
 use App\Models\Admin\Driver\DriverMedicalQualification;
 use App\Models\Admin\Driver\DriverExperience;
 use App\Models\Admin\Driver\DriverAddress;
+use App\Models\VehicleDriverAssignment;
 use Spatie\Permission\Models\Role;
 use Faker\Factory as Faker;
 use Carbon\Carbon;
@@ -182,6 +183,20 @@ class UserDriverSeeder extends Seeder
                 'updated_at' => now(),
             ]);
             
+            // Crear VehicleDriverAssignment para el Vehicle Assignment Type
+            $assignmentTypes = ['company_driver', 'owner_operator', 'third_party'];
+            $assignmentType = $faker->randomElement($assignmentTypes);
+            
+            $vehicleDriverAssignment = VehicleDriverAssignment::create([
+                'user_driver_detail_id' => $userDriverDetail->id,
+                'status' => $faker->randomElement(['pending', 'active', 'inactive']),
+                'start_date' => $faker->dateTimeBetween($user->created_at, 'now'),
+                'end_date' => $faker->optional(0.3)->dateTimeBetween('now', '+1 year'),
+                'notes' => $faker->optional(0.5)->sentence(),
+                'created_at' => $user->created_at,
+                'updated_at' => now(),
+            ]);
+
             // Crear DriverApplicationDetail
             $position = $faker->randomElement($positions);
             DriverApplicationDetail::create([
@@ -195,6 +210,7 @@ class UserDriverSeeder extends Seeder
                 'how_did_hear' => $faker->randomElement(['website', 'referral', 'job_board', 'social_media', 'other']),
                 'expected_pay' => $faker->randomFloat(2, 50000, 80000),
                 'has_completed_employment_history' => $applicationCompleted,
+                'vehicle_driver_assignment_id' => $vehicleDriverAssignment->id,
                 'created_at' => $user->created_at,
                 'updated_at' => now(),
             ]);
