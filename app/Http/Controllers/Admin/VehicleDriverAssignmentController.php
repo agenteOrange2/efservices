@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\VehicleDriverAssignment;
+use App\Models\Admin\Vehicle\VehicleDriverAssignment;
 use App\Models\Admin\Vehicle\Vehicle;
 use App\Models\User;
 use App\Models\OwnerOperatorDetail;
@@ -216,7 +216,7 @@ class VehicleDriverAssignmentController extends Controller
                 $assignment = VehicleDriverAssignment::create([
                     'vehicle_id' => $validated['vehicle_id'],
                     'user_id' => $validated['user_id'] ?? null, // Allow null for unassigned company drivers
-                    'assignment_type' => $validated['assignment_type'],
+                    'driver_type' => $validated['assignment_type'],
                     'status' => 'active',
                     'assigned_by' => auth()->id(),
                     'assigned_at' => now(),
@@ -231,7 +231,7 @@ class VehicleDriverAssignmentController extends Controller
                     'assignment_id' => $assignment->id,
                     'vehicle_id' => $validated['vehicle_id'],
                     'user_id' => $validated['user_id'],
-                    'assignment_type' => $validated['assignment_type'],
+                    'driver_type' => $validated['assignment_type'],
                     'assigned_by' => auth()->id()
                 ]);
             });

@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\Admin\Driver\VehicleDriverAssignment;
+use App\Models\Admin\Vehicle\VehicleDriverAssignment;
 use App\Models\Admin\Vehicle\Vehicle;
 use App\Models\UserDriverDetail;
 use App\Models\DriverApplication;

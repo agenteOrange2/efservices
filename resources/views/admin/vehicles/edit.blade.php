@@ -12,57 +12,76 @@ $breadcrumbLinks = [
 <script>
     // Global functions for Make and Type modals - must be defined before Alpine.js
     function addNewMake() {
-        document.getElementById('addMakeModal').classList.remove('hidden');
-        document.getElementById('newMakeName').focus();
+        const modal = document.getElementById('addMakeModal');
+        const input = document.getElementById('makeName');
+        if (modal) modal.classList.remove('hidden');
+        if (input) input.focus();
     }
 
     function addNewType() {
-        document.getElementById('addTypeModal').classList.remove('hidden');
-        document.getElementById('newTypeName').focus();
+        const modal = document.getElementById('addTypeModal');
+        const input = document.getElementById('typeName');
+        if (modal) modal.classList.remove('hidden');
+        if (input) input.focus();
     }
 
     // Modal functions for Make
     function openMakeModal() {
-        document.getElementById('addMakeModal').classList.remove('hidden');
-        document.getElementById('newMakeName').focus();
+        const modal = document.getElementById('addMakeModal');
+        const input = document.getElementById('makeName');
+        if (modal) modal.classList.remove('hidden');
+        if (input) input.focus();
     }
 
     function closeMakeModal() {
-        document.getElementById('addMakeModal').classList.add('hidden');
-        document.getElementById('newMakeName').value = '';
+        const modal = document.getElementById('addMakeModal');
+        const input = document.getElementById('makeName');
+        if (modal) modal.classList.add('hidden');
+        if (input) input.value = '';
         hideError('makeError');
     }
 
     // Modal functions for Type
     function openTypeModal() {
-        document.getElementById('addTypeModal').classList.remove('hidden');
-        document.getElementById('newTypeName').focus();
+        const modal = document.getElementById('addTypeModal');
+        const input = document.getElementById('typeName');
+        if (modal) modal.classList.remove('hidden');
+        if (input) input.focus();
     }
 
     function closeTypeModal() {
-        document.getElementById('addTypeModal').classList.add('hidden');
-        document.getElementById('newTypeName').value = '';
+        const modal = document.getElementById('addTypeModal');
+        const input = document.getElementById('typeName');
+        if (modal) modal.classList.add('hidden');
+        if (input) input.value = '';
         hideError('typeError');
     }
 
     // Error handling functions
     function showError(elementId, message) {
         const errorElement = document.getElementById(elementId);
-        errorElement.textContent = message;
-        errorElement.classList.remove('hidden');
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+        }
     }
 
     function hideError(elementId) {
         const errorElement = document.getElementById(elementId);
-        errorElement.classList.add('hidden');
+        if (errorElement) {
+            errorElement.classList.add('hidden');
+        }
     }
 
     // Initialize event listeners when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
         // Form submission handlers
-        document.getElementById('addMakeForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const makeName = document.getElementById('newMakeName').value.trim();
+        const addMakeForm = document.getElementById('addMakeForm');
+        if (addMakeForm) {
+            addMakeForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const makeNameInput = document.getElementById('makeName');
+                const makeName = makeNameInput ? makeNameInput.value.trim() : '';
             
             if (!makeName) {
                 showError('makeError', 'Make name is required');
@@ -77,14 +96,19 @@ $breadcrumbLinks = [
                 },
                 body: JSON.stringify({ name: makeName })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => Promise.reject(err));
+                }
+                return response.json();
+            })
             .then(data => {
-                if (data.success) {
+                if (data.success && data.data) {
                     // Add new option to select
                     const makeSelect = document.querySelector('select[name="make"]');
                     const newOption = document.createElement('option');
-                    newOption.value = data.make.name;
-                    newOption.textContent = data.make.name;
+                    newOption.value = data.data.name;
+                    newOption.textContent = data.data.name;
                     newOption.selected = true;
                     
                     // Insert before the "Add New Make" option
@@ -95,7 +119,7 @@ $breadcrumbLinks = [
                     if (window.Alpine && window.Alpine.store) {
                         const alpineData = makeSelect.closest('[x-data]');
                         if (alpineData && alpineData._x_dataStack) {
-                            alpineData._x_dataStack[0].make = data.make.name;
+                            alpineData._x_dataStack[0].make = data.data.name;
                         }
                     }
                     
@@ -106,13 +130,23 @@ $breadcrumbLinks = [
             })
             .catch(error => {
                 console.error('Error:', error);
-                showError('makeError', 'Network error occurred');
+                if (error.errors) {
+                    // Handle validation errors
+                    const errorMessages = Object.values(error.errors).flat().join(', ');
+                    showError('makeError', errorMessages);
+                } else {
+                    showError('makeError', error.message || 'Network error occurred');
+                }
             });
-        });
+            });
+        }
 
-        document.getElementById('addTypeForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const typeName = document.getElementById('newTypeName').value.trim();
+        const addTypeForm = document.getElementById('addTypeForm');
+        if (addTypeForm) {
+            addTypeForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const typeNameInput = document.getElementById('typeName');
+                const typeName = typeNameInput ? typeNameInput.value.trim() : '';
             
             if (!typeName) {
                 showError('typeError', 'Type name is required');
@@ -127,14 +161,19 @@ $breadcrumbLinks = [
                 },
                 body: JSON.stringify({ name: typeName })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => Promise.reject(err));
+                }
+                return response.json();
+            })
             .then(data => {
-                if (data.success) {
+                if (data.success && data.data) {
                     // Add new option to select
                     const typeSelect = document.querySelector('select[name="type"]');
                     const newOption = document.createElement('option');
-                    newOption.value = data.type.name;
-                    newOption.textContent = data.type.name;
+                    newOption.value = data.data.name;
+                    newOption.textContent = data.data.name;
                     newOption.selected = true;
                     
                     // Insert before the "Add New Type" option
@@ -145,7 +184,7 @@ $breadcrumbLinks = [
                     if (window.Alpine && window.Alpine.store) {
                         const alpineData = typeSelect.closest('[x-data]');
                         if (alpineData && alpineData._x_dataStack) {
-                            alpineData._x_dataStack[0].type = data.type.name;
+                            alpineData._x_dataStack[0].type = data.data.name;
                         }
                     }
                     
@@ -156,22 +195,35 @@ $breadcrumbLinks = [
             })
             .catch(error => {
                 console.error('Error:', error);
-                showError('typeError', 'Network error occurred');
+                if (error.errors) {
+                    // Handle validation errors
+                    const errorMessages = Object.values(error.errors).flat().join(', ');
+                    showError('typeError', errorMessages);
+                } else {
+                    showError('typeError', error.message || 'Network error occurred');
+                }
+                });
             });
-        });
+        }
 
         // Close modals when clicking outside
-        document.getElementById('addMakeModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeMakeModal();
-            }
-        });
+        const addMakeModal = document.getElementById('addMakeModal');
+        if (addMakeModal) {
+            addMakeModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeMakeModal();
+                }
+            });
+        }
 
-        document.getElementById('addTypeModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeTypeModal();
-            }
-        });
+        const addTypeModal = document.getElementById('addTypeModal');
+        if (addTypeModal) {
+            addTypeModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeTypeModal();
+                }
+            });
+        }
     });
 </script>
 
@@ -189,6 +241,7 @@ $breadcrumbLinks = [
                 <div x-data="{
                                 activeTab: 'general',
                                 // Datos del vehículo
+                                carrier_id: '{{ old('carrier_id', $vehicle->carrier_id) }}',
                                 make: '{{ old('make', $vehicle->make) }}',
                                 model: '{{ old('model', $vehicle->model) }}',
                                 type: '{{ old('type', $vehicle->type) }}',
@@ -351,13 +404,13 @@ $breadcrumbLinks = [
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="mt-3 w-full flex-1 xl:mt-0">
-                                            <select id="carrier_id" name="carrier_id"
+                                        <div class="mt-3 w-full flex-1 xl:mt-0">                                            
+                                            <select id="carrier_id" name="carrier_id" x-model="carrier_id"
+                                                x-init="$nextTick(() => { if(carrier_id) { $el.value = carrier_id; } })"
                                                 class="w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8">
                                                 <option value="">Select Carrier</option>
                                                 @foreach ($carriers as $carrier)
-                                                <option value="{{ $carrier->id }}"
-                                                    {{ old('carrier_id', $vehicle->carrier_id) == $carrier->id ? 'selected' : '' }}>
+                                                <option value="{{ $carrier->id }}">
                                                     {{ $carrier->name }}
                                                 </option>
                                                 @endforeach
@@ -383,11 +436,13 @@ $breadcrumbLinks = [
                                                 <div class="flex items-center justify-between">
                                                     <div>
                                                         <h4 class="font-medium text-green-800">Currently Assigned</h4>
-                                                        <p class="text-sm text-green-700 mt-1">
-                                                            <strong>Type:</strong> {{ ucfirst(str_replace('_', ' ', $vehicle->currentDriverAssignment->assignment_type)) }}<br>
-                                                            @if($vehicle->currentDriverAssignment->user)
+                                                        <p class="text-sm text-green-700 mt-1">                                                            
+                                                            @if($vehicle->currentDriverAssignment->driver && $vehicle->currentDriverAssignment->driver->user)
+                                                            <strong>Driver:</strong> {{ $vehicle->currentDriverAssignment->driver->user->name }}<br>
+                                                            @elseif($vehicle->currentDriverAssignment->user)
                                                             <strong>Driver:</strong> {{ $vehicle->currentDriverAssignment->user->name }}<br>
                                                             @endif
+                                                            <strong>Status:</strong> {{ ucfirst($vehicle->currentDriverAssignment->status) }}<br>
                                                             <strong>Start Date:</strong> {{ $vehicle->currentDriverAssignment->start_date ? $vehicle->currentDriverAssignment->start_date->format('M d, Y') : 'N/A' }}
                                                         </p>
                                                     </div>
@@ -662,7 +717,7 @@ $breadcrumbLinks = [
                                                 <div>
                                                     <label class="block text-sm mb-1">Location</label>
                                                     <input type="text" name="location"
-                                                        value="{{ old('location') }}"
+                                                        value="{{ old('location', $vehicle->location) }}"
                                                         class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm"
                                                         placeholder="Ex. Main Terminal">
                                                     @error('location')
@@ -1065,14 +1120,17 @@ $breadcrumbLinks = [
     // Event listeners para los formularios
     document.addEventListener('DOMContentLoaded', function() {
         // Formulario de marca
-        document.getElementById('addMakeForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const makeName = document.getElementById('newMakeName').value.trim();
-            if (!makeName) {
-                showError('makeError', 'El nombre de la marca es requerido.');
-                return;
-            }
+        const addMakeFormSecond = document.getElementById('addMakeForm');
+        if (addMakeFormSecond) {
+            addMakeFormSecond.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const makeNameInput = document.getElementById('makeName');
+                const makeName = makeNameInput ? makeNameInput.value.trim() : '';
+                if (!makeName) {
+                    showError('makeError', 'El nombre de la marca es requerido.');
+                    return;
+                }
             
             hideError('makeError');
             
@@ -1139,18 +1197,22 @@ $breadcrumbLinks = [
                 } else {
                     showError('makeError', error.message || 'Error de conexión. Por favor, inténtelo de nuevo.');
                 }
+                });
             });
-        });
+        }
         
         // Formulario de tipo
-        document.getElementById('addTypeForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const typeName = document.getElementById('newTypeName').value.trim();
-            if (!typeName) {
-                showError('typeError', 'El nombre del tipo es requerido.');
-                return;
-            }
+        const addTypeFormSecond = document.getElementById('addTypeForm');
+        if (addTypeFormSecond) {
+            addTypeFormSecond.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const typeNameInput = document.getElementById('typeName');
+                const typeName = typeNameInput ? typeNameInput.value.trim() : '';
+                if (!typeName) {
+                    showError('typeError', 'El nombre del tipo es requerido.');
+                    return;
+                }
             
             hideError('typeError');
             
@@ -1217,21 +1279,28 @@ $breadcrumbLinks = [
                 } else {
                     showError('typeError', error.message || 'Error de conexión. Por favor, inténtelo de nuevo.');
                 }
+                });
             });
-        });
+        }
         
         // Cerrar modales al hacer clic fuera de ellos
-        document.getElementById('addMakeModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeMakeModal();
-            }
-        });
+        const addMakeModalSecond = document.getElementById('addMakeModal');
+        if (addMakeModalSecond) {
+            addMakeModalSecond.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeMakeModal();
+                }
+            });
+        }
         
-        document.getElementById('addTypeModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeTypeModal();
-            }
-        });
+        const addTypeModalSecond = document.getElementById('addTypeModal');
+        if (addTypeModalSecond) {
+            addTypeModalSecond.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeTypeModal();
+                }
+            });
+        }
     });
 </script>
 @endpush

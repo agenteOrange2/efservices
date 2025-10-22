@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Admin\Vehicle\Vehicle;
 use App\Models\OwnerOperatorDetail;
 use App\Models\ThirdPartyDetail;
-use App\Models\VehicleDriverAssignment;
+use App\Models\Admin\Vehicle\VehicleDriverAssignment;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;

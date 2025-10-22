@@ -1,12 +1,12 @@
 @extends('../themes/' . $activeTheme)
-@section('title', 'Detalle de Mantenimiento')
+@section('title', 'Detail Maintenance')
 @php
     $breadcrumbLinks = [
         ['label' => 'App', 'url' => route('admin.dashboard')],
-        ['label' => 'Vehículos', 'url' => route('admin.vehicles.index')],
+        ['label' => 'Vehicles', 'url' => route('admin.vehicles.index')],
         ['label' => $vehicle->make . ' ' . $vehicle->model, 'url' => route('admin.vehicles.show', $vehicle->id)],
-        ['label' => 'Mantenimientos', 'url' => route('admin.vehicles.maintenances.index', $vehicle->id)],
-        ['label' => 'Detalle de Mantenimiento', 'active' => true],
+        ['label' => 'Maintenances', 'url' => route('admin.vehicles.maintenances.index', $vehicle->id)],
+        ['label' => 'Detail Maintenance', 'active' => true],
     ];
 @endphp
 @section('subcontent')
@@ -14,18 +14,18 @@
     <div class="col-span-12">
         <div class="flex flex-col gap-y-3 md:h-10 md:flex-row md:items-center">
             <div class="text-base font-medium">
-                Detalle de Mantenimiento
+                Detail Maintenance
             </div>
             <div class="flex flex-col gap-x-3 gap-y-2 sm:flex-row md:ml-auto">
                 <x-base.button as="a" href="{{ route('admin.vehicles.maintenances.index', $vehicle->id) }}"
                     class="w-full sm:w-auto" variant="outline-secondary">
                     <x-base.lucide class="mr-2 h-4 w-4" icon="ArrowLeft" />
-                    Volver a Mantenimientos
+                    Back to Maintenances
                 </x-base.button>
                 <x-base.button as="a" href="{{ route('admin.vehicles.maintenances.edit', [$vehicle->id, $serviceItem->id]) }}"
                     class="w-full sm:w-auto" variant="primary">
                     <x-base.lucide class="mr-2 h-4 w-4" icon="Edit" />
-                    Editar
+                    Edit
                 </x-base.button>
             </div>
         </div>
@@ -35,60 +35,60 @@
                 <div class="md:col-span-2">
                     <div class="box box--stacked">
                         <div class="box-header">
-                            <div class="box-title p-5 border-b border-slate-200/60 bg-slate-50">Información del Servicio</div>
+                            <div class="box-title p-5 border-b border-slate-200/60 bg-slate-50">Service Information</div>
                         </div>
                         <div class="box-body p-5">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
-                                    <h5 class="font-medium">Unidad/Sistema:</h5>
+                                    <h5 class="font-medium">Vehicle Unit/System:</h5>
                                     <p>{{ $serviceItem->unit }}</p>
                                 </div>
                                 <div>
-                                    <h5 class="font-medium">Tareas Realizadas:</h5>
+                                    <h5 class="font-medium">Performed Tasks:</h5>
                                     <p>{{ $serviceItem->service_tasks }}</p>
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4">
                                 <div>
-                                    <h5 class="font-medium">Fecha del Servicio:</h5>
+                                    <h5 class="font-medium">Service Date:</h5>
                                     <p>{{ $serviceItem->service_date->format('d/m/Y') }}</p>
                                 </div>
                                 <div>
-                                    <h5 class="font-medium">Próximo Servicio:</h5>
+                                    <h5 class="font-medium">Next Service Date:</h5>
                                     <p>
                                         {{ $serviceItem->next_service_date->format('d/m/Y') }}
                                         @if($serviceItem->isOverdue() && !$serviceItem->status)
-                                            <span class="badge bg-danger text-white">Vencido</span>
+                                            <span class="badge bg-danger text-white">Overdue</span>
                                         @elseif($serviceItem->isUpcoming() && !$serviceItem->status)
-                                            <span class="badge bg-warning text-white">Próximo</span>
+                                            <span class="badge bg-warning text-white">Upcoming</span>
                                         @elseif($serviceItem->status)
-                                            <span class="badge bg-success text-white">Completado</span>
+                                            <span class="badge bg-success text-white">Completed</span>
                                         @else
-                                            <span class="badge bg-success text-white">Al día</span>
+                                            <span class="badge bg-success text-white">On Time</span>
                                         @endif
                                     </p>
                                 </div>
                                 <div>
-                                    <h5 class="font-medium">Odómetro:</h5>
-                                    <p>{{ $serviceItem->odometer ? number_format($serviceItem->odometer) . ' millas' : 'No registrado' }}</p>
+                                    <h5 class="font-medium">Odometer:</h5>
+                                    <p>{{ $serviceItem->odometer ? number_format($serviceItem->odometer) . ' miles' : 'Not registered' }}</p>
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
-                                    <h5 class="font-medium">Proveedor/Mecánico:</h5>
+                                    <h5 class="font-medium">Provider/Mechanic:</h5>
                                     <p>{{ $serviceItem->vendor_mechanic }}</p>
                                 </div>
                                 <div>
-                                    <h5 class="font-medium">Costo:</h5>
+                                    <h5 class="font-medium">Cost:</h5>
                                     <p>${{ number_format($serviceItem->cost, 2) }}</p>
                                 </div>
                             </div>
 
                             @if($serviceItem->description)
                                 <div class="border-t border-slate-200/60 pt-4 mt-4">
-                                    <h5 class="font-medium">Descripción/Notas:</h5>
+                                    <h5 class="font-medium">Description/Notes:</h5>
                                     <p class="mt-2">{{ $serviceItem->description }}</p>
                                 </div>
                             @endif
@@ -112,11 +112,11 @@
                                                 </div>
                                             </div>
                                             <div class="flex justify-between mt-auto pt-2">
-                                                <a href="{{ $media->getUrl() }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                    <x-base.lucide class="h-4 w-4 mr-1" icon="Eye" /> Ver
+                                                <a href="{{ $media->getUrl() }}" target="_blank" class="flex items-center btn btn-sm btn-outline-primary">
+                                                    <x-base.lucide class="h-4 w-4 mr-1" icon="Eye" /> View
                                                 </a>
-                                                <a href="{{ $media->getUrl() }}" download class="btn btn-sm btn-outline-secondary">
-                                                    <x-base.lucide class="h-4 w-4 mr-1" icon="Download" /> Descargar
+                                                <a href="{{ $media->getUrl() }}" download class="flex items-center btn btn-sm btn-outline-secondary">
+                                                    <x-base.lucide class="h-4 w-4 mr-1" icon="Download" /> Download
                                                 </a>
                                             </div>
                                         </div>
@@ -130,7 +130,7 @@
                                     <small class="text-slate-500">Creado: {{ $serviceItem->created_at->format('d/m/Y H:i') }}</small>
                                     @if($serviceItem->updated_at->ne($serviceItem->created_at))
                                         <br>
-                                        <small class="text-slate-500">Actualizado: {{ $serviceItem->updated_at->format('d/m/Y H:i') }}</small>
+                                        <small class="text-slate-500">Updated: {{ $serviceItem->updated_at->format('d/m/Y H:i') }}</small>
                                     @endif
                                 </div>
                                 
@@ -140,13 +140,13 @@
                                         @method('PUT')
                                         <button type="submit" class="btn flex {{ $serviceItem->status ? 'btn-warning' : 'btn-success' }} mr-2">
                                             <x-base.lucide class="h-4 w-4 mr-1" icon="{{ $serviceItem->status ? 'RotateCcw' : 'CheckCircle' }}" />
-                                            {{ $serviceItem->status ? 'Marcar como Pendiente' : 'Marcar como Completado' }}
+                                            {{ $serviceItem->status ? 'Mark as Pending' : 'Mark as Completed' }}
                                         </button>
                                     </form>
                                     
                                     <button type="button" data-tw-toggle="modal" data-tw-target="#delete-confirmation-modal" class="btn btn-danger flex">
                                         <x-base.lucide class="h-4 w-4 mr-1" icon="Trash" />
-                                        Eliminar Registro
+                                        Delete Record
                                     </button>
                                 </div>
                             </div>
@@ -157,7 +157,7 @@
                 <div class="md:col-span-1">
                     <div class="box box--stacked mb-5">
                         <div class="box-header">
-                            <div class="box-title p-5 border-b border-slate-200/60 bg-slate-50">Vehículo</div>
+                            <div class="box-title p-5 border-b border-slate-200/60 bg-slate-50">Vehicle Details</div>
                         </div>
                         <div class="box-body p-5">
                             <div class="text-center mb-3">
@@ -169,23 +169,23 @@
                             
                             <div class="border-t border-slate-200/60 pt-4">
                                 <div class="grid grid-cols-2 gap-2">
-                                    <div class="text-slate-500">Tipo:</div>
+                                    <div class="text-slate-500">Type:</div>
                                     <div class="text-right">{{ $vehicle->type }}</div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-2 mt-2">
-                                    <div class="text-slate-500">Placa:</div>
+                                    <div class="text-slate-500">Plate:</div>
                                     <div class="text-right">{{ $vehicle->registration_number }}</div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-2 mt-2">
-                                    <div class="text-slate-500">Estado:</div>
-                                    <div class="text-right">{{ $vehicle->registration_state }}</div>
+                                    <div class="text-slate-500">Status:</div>
+                                    <div class="text-right">{{ $vehicle->status }}</div>
                                 </div>
                             </div>
                             
                             <div class="mt-4 text-center">
                                 <a href="{{ route('admin.vehicles.show', $vehicle->id) }}" class="btn btn-outline-secondary btn-sm w-full flex items-center">
                                     <x-base.lucide class="h-4 w-4 mr-1" icon="Info" />
-                                    Ver Detalles del Vehículo
+                                    View Vehicle Details
                                 </a>
                             </div>
                         </div>
@@ -193,7 +193,7 @@
                     
                     <div class="box box--stacked">
                         <div class="box-header">
-                            <div class="box-title p-5 border-b border-slate-200/60 bg-slate-50">Recordatorio</div>
+                            <div class="box-title p-5 border-b border-slate-200/60 bg-slate-50">Maintenance Reminder</div>
                         </div>
                         <div class="box-body p-5">
                             <div class="text-center mb-3">
@@ -201,30 +201,30 @@
                                     <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success/20 text-success">
                                         <x-base.lucide class="h-8 w-8" icon="CheckCircle" />
                                     </div>
-                                    <h5 class="mt-2 font-medium text-success">Mantenimiento Completado</h5>
+                                    <h5 class="mt-2 font-medium text-success">Maintenance Completed</h5>
                                 @elseif($serviceItem->isOverdue())
                                     <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-danger/20 text-danger">
                                         <x-base.lucide class="h-8 w-8" icon="AlertOctagon" />
                                     </div>
-                                    <h5 class="mt-2 font-medium text-danger">Mantenimiento Vencido</h5>
+                                    <h5 class="mt-2 font-medium text-danger">Maintenance Overdue</h5>
                                     <p class="text-slate-500 text-sm">
-                                        Debió realizarse hace {{ $serviceItem->next_service_date->diffInDays(now()) }} días.
+                                        Should have been performed {{ $serviceItem->next_service_date->diffInDays(now()) }} days ago.
                                     </p>
                                 @elseif($serviceItem->isUpcoming())
                                     <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-warning/20 text-warning">
                                         <x-base.lucide class="h-8 w-8" icon="AlertTriangle" />
                                     </div>
-                                    <h5 class="mt-2 font-medium text-warning">Próximo Mantenimiento</h5>
+                                    <h5 class="mt-2 font-medium text-warning">Upcoming Maintenance</h5>
                                     <p class="text-slate-500 text-sm">
-                                        Programado en {{ $serviceItem->next_service_date->diffInDays(now()) }} días.
+                                        Scheduled for {{ $serviceItem->next_service_date->diffInDays(now()) }} days.
                                     </p>
                                 @else
                                     <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success/20 text-success">
                                         <x-base.lucide class="h-8 w-8" icon="Calendar" />
                                     </div>
-                                    <h5 class="mt-2 font-medium text-success">Mantenimiento al Día</h5>
+                                    <h5 class="mt-2 font-medium text-success">Maintenance on Schedule</h5>
                                     <p class="text-slate-500 text-sm">
-                                        Próximo servicio en {{ $serviceItem->next_service_date->diffInDays(now()) }} días.
+                                        Next service is scheduled for {{ $serviceItem->next_service_date->diffInDays(now()) }} days.
                                     </p>
                                 @endif
                             </div>
@@ -233,7 +233,7 @@
                                 <!-- Acceso al historial centralizado -->
                                 <a href="{{ route('admin.maintenance.show', $serviceItem->id) }}" class="btn btn-outline-primary btn-sm w-full flex items-center">
                                     <x-base.lucide class="h-4 w-4 mr-1" icon="ExternalLink" />
-                                    Ver en Mantenimientos Centralizados
+                                    View in Centralized Maintenance
                                 </a>
                             </div>
                         </div>
@@ -249,10 +249,10 @@
     <x-base.dialog.panel>
         <div class="p-5 text-center">
             <x-base.lucide class="mx-auto mt-3 h-16 w-16 text-danger" icon="XCircle" />
-            <div class="mt-5 text-2xl">¿Estás seguro?</div>
+            <div class="mt-5 text-2xl">Are you sure?</div>
             <div class="mt-2 text-slate-500">
-                ¿Realmente quieres eliminar este registro de servicio? <br>
-                Este proceso no se puede deshacer.
+                Do you really want to delete this service record? <br>
+                This action cannot be undone.
             </div>
         </div>
         <div class="px-5 pb-8 text-center">
@@ -260,10 +260,10 @@
                 @csrf
                 @method('DELETE')
                 <x-base.button class="mr-1 w-24" data-tw-dismiss="modal" type="button" variant="outline-secondary">
-                    Cancelar
+                    Cancel
                 </x-base.button>
                 <x-base.button class="w-24" type="submit" variant="danger">
-                    Eliminar
+                    Delete
                 </x-base.button>
             </form>
         </div>

@@ -124,7 +124,7 @@ class MaintenanceController extends Controller
             DB::commit();
             
             return redirect()->route('admin.maintenance.index')
-                ->with('success', 'Registro de mantenimiento creado correctamente.');
+                ->with('maintenance_success', 'Registro de mantenimiento creado correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error al crear registro de mantenimiento: ' . $e->getMessage(), [
@@ -133,7 +133,7 @@ class MaintenanceController extends Controller
             ]);
             
             return redirect()->back()
-                ->with('error', 'Error al crear el registro de mantenimiento. Por favor, inténtelo de nuevo.')
+                ->with('maintenance_error', 'Error al crear el registro de mantenimiento. Por favor, inténtelo de nuevo.')
                 ->withInput();
         }
     }
@@ -230,7 +230,7 @@ class MaintenanceController extends Controller
             DB::commit();
             
             return redirect()->route('admin.maintenance.index')
-                ->with('success', 'Registro de mantenimiento actualizado correctamente');
+                ->with('maintenance_success', 'Registro de mantenimiento actualizado correctamente');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error al actualizar registro de mantenimiento: ' . $e->getMessage(), [
@@ -240,7 +240,7 @@ class MaintenanceController extends Controller
             ]);
             
             return redirect()->back()
-                ->with('error', 'Error al actualizar el registro de mantenimiento. Por favor, inténtelo de nuevo.')
+                ->with('maintenance_error', 'Error al actualizar el registro de mantenimiento. Por favor, inténtelo de nuevo.')
                 ->withInput();
         }
     }
@@ -292,7 +292,7 @@ class MaintenanceController extends Controller
             $maintenance->save();
             
             return redirect()->route('admin.maintenance.show', $id)
-                ->with('success', 'Mantenimiento reprogramado correctamente para el ' . 
+                ->with('maintenance_success', 'Mantenimiento reprogramado correctamente para el ' . 
                     Carbon::parse($request->next_service_date)->format('d/m/Y'));
         } catch (\Exception $e) {
             Log::error('Error al reprogramar mantenimiento: ' . $e->getMessage(), [
@@ -302,7 +302,7 @@ class MaintenanceController extends Controller
             ]);
             
             return redirect()->back()
-                ->with('error', 'Error al reprogramar el mantenimiento: ' . $e->getMessage())
+                ->with('maintenance_error', 'Error al reprogramar el mantenimiento: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -316,7 +316,7 @@ class MaintenanceController extends Controller
         $maintenance->status = !$maintenance->status;
         $maintenance->save();
         
-        return back()->with('success', 'Estado del mantenimiento actualizado.');
+        return back()->with('maintenance_success', 'Estado del mantenimiento actualizado.');
     }
     
     /**
@@ -438,7 +438,7 @@ class MaintenanceController extends Controller
                 }
             } else {
                 DB::rollBack();
-                return redirect()->back()->with('error', 'No se recibieron archivos para subir');
+                return redirect()->back()->with('maintenance_error', 'No se recibieron archivos para subir');
             }
             
             DB::commit();
@@ -446,10 +446,10 @@ class MaintenanceController extends Controller
             $message = "$uploadedCount documentos subidos correctamente";
             if (!empty($errors)) {
                 $message .= ", pero hubo errores con algunos archivos: " . implode(", ", $errors);
-                return redirect()->back()->with('warning', $message);
+                return redirect()->back()->with('maintenance_message', $message);
             }
             
-            return redirect()->back()->with('success', $message);
+            return redirect()->back()->with('maintenance_success', $message);
         } catch (\Exception $e) {
             DB::rollBack();
             
@@ -683,7 +683,7 @@ class MaintenanceController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             
-            return redirect()->back()->with('error', 'Error al cargar el calendario de mantenimiento');
+            return redirect()->back()->with('maintenance_error', 'Error al cargar el calendario de mantenimiento');
         }
     }
 

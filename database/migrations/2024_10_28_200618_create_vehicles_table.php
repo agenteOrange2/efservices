@@ -34,7 +34,7 @@ return new class extends Migration
             $table->string('tire_size')->nullable();
             $table->string('fuel_type');
             $table->boolean('irp_apportioned_plate')->default(false);
-            $table->enum('ownership_type', ['owned', 'leased', 'third-party', 'unassigned'])->default('unassigned');
+            // $table->enum('ownership_type', ['owned', 'leased', 'third-party', 'unassigned'])->default('unassigned');
             $table->enum('driver_type', ['owner_operator', 'third_party', 'company'])->nullable();
             $table->index('driver_type');
             $table->string('location')->nullable();

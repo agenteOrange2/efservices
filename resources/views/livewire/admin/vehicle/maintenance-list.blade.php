@@ -1,4 +1,19 @@
 <div>
+    <!-- Flash Messages -->
+    @if (session()->has('message'))
+    <div class="alert alert-success flex items-center mb-5">
+        <x-base.lucide class="w-6 h-6 mr-2" icon="check-circle" />
+        {{ session('message') }}
+    </div>
+    @endif
+
+    @if (session()->has('error'))
+    <div class="alert alert-danger flex items-center mb-5">
+        <x-base.lucide class="w-6 h-6 mr-2" icon="alert-circle" />
+        {{ session('error') }}
+    </div>
+    @endif
+
     <!-- Filtros y tabla de mantenimientos -->
     <div class="intro-y box p-5 mt-5">
         <!-- Filtros -->

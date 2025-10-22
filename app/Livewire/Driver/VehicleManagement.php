@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\UserDriverDetail;
-use App\Models\Vehicle;
-use App\Models\VehicleDriverAssignment;
+use App\Models\Admin\Vehicle\Vehicle;
+use App\Models\Admin\Vehicle\VehicleDriverAssignment;
 use Carbon\Carbon;
 
 class VehicleManagement extends Component

@@ -1,12 +1,12 @@
 @extends('../themes/' . $activeTheme)
-@section('title', 'Nuevo Mantenimiento')
+@section('title', 'New Service Item')
 @php
     $breadcrumbLinks = [
         ['label' => 'App', 'url' => route('admin.dashboard')],
-        ['label' => 'Vehículos', 'url' => route('admin.vehicles.index')],
+        ['label' => 'Vehicles', 'url' => route('admin.vehicles.index')],
         ['label' => $vehicle->make . ' ' . $vehicle->model, 'url' => route('admin.vehicles.show', $vehicle->id)],
-        ['label' => 'Mantenimientos', 'url' => route('admin.vehicles.maintenances.index', $vehicle->id)],
-        ['label' => 'Nuevo Mantenimiento', 'active' => true],
+        ['label' => 'Service Items', 'url' => route('admin.vehicles.service-items.index', $vehicle->id)],
+        ['label' => 'New Service Item', 'active' => true],
     ];
 @endphp
 @section('subcontent')
@@ -20,7 +20,7 @@
                 <x-base.button as="a" href="{{ route('admin.vehicles.maintenances.index', $vehicle->id) }}"
                     class="w-full sm:w-auto" variant="outline-secondary">
                     <x-base.lucide class="mr-2 h-4 w-4" icon="ArrowLeft" />
-                    Volver a Mantenimientos
+                    Back to Maintenances
                 </x-base.button>
             </div>
         </div>
@@ -28,7 +28,7 @@
         <div class="box box--stacked mt-5">
             <div class="box-header">
                 <div class="box-title p-5 border-b border-slate-200/60 bg-slate-50">
-                    Datos del Servicio
+                    Service Item Details
                 </div>
             </div>
             <div class="box-body p-5">
@@ -47,13 +47,13 @@
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                         <div>
-                            <x-base.form-label for="unit">Unidad/Sistema <span class="text-danger">*</span></x-base.form-label>
+                            <x-base.form-label for="unit">Unit/System <span class="text-danger">*</span></x-base.form-label>
                             <x-base.form-input id="unit" name="unit" value="{{ old('unit', $vehicle->company_unit_number) }}" 
                                 placeholder="Ej: Motor, Transmisión, Frenos..." required />
-                            <small class="text-slate-500">Identifica el sistema o parte del vehículo atendida</small>
+                            <small class="text-slate-500">Identify the system or part of the vehicle serviced.</small>
                         </div>
                         <div>
-                            <x-base.form-label for="service_tasks">Tareas realizadas <span class="text-danger">*</span></x-base.form-label>
+                            <x-base.form-label for="service_tasks">Service Tasks <span class="text-danger">*</span></x-base.form-label>
                             <x-base.form-input id="service_tasks" name="service_tasks" value="{{ old('service_tasks') }}" 
                                 placeholder="Ej: Cambio de aceite, ajuste de frenos..." required />
                         </div>
@@ -61,30 +61,30 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                         <div>
-                            <x-base.form-label for="service_date">Fecha del servicio <span class="text-danger">*</span></x-base.form-label>
+                            <x-base.form-label for="service_date">Service Date <span class="text-danger">*</span></x-base.form-label>
                             <x-base.form-input type="date" id="service_date" name="service_date" 
                                 value="{{ old('service_date', date('Y-m-d')) }}" required />
                         </div>
                         <div>
-                            <x-base.form-label for="next_service_date">Próximo servicio <span class="text-danger">*</span></x-base.form-label>
+                            <x-base.form-label for="next_service_date">Next Service Date <span class="text-danger">*</span></x-base.form-label>
                             <x-base.form-input type="date" id="next_service_date" name="next_service_date" 
                                 value="{{ old('next_service_date', date('Y-m-d', strtotime('+3 months'))) }}" required />
                         </div>
                         <div>
-                            <x-base.form-label for="odometer">Odómetro (millas)</x-base.form-label>
+                            <x-base.form-label for="odometer">Odometer Reading (miles)</x-base.form-label>
                             <x-base.form-input type="number" id="odometer" name="odometer" value="{{ old('odometer') }}" 
-                                placeholder="Lectura del odómetro" />
+                                placeholder="Odometer reading" />
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                         <div>
-                            <x-base.form-label for="vendor_mechanic">Proveedor/Mecánico <span class="text-danger">*</span></x-base.form-label>
+                            <x-base.form-label for="vendor_mechanic">Service Provider/Mechanic <span class="text-danger">*</span></x-base.form-label>
                             <x-base.form-input id="vendor_mechanic" name="vendor_mechanic" value="{{ old('vendor_mechanic') }}" 
                                 placeholder="Ej: Taller Mecánico XYZ" required />
                         </div>
                         <div>
-                            <x-base.form-label for="cost">Costo ($) <span class="text-danger">*</span></x-base.form-label>
+                            <x-base.form-label for="cost">Cost/Price ($) <span class="text-danger">*</span></x-base.form-label>
                             <div class="input-group">
                                 <div class="input-group-text">$</div>
                                 <x-base.form-input type="number" step="0.01" id="cost" name="cost" value="{{ old('cost', '0.00') }}" 
@@ -94,13 +94,13 @@
                     </div>
 
                     <div class="mb-4">
-                        <x-base.form-label for="description">Descripción/Notas</x-base.form-label>
+                        <x-base.form-label for="description">Description/Notes</x-base.form-label>
                         <x-base.form-textarea id="description" name="description" rows="4">{{ old('description') }}</x-base.form-textarea>
                     </div>
 
                     <!-- Drag and drop para subir tickets de servicio -->
                     <div class="mb-4">
-                        <x-base.form-label>Tickets de Servicio</x-base.form-label>
+                        <x-base.form-label>Service Tickets</x-base.form-label>
                         <div 
                             x-data="{
                                 files: [],
@@ -170,9 +170,9 @@
                             <div x-show="files.length === 0">
                                 <x-base.lucide class="mx-auto h-12 w-12 text-slate-400" icon="Upload" />
                                 <p class="mt-2 text-sm text-slate-500">
-                                    Arrastra y suelta archivos aquí o
+                                    Drag and drop files here or
                                     <label class="relative cursor-pointer text-primary">
-                                        <span>selecciona archivos</span>
+                                        <span>select files</span>
                                         <input type="file" class="sr-only" multiple @change="handleFileSelect" name="maintenance_files[]">
                                     </label>
                                 </p>
@@ -205,12 +205,12 @@
                                 </template>
                                 
                                 <button type="button" @click="files = []" class="btn btn-sm btn-outline-secondary mt-2">
-                                    <x-base.lucide class="mr-1 h-4 w-4" icon="Trash" /> Limpiar todos
+                                    <x-base.lucide class="mr-1 h-4 w-4" icon="Trash" /> Clear all
                                 </button>
                                 
                                 <div class="mt-2">
                                     <label class="relative cursor-pointer btn btn-sm btn-outline-primary">
-                                        <x-base.lucide class="mr-1 h-4 w-4" icon="Plus" /> Agregar más archivos
+                                        <x-base.lucide class="mr-1 h-4 w-4" icon="Plus" /> Add more files
                                         <input type="file" class="sr-only" multiple @change="handleFileSelect" name="maintenance_files[]">
                                     </label>
                                 </div>
@@ -220,15 +220,16 @@
 
                     <div class="flex items-center mt-5 pt-5 border-t border-slate-200/60">
                         <div class="form-check mr-4">
-                            <input type="checkbox" id="status" name="status" value="1" class="form-check-input" {{ old('status') ? 'checked' : '' }}>
-                            <label for="status" class="form-check-label">Marcar como completado</label>
+                            <input type="checkbox" id="status" name="status" value="1" class="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary"
+                            {{ old('status') ? 'checked' : '' }}>                            
+                            <label for="status" class="form-check-label">Mark as completed</label>
                         </div>
                         <div class="ml-auto">
                             <x-base.button type="reset" variant="outline-secondary" class="mr-1 w-24">
-                                Limpiar
+                                Clean
                             </x-base.button>
                             <x-base.button type="submit" variant="primary" class="w-24">
-                                Guardar
+                                Save
                             </x-base.button>
                         </div>
                     </div>

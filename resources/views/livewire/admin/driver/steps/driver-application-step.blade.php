@@ -56,7 +56,7 @@
                         </label>
                         
                         <label class="flex items-center p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-300 cursor-pointer transition-colors duration-200">
-                            <input type="radio" wire:model="selectedDriverType" value="third_party_driver" class="mr-3 h-4 w-4 text-blue-600">
+                            <input type="radio" wire:model="selectedDriverType" value="third_party" class="mr-3 h-4 w-4 text-blue-600">
                             <div class="flex-1">
                                 <div class="font-medium text-gray-900">Third Party Vehicles</div>
                                 <div class="text-sm text-gray-500">Manage third party assignments</div>
@@ -182,8 +182,21 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
                             <label class="block mb-1">Make *</label>
-                            <x-base.form-input type="text" wire:model="vehicle_make"
-                                class="w-full px-3 py-2 border rounded" />
+                            <div class="flex gap-2">
+                                <select wire:model="vehicle_make"
+                                    class="form-select flex-1 rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
+                                    <option value="">Select Make</option>
+                                    @foreach ($vehicleMakes as $make)
+                                        <option value="{{ $make->name }}">{{ $make->name }}</option>
+                                    @endforeach
+                                </select>
+                                <button type="button" wire:click="$set('showAddMakeModal', true)"
+                                    class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-150 ease-in-out">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
                             @error('vehicle_make')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
@@ -228,15 +241,21 @@
                         </div>
                         <div>
                             <label class="block mb-1">Type *</label>
-                            <select wire:model="vehicle_type"
-                                class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
-                                <option value="">Select Type</option>
-                                <option value="truck">Truck</option>
-                                <option value="trailer">Trailer</option>
-                                <option value="van">Van</option>
-                                <option value="pickup">Pickup</option>
-                                <option value="other">Other</option>
-                            </select>
+                            <div class="flex gap-2">
+                                <select wire:model="vehicle_type"
+                                    class="form-select flex-1 rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
+                                    <option value="">Select Type</option>
+                                    @foreach ($vehicleTypes as $type)
+                                        <option value="{{ $type->name }}">{{ $type->name }}</option>
+                                    @endforeach
+                                </select>
+                                <button type="button" wire:click="$set('showAddTypeModal', true)"
+                                    class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-150 ease-in-out">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
                             @error('vehicle_type')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
@@ -268,11 +287,10 @@
                             <select wire:model="vehicle_fuel_type"
                                 class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
                                 <option value="">Select Fuel Type</option>
-                                <option value="diesel">Diesel</option>
-                                <option value="gasoline">Gasoline</option>
-                                <option value="electric">Electric</option>
-                                <option value="hybrid">Hybrid</option>
-                                <option value="other">Other</option>
+                                <option value="Diesel">Diesel</option>
+                                <option value="Gasoline">Gasoline</option>
+                                <option value="CNG">CNG</option>
+                                <option value="LNG">LNG</option>
                             </select>
                             @error('vehicle_fuel_type')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
@@ -386,7 +404,7 @@
                 </div>
 
                 <!-- Third Party Driver Information -->
-                <div x-show="$wire.selectedDriverType === 'third_party_driver'" x-transition
+                <div x-show="$wire.selectedDriverType === 'third_party'" x-transition
                     class="mt-4 p-4 border rounded bg-gray-50">
                     <h3 class="text-lg font-medium mb-4 text-primary border-b border-gray-200 pb-2">Third Party Company Information</h3>
 
@@ -526,8 +544,21 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
                             <label class="block mb-1">Make *</label>
-                            <x-base.form-input type="text" wire:model="vehicle_make"
-                                class="w-full px-3 py-2 border rounded" />
+                            <div class="flex gap-2">
+                                <select wire:model="vehicle_make"
+                                    class="form-select flex-1 rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
+                                    <option value="">Select Make</option>
+                                    @foreach ($vehicleMakes as $make)
+                                        <option value="{{ $make->name }}">{{ $make->name }}</option>
+                                    @endforeach
+                                </select>
+                                <button type="button" wire:click="$set('showAddMakeModal', true)"
+                                    class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-150 ease-in-out">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
                             @error('vehicle_make')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
@@ -572,15 +603,21 @@
                         </div>
                         <div>
                             <label class="block mb-1">Type *</label>
-                            <select wire:model="vehicle_type"
-                                class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
-                                <option value="">Select Type</option>
-                                <option value="truck">Truck</option>
-                                <option value="trailer">Trailer</option>
-                                <option value="van">Van</option>
-                                <option value="pickup">Pickup</option>
-                                <option value="other">Other</option>
-                            </select>
+                            <div class="flex gap-2">
+                                <select wire:model="vehicle_type"
+                                    class="form-select flex-1 rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
+                                    <option value="">Select Type</option>
+                                    @foreach ($vehicleTypes as $type)
+                                        <option value="{{ $type->name }}">{{ $type->name }}</option>
+                                    @endforeach
+                                </select>
+                                <button type="button" wire:click="$set('showAddTypeModal', true)"
+                                    class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-150 ease-in-out">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
                             @error('vehicle_type')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
                             @enderror
@@ -612,11 +649,10 @@
                             <select wire:model="vehicle_fuel_type"
                                 class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
                                 <option value="">Select Fuel Type</option>
-                                <option value="diesel">Diesel</option>
-                                <option value="gasoline">Gasoline</option>
-                                <option value="electric">Electric</option>
-                                <option value="hybrid">Hybrid</option>
-                                <option value="other">Other</option>
+                                <option value="Diesel">Diesel</option>
+                                <option value="Gasoline">Gasoline</option>
+                                <option value="CNG">CNG</option>
+                                <option value="LNG">LNG</option>
                             </select>
                             @error('vehicle_fuel_type')
                                 <span class="text-red-500 text-sm">{{ $message }}</span>
@@ -1010,3 +1046,72 @@
                 </div>
             </div>
         </div>
+
+    <!-- Add Make Modal -->
+    <div x-show="$wire.showAddMakeModal" x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 transform scale-90"
+        x-transition:enter-end="opacity-100 transform scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 transform scale-100"
+        x-transition:leave-end="opacity-0 transform scale-90"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="$wire.showAddMakeModal = false"></div>
+        <div class="relative w-full max-w-md p-6 bg-white rounded-lg shadow-xl transform transition-all">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Add New Vehicle Make</h3>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Make Name</label>
+                    <input type="text" wire:model="newMakeName" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter make name">
+                    @error('newMakeName')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                    @enderror
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" @click="$wire.showAddMakeModal = false"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="createMake"
+                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Add Make
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Type Modal -->
+    <div x-show="$wire.showAddTypeModal" x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 transform scale-90"
+        x-transition:enter-end="opacity-100 transform scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 transform scale-100"
+        x-transition:leave-end="opacity-0 transform scale-90"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="$wire.showAddTypeModal = false"></div>
+        <div class="relative w-full max-w-md p-6 bg-white rounded-lg shadow-xl transform transition-all">
+                <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Add New Vehicle Type</h3>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Type Name</label>
+                    <input type="text" wire:model="newTypeName" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter type name">
+                    @error('newTypeName')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                    @enderror
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" @click="$wire.showAddTypeModal = false"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="createType"
+                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Add Type
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

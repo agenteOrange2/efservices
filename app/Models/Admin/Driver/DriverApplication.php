@@ -6,7 +6,7 @@ use App\Models\UserDriverDetail;
 use App\Models\OwnerOperatorDetail;
 use App\Models\ThirdPartyDetail;
 use App\Models\CompanyDriverDetail;
-use App\Models\VehicleDriverAssignment;
+use App\Models\Admin\Vehicle\VehicleDriverAssignment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;

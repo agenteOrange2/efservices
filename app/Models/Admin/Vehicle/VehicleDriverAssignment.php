@@ -1,10 +1,12 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Admin\Vehicle;
 
 use App\Models\User;
 use App\Models\UserDriverDetail;
-use App\Models\Admin\Vehicle\Vehicle;
+use App\Models\CompanyDriverDetail;
+use App\Models\OwnerOperatorDetail;
+use App\Models\ThirdPartyDetail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -19,6 +21,7 @@ class VehicleDriverAssignment extends Model
     protected $fillable = [
         'vehicle_id',
         'user_driver_detail_id',
+        'driver_type',
         'start_date',
         'end_date',
         'status',

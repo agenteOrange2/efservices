@@ -11,7 +11,10 @@
     <!-- Contenido principal -->
     <div class="box box--stacked mt-5">
         <div class="box-body p-5">
-            <form id="assign-driver-form" action="{{ route('admin.vehicles.store-driver-type', $vehicle->id) }}" method="POST" x-data="{ ownershipType: '{{ old('ownership_type', $driverData['ownership_type'] ?? '') }}' }" class="space-y-6">
+            <form id="assign-driver-form" action="{{ route('admin.vehicles.store-driver-type', $vehicle->id) }}" method="POST" x-data="{ 
+                ownershipType: '{{ old('ownership_type', $currentDriverType ?? '') }}',
+                selectedUserId: '{{ old('user_id', $currentAssignment->user->id ?? '') }}'
+            }" class="space-y-6">
                 @csrf
                 <input type="hidden" name="vehicle_id" value="{{ $vehicle->id }}">
                 <input type="hidden" name="effective_date" value="{{ date('Y-m-d') }}">
@@ -54,9 +57,9 @@
                                 x-model="ownershipType"
                             >
                                 <option value="">Select Driver Type</option>
-                                <option value="company_driver" {{ old('ownership_type') == 'company_driver' ? 'selected' : '' }}>Company Driver</option>
-                                <option value="owner_operator" {{ old('ownership_type') == 'owner_operator' ? 'selected' : '' }}>Owner Operator</option>
-                                <option value="third_party" {{ old('ownership_type') == 'third_party' ? 'selected' : '' }}>Third Party</option>
+                                <option value="company_driver" {{ old('ownership_type', $currentDriverType) == 'company_driver' ? 'selected' : '' }}>Company Driver</option>
+                                <option value="owner_operator" {{ old('ownership_type', $currentDriverType) == 'owner_operator' ? 'selected' : '' }}>Owner Operator</option>
+                                <option value="third_party" {{ old('ownership_type', $currentDriverType) == 'third_party' ? 'selected' : '' }}>Third Party</option>
                             </x-base.form-select>
                             <small class="form-text text-muted">Select the driver type that best describes the relationship with the vehicle.</small>
                             @error('ownership_type')
@@ -72,11 +75,11 @@
                         <div class="grid grid-cols-1 gap-6">
                             <div>
                                 <x-base.form-label for="user_id" class="form-label" x-bind:class="ownershipType !== 'company_driver' ? 'required' : ''">Select Driver</x-base.form-label>
-                                <x-base.form-select id="user_id" name="user_id" class="form-select @error('user_id') is-invalid @enderror" x-bind:required="ownershipType !== 'company_driver'">
+                                <x-base.form-select id="user_id" name="user_id" class="form-select @error('user_id') is-invalid @enderror" x-bind:required="ownershipType !== 'company_driver'" x-model="selectedUserId">
                                     <option value="">Select a driver</option>
                                     @if(isset($availableDrivers))
                                         @foreach($availableDrivers as $driver)
-                                            <option value="{{ $driver->id }}" {{ old('user_id') == $driver->id ? 'selected' : '' }}>
+                                            <option value="{{ $driver->id }}">
                                                 {{ $driver->name }} ({{ $driver->email }})
                                             </option>
                                         @endforeach
@@ -135,7 +138,7 @@
                     </div>
 
                     <!-- License Information -->
-                    <div class="mb-6">
+                    <!-- <div class="mb-6">
                         <h5 class="text-md font-medium mb-3 text-gray-700">License Information</h5>
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <div>
@@ -162,8 +165,7 @@
                                         <option value="DE" {{ old('owner_license_state') == 'DE' ? 'selected' : '' }}>Delaware</option>
                                         <option value="FL" {{ old('owner_license_state') == 'FL' ? 'selected' : '' }}>Florida</option>
                                         <option value="GA" {{ old('owner_license_state') == 'GA' ? 'selected' : '' }}>Georgia</option>
-                                        <option value="TX" {{ old('owner_license_state') == 'TX' ? 'selected' : '' }}>Texas</option>
-                                        <!-- Add more states as needed -->
+                                        <option value="TX" {{ old('owner_license_state') == 'TX' ? 'selected' : '' }}>Texas</option>                                        
                                     </x-base.form-select>
                                 @endif
                                 @error('owner_license_state')
@@ -182,7 +184,7 @@
                                 @enderror
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                 </div>
 
                 <!-- Sección 4: Third Party Information -->
@@ -192,17 +194,24 @@
                     <!-- Company Information -->
                     <div class="mb-6">
                         <h5 class="text-md font-medium mb-3 text-gray-700">Company Information</h5>
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <div>
                                 <x-base.form-label for="third_party_name" class="form-label required">Company Name</x-base.form-label>
-                                <x-base.form-input type="text" id="third_party_name" name="third_party_name" class="form-control @error('third_party_name') is-invalid @enderror" value="{{ old('third_party_name') }}" placeholder="Enter company name" />
+                                <x-base.form-input type="text" id="third_party_name" name="third_party_name" class="form-control @error('third_party_name') is-invalid @enderror" value="{{ old('third_party_name', $thirdPartyData['third_party_name'] ?? '') }}" placeholder="Enter company name" />
                                 @error('third_party_name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div>
+                                <x-base.form-label for="third_party_dba" class="form-label">DBA (Doing Business As)</x-base.form-label>
+                                <x-base.form-input type="text" id="third_party_dba" name="third_party_dba" class="form-control @error('third_party_dba') is-invalid @enderror" value="{{ old('third_party_dba', $thirdPartyData['third_party_dba'] ?? '') }}" placeholder="Enter DBA name" />
+                                @error('third_party_dba')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div>
                                 <x-base.form-label for="third_party_address" class="form-label required">Company Address</x-base.form-label>
-                                <x-base.form-input id="third_party_address" name="third_party_address" type="text" class="form-control @error('third_party_address') is-invalid @enderror" placeholder="Enter complete address" value="{{ old('third_party_address') }}" />
+                                <x-base.form-input id="third_party_address" name="third_party_address" type="text" class="form-control @error('third_party_address') is-invalid @enderror" placeholder="Enter complete address" value="{{ old('third_party_address', $thirdPartyData['third_party_address'] ?? '') }}" />
                                 @error('third_party_address')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -216,21 +225,21 @@
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <div>
                                 <x-base.form-label for="third_party_phone" class="form-label required">Phone Number</x-base.form-label>
-                                <x-base.form-input type="tel" id="third_party_phone" name="third_party_phone" class="form-control @error('third_party_phone') is-invalid @enderror" value="{{ old('third_party_phone') }}" placeholder="(555) 123-4567" />
+                                <x-base.form-input type="tel" id="third_party_phone" name="third_party_phone" class="form-control @error('third_party_phone') is-invalid @enderror" value="{{ old('third_party_phone', $thirdPartyData['third_party_phone'] ?? '') }}" placeholder="(555) 123-4567" />
                                 @error('third_party_phone')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div>
                                 <x-base.form-label for="third_party_email" class="form-label required">Email Address</x-base.form-label>
-                                <x-base.form-input type="email" id="third_party_email" name="third_party_email" class="form-control @error('third_party_email') is-invalid @enderror" value="{{ old('third_party_email') }}" placeholder="company@email.com" />
+                                <x-base.form-input type="email" id="third_party_email" name="third_party_email" class="form-control @error('third_party_email') is-invalid @enderror" value="{{ old('third_party_email', $thirdPartyData['third_party_email'] ?? '') }}" placeholder="company@email.com" />
                                 @error('third_party_email')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div>
                                 <x-base.form-label for="third_party_fein" class="form-label">FEIN / Tax ID</x-base.form-label>
-                                <x-base.form-input type="text" id="third_party_fein" name="third_party_fein" class="form-control @error('third_party_fein') is-invalid @enderror" value="{{ old('third_party_fein') }}" placeholder="XX-XXXXXXX" />
+                                <x-base.form-input type="text" id="third_party_fein" name="third_party_fein" class="form-control @error('third_party_fein') is-invalid @enderror" value="{{ old('third_party_fein', $thirdPartyData['third_party_fein'] ?? '') }}" placeholder="XX-XXXXXXX" />
                                 @error('third_party_fein')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -244,15 +253,8 @@
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div>
                                 <x-base.form-label for="third_party_contact_person" class="form-label">Contact Person</x-base.form-label>
-                                <x-base.form-input type="text" id="third_party_contact_person" name="third_party_contact_person" class="form-control @error('third_party_contact_person') is-invalid @enderror" value="{{ old('third_party_contact_person') }}" placeholder="Primary contact name" />
+                                <x-base.form-input type="text" id="third_party_contact_person" name="third_party_contact_person" class="form-control @error('third_party_contact_person') is-invalid @enderror" value="{{ old('third_party_contact_person', $thirdPartyData['third_party_contact'] ?? '') }}" placeholder="Primary contact name" />
                                 @error('third_party_contact_person')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div>
-                                <x-base.form-label for="third_party_contact_phone" class="form-label">Contact Phone</x-base.form-label>
-                                <x-base.form-input type="tel" id="third_party_contact_phone" name="third_party_contact_phone" class="form-control @error('third_party_contact_phone') is-invalid @enderror" value="{{ old('third_party_contact_phone') }}" placeholder="(XXX) XXX-XXXX" />
-                                @error('third_party_contact_phone')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>

@@ -13,7 +13,7 @@ use App\Models\Admin\Driver\DriverLicense;
 use App\Models\Admin\Driver\DriverMedicalQualification;
 use App\Models\Admin\Driver\DriverExperience;
 use App\Models\Admin\Driver\DriverAddress;
-use App\Models\VehicleDriverAssignment;
+use App\Models\Admin\Vehicle\VehicleDriverAssignment;
 use Spatie\Permission\Models\Role;
 use Faker\Factory as Faker;
 use Carbon\Carbon;
@@ -201,13 +201,14 @@ class UserDriverSeeder extends Seeder
             $position = $faker->randomElement($positions);
             DriverApplicationDetail::create([
                 'driver_application_id' => $driverApplication->id,
-                'applying_position' => $position,
-                'applying_location' => $faker->city . ', ' . $faker->stateAbbr,
+                'applying_position' => $position,                
+                // 'applying_location' => $faker->city . ', ' . $faker->stateAbbr,
+                'applying_location' => $faker->randomElement($states),
                 'eligible_to_work' => $faker->boolean(95),
                 'can_speak_english' => $faker->boolean(90),
                 'has_twic_card' => $faker->boolean(30),
                 'twic_expiration_date' => $faker->optional(0.3)->dateTimeBetween('now', '+5 years'),
-                'how_did_hear' => $faker->randomElement(['website', 'referral', 'job_board', 'social_media', 'other']),
+                'how_did_hear' => $faker->randomElement(['referral', 'employee_referral', 'job_board', 'other']),
                 'expected_pay' => $faker->randomFloat(2, 50000, 80000),
                 'has_completed_employment_history' => $applicationCompleted,
                 'vehicle_driver_assignment_id' => $vehicleDriverAssignment->id,
@@ -257,6 +258,7 @@ class UserDriverSeeder extends Seeder
             // Crear DriverMedicalQualification
             $medicalExpirationDate = $faker->dateTimeBetween('now', '+2 years');
             DriverMedicalQualification::create([
+                'social_security_number' => $faker->numerify('#########'),
                 'user_driver_detail_id' => $userDriverDetail->id,
                 'hire_date' => $faker->optional(0.7)->dateTimeBetween('-2 years', 'now'),
                 'location' => $faker->city . ', ' . $faker->stateAbbr,

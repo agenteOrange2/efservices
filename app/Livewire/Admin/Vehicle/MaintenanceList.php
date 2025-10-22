@@ -139,7 +139,7 @@ class MaintenanceList extends Component
             ]);
 
             $this->dispatchBrowserEvent('close-modal');
-            session()->flash('message', 'Maintenance record updated successfully.');
+            session()->flash('maintenance_success', 'Maintenance record updated successfully.');
         }
     }
 

@@ -105,6 +105,9 @@ Route::post('vehicles/assign-to-driver', [VehicleController::class, 'assignToDri
 Route::post('vehicles/{vehicle}/assign-driver', [VehicleController::class, 'assignDriver'])->name('vehicles.assign-driver');
 Route::delete('vehicles/{vehicle}/remove-driver/{assignmentId}', [VehicleController::class, 'removeDriver'])->name('vehicles.remove-driver');
 
+// Driver Assignment History page
+Route::get('vehicles/{vehicle}/driver-assignment-history', [VehicleController::class, 'driverAssignmentHistory'])->name('vehicles.driver-assignment-history');
+
 // Direct routes to VehicleDriverAssignmentController
 Route::prefix('vehicle-driver-assignments')->name('vehicle-driver-assignments.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\VehicleDriverAssignmentController::class, 'index'])->name('index');

@@ -12,6 +12,7 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use App\Models\Admin\Driver\DriverApplication;
+use App\Models\Admin\Vehicle\VehicleDriverAssignment;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Illuminate\Foundation\Auth\User as Authenticatable;

@@ -132,7 +132,7 @@ class VehicleMaintenanceController extends Controller
 
             // Redireccionar tanto a la vista de vehículo como a la vista general de mantenimiento
             return redirect()->route('admin.vehicles.show', $vehicle->id)
-                ->with('success', 'Servicio de mantenimiento creado exitosamente');
+                ->with('success', 'Maintenance item created successfully');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error al guardar mantenimiento', [
@@ -190,29 +190,67 @@ class VehicleMaintenanceController extends Controller
      */
     public function update(Request $request, Vehicle $vehicle, $serviceItemId)
     {
+        Log::info('=== VehicleMaintenanceController UPDATE METHOD CALLED ===', [
+            'timestamp' => now(),
+            'vehicle_id' => $vehicle->id,
+            'service_item_id' => $serviceItemId,
+            'request_method' => $request->method(),
+            'request_url' => $request->fullUrl(),
+            'all_request_data' => $request->all(),
+            'unit_value' => $request->input('unit'),
+            'unit_exists' => $request->has('unit'),
+            'unit_filled' => $request->filled('unit'),
+            'csrf_token' => $request->input('_token'),
+            'method_override' => $request->input('_method'),
+            'content_type' => $request->header('Content-Type'),
+            'user_agent' => $request->header('User-Agent')
+        ]);
+
         // Buscar usando el nuevo modelo
         $serviceItem = VehicleMaintenance::findOrFail($serviceItemId);
 
         if ($serviceItem->vehicle_id !== $vehicle->id) {
+            Log::error('Vehicle ID mismatch', [
+                'service_item_vehicle_id' => $serviceItem->vehicle_id,
+                'requested_vehicle_id' => $vehicle->id
+            ]);
             abort(404);
         }
 
-        $validator = Validator::make($request->all(), [
-            'unit' => 'required|string|max:255',
-            'service_date' => 'required|date',
-            'next_service_date' => 'required|date|after:service_date',
-            'service_tasks' => 'required|string|max:255',
-            'vendor_mechanic' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'cost' => 'required|numeric|min:0',
-            'odometer' => 'nullable|integer|min:0',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'unit' => 'required|string|max:255',
+                'service_date' => 'required|date',
+                'next_service_date' => 'required|date|after:service_date',
+                'service_tasks' => 'required|string|max:255',
+                'vendor_mechanic' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'cost' => 'required|numeric|min:0',
+                'odometer' => 'nullable|integer|min:0',
+            ]);
 
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            if ($validator->fails()) {
+                Log::error('=== VALIDATION FAILED ===', [
+                    'errors' => $validator->errors()->toArray(),
+                    'failed_rules' => $validator->failed()
+                ]);
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput();
+            }
+
+            Log::info('=== VALIDATION PASSED ===');
+        } catch (\Exception $e) {
+            Log::error('=== VALIDATION EXCEPTION ===', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
         }
+
+        // Debug del status recibido
+        Log::info('Status recibido en update: ' . ($request->has('status') ? 'true' : 'false'));
+        Log::info('Valor del status: ' . $request->input('status', 'no enviado'));
 
         // Actualizar los campos - incluido status
         $serviceItem->update([
@@ -224,7 +262,7 @@ class VehicleMaintenanceController extends Controller
             'description' => $request->description,
             'cost' => $request->cost,
             'odometer' => $request->odometer,
-            // Conservamos el valor actual de status
+            'status' => $request->has('status') ? 1 : 0,
         ]);
 
         // Procesar archivos de mantenimiento si existen
@@ -249,7 +287,7 @@ class VehicleMaintenanceController extends Controller
         }
 
         return redirect()->route('admin.vehicles.maintenances.index', $vehicle->id)
-            ->with('success', 'Mantenimiento actualizado exitosamente');
+            ->with('maintenance_success', 'Maintenance item updated successfully');
     }
 
     /**
@@ -277,7 +315,7 @@ class VehicleMaintenanceController extends Controller
         $serviceItem->delete();
 
         return redirect()->route('admin.vehicles.show', $vehicle->id)
-            ->with('success', 'Mantenimiento eliminado exitosamente');
+            ->with('maintenance_success', 'Maintenance item deleted successfully');
     }
 
     /**
@@ -285,14 +323,7 @@ class VehicleMaintenanceController extends Controller
      */
     function toggleStatus(Vehicle $vehicle, $serviceItemId)
     {
-        Log::info('toggleStatus llamado', [
-            'vehicle_id' => $vehicle->id,
-            'service_item_id' => $serviceItemId,
-            'url' => request()->fullUrl(),
-            'route_name' => request()->route()->getName(),
-            'route_parameters' => request()->route()->parameters()
-        ]);
-
+        
         try {
             $serviceItem = VehicleMaintenance::findOrFail($serviceItemId);
 
@@ -319,7 +350,7 @@ class VehicleMaintenanceController extends Controller
                 'new_status' => $serviceItem->status
             ]);
 
-            return back()->with('success', 'Estado del mantenimiento actualizado exitosamente');
+            return back()->with('maintenance_success', 'Maintenance item status updated successfully');
         } catch (\Exception $e) {
             Log::error('Error en toggleStatus', [
                 'message' => $e->getMessage(),
@@ -379,10 +410,9 @@ class VehicleMaintenanceController extends Controller
 
             // Eliminamos directamente de la tabla media para evitar problemas de eliminación en cascada
             DB::table('media')->where('id', $mediaId)->delete();
+            
 
-            Log::info('Archivo eliminado correctamente');
-
-            return back()->with('success', 'Archivo eliminado exitosamente');
+            return back()->with('maintenance_success', 'File deleted successfully');
         } catch (\Exception $e) {
             Log::error('Error en deleteFile', [
                 'message' => $e->getMessage(),

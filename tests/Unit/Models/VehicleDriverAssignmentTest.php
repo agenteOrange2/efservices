@@ -93,7 +93,7 @@ class VehicleDriverAssignmentTest extends TestCase
     {
         // Company driver
         $companyAssignment = VehicleDriverAssignment::factory()->create([
-            'assignment_type' => 'company_driver'
+            'driver_type' => 'company_driver'
         ]);
         $companyDriver = CompanyDriverDetail::factory()->create([
             'vehicle_driver_assignment_id' => $companyAssignment->id
@@ -103,7 +103,7 @@ class VehicleDriverAssignmentTest extends TestCase
 
         // Owner operator
         $ownerAssignment = VehicleDriverAssignment::factory()->create([
-            'assignment_type' => 'owner_operator'
+            'driver_type' => 'owner_operator'
         ]);
         $ownerOperator = OwnerOperatorDetail::factory()->create([
             'assignment_id' => $ownerAssignment->id
@@ -113,7 +113,7 @@ class VehicleDriverAssignmentTest extends TestCase
 
         // Third party
         $thirdPartyAssignment = VehicleDriverAssignment::factory()->create([
-            'assignment_type' => 'third_party'
+            'driver_type' => 'third_party'
         ]);
         $thirdParty = ThirdPartyDetail::factory()->create([
             'assignment_id' => $thirdPartyAssignment->id

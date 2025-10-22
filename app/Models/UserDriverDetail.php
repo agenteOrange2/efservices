@@ -24,7 +24,7 @@ use App\Models\Admin\Driver\DriverUnemploymentPeriod;
 use App\Models\Admin\Driver\DriverTesting;
 use App\Models\Admin\Driver\DriverInspection;
 use App\Models\Admin\Driver\DriverTraining;
-use App\Models\VehicleDriverAssignment;
+use App\Models\Admin\Vehicle\VehicleDriverAssignment;
 use App\Models\OwnerOperatorDetail;
 use App\Models\ThirdPartyDetail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

@@ -6,7 +6,7 @@ use App\Models\Admin\Driver\DriverApplicationDetail;
 use App\Models\UserDriverDetail;
 use App\Models\Admin\Driver\DriverInspection;
 use App\Models\EmergencyRepair;
-use App\Models\VehicleDriverAssignment;
+use App\Models\Admin\Vehicle\VehicleDriverAssignment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -122,10 +122,7 @@ class Vehicle extends Model
     /**
      * Relación con los detalles de aplicación del conductor (para información de propietario/tercero).
      */
-    public function driverApplicationDetail(): HasOne
-    {
-        return $this->hasOne(\App\Models\Admin\Driver\DriverApplicationDetail::class);
-    }
+
     
     /**
      * Relación con todas las asignaciones de conductores del vehículo.
@@ -144,11 +141,13 @@ class Vehicle extends Model
     }
     
     /**
-     * Alias para activeDriverAssignment para compatibilidad con tests.
+     * Relación con la asignación actual de conductor del vehículo (activa o pendiente).
      */
     public function currentDriverAssignment(): HasOne
     {
-        return $this->activeDriverAssignment();
+        return $this->hasOne(VehicleDriverAssignment::class)
+            ->whereIn('status', ['active', 'pending'])
+            ->orderBy('created_at', 'desc');
     }
     
     /**

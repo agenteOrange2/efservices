@@ -243,9 +243,10 @@
                     </div>
 
                     <div class="flex items-center mt-5 pt-5 border-t border-slate-200/60">
-                        <div class="form-check mr-4">
-                            <input type="checkbox" id="status" name="status" value="1" class="form-check-input" {{ old('status') ? 'checked' : '' }}>
-                            <label for="status" class="form-check-label">Mark as completed</label>
+                        <div class="form-check mr-4">                            
+                            <input type="checkbox" id="status" name="status" value="1" class="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary"
+                            {{ old('status') ? 'checked' : '' }}>   
+                            <label for="status" class="ml-2">Mark as completed</label>
                         </div>
                         <div class="ml-auto">
                             <x-base.button type="reset" variant="outline-secondary" class="mr-1 w-24">

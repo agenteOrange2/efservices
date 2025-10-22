@@ -1,12 +1,12 @@
 @extends('../themes/' . $activeTheme)
-@section('title', 'Editar Mantenimiento')
+@section('title', 'Edit Maintenance')
 @php
     $breadcrumbLinks = [
         ['label' => 'App', 'url' => route('admin.dashboard')],
-        ['label' => 'Vehículos', 'url' => route('admin.vehicles.index')],
+        ['label' => 'Vehicles', 'url' => route('admin.vehicles.index')],
         ['label' => $vehicle->make . ' ' . $vehicle->model, 'url' => route('admin.vehicles.show', $vehicle->id)],
-        ['label' => 'Mantenimientos', 'url' => route('admin.vehicles.maintenances.index', $vehicle->id)],
-        ['label' => 'Editar Mantenimiento', 'active' => true],
+        ['label' => 'Maintenances', 'url' => route('admin.vehicles.maintenances.index', $vehicle->id)],
+        ['label' => 'Edit Maintenance', 'active' => true],
     ];
 @endphp
 @section('subcontent')
@@ -85,8 +85,7 @@
                         </div>
                         <div>
                             <x-base.form-label for="cost">Costo ($) <span class="text-danger">*</span></x-base.form-label>
-                            <div class="input-group">
-                                <div class="input-group-text">$</div>
+                            <div class="input-group">                                
                                 <x-base.form-input type="number" step="0.01" id="cost" name="cost" 
                                     value="{{ old('cost', $serviceItem->cost) }}" min="0" required />
                             </div>

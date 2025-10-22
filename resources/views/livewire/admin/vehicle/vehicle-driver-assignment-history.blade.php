@@ -26,11 +26,47 @@
                         <div>
                             <div class="font-medium text-slate-900">{{ $this->getDriverDisplayName($currentAssignment) }}</div>
                             @php $details = $this->getDriverDetails($currentAssignment) @endphp
-                            @if($details['email'])
-                                <div class="text-sm text-slate-500">{{ $details['email'] }}</div>
-                            @endif
-                            @if($details['phone'])
-                                <div class="text-sm text-slate-500">{{ $details['phone'] }}</div>
+                            
+                            @if($currentAssignment->driver_type === 'third_party')
+                                <!-- Información del conductor -->
+                                @if($details['driver_name'])
+                                    <div class="text-sm text-slate-600 mt-1">
+                                        <strong>Driver:</strong> {{ $details['driver_name'] }}
+                                    </div>
+                                    @if($details['driver_email'])
+                                        <div class="text-xs text-slate-500">{{ $details['driver_email'] }}</div>
+                                    @endif
+                                    @if($details['driver_phone'])
+                                        <div class="text-xs text-slate-500">{{ $details['driver_phone'] }}</div>
+                                    @endif
+                                @endif
+                                
+                                <!-- Información de la empresa -->
+                                @if($details['company_name'])
+                                    <div class="text-sm text-slate-600 mt-2">
+                                        <strong>Company:</strong> {{ $details['company_name'] }}
+                                    </div>
+                                    @if($details['company_email'])
+                                        <div class="text-xs text-slate-500">{{ $details['company_email'] }}</div>
+                                    @endif
+                                    @if($details['company_phone'])
+                                        <div class="text-xs text-slate-500">{{ $details['company_phone'] }}</div>
+                                    @endif
+                                    @if($details['contact'])
+                                        <div class="text-xs text-slate-500"><strong>Contact:</strong> {{ $details['contact'] }}</div>
+                                    @endif
+                                    @if($details['fein'])
+                                        <div class="text-xs text-slate-500"><strong>FEIN:</strong> {{ $details['fein'] }}</div>
+                                    @endif
+                                @endif
+                            @else
+                                <!-- Para otros tipos de asignación (company_driver, owner_operator) -->
+                                @if($details['email'])
+                                    <div class="text-sm text-slate-500">{{ $details['email'] }}</div>
+                                @endif
+                                @if($details['phone'])
+                                    <div class="text-sm text-slate-500">{{ $details['phone'] }}</div>
+                                @endif
                             @endif
                         </div>
                     </div>
@@ -38,7 +74,7 @@
                 
                 <div class="text-right">
                     <div class="text-sm text-slate-500 mb-2">
-                        <strong>Effective:</strong> {{ $currentAssignment->effective_date->format('M d, Y') }}
+                        <strong>Effective:</strong> {{ $currentAssignment->start_date ? $currentAssignment->start_date->format('M d, Y') : 'N/A' }}
                     </div>
                     <div class="flex justify-end space-x-2">
                         <a href="{{ route('admin.vehicles.assign-driver-type', $vehicle->id) }}"
@@ -69,7 +105,7 @@
             @endif
         </div>
     @else
-        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-2">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <div class="flex-shrink-0">
@@ -85,7 +121,7 @@
                     </div>
                 </div>
                 <a href="{{ route('admin.vehicles.assign-driver-type', $vehicle->id) }}"
-                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                   class="inline-flex items-center px-2 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                     </svg>
@@ -96,13 +132,13 @@
     @endif
 
     <!-- Assignment History Section -->
-    @if($assignments->count() > 0)
+    @if($assignmentHistory->count() > 0)
         <div class="bg-white rounded-lg border border-slate-200">
             <div class="px-6 py-4 border-b border-slate-200">
                 <button wire:click="toggleHistory" 
                         class="flex items-center justify-between w-full text-left">
                     <h3 class="text-lg font-semibold text-slate-800">
-                        Driver Assignment History ({{ $assignments->count() }} {{ $assignments->count() === 1 ? 'record' : 'records' }})
+                        Driver Assignment History ({{ $assignmentHistory->count() }} {{ $assignmentHistory->count() === 1 ? 'record' : 'records' }})
                     </h3>
                     <svg class="w-5 h-5 text-slate-500 transform transition-transform {{ $showHistory ? 'rotate-180' : '' }}" 
                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,7 +149,7 @@
             
             @if($showHistory)
                 <div class="divide-y divide-slate-200">
-                    @foreach($assignments as $assignment)
+                    @foreach($assignmentHistory as $assignment)
                         <div class="px-6 py-4">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-3">
@@ -128,8 +164,32 @@
                                         <div class="font-medium text-slate-900">{{ $this->getDriverDisplayName($assignment) }}</div>
                                         @php $details = $this->getDriverDetails($assignment) @endphp
                                         <div class="text-sm text-slate-500">{{ $details['type'] }}</div>
-                                        @if($details['email'])
-                                            <div class="text-xs text-slate-400">{{ $details['email'] }}</div>
+                                        
+                                        @if($assignment->driver_type === 'third_party')
+                                            <!-- Información del conductor en historial -->
+                                            @if($details['driver_name'])
+                                                <div class="text-xs text-slate-400 mt-1">
+                                                    <strong>Conductor:</strong> {{ $details['driver_name'] }}
+                                                </div>
+                                                @if($details['driver_email'])
+                                                    <div class="text-xs text-slate-400">{{ $details['driver_email'] }}</div>
+                                                @endif
+                                            @endif
+                                            
+                                            <!-- Información de la empresa en historial -->
+                                            @if($details['company_name'])
+                                                <div class="text-xs text-slate-400 mt-1">
+                                                    <strong>Empresa:</strong> {{ $details['company_name'] }}
+                                                </div>
+                                                @if($details['company_email'])
+                                                    <div class="text-xs text-slate-400">{{ $details['company_email'] }}</div>
+                                                @endif
+                                            @endif
+                                        @else
+                                            <!-- Para otros tipos de asignación en historial -->
+                                            @if($details['email'])
+                                                <div class="text-xs text-slate-400">{{ $details['email'] }}</div>
+                                            @endif
                                         @endif
                                     </div>
                                 </div>
@@ -139,11 +199,13 @@
                                         Ended
                                     </span>
                                     <div class="text-xs text-slate-500 mt-1">
-                                        {{ $assignment->effective_date->format('M d, Y') }} - {{ $assignment->end_date->format('M d, Y') }}
+                                        {{ $assignment->start_date ? $assignment->start_date->format('M d, Y') : 'N/A' }} - {{ $assignment->end_date ? $assignment->end_date->format('M d, Y') : 'N/A' }}
                                     </div>
-                                    <div class="text-xs text-slate-400">
-                                        Duration: {{ $assignment->effective_date->diffInDays($assignment->end_date) }} days
-                                    </div>
+                                    @if($assignment->start_date && $assignment->end_date)
+                                        <div class="text-xs text-slate-400">
+                                            Duration: {{ $assignment->start_date->diffInDays($assignment->end_date) }} days
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                             
@@ -160,7 +222,7 @@
     @endif
 
     <!-- Flash Messages -->
-    @if (session()->has('success'))
+    @if (session()->has('driver_assignment_success'))
         <div class="bg-green-50 border border-green-200 rounded-md p-4">
             <div class="flex">
                 <div class="flex-shrink-0">
@@ -170,14 +232,14 @@
                 </div>
                 <div class="ml-3">
                     <p class="text-sm font-medium text-green-800">
-                        {{ session('success') }}
+                        {{ session('driver_assignment_success') }}
                     </p>
                 </div>
             </div>
         </div>
     @endif
 
-    @if (session()->has('error'))
+    @if (session()->has('driver_assignment_error'))
         <div class="bg-red-50 border border-red-200 rounded-md p-4">
             <div class="flex">
                 <div class="flex-shrink-0">
@@ -187,7 +249,7 @@
                 </div>
                 <div class="ml-3">
                     <p class="text-sm font-medium text-red-800">
-                        {{ session('error') }}
+                        {{ session('driver_assignment_error') }}
                     </p>
                 </div>
             </div>

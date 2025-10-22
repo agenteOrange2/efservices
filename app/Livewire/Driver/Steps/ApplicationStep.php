@@ -13,7 +13,7 @@ use App\Models\CompanyDriverDetail;
 use App\Models\Admin\Vehicle\Vehicle;
 use App\Models\Admin\Driver\DriverApplication;
 use App\Models\Admin\Driver\DriverApplicationDetail;
-use App\Models\VehicleDriverAssignment;
+use App\Models\Admin\Vehicle\VehicleDriverAssignment;
 use App\Mail\ThirdPartyVehicleVerification;
 use Illuminate\Support\Carbon;
 use App\Helpers\DateHelper;
