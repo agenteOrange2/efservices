@@ -19,13 +19,12 @@
                 </div>
             </div>
             <div class="mt-3 w-full flex-1 xl:mt-0">
-                <!-- Position Select -->
+                <!-- Position Select - SIMPLIFIED TO DRIVER AND OTHER -->
                 <div class="mb-6">
                     <select wire:model="applying_position" class="form-select w-full rounded-md border border-slate-300/60 bg-white px-3 py-2 shadow-sm">
                         <option value="">Select Position</option>
-                        @foreach($positionOptions as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
-                        @endforeach
+                        <option value="driver">Driver</option>
+                        <option value="other">Other</option>
                     </select>
                     @error('applying_position')
                         <span class="text-red-500 text-sm">{{ $message }}</span>
@@ -56,7 +55,7 @@
                         </label>
                         
                         <label class="flex items-center p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-300 cursor-pointer transition-colors duration-200">
-                            <input type="radio" wire:model="selectedDriverType" value="third_party_driver" class="mr-3 h-4 w-4 text-blue-600">
+                            <input type="radio" wire:model="selectedDriverType" value="third_party" class="mr-3 h-4 w-4 text-blue-600">
                             <div class="flex-1">
                                 <div class="font-medium text-gray-900">Third Party Vehicles</div>
                                 <div class="text-sm text-gray-500">Manage third party assignments</div>
@@ -74,7 +73,7 @@
                     
                     <!-- Debug Info -->
                     <div class="mt-4 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm">
-                        <strong>Debug:</strong> selectedDriverType = {{ $selectedDriverType }}
+                        <strong>Debug:</strong> selectedDriverType = {{ $selectedDriverType }} | applying_position = {{ $applying_position }}
                     </div>
                 </div>
 
@@ -386,7 +385,7 @@
                 </div>
 
                 <!-- Third Party Driver Information -->
-                <div x-show="$wire.selectedDriverType === 'third_party_driver'" x-transition
+                <div x-show="$wire.selectedDriverType === 'third_party'" x-transition
                     class="mt-4 p-4 border rounded bg-gray-50">
                     <h3 class="text-lg font-medium mb-4 text-primary border-b border-gray-200 pb-2">Third Party Company Information</h3>
 

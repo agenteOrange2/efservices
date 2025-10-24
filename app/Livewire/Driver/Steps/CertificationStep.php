@@ -446,22 +446,34 @@ class CertificationStep extends Component
         }
         
         // Generar contrato de arrendamiento para propietarios-operadores si corresponde
-        $application = $userDriverDetail->application;
+        // Ahora obtenemos el tipo de conductor desde vehicle_driver_assignments en lugar de driver_application_details
+        
+        // Obtener la asignación activa del vehículo para determinar el tipo de conductor
+        $activeAssignment = $userDriverDetail->activeVehicleAssignment;
+        
+        // Si no hay asignación activa, intentar obtener la más reciente
+        if (!$activeAssignment) {
+            $activeAssignment = $userDriverDetail->vehicleAssignments()
+                ->where('status', 'pending')
+                ->latest()
+                ->first();
+        }
         
         // Verificar el tipo de conductor y generar los documentos correspondientes
-        if ($application && $application->details) {
-            $applyingPosition = $application->details->applying_position ?? 'unknown';
-            Log::info('Verificando tipo de conductor para generar documentos', [
+        if ($activeAssignment) {
+            $driverType = $activeAssignment->driver_type ?? 'unknown';
+            Log::info('Verificando tipo de conductor para generar documentos desde vehicle_driver_assignments', [
                 'driver_id' => $userDriverDetail->id,
-                'applying_position' => $applyingPosition
+                'driver_type' => $driverType,
+                'assignment_id' => $activeAssignment->id
             ]);
             
-            if ($applyingPosition === 'owner_operator') {
+            if ($driverType === 'owner_operator') {
                 Log::info('Generando contrato de arrendamiento para propietario-operador', [
                     'driver_id' => $userDriverDetail->id
                 ]);
                 $this->generateLeaseAgreementPDF($userDriverDetail, $signaturePath);
-            } elseif ($applyingPosition === 'third_party_driver') {
+            } elseif ($driverType === 'third_party') {
                 Log::info('Generando documentos para conductor third-party', [
                     'driver_id' => $userDriverDetail->id
                 ]);
@@ -469,14 +481,14 @@ class CertificationStep extends Component
             } else {
                 Log::info('No se generan documentos específicos para este tipo de conductor', [
                     'driver_id' => $userDriverDetail->id,
-                    'applying_position' => $applyingPosition
+                    'driver_type' => $driverType
                 ]);
             }
         } else {
-            Log::warning('No se puede determinar el tipo de conductor, faltan datos de aplicación', [
+            Log::warning('No se puede determinar el tipo de conductor, no hay asignación de vehículo', [
                 'driver_id' => $userDriverDetail->id,
-                'has_application' => $application ? 'yes' : 'no',
-                'has_details' => ($application && $application->details) ? 'yes' : 'no'
+                'has_active_assignment' => $userDriverDetail->activeVehicleAssignment ? 'yes' : 'no',
+                'total_assignments' => $userDriverDetail->vehicleAssignments()->count()
             ]);
         }
         
@@ -946,6 +958,9 @@ class CertificationStep extends Component
                 $pdfContent = $pdf->output();
                 Storage::disk('public')->put($filePath, $pdfContent);
                 
+                // Almacenar la ruta del PDF de consentimiento para adjuntar al email
+                $consentPdfPath = storage_path('app/public/' . $filePath);
+                
             } catch (\Exception $e) {
                 Log::error('Error al generar PDF de consentimiento de terceros', [
                     'driver_id' => $userDriverDetail->id,
@@ -1010,6 +1025,8 @@ class CertificationStep extends Component
                 $pdfContent = $pdf->output();
                 Storage::disk('public')->put($filePath, $pdfContent);
                 
+                $leasePdfPath = storage_path('app/public/' . $filePath);
+                
             } catch (\Exception $e) {
                 Log::error('Error al generar PDF de contrato de arrendamiento para third-party', [
                     'driver_id' => $userDriverDetail->id,
@@ -1017,6 +1034,13 @@ class CertificationStep extends Component
                     'trace' => $e->getTraceAsString()
                 ]);
             }
+            
+            // PDFs generados exitosamente
+            Log::info('PDFs de third-party generados exitosamente', [
+                'driver_id' => $userDriverDetail->id,
+                'consent_pdf' => isset($consentPdfPath),
+                'lease_pdf' => isset($leasePdfPath)
+            ]);
             
         } catch (\Exception $e) {
             Log::error('Error al generar documentos para third-party', [
@@ -1182,11 +1206,11 @@ class CertificationStep extends Component
         }
     }
     
+
+
     // Renderizar
     public function render()
     {
-        return view('livewire.driver.steps.certification-step', [
-            'employmentHistory' => $this->employmentHistory
-        ]);
+        return view('livewire.driver.steps.certification-step');
     }
 }

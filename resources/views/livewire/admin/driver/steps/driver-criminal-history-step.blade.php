@@ -4,7 +4,7 @@
 
 <!-- Criminal Record Section -->
 <div class="mb-6 p-4 border rounded-lg bg-white shadow-sm">
-    <h4 class="font-medium text-lg mb-3">Criminal Record</h4>
+    <h4 class="font-medium text-lg mb-3">Criminal Record <span class="text-sm text-gray-500 font-normal">(Optional)</span></h4>
 
     <div class="mb-4">
         <div class="flex items-center justify-between">
@@ -28,7 +28,7 @@
 
 <!-- Felonies Section -->
 <div class="mb-6 p-4 border rounded-lg bg-white shadow-sm">
-    <h4 class="font-medium text-lg mb-3">Felonies</h4>
+    <h4 class="font-medium text-lg mb-3">Felonies <span class="text-sm text-gray-500 font-normal">(Optional)</span></h4>
 
     <div class="mb-4">
         <div class="flex items-center justify-between">

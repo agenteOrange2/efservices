@@ -11,6 +11,8 @@ use App\Models\OwnerOperatorDetail;
 use App\Models\ThirdPartyDetail;
 use App\Models\CompanyDriverDetail;
 use App\Models\Admin\Vehicle\Vehicle;
+use App\Models\Admin\Vehicle\VehicleMake;
+use App\Models\Admin\Vehicle\VehicleType;
 use App\Models\Admin\Driver\DriverApplication;
 use App\Models\Admin\Driver\DriverApplicationDetail;
 use App\Models\Admin\Vehicle\VehicleDriverAssignment;
@@ -20,16 +22,17 @@ use App\Helpers\DateHelper;
 
 class ApplicationStep extends Component
 {
+     // Step management
+    public $currentStep = 1;
+    
     // Application Details
     public $applying_position;
     public $applying_position_other;
     public $applying_location;
     
-    // Position options for select
+    // Position options for select - SIMPLIFIED TO ONLY DRIVER AND OTHER
     public $positionOptions = [
-        'owner_operator' => 'Owner Operator',
-        'third_party_driver' => 'Third Party Driver', 
-        'company_driver' => 'Company Driver',
+        'driver' => 'Driver',
         'other' => 'Other'
     ];
     
@@ -39,7 +42,7 @@ class ApplicationStep extends Component
     // Vehicle type checkboxes (deprecated - keeping for backward compatibility)
     public $vehicleTypeCheckboxes = [
         'owner_operator' => false,
-        'third_party_driver' => false,
+        'third_party' => false,
         'company_driver' => false
     ];
     public $eligible_to_work = true;
@@ -121,6 +124,14 @@ class ApplicationStep extends Component
     public $existingVehicles = [];
     public $selectedVehicleId;
 
+    // Vehicle dropdown options
+    public $vehicleMakes = [];
+    public $vehicleTypes = [];
+    public $showAddMakeModal = false;
+    public $showAddTypeModal = false;
+    public $newMakeName = '';
+    public $newTypeName = '';
+
     // Validation rules
     protected function rules()
     {
@@ -170,7 +181,7 @@ class ApplicationStep extends Component
             ]);
         }
         
-        if ($this->selectedDriverType === 'third_party_driver') {
+        if ($this->selectedDriverType === 'third_party') {
             // Third Party Company Driver validation rules
             $rules = array_merge($rules, [
                 'third_party_name' => 'required|string|max:255',
@@ -259,6 +270,8 @@ class ApplicationStep extends Component
     public function mount($driverId = null)
     {
         $this->driverId = $driverId;
+        $this->vehicleMakes = VehicleMake::orderBy('name')->get();
+        $this->vehicleTypes = VehicleType::orderBy('name')->get();
         
         // Ensure selectedDriverTypes is always an array (deprecated)
         if (!is_array($this->selectedDriverTypes)) {
@@ -278,7 +291,7 @@ class ApplicationStep extends Component
         if (!is_array($this->vehicleTypeCheckboxes)) {
             $this->vehicleTypeCheckboxes = [
                 'owner_operator' => false,
-                'third_party_driver' => false,
+                'third_party' => false,
                 'company_driver' => false
             ];
         }
@@ -305,66 +318,61 @@ class ApplicationStep extends Component
             'driver_id' => $this->driverId,
             'selectedDriverTypes_after_load' => $this->selectedDriverTypes,
             'applying_position' => $this->applying_position ?? 'null',
-            'vehicleTypeCheckboxes_after_load' => $this->vehicleTypeCheckboxes
+            'applying_position_type' => gettype($this->applying_position),
+            'applying_position_empty' => empty($this->applying_position),
+            'vehicleTypeCheckboxes_after_load' => $this->vehicleTypeCheckboxes,
+            'selectedDriverType_after_load' => $this->selectedDriverType ?? 'null'
         ]);
     }
     
     /**
-     * Actualiza los campos cuando cambia la posición seleccionada
+     * Actualiza los campos cuando cambia la posición seleccionada - SIMPLIFIED
      */
     public function updatedApplyingPosition($value)
     {
-        if ($value === 'owner_operator') {
-            // Clear third party fields
-            $this->third_party_name = null;
-            $this->third_party_phone = null;
-            $this->third_party_email = null;
-            $this->third_party_dba = null;
-            $this->third_party_address = null;
-            $this->third_party_contact = null;
-            $this->third_party_fein = null;
-            $this->email_sent = false;
-            
-            // Auto-fill owner fields if driver info is available
-            $this->autoFillOwnerFields();
-        } elseif ($value === 'third_party_driver') {
-            // Clear owner fields
-            $this->owner_name = null;
-            $this->owner_phone = null;
-            $this->owner_email = null;
-            $this->contract_agreed = false;
-        } else {
-            // Clear both owner and third party fields for other positions
-            $this->owner_name = null;
-            $this->owner_phone = null;
-            $this->owner_email = null;
-            $this->contract_agreed = false;
-            
-            $this->third_party_name = null;
-            $this->third_party_phone = null;
-            $this->third_party_email = null;
-            $this->third_party_dba = null;
-            $this->third_party_address = null;
-            $this->third_party_contact = null;
-            $this->third_party_fein = null;
-            $this->email_sent = false;
-        }
+        // Save immediately to database
+        $this->saveApplyingPositionToDatabase();
         
-        // Synchronize with vehicle ownership_type using Constants mapping
-        $this->syncApplyingPositionWithOwnership($value);
-        
-        // Reload existing vehicles when position changes
-        if ($this->driverId && ($value === 'owner_operator' || $value === 'third_party_driver')) {
-            $this->loadExistingVehicles();
-        }
-        
-        Log::info('Applying position cambiado', [
+        Log::info('ApplicationStep: applying_position updated', [
             'driver_id' => $this->driverId,
-            'new_position' => $value,
-            'previous_position' => $this->applying_position ?? 'none'
+            'new_value' => $value,
+            'timestamp' => now()->toDateTimeString()
         ]);
     }
     
+    /**
+     * Handle applying_position_other field updates
+     */
+    public function updatedApplyingPositionOther($value)
+    {
+        Log::info('CRITICAL: updatedApplyingPositionOther METHOD CALLED', [
+            'driver_id' => $this->driverId,
+            'applying_position' => $this->applying_position,
+            'applying_position_other_value' => $value,
+            'applying_position_other_property' => $this->applying_position_other,
+            'method_called_at' => now()->toDateTimeString(),
+            'stack_trace' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3)
+        ]);
+        
+        // Ensure the property is set
+        $this->applying_position_other = $value;
+        
+        // Only save if applying_position is 'other'
+        if ($this->applying_position === 'other') {
+            Log::info('CRITICAL: Calling saveApplyingPositionToDatabase from updatedApplyingPositionOther');
+            $result = $this->saveApplyingPositionToDatabase();
+            
+            Log::info('CRITICAL: Save result from updatedApplyingPositionOther', [
+                'save_result' => $result,
+                'final_applying_position_other' => $this->applying_position_other
+            ]);
+        } else {
+            Log::warning('CRITICAL: applying_position is not "other", skipping save', [
+                'applying_position' => $this->applying_position
+            ]);
+        }
+    }
+
     /**
      * Load existing vehicles for the driver (independent of applying_position)
      */
@@ -715,20 +723,54 @@ class ApplicationStep extends Component
      */
     public function updatedSelectedDriverType($value)
     {
-        Log::info('Selected driver type updated', [
-            'type' => $value,
-            'driver_id' => $this->driverId
+        // CRITICAL: Log para confirmar que el método se ejecuta
+        Log::critical('🔥 MÉTODO EJECUTADO: updatedSelectedDriverType', [
+            'value' => $value,
+            'driver_id' => $this->driverId,
+            'timestamp' => now()->toDateTimeString()
         ]);
         
-        // Clear all previous assignments
-        $this->deleteAllVehicleDriverAssignments();
+        Log::info('🔥 EXTREME LOGGING: updatedSelectedDriverType CALLED', [
+            'method' => 'updatedSelectedDriverType',
+            'type' => $value,
+            'driver_id' => $this->driverId,
+            'current_applying_position' => $this->applying_position,
+            'timestamp' => now()->toDateTimeString(),
+            'stack_trace' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3)
+        ]);
         
-        // Create new assignment for selected type
+        // CRITICAL: Normalizar el valor de third a third_party (NO third_party)
+        // La tabla vehicle_driver_assignments tiene ENUM con valores: owner_operator, third_party, company_driver
+        if ($value === 'third') {
+            $value = 'third_party';
+            Log::info('CRITICAL: Normalized third to third_party', [
+                'original_value' => 'third',
+                'normalized_value' => $value,
+                'driver_id' => $this->driverId,
+                'note' => 'DB ENUM expects third_party not third_party'
+            ]);
+        }
+        
+        // FIXED: selectedDriverType is for vehicle assignments ONLY
+        // DO NOT modify applying_position here - it should only be "driver" or "other"
         if ($value) {
+            Log::info('Vehicle driver type selected', [
+                'selectedDriverType' => $value,
+                'applying_position_unchanged' => $this->applying_position,
+                'driver_id' => $this->driverId
+            ]);
+            
+            // CRITICAL: Load existing data FIRST to preserve all data
+            $this->loadExistingData();
+            
+            // CRITICAL: Delete all existing assignments to ensure only ONE record exists
+            $this->deleteAllVehicleDriverAssignments();
+            
+            // CRITICAL: Create new assignment for the selected type
             $this->createVehicleDriverAssignment($value);
             
-            // Auto-fill owner fields when owner_operator is selected
-            if ($value === 'owner_operator') {
+            // Auto-fill owner fields when owner_operator is selected (only if no existing data)
+            if ($value === 'owner_operator' && empty($this->owner_name)) {
                 $this->autoFillOwnerFields();
             }
         }
@@ -742,25 +784,160 @@ class ApplicationStep extends Component
         Log::info('Vehicle type checkbox updated', [
             'type' => $type,
             'value' => $value,
-            'driver_id' => $this->driverId
+            'driver_id' => $this->driverId,
+            'current_applying_position' => $this->applying_position
         ]);
         
         if ($value) {
+            // FIXED: DO NOT modify applying_position from vehicle type checkboxes
+            // applying_position should only be "driver" or "other"
+            
             $this->createVehicleDriverAssignment($type);
             
             // Auto-fill owner fields when owner_operator is selected
             if ($type === 'owner_operator') {
                 $this->autoFillOwnerFields();
             }
+            
+            Log::info('Vehicle type checkbox selected', [
+                'vehicle_type' => $type,
+                'applying_position_unchanged' => $this->applying_position,
+                'driver_id' => $this->driverId
+            ]);
         } else {
             $this->deleteVehicleDriverAssignment($type);
         }
     }
     
     /**
+     * Handle fuel type changes for debugging
+     */
+    public function updatedVehicleFuelType($value)
+    {
+        Log::info('Fuel type actualizado', [
+            'fuel_type' => $value,
+            'vehicle_id' => $this->vehicle_id,
+            'driver_id' => $this->driverId,
+            'applying_position' => $this->applying_position
+        ]);
+    }
+    
+    /**
      * Create VehicleDriverAssignment record for the selected type
      */
     private function createVehicleDriverAssignment($type)
+    {
+        try {
+            Log::info('🔥 EXTREME LOGGING: createVehicleDriverAssignment CALLED', [
+                'method' => 'createVehicleDriverAssignment',
+                'original_type' => $type,
+                'driver_id' => $this->driverId,
+                'timestamp' => now()->toDateTimeString(),
+                'stack_trace' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3)
+            ]);
+            
+            // CRITICAL: Normalizar third a third_party (NO third_party)
+            // La tabla vehicle_driver_assignments tiene ENUM con valores: owner_operator, third_party, company_driver
+            if ($type === 'third') {
+                $type = 'third_party';
+                Log::info('🔥 CRITICAL: Normalized third to third_party in createVehicleDriverAssignment', [
+                    'original_type' => 'third',
+                    'normalized_type' => $type,
+                    'driver_id' => $this->driverId,
+                    'note' => 'DB ENUM expects third_party not third_party'
+                ]);
+            }
+            
+            $assignmentData = [
+                'user_driver_detail_id' => $this->driverId,
+                'driver_type' => $type,
+                'status' => 'pending',
+                'start_date' => now()->format('Y-m-d')
+            ];
+            
+            // Para company_driver: vehicle_id = NULL (se asigna después)
+            // Para owner_operator y third_party: necesitamos el vehicle_id del vehículo
+            if ($type === 'company_driver') {
+                $assignmentData['vehicle_id'] = null;
+            } else {
+                // Para owner_operator y third_party, buscar el vehículo asociado
+                $vehicle = null;
+                if (isset($this->vehiclesByType[$type]) && !empty($this->vehiclesByType[$type])) {
+                    // Si hay vehículos en el array, usar el primero que tenga ID
+                    foreach ($this->vehiclesByType[$type] as $vehicleData) {
+                        if (!empty($vehicleData['id'])) {
+                            $vehicle = Vehicle::find($vehicleData['id']);
+                            break;
+                        }
+                    }
+                }
+                
+                $assignmentData['vehicle_id'] = $vehicle ? $vehicle->id : null;
+            }
+            
+            $assignment = VehicleDriverAssignment::create($assignmentData);
+            
+            Log::info('🔥 CRITICAL: New VehicleDriverAssignment created by createVehicleDriverAssignment', [
+                'assignment_id' => $assignment->id,
+                'driver_id' => $this->driverId,
+                'driver_type' => $type,
+                'driver_type_saved' => $assignment->driver_type,
+                'vehicle_id' => $assignmentData['vehicle_id'],
+                'start_date' => $assignmentData['start_date'],
+                'action' => 'OVERWRITE_PREVIOUS_ASSIGNMENTS',
+                'is_third_party' => $type === 'third_party' ? 'YES' : 'NO',
+                'method_source' => 'createVehicleDriverAssignment'
+            ]);
+            
+            // CRITICAL: Verificar que el registro se creó correctamente en la base de datos
+            $verifyAssignment = VehicleDriverAssignment::find($assignment->id);
+            if ($verifyAssignment) {
+                Log::info('🔥 CRITICAL: VehicleDriverAssignment verified in database', [
+                    'assignment_id' => $verifyAssignment->id,
+                    'driver_type_in_db' => $verifyAssignment->driver_type,
+                    'user_driver_detail_id' => $verifyAssignment->user_driver_detail_id,
+                    'status' => $verifyAssignment->status,
+                    'method_source' => 'createVehicleDriverAssignment'
+                ]);
+                
+                // CRITICAL: Check for duplicates immediately after creation
+                $duplicates = VehicleDriverAssignment::where('user_driver_detail_id', $this->driverId)
+                    ->where('status', 'pending')
+                    ->get();
+                    
+                Log::info('🔥 DUPLICATE CHECK: All assignments for this driver', [
+                    'driver_id' => $this->driverId,
+                    'total_assignments' => $duplicates->count(),
+                    'assignments' => $duplicates->map(function($dup) {
+                        return [
+                            'id' => $dup->id,
+                            'driver_type' => $dup->driver_type,
+                            'vehicle_id' => $dup->vehicle_id,
+                            'created_at' => $dup->created_at->toDateTimeString()
+                        ];
+                    })->toArray()
+                ]);
+            } else {
+                Log::error('🔥 CRITICAL: VehicleDriverAssignment NOT FOUND in database after creation', [
+                    'expected_id' => $assignment->id,
+                    'driver_id' => $this->driverId,
+                    'type' => $type
+                ]);
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Error creating VehicleDriverAssignment', [
+                'error' => $e->getMessage(),
+                'driver_id' => $this->driverId,
+                'type' => $type
+            ]);
+        }
+    }
+    
+    /**
+     * Create VehicleDriverAssignment record only if it doesn't exist
+     */
+    private function createVehicleDriverAssignmentIfNotExists($type)
     {
         try {
             // Check if assignment already exists for this specific driver type
@@ -770,45 +947,20 @@ class ApplicationStep extends Component
                 ->first();
                 
             if (!$existingAssignment) {
-                $assignmentData = [
-                    'user_driver_detail_id' => $this->driverId,
-                    'driver_type' => $type,
-                    'status' => 'pending',
-                    'start_date' => now()->format('Y-m-d')
-                ];
-                
-                // Para company_driver: vehicle_id = NULL (se asigna después)
-                // Para owner_operator y third_party_driver: necesitamos el vehicle_id del vehículo
-                if ($type === 'company_driver') {
-                    $assignmentData['vehicle_id'] = null;
-                } else {
-                    // Para owner_operator y third_party_driver, buscar el vehículo asociado
-                    $vehicle = null;
-                    if (isset($this->vehiclesByType[$type]) && !empty($this->vehiclesByType[$type])) {
-                        // Si hay vehículos en el array, usar el primero que tenga ID
-                        foreach ($this->vehiclesByType[$type] as $vehicleData) {
-                            if (!empty($vehicleData['id'])) {
-                                $vehicle = Vehicle::find($vehicleData['id']);
-                                break;
-                            }
-                        }
-                    }
-                    
-                    $assignmentData['vehicle_id'] = $vehicle ? $vehicle->id : null;
-                }
-                
-                $assignment = VehicleDriverAssignment::create($assignmentData);
-                
-                Log::info('VehicleDriverAssignment created', [
-                    'assignment_id' => $assignment->id,
+                Log::info('Creating new VehicleDriverAssignment for type', [
+                    'driver_id' => $this->driverId,
+                    'type' => $type
+                ]);
+                $this->createVehicleDriverAssignment($type);
+            } else {
+                Log::info('VehicleDriverAssignment already exists for type', [
                     'driver_id' => $this->driverId,
                     'type' => $type,
-                    'vehicle_id' => $assignmentData['vehicle_id'],
-                    'start_date' => $assignmentData['start_date']
+                    'assignment_id' => $existingAssignment->id
                 ]);
             }
         } catch (\Exception $e) {
-            Log::error('Error creating VehicleDriverAssignment', [
+            Log::error('Error checking/creating VehicleDriverAssignment', [
                 'error' => $e->getMessage(),
                 'driver_id' => $this->driverId,
                 'type' => $type
@@ -822,11 +974,30 @@ class ApplicationStep extends Component
     private function deleteAllVehicleDriverAssignments()
     {
         try {
+            // Get existing assignments before deleting for logging
+            $existingAssignments = VehicleDriverAssignment::where('user_driver_detail_id', $this->driverId)
+                ->where('status', 'pending')
+                ->get();
+                
+            Log::info('🔥 CRITICAL: Deleting existing VehicleDriverAssignments before creating new one', [
+                'method' => 'deleteAllVehicleDriverAssignments',
+                'driver_id' => $this->driverId,
+                'existing_assignments' => $existingAssignments->map(function($assignment) {
+                    return [
+                        'id' => $assignment->id,
+                        'driver_type' => $assignment->driver_type,
+                        'vehicle_id' => $assignment->vehicle_id,
+                        'status' => $assignment->status
+                    ];
+                })->toArray(),
+                'timestamp' => now()->toDateTimeString()
+            ]);
+            
             $deleted = VehicleDriverAssignment::where('user_driver_detail_id', $this->driverId)
                 ->where('status', 'pending')
                 ->delete();
                 
-            Log::info('All VehicleDriverAssignments deleted', [
+            Log::info('CRITICAL: VehicleDriverAssignments deleted successfully', [
                 'deleted_count' => $deleted,
                 'driver_id' => $this->driverId
             ]);
@@ -885,7 +1056,7 @@ class ApplicationStep extends Component
                 } elseif ($assignment->ownerOperatorDetail) {
                     $driverType = 'owner_operator';
                 } elseif ($assignment->thirdPartyDetail) {
-                    $driverType = 'third_party_driver';
+                    $driverType = 'third_party';
                 } elseif ($assignment->companyDriverDetail) {
                     $driverType = 'company_driver';
                 }
@@ -1021,7 +1192,21 @@ class ApplicationStep extends Component
         if ($this->application && $this->application->details) {
             $details = $this->application->details;
 
+            // DEBUG: Log raw database value
+            Log::info('DEBUG: Raw applying_position from database', [
+                'raw_value' => $details->getOriginal('applying_position'),
+                'accessor_value' => $details->applying_position,
+                'details_id' => $details->id
+            ]);
+
             $this->applying_position = $details->applying_position;
+            
+            // DEBUG: Log after assignment
+            Log::info('DEBUG: After assignment to component property', [
+                'component_applying_position' => $this->applying_position,
+                'type' => gettype($this->applying_position),
+                'empty' => empty($this->applying_position)
+            ]);
             $this->applying_position_other = $details->applying_position_other;
             $this->applying_location = $details->applying_location;
             $this->eligible_to_work = $details->eligible_to_work;
@@ -1037,7 +1222,7 @@ class ApplicationStep extends Component
             // Initialize vehicleTypeCheckboxes and selectedDriverTypes based on existing data
             $this->vehicleTypeCheckboxes = [
                 'owner_operator' => false,
-                'third_party_driver' => false,
+                'third_party' => false,
                 'company_driver' => false
             ];
             $this->selectedDriverTypes = [];
@@ -1054,9 +1239,13 @@ class ApplicationStep extends Component
                 $this->owner_email = $ownerDetails->owner_email;
                 $this->contract_agreed = (bool)($ownerDetails->contract_agreed ?? false);
                 
-                // Marcar como disponible en vehicleTypeCheckboxes
+                // Marcar como disponible en vehicleTypeCheckboxes (backward compatibility)
                 $this->vehicleTypeCheckboxes['owner_operator'] = true;
                 $this->selectedDriverTypes[] = 'owner_operator';
+                
+                // FIXED: selectedDriverType is independent of applying_position
+                // applying_position is only "driver" or "other", not vehicle types
+                // Set selectedDriverType based on existing vehicle assignments, not applying_position
                 
                 // Initialize vehiclesByType for owner_operator
                 if (!isset($this->vehiclesByType['owner_operator'])) {
@@ -1068,7 +1257,9 @@ class ApplicationStep extends Component
                     'owner_name' => $this->owner_name,
                     'owner_phone' => $this->owner_phone,
                     'owner_email' => $this->owner_email,
-                    'contract_agreed' => $this->contract_agreed
+                    'contract_agreed' => $this->contract_agreed,
+                    'applying_position' => $this->applying_position,
+                    'selectedDriverType_set' => $this->selectedDriverType
                 ]);
             } else {
                 Log::info('ApplicationStep: No se encontraron datos de Owner Operator');
@@ -1090,20 +1281,25 @@ class ApplicationStep extends Component
                 $this->third_party_fein = $thirdPartyDetails->third_party_fein;
                 $this->email_sent = (bool)($thirdPartyDetails->email_sent ?? false);
                 
-                // Marcar como disponible en vehicleTypeCheckboxes
-                $this->vehicleTypeCheckboxes['third_party_driver'] = true;
-                $this->selectedDriverTypes[] = 'third_party_driver';
+                // Marcar como disponible en vehicleTypeCheckboxes (backward compatibility)
+                $this->vehicleTypeCheckboxes['third_party'] = true;
+                $this->selectedDriverTypes[] = 'third_party';
                 
-                // Initialize vehiclesByType for third_party_driver
-                if (!isset($this->vehiclesByType['third_party_driver'])) {
-                    $this->vehiclesByType['third_party_driver'] = [];
+                // FIXED: selectedDriverType is independent of applying_position
+                // Set selectedDriverType based on existing vehicle assignments
+                
+                // Initialize vehiclesByType for third_party
+                if (!isset($this->vehiclesByType['third_party'])) {
+                    $this->vehiclesByType['third_party'] = [];
                 }
                 
                 Log::info('ApplicationStep: Cargados datos de Third Party', [
                     'application_id' => $this->application->id,
                     'third_party_name' => $this->third_party_name,
                     'third_party_phone' => $this->third_party_phone,
-                    'third_party_email' => $this->third_party_email
+                    'third_party_email' => $this->third_party_email,
+                    'applying_position' => $this->applying_position,
+                    'selectedDriverType_set' => $this->selectedDriverType
                 ]);
             } else {
                 Log::info('ApplicationStep: No se encontraron datos de Third Party');
@@ -1118,9 +1314,12 @@ class ApplicationStep extends Component
                 $companyDetails = $this->application->companyDriverDetail;
                 $this->company_driver_notes = $companyDetails->notes;
                 
-                // Marcar como disponible en vehicleTypeCheckboxes
+                // Marcar como disponible en vehicleTypeCheckboxes (backward compatibility)
                 $this->vehicleTypeCheckboxes['company_driver'] = true;
                 $this->selectedDriverTypes[] = 'company_driver';
+                
+                // FIXED: selectedDriverType is independent of applying_position
+                // Set selectedDriverType based on existing vehicle assignments
                 
                 // Initialize vehiclesByType for company_driver
                 if (!isset($this->vehiclesByType['company_driver'])) {
@@ -1129,17 +1328,27 @@ class ApplicationStep extends Component
                 
                 Log::info('ApplicationStep: Cargados datos de Company Driver', [
                     'application_id' => $this->application->id,
-                    'notes' => $this->company_driver_notes
+                    'notes' => $this->company_driver_notes,
+                    'applying_position' => $this->applying_position,
+                    'selectedDriverType_set' => $this->selectedDriverType
                 ]);
             } else {
                 Log::info('ApplicationStep: No se encontraron datos de Company Driver');
             }
             
-            // Set currentDriverType to the first available type or default to applying_position
+            // FIXED: Set currentDriverType to the first available vehicle type
+            // DO NOT use applying_position for vehicle types
             if (!empty($this->selectedDriverTypes)) {
                 $this->currentDriverType = $this->selectedDriverTypes[0];
-            } elseif ($this->applying_position) {
-                $this->currentDriverType = $this->applying_position;
+                
+                // Set selectedDriverType to the first available vehicle type
+                if (!$this->selectedDriverType) {
+                    $this->selectedDriverType = $this->selectedDriverTypes[0];
+                    Log::info('ApplicationStep: selectedDriverType set from first available vehicle type', [
+                        'selectedDriverType' => $this->selectedDriverType,
+                        'applying_position' => $this->applying_position
+                    ]);
+                }
             }
             
             // Si hay un vehículo asociado a la aplicación, cargar sus datos
@@ -1219,8 +1428,8 @@ class ApplicationStep extends Component
             $this->processThirdPartyVehicles($application, $userDriverDetail);
             $this->processCompanyDriverInfo($application, $userDriverDetail);
             
-            // Crear vehículo si es necesario
-            if (($this->applying_position === 'owner_operator' || $this->applying_position === 'third_party_driver') && 
+            // FIXED: Create vehicle based on selectedDriverType, not applying_position
+            if (($this->selectedDriverType === 'owner_operator' || $this->selectedDriverType === 'third_party') && 
                 $this->vehicle_make && $this->vehicle_model && $this->vehicle_year && $this->vehicle_vin) {
                 
                 $carrierId = $userDriverDetail->carrier_id;
@@ -1232,9 +1441,9 @@ class ApplicationStep extends Component
                 if ($this->vehicle_id) {
                     $vehicle = Vehicle::find($this->vehicle_id);
                     if ($vehicle) {
-                        // Determinar el tipo de vehículo según la posición seleccionada
-                        $driverType = $this->applying_position === 'owner_operator' ? 'owner_operator' : 
-                                      ($this->applying_position === 'third_party_driver' ? 'third_party' : 'company');
+                        // FIXED: Determine vehicle type based on selectedDriverType, not applying_position
+                        $driverType = $this->selectedDriverType === 'owner_operator' ? 'owner_operator' : 
+                                      ($this->selectedDriverType === 'third_party' ? 'third_party' : 'company');
                         
                         // Update existing vehicle
                         $vehicle->update([
@@ -1256,7 +1465,7 @@ class ApplicationStep extends Component
                             'permanent_tag' => $this->vehicle_permanent_tag,
                             'location' => $this->vehicle_location,
                             'driver_type' => $driverType,
-                            'ownership_type' => $this->applying_position === 'owner_operator' ? 'owned' : 'leased',
+                            'ownership_type' => $this->selectedDriverType === 'owner_operator' ? 'owned' : 'leased',
                             'status' => 'pending',
                             'notes' => $this->vehicle_notes,
                         ]);
@@ -1273,9 +1482,9 @@ class ApplicationStep extends Component
                         ? Carbon::parse(DateHelper::toDatabase($this->vehicle_registration_expiration_date)) 
                         : now()->addYear();
                     
-                    // Determinar el tipo de vehículo según la posición seleccionada
-                    $driverType = $this->applying_position === 'owner_operator' ? 'owner_operator' : 
-                                  ($this->applying_position === 'third_party_driver' ? 'third_party' : 'company');
+                    // FIXED: Determine vehicle type based on selectedDriverType, not applying_position
+                    $driverType = $this->selectedDriverType === 'owner_operator' ? 'owner_operator' : 
+                                  ($this->selectedDriverType === 'third_party' ? 'third_party' : 'company');
                     
                     // Crear nuevo vehículo
                     $vehicle = Vehicle::create([
@@ -1295,7 +1504,7 @@ class ApplicationStep extends Component
                         'registration_expiration_date' => $registrationDate,
                         'permanent_tag' => $this->vehicle_permanent_tag,
                         'location' => $this->vehicle_location,
-                        'ownership_type' => $this->applying_position === 'owner_operator' ? 'owned' : 'leased',
+                        'ownership_type' => $this->selectedDriverType === 'owner_operator' ? 'owned' : 'leased',
                         'driver_type' => $driverType,
                         'user_id' => $userDriverDetail->user_id,
                         'status' => 'pending',
@@ -1313,6 +1522,15 @@ class ApplicationStep extends Component
             Log::info('Actualizando detalles de aplicación', [
                 'position' => $this->applying_position,
                 'location' => $this->applying_location
+            ]);
+            
+            // DEBUG LOG: Verificar valor antes de guardar
+            Log::info('DEBUG: applying_position antes de guardar', [
+                'driver_id' => $this->driverId,
+                'applying_position_value' => $this->applying_position,
+                'applying_position_type' => gettype($this->applying_position),
+                'is_null' => is_null($this->applying_position),
+                'is_empty' => empty($this->applying_position)
             ]);
 
             $applicationDetails = $application->details()->updateOrCreate(
@@ -1335,8 +1553,16 @@ class ApplicationStep extends Component
                 ]
             );
             
-            // Limpiar detalles del tipo anterior y guardar detalles del tipo actual
-            if ($this->applying_position === 'owner_operator') {
+            // DEBUG LOG: Verificar que se guardó correctamente
+            Log::info('DEBUG: applying_position después de guardar', [
+                'driver_id' => $this->driverId,
+                'application_details_id' => $applicationDetails->id,
+                'saved_applying_position' => $applicationDetails->applying_position,
+                'fresh_from_db' => $applicationDetails->fresh()->applying_position
+            ]);
+            
+            // FIXED: Process vehicle type details based on selectedDriverType, not applying_position
+            if ($this->selectedDriverType === 'owner_operator') {
                 // Eliminar detalles de Third Party si existen
                 $application->thirdPartyDetail()->delete();
                 
@@ -1356,19 +1582,19 @@ class ApplicationStep extends Component
                     'application_id' => $application->id,
                     'owner_name' => $this->owner_name
                 ]);
-            } elseif ($this->applying_position === 'third_party_driver') {
+            } elseif ($this->selectedDriverType === 'third_party') {
                 // Eliminar detalles de Owner Operator si existen
                 $application->ownerOperatorDetail()->delete();
                 
                 // Guardar detalles de Third Party usando VehicleDriverAssignment
                 // First, get or create the VehicleDriverAssignment for this third party
-                $assignment = \App\Models\VehicleDriverAssignment::where('user_driver_detail_id', $userDriverDetail->id)
+                $assignment = VehicleDriverAssignment::where('user_driver_detail_id', $userDriverDetail->id)
                     ->where('status', 'pending')
                     ->first();
                     
                 if (!$assignment) {
                     // Create a new VehicleDriverAssignment for third party
-                    $assignment = \App\Models\VehicleDriverAssignment::create([
+                    $assignment = VehicleDriverAssignment::create([
                         'user_driver_detail_id' => $userDriverDetail->id,
                         'vehicle_id' => $this->vehicle_id,
                         'status' => 'pending',
@@ -1396,9 +1622,9 @@ class ApplicationStep extends Component
                     'third_party_name' => $this->third_party_name
                 ]);
             } else {
-                // Si no es owner_operator ni third_party_driver, eliminar ambos tipos de detalles
+                // Si no es owner_operator ni third_party, eliminar ambos tipos de detalles
                 // Get the assignment for this application to properly delete related details
-                $assignment = \App\Models\VehicleDriverAssignment::where('user_driver_detail_id', $userDriverDetail->id)
+                $assignment = VehicleDriverAssignment::where('user_driver_detail_id', $userDriverDetail->id)
                     ->where('status', 'pending')
                     ->first();
                     
@@ -1510,13 +1736,52 @@ class ApplicationStep extends Component
                 throw new \Exception('No carrier found for this driver');
             }
             
-            // Check if vehicle already exists by VIN
-            $existingVehicle = Vehicle::where('vin', $this->vehicle_vin)->first();
-            
-            if ($existingVehicle) {
-                $vehicle = $existingVehicle;
-                Log::info('ApplicationStep: Usando vehículo existente', ['vehicle_id' => $vehicle->id]);
+            // Check if we have a selected vehicle_id first
+            if ($this->vehicle_id) {
+                $vehicle = Vehicle::find($this->vehicle_id);
+                if ($vehicle) {
+                    // Update existing selected vehicle with current form data
+                    $registrationDate = $this->vehicle_registration_expiration_date 
+                        ? \Carbon\Carbon::parse(\App\Helpers\DateHelper::toDatabase($this->vehicle_registration_expiration_date)) 
+                        : $vehicle->registration_expiration_date;
+                    
+                    $vehicle->update([
+                        'carrier_id' => $carrierId,
+                        'make' => $this->vehicle_make,
+                        'model' => $this->vehicle_model,
+                        'year' => $this->vehicle_year,
+                        'vin' => $this->vehicle_vin,
+                        'company_unit_number' => $this->vehicle_company_unit_number,
+                        'type' => $this->vehicle_type,
+                        'gvwr' => $this->vehicle_gvwr,
+                        'tire_size' => $this->vehicle_tire_size,
+                        'fuel_type' => $this->vehicle_fuel_type,
+                        'irp_apportioned_plate' => $this->vehicle_irp_apportioned_plate,
+                        'registration_state' => $this->vehicle_registration_state ?: $this->applying_location,
+                        'registration_number' => $this->vehicle_registration_number ?: $vehicle->registration_number,
+                        'registration_expiration_date' => $registrationDate,
+                        'permanent_tag' => $this->vehicle_permanent_tag,
+                        'location' => $this->vehicle_location,
+                        'notes' => $this->vehicle_notes,
+                    ]);
+                    
+                    Log::info('ApplicationStep: Vehículo existente actualizado para owner operator', [
+                        'vehicle_id' => $vehicle->id,
+                        'fuel_type' => $this->vehicle_fuel_type,
+                        'make' => $this->vehicle_make,
+                        'model' => $this->vehicle_model
+                    ]);
+                }
             } else {
+                // Check if vehicle already exists by VIN
+                $existingVehicle = Vehicle::where('vin', $this->vehicle_vin)->first();
+                
+                if ($existingVehicle) {
+                    $vehicle = $existingVehicle;
+                    // Update carrier_id for existing vehicle
+                    $vehicle->update(['carrier_id' => $carrierId]);
+                    Log::info('ApplicationStep: Usando vehículo existente por VIN', ['vehicle_id' => $vehicle->id]);
+                } else {
                 // Create new vehicle
                 $registrationDate = $this->vehicle_registration_expiration_date 
                     ? \Carbon\Carbon::parse(\App\Helpers\DateHelper::toDatabase($this->vehicle_registration_expiration_date)) 
@@ -1547,14 +1812,17 @@ class ApplicationStep extends Component
                 ]);
                 
                 Log::info('ApplicationStep: Vehículo creado para owner operator', ['vehicle_id' => $vehicle->id]);
+                }
             }
             
-            // Set the vehicle_id property
-            $this->vehicle_id = $vehicle->id;
+            // Set the vehicle_id property if we have a vehicle
+            if ($vehicle) {
+                $this->vehicle_id = $vehicle->id;
+            }
         }
         
         // STEP 2: Create or get the VehicleDriverAssignment with the vehicle_id
-        $assignment = \App\Models\VehicleDriverAssignment::where('user_driver_detail_id', $userDriverDetail->id)
+        $assignment = VehicleDriverAssignment::where('user_driver_detail_id', $userDriverDetail->id)
             ->where('status', 'pending')
             ->first();
             
@@ -1565,9 +1833,10 @@ class ApplicationStep extends Component
             ]);
             
             // Create a new VehicleDriverAssignment for owner operator
-            $assignment = \App\Models\VehicleDriverAssignment::create([
+            $assignment = VehicleDriverAssignment::create([
                 'user_driver_detail_id' => $userDriverDetail->id,
                 'vehicle_id' => $vehicle ? $vehicle->id : null,
+                'driver_type' => 'owner_operator', // ✅ FIXED: Agregar driver_type
                 'status' => 'pending',
                 'start_date' => now()->format('Y-m-d'),
             ]);
@@ -1575,17 +1844,24 @@ class ApplicationStep extends Component
             Log::info('ApplicationStep: VehicleDriverAssignment creado para owner operator', [
                 'assignment_id' => $assignment->id,
                 'user_driver_detail_id' => $userDriverDetail->id,
-                'vehicle_id' => $assignment->vehicle_id
+                'vehicle_id' => $assignment->vehicle_id,
+                'driver_type' => $assignment->driver_type // ✅ CRITICAL: Log driver_type
             ]);
         } else {
-            // Update existing assignment with vehicle_id if we have one
-            if ($vehicle && !$assignment->vehicle_id) {
-                $assignment->update(['vehicle_id' => $vehicle->id]);
-                Log::info('ApplicationStep: VehicleDriverAssignment actualizado con vehicle_id', [
-                    'assignment_id' => $assignment->id,
-                    'vehicle_id' => $vehicle->id
-                ]);
-            }
+            // EXISTING assignment found - UPDATE the driver_type and vehicle_id
+            $oldDriverType = $assignment->driver_type;
+            $assignment->update([
+                'driver_type' => 'owner_operator',
+                'vehicle_id' => $vehicle ? $vehicle->id : $assignment->vehicle_id
+            ]);
+            
+            Log::critical('🔥 CRITICAL: Updated existing VehicleDriverAssignment driver_type for owner_operator', [
+                'assignment_id' => $assignment->id,
+                'old_driver_type' => $oldDriverType,
+                'new_driver_type' => $assignment->driver_type,
+                'vehicle_id' => $assignment->vehicle_id,
+                'method' => 'processOwnerOperatorVehicles'
+            ]);
         }
         
         // Create or update owner operator details in the dedicated table
@@ -1609,11 +1885,13 @@ class ApplicationStep extends Component
             'was_recently_created' => $ownerOperatorDetail->wasRecentlyCreated
         ]);
         
-        // Create or update application detail (basic info only)
+        // FIXED: Create or update application detail with correct applying_position
         $applicationDetail = $application->details()->updateOrCreate(
-            ['driver_application_id' => $application->id],
             [
-                'applying_position' => 'owner_operator',
+                'driver_application_id' => $application->id,
+            ],
+            [
+                'applying_position' => $this->applying_position, // Use the actual applying_position value
                 'applying_location' => $this->applying_location,
                 'eligible_to_work' => $this->eligible_to_work,
                 'can_speak_english' => $this->can_speak_english,
@@ -1641,35 +1919,182 @@ class ApplicationStep extends Component
      */
     protected function processThirdPartyVehicles($application, $userDriverDetail)
     {
-        Log::info('ApplicationStep: Iniciando processThirdPartyVehicles', [
+        Log::info('🔥 EXTREME LOGGING: processThirdPartyVehicles CALLED', [
+            'method' => 'processThirdPartyVehicles',
             'user_driver_detail_id' => $userDriverDetail->id,
             'application_id' => $application->id,
             'third_party_name' => $this->third_party_name ?? null,
             'third_party_phone' => $this->third_party_phone ?? null,
-            'third_party_email' => $this->third_party_email ?? null
+            'third_party_email' => $this->third_party_email ?? null,
+            'vehicle_make' => $this->vehicle_make ?? null,
+            'vehicle_model' => $this->vehicle_model ?? null,
+            'vehicle_vin' => $this->vehicle_vin ?? null,
+            'vehicle_fuel_type' => $this->vehicle_fuel_type ?? null,
+            'timestamp' => now()->toDateTimeString(),
+            'stack_trace' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3)
         ]);
         
-        // First, get or create the VehicleDriverAssignment for this third party
-        $assignment = \App\Models\VehicleDriverAssignment::where('user_driver_detail_id', $userDriverDetail->id)
+        // STEP 1: Create or get the vehicle first
+        $vehicle = null;
+        if ($this->vehicle_make && $this->vehicle_model && $this->vehicle_year && $this->vehicle_vin) {
+            $carrierId = $userDriverDetail->carrier_id;
+            if (!$carrierId) {
+                throw new \Exception('No carrier found for this driver');
+            }
+            
+            // Check if we have a selected vehicle_id first
+            if ($this->vehicle_id) {
+                $vehicle = Vehicle::find($this->vehicle_id);
+                if ($vehicle) {
+                    // Update existing selected vehicle with current form data
+                    $registrationDate = $this->vehicle_registration_expiration_date 
+                        ? \Carbon\Carbon::parse(\App\Helpers\DateHelper::toDatabase($this->vehicle_registration_expiration_date)) 
+                        : $vehicle->registration_expiration_date;
+                    
+                    $vehicle->update([
+                        'carrier_id' => $carrierId,
+                        'make' => $this->vehicle_make,
+                        'model' => $this->vehicle_model,
+                        'year' => $this->vehicle_year,
+                        'vin' => $this->vehicle_vin,
+                        'company_unit_number' => $this->vehicle_company_unit_number,
+                        'type' => $this->vehicle_type,
+                        'gvwr' => $this->vehicle_gvwr,
+                        'tire_size' => $this->vehicle_tire_size,
+                        'fuel_type' => $this->vehicle_fuel_type,
+                        'irp_apportioned_plate' => $this->vehicle_irp_apportioned_plate,
+                        'registration_state' => $this->vehicle_registration_state ?: $this->applying_location,
+                        'registration_number' => $this->vehicle_registration_number ?: $vehicle->registration_number,
+                        'registration_expiration_date' => $registrationDate,
+                        'permanent_tag' => $this->vehicle_permanent_tag,
+                        'location' => $this->vehicle_location,
+                        'notes' => $this->vehicle_notes,
+                    ]);
+                    
+                    Log::info('ApplicationStep: Vehículo existente actualizado para third party', [
+                        'vehicle_id' => $vehicle->id,
+                        'fuel_type' => $this->vehicle_fuel_type,
+                        'make' => $this->vehicle_make,
+                        'model' => $this->vehicle_model
+                    ]);
+                }
+            } else {
+                // Check if vehicle already exists by VIN
+                $existingVehicle = Vehicle::where('vin', $this->vehicle_vin)->first();
+                
+                if ($existingVehicle) {
+                    $vehicle = $existingVehicle;
+                    // Update carrier_id for existing vehicle
+                    $vehicle->update(['carrier_id' => $carrierId]);
+                    Log::info('ApplicationStep: Usando vehículo existente por VIN para third party', ['vehicle_id' => $vehicle->id]);
+                } else {
+                    // Create new vehicle
+                    $registrationDate = $this->vehicle_registration_expiration_date 
+                        ? \Carbon\Carbon::parse(\App\Helpers\DateHelper::toDatabase($this->vehicle_registration_expiration_date)) 
+                        : now()->addYear();
+                    
+                    $vehicle = Vehicle::create([
+                        'carrier_id' => $carrierId,
+                        'make' => $this->vehicle_make,
+                        'model' => $this->vehicle_model,
+                        'year' => $this->vehicle_year,
+                        'vin' => $this->vehicle_vin,
+                        'company_unit_number' => $this->vehicle_company_unit_number,
+                        'type' => $this->vehicle_type,
+                        'gvwr' => $this->vehicle_gvwr,
+                        'tire_size' => $this->vehicle_tire_size,
+                        'fuel_type' => $this->vehicle_fuel_type,
+                        'irp_apportioned_plate' => $this->vehicle_irp_apportioned_plate,
+                        'registration_state' => $this->vehicle_registration_state ?: $this->applying_location,
+                        'registration_number' => $this->vehicle_registration_number ?: 'Pending',
+                        'registration_expiration_date' => $registrationDate,
+                        'permanent_tag' => $this->vehicle_permanent_tag,
+                        'location' => $this->vehicle_location,
+                        'ownership_type' => 'third_party',
+                        'driver_type' => 'third_party',
+                        'user_id' => $userDriverDetail->user_id,
+                        'status' => 'pending',
+                        'notes' => $this->vehicle_notes,
+                    ]);
+                    
+                    Log::info('ApplicationStep: Vehículo creado para third party', ['vehicle_id' => $vehicle->id]);
+                }
+            }
+            
+            // Set the vehicle_id property if we have a vehicle
+            if ($vehicle) {
+                $this->vehicle_id = $vehicle->id;
+            }
+        }
+        
+        // STEP 2: Create or get the VehicleDriverAssignment with the vehicle_id
+        $assignment = VehicleDriverAssignment::where('user_driver_detail_id', $userDriverDetail->id)
             ->where('status', 'pending')
             ->first();
             
         if (!$assignment) {
-            Log::info('ApplicationStep: No se encontró assignment para third party, creando uno nuevo', [
-                'user_driver_detail_id' => $userDriverDetail->id
+            Log::info('🔥 EXTREME LOGGING: No assignment found for third party, creating new one', [
+                'user_driver_detail_id' => $userDriverDetail->id,
+                'method' => 'processThirdPartyVehicles'
             ]);
             
             // Create a new VehicleDriverAssignment for third party
-            $assignment = \App\Models\VehicleDriverAssignment::create([
+            $assignment = VehicleDriverAssignment::create([
                 'user_driver_detail_id' => $userDriverDetail->id,
-                'vehicle_id' => null, // Will be set when vehicle is created
+                'vehicle_id' => $vehicle ? $vehicle->id : null,
+                'driver_type' => 'third_party', // ✅ FIXED: Agregar driver_type
                 'status' => 'pending',
                 'start_date' => now()->format('Y-m-d'),
             ]);
             
-            Log::info('ApplicationStep: VehicleDriverAssignment creado para third party', [
+            Log::info('🔥 CRITICAL: VehicleDriverAssignment created by processThirdPartyVehicles', [
                 'assignment_id' => $assignment->id,
-                'user_driver_detail_id' => $userDriverDetail->id
+                'user_driver_detail_id' => $userDriverDetail->id,
+                'vehicle_id' => $assignment->vehicle_id,
+                'driver_type' => $assignment->driver_type,
+                'driver_type_saved' => $assignment->driver_type,
+                'method_source' => 'processThirdPartyVehicles',
+                'is_third_party' => 'YES'
+            ]);
+        } else {
+            Log::info('🔥 EXTREME LOGGING: Found existing assignment for third party', [
+                'assignment_id' => $assignment->id,
+                'user_driver_detail_id' => $userDriverDetail->id,
+                'existing_driver_type' => $assignment->driver_type,
+                'method' => 'processThirdPartyVehicles'
+            ]);
+            
+            // CRITICAL FIX: UPDATE the existing assignment's driver_type
+            $oldDriverType = $assignment->driver_type;
+            $assignment->update([
+                'driver_type' => 'third_party',
+                'vehicle_id' => $vehicle ? $vehicle->id : $assignment->vehicle_id
+            ]);
+            
+            Log::info('🔥 CRITICAL: Updated existing VehicleDriverAssignment driver_type', [
+                'assignment_id' => $assignment->id,
+                'old_driver_type' => $oldDriverType,
+                'new_driver_type' => $assignment->driver_type,
+                'vehicle_id' => $assignment->vehicle_id,
+                'method' => 'processThirdPartyVehicles'
+            ]);
+            
+            // CRITICAL: Check for duplicates when using existing assignment
+            $duplicates = VehicleDriverAssignment::where('user_driver_detail_id', $userDriverDetail->id)
+                ->where('status', 'pending')
+                ->get();
+                
+            Log::info('🔥 DUPLICATE CHECK: All assignments for this driver (processThirdPartyVehicles)', [
+                'driver_id' => $userDriverDetail->id,
+                'total_assignments' => $duplicates->count(),
+                'assignments' => $duplicates->map(function($dup) {
+                    return [
+                        'id' => $dup->id,
+                        'driver_type' => $dup->driver_type,
+                        'vehicle_id' => $dup->vehicle_id,
+                        'created_at' => $dup->created_at->toDateTimeString()
+                    ];
+                })->toArray()
             ]);
         }
         
@@ -1694,11 +2119,13 @@ class ApplicationStep extends Component
             'was_recently_created' => $thirdPartyDetail->wasRecentlyCreated
         ]);
         
-        // Create or update application detail (basic info only)
+        // FIXED: Create or update application detail with correct applying_position
         $applicationDetail = $application->details()->updateOrCreate(
-            ['driver_application_id' => $application->id],
             [
-                'applying_position' => 'third_party_driver',
+                'driver_application_id' => $application->id,
+            ],
+            [
+                'applying_position' => $this->applying_position, // Use the actual applying_position value
                 'applying_location' => $this->applying_location,
                 'eligible_to_work' => $this->eligible_to_work,
                 'can_speak_english' => $this->can_speak_english,
@@ -1712,7 +2139,7 @@ class ApplicationStep extends Component
             ]
         );
         
-        Log::info('ApplicationStep: DriverApplicationDetail para third_party_driver guardado', [
+        Log::info('ApplicationStep: DriverApplicationDetail para third_party guardado', [
             'application_detail_id' => $applicationDetail->id,
             'applying_position' => $applicationDetail->applying_position,
             'driver_application_id' => $applicationDetail->driver_application_id,
@@ -1734,7 +2161,7 @@ class ApplicationStep extends Component
         
         // Create or update company driver details in the dedicated table
         // First, get or create the VehicleDriverAssignment for this company driver
-        $assignment = \App\Models\VehicleDriverAssignment::where('user_driver_detail_id', $userDriverDetail->id)
+        $assignment = VehicleDriverAssignment::where('user_driver_detail_id', $userDriverDetail->id)
             ->where('status', 'pending')
             ->whereNull('vehicle_id') // Company drivers have NULL vehicle_id initially
             ->first();
@@ -1745,16 +2172,31 @@ class ApplicationStep extends Component
             ]);
             
             // Create a new VehicleDriverAssignment for company driver
-            $assignment = \App\Models\VehicleDriverAssignment::create([
+            $assignment = VehicleDriverAssignment::create([
                 'user_driver_detail_id' => $userDriverDetail->id,
                 'vehicle_id' => null, // Company drivers don't have vehicles initially
+                'driver_type' => 'company_driver', // ✅ FIXED: Agregar driver_type
                 'status' => 'pending',
                 'start_date' => now()->format('Y-m-d'),
             ]);
             
             Log::info('ApplicationStep: VehicleDriverAssignment creado para company driver', [
                 'assignment_id' => $assignment->id,
-                'user_driver_detail_id' => $userDriverDetail->id
+                'user_driver_detail_id' => $userDriverDetail->id,
+                'driver_type' => $assignment->driver_type // ✅ CRITICAL: Log driver_type
+            ]);
+        } else {
+            // EXISTING assignment found - UPDATE the driver_type
+            $oldDriverType = $assignment->driver_type;
+            $assignment->update([
+                'driver_type' => 'company_driver'
+            ]);
+            
+            Log::critical('🔥 CRITICAL: Updated existing VehicleDriverAssignment driver_type for company_driver', [
+                'assignment_id' => $assignment->id,
+                'old_driver_type' => $oldDriverType,
+                'new_driver_type' => $assignment->driver_type,
+                'method' => 'processCompanyDriverInfo'
             ]);
         }
         
@@ -1772,13 +2214,13 @@ class ApplicationStep extends Component
             'was_recently_created' => $companyDriverDetail->wasRecentlyCreated
         ]);
         
-        // Create or update application detail for company driver with unique key including applying_position
+        // FIXED: Create or update application detail with correct applying_position
         $applicationDetail = $application->details()->updateOrCreate(
             [
                 'driver_application_id' => $application->id,
-                'applying_position' => 'company_driver'
             ],
             [
+                'applying_position' => $this->applying_position, // Use the actual applying_position value
                 'applying_location' => $this->applying_location,
                 'eligible_to_work' => $this->eligible_to_work,
                 'can_speak_english' => $this->can_speak_english,
@@ -1865,7 +2307,7 @@ class ApplicationStep extends Component
             Log::info('ApplicationStep: Procesando tipo de vehículo seleccionado', [
                 'selectedDriverType' => $this->selectedDriverType,
                 'owner_operator_checked' => $this->vehicleTypeCheckboxes['owner_operator'] ?? false,
-                'third_party_checked' => $this->vehicleTypeCheckboxes['third_party_driver'] ?? false,
+                'third_party_checked' => $this->vehicleTypeCheckboxes['third_party'] ?? false,
                 'company_driver_checked' => $this->vehicleTypeCheckboxes['company_driver'] ?? false
             ]);
             
@@ -1876,7 +2318,7 @@ class ApplicationStep extends Component
                         Log::info('ApplicationStep: Procesando owner operator vehicles');
                         $this->processOwnerOperatorVehicles($application, $userDriverDetail);
                         break;
-                    case 'third_party_driver':
+                    case 'third_party':  // FIXED: Cambiar de 'third_party' a 'third_party'
                         Log::info('ApplicationStep: Procesando third party vehicles');
                         $this->processThirdPartyVehicles($application, $userDriverDetail);
                         break;
@@ -1892,7 +2334,7 @@ class ApplicationStep extends Component
                     $this->processOwnerOperatorVehicles($application, $userDriverDetail);
                 }
                 
-                if ($this->vehicleTypeCheckboxes['third_party_driver'] ?? false) {
+                if ($this->vehicleTypeCheckboxes['third_party'] ?? false) {
                     Log::info('ApplicationStep: Procesando third party vehicles (fallback)');
                     $this->processThirdPartyVehicles($application, $userDriverDetail);
                 }
@@ -2022,15 +2464,22 @@ class ApplicationStep extends Component
     // Next step
     public function next()
     {
-        // Debug statement removed
+        Log::info('ApplicationStep: Iniciando next()', [
+            'driver_id' => $this->driverId,
+            'current_step' => $this->currentStep,
+            'applying_position' => $this->applying_position,
+            'vehicle_fuel_type' => $this->vehicle_fuel_type,
+            'vehicle_id' => $this->vehicle_id
+        ]);
+        
         // Step completion validation - ensure previous steps are completed
         if (!$this->validateStepCompletion()) {
             return;
         }
         
-        // Verificar si tiene third_party_driver seleccionado y no se ha enviado el correo
-        if (isset($this->vehicleTypeCheckboxes['third_party_driver']) && 
-            $this->vehicleTypeCheckboxes['third_party_driver'] && 
+        // Verificar si tiene third_party seleccionado y no se ha enviado el correo
+        if (isset($this->vehicleTypeCheckboxes['third_party']) && 
+            $this->vehicleTypeCheckboxes['third_party'] && 
             !$this->email_sent && 
             $this->third_party_email && $this->third_party_name && $this->third_party_phone) {
             
@@ -2240,13 +2689,13 @@ class ApplicationStep extends Component
             
             // Actualizar los detalles específicos de Third Party en la tabla correspondiente
             // Get or create the VehicleDriverAssignment for this third party
-            $assignment = \App\Models\VehicleDriverAssignment::where('user_driver_detail_id', $userDriverDetail->id)
+            $assignment = VehicleDriverAssignment::where('user_driver_detail_id', $userDriverDetail->id)
                 ->where('status', 'pending')
                 ->first();
                 
             if (!$assignment) {
                 // Create a new VehicleDriverAssignment for third party
-                $assignment = \App\Models\VehicleDriverAssignment::create([
+                $assignment = VehicleDriverAssignment::create([
                     'user_driver_detail_id' => $userDriverDetail->id,
                     'vehicle_id' => $vehicle->id,
                     'status' => 'pending',
@@ -2529,6 +2978,261 @@ class ApplicationStep extends Component
     }
     
     /**
+     * Save applying_position to database immediately
+     */
+    protected function saveApplyingPositionToDatabase()
+    {
+        try {
+            Log::info('CRITICAL: saveApplyingPositionToDatabase CALLED', [
+                'driver_id' => $this->driverId,
+                'applying_position' => $this->applying_position,
+                'applying_position_other' => $this->applying_position_other,
+                'applying_position_type' => gettype($this->applying_position),
+                'applying_position_other_type' => gettype($this->applying_position_other),
+                'is_null' => is_null($this->applying_position),
+                'is_empty' => empty($this->applying_position),
+                'other_is_null' => is_null($this->applying_position_other),
+                'other_is_empty' => empty($this->applying_position_other),
+                'timestamp' => now()->toDateTimeString()
+            ]);
+            
+            if (!$this->driverId) {
+                Log::warning('CRITICAL: No driver ID available for saving applying_position');
+                return false;
+            }
+            
+            if (empty($this->applying_position)) {
+                Log::warning('CRITICAL: applying_position is empty, cannot save');
+                return false;
+            }
+            
+            $userDriverDetail = UserDriverDetail::find($this->driverId);
+            if (!$userDriverDetail) {
+                Log::error('CRITICAL: Driver not found for applying_position save', ['driver_id' => $this->driverId]);
+                return false;
+            }
+            
+            // Get or create application
+            $application = $userDriverDetail->application;
+            if (!$application) {
+                Log::info('CRITICAL: Creating new application for applying_position save');
+                $application = DriverApplication::create([
+                    'user_id' => $userDriverDetail->user_id,
+                    'status' => 'draft'
+                ]);
+            }
+            
+            // Update applying_position and applying_position_other fields
+            $updateData = ['applying_position' => $this->applying_position];
+            
+            // Include applying_position_other if applying_position is 'other'
+            if ($this->applying_position === 'other') {
+                $updateData['applying_position_other'] = $this->applying_position_other;
+                
+                Log::info('CRITICAL: Including applying_position_other in updateData', [
+                    'applying_position_other_value' => $this->applying_position_other,
+                    'updateData' => $updateData
+                ]);
+            } else {
+                Log::info('CRITICAL: NOT including applying_position_other (applying_position is not "other")', [
+                    'applying_position' => $this->applying_position
+                ]);
+            }
+            
+            $applicationDetails = $application->details()->updateOrCreate(
+                [],
+                $updateData
+            );
+            
+            // Verify the save was successful
+            $freshDetails = $applicationDetails->fresh();
+            
+            Log::info('CRITICAL: applying_position saved to database', [
+                'driver_id' => $this->driverId,
+                'application_id' => $application->id,
+                'application_details_id' => $applicationDetails->id,
+                'saved_applying_position' => $applicationDetails->applying_position,
+                'saved_applying_position_other' => $applicationDetails->applying_position_other,
+                'fresh_applying_position' => $freshDetails->applying_position,
+                'fresh_applying_position_other' => $freshDetails->applying_position_other,
+                'save_successful' => ($freshDetails->applying_position === $this->applying_position),
+                'other_save_successful' => ($this->applying_position === 'other' ? 
+                    ($freshDetails->applying_position_other === $this->applying_position_other) : true),
+                'timestamp' => now()->toDateTimeString()
+            ]);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            Log::error('CRITICAL: Error saving applying_position to database', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'driver_id' => $this->driverId,
+                'applying_position' => $this->applying_position,
+                'timestamp' => now()->toDateTimeString()
+            ]);
+            return false;
+        }
+    }
+    
+    /**
+     * Load existing data for a specific driver type to prevent data loss
+     */
+    protected function loadExistingDataForDriverType($driverType)
+    {
+        try {
+            Log::info('Loading existing data for driver type', [
+                'driver_id' => $this->driverId,
+                'driver_type' => $driverType
+            ]);
+            
+            if (!$this->driverId) {
+                return;
+            }
+            
+            $userDriverDetail = UserDriverDetail::find($this->driverId);
+            if (!$userDriverDetail) {
+                return;
+            }
+            
+            $application = $userDriverDetail->application;
+            if (!$application) {
+                return;
+            }
+            
+            // Load data based on driver type
+            switch ($driverType) {
+                case 'owner_operator':
+                    $this->loadOwnerOperatorData($application);
+                    break;
+                    
+                case 'third_party':
+                    $this->loadThirdPartyData($application);
+                    break;
+                    
+                case 'company_driver':
+                    $this->loadCompanyDriverData($application);
+                    break;
+            }
+            
+            // Load vehicle data for the selected type
+            $this->loadVehicleDataForDriverType($driverType);
+            
+        } catch (\Exception $e) {
+            Log::error('Error loading existing data for driver type', [
+                'error' => $e->getMessage(),
+                'driver_id' => $this->driverId,
+                'driver_type' => $driverType
+            ]);
+        }
+    }
+    
+    /**
+     * Load Owner Operator specific data
+     */
+    protected function loadOwnerOperatorData($application)
+    {
+        if ($application->ownerOperatorDetail) {
+            $ownerDetails = $application->ownerOperatorDetail;
+            $this->owner_name = $ownerDetails->owner_name;
+            $this->owner_phone = $ownerDetails->owner_phone;
+            $this->owner_email = $ownerDetails->owner_email;
+            $this->contract_agreed = (bool)($ownerDetails->contract_agreed ?? false);
+            
+            Log::info('Owner Operator data loaded', [
+                'owner_name' => $this->owner_name,
+                'owner_phone' => $this->owner_phone,
+                'owner_email' => $this->owner_email
+            ]);
+        }
+    }
+    
+    /**
+     * Load Third Party specific data
+     */
+    protected function loadThirdPartyData($application)
+    {
+        if ($application->thirdPartyDetail) {
+            $thirdPartyDetails = $application->thirdPartyDetail;
+            $this->third_party_name = $thirdPartyDetails->third_party_name;
+            $this->third_party_phone = $thirdPartyDetails->third_party_phone;
+            $this->third_party_email = $thirdPartyDetails->third_party_email;
+            $this->third_party_dba = $thirdPartyDetails->third_party_dba;
+            $this->third_party_address = $thirdPartyDetails->third_party_address;
+            $this->third_party_contact = $thirdPartyDetails->third_party_contact;
+            $this->third_party_fein = $thirdPartyDetails->third_party_fein;
+            $this->email_sent = (bool)($thirdPartyDetails->email_sent ?? false);
+            
+            Log::info('Third Party data loaded', [
+                'third_party_name' => $this->third_party_name,
+                'third_party_phone' => $this->third_party_phone,
+                'third_party_email' => $this->third_party_email
+            ]);
+        }
+    }
+    
+    /**
+     * Load Company Driver specific data
+     */
+    protected function loadCompanyDriverData($application)
+    {
+        if ($application->companyDriverDetail) {
+            $companyDetails = $application->companyDriverDetail;
+            $this->company_driver_notes = $companyDetails->notes;
+            
+            Log::info('Company Driver data loaded', [
+                'notes' => $this->company_driver_notes
+            ]);
+        }
+    }
+    
+    /**
+     * Load vehicle data for specific driver type
+     */
+    protected function loadVehicleDataForDriverType($driverType)
+    {
+        if (!$this->driverId) {
+            return;
+        }
+        
+        $userDriverDetail = UserDriverDetail::find($this->driverId);
+        if (!$userDriverDetail || !$userDriverDetail->application || !$userDriverDetail->application->details) {
+            return;
+        }
+        
+        $details = $userDriverDetail->application->details;
+        
+        // Load vehicle data if exists
+        if ($details->vehicle_id && $details->vehicle) {
+            $vehicle = $details->vehicle;
+            $this->vehicle_id = $vehicle->id;
+            $this->vehicle_make = $vehicle->make;
+            $this->vehicle_model = $vehicle->model;
+            $this->vehicle_year = $vehicle->year;
+            $this->vehicle_vin = $vehicle->vin;
+            $this->vehicle_company_unit_number = $vehicle->company_unit_number;
+            $this->vehicle_type = $vehicle->type;
+            $this->vehicle_gvwr = $vehicle->gvwr;
+            $this->vehicle_tire_size = $vehicle->tire_size;
+            $this->vehicle_fuel_type = $vehicle->fuel_type;
+            $this->vehicle_irp_apportioned_plate = (bool)$vehicle->irp_apportioned_plate;
+            $this->vehicle_registration_state = $vehicle->registration_state;
+            $this->vehicle_registration_number = $vehicle->registration_number;
+            $this->vehicle_registration_expiration_date = $vehicle->registration_expiration_date ? DateHelper::toDisplay($vehicle->registration_expiration_date) : null;
+            $this->vehicle_permanent_tag = (bool)$vehicle->permanent_tag;
+            $this->vehicle_location = $vehicle->location;
+            $this->vehicle_notes = $vehicle->notes;
+            
+            Log::info('Vehicle data loaded for driver type', [
+                'driver_type' => $driverType,
+                'vehicle_id' => $this->vehicle_id,
+                'vehicle_make' => $this->vehicle_make,
+                'vehicle_model' => $this->vehicle_model
+            ]);
+        }
+    }
+    
+    /**
      * Validate consistency between ownership_type and applying_position
      */
     public function validateOwnershipConsistency($ownershipType = null, $applyingPosition = null)
@@ -2555,13 +3259,68 @@ class ApplicationStep extends Component
         ];
     }
 
+    /**
+     * Create a new vehicle make
+     */
+    public function createMake()
+    {
+        $this->validate([
+            'newMakeName' => 'required|string|max:255|unique:vehicle_makes,name'
+        ]);
+
+        $make = VehicleMake::create(['name' => $this->newMakeName]);
+        
+        $this->vehicleMakes = VehicleMake::orderBy('name')->get();
+        $this->vehicle_make = $this->newMakeName;
+        $this->newMakeName = '';
+        $this->showAddMakeModal = false;
+
+        $this->dispatch('notify', [
+            'type' => 'success',
+            'message' => 'Vehicle make created successfully'
+        ]);
+    }
+
+    /**
+     * Create a new vehicle type
+     */
+    public function createType()
+    {
+        $this->validate([
+            'newTypeName' => 'required|string|max:255|unique:vehicle_types,name'
+        ]);
+
+        $type = VehicleType::create(['name' => $this->newTypeName]);
+        
+        $this->vehicleTypes = VehicleType::orderBy('name')->get();
+        $this->vehicle_type = $this->newTypeName;
+        $this->newTypeName = '';
+        $this->showAddTypeModal = false;
+
+        $this->dispatch('notify', [
+            'type' => 'success',
+            'message' => 'Vehicle type created successfully'
+        ]);
+    }
+
     // Render
     public function render()
     {
+        // DEBUG LOG: Verificar valor al renderizar
+        Log::info('DEBUG: applying_position al renderizar', [
+            'driver_id' => $this->driverId,
+            'applying_position_value' => $this->applying_position,
+            'applying_position_type' => gettype($this->applying_position),
+            'applying_position_empty' => empty($this->applying_position),
+            'positionOptions' => $this->positionOptions
+        ]);
+        
         return view('livewire.driver.steps.application-step', [
             'usStates' => Constants::usStates(),
             'driverPositions' => Constants::driverPositions(),
-            'referralSources' => Constants::referralSources()
+            'referralSources' => Constants::referralSources(),
+            'vehicleMakes' => $this->vehicleMakes,
+            'vehicleTypes' => $this->vehicleTypes
         ]);
     }
 

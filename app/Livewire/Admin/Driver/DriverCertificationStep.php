@@ -9,9 +9,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Mail;
 use App\Models\Admin\Driver\DriverApplication;
 use App\Models\Admin\Driver\DriverCertification;
 use App\Models\Admin\Vehicle\Vehicle;
+use App\Mail\ThirdPartyVehicleVerification;
+use App\Models\VehicleVerificationToken;
 
 class DriverCertificationStep extends Component
 {
@@ -465,22 +468,34 @@ class DriverCertificationStep extends Component
         }
         
         // Generar contrato de arrendamiento para propietarios-operadores si corresponde
-        $application = $userDriverDetail->application;
+        // Ahora obtenemos el tipo de conductor desde vehicle_driver_assignments en lugar de driver_application_details
+        
+        // Obtener la asignación activa del vehículo para determinar el tipo de conductor
+        $activeAssignment = $userDriverDetail->activeVehicleAssignment;
+        
+        // Si no hay asignación activa, intentar obtener la más reciente
+        if (!$activeAssignment) {
+            $activeAssignment = $userDriverDetail->vehicleAssignments()
+                ->where('status', 'pending')
+                ->latest()
+                ->first();
+        }
         
         // Verificar el tipo de conductor y generar los documentos correspondientes
-        if ($application && $application->details) {
-            $applyingPosition = $application->details->applying_position ?? 'unknown';
-            Log::info('Verificando tipo de conductor para generar documentos', [
+        if ($activeAssignment) {
+            $driverType = $activeAssignment->driver_type ?? 'unknown';
+            Log::info('Verificando tipo de conductor para generar documentos desde vehicle_driver_assignments', [
                 'driver_id' => $userDriverDetail->id,
-                'applying_position' => $applyingPosition
+                'driver_type' => $driverType,
+                'assignment_id' => $activeAssignment->id
             ]);
             
-            if ($applyingPosition === 'owner_operator') {
+            if ($driverType === 'owner_operator') {
                 Log::info('Generando contrato de arrendamiento para propietario-operador', [
                     'driver_id' => $userDriverDetail->id
                 ]);
                 $this->generateLeaseAgreementPDF($userDriverDetail, $signaturePath);
-            } elseif ($applyingPosition === 'third_party_driver') {
+            } elseif ($driverType === 'third_party') {
                 Log::info('Generando documentos para conductor third-party', [
                     'driver_id' => $userDriverDetail->id
                 ]);
@@ -488,14 +503,14 @@ class DriverCertificationStep extends Component
             } else {
                 Log::info('No se generan documentos específicos para este tipo de conductor', [
                     'driver_id' => $userDriverDetail->id,
-                    'applying_position' => $applyingPosition
+                    'driver_type' => $driverType
                 ]);
             }
         } else {
-            Log::warning('No se puede determinar el tipo de conductor, faltan datos de aplicación', [
+            Log::warning('No se puede determinar el tipo de conductor, no hay asignación de vehículo', [
                 'driver_id' => $userDriverDetail->id,
-                'has_application' => $application ? 'yes' : 'no',
-                'has_details' => ($application && $application->details) ? 'yes' : 'no'
+                'has_active_assignment' => $userDriverDetail->activeVehicleAssignment ? 'yes' : 'no',
+                'total_assignments' => $userDriverDetail->vehicleAssignments()->count()
             ]);
         }
         
@@ -1094,6 +1109,16 @@ class DriverCertificationStep extends Component
                 $pdfContent = $pdf->output();
                 Storage::disk('public')->put($filePath, $pdfContent);
                 
+                // Almacenar la ruta del PDF de consentimiento para adjuntar al email
+                $consentPdfPath = storage_path('app/public/' . $filePath);
+                
+                Log::info('PDF de consentimiento de terceros guardado exitosamente', [
+                    'driver_id' => $driverId,
+                    'file_path' => $filePath,
+                    'full_path' => $consentPdfPath,
+                    'file_exists' => file_exists($consentPdfPath)
+                ]);
+                
             } catch (\Exception $e) {
                 Log::error('Error al generar PDF de consentimiento de terceros', [
                     'driver_id' => $userDriverDetail->id,
@@ -1158,6 +1183,15 @@ class DriverCertificationStep extends Component
                 $pdfContent = $pdf->output();
                 Storage::disk('public')->put($filePath, $pdfContent);
                 
+                $leasePdfPath = storage_path('app/public/' . $filePath);
+                
+                Log::info('PDF de contrato de arrendamiento para third-party guardado exitosamente', [
+                    'driver_id' => $driverId,
+                    'file_path' => $filePath,
+                    'full_path' => $leasePdfPath,
+                    'file_exists' => file_exists($leasePdfPath)
+                ]);
+                
             } catch (\Exception $e) {
                 Log::error('Error al generar PDF de contrato de arrendamiento para third-party', [
                     'driver_id' => $userDriverDetail->id,
@@ -1165,6 +1199,13 @@ class DriverCertificationStep extends Component
                     'trace' => $e->getTraceAsString()
                 ]);
             }
+            
+            // PDFs generados exitosamente
+            Log::info('PDFs de third-party generados exitosamente', [
+                'driver_id' => $userDriverDetail->id,
+                'consent_pdf' => isset($consentPdfPath),
+                'lease_pdf' => isset($leasePdfPath)
+            ]);
             
         } catch (\Exception $e) {
             Log::error('Error al generar documentos para third-party', [
@@ -1215,6 +1256,103 @@ class DriverCertificationStep extends Component
         ];
     }
     
+    /**
+     * Envía email de notificación a third-party con PDFs adjuntos
+     * @param UserDriverDetail $userDriverDetail
+     */
+    private function sendThirdPartyNotificationEmail($userDriverDetail)
+    {
+        try {
+            $application = $userDriverDetail->application;
+            $thirdPartyDetails = $application->thirdPartyDetail;
+            
+            // Verificar que tenemos email de third-party
+            if (!$thirdPartyDetails || !$thirdPartyDetails->third_party_email) {
+                Log::warning('No se puede enviar email de notificación: falta email de third-party', [
+                    'driver_id' => $userDriverDetail->id
+                ]);
+                return;
+            }
+            
+            // Crear token de verificación único
+            $token = bin2hex(random_bytes(32));
+            $expiresAt = now()->addDays(30); // Token válido por 30 días
+            
+            // Guardar token en la base de datos
+            VehicleVerificationToken::create([
+                'driver_id' => $userDriverDetail->id,
+                'token' => $token,
+                'expires_at' => $expiresAt,
+                'is_used' => false
+            ]);
+            
+            // Preparar datos para el email
+            $vehicle = null;
+            if ($userDriverDetail->activeVehicleAssignment && $userDriverDetail->activeVehicleAssignment->vehicle) {
+                $vehicle = $userDriverDetail->activeVehicleAssignment->vehicle;
+            } elseif ($userDriverDetail->vehicleAssignments->isNotEmpty()) {
+                $vehicle = $userDriverDetail->vehicleAssignments->first()->vehicle;
+            }
+            
+            $emailData = [
+                'driverName' => $userDriverDetail->user->name ?? '',
+                'thirdPartyName' => $thirdPartyDetails->third_party_name ?? '',
+                'thirdPartyContact' => $thirdPartyDetails->third_party_contact ?? '',
+                'vehicle' => $vehicle,
+                'verificationUrl' => url('/vehicle-verification/' . $token),
+                'token' => $token
+            ];
+            
+            // Buscar PDFs para adjuntar
+            $attachments = [];
+            $driverId = $userDriverDetail->id;
+            $dirPath = 'driver/' . $driverId . '/vehicle-verifications';
+            
+            // Buscar PDF de consentimiento
+            $consentFiles = Storage::disk('public')->files($dirPath);
+            foreach ($consentFiles as $file) {
+                if (strpos($file, 'third_party_consent_') !== false) {
+                    $attachments[] = [
+                        'path' => Storage::disk('public')->path($file),
+                        'name' => 'Third_Party_Consent.pdf',
+                        'mime' => 'application/pdf'
+                    ];
+                    break;
+                }
+            }
+            
+            // Buscar PDF de lease agreement
+            foreach ($consentFiles as $file) {
+                if (strpos($file, 'lease_agreement_third_party_') !== false) {
+                    $attachments[] = [
+                        'path' => Storage::disk('public')->path($file),
+                        'name' => 'Lease_Agreement.pdf',
+                        'mime' => 'application/pdf'
+                    ];
+                    break;
+                }
+            }
+            
+            // Enviar email
+            Mail::to($thirdPartyDetails->third_party_email)
+                ->send(new ThirdPartyVehicleVerification($emailData, $attachments));
+            
+            Log::info('Email de notificación enviado a third-party', [
+                'driver_id' => $userDriverDetail->id,
+                'third_party_email' => $thirdPartyDetails->third_party_email,
+                'token' => $token,
+                'attachments_count' => count($attachments)
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error al enviar email de notificación a third-party', [
+                'driver_id' => $userDriverDetail->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
     /**
      * Prepara la firma para usarla en PDFs
      * @param string $signature La firma en formato base64 o ruta de archivo

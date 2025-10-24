@@ -63,10 +63,11 @@ class DriverApplicationDetail extends Model
     }
 
     // En el modelo ApplicationDetails
-    public function getApplyingPositionAttribute($value)
-    {
-        return $this->applying_position_other ? 'other' : $value;
-    }
+    // REMOVED: Problematic accessor that was interfering with applying_position field
+    // public function getApplyingPositionAttribute($value)
+    // {
+    //     return $this->applying_position_other ? 'other' : $value;
+    // }
 
     public function getHowDidHearAttribute($value)
     {

@@ -295,6 +295,12 @@ class TrafficStep extends Component
             // Actualizar el ID en el array local
             $this->traffic_convictions[$index]['id'] = $trafficConviction->id;
             
+            Log::info('Traffic conviction created with ID', [
+                'conviction_id' => $trafficConviction->id,
+                'index' => $index,
+                'driver_id' => $this->driverId
+            ]);
+            
             // Actualizar el flag has_traffic_convictions en application details
             if ($userDriverDetail->application && $userDriverDetail->application->details) {
                 $userDriverDetail->application->details->update([
@@ -363,18 +369,22 @@ class TrafficStep extends Component
         
         // Verificar que el modelo y el índice sean correctos
         if ($modelName === 'ticket_files' && isset($this->traffic_convictions[$modelIndex])) {
-            // Primero, asegurar que la convicción tenga datos básicos antes de permitir subir archivos
             $conviction = $this->traffic_convictions[$modelIndex];
-            if (empty($conviction['conviction_date']) || empty($conviction['location']) || 
-                empty($conviction['charge']) || empty($conviction['penalty'])) {
-                
-                // Mostrar mensaje al usuario indicando que debe completar los datos primero
-                $this->dispatch('notify', [
-                    'type' => 'warning',
-                    'message' => 'Por favor, complete primero los datos de la convicción (fecha, ubicación, cargo y penalidad) antes de subir archivos.'
+            
+            // Solo verificar que la convicción exista en la DB si ya tiene ID
+            // Si no tiene ID, permitir subir archivos temporales que se procesarán después
+            if (isset($conviction['id']) && !empty($conviction['id'])) {
+                // La convicción ya existe en la DB, permitir subir archivos directamente
+                Log::info('Subiendo archivo para convicción existente', [
+                    'conviction_id' => $conviction['id'],
+                    'file_name' => $originalName
                 ]);
-                
-                return;
+            } else {
+                // La convicción no existe aún, pero permitir subir archivos temporales
+                Log::info('Subiendo archivo temporal para convicción nueva', [
+                    'conviction_index' => $modelIndex,
+                    'file_name' => $originalName
+                ]);
             }
             
             // Inicializar el array de documentos si no existe
@@ -469,21 +479,35 @@ class TrafficStep extends Component
                 return false;
             }
             
-            // Buscar la convicción en la base de datos
-            $trafficConviction = \App\Models\Admin\Driver\DriverTrafficConviction::where('user_driver_detail_id', $this->driverId)
-                ->where('conviction_date', $conviction['conviction_date'])
-                ->where('location', $conviction['location'])
-                ->where('charge', $conviction['charge'])
-                ->where('penalty', $conviction['penalty'])
-                ->first();
+            // Buscar la convicción en la base de datos usando el ID
+            $trafficConviction = null;
+            if (isset($conviction['id']) && !empty($conviction['id'])) {
+                $trafficConviction = \App\Models\Admin\Driver\DriverTrafficConviction::find($conviction['id']);
+            } else {
+                // Fallback: buscar por campos si no hay ID (para compatibilidad)
+                $trafficConviction = \App\Models\Admin\Driver\DriverTrafficConviction::where('user_driver_detail_id', $this->driverId)
+                    ->where('conviction_date', $conviction['conviction_date'])
+                    ->where('location', $conviction['location'])
+                    ->where('charge', $conviction['charge'])
+                    ->where('penalty', $conviction['penalty'])
+                    ->first();
+            }
             
             if (!$trafficConviction) {
                 Log::warning('No se encontró la convicción de tráfico para procesar archivo', [
                     'conviction_index' => $convictionIndex,
-                    'conviction_data' => $conviction
+                    'conviction_data' => $conviction,
+                    'searched_by_id' => isset($conviction['id']) && !empty($conviction['id']),
+                    'conviction_id' => $conviction['id'] ?? 'N/A'
                 ]);
                 return false;
             }
+            
+            Log::info('Convicción encontrada para procesar archivo', [
+                'conviction_id' => $trafficConviction->id,
+                'conviction_index' => $convictionIndex,
+                'temp_file' => $originalName
+            ]);
             
             // Leer el contenido del archivo temporal
             $fileContent = \Illuminate\Support\Facades\Storage::disk('local')->get($tempPath);

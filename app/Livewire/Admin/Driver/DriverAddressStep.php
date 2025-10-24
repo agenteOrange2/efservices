@@ -174,26 +174,12 @@ class DriverAddressStep extends Component
             $normalizedFromDate = null;
             $normalizedToDate = null;
             
-            if (!empty($this->from_date)) {
-                try {
-                    $normalizedFromDate = \Carbon\Carbon::parse($this->from_date)->format('Y-m-d');
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::warning('Invalid from_date format', [
-                        'from_date' => $this->from_date,
-                        'error' => $e->getMessage()
-                    ]);
-                }
+            if (!empty($this->from_date)) {                
+                $normalizedFromDate = Carbon::parse($this->from_date)->format('Y-m-d');                
             }
             
-            if (!empty($this->to_date)) {
-                try {
-                    $normalizedToDate = \Carbon\Carbon::parse($this->to_date)->format('Y-m-d');
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::warning('Invalid to_date format', [
-                        'to_date' => $this->to_date,
-                        'error' => $e->getMessage()
-                    ]);
-                }
+            if (!empty($this->to_date)) {                
+                $normalizedToDate = Carbon::parse($this->to_date)->format('Y-m-d');                
             }
             
             // Update primary address
@@ -223,26 +209,12 @@ class DriverAddressStep extends Component
                     $prevFromDate = null;
                     $prevToDate = null;
                     
-                    if (!empty($prevAddressData['from_date'])) {
-                        try {
-                            $prevFromDate = \Carbon\Carbon::parse($prevAddressData['from_date'])->format('Y-m-d');
-                        } catch (\Exception $e) {
-                            \Illuminate\Support\Facades\Log::warning('Invalid previous address from_date format', [
-                                'from_date' => $prevAddressData['from_date'],
-                                'error' => $e->getMessage()
-                            ]);
-                        }
+                    if (!empty($prevAddressData['from_date'])) {                        
+                        $prevFromDate = Carbon::parse($prevAddressData['from_date'])->format('Y-m-d');                        
                     }
                     
-                    if (!empty($prevAddressData['to_date'])) {
-                        try {
-                            $prevToDate = \Carbon\Carbon::parse($prevAddressData['to_date'])->format('Y-m-d');
-                        } catch (\Exception $e) {
-                            \Illuminate\Support\Facades\Log::warning('Invalid previous address to_date format', [
-                                'to_date' => $prevAddressData['to_date'],
-                                'error' => $e->getMessage()
-                            ]);
-                        }
+                    if (!empty($prevAddressData['to_date'])) {                        
+                        $prevToDate = Carbon::parse($prevAddressData['to_date'])->format('Y-m-d');                        
                     }
                     
                     $addressId = $prevAddressData['id'] ?? null;
@@ -295,11 +267,7 @@ class DriverAddressStep extends Component
             return true;
             
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error saving address', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            DB::rollBack();            
             session()->flash('error', 'Error saving address information: ' . $e->getMessage());
             return false;
         }

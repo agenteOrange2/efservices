@@ -142,10 +142,7 @@ class DriverGeneralInfoStep extends Component
     protected function createDriver()
     {
         try {
-            DB::beginTransaction();
-
-            // We'll handle custom dates by modifying created_at after creation
-
+            DB::beginTransaction();            
             // Create user
             $user = User::create([
                 'name' => $this->name,
@@ -210,12 +207,7 @@ class DriverGeneralInfoStep extends Component
             foreach ($recipients as $recipient) {
                 $recipient->notify(new \App\Notifications\Admin\Driver\NewDriverRegisteredNotification($user, $carrier));
             }
-            
-            \Illuminate\Support\Facades\Log::info('New driver notification sent', [
-                'driver_id' => $user->id,
-                'driver_email' => $user->email,
-                'carrier_id' => $carrier->id
-            ]);
+                        
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Error sending driver notification', [
                 'error' => $e->getMessage(),
