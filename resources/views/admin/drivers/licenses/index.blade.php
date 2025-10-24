@@ -226,7 +226,7 @@
                 </div>
                 <!-- Paginación -->
                 <div class="box-footer py-5 px-8">
-                    {{ $licenses->appends(request()->all())->links() }}
+                    {{ $licenses->links('custom.pagination') }}                    
                 </div>
             @else
                 <div class="box-body p-10 text-center">

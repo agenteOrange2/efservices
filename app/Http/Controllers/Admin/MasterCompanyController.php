@@ -15,11 +15,42 @@ class MasterCompanyController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $companies = MasterCompany::orderBy('company_name')->paginate(15);
+        $query = MasterCompany::query();
+
+        // Aplicar filtros si existen
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where('company_name', 'like', '%' . $search . '%');
+        }
+
+        if ($request->filled('state')) {
+            $query->where('state', $request->get('state'));
+        }
+
+        if ($request->filled('city')) {
+            $query->where('city', $request->get('city'));
+        }
+
+        $companies = $query->withCount('driverEmploymentCompanies')
+                          ->orderBy('company_name')
+                          ->paginate(15);
         
-        return view('admin.companies.index', compact('companies'));
+        // Obtener todos los estados y ciudades disponibles para los filtros
+        $allStates = MasterCompany::whereNotNull('state')
+                                 ->where('state', '!=', '')
+                                 ->distinct()
+                                 ->pluck('state')
+                                 ->sort();
+        
+        $allCities = MasterCompany::whereNotNull('city')
+                                 ->where('city', '!=', '')
+                                 ->distinct()
+                                 ->pluck('city')
+                                 ->sort();
+        
+        return view('admin.companies.index', compact('companies', 'allStates', 'allCities'));
     }
 
     /**

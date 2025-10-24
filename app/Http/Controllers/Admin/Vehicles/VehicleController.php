@@ -29,12 +29,13 @@ class VehicleController extends Controller
     {
         $query = Vehicle::with(['carrier', 'currentDriverAssignment.user']);
         
-        // Filtros
-        if ($request->has('carrier_id')) {
+        // Filtro por Carrier
+        if ($request->filled('carrier_id') && $request->carrier_id !== '') {
             $query->where('carrier_id', $request->carrier_id);
         }
 
-        if ($request->has('status')) {
+        // Filtro por Status
+        if ($request->filled('status') && $request->status !== '') {
             if ($request->status === 'active') {
                 $query->where('out_of_service', false)->where('suspended', false);
             } elseif ($request->status === 'out_of_service') {
@@ -43,14 +44,43 @@ class VehicleController extends Controller
                 $query->where('suspended', true);
             }
         }
+
+        // Filtro por Vehicle Type
+        if ($request->filled('vehicle_type') && $request->vehicle_type !== '') {
+            $query->where('type', $request->vehicle_type);
+        }
+
+        // Filtro por Brand/Make
+        if ($request->filled('vehicle_make') && $request->vehicle_make !== '') {
+            $query->where('make', $request->vehicle_make);
+        }
+
+        // Búsqueda mejorada
+        if ($request->filled('search') && $request->search !== '') {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('company_unit_number', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('make', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('model', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('vin', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('registration_number', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+
+        // Paginación con cantidad personalizable
+        $perPage = $request->get('per_page', 10);
+        if (!in_array($perPage, [10, 25, 50, 100])) {
+            $perPage = 10;
+        }
         
-        $vehicles = $query->paginate(10);
+        $vehicles = $query->paginate($perPage)->appends($request->query());
         
-        // Obtener los tipos y marcas de vehículos para los filtros
+        // Obtener datos para los filtros
+        $carriers = Carrier::where('status', 1)->orderBy('name')->get();
         $vehicleTypes = VehicleType::orderBy('name')->get();
         $vehicleMakes = VehicleMake::orderBy('name')->get();
         
-        return view('admin.vehicles.index', compact('vehicles', 'vehicleTypes', 'vehicleMakes'));
+        return view('admin.vehicles.index', compact('vehicles', 'carriers', 'vehicleTypes', 'vehicleMakes'));
     }
 
     /**

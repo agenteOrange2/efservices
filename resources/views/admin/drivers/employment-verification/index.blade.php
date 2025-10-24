@@ -156,8 +156,8 @@
                     </table>
                 </div>
 
-                <div class="mt-5">
-                    {{ $employmentVerifications->links() }}
+                <div class="mt-5">                    
+                    {{ $employmentVerifications->links('custom.pagination') }}
                 </div>
             </div>
         </div>

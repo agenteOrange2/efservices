@@ -18,6 +18,7 @@ class DriverRecruitmentList extends Component
     public $search = '';
     public $statusFilter = '';
     public $carrierFilter = '';
+    public $perPage = 10;
     
     
 
@@ -32,6 +33,11 @@ class DriverRecruitmentList extends Component
     }
 
     public function updatingCarrierFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
     {
         $this->resetPage();
     }
@@ -153,7 +159,7 @@ class DriverRecruitmentList extends Component
         }
 
         // Obtener conductores paginados
-        $drivers = $query->paginate(10);
+        $drivers = $query->paginate($this->perPage);
         
         // Obtener lista de carriers para el selector de filtros
         $carriers = Carrier::orderBy('name')->get();

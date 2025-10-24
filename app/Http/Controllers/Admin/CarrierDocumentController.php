@@ -8,6 +8,7 @@ use App\Models\CarrierDocument;
 use App\Models\DocumentType;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use App\Services\CarrierDocumentService;
 use App\Traits\SendsCustomNotifications;
 use App\Repositories\CarrierDocumentRepository;
@@ -221,19 +222,51 @@ class CarrierDocumentController extends Controller
 
     public function upload(Request $request, Carrier $carrier, DocumentType $documentType)
     {
-        $validated = $request->validate([
-            'document' => 'required|file|mimes:pdf,jpg,png|max:2048',
-            'notes' => 'nullable|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'document' => 'required|file|mimes:pdf,jpg,png|max:2048',
+                'notes' => 'nullable|string',
+            ]);
 
-        $document = $this->documentRepository->createOrUpdateDocument(
-            $carrier,
-            $documentType,
-            $request->file('document'),
-            $validated['notes'] ?? null
-        );
+            Log::info('Document upload attempt', [
+                'carrier_id' => $carrier->id,
+                'document_type_id' => $documentType->id,
+                'file_name' => $request->file('document')->getClientOriginalName(),
+                'file_size' => $request->file('document')->getSize()
+            ]);
 
-        return back()->with('success', 'Document uploaded successfully.');
+            $document = $this->documentRepository->createOrUpdateDocument(
+                $carrier,
+                $documentType,
+                $request->file('document'),
+                $validated['notes'] ?? null
+            );
+
+            Log::info('Document uploaded successfully', [
+                'document_id' => $document->id,
+                'carrier_id' => $carrier->id,
+                'document_type_id' => $documentType->id
+            ]);
+
+            return back()->with($this->sendNotification(
+                'success',
+                'Document uploaded successfully.',
+                'The document has been saved and is ready for review.'
+            ));
+        } catch (\Exception $e) {
+            \Log::error('Document upload failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'carrier_id' => $carrier->id,
+                'document_type_id' => $documentType->id
+            ]);
+
+            return back()->with($this->sendNotification(
+                'error',
+                'Error uploading document',
+                $e->getMessage()
+            ));
+        }
     }
 
 
@@ -244,13 +277,21 @@ class CarrierDocumentController extends Controller
     {
         if ($document->documentType->requirement) {
             return redirect()->route('admin.carrier.documents.index', $carrier->slug)
-                ->with('error', 'No se puede eliminar un documento obligatorio.');
+            ->with($this->sendNotification(
+                'error',
+                'Cannot delete required document',
+                'Required documents cannot be deleted from the system.'
+            ));
         }
 
         $document->clearMediaCollection('carrier_documents');
         $document->delete();
 
         return redirect()->route('admin.carrier.documents.index', $carrier->slug)
-            ->with('success', 'Documento eliminado exitosamente.');
+            ->with($this->sendNotification(
+                'success',
+                'Document deleted successfully',
+                'The document has been removed from the system.'
+            ));
     }
 }

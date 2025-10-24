@@ -156,8 +156,8 @@
         </div>
         
         @if($drivers->hasPages())
-            <div class="px-6 py-4 border-t">
-                {{ $drivers->links() }}
+            <div class="w-full">
+                {{ $drivers->links('custom.pagination') }}
             </div>
         @endif
     </div>

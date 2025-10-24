@@ -26,4 +26,9 @@ class MasterCompany extends Model
     {
         return $this->hasMany(DriverEmploymentCompany::class);
     }
+
+    public function driverEmploymentCompanies()
+    {
+        return $this->hasMany(DriverEmploymentCompany::class);
+    }
 }

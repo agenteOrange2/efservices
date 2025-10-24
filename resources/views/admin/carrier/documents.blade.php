@@ -13,28 +13,10 @@
 @endPushOnce
 
 @section('subcontent')
-    <!-- Success Notification Content -->
-    <div id="success-notification-content" class="hidden">
-        <div class="flex items-center gap-3 p-3 rounded-lg bg-green-100 border border-green-400 text-green-700">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path>
-            </svg>
-            <span>File uploaded successfully!</span>
-        </div>
-    </div>
+    <!-- Componente de notificación toast -->
+    <x-base.notificationtoast.notification-toast :notification="session('notification')" />
 
-    <!-- Error Notification Content -->
-    <div id="error-notification-content" class="hidden">
-        <div class="flex items-center gap-3 p-3 rounded-lg bg-red-100 border border-red-400 text-red-700">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M12 8v4m0 4h.01M12 2a10 10 0 11-10 10A10 10 0 0112 2z"></path>
-            </svg>
-            <span>Error uploading the file. Please try again.</span>
-        </div>
-    </div>
-
-    <div class="flex justify-between items-center mb-4">
+    <div class="flex flex-col gap-5 sm:flex-row justify-between items-center mb-4">
         <h1 class="text-xl font-semibold">
             Documents for {{ $carrier->name }}
         </h1>
@@ -42,13 +24,12 @@
         <!-- Botón para generar documentos faltantes -->
         <form action="{{ route('admin.carrier.generate-missing-documents', $carrier->slug) }}" method="POST" class="inline">
             @csrf
-            <button type="submit" 
-                class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 flex items-center gap-2">
+            <x-base.button type="submit"  variant="primary">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
                 Generar Documentos Faltantes
-            </button>
+            </x-base.button>
         </form>
     </div>
 
@@ -365,7 +346,7 @@
 @endsection
 
 @pushOnce('scripts')
-    @vite('resources/js/app.js') {{-- Este debe ir primero --}}
+    @vite('resources/js/app.js')
     @vite('resources/js/pages/notification.js')
     <script>
         document.addEventListener("DOMContentLoaded", () => {
@@ -391,59 +372,6 @@
                     );
                     fileNameDisplay.textContent = `Selected File: ${fileName}`;
                     fileNameDisplay.classList.remove("hidden");
-                });
-            });
-
-            // Lógica del formulario con Fetch y Toastify
-            const forms = document.querySelectorAll("form[id^='upload-form']");
-            forms.forEach(form => {
-                form.addEventListener("submit", async (e) => {
-                    e.preventDefault();
-
-                    const formData = new FormData(form);
-
-                    try {
-                        const response = await fetch(form.action, {
-                            method: "POST",
-                            body: formData,
-                            headers: {
-                                "X-CSRF-TOKEN": document.querySelector(
-                                    'input[name="_token"]').value,
-                            },
-                        });
-
-                        if (response.ok) {
-                            const successContent = document
-                                .getElementById("success-notification-content")
-                                .cloneNode(true);
-                            successContent.classList.remove("hidden");
-
-                            Toastify({
-                                node: successContent,
-                                duration: 3000,
-                                gravity: "top",
-                                position: "right",
-                                stopOnFocus: true,
-                            }).showToast();
-
-                            setTimeout(() => location.reload(), 1500);
-                        } else {
-                            throw new Error("Upload failed. Please try again.");
-                        }
-                    } catch (error) {
-                        const errorContent = document
-                            .getElementById("error-notification-content")
-                            .cloneNode(true);
-                        errorContent.classList.remove("hidden");
-
-                        Toastify({
-                            node: errorContent,
-                            duration: 3000,
-                            gravity: "top",
-                            position: "right",
-                            stopOnFocus: true,
-                        }).showToast();
-                    }
                 });
             });
 

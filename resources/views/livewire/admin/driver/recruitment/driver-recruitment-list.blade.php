@@ -239,16 +239,9 @@
                 </x-base.table.tbody>
             </x-base.table>
         </div>
-
         <!-- Paginación -->
-        <div class="flex flex-col-reverse items-center gap-y-2 p-5 sm:flex-row">
-            {{ $drivers->links() }}
-            <x-base.form-select class="rounded-[0.5rem] sm:w-20">
-                <option>10</option>
-                <option>25</option>
-                <option>35</option>
-                <option>50</option>
-            </x-base.form-select>
+        <div class="w-full">
+            {{ $drivers->links('custom.livewire-pagination') }}
         </div>
     </div>
 </div>

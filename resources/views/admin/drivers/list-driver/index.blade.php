@@ -82,14 +82,33 @@
 
                 <div class="box box--stacked flex flex-col">
                     <div class="flex flex-col gap-y-2 p-5 sm:flex-row sm:items-center">
-                        <div>
-                            <div class="relative">
+                        <div class="flex items-center gap-2">
+                            <form method="GET" action="{{ route('admin.drivers.index') }}" class="relative">
+                                @if(request('tab'))
+                                    <input type="hidden" name="tab" value="{{ request('tab') }}">
+                                @endif
+                                @if(request('carrier'))
+                                    <input type="hidden" name="carrier" value="{{ request('carrier') }}">
+                                @endif
                                 <x-base.lucide
                                     class="absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3] text-slate-500"
                                     icon="Search" />
-                                <x-base.form-input class="rounded-[0.5rem] pl-9 sm:w-64" type="text" name="search"
-                                    value="{{ $search }}" placeholder="Search drivers..." />
-                            </div>
+                                <x-base.form-input 
+                                    class="rounded-[0.5rem] pl-9 sm:w-64" 
+                                    type="text" 
+                                    name="search"
+                                    value="{{ $search }}" 
+                                    placeholder="Search drivers..." 
+                                    onkeyup="if(event.key === 'Enter') this.form.submit()" />
+                            </form>
+                            
+                            @if($search || (request('tab') && request('tab') !== 'all') || request('carrier'))
+                                <a href="{{ route('admin.drivers.index') }}" 
+                                   class="flex items-center justify-center w-10 h-10 rounded-[0.5rem] border border-slate-300 bg-white hover:bg-slate-50 transition-colors"
+                                   title="Limpiar filtros">
+                                    <x-base.lucide class="h-4 w-4 stroke-[1.3] text-slate-500" icon="X" />
+                                </a>
+                            @endif
                         </div>
                         <div class="flex flex-col gap-x-3 gap-y-2 sm:ml-auto sm:flex-row">
                             {{-- <x-base.menu>
@@ -306,15 +325,9 @@
                             </x-base.table.tbody>
                         </x-base.table>
                     </div>
-                    <div class="flex-reverse flex flex-col-reverse flex-wrap items-center gap-y-2 p-5 sm:flex-row">
-                        {{ $drivers->appends(request()->query())->links() }}
-                        <x-base.form-select class="rounded-[0.5rem] sm:w-20" name="per_page"
-                            onchange="this.form.submit()">
-                            <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10</option>
-                            <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25</option>
-                            <option value="35" {{ $perPage == 35 ? 'selected' : '' }}>35</option>
-                            <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50</option>
-                        </x-base.form-select>
+                    <div class="w-full">
+                        
+                        {{ $drivers->links('custom.pagination') }}
                     </div>
                 </div>
             </div>

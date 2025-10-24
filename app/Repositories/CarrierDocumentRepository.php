@@ -71,7 +71,7 @@ class CarrierDocumentRepository
                 ->usingFileName(strtolower(str_replace(' ', '_', $documentType->name)) . '.pdf')
                 ->toMediaCollection('carrier_documents');
 
-            $document->update(['status' => CarrierDocument::STATUS_IN_PROCCESS]);
+            $document->update(['status' => CarrierDocument::STATUS_IN_PROCESS]);
         }
 
         return $document;
