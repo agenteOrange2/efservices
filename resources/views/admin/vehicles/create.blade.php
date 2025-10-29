@@ -527,6 +527,21 @@ $breadcrumbLinks = [
                                         </div>
                                     </div>
                                     <div class="mt-3 w-full flex-1 xl:mt-0 space-y-4">
+                                        {{-- Vehicle Status --}}
+                                        <div>
+                                            <label class="block text-sm mb-1">Vehicle Status</label>
+                                            <select name="status" class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm @error('status') border-red-500 @enderror">
+                                                <option value="active" {{ old('status', 'active') == 'active' ? 'selected' : '' }}>Active</option>
+                                                <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                                <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                                <option value="suspended" {{ old('status') == 'suspended' ? 'selected' : '' }}>Suspended</option>
+                                                <option value="out_of_service" {{ old('status') == 'out_of_service' ? 'selected' : '' }}>Out of Service</option>
+                                            </select>
+                                            @error('status')
+                                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+                                        
                                         {{-- Out of Service --}}
                                         <div>
                                             <div class="flex items-center">

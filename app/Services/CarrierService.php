@@ -118,11 +118,11 @@ class CarrierService
                 Log::warning('Carrier without membership plan', ['carrier_id' => $carrierId]);
             }
 
-            // Filtrar documentos por estado de manera eficiente
+            // Filtrar documentos por estado de manera eficiente usando los valores numéricos correctos
             $documentsByStatus = $documents->groupBy('status');
-            $pendingDocuments = $documentsByStatus->get('pending', collect());
-            $approvedDocuments = $documentsByStatus->get('approved', collect());
-            $rejectedDocuments = $documentsByStatus->get('rejected', collect());
+            $pendingDocuments = $documentsByStatus->get(0, collect()); // STATUS_PENDING = 0
+            $approvedDocuments = $documentsByStatus->get(1, collect()); // STATUS_APPROVED = 1
+            $rejectedDocuments = $documentsByStatus->get(2, collect()); // STATUS_REJECTED = 2
 
             // Obtener tipos de documentos faltantes de manera optimizada
             $existingDocumentTypeIds = $documents->pluck('document_type_id')->unique()->toArray();
@@ -155,6 +155,24 @@ class CarrierService
                     ? round(($approvedDocuments->count() / $documents->count()) * 100, 1) 
                     : 0
             ];
+
+            // Debug logging para verificar conteos de documentos
+            Log::info('Document status counts for carrier', [
+                'carrier_id' => $carrierId,
+                'total_documents' => $stats['total_documents'],
+                'approved_documents' => $stats['approved_documents_count'],
+                'pending_documents' => $stats['pending_documents_count'],
+                'rejected_documents' => $stats['rejected_documents_count'],
+                'document_statuses' => $documents->pluck('status')->countBy()->toArray(),
+                'documents_by_status_detailed' => $documents->map(function($doc) {
+                    return [
+                        'id' => $doc->id,
+                        'document_type_id' => $doc->document_type_id,
+                        'status' => $doc->status,
+                        'created_at' => $doc->created_at
+                    ];
+                })->toArray()
+            ]);
 
             Log::info('Carrier details loaded successfully', [
                 'carrier_id' => $carrierId,

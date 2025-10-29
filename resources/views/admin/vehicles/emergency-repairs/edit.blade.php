@@ -37,9 +37,8 @@
                         @csrf
                         @method('PUT')
                         
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <!-- Left Column -->
-                            <div class="space-y-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 ">
+                            <!-- Left Column -->                            
                                 <!-- Carrier Selection -->
                                 <div>
                                     <x-base.form-label for="carrier_id">Carrier *</x-base.form-label>
@@ -76,7 +75,7 @@
                                 <div>
                                     <x-base.form-label for="repair_name">Repair Name *</x-base.form-label>
                                     <x-base.form-input id="repair_name" name="repair_name" type="text" 
-                                        class="w-full @error('repair_name') border-red-500 @enderror" 
+                                        class="w-full @error('repair_name') border-primary @enderror" 
                                         placeholder="Enter repair name" value="{{ old('repair_name', $emergencyRepair->repair_name) }}" required />
                                     @error('repair_name')
                                         <div class="text-red-500 text-sm mt-1">{{ $message }}</div>
@@ -119,9 +118,9 @@
                                     @error('status')
                                         <div class="text-red-500 text-sm mt-1">{{ $message }}</div>
                                     @enderror
-                                </div>
-                            </div>
-
+                                </div>                            
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-1 gap-6 mt-6">
                             <!-- Right Column -->
                             <div class="space-y-6">
                                 <!-- Description -->
@@ -209,12 +208,12 @@
                         </div>
 
                         <!-- Form Actions -->
-                        <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-200/60 dark:border-darkmode-400">
+                        <div class="flex flex-col sm:flex-row justify-end gap-3 mt-8 pt-6 border-t border-slate-200/60 dark:border-darkmode-400">
                             <x-base.button as="a" href="{{ route('admin.vehicles.emergency-repairs.show', $emergencyRepair) }}" 
-                                variant="outline-secondary" class="w-24">
+                                variant="outline-secondary" class="w-full sm:w-24">
                                 Cancel
                             </x-base.button>
-                            <x-base.button type="submit" variant="primary" class="w-32">
+                            <x-base.button type="submit" variant="primary" class="w-64">
                                 <x-base.lucide class="mr-2 h-4 w-4 stroke-[1.3]" icon="Save" />
                                 Update Repair
                             </x-base.button>
@@ -343,7 +342,7 @@
             // Delete existing file function
             function deleteFile(mediaId) {
                 if (confirm('Are you sure you want to delete this file?')) {
-                    fetch(`{{ route('admin.vehicles.emergency-repairs.index') }}/delete-file/${mediaId}`, {
+                    fetch(`/admin/vehicles/emergency-repairs/{{ $emergencyRepair->id }}/files/${mediaId}`, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),

@@ -27,6 +27,7 @@ return new class extends Migration
             $table->integer('completion_percentage')->default(0);
             $table->boolean('use_custom_dates')->default(false);     
             $table->datetime('custom_created_at')->nullable();            
+            $table->boolean('has_completed_employment_history')->default(false);
             $table->date('custom_registration_date')->nullable();
             $table->date('custom_completion_date')->nullable();
             $table->timestamps();

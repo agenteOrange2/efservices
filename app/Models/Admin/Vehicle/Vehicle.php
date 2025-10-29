@@ -18,6 +18,13 @@ class Vehicle extends Model
 {
     use HasFactory;
     
+    // Status constants
+    const STATUS_ACTIVE = 'active';
+    const STATUS_INACTIVE = 'inactive';
+    const STATUS_PENDING = 'pending';
+    const STATUS_SUSPENDED = 'suspended';
+    const STATUS_OUT_OF_SERVICE = 'out_of_service';
+    
     /**
      * Create a new factory instance for the model.
      *

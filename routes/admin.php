@@ -50,6 +50,8 @@ use App\Http\Controllers\Admin\MasterCompanyController;
 Route::get('theme-switcher/{activeTheme}', [ThemeController::class, 'switch'])->name('theme-switcher');
 
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('/dashboard-overview', [\App\Http\Controllers\Admin\DashboardOverviewController::class, 'index'])->name('dashboard.overview');
+Route::get('/dashboard-overview-1', [\App\Http\Controllers\Admin\DashboardOverview1Controller::class, 'index'])->name('dashboard.overview-1');
 Route::post('/dashboard/export-pdf', [DashboardController::class, 'exportPdf'])->middleware('api.rate.limit:admin_reports,30,1')->name('dashboard.export-pdf');
 Route::post('/dashboard/ajax-update', [DashboardController::class, 'ajaxUpdate'])->middleware('api.rate.limit:admin_ajax,120,1')->name('dashboard.ajax-update');
 
@@ -130,10 +132,21 @@ Route::prefix('vehicle-driver-assignments')->name('vehicle-driver-assignments.')
 Route::prefix('driver-types')->name('driver-types.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\DriverTypeController::class, 'index'])->name('index');
     Route::get('/data', [\App\Http\Controllers\Admin\DriverTypeController::class, 'getData'])->name('data');
+    Route::get('/{driver}/show', [\App\Http\Controllers\Admin\DriverTypeController::class, 'showDriver'])->name('show');
+    Route::get('/{driver}/assign-vehicle', [\App\Http\Controllers\Admin\DriverTypeController::class, 'assignVehicle'])->name('assign-vehicle');
+    Route::post('/{driver}/assign-vehicle', [\App\Http\Controllers\Admin\DriverTypeController::class, 'storeVehicleAssignment'])->name('store-vehicle-assignment');
+    
+    // Nuevas rutas para gestión de asignaciones de vehículos
+    Route::get('/{driver}/edit-assignment', [\App\Http\Controllers\Admin\DriverTypeController::class, 'editAssignment'])->name('edit-assignment');
+    Route::put('/{driver}/update-assignment', [\App\Http\Controllers\Admin\DriverTypeController::class, 'updateAssignment'])->name('update-assignment');
+    Route::delete('/{driver}/cancel-assignment', [\App\Http\Controllers\Admin\DriverTypeController::class, 'cancelAssignment'])->name('cancel-assignment');
+    Route::get('/{driver}/assignment-history', [\App\Http\Controllers\Admin\DriverTypeController::class, 'assignmentHistory'])->name('assignment-history');
+    
+    Route::get('/{driver}/contact', [\App\Http\Controllers\Admin\DriverTypeController::class, 'contact'])->name('contact');
+    Route::post('/{driver}/contact', [\App\Http\Controllers\Admin\DriverTypeController::class, 'sendContact'])->name('send-contact');
     Route::get('/{driverApplication}/edit', [\App\Http\Controllers\Admin\DriverTypeController::class, 'edit'])->name('edit');
     Route::put('/{driverApplication}', [\App\Http\Controllers\Admin\DriverTypeController::class, 'update'])->name('update');
     Route::delete('/{driverApplication}', [\App\Http\Controllers\Admin\DriverTypeController::class, 'destroy'])->name('destroy');
-    Route::get('/{driverApplication}', [\App\Http\Controllers\Admin\DriverTypeController::class, 'show'])->name('show');
 });
 
 // 2. Rutas para maintenances como recurso anidado
@@ -1169,3 +1182,27 @@ Route::prefix('reports')->name('reports.')->group(function () {
 
 // API route for getting active drivers by carrier (used in accident registration)
 Route::get('/api/active-drivers-by-carrier/{carrierId}', [\App\Http\Controllers\Admin\ReportsController::class, 'getActiveDriversByCarrier']);
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS PARA GESTIÓN DE MENSAJES ADMINISTRATIVOS
+|--------------------------------------------------------------------------
+*/
+Route::prefix('messages')->name('messages.')->group(function () {
+    // Dashboard de mensajes
+    Route::get('/dashboard', [\App\Http\Controllers\Admin\MessagesController::class, 'dashboard'])->name('dashboard');
+    
+    // Rutas CRUD para mensajes
+    Route::get('/', [\App\Http\Controllers\Admin\MessagesController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\Admin\MessagesController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\Admin\MessagesController::class, 'store'])->name('store');
+    Route::get('/{message}', [\App\Http\Controllers\Admin\MessagesController::class, 'show'])->name('show');
+    Route::get('/{message}/edit', [\App\Http\Controllers\Admin\MessagesController::class, 'edit'])->name('edit');
+    Route::put('/{message}', [\App\Http\Controllers\Admin\MessagesController::class, 'update'])->name('update');
+    Route::delete('/{message}', [\App\Http\Controllers\Admin\MessagesController::class, 'destroy'])->name('destroy');
+    
+    // Rutas adicionales para funcionalidades específicas
+    Route::post('/{message}/duplicate', [\App\Http\Controllers\Admin\MessagesController::class, 'duplicate'])->name('duplicate');
+    Route::post('/{message}/resend', [\App\Http\Controllers\Admin\MessagesController::class, 'resend'])->name('resend');
+    Route::delete('/{message}/recipients/{recipient}', [\App\Http\Controllers\Admin\MessagesController::class, 'removeRecipient'])->name('remove-recipient');
+});

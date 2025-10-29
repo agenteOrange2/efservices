@@ -31,8 +31,7 @@
                         @csrf
                         
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <!-- Left Column -->
-                            <div class="space-y-6">
+                            <!-- Left Column -->                            
                                 <!-- Carrier Selection -->
                                 <div>
                                     <x-base.form-label for="carrier_id">Carrier *</x-base.form-label>
@@ -115,6 +114,7 @@
                                 </div>
                             </div>
 
+                            <div class="grid grid-cols-1 lg:grid-cols-1 gap-6 mt-5">
                             <!-- Right Column -->
                             <div class="space-y-6">
                                 <!-- Description -->
@@ -166,12 +166,12 @@
                         </div>
 
                         <!-- Form Actions -->
-                        <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-200/60 dark:border-darkmode-400">
+                        <div class="flex flex-col sm:flex-row justify-end gap-3 mt-8 pt-6 border-t border-slate-200/60 dark:border-darkmode-400">
                             <x-base.button as="a" href="{{ route('admin.vehicles.emergency-repairs.index') }}" 
-                                variant="outline-secondary" class="w-24">
+                                variant="outline-secondary" class="w-full sm:w-32">
                                 Cancel
                             </x-base.button>
-                            <x-base.button type="submit" variant="primary" class="w-32">
+                            <x-base.button type="submit" variant="primary" class="w-full sm:w-42">
                                 <x-base.lucide class="mr-2 h-4 w-4 stroke-[1.3]" icon="Save" />
                                 Create Repair
                             </x-base.button>

@@ -164,6 +164,7 @@ class UserDriverSeeder extends Seeder
                 'current_step' => $currentStep,
                 'completion_percentage' => $completionPercentage,
                 'use_custom_dates' => false,
+                'has_completed_employment_history' => $applicationCompleted,
                 'created_at' => $user->created_at,
                 'updated_at' => now(),
             ]);
@@ -210,7 +211,6 @@ class UserDriverSeeder extends Seeder
                 'twic_expiration_date' => $faker->optional(0.3)->dateTimeBetween('now', '+5 years'),
                 'how_did_hear' => $faker->randomElement(['referral', 'employee_referral', 'job_board', 'other']),
                 'expected_pay' => $faker->randomFloat(2, 50000, 80000),
-                'has_completed_employment_history' => $applicationCompleted,
                 'vehicle_driver_assignment_id' => $vehicleDriverAssignment->id,
                 'created_at' => $user->created_at,
                 'updated_at' => now(),

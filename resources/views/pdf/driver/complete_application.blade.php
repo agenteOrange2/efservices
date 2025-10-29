@@ -889,7 +889,7 @@
                         years?</strong><br>{{ $userDriverDetail->application && $userDriverDetail->application->details && $userDriverDetail->application->details->has_unemployment_periods ? 'Yes' : 'No' }}
                 </td>
                 <td style="width: 50%"><strong>Have you completed your employment history
-                        information?</strong><br>{{ $userDriverDetail->application && $userDriverDetail->application->details && $userDriverDetail->application->details->has_completed_employment_history ? 'Yes' : 'No' }}
+                        information?</strong><br>{{ $userDriverDetail->has_completed_employment_history ? 'Yes' : 'No' }}
                 </td>
             </tr>
         </table>

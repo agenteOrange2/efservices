@@ -2,7 +2,18 @@
     "use strict";
 
     // Litepicker - Configuración global para toda la aplicación
+    // Prevenir múltiples inicializaciones
+    if (window.litepickerInitialized) {
+        return;
+    }
+    window.litepickerInitialized = true;
+
     $(".datepicker").each(function () {
+        // Verificar si ya tiene una instancia de litepicker
+        if (this._litepicker) {
+            return;
+        }
+
         // Configuración base
         let options = {
             autoApply: true,
@@ -65,5 +76,8 @@
             element: this,
             ...options,
         });
+
+        // Guardar referencia para evitar duplicados
+        this._litepicker = picker;
     });
 })();

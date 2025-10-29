@@ -13,17 +13,17 @@ return new class extends Migration
     {
         Schema::create('vehicle_driver_assignments', function (Blueprint $table) {
             $table->id();
+            $table->enum('driver_type', ['owner_operator', 'third_party', 'company_driver'])->nullable();
             $table->unsignedBigInteger('vehicle_id')->nullable();
-            $table->unsignedBigInteger('user_driver_detail_id');
+            $table->unsignedBigInteger('user_driver_detail_id')->nullable();
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->enum('status', ['active', 'inactive', 'pending'])->default('active');
             $table->text('notes')->nullable();
             $table->timestamps();
-            
             // Foreign key constraints
             $table->foreign('vehicle_id')->references('id')->on('vehicles')->onDelete('cascade');
-            $table->foreign('user_driver_detail_id')->references('id')->on('user_driver_details')->onDelete('cascade');
+            $table->foreign('user_driver_detail_id')->references('id')->on('user_driver_details')->onDelete('set null');
             
             // Indexes for performance
             $table->index(['vehicle_id', 'status']);

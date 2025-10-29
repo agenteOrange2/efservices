@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class EmergencyRepairController extends Controller
 {
@@ -318,36 +319,62 @@ class EmergencyRepairController extends Controller
         ]);
 
         try {
-            // Verify that the file belongs to the emergency repair
-            $media = $emergencyRepair->media()->where('id', $mediaId)->first();
-
+            // First check if the media exists at all
+            $media = Media::find($mediaId);
+            
             if (!$media) {
-                Log::warning('Media not found', [
+                Log::warning('Media does not exist in database', [
                     'repair_id' => $emergencyRepair->id,
                     'media_id' => $mediaId
                 ]);
-                abort(404, 'File not found');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El archivo ya no existe o ha sido eliminado previamente.'
+                ], 404);
+            }
+
+            // Verify that the file belongs to the emergency repair
+            $mediaFromRepair = $emergencyRepair->media()->where('id', $mediaId)->first();
+
+            if (!$mediaFromRepair) {
+                Log::warning('Media not associated with this repair', [
+                    'repair_id' => $emergencyRepair->id,
+                    'media_id' => $mediaId,
+                    'media_model_type' => $media->model_type,
+                    'media_model_id' => $media->model_id
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Este archivo no pertenece a esta reparación de emergencia.'
+                ], 403);
             }
 
             Log::info('Media found, deleting', [
                 'media_id' => $media->id,
                 'media_model_id' => $media->model_id,
-                'media_model_type' => $media->model_type
+                'media_model_type' => $media->model_type,
+                'file_name' => $media->file_name
             ]);
 
-            // Delete directly from media table to avoid cascade issues
-            DB::table('media')->where('id', $mediaId)->delete();
+            // Delete the media using the model method to ensure proper cleanup
+            $media->delete();
 
             Log::info('File deleted successfully');
 
-            return back()->with('success', 'File deleted successfully');
+            return response()->json([
+                'success' => true,
+                'message' => 'Archivo eliminado exitosamente'
+            ]);
         } catch (\Exception $e) {
             Log::error('Error in deleteFile', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
 
-            throw $e;
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar el archivo: ' . $e->getMessage()
+            ], 500);
         }
     }
 

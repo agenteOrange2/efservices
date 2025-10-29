@@ -153,6 +153,7 @@ class VehicleController extends Controller
             'registration_expiration_date' => 'required|date|after:today',
             'annual_inspection_expiration_date' => 'required|date|after:today',
             'fuel_type' => 'required|string|in:Diesel,Gasoline,CNG,LNG,Electric,Hybrid',
+            'status' => 'required|string|in:active,inactive,pending,suspended,out_of_service',
         ]);
 
         if ($validator->fails()) {
@@ -167,7 +168,7 @@ class VehicleController extends Controller
             'company_unit_number', 'gvwr', 'tire_size', 'fuel_type',
             'irp_apportioned_plate', 'registration_state', 'registration_number',
             'registration_expiration_date', 'annual_inspection_expiration_date', 'permanent_tag', 'location', 'notes',
-            'out_of_service', 'out_of_service_date', 'suspended', 'suspended_date'
+            'out_of_service', 'out_of_service_date', 'suspended', 'suspended_date', 'status'
         ]);
         
         $vehicle = Vehicle::create($vehicleData);
@@ -348,18 +349,7 @@ class VehicleController extends Controller
             'registration_expiration_date' => 'required|date|after:today',
             'fuel_type' => 'required|string|in:Diesel,Gasoline,CNG,LNG,Electric,Hybrid',
             'location' => 'nullable|string|max:255',
-            'ownership_type' => 'required|in:owned,leased,third-party,unassigned',
-
-            'owner_name' => 'nullable|required_if:ownership_type,owned|string|max:255',
-            'owner_phone' => 'nullable|required_if:ownership_type,owned|string|max:255',
-            'owner_email' => 'nullable|required_if:ownership_type,owned|email|max:255',
-            'third_party_name' => 'nullable|required_if:ownership_type,third-party|string|max:255',
-            'third_party_phone' => 'nullable|required_if:ownership_type,third-party|string|max:255',
-            'third_party_email' => 'nullable|required_if:ownership_type,third-party|email|max:255',
-            'third_party_dba' => 'nullable|string|max:255',
-            'third_party_address' => 'nullable|string|max:255',
-            'third_party_contact' => 'nullable|string|max:255',
-            'third_party_fein' => 'nullable|string|max:255',
+            'status' => 'required|string|in:active,inactive,pending,suspended,out_of_service',
         ]);
 
         if ($validator->fails()) {
@@ -1139,24 +1129,10 @@ class VehicleController extends Controller
              throw $e;
          }
 
-        // Mapear los valores del formulario a los valores de la base de datos
-        $ownershipMapping = [
-            'company_driver' => 'leased',
-            'owner_operator' => 'owned', 
-            'third_party' => 'third_party',
-            'other' => 'other'
-        ];
-        
-        $dbOwnershipType = $ownershipMapping[$request->ownership_type] ?? 'unassigned';
-        
-        Log::info('StoreDriverType - Mapeo de ownership_type', [
+        Log::info('StoreDriverType - Procesando tipo de conductor', [
             'form_value' => $request->ownership_type,
-            'db_value' => $dbOwnershipType
+            'vehicle_id' => $vehicle->id
         ]);
-        
-        // Actualizar el ownership_type del vehículo
-        $vehicle->ownership_type = $dbOwnershipType;
-        $vehicle->save();
 
         // Buscar o crear aplicación de conductor
         // Primero intentar encontrar por el conductor asignado al vehículo
@@ -1192,7 +1168,7 @@ class VehicleController extends Controller
 
         // Buscar user_driver_detail_id si se proporcionó un user_id
         $userDriverDetailId = null;
-        if ($request->filled('user_id')) {
+        if ($request->filled('user_id') && $request->user_id !== 'unassigned') {
             $userDriverDetail = \App\Models\UserDriverDetail::where('user_id', $request->user_id)->first();
             if ($userDriverDetail) {
                 $userDriverDetailId = $userDriverDetail->id;
@@ -1207,41 +1183,54 @@ class VehicleController extends Controller
             }
         }
 
+        // Para Company Driver sin conductor específico, permitir que user_driver_detail_id sea null
+        if ($request->ownership_type === 'company_driver' && !$userDriverDetailId) {
+            Log::info('StoreDriverType - Company driver sin conductor específico asignado', [
+                'vehicle_id' => $vehicle->id,
+                'user_driver_detail_id' => null
+            ]);
+            // $userDriverDetailId permanece null, lo cual ahora es permitido
+        }
+
         // Buscar asignación activa existente
         $existingAssignment = VehicleDriverAssignment::where('vehicle_id', $vehicle->id)
             ->where('status', 'active')
             ->first();
 
-        // Si existe una asignación activa, finalizarla para crear historial
+        // Si existe una asignación activa, actualizarla en lugar de crear una nueva
         if ($existingAssignment) {
             $existingAssignment->update([
-                'end_date' => now(),
-                'status' => 'inactive'
+                'user_driver_detail_id' => $userDriverDetailId,
+                'driver_type' => $request->ownership_type,
+                'updated_at' => now()
             ]);
             
-            Log::info('StoreDriverType - Asignación anterior finalizada para historial', [
-                'previous_assignment_id' => $existingAssignment->id,
+            $assignment = $existingAssignment;
+            
+            Log::info('StoreDriverType - Asignación existente actualizada', [
+                'assignment_id' => $assignment->id,
                 'vehicle_id' => $vehicle->id,
-                'previous_driver_type' => $existingAssignment->driver_type,
-                'end_date' => $existingAssignment->end_date
+                'previous_driver_type' => $existingAssignment->getOriginal('driver_type'),
+                'new_driver_type' => $request->ownership_type,
+                'updated_at' => $assignment->updated_at
+            ]);
+        } else {
+            // Solo crear nueva asignación si no existe una activa
+            $assignment = VehicleDriverAssignment::create([
+                'vehicle_id' => $vehicle->id,
+                'user_driver_detail_id' => $userDriverDetailId,
+                'driver_type' => $request->ownership_type,
+                'start_date' => now(),
+                'status' => 'active'
+            ]);
+            
+            Log::info('StoreDriverType - Nueva asignación de vehículo creada', [
+                'assignment_id' => $assignment->id,
+                'vehicle_id' => $vehicle->id,
+                'driver_type' => $request->ownership_type,
+                'is_new_assignment' => true
             ]);
         }
-
-        // Crear nueva asignación activa
-        $assignment = VehicleDriverAssignment::create([
-            'vehicle_id' => $vehicle->id,
-            'user_driver_detail_id' => $userDriverDetailId,
-            'driver_type' => $request->ownership_type,
-            'start_date' => now(),
-            'status' => 'active'
-        ]);
-        
-        Log::info('StoreDriverType - Nueva asignación de vehículo creada', [
-            'assignment_id' => $assignment->id,
-            'vehicle_id' => $vehicle->id,
-            'driver_type' => $request->ownership_type,
-            'had_previous_assignment' => $existingAssignment ? true : false
-        ]);
 
         // Guardar detalles específicos según el tipo de conductor
         try {

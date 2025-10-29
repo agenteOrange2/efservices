@@ -255,6 +255,34 @@ class SideMenu
                 'title' => "Memberships",
             ],
 
+            "MESSAGES MANAGEMENT",
+            [
+                'icon' => "mail",
+                'route_name' => "#",
+                'params' => [],
+                'title' => "Messages",
+                'sub_menu' => [
+                    [
+                        'icon' => "layout-dashboard",
+                        'route_name' => "admin.messages.dashboard",
+                        'params' => [],
+                        'title' => "Dashboard",
+                    ],
+                    [
+                        'icon' => "list",
+                        'route_name' => "admin.messages.index",
+                        'params' => [],
+                        'title' => "All Messages",
+                    ],
+                    [
+                        'icon' => "plus",
+                        'route_name' => "admin.messages.create",
+                        'params' => [],
+                        'title' => "New Message",
+                    ],
+                ],
+            ],
+
             "USER MANAGEMENT",
             [
                 'icon' => "UserSquare",

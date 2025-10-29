@@ -784,37 +784,53 @@ $breadcrumbLinks = [
                                                 </div>
                                             </div>
                                         </div>
-                                        {{-- Out of Service --}}
-                                        <div>
-                                            <div class="flex items-center mb-3">
-                                                <input type="checkbox" name="out_of_service" value="1"
-                                                    x-model="outOfService"
-                                                    class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500">
-                                                <label class="ml-3 text-sm font-medium text-gray-700">
-                                                    Out of Service
-                                                </label>
+                                        <div class="mt-3 w-full flex-1 xl:mt-0 space-y-4">
+                                            {{-- Vehicle Status --}}
+                                            <div>
+                                                <label class="block text-sm mb-1">Vehicle Status</label>
+                                                <select name="status" class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm @error('status') border-red-500 @enderror">
+                                                    <option value="active" {{ old('status', $vehicle->status) == 'active' ? 'selected' : '' }}>Active</option>
+                                                    <option value="inactive" {{ old('status', $vehicle->status) == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                                    <option value="pending" {{ old('status', $vehicle->status) == 'pending' ? 'selected' : '' }}>Pending</option>
+                                                    <option value="suspended" {{ old('status', $vehicle->status) == 'suspended' ? 'selected' : '' }}>Suspended</option>
+                                                    <option value="out_of_service" {{ old('status', $vehicle->status) == 'out_of_service' ? 'selected' : '' }}>Out of Service</option>
+                                                </select>
+                                                @error('status')
+                                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                                                @enderror
                                             </div>
-                                            <div x-show="outOfService" class="mt-2 ml-6">
-                                                <label class="block text-sm mb-1">Out of Service Date</label>
-                                                <x-base.litepicker name="out_of_service_date" value="{{ old('out_of_service_date', $vehicle->out_of_service_date) }}" class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm @error('out_of_service_date') border-red-500 @enderror" placeholder="MM/DD/YYYY" />
+                                            
+                                            {{-- Out of Service --}}
+                                            <div>
+                                                <div class="flex items-center mb-3">
+                                                    <input type="checkbox" name="out_of_service" value="1"
+                                                        x-model="outOfService"
+                                                        class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500">
+                                                    <label class="ml-3 text-sm font-medium text-gray-700">
+                                                        Out of Service
+                                                    </label>
+                                                </div>
+                                                <div x-show="outOfService" class="mt-2 ml-6">
+                                                    <label class="block text-sm mb-1">Out of Service Date</label>
+                                                    <x-base.litepicker name="out_of_service_date" value="{{ old('out_of_service_date', $vehicle->out_of_service_date) }}" class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm @error('out_of_service_date') border-red-500 @enderror" placeholder="MM/DD/YYYY" />
+                                                </div>
+                                            </div>
+                                            {{-- Suspended --}}
+                                            <div>
+                                                <div class="flex items-center mb-3">
+                                                    <input type="checkbox" name="suspended" value="1"
+                                                        x-model="suspended"
+                                                        class="w-4 h-4 text-yellow-600 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500">
+                                                    <label class="ml-3 text-sm font-medium text-gray-700">
+                                                        Suspended
+                                                    </label>
+                                                </div>
+                                                <div x-show="suspended" class="mt-2 ml-6">
+                                                    <label class="block text-sm mb-1">Suspension Date</label>
+                                                    <x-base.litepicker name="suspended_date" value="{{ old('suspended_date', $vehicle->suspended_date) }}" class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm @error('suspended_date') border-red-500 @enderror" placeholder="MM/DD/YYYY" />
+                                                </div>
                                             </div>
                                         </div>
-                                        {{-- Suspended --}}
-                                        <div>
-                                            <div class="flex items-center mb-3">
-                                                <input type="checkbox" name="suspended" value="1"
-                                                    x-model="suspended"
-                                                    class="w-4 h-4 text-yellow-600 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500">
-                                                <label class="ml-3 text-sm font-medium text-gray-700">
-                                                    Suspended
-                                                </label>
-                                            </div>
-                                            <div x-show="suspended" class="mt-2 ml-6">
-                                                <label class="block text-sm mb-1">Suspension Date</label>
-                                                <x-base.litepicker name="suspended_date" value="{{ old('suspended_date', $vehicle->suspended_date) }}" class="py-2 px-3 block w-full border-gray-200 rounded-md text-sm @error('suspended_date') border-red-500 @enderror" placeholder="MM/DD/YYYY" />
-                                            </div>
-                                        </div>
-
                                     </div>
 
                                     {{-- Notes --}}

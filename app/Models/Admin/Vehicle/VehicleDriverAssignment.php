@@ -26,6 +26,7 @@ class VehicleDriverAssignment extends Model
         'end_date',
         'status',
         'notes',
+        'assigned_by',
     ];
 
     protected $casts = [
@@ -62,6 +63,14 @@ class VehicleDriverAssignment extends Model
             'user_driver_detail_id', // Local key on VehicleDriverAssignment table
             'user_id' // Local key on UserDriverDetail table
         );
+    }
+
+    /**
+     * Get the user who assigned this assignment.
+     */
+    public function assignedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
     }
 
     /**

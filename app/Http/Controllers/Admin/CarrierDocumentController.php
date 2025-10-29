@@ -146,6 +146,19 @@ class CarrierDocumentController extends Controller
             'date' => $validated['date'] ?? $document->date,
         ]));
 
+        // Limpiar cache relacionado con estadísticas del carrier después de actualizar documento
+        \Cache::forget("carrier_stats_{$carrier->id}");
+        \Cache::forget("carrier_details_{$carrier->id}");
+        
+        // Log para debug de la actualización
+        \Log::info('Document status updated', [
+            'carrier_id' => $carrier->id,
+            'document_id' => $document->id,
+            'old_status' => $document->getOriginal('status'),
+            'new_status' => $document->status,
+            'document_type' => $document->documentType->name ?? 'Unknown'
+        ]);
+
         return back()->with($this->sendNotification(
             'success',
             'Documento actualizado exitosamente.',

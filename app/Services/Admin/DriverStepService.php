@@ -429,12 +429,8 @@ class DriverStepService
             return self::STATUS_PENDING;
         }
         
-        // Si la aplicación existe y se ha marcado como completado el historial
-        if (
-            $userDriverDetail->application &&
-            $userDriverDetail->application->details &&
-            $userDriverDetail->application->details->has_completed_employment_history
-        ) {
+        // Si se ha marcado como completado el historial
+        if ($userDriverDetail->has_completed_employment_history) {
             // Si se marcó como completado pero no hay datos, está pendiente
             return self::STATUS_PENDING;
         }

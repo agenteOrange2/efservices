@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('vehicle_driver_assignments', function (Blueprint $table) {
-            $table->enum('driver_type', ['owner_operator', 'third_party', 'company_driver'])->nullable()->after('id');
+        Schema::create('dashboard_statistics', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
         });
     }
 
@@ -21,8 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('vehicle_driver_assignments', function (Blueprint $table) {
-            $table->dropColumn('driver_type');
-        });
+        Schema::dropIfExists('dashboard_statistics');
     }
 };

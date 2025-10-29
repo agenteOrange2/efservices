@@ -29,7 +29,6 @@ class DriverApplicationDetail extends Model
         'how_did_hear_other',
         'referral_employee_name',
         'expected_pay',
-        'has_completed_employment_history',
         'vehicle_id',
         // Owner Operator fields
         'owner_name',

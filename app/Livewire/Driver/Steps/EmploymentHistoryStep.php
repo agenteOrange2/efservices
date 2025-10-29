@@ -313,11 +313,15 @@ class EmploymentHistoryStep extends Component
                 throw new \Exception('Driver not found');
             }
 
-            // Update application details
+            // Update user driver details
+            $userDriverDetail->update([
+                'has_completed_employment_history' => $this->has_completed_employment_history,
+            ]);
+
+            // Update application details for unemployment periods
             if ($userDriverDetail->application && $userDriverDetail->application->details) {
                 $userDriverDetail->application->details->update([
                     'has_unemployment_periods' => $this->has_unemployment_periods,
-                    'has_completed_employment_history' => $this->has_completed_employment_history,
                 ]);
             }
 

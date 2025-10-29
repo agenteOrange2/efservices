@@ -154,8 +154,9 @@ class DriverEmploymentHistoryStep extends Component
         // Check if has unemployment periods from application details
         if ($userDriverDetail->application && $userDriverDetail->application->details) {
             $this->has_unemployment_periods = (bool)($userDriverDetail->application->details->has_unemployment_periods ?? false);
-            $this->has_completed_employment_history = (bool)($userDriverDetail->application->details->has_completed_employment_history ?? false);
         }
+        
+        $this->has_completed_employment_history = (bool)($userDriverDetail->has_completed_employment_history ?? false);
 
         // Load unemployment periods
         $this->unemployment_periods = [];
@@ -327,9 +328,13 @@ class DriverEmploymentHistoryStep extends Component
             if ($userDriverDetail->application && $userDriverDetail->application->details) {
                 $userDriverDetail->application->details->update([
                     'has_unemployment_periods' => $this->has_unemployment_periods,
-                    'has_completed_employment_history' => $this->has_completed_employment_history,
                 ]);
             }
+            
+            // Update user driver details
+            $userDriverDetail->update([
+                'has_completed_employment_history' => $this->has_completed_employment_history,
+            ]);
 
             // Save unemployment periods
             $existingPeriodIds = $userDriverDetail->unemploymentPeriods()->pluck('id')->toArray();

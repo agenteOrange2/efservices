@@ -27,8 +27,8 @@ return new class extends Migration
             $table->string('referral_employee_name')->nullable();
             $table->decimal('expected_pay', 10, 2);
             // $table->boolean('has_work_history')->default(false);
-            $table->boolean('has_unemployment_periods')->default(false);
-            $table->boolean('has_completed_employment_history')->default(false);
+            // $table->boolean('has_unemployment_periods')->default(false);
+            // $table->boolean('has_completed_employment_history')->default(false);
             $table->timestamps();
         });
     }

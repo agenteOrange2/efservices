@@ -63,6 +63,7 @@ class UserDriverDetail extends Model implements HasMedia
         'completion_percentage',
         'use_custom_dates',
         'custom_created_at',
+        'has_completed_employment_history',
         'custom_registration_date',
         'custom_completion_date',
     ];
@@ -163,7 +164,7 @@ class UserDriverDetail extends Model implements HasMedia
             'media_exists' => $media ? true : false,
             'media_url' => $media ? $media->getUrl() : null,
         ]);
-        return $media ? $media->getUrl() : asset('build/assets/images/default_profile.png');
+        return $media ? $media->getUrl() : asset('build/default_profile.png');
     }
 
     //Media library

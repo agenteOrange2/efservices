@@ -221,14 +221,15 @@ class CustomPathGenerator implements PathGenerator
         // Gestionar archivos de mantenimiento de vehículos
         if ($model instanceof \App\Models\Admin\Vehicle\VehicleMaintenance) {
             $vehicleId = $model->vehicle_id ?? 'unknown';
+            $maintenanceId = $model->id ?? 'unknown';
             
-            // Organizar por tipo de colección
+            // Organizar por vehículo y mantenimiento específico
             if ($media->collection_name === 'maintenance_files') {
-                return "vehicle/{$vehicleId}/";
+                return "vehicle/{$vehicleId}/maintenance/{$maintenanceId}/";
             }
             
             // Default para otras colecciones de mantenimiento
-            return "vehicle/{$vehicleId}/";
+            return "vehicle/{$vehicleId}/maintenance/{$maintenanceId}/";
         }
         
         // Gestionar documentos de vehículos
@@ -286,6 +287,19 @@ class CustomPathGenerator implements PathGenerator
             
             // PDFs individuales por paso se guardan en una subcarpeta
             return "driver/{$driverId}/driver_applications/";
+        }
+
+        // Gestionar archivos de reparaciones de emergencia
+        if ($model instanceof \App\Models\EmergencyRepair) {
+            $vehicleId = $model->vehicle_id ?? 'unknown';
+            
+            // Organizar por vehículo y tipo de reparación
+            if ($media->collection_name === 'emergency_repair_files') {
+                return "vehicle/{$vehicleId}/repairs/";
+            }
+            
+            // Default para otras colecciones de reparaciones de emergencia
+            return "vehicle/{$vehicleId}/repairs/";
         }
 
         return "others/{$model->getKey()}/";
