@@ -60,10 +60,25 @@ class CarrierDashboardController extends Controller
                     ->with('error', 'Su solicitud ha sido rechazada.');
                     
             case Carrier::STATUS_ACTIVE:
-                // Verificar si los documentos están completos
-                if (!$carrier->documents_complete) {
+                // Verificar si los documentos están completos Y si no tiene sesión de skip
+                if (!$carrier->documents_completed && !session()->has('skip_documents_' . $carrier->id)) {
+                    Log::info('REDIRECCIÓN desde CarrierDashboardController: Documentos no completados', [
+                        'user_id' => $user->id,
+                        'carrier_id' => $carrier->id,
+                        'documents_completed' => $carrier->documents_completed,
+                        'has_skip_session' => session()->has('skip_documents_' . $carrier->id),
+                        'skip_session_key' => 'skip_documents_' . $carrier->id
+                    ]);
                     return redirect()->route('carrier.documents.index', $carrier->slug)
                         ->with('warning', 'Debe completar la carga de documentos.');
+                } else {
+                    Log::info('DEBUG CarrierDashboardController: Permitiendo acceso al dashboard', [
+                        'user_id' => $user->id,
+                        'carrier_id' => $carrier->id,
+                        'documents_completed' => $carrier->documents_completed,
+                        'has_skip_session' => session()->has('skip_documents_' . $carrier->id),
+                        'reason' => $carrier->documents_completed ? 'Documents completed' : 'Has skip session'
+                    ]);
                 }
                 break;
                 

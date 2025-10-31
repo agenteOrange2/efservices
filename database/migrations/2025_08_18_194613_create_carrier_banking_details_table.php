@@ -15,6 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('carrier_id')->constrained('carriers')->onDelete('cascade');
             $table->text('account_number'); // Will be encrypted at model level
+            $table->text('banking_routing_number')->nullable(); // Will be encrypted at model level
+            $table->text('zip_code')->nullable(); // Will be encrypted at model level  
+            $table->text('security_code')->nullable(); // Will be encrypted at model level
             $table->text('account_holder_name'); // Will be encrypted at model level
             $table->string('country_code', 2)->default('US');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');

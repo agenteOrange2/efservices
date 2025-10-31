@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\CarrierDocumentController;
 use App\Http\Controllers\Admin\Driver\TestingsController;
 use App\Http\Controllers\Admin\Driver\AccidentsController;
 use App\Http\Controllers\Admin\Driver\DocumentsController;
+use App\Http\Controllers\Admin\Driver\DriverDocumentsController;
 use App\Http\Controllers\Admin\Vehicles\VehicleController;
 use App\Http\Controllers\Admin\Driver\DriverListController;
 use App\Http\Controllers\Admin\Driver\InspectionsController;
@@ -821,9 +822,15 @@ Route::prefix('drivers')->name('drivers.')->group(function () {
     Route::get('/{driver}/traffic-history', [TrafficConvictionsController::class, 'driverHistory'])->name('traffic-history');
     Route::put('/{driver}/activate', [DriverListController::class, 'activate'])->name('activate');
     Route::put('/{driver}/deactivate', [DriverListController::class, 'deactivate'])->name('deactivate');
-    Route::get('/{id}/documents/download', [DriverListController::class, 'downloadDocuments'])->name('documents.download');
+    Route::post('/{driver}/documents', [DocumentsController::class, 'store'])->name('documents.store');
+    Route::get('/{driver}/documents/download', [DriverDocumentsController::class, 'downloadAll'])->name('documents.download');
     Route::get('/{id}/regenerate-application-forms', [DriverListController::class, 'regenerateApplicationForms'])->name('regenerate-application-forms');
     Route::get('/export', [DriverListController::class, 'export'])->name('export');
+    
+    // Rutas para el DriverDocumentsController
+    Route::get('/{driver}/documents', [DriverDocumentsController::class, 'index'])->name('documents.index');
+    Route::post('/{driver}/documents/download-all', [DriverDocumentsController::class, 'downloadAll'])->name('documents.download-all');
+    Route::post('/{driver}/documents/download-selected', [DriverDocumentsController::class, 'downloadSelected'])->name('documents.download-selected');
 });
 
 // Rutas para accidentes

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Driver;
 
 use App\Http\Controllers\Controller;
 use App\Models\DocumentAttachment;
+use App\Models\UserDriverDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -11,6 +12,44 @@ use Illuminate\Support\Facades\Response;
 
 class DocumentsController extends Controller
 {
+    /**
+     * Store a new document for a driver
+     * 
+     * @param Request $request
+     * @param int $driverId
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function store(Request $request, $driverId)
+    {
+        try {
+            $driver = UserDriverDetail::findOrFail($driverId);
+            
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'category' => 'required|string',
+                'document' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240',
+                'type' => 'nullable|string',
+                'expires_at' => 'nullable|date',
+                'description' => 'nullable|string'
+            ]);
+            
+            $driver->addMediaFromRequest('document')
+                   ->withCustomProperties([
+                       'name' => $request->name,
+                       'category' => $request->category,
+                       'type' => $request->type,
+                       'expires_at' => $request->expires_at,
+                       'description' => $request->description
+                   ])
+                   ->toMediaCollection('documents');
+            
+            return redirect()->back()->with('success', 'Document uploaded successfully.');
+            
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error uploading document: ' . $e->getMessage());
+        }
+    }
+
     /**
      * Elimina un documento por su ID
      * 

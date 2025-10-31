@@ -421,6 +421,15 @@ class DriverTypeController extends Controller
                 'driverEmploymentCompanies.company',
                 'vehicleAssignments' => function($q) {
                     $q->with('vehicle')->latest();
+                },
+                'inspections' => function($q) {
+                    $q->orderBy('inspection_date', 'desc');
+                },
+                'accidents' => function($q) {
+                    $q->orderBy('accident_date', 'desc');
+                },
+                'trafficConvictions' => function($q) {
+                    $q->orderBy('conviction_date', 'desc');
                 }
             ]);
 
@@ -532,7 +541,7 @@ class DriverTypeController extends Controller
         try {
             DB::transaction(function () use ($request, $driver) {
                 // Create admin message record
-                $adminMessage = \App\Models\Admin\AdminMessage::create([
+                $adminMessage = \App\Models\AdminMessage::create([
                     'sender_id' => auth()->id(),
                     'subject' => $request->subject,
                     'message' => $request->message,
@@ -542,7 +551,7 @@ class DriverTypeController extends Controller
                 ]);
 
                 // Create message recipient record
-                \App\Models\Admin\MessageRecipient::create([
+                \App\Models\MessageRecipient::create([
                     'message_id' => $adminMessage->id,
                     'recipient_type' => 'driver',
                     'recipient_id' => $driver->id,
@@ -552,7 +561,7 @@ class DriverTypeController extends Controller
                 ]);
 
                 // Create status log
-                \App\Models\Admin\MessageStatusLog::createLog($adminMessage->id, 'sent', 'Message sent to driver via contact form');
+                \App\Models\MessageStatusLog::createLog($adminMessage->id, 'sent', 'Message sent to driver via contact form');
 
                 // Send actual email using Laravel Mail
                 Mail::to($driver->user->email)->send(new DriverContactMail(
@@ -562,7 +571,7 @@ class DriverTypeController extends Controller
                 ));
 
                 // Update delivery status to delivered
-                $recipient = \App\Models\Admin\MessageRecipient::where('message_id', $adminMessage->id)
+                $recipient = \App\Models\MessageRecipient::where('message_id', $adminMessage->id)
                     ->where('recipient_id', $driver->id)
                     ->first();
                 

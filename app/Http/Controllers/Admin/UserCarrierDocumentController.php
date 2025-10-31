@@ -64,7 +64,7 @@ class UserCarrierDocumentController extends Controller
                 ->toMediaCollection('document');
 
             // Actualizar el estado a "In Process"
-            $carrierDocument->update(['status' => CarrierDocument::STATUS_IN_PROCCESS]);
+            $carrierDocument->update(['status' => CarrierDocument::STATUS_IN_PROCESS]);
         }
     
         // Redirigir al listado de documentos (index)

@@ -183,15 +183,46 @@ class CheckUserStatus
 
                 // Si el carrier está ACTIVO, verificar si necesita subir documentos
                 if ($carrier->status === Carrier::STATUS_ACTIVE) {
+                    // DEBUG: Log detallado para entender el flujo
+                    Log::info('DEBUG CheckUserStatus - Carrier activo detectado', [
+                        'user_id' => $user->id,
+                        'carrier_id' => $carrier->id,
+                        'carrier_status' => $carrier->status,
+                        'documents_completed' => $carrier->documents_completed,
+                        'document_status' => $carrier->document_status,
+                        'current_route' => $request->path(),
+                        'is_dashboard' => $request->is('carrier/dashboard'),
+                        'has_skip_session' => $request->session()->has('skip_documents_' . $carrier->id),
+                        'skip_session_key' => 'skip_documents_' . $carrier->id,
+                        'skip_session_value' => $request->session()->get('skip_documents_' . $carrier->id),
+                        'all_session_keys' => array_keys($request->session()->all()),
+                        'referer' => $request->header('referer'),
+                        'method' => $request->method()
+                    ]);
+
                     // Si intenta acceder al dashboard pero no ha completado documentos, redirigir a documentos
-                    if ($request->is('carrier/dashboard') && ($carrier->document_status === 'in_progress' || $carrier->document_status === null)) {
-                        Log::info('Carrier activo redirigido a documentos desde dashboard', [
+                    // EXCEPTO si viene de "skip for now" (verificar sesión)
+                    if ($request->is('carrier/dashboard') && !$carrier->documents_completed && !$request->session()->has('skip_documents_' . $carrier->id)) {
+                        Log::info('REDIRECCIÓN: Carrier activo redirigido a documentos desde dashboard', [
                             'user_id' => $user->id,
                             'carrier_id' => $carrier->id,
-                            'document_status' => $carrier->document_status
+                            'documents_completed' => $carrier->documents_completed,
+                            'document_status' => $carrier->document_status,
+                            'reason' => 'No tiene skip session'
                         ]);
                         return redirect()->route('carrier.documents.index', $carrier->slug)
                             ->with('info', 'Please upload your carrier documents. You can skip documents you don\'t have ready and complete them later.');
+                    } else {
+                        Log::info('DEBUG: No se redirige desde dashboard', [
+                            'user_id' => $user->id,
+                            'carrier_id' => $carrier->id,
+                            'is_dashboard' => $request->is('carrier/dashboard'),
+                            'documents_completed' => $carrier->documents_completed,
+                            'has_skip_session' => $request->session()->has('skip_documents_' . $carrier->id),
+                            'reason' => $request->is('carrier/dashboard') ? 
+                                ($carrier->documents_completed ? 'Documents completed' : 'Has skip session') : 
+                                'Not dashboard route'
+                        ]);
                     }
                 }
 

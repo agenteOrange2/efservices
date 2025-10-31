@@ -4,21 +4,21 @@
 
 <!-- Criminal Record Section -->
 <div class="mb-6 p-4 border rounded-lg bg-white shadow-sm">
-    <h4 class="font-medium text-lg mb-3">Criminal Record <span class="text-sm text-gray-500 font-normal">(Optional)</span></h4>
+    <h4 class="font-medium text-lg mb-3">Criminal Record <span class="text-red-500">*</span></h4>
 
     <div class="mb-4">
-        <div class="flex items-center justify-between">
-            <p class="text-sm text-gray-700">Do you have criminal charges pending?</p>
-            <div class="flex items-center">
-                <span class="mr-2 text-sm {{ $has_criminal_charges ? 'text-gray-400' : 'text-gray-700 font-medium' }}">No</span>
-                <label class="inline-flex items-center cursor-pointer">
-                    <input type="checkbox" wire:model="has_criminal_charges" class="sr-only peer">
-                    <div
-                        class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
-                    </div>
-                </label>
-                <span class="ml-2 text-sm {{ $has_criminal_charges ? 'text-gray-700 font-medium' : 'text-gray-400' }}">Yes</span>
-            </div>
+        <p class="text-sm text-gray-700 mb-3">Do you have criminal charges pending?</p>
+        <div class="flex items-center space-x-6">
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" wire:model="has_criminal_charges" value="0" name="criminal_charges" 
+                       class="form-radio h-4 w-4 text-primary border-gray-300 focus:ring-primary focus:ring-2">
+                <span class="ml-2 text-sm text-gray-700">No</span>
+            </label>
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" wire:model="has_criminal_charges" value="1" name="criminal_charges" 
+                       class="form-radio h-4 w-4 text-primary border-gray-300 focus:ring-primary focus:ring-2">
+                <span class="ml-2 text-sm text-gray-700">Yes</span>
+            </label>
         </div>
         @error('has_criminal_charges')
             <span class="text-red-500 text-sm block mt-1">{{ $message }}</span>
@@ -28,22 +28,22 @@
 
 <!-- Felonies Section -->
 <div class="mb-6 p-4 border rounded-lg bg-white shadow-sm">
-    <h4 class="font-medium text-lg mb-3">Felonies <span class="text-sm text-gray-500 font-normal">(Optional)</span></h4>
+    <h4 class="font-medium text-lg mb-3">Felonies <span class="text-red-500">*</span></h4>
 
     <div class="mb-4">
-        <div class="flex items-center justify-between">
-            <p class="text-sm text-gray-700">Have you ever pled 'guilty' to, been convicted of, or pled 'no contest'
-                to a felony?</p>
-            <div class="flex items-center">
-                <span class="mr-2 text-sm {{ $has_felony_conviction ? 'text-gray-400' : 'text-gray-700 font-medium' }}">No</span>
-                <label class="inline-flex items-center cursor-pointer">
-                    <input type="checkbox" wire:model="has_felony_conviction" class="sr-only peer">
-                    <div
-                        class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
-                    </div>
-                </label>
-                <span class="ml-2 text-sm {{ $has_felony_conviction ? 'text-gray-700 font-medium' : 'text-gray-400' }}">Yes</span>
-            </div>
+        <p class="text-sm text-gray-700 mb-3">Have you ever pled 'guilty' to, been convicted of, or pled 'no contest'
+            to a felony?</p>
+        <div class="flex items-center space-x-6">
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" wire:model="has_felony_conviction" value="0" name="felony_conviction" 
+                       class="form-radio h-4 w-4 text-primary border-gray-300 focus:ring-primary focus:ring-2">
+                <span class="ml-2 text-sm text-gray-700">No</span>
+            </label>
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" wire:model="has_felony_conviction" value="1" name="felony_conviction" 
+                       class="form-radio h-4 w-4 text-primary border-gray-300 focus:ring-primary focus:ring-2">
+                <span class="ml-2 text-sm text-gray-700">Yes</span>
+            </label>
         </div>
         @error('has_felony_conviction')
             <span class="text-red-500 text-sm block mt-1">{{ $message }}</span>
@@ -51,19 +51,19 @@
     </div>
 
     <div class="mb-4">
-        <div class="flex items-center justify-between">
-            <p class="text-sm text-gray-700">If you have any felony convictions, do you currently hold a minister's
-                permit to enter or exit Canada?</p>
-            <div class="flex items-center">
-                <span class="mr-2 text-sm {{ $has_minister_permit ? 'text-gray-400' : 'text-gray-700 font-medium' }}">No</span>
-                <label class="inline-flex items-center cursor-pointer">
-                    <input type="checkbox" wire:model="has_minister_permit" class="sr-only peer">
-                    <div
-                        class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
-                    </div>
-                </label>
-                <span class="ml-2 text-sm {{ $has_minister_permit ? 'text-gray-700 font-medium' : 'text-gray-400' }}">Yes</span>
-            </div>
+        <p class="text-sm text-gray-700 mb-3">If you have any felony convictions, do you currently hold a minister's
+            permit to enter or exit Canada?</p>
+        <div class="flex items-center space-x-6">
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" wire:model="has_minister_permit" value="0" name="minister_permit" 
+                       class="form-radio h-4 w-4 text-primary border-gray-300 focus:ring-primary focus:ring-2">
+                <span class="ml-2 text-sm text-gray-700">No</span>
+            </label>
+            <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" wire:model="has_minister_permit" value="1" name="minister_permit" 
+                       class="form-radio h-4 w-4 text-primary border-gray-300 focus:ring-primary focus:ring-2">
+                <span class="ml-2 text-sm text-gray-700">Yes</span>
+            </label>
         </div>
         @error('has_minister_permit')
             <span class="text-red-500 text-sm block mt-1">{{ $message }}</span>

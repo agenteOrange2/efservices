@@ -38,6 +38,8 @@ return new class extends Migration
             $table->enum('document_status', ['pending', 'in_progress', 'skipped'])
             ->default('pending')
             ->nullable();
+            $table->boolean('documents_completed')->default(false);
+            $table->timestamp('documents_completed_at')->nullable();
             $table->timestamp('referrer_token_expires_at')->nullable();
             $table->timestamps();
         });

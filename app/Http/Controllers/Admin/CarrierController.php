@@ -242,9 +242,12 @@ class CarrierController extends Controller
             
             // Validar datos críticos antes de mostrar la vista
             if (!$carrier) {
+                Log::error('Carrier data is null after service call', [
+                    'original_carrier_id' => $carrier->id ?? 'unknown'
+                ]);
                 return back()->with('error', 'Carrier data could not be loaded');
             }
-            
+
             return view('admin.carrier.show', compact(
                 'carrier', 
                 'userCarriers', 
@@ -331,11 +334,13 @@ class CarrierController extends Controller
         $memberships = Membership::where('status', 1)->select('id', 'name')->get();
         $usStates = Constants::usStates();
 
+        // Cargar datos bancarios del carrier
+        $bankingDetails = $carrier->bankingDetails;
         
         // Generar URL de referencia con el prefijo correcto
         $referralUrl = url("/driver/register/{$carrier->slug}?token={$carrier->referrer_token}");
         
-        return view('admin.carrier.edit', compact('carrier', 'memberships', 'usStates','referralUrl'));
+        return view('admin.carrier.edit', compact('carrier', 'memberships', 'usStates', 'referralUrl', 'bankingDetails'));
     }
 
     /**
@@ -551,31 +556,87 @@ class CarrierController extends Controller
      */
     public function updateBanking(Request $request, Carrier $carrier)
     {
+        Log::info('=== UPDATE BANKING METHOD START ===', [
+            'carrier_id' => $carrier->id,
+            'carrier_name' => $carrier->name,
+            'request_data' => [
+                'account_holder_name' => $request->account_holder_name,
+                'account_number' => substr($request->account_number, 0, 4) . '****',
+                'banking_routing_number' => $request->banking_routing_number,
+                'zip_code' => $request->zip_code,
+                'security_code' => '***',
+                'country_code' => $request->country_code,
+                'status' => $request->status,
+                'has_rejection_reason' => !empty($request->rejection_reason)
+            ],
+            'timestamp' => now()->toDateTimeString()
+        ]);
+
         $request->validate([
             'account_holder_name' => 'required|string|max:255',
             'account_number' => 'required|string|max:50',
+            'banking_routing_number' => 'required|string|size:9|regex:/^[0-9]{9}$/',
+            'zip_code' => 'required|string|regex:/^[0-9]{5}(-[0-9]{4})?$/',
+            'security_code' => 'required|string|min:3|max:4|regex:/^[0-9]{3,4}$/',
             'country_code' => 'required|string|max:3',
             'status' => 'required|in:pending,approved,rejected',
             'rejection_reason' => 'nullable|string|max:500'
+        ]);
+
+        Log::info('Validation passed for updateBanking', [
+            'carrier_id' => $carrier->id
         ]);
         
         try {
             $bankingDetails = $carrier->bankingDetails;
             
+            Log::info('Checking existing banking details for update', [
+                'carrier_id' => $carrier->id,
+                'banking_details_exists' => !is_null($bankingDetails),
+                'banking_details_id' => $bankingDetails ? $bankingDetails->id : null,
+                'current_status' => $bankingDetails ? $bankingDetails->status : null,
+                'current_account_holder' => $bankingDetails ? $bankingDetails->account_holder_name : null
+            ]);
+            
             if (!$bankingDetails) {
+                Log::error('No banking information found for carrier during update', [
+                    'carrier_id' => $carrier->id
+                ]);
                 return back()->with('error', 'No banking information found for this carrier.');
             }
             
             $oldStatus = $bankingDetails->status;
             $newStatus = $request->status;
             
+            Log::info('Preparing to update banking details', [
+                'carrier_id' => $carrier->id,
+                'banking_details_id' => $bankingDetails->id,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'old_account_holder' => $bankingDetails->account_holder_name,
+                'new_account_holder' => $request->account_holder_name,
+                'old_account_number' => substr($bankingDetails->account_number, 0, 4) . '****',
+                'new_account_number' => substr($request->account_number, 0, 4) . '****'
+            ]);
+            
             // Actualizar información bancaria
             $bankingDetails->update([
                 'account_holder_name' => $request->account_holder_name,
                 'account_number' => $request->account_number,
+                'banking_routing_number' => $request->banking_routing_number,
+                'zip_code' => $request->zip_code,
+                'security_code' => $request->security_code,
                 'country_code' => $request->country_code,
                 'status' => $newStatus,
                 'rejection_reason' => $request->rejection_reason
+            ]);
+
+            Log::info('Banking details updated successfully', [
+                'carrier_id' => $carrier->id,
+                'banking_details_id' => $bankingDetails->id,
+                'updated_status' => $bankingDetails->fresh()->status,
+                'updated_account_holder' => $bankingDetails->fresh()->account_holder_name,
+                'updated_at' => $bankingDetails->fresh()->updated_at
             ]);
             
             // Manejar cambios de estado y envío de emails
@@ -659,6 +720,19 @@ class CarrierController extends Controller
                 'old_status' => $oldStatus,
                 'new_status' => $newStatus
             ]);
+
+            // Final verification log
+            $finalBankingDetails = $carrier->fresh()->bankingDetails;
+            Log::info('=== UPDATE BANKING METHOD END - FINAL VERIFICATION ===', [
+                'carrier_id' => $carrier->id,
+                'final_banking_details_exists' => !is_null($finalBankingDetails),
+                'final_banking_details_id' => $finalBankingDetails ? $finalBankingDetails->id : null,
+                'final_status' => $finalBankingDetails ? $finalBankingDetails->status : null,
+                'final_account_holder' => $finalBankingDetails ? $finalBankingDetails->account_holder_name : null,
+                'final_updated_at' => $finalBankingDetails ? $finalBankingDetails->updated_at : null,
+                'success' => true,
+                'timestamp' => now()->toDateTimeString()
+            ]);
             
             return back()->with($this->sendNotification(
                 'success',
@@ -681,33 +755,84 @@ class CarrierController extends Controller
      */
     public function storeBanking(Request $request, Carrier $carrier)
     {
+        Log::info('=== STORE BANKING METHOD START ===', [
+            'carrier_id' => $carrier->id,
+            'carrier_name' => $carrier->name,
+            'request_data' => [
+                'account_holder_name' => $request->account_holder_name,
+                'account_number' => substr($request->account_number, 0, 4) . '****',
+                'banking_routing_number' => $request->banking_routing_number,
+                'zip_code' => $request->zip_code,
+                'security_code' => '***',
+                'country_code' => $request->country_code,
+                'status' => $request->status,
+                'has_rejection_reason' => !empty($request->rejection_reason)
+            ],
+            'timestamp' => now()->toDateTimeString()
+        ]);
 
         $request->validate([
             'account_holder_name' => 'required|string|max:255',
             'account_number' => 'required|string|max:50',
+            'banking_routing_number' => 'required|string|size:9|regex:/^[0-9]{9}$/',
+            'zip_code' => 'required|string|regex:/^[0-9]{5}(-[0-9]{4})?$/',
+            'security_code' => 'required|string|min:3|max:4|regex:/^[0-9]{3,4}$/',
             'country_code' => 'required|string|max:3',
             'status' => 'required|in:pending,approved,rejected',
             'rejection_reason' => 'nullable|string|max:1000|required_if:status,rejected'
         ]);
 
+        Log::info('Validation passed for storeBanking', [
+            'carrier_id' => $carrier->id
+        ]);
+
         try {
             // Verificar que no exista información bancaria previa
-            if ($carrier->bankingDetails) {
+            $existingBanking = $carrier->bankingDetails;
+            Log::info('Checking for existing banking details', [
+                'carrier_id' => $carrier->id,
+                'existing_banking_exists' => !is_null($existingBanking),
+                'existing_banking_id' => $existingBanking ? $existingBanking->id : null
+            ]);
+
+            if ($existingBanking) {
                 Log::warning('Attempt to create banking info for carrier that already has it', [
                     'carrier_id' => $carrier->id,
-                    'existing_banking_id' => $carrier->bankingDetails->id
+                    'existing_banking_id' => $existingBanking->id,
+                    'existing_status' => $existingBanking->status
                 ]);
                 return back()->with('error', 'This carrier already has banking information. Use the edit function instead.');
             }
+
+            Log::info('Creating new banking details', [
+                'carrier_id' => $carrier->id,
+                'data_to_create' => [
+                    'account_holder_name' => $request->account_holder_name,
+                    'account_number_masked' => substr($request->account_number, 0, 4) . '****',
+                    'status' => $request->status
+                ]
+            ]);
 
             // Crear nueva información bancaria
             $bankingDetail = CarrierBankingDetail::create([
                 'carrier_id' => $carrier->id,
                 'account_holder_name' => $request->account_holder_name,
                 'account_number' => $request->account_number,
+                'banking_routing_number' => $request->banking_routing_number,
+                'zip_code' => $request->zip_code,
+                'security_code' => $request->security_code,
                 'country_code' => $request->country_code,
                 'status' => $request->status,
                 'rejection_reason' => $request->rejection_reason
+            ]);
+
+            Log::info('Banking details created successfully', [
+                'carrier_id' => $carrier->id,
+                'banking_detail_id' => $bankingDetail->id,
+                'banking_detail_status' => $bankingDetail->status,
+                'banking_detail_created_at' => $bankingDetail->created_at,
+                'account_holder_after_create' => $bankingDetail->account_holder_name,
+                'account_number_after_create' => substr($bankingDetail->account_number, 0, 4) . '****'
             ]);
 
             Log::info('Banking information created successfully by admin', [
@@ -716,6 +841,20 @@ class CarrierController extends Controller
                 'admin_user_id' => auth()->id(),
                 'country_code' => $request->country_code,
                 'status' => $request->status
+            ]);
+
+            // Final verification log
+            $finalCarrier = $carrier->fresh();
+            $finalBankingDetails = $finalCarrier->bankingDetails;
+            Log::info('=== STORE BANKING METHOD END - FINAL VERIFICATION ===', [
+                'carrier_id' => $carrier->id,
+                'final_banking_details_exists' => !is_null($finalBankingDetails),
+                'final_banking_details_id' => $finalBankingDetails ? $finalBankingDetails->id : null,
+                'final_status' => $finalBankingDetails ? $finalBankingDetails->status : null,
+                'final_account_holder' => $finalBankingDetails ? $finalBankingDetails->account_holder_name : null,
+                'final_created_at' => $finalBankingDetails ? $finalBankingDetails->created_at : null,
+                'success' => true,
+                'timestamp' => now()->toDateTimeString()
             ]);
 
             return back()->with($this->sendNotification(

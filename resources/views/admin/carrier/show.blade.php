@@ -365,8 +365,8 @@ $breadcrumbLinks = [
                             <x-base.lucide class="w-4 h-4" icon="CreditCard" />
                             <span class="hidden sm:inline">Banking</span>
                             <span class="sm:hidden">Bank</span>
-                            @if($carrier->bankingDetails)
-                            <span class="ml-1 w-2 h-2 rounded-full {{ $carrier->bankingDetails->status === 'approved' ? 'bg-success' : ($carrier->bankingDetails->status === 'rejected' ? 'bg-danger' : 'bg-warning') }}"></span>
+                            @if($bankingDetails)
+                            <span class="ml-1 w-2 h-2 rounded-full {{ $bankingDetails->status === 'approved' ? 'bg-success' : ($bankingDetails->status === 'rejected' ? 'bg-danger' : 'bg-warning') }}"></span>
                             @endif
                         </x-base.tab.button>
                     </x-base.tab>
@@ -764,14 +764,65 @@ $breadcrumbLinks = [
 
         <!-- Banking Info Tab -->
         <div id="tab-content-banking" class="tab-pane hidden transition-opacity duration-300 ease-in-out" role="tabpanel" aria-labelledby="tab-banking">
-            @if(isset($carrier->bankingDetails) && $carrier->bankingDetails)
+            
+            {{-- DEBUG: Banking Variables --}}
+            @if(config('app.debug'))
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h4 class="text-sm font-bold text-blue-800 mb-2">🔍 DEBUG: Banking Variables Available</h4>
+                <div class="text-xs text-blue-700 space-y-1">
+                    <div><strong>$bankingDetails exists:</strong> {{ isset($bankingDetails) ? 'YES' : 'NO' }}</div>
+                    @if(isset($bankingDetails))
+                        <div><strong>$bankingDetails is null:</strong> {{ is_null($bankingDetails) ? 'YES' : 'NO' }}</div>
+                        @if(!is_null($bankingDetails))
+                            <div><strong>$bankingDetails ID:</strong> {{ $bankingDetails->id ?? 'NULL' }}</div>
+                            <div><strong>$bankingDetails status:</strong> {{ $bankingDetails->status ?? 'NULL' }}</div>
+                            <div><strong>$bankingDetails account_holder_name:</strong> {{ $bankingDetails->account_holder_name ?? 'NULL' }}</div>
+                            <div><strong>$bankingDetails account_number:</strong> {{ $bankingDetails->account_number ? substr($bankingDetails->account_number, 0, 4) . '****' : 'NULL' }}</div>
+                            <div><strong>$bankingDetails created_at:</strong> {{ $bankingDetails->created_at ?? 'NULL' }}</div>
+                        @endif
+                    @endif
+                    <div><strong>$carrier->bankingDetails exists:</strong> {{ isset($carrier->bankingDetails) ? 'YES' : 'NO' }}</div>
+                    @if(isset($carrier->bankingDetails))
+                        <div><strong>$carrier->bankingDetails is null:</strong> {{ is_null($carrier->bankingDetails) ? 'YES' : 'NO' }}</div>
+                        @if(!is_null($carrier->bankingDetails))
+                            <div><strong>$carrier->bankingDetails ID:</strong> {{ $carrier->bankingDetails->id ?? 'NULL' }}</div>
+                            <div><strong>$carrier->bankingDetails status:</strong> {{ $carrier->bankingDetails->status ?? 'NULL' }}</div>
+                        @endif
+                    @endif
+                    <div><strong>Carrier ID:</strong> {{ $carrier->id ?? 'NULL' }}</div>
+                    <div><strong>Carrier Name:</strong> {{ $carrier->name ?? 'NULL' }}</div>
+                    <div><strong>Current timestamp:</strong> {{ now()->toDateTimeString() }}</div>
+                </div>
+            </div>
+            @endif
+            {{-- END DEBUG --}}
+            
+            {{-- Additional debug for the condition --}}
+            @if(config('app.debug'))
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <h4 class="text-sm font-bold text-red-800 mb-2">🚨 DEBUG: Condition Check</h4>
+                <div class="text-xs text-red-700 space-y-1">
+                    <div><strong>Evaluating @if($bankingDetails):</strong> {{ $bankingDetails ? 'TRUE (will show)' : 'FALSE (will NOT show)' }}</div>
+                    <div><strong>Type of $bankingDetails:</strong> {{ gettype($bankingDetails) }}</div>
+                    @if(is_object($bankingDetails))
+                        <div><strong>Class of $bankingDetails:</strong> {{ get_class($bankingDetails) }}</div>
+                    @endif
+                    <div><strong>Boolean evaluation:</strong> {{ $bankingDetails ? 'TRUTHY' : 'FALSY' }}</div>
+                    <div><strong>isset($bankingDetails):</strong> {{ isset($bankingDetails) ? 'TRUE' : 'FALSE' }}</div>
+                    <div><strong>!is_null($bankingDetails):</strong> {{ !is_null($bankingDetails) ? 'TRUE' : 'FALSE' }}</div>
+                    <div><strong>!empty($bankingDetails):</strong> {{ !empty($bankingDetails) ? 'TRUE' : 'FALSE' }}</div>
+                </div>
+            </div>
+            @endif
+            
+            @if(isset($bankingDetails) && !is_null($bankingDetails) && $bankingDetails)
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <!-- Header with Status -->
-                <div class="bg-gradient-to-r {{ $carrier->bankingDetails->status === 'approved' ? 'from-green-50 to-green-100 border-green-200' : ($carrier->bankingDetails->status === 'rejected' ? 'from-red-50 to-red-100 border-red-200' : 'from-yellow-50 to-yellow-100 border-yellow-200') }} px-6 py-4 border-b">
+                <div class="bg-gradient-to-r {{ $bankingDetails->status === 'approved' ? 'from-green-50 to-green-100 border-green-200' : ($bankingDetails->status === 'rejected' ? 'from-red-50 to-red-100 border-red-200' : 'from-yellow-50 to-yellow-100 border-yellow-200') }} px-6 py-4 border-b">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <div class="p-2 {{ $carrier->bankingDetails->status === 'approved' ? 'bg-green-100' : ($carrier->bankingDetails->status === 'rejected' ? 'bg-red-100' : 'bg-yellow-100') }} rounded-lg">
-                                <x-base.lucide icon="credit-card" class="w-6 h-6 {{ $carrier->bankingDetails->status === 'approved' ? 'text-green-600' : ($carrier->bankingDetails->status === 'rejected' ? 'text-red-600' : 'text-yellow-600') }}" />
+                            <div class="p-2 {{ $bankingDetails->status === 'approved' ? 'bg-green-100' : ($bankingDetails->status === 'rejected' ? 'bg-red-100' : 'bg-yellow-100') }} rounded-lg">
+                                <x-base.lucide icon="credit-card" class="w-6 h-6 {{ $bankingDetails->status === 'approved' ? 'text-green-600' : ($bankingDetails->status === 'rejected' ? 'text-red-600' : 'text-yellow-600') }}" />
                             </div>
                             <div>
                                 <h2 class="text-xl font-semibold text-gray-900">Banking Information</h2>
@@ -779,12 +830,12 @@ $breadcrumbLinks = [
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
-                            @if($carrier->bankingDetails->status === 'approved')
+                            @if($bankingDetails->status === 'approved')
                             <x-base.badge variant="success" class="inline-flex items-center px-3 py-1.5 text-sm font-medium">
                                 <x-base.lucide icon="check-circle" class="w-4 h-4 mr-2" />
                                 Verified & Approved
                             </x-base.badge>
-                            @elseif($carrier->bankingDetails->status === 'rejected')
+                            @elseif($bankingDetails->status === 'rejected')
                             <x-base.badge variant="danger" class="inline-flex items-center px-3 py-1.5 text-sm font-medium">
                                 <x-base.lucide icon="x-circle" class="w-4 h-4 mr-2" />
                                 Rejected
@@ -800,7 +851,7 @@ $breadcrumbLinks = [
                 </div>
 
                 <!-- Action Buttons for Pending Status -->
-                @if($carrier->bankingDetails->status === 'pending')
+                @if($bankingDetails->status === 'pending')
                 <div class="bg-yellow-50 px-6 py-4 border-b border-yellow-200">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
@@ -825,13 +876,13 @@ $breadcrumbLinks = [
                 @endif
 
                 <!-- Rejection Reason -->
-                @if($carrier->bankingDetails->status === 'rejected' && $carrier->bankingDetails->rejection_reason)
+                @if($bankingDetails->status === 'rejected' && $bankingDetails->rejection_reason)
                 <div class="bg-red-50 px-6 py-4 border-b border-red-200">
                     <div class="flex items-start gap-3">
                         <x-base.lucide icon="alert-circle" class="w-5 h-5 text-red-600 mt-0.5" />
                         <div>
                             <p class="text-sm font-medium text-red-800 mb-1">Rejection Reason:</p>
-                            <p class="text-sm text-red-700">{{ $carrier->bankingDetails->rejection_reason }}</p>
+                            <p class="text-sm text-red-700">{{ $bankingDetails->rejection_reason }}</p>
                         </div>
                     </div>
                 </div>
@@ -862,7 +913,7 @@ $breadcrumbLinks = [
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
                                     <div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
                                         <x-base.lucide icon="user" class="w-4 h-4 text-gray-500" />
-                                        <span class="text-gray-900 font-medium">{{ $carrier->bankingDetails->account_holder_name ?? 'N/A' }}</span>
+                                        <span class="text-gray-900 font-medium">{{ $bankingDetails->account_holder_name ?? 'N/A' }}</span>
                                     </div>
                                 </div>
 
@@ -874,15 +925,23 @@ $breadcrumbLinks = [
                                     </div>
                                 </div>
 
-                                @if($carrier->email)
+
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Contact Email</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Zip Code</label>
                                     <div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
-                                        <x-base.lucide icon="mail" class="w-4 h-4 text-gray-500" />
-                                        <span class="text-gray-900">{{ $carrier->email }}</span>
+                                        <x-base.lucide icon="map-pin" class="w-4 h-4 text-gray-500" />
+                                        <span class="text-gray-900 font-mono tracking-wider">
+                                            @if($bankingDetails && $bankingDetails->zip_code && strlen($bankingDetails->zip_code) >= 5)
+                                            <span class="text-blue-600">{{ substr($bankingDetails->zip_code, 0, 2) }}</span><span class="text-gray-400">•••</span><span class="text-blue-600 font-bold">{{ substr($bankingDetails->zip_code, -2) }}</span>
+                                            @elseif($bankingDetails && $bankingDetails->zip_code)
+                                            <span class="text-blue-600">{{ $bankingDetails->zip_code }}</span>
+                                            @else
+                                            <span class="text-gray-400">N/A</span>
+                                            @endif
+                                        </span>
+                                        <x-base.badge variant="secondary" size="sm" class="ml-auto text-xs">Protected</x-base.badge>
                                     </div>
                                 </div>
-                                @endif
                             </div>
                         </div>
 
@@ -901,10 +960,10 @@ $breadcrumbLinks = [
                                     <div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
                                         <x-base.lucide icon="hash" class="w-4 h-4 text-gray-500" />
                                         <span class="text-gray-900 font-mono tracking-wider text-lg">
-                                            @if($carrier->bankingDetails->account_number && strlen($carrier->bankingDetails->account_number) >= 8)
-                                            <span class="text-blue-600">{{ substr($carrier->bankingDetails->account_number, 0, 4) }}</span><span class="text-gray-400">••••••••</span><span class="text-blue-600 font-bold">{{ substr($carrier->bankingDetails->account_number, -4) }}</span>
-                                            @elseif($carrier->bankingDetails->account_number)
-                                            <span class="text-gray-400">••••</span><span class="text-blue-600 font-bold">{{ substr($carrier->bankingDetails->account_number, -4) }}</span>
+                                            @if($bankingDetails && $bankingDetails->account_number && strlen($bankingDetails->account_number) >= 8)
+                                            <span class="text-blue-600">{{ substr($bankingDetails->account_number, 0, 4) }}</span><span class="text-gray-400">••••••••</span><span class="text-blue-600 font-bold">{{ substr($bankingDetails->account_number, -4) }}</span>
+                                            @elseif($bankingDetails && $bankingDetails->account_number)
+                                            <span class="text-gray-400">••••</span><span class="text-blue-600 font-bold">{{ substr($bankingDetails->account_number, -4) }}</span>
                                             @else
                                             <span class="text-gray-400">No disponible</span>
                                             @endif
@@ -913,29 +972,53 @@ $breadcrumbLinks = [
                                     </div>
                                 </div>
 
-                                @if($carrier->bankingDetails->routing_number)
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Routing Number</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Banking Routing Number</label>
                                     <div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
-                                        <x-base.lucide icon="map-pin" class="w-4 h-4 text-gray-500" />
-                                        <span class="text-gray-900 font-mono">{{ $carrier->bankingDetails->routing_number }}</span>
+                                        <x-base.lucide icon="credit-card" class="w-4 h-4 text-gray-500" />
+                                        <span class="text-gray-900 font-mono tracking-wider">
+                                            @if($bankingDetails && $bankingDetails->banking_routing_number && strlen($bankingDetails->banking_routing_number) >= 6)
+                                            <span class="text-blue-600">{{ substr($bankingDetails->banking_routing_number, 0, 3) }}</span><span class="text-gray-400">••••••</span><span class="text-blue-600 font-bold">{{ substr($bankingDetails->banking_routing_number, -3) }}</span>
+                                            @elseif($bankingDetails && $bankingDetails->banking_routing_number)
+                                            <span class="text-gray-400">••••••</span><span class="text-blue-600 font-bold">{{ substr($bankingDetails->banking_routing_number, -3) }}</span>
+                                            @else
+                                            <span class="text-gray-400">N/A</span>
+                                            @endif
+                                        </span>
+                                        <x-base.badge variant="secondary" size="sm" class="ml-auto text-xs">Protected</x-base.badge>
                                     </div>
                                 </div>
-                                @endif
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Security Code</label>
+                                    <div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                        <x-base.lucide icon="shield" class="w-4 h-4 text-gray-500" />
+                                        <span class="text-gray-900 font-mono tracking-wider">
+                                            @if($bankingDetails && $bankingDetails->security_code)
+                                            <span class="text-gray-400">••••</span>
+                                            @else
+                                            <span class="text-gray-400">N/A</span>
+                                            @endif
+                                        </span>
+                                        <x-base.badge variant="secondary" size="sm" class="ml-auto text-xs">Protected</x-base.badge>
+                                    </div>
+                                </div>
 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Country</label>
                                     <div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
                                         <x-base.lucide icon="globe" class="w-4 h-4 text-gray-500" />
                                         <span class="text-gray-900">
-                                            @if($carrier->bankingDetails->country_code === 'US')
+                                            @if($bankingDetails && $bankingDetails->country_code === 'US')
                                             🇺🇸 United States
-                                            @elseif($carrier->bankingDetails->country_code === 'CA')
+                                            @elseif($bankingDetails && $bankingDetails->country_code === 'CA')
                                             🇨🇦 Canada
-                                            @elseif($carrier->bankingDetails->country_code === 'MX')
+                                            @elseif($bankingDetails && $bankingDetails->country_code === 'MX')
                                             🇲🇽 Mexico
+                                            @elseif($bankingDetails && $bankingDetails->country_code)
+                                            {{ $bankingDetails->country_code }}
                                             @else
-                                            {{ $carrier->bankingDetails->country_code }}
+                                            N/A
                                             @endif
                                         </span>
                                     </div>
@@ -946,20 +1029,20 @@ $breadcrumbLinks = [
                                     <div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
                                         <x-base.lucide icon="calendar" class="w-4 h-4 text-gray-500" />
                                         <div>
-                                            <span class="text-gray-900">{{ $carrier->bankingDetails->created_at->format('M d, Y') }}</span>
-                                            <span class="text-gray-500 text-sm ml-2">at {{ $carrier->bankingDetails->created_at->format('H:i') }}</span>
+                                            <span class="text-gray-900">{{ $bankingDetails->created_at->format('M d, Y') }}</span>
+                                            <span class="text-gray-500 text-sm ml-2">at {{ $bankingDetails->created_at->format('H:i') }}</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                @if($carrier->bankingDetails->updated_at && $carrier->bankingDetails->updated_at != $carrier->bankingDetails->created_at)
+                                @if($bankingDetails->updated_at && $bankingDetails->updated_at != $bankingDetails->created_at)
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Last Updated</label>
                                     <div class="flex items-center gap-3 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
                                         <x-base.lucide icon="clock" class="w-4 h-4 text-gray-500" />
                                         <div>
-                                            <span class="text-gray-900">{{ $carrier->bankingDetails->updated_at->format('M d, Y') }}</span>
-                                            <span class="text-gray-500 text-sm ml-2">at {{ $carrier->bankingDetails->updated_at->format('H:i') }}</span>
+                                            <span class="text-gray-900">{{ $bankingDetails->updated_at->format('M d, Y') }}</span>
+                                            <span class="text-gray-500 text-sm ml-2">at {{ $bankingDetails->updated_at->format('H:i') }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -986,38 +1069,53 @@ $breadcrumbLinks = [
                                 <div class="space-y-4">
                                     <div>
                                         <label for="account_holder_name" class="block text-sm font-medium text-gray-700 mb-2">Account Holder Name</label>
-                                        <input type="text" id="account_holder_name" name="account_holder_name" value="{{ old('account_holder_name', $carrier->bankingDetails->account_holder_name) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                        <input type="text" id="account_holder_name" name="account_holder_name" value="{{ old('account_holder_name', $bankingDetails?->account_holder_name ?? '') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
                                     </div>
 
                                     <div>
                                         <label for="account_number" class="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
-                                        <input type="text" id="account_number" name="account_number" value="{{ old('account_number', $carrier->bankingDetails->account_number) }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                        <input type="text" id="account_number" name="account_number" value="{{ old('account_number', $bankingDetails?->account_number ?? '') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                    </div>
+
+                                    <div>
+                                        <label for="banking_routing_number" class="block text-sm font-medium text-gray-700 mb-2">Banking Routing Number</label>
+                                        <input type="text" id="banking_routing_number" name="banking_routing_number" value="{{ old('banking_routing_number', $bankingDetails?->banking_routing_number ?? '') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="9" required>
+                                    </div>
+
+                                    <div>
+                                        <label for="zip_code" class="block text-sm font-medium text-gray-700 mb-2">Zip Code</label>
+                                        <input type="text" id="zip_code" name="zip_code" value="{{ old('zip_code', $bankingDetails?->zip_code ?? '') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="10" required>
+                                    </div>
+
+                                    <div>
+                                        <label for="security_code" class="block text-sm font-medium text-gray-700 mb-2">Security Code</label>
+                                        <input type="password" id="security_code" name="security_code" value="{{ old('security_code', $bankingDetails?->security_code ?? '') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="4" required>
                                     </div>
 
                                     <div>
                                         <label for="country_code" class="block text-sm font-medium text-gray-700 mb-2">Country</label>
                                         <select id="country_code" name="country_code" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                                            <option value="US" {{ old('country_code', $carrier->bankingDetails->country_code) === 'US' ? 'selected' : '' }}>United States</option>
-                                            <option value="CA" {{ old('country_code', $carrier->bankingDetails->country_code) === 'CA' ? 'selected' : '' }}>Canada</option>
-                                            <option value="MX" {{ old('country_code', $carrier->bankingDetails->country_code) === 'MX' ? 'selected' : '' }}>Mexico</option>
+                                            <option value="US" {{ old('country_code', $bankingDetails?->country_code ?? '') === 'US' ? 'selected' : '' }}>United States</option>
+                                            <option value="CA" {{ old('country_code', $bankingDetails?->country_code ?? '') === 'CA' ? 'selected' : '' }}>Canada</option>
+                                            <option value="MX" {{ old('country_code', $bankingDetails?->country_code ?? '') === 'MX' ? 'selected' : '' }}>Mexico</option>
                                         </select>
                                     </div>
 
                                     <div>
                                         <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                                         <select id="status" name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required onchange="toggleRejectionReason()">
-                                            <option value="pending" {{ old('status', $carrier->bankingDetails->status) === 'pending' ? 'selected' : '' }}>Pending</option>
-                                            <option value="approved" {{ old('status', $carrier->bankingDetails->status) === 'approved' ? 'selected' : '' }}>Approved</option>
-                                            <option value="rejected" {{ old('status', $carrier->bankingDetails->status) === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                            <option value="pending" {{ old('status', $bankingDetails?->status ?? '') === 'pending' ? 'selected' : '' }}>Pending</option>
+                                            <option value="approved" {{ old('status', $bankingDetails?->status ?? '') === 'approved' ? 'selected' : '' }}>Approved</option>
+                                            <option value="rejected" {{ old('status', $bankingDetails?->status ?? '') === 'rejected' ? 'selected' : '' }}>Rejected</option>
                                         </select>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Rejection Reason (shown only when status is rejected) -->
-                            <div id="rejectionReasonDiv" class="mt-4 {{ old('status', $carrier->bankingDetails->status) === 'rejected' ? '' : 'hidden' }}">
+                            <div id="rejectionReasonDiv" class="mt-4 {{ old('status', $bankingDetails?->status ?? '') === 'rejected' ? '' : 'hidden' }}">
                                 <label for="rejection_reason" class="block text-sm font-medium text-gray-700 mb-2">Rejection Reason</label>
-                                <textarea id="rejection_reason" name="rejection_reason" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Please provide a reason for rejection...">{{ old('rejection_reason', $carrier->bankingDetails->rejection_reason) }}</textarea>
+                                <textarea id="rejection_reason" name="rejection_reason" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Please provide a reason for rejection...">{{ old('rejection_reason', $bankingDetails?->rejection_reason ?? '') }}</textarea>
                             </div>
 
                             <!-- Form Actions -->
@@ -1090,6 +1188,30 @@ $breadcrumbLinks = [
                                     placeholder="Enter account number">
                             </div>
 
+                            <!-- Banking Routing Number -->
+                            <div>
+                                <label for="banking_routing_number" class="block text-sm font-medium text-gray-700 mb-2">Banking Routing Number *</label>
+                                <input type="text" id="banking_routing_number" name="banking_routing_number" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Enter routing number" maxlength="9">
+                            </div>
+
+                            <!-- Zip Code -->
+                            <div>
+                                <label for="zip_code" class="block text-sm font-medium text-gray-700 mb-2">Zip Code *</label>
+                                <input type="text" id="zip_code" name="zip_code" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Enter zip code" maxlength="10">
+                            </div>
+
+                            <!-- Security Code -->
+                            <div>
+                                <label for="security_code" class="block text-sm font-medium text-gray-700 mb-2">Security Code *</label>
+                                <input type="password" id="security_code" name="security_code" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Enter security code" maxlength="4">
+                            </div>
+
                             <!-- Country Code -->
                             <div>
                                 <label for="country_code" class="block text-sm font-medium text-gray-700 mb-2">Country *</label>
@@ -1139,47 +1261,7 @@ $breadcrumbLinks = [
             @endif
         </div>
     </div>
-
-
-    <!-- Modal de Rechazo -->
-    <div id="rejectModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-medium text-gray-900">Reject Banking Information</h3>
-                    <button type="button" onclick="closeRejectModal()" class="text-gray-400 hover:text-gray-600">
-                        <i data-lucide="x" class="w-5 h-5"></i>
-                    </button>
-                </div>
-
-                <form action="{{ route('admin.carrier.banking.reject', $carrier) }}" method="POST">
-                    @csrf
-                    <div class="mb-4">
-                        <label for="rejectionReason" class="block text-sm font-medium text-gray-700 mb-2">
-                            Reason for Rejection <span class="text-red-500">*</span>
-                        </label>
-                        <textarea
-                            id="rejectionReason"
-                            name="rejection_reason"
-                            rows="4"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                            placeholder="Please provide a detailed reason for rejecting the banking information..."
-                            required></textarea>
-                    </div>
-
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" onclick="closeRejectModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200">
-                            Cancel
-                        </button>
-                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors duration-200">
-                            <i data-lucide="x" class="w-4 h-4 mr-1 inline"></i>
-                            Reject Banking Info
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    @endif
 
     <!-- Modal de Rechazo -->
     <div id="rejectModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">

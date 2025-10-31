@@ -98,6 +98,10 @@ Route::middleware(['auth'])->group(function () {
                 ->name('documents.delete');
             Route::get('/documents/progress', [CarrierDocumentController::class, 'getDocumentProgress'])
                 ->name('documents.progress');
+            Route::get('/documents/{document}/view', [CarrierDocumentController::class, 'viewDocument'])
+                ->name('documents.view');
+            Route::get('/documents/skip', [CarrierDocumentController::class, 'skipDocuments'])
+                ->name('documents.skip');
         });
 
         // La vista principal del perfil

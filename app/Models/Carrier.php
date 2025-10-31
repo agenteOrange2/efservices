@@ -40,12 +40,16 @@ class Carrier extends Model implements HasMedia
         'terms_accepted_at',
         'status',
         'document_status',
+        'documents_completed',
+        'documents_completed_at',
         'referrer_token_expires_at',
     ];
 
     // Agregar constantes para limitar valores de status
     protected $casts = [
         'status' => 'integer',
+        'documents_completed' => 'boolean',
+        'documents_completed_at' => 'datetime',
         'referrer_token_expires_at' => 'datetime'
     ];
 
@@ -194,6 +198,36 @@ class Carrier extends Model implements HasMedia
     public function vehicles()
     {
         return $this->hasMany(\App\Models\Admin\Vehicle\Vehicle::class);
+    }
+
+    /**
+     * Verificar si todos los documentos requeridos están aprobados
+     */
+    public function checkDocumentsCompletion()
+    {
+        $totalDocumentTypes = \App\Models\DocumentType::count();
+        $approvedDocuments = $this->documents()
+            ->where('status', \App\Models\CarrierDocument::STATUS_APPROVED)
+            ->count();
+        
+        $isCompleted = ($approvedDocuments === $totalDocumentTypes && $totalDocumentTypes > 0);
+        
+        // Solo actualizar si hay un cambio
+        if ($this->documents_completed !== $isCompleted) {
+            $this->update([
+                'documents_completed' => $isCompleted,
+                'documents_completed_at' => $isCompleted ? now() : null
+            ]);
+            
+            \Log::info('Documents completion status updated', [
+                'carrier_id' => $this->id,
+                'documents_completed' => $isCompleted,
+                'approved_documents' => $approvedDocuments,
+                'total_document_types' => $totalDocumentTypes
+            ]);
+        }
+        
+        return $isCompleted;
     }
 
     // Relación con detalles bancarios

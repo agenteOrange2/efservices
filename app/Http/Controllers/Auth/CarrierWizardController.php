@@ -562,6 +562,9 @@ class CarrierWizardController extends Controller
                 [
                     'account_number' => $request->account_number,
                     'account_holder_name' => $request->account_holder_name,
+                    'banking_routing_number' => $request->banking_routing_number,
+                    'zip_code' => $request->zip_code,
+                    'security_code' => $request->security_code,
                     'country_code' => $request->country_code,
                     'status' => CarrierBankingDetail::STATUS_PENDING
                 ]

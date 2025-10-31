@@ -242,7 +242,7 @@ class CarrierDocumentService
                     case CarrierDocument::STATUS_REJECTED:
                         $rejectedDocuments++;
                         break;
-                    case CarrierDocument::STATUS_IN_PROCCESS:
+                    case CarrierDocument::STATUS_IN_PROCESS:
                     case CarrierDocument::STATUS_PENDING:
                     default:
                         $pendingDocuments++;

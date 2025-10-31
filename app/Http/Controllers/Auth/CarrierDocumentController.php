@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Models\Carrier;
+use App\Models\CarrierDocument;
 use Illuminate\Http\Request;
 use App\Models\UserCarrierDetail;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use App\Services\CarrierDocumentService;
 
 class CarrierDocumentController extends Controller
@@ -37,16 +39,124 @@ class CarrierDocumentController extends Controller
                 ->withErrors(['access' => 'You do not have permission to access this carrier.']);
         }
 
-        // Obtener documentos mapeados
-        $mappedDocuments = $this->carrierDocumentService->getMappedDocuments($carrier);
+        // Obtener documentos mapeados con estado mejorado
+        $mappedDocuments = $this->getMappedDocumentsWithStatus($carrier);
+        
+        // Calcular progreso y estadísticas
+        $progress = $this->carrierDocumentService->getDocumentProgress($carrier);
+        
+        // Preparar estadísticas para filtros
+        $documentStats = $this->calculateDocumentStats($mappedDocuments);
         
         Log::info('Acceso a documentos de carrier', [
             'user_id' => Auth::id(),
             'carrier_id' => $carrier->id,
-            'document_count' => count($mappedDocuments)
+            'document_count' => count($mappedDocuments),
+            'progress_percentage' => $progress['progress_percentage']
         ]);
 
-        return view('carrier.documents.index', compact('carrier', 'mappedDocuments'));
+        return view('carrier.documents.index', compact(
+            'carrier', 
+            'mappedDocuments', 
+            'progress', 
+            'documentStats'
+        ));
+    }
+
+    /**
+     * Obtener documentos mapeados con estado mejorado
+     */
+    private function getMappedDocumentsWithStatus($carrier)
+    {
+        $documentTypes = \App\Models\DocumentType::all();
+        $carrierDocuments = $carrier->documents()->with('documentType')->get();
+        
+        $mappedDocuments = [];
+        
+        foreach ($documentTypes as $type) {
+            $carrierDocument = $carrierDocuments->where('document_type_id', $type->id)->first();
+            
+            // Determinar el estado del documento
+            $status = $this->determineDocumentStatus($carrierDocument, $type);
+            
+            // Verificar si tiene archivo
+            $hasFile = $carrierDocument && $carrierDocument->getFirstMedia('carrier_documents');
+            
+            // Verificar si tiene documento por defecto disponible
+            $hasDefault = $type->getFirstMedia('default_documents') !== null;
+            
+            $mappedDocuments[] = [
+                'type' => $type,
+                'document' => $carrierDocument,
+                'status' => $status,
+                'has_file' => $hasFile,
+                'has_default' => $hasDefault,
+            ];
+        }
+        
+        return $mappedDocuments;
+    }
+
+    /**
+     * Determinar el estado del documento
+     */
+    private function determineDocumentStatus($carrierDocument, $documentType)
+    {
+        if (!$carrierDocument) {
+            // Si no existe el documento del carrier, verificar si hay uno por defecto
+            $hasDefault = $documentType->getFirstMedia('default_documents') !== null;
+            return $hasDefault ? 'default-available' : 'missing';
+        }
+        
+        // Si existe el documento del carrier
+        $hasFile = $carrierDocument->getFirstMedia('carrier_documents');
+        
+        if (!$hasFile) {
+            // No tiene archivo, verificar si hay uno por defecto
+            $hasDefault = $documentType->getFirstMedia('default_documents') !== null;
+            return $hasDefault ? 'default-available' : 'missing';
+        }
+        
+        // Tiene archivo, verificar el estado
+        switch ($carrierDocument->status) {
+            case \App\Models\CarrierDocument::STATUS_APPROVED:
+                return 'uploaded';
+            case \App\Models\CarrierDocument::STATUS_REJECTED:
+                return 'rejected'; // Rechazado tiene su propio estado
+            case \App\Models\CarrierDocument::STATUS_IN_PROCESS:
+            case \App\Models\CarrierDocument::STATUS_PENDING:
+            default:
+                return 'pending';
+        }
+    }
+
+    /**
+     * Calcular estadísticas de documentos para filtros
+     */
+    private function calculateDocumentStats($mappedDocuments)
+    {
+        $stats = [
+            'all' => count($mappedDocuments),
+            'uploaded' => 0,
+            'pending' => 0,
+            'missing' => 0,
+            'rejected' => 0,
+            'default-available' => 0,
+            'mandatory' => 0,
+            'optional' => 0
+        ];
+        
+        foreach ($mappedDocuments as $document) {
+            $stats[$document['status']]++;
+            
+            if ($document['type']->requirement) {
+                $stats['mandatory']++;
+            } else {
+                $stats['optional']++;
+            }
+        }
+        
+        return $stats;
     }
 
     /**
@@ -232,6 +342,83 @@ class CarrierDocumentController extends Controller
     }
 
     /**
+     * Mostrar/descargar un documento específico.
+     */
+    public function viewDocument($carrierSlug, CarrierDocument $document)
+    {
+        $carrier = $this->findCarrierBySlug($carrierSlug);
+        
+        if (!$this->canAccessCarrier($carrier)) {
+            Log::warning('Acceso no autorizado a documento de carrier', [
+                'user_id' => Auth::id(),
+                'carrier_slug' => $carrierSlug,
+                'document_id' => $document->id
+            ]);
+            
+            abort(403, 'You do not have permission to access this document.');
+        }
+
+        // Verificar que el documento pertenece al carrier
+        if ($document->carrier_id !== $carrier->id) {
+            Log::warning('Intento de acceso a documento de otro carrier', [
+                'user_id' => Auth::id(),
+                'carrier_slug' => $carrierSlug,
+                'document_id' => $document->id,
+                'document_carrier_id' => $document->carrier_id,
+                'expected_carrier_id' => $carrier->id
+            ]);
+            
+            abort(404, 'Document not found.');
+        }
+
+        // Obtener el archivo usando Spatie Media Library
+        $mediaFile = $document->getFirstMedia('carrier_documents');
+        
+        if (!$mediaFile) {
+            Log::warning('Intento de acceso a documento sin archivo', [
+                'user_id' => Auth::id(),
+                'document_id' => $document->id
+            ]);
+            
+            abort(404, 'Document file not found.');
+        }
+
+        // Verificar que el archivo existe físicamente
+        if (!file_exists($mediaFile->getPath())) {
+            Log::error('Archivo de documento no encontrado en storage', [
+                'user_id' => Auth::id(),
+                'document_id' => $document->id,
+                'media_path' => $mediaFile->getPath()
+            ]);
+            
+            abort(404, 'Document file not found in storage.');
+        }
+
+        Log::info('Acceso a documento de carrier', [
+            'user_id' => Auth::id(),
+            'carrier_slug' => $carrierSlug,
+            'document_id' => $document->id,
+            'media_path' => $mediaFile->getPath(),
+            'media_name' => $mediaFile->name
+        ]);
+
+        // Obtener el path completo del archivo
+        $filePath = $mediaFile->getPath();
+        
+        // Obtener el nombre original del archivo
+        $fileName = $mediaFile->name;
+        
+        // Determinar el tipo MIME
+        $mimeType = $mediaFile->mime_type;
+        
+        // Retornar el archivo como respuesta para visualización inline
+        return response()->file($filePath, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"'
+        ]);
+    }
+
+    /**
      * Verificar si el usuario puede acceder al carrier.
      */
     private function canAccessCarrier($carrier)
@@ -262,5 +449,30 @@ class CarrierDocumentController extends Controller
         }
 
         return false;
+    }
+
+    /**
+     * Manejar el "skip for now" - permitir acceso temporal al dashboard
+     */
+    public function skipDocuments($carrierSlug)
+    {
+        $carrier = $this->findCarrierBySlug($carrierSlug);
+        
+        if (!$this->canAccessCarrier($carrier)) {
+            return redirect()->route('login')
+                ->withErrors(['access' => 'You do not have permission to access this carrier.']);
+        }
+
+        // Establecer sesión temporal para permitir acceso al dashboard
+        session(['skip_documents_' . $carrier->id => true]);
+
+        Log::info('Carrier skipped documents temporarily', [
+            'user_id' => Auth::id(),
+            'carrier_id' => $carrier->id,
+            'carrier_slug' => $carrierSlug
+        ]);
+
+        return redirect()->route('carrier.dashboard')
+            ->with('info', 'You can upload your documents later from the dashboard. We\'ll remind you about pending documents.');
     }
 }

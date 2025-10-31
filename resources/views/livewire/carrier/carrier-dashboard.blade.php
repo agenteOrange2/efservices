@@ -1,4 +1,31 @@
 <div>
+    <!-- Notificación de documentos pendientes -->
+    @if(!$carrier->documents_completed)
+        <div class="mb-6 rounded-lg border border-warning/20 bg-warning/10 p-4">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <x-base.lucide class="h-5 w-5 text-warning" icon="AlertTriangle" />
+                </div>
+                <div class="ml-3 flex-1">
+                    <h3 class="text-sm font-medium text-warning-800">
+                        Documentos Pendientes
+                    </h3>
+                    <div class="mt-2 text-sm text-warning-700">
+                        <p>Tienes documentos pendientes por completar. Para acceder a todas las funcionalidades, por favor completa la carga de tus documentos.</p>
+                    </div>
+                    <div class="mt-4">
+                        <div class="-mx-2 -my-1.5 flex">
+                            <a href="{{ route('carrier.documents.index', $carrier->slug) }}" 
+                               class="rounded-md bg-warning/20 px-2 py-1.5 text-sm font-medium text-warning-800 hover:bg-warning/30 focus:outline-none focus:ring-2 focus:ring-warning focus:ring-offset-2 focus:ring-offset-warning/10">
+                                Completar Documentos
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="grid grid-cols-12 gap-x-6 gap-y-10">
         <!-- Estadísticas de cabecera -->
         <div class="col-span-12">

@@ -243,7 +243,7 @@ class LicenseStep extends Component
                             'equipment_type' => $expData['equipment_type'],
                             'years_experience' => $expData['years_experience'] ?? 0,
                             'miles_driven' => $expData['miles_driven'] ?? 0,
-                            'requires_cdl' => isset($expData['requires_cdl'])
+                            'requires_cdl' => $expData['requires_cdl'] ?? false
                         ]);
                         $updatedExpIds[] = $experience->id;
                     }
@@ -253,7 +253,7 @@ class LicenseStep extends Component
                         'equipment_type' => $expData['equipment_type'],
                         'years_experience' => $expData['years_experience'] ?? 0,
                         'miles_driven' => $expData['miles_driven'] ?? 0,
-                        'requires_cdl' => isset($expData['requires_cdl'])
+                        'requires_cdl' => $expData['requires_cdl'] ?? false
                     ]);
                     $updatedExpIds[] = $experience->id;
                 }

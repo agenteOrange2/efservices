@@ -1,376 +1,230 @@
 <x-carrier-layout>
     @push('styles')
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
             body {
-                font-family: 'DM Sans', sans-serif;
+                font-family: 'Inter', sans-serif;
             }
 
+            /* Document Center Styles */
+            .document-center {
+                --primary-color: #2563eb;
+                --primary-hover: #1d4ed8;
+                --success-color: #059669;
+                --warning-color: #d97706;
+                --error-color: #dc2626;
+                --gray-50: #f8fafc;
+                --gray-100: #f1f5f9;
+                --gray-200: #e2e8f0;
+                --gray-300: #cbd5e1;
+                --gray-400: #94a3b8;
+                --gray-500: #64748b;
+                --gray-600: #475569;
+                --gray-700: #334155;
+                --gray-800: #1e293b;
+                --gray-900: #0f172a;
+            }
+
+            /* Document Card Styles */
             .document-card {
-                transition: all 0.3s ease;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                border: 1px solid var(--gray-200);
             }
 
             .document-card:hover {
-                transform: translateY(-4px);
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                border-color: var(--gray-300);
             }
 
+            .document-card.selected {
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 1px var(--primary-color);
+            }
+
+            /* Upload Zone Styles */
             .upload-zone {
                 transition: all 0.2s ease;
-                background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%23E5E7EB' stroke-width='2' stroke-dasharray='6%2c 8' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+                border: 2px dashed var(--gray-300);
+                background-color: var(--gray-50);
             }
 
             .upload-zone:hover,
-            .upload-zone.dragging {
-                background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%233B82F6' stroke-width='2' stroke-dasharray='6%2c 8' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+            .upload-zone.drag-over {
+                border-color: var(--primary-color);
+                background-color: #dbeafe;
             }
 
-            .status-indicator {
-                width: 8px;
-                height: 8px;
-                border-radius: 50%;
-                display: inline-block;
-                margin-right: 6px;
+            .upload-zone.uploading {
+                border-color: var(--warning-color);
+                background-color: #fef3c7;
             }
 
+            .upload-zone.success {
+                border-color: var(--success-color);
+                background-color: #d1fae5;
+            }
+
+            .upload-zone.error {
+                border-color: var(--error-color);
+                background-color: #fee2e2;
+            }
+
+            /* Status Indicators */
+            .status-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 0.25rem 0.75rem;
+                border-radius: 9999px;
+                font-size: 0.75rem;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.025em;
+            }
+
+            .status-badge.not-uploaded {
+                background-color: var(--gray-100);
+                color: var(--gray-600);
+            }
+
+            .status-badge.pending {
+                background-color: #fef3c7;
+                color: #92400e;
+            }
+
+            .status-badge.approved {
+                background-color: #d1fae5;
+                color: #065f46;
+            }
+
+            .status-badge.rejected {
+                background-color: #fee2e2;
+                color: #991b1b;
+            }
+
+            /* Progress Indicators */
             .progress-bar {
-                height: 2px;
-                background-color: #e5e7eb;
+                height: 4px;
+                background-color: var(--gray-200);
+                border-radius: 9999px;
                 overflow: hidden;
-                position: relative;
             }
 
-            .progress-value {
-                position: absolute;
+            .progress-fill {
                 height: 100%;
-                background-color: #3b82f6;
+                background-color: var(--primary-color);
+                border-radius: 9999px;
                 transition: width 0.3s ease;
             }
 
-            .toggle-checkbox:checked {
-                right: 0;
-                border-color: #3b82f6;
+            /* Responsive Grid */
+            .document-grid {
+                display: grid;
+                gap: 1.5rem;
+                grid-template-columns: 1fr;
             }
 
-            .toggle-checkbox:checked+.toggle-label {
-                background-color: #3b82f6;
+            @media (min-width: 768px) {
+                .document-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+
+            @media (min-width: 1024px) {
+                .document-grid {
+                    grid-template-columns: repeat(3, 1fr);
+                }
+            }
+
+            .document-list {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            /* Animation Classes */
+            .fade-in {
+                animation: fadeIn 0.3s ease-in-out;
+            }
+
+            .slide-up {
+                animation: slideUp 0.3s ease-out;
+            }
+
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+
+            @keyframes slideUp {
+                from { 
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to { 
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            /* Loading States */
+            .skeleton {
+                background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+                background-size: 200% 100%;
+                animation: loading 1.5s infinite;
+            }
+
+            @keyframes loading {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+
+            /* Custom Scrollbar */
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .custom-scrollbar::-webkit-scrollbar-track {
+                background: var(--gray-100);
+                border-radius: 3px;
+            }
+
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: var(--gray-400);
+                border-radius: 3px;
+            }
+
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: var(--gray-500);
             }
         </style>
     @endpush
 
-    <div class="min-h-screen bg-gradient-to-br from-white to-gray-50">
+    <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 document-center">
 
-        <main class="max-w-6xl mx-auto px-6 py-16">
-            <header class="mb-12">
-                <div class="flex items-center space-x-2 mb-2">
-                    <div class="h-8 w-1 bg-blue-500 rounded-full"></div>
-                    <h1 class="text-3xl font-bold tracking-tight">Document Center</h1>
-                </div>
-                <p class="text-gray-500 text-sm ml-10 max-w-2xl">
-                    Don't have all documents ready? No problem! You can continue without uploading all documents and
-                    complete them later.
-                    <span class="text-blue-500 font-medium">Required documents are marked with an asterisk (*)</span>.
-                </p>
-                <div class="ml-10 mt-2 text-sm text-gray-500 bg-gray-50 px-3 py-1 rounded-full inline-block">
-                    Carrier: <span class="font-semibold">{{ $carrier->name }}</span>
-                </div>
-            </header>
-
-            <div class="gap-8">
-                <!-- Columna principal - Todos los documentos -->
-                <div class="md:col-span-8 space-y-6">
-                    <h2 class="text-lg font-medium text-gray-700 mb-4 flex items-center">
-                        <span class="inline-block w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
-                        Documentos
-                    </h2>
-
-                    @foreach ($documents as $document)
-                        <div class="document-card bg-white rounded-2xl shadow-sm overflow-hidden">
-                            <div class="p-4 sm:p-6">
-                                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-3">
-                                    <div class="flex-1">
-                                        <h3 class="text-gray-900 font-medium flex items-center">
-                                            {{ $document['type']->name }}
-                                            @if ($document['type']->requirement)
-                                                <span class="ml-1 text-red-500 font-bold">*</span>
-                                            @endif
-                                        </h3>
-                                        <p class="text-sm text-gray-600 mt-1 max-w-xl">
-                                            {{ $document['type']->description ?? 'Please upload this document to complete your registration.' }}
-                                        </p>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <span
-                                            class="status-indicator {{ $document['status_name'] === 'Not Uploaded' ? 'bg-gray-300' : ($document['status_name'] === 'Pending' ? 'bg-yellow-400' : 'bg-green-500') }}"></span>
-                                        <span
-                                            class="text-xs font-medium text-gray-600 px-4 py-2 rounded-sm {{ $document['status_name'] === 'Not Uploaded' ? 'bg-gray-100' : ($document['status_name'] === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') }}">{{ $document['status_name'] }}</span>
-                                    </div>
-                                </div>
-
-                                @if ($document['file_url'])
-                                    <!-- Documento ya subido -->
-                                    <div
-                                        class="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 bg-blue-50 rounded-xl gap-4">
-                                        <div class="flex items-center">
-                                            <svg class="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 mr-3" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                            <div>
-                                                <div class="text-sm font-medium text-gray-900">Document uploaded</div>
-                                                <div class="text-xs text-gray-500">Date:
-                                                    {{ $document['document'] ? $document['document']->created_at->format('m/d/Y H:i') : 'N/A' }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                                            <a href="{{ $document['file_url'] }}" target="_blank"
-                                                class="px-4 py-2 bg-primary text-white text-sm rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center">
-                                                <svg class="w-6 h-6 sm:w-4 sm:h-4 text-white mr-3" fill="none"
-                                                    viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="1.5"
-                                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                </svg>
-                                                View Document
-                                            </a>
-                                            <form
-                                                action="{{ route('carrier.documents.upload', [$carrier, $document['type']->id]) }}"
-                                                method="POST" enctype="multipart/form-data" class="inline">
-                                                @csrf
-                                                <label
-                                                    class="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-100 transition-colors flex items-center cursor-pointer justify-center w-full">
-                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
-                                                    </svg>
-                                                    Replace Document
-                                                    <input type="file" name="document" class="hidden"
-                                                        onchange="this.form.submit()">
-                                                </label>
-                                            </form>
-                                        </div>
-                                    </div>
-                                @elseif($document['type']->getFirstMediaUrl('default_documents'))
-                                    <!-- Documento con plantilla disponible -->
-                                    <div class="mt-4 flex flex-col space-y-4">
-                                        <!-- Document Info Card -->
-                                        <div
-                                            class="flex flex-col gap-4 py-4 bg-gray-50 rounded-lg lg:flex-row lg:items-center lg:justify-between lg:gap-6">
-                                            <!-- Document Info -->
-                                            <div class="flex items-start gap-3 flex-1 min-w-0">
-                                                <div class="flex-shrink-0">
-                                                    <svg class="w-6 h-6 text-gray-400 sm:w-8 sm:h-8" fill="none"
-                                                        viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="1.5"
-                                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                    </svg>
-                                                </div>
-                                                <div class="min-w-0 flex-1">
-                                                    <div class="text-sm font-medium text-gray-900 sm:text-base">
-                                                        Document available
-                                                    </div>
-                                                    <div class="text-xs text-gray-500 sm:text-sm">
-                                                        You can use the document or upload your own document
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- View Document Button -->
-                                            <div class="flex-shrink-0">
-                                                <a href="{{ $document['type']->getFirstMediaUrl('default_documents') }}"
-                                                    target="_blank"
-                                                    class="inline-flex items-center justify-center w-full px-4 py-2 bg-primary text-white text-sm rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors sm:w-auto sm:px-6">
-                                                    <svg class="w-6 h-6 sm:w-4 sm:h-4 text-white mr-3" fill="none"
-                                                        viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="1.5"
-                                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                    </svg>
-                                                    <span class="whitespace-nowrap">View Document</span>
-                                                </a>
-                                            </div>
-                                        </div>
-
-                                        <!-- Controls Section -->
-                                        <div
-                                            class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                            <!-- Toggle Section -->
-                                            <div class="flex items-center gap-3">
-                                                <div class="relative inline-block">
-                                                    <input type="checkbox" id="toggle-{{ $document['type']->id }}"
-                                                        name="toggle-{{ $document['type']->id }}"
-                                                        class="toggle-input sr-only"
-                                                        {{ $document['document'] && $document['document']->status === 'approved' ? 'checked' : '' }}
-                                                        onchange="handleDefaultDocument(this, {{ $document['type']->id }})" />
-                                                    <label for="toggle-{{ $document['type']->id }}"
-                                                        class="toggle-label relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                                                        <span class="sr-only">Use document</span>
-                                                        <span
-                                                            class="toggle-dot pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
-                                                    </label>
-                                                </div>
-                                                <span class="text-sm font-medium text-gray-700 sm:text-base">Use
-                                                    document</span>
-                                            </div>
-
-                                            <!-- Upload Section -->
-                                            <div class="flex-shrink-0">
-                                                <form
-                                                    action="{{ route('carrier.documents.upload', [$carrier, $document['type']->id]) }}"
-                                                    method="POST" enctype="multipart/form-data"
-                                                    class="inline-block">
-                                                    @csrf
-                                                    <label
-                                                        class="inline-flex items-center justify-center w-full px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors cursor-pointer sm:w-auto sm:px-6">
-                                                        <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none"
-                                                            stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
-                                                        </svg>
-                                                        <span class="whitespace-nowrap">Upload Document</span>
-                                                        <input type="file" name="document" class="sr-only"
-                                                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                                            onchange="this.form.submit()">
-                                                    </label>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <style>
-                                        /* Toggle Switch Styles */
-                                        .toggle-input:checked+.toggle-label {
-                                            background-color: #03045e;
-                                        }
-
-                                        .toggle-input:checked+.toggle-label .toggle-dot {
-                                            transform: translateX(100%);
-                                        }
-
-                                        .toggle-input:focus+.toggle-label {
-                                            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-                                        }
-                                    </style>
-                                @else
-                                    <!-- Sin documento ni plantilla - Formulario directo -->
-                                    <form
-                                        action="{{ route('carrier.documents.upload', [$carrier, $document['type']->id]) }}"
-                                        method="POST" enctype="multipart/form-data" class="mt-4">
-                                        @csrf
-                                        <div id="upload-zone-{{ $document['type']->id }}"
-                                            class="upload-zone p-4 sm:p-6 rounded-xl flex flex-col items-center justify-center cursor-pointer relative border-2 border-dashed border-gray-300">
-                                            <svg class="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mb-2" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    stroke-width="1.5"
-                                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                            </svg>
-                                            <div class="text-sm font-medium text-gray-900">Click to upload
-                                                document</div>
-                                            <div class="text-xs text-gray-500 mt-1">or drag and drop here</div>
-                                            <input type="file" name="document"
-                                                id="document-{{ $document['type']->id }}"
-                                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                onchange="showFileName(this, {{ $document['type']->id }})">
-                                        </div>
-                                        <div id="file-info-{{ $document['type']->id }}"
-                                            class="hidden mt-3 p-3 bg-gray-50 rounded-lg">
-                                            <div class="flex items-center justify-between">
-                                                <div class="flex items-center flex-1 min-w-0">
-                                                    <svg class="w-5 h-5 text-gray-400 mr-2 flex-shrink-0"
-                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                    </svg>
-                                                    <span id="file-name-{{ $document['type']->id }}"
-                                                        class="text-sm font-medium text-gray-700 truncate"></span>
-                                                </div>
-                                                <button type="button"
-                                                    onclick="removeSelectedFile({{ $document['type']->id }})"
-                                                    class="text-gray-400 hover:text-gray-600 flex-shrink-0 ml-2">
-                                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                                                        stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="mt-3 flex justify-end">
-                                            <button type="submit" id="submit-btn-{{ $document['type']->id }}"
-                                                class="px-4 py-2 bg-primary text-white text-sm rounded-md hover:bg-blue-700 transition-colors flex items-center"
-                                                style="display: none;">
-                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
-                                                </svg>
-                                                Upload Document
-                                            </button>
-                                        </div>
-                                    </form>
-                                @endif
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-
-                <div class="mt-10 border-t border-gray-200 pt-6">
-                    <div
-                        class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4">
-                        <div class="text-gray-600 text-sm w-full sm:w-auto">
-                            <p class="flex items-center justify-center sm:justify-start">
-                                <svg class="w-5 h-5 mr-2 text-blue-500 flex-shrink-0" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <span class="text-center sm:text-left">You can complete your registration now and
-                                    upload documents later</span>
-                            </p>
-                        </div>
-
-                        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
-                            <form action="{{ route('carrier.documents.skip', $carrier->slug) }}" method="POST"
-                                class="inline w-full sm:w-auto">
-                                @csrf
-                                <button type="submit"
-                                    class="w-full sm:w-auto px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center">
-                                    <svg class="w-5 h-5 mr-2 text-gray-500 flex-shrink-0" fill="none"
-                                        stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                                    </svg>
-                                    Skip For Now
-                                </button>
-                            </form>
-
-                            <form action="{{ route('carrier.documents.complete', $carrier->slug) }}" method="POST"
-                                class="inline w-full sm:w-auto">
-                                @csrf
-                                <button type="submit" id="completeSubmissionBtn"
-                                    class="w-full sm:w-auto px-5 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center">
-                                    <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M5 13l4 4L19 7"></path>
-                                    </svg>
-                                    Complete Submission
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+        <!-- Document Center Component -->
+        <x-carrier.document-center 
+            :carrier="$carrier"
+            :documents="$documents"
+            :progress="[
+                'overall' => $overallProgress ?? 0,
+                'required' => $requiredProgress ?? 0,
+                'optional' => $optionalProgress ?? 0,
+                'approved' => $approvedCount ?? 0,
+                'pending' => $pendingCount ?? 0,
+                'rejected' => $rejectedCount ?? 0,
+                'not_uploaded' => $notUploadedCount ?? 0
+            ]"
+            :filters="[
+                'search' => request('search', ''),
+                'status' => request('status', ''),
+                'type' => request('type', ''),
+                'sort' => request('sort', 'name'),
+                'view' => request('view', 'grid')
+            ]"
+            :bulk-actions="true"
+        />
 
         <!-- Modal de carga mejorado -->
         <div id="uploadModal"

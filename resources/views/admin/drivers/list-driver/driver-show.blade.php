@@ -1,2668 +1,848 @@
 @extends('../themes/' . $activeTheme)
-@section('title', 'All Drivers Overview')
+@section('title', 'Driver Details')
 
 @php
-    $breadcrumbLinks = [
-        ['label' => 'App', 'url' => route('admin.dashboard')],
-        ['label' => 'Drivers', 'url' => route('admin.drivers.index')],
-        ['label' => 'Driver: ' . $driver->user->name, 'active' => true],
-    ];
+$breadcrumbLinks = [
+['label' => 'App', 'url' => route('admin.dashboard')],
+['label' => 'Drivers', 'url' => route('admin.drivers.index')],
+['label' => 'Driver Details', 'active' => true],
+];
+
+// Calculate document statistics based on ALL document categories from Documents tab
+$totalDocuments = 0;
+$approvedDocuments = 0;
+$pendingDocuments = 0;
+$rejectedDocuments = 0;
+$expiringDocuments = 0;
+$expiredDocuments = 0;
+
+// 1. LICENSES - Count all license documents
+foreach ($driver->licenses as $license) {
+$totalDocuments += $license->getMedia('license_front')->count();
+$totalDocuments += $license->getMedia('license_back')->count();
+$totalDocuments += $license->getMedia('license_documents')->count();
+}
+
+// 2. MEDICAL DOCUMENTS - Count all medical documents
+if ($driver->medicalQualification) {
+$medicalCollections = ['medical_certificate', 'test_results', 'additional_documents', 'medical_documents', 'medical_card'];
+foreach ($medicalCollections as $collection) {
+$totalDocuments += $driver->medicalQualification->getMedia($collection)->count();
+}
+}
+
+// 3. TRAINING SCHOOLS - Count school certificates
+foreach ($driver->trainingSchools as $school) {
+$totalDocuments += $school->getMedia('school_certificates')->count();
+}
+
+// 4. COURSES - Count course certificates
+foreach ($driver->courses as $course) {
+$totalDocuments += $course->getMedia('course_certificates')->count();
+}
+
+// 5. ACCIDENTS - Count accident images
+foreach ($driver->accidents as $accident) {
+$totalDocuments += $accident->getMedia('accident-images')->count();
+}
+
+// 6. TRAFFIC VIOLATIONS - Count traffic images
+foreach ($driver->trafficConvictions as $conviction) {
+$totalDocuments += $conviction->getMedia('traffic_images')->count();
+}
+
+// 7. TESTING - Count all testing documents
+if ($driver->testings) {
+foreach ($driver->testings as $testing) {
+$totalDocuments += $testing->getMedia('drug_test_pdf')->count();
+$totalDocuments += $testing->getMedia('test_results')->count();
+$totalDocuments += $testing->getMedia('test_certificates')->count();
+}
+}
+
+// 8. INSPECTIONS - Count inspection documents
+if ($driver->inspections) {
+foreach ($driver->inspections as $inspection) {
+$totalDocuments += $inspection->getMedia('inspection_documents')->count();
+$totalDocuments += $inspection->getMedia()->count(); // All media from inspections
+}
+}
+
+// 9. VEHICLE VERIFICATIONS - Count PDF files from storage
+$vehicleVerificationsPath = "driver/{$driver->id}/vehicle_verifications";
+if (\Storage::disk('public')->exists($vehicleVerificationsPath)) {
+$vehicleFiles = \Storage::disk('public')->files($vehicleVerificationsPath);
+foreach ($vehicleFiles as $filePath) {
+$fileExtension = pathinfo($filePath, PATHINFO_EXTENSION);
+if (strtolower($fileExtension) === 'pdf') {
+$totalDocuments++;
+}
+}
+}
+
+// 10. RECORDS - Count all record types
+$recordCollections = ['driving_records', 'criminal_records', 'medical_records', 'clearing_house', 'records', 'general', 'documents'];
+foreach ($recordCollections as $collection) {
+$totalDocuments += $driver->getMedia($collection)->count();
+}
+
+// 11. EMPLOYMENT VERIFICATION - Count employment documents
+if ($driver->employmentCompanies && $driver->employmentCompanies->count() > 0) {
+foreach ($driver->employmentCompanies as $empCompany) {
+$totalDocuments += $empCompany->getMedia('employment_verification_documents')->count();
+
+// Count verification tokens with documents
+$tokens = \App\Models\Admin\Driver\EmploymentVerificationToken::where('employment_company_id', $empCompany->id)
+->whereNotNull('verified_at')
+->where('document_path', '!=', null)
+->get();
+foreach ($tokens as $token) {
+if (\Storage::disk('public')->exists($token->document_path)) {
+$totalDocuments++;
+}
+}
+}
+}
+
+// 12. APPLICATION FORMS - Count all application documents
+if ($driver->application) {
+$totalDocuments += $driver->application->getMedia('application_pdf')->count();
+$totalDocuments += $driver->application->getMedia('signed_application')->count();
+}
+
+// Individual application media
+$individualApplicationCollections = ['signed_application', 'application_pdf', 'lease_agreement', 'contract_documents', 'application_forms', 'individual_forms'];
+foreach ($individualApplicationCollections as $collection) {
+$totalDocuments += $driver->getMedia($collection)->count();
+}
+
+// Application files from storage
+$driverApplicationsPath = "driver/{$driver->id}/driver_applications";
+if (\Storage::disk('public')->exists($driverApplicationsPath)) {
+$individualFiles = \Storage::disk('public')->files($driverApplicationsPath);
+foreach ($individualFiles as $filePath) {
+$fileExtension = pathinfo($filePath, PATHINFO_EXTENSION);
+if (strtolower($fileExtension) === 'pdf') {
+$totalDocuments++;
+}
+}
+}
+
+// OTHER DOCUMENTS - Count other/miscellaneous documents
+$otherCollections = ['other', 'miscellaneous'];
+foreach ($otherCollections as $collection) {
+$totalDocuments += $driver->getMedia($collection)->count();
+}
+
+// Calculate records uploaded count
+$recordsUploaded = $driver->getMedia('driving_records')->count() +
+$driver->getMedia('medical_records')->count() +
+$driver->getMedia('criminal_records')->count() +
+$driver->getMedia('clearing_house')->count();
+
+// Calculate medical status
+$medicalStatus = 'Expired';
+if ($driver->medicalQualification && $driver->medicalQualification->dot_medical_expiry_date) {
+$expiryDate = \Carbon\Carbon::parse($driver->medicalQualification->dot_medical_expiry_date);
+if ($expiryDate->isFuture()) {
+$medicalStatus = 'Valid';
+}
+}
+
+// Calculate testing count and status
+$testingCount = $driver->testings ? $driver->testings->count() : 0;
+$testingStatus = $testingCount > 0 ? 'Tests Completed' : 'No Tests';
+
+// Calculate associated vehicles count
+$associatedVehiclesCount = 0;
+if ($driver->vehicles) {
+$associatedVehiclesCount = $driver->vehicles->count();
+} elseif (method_exists($driver, 'assignedVehicles')) {
+$associatedVehiclesCount = $driver->assignedVehicles->count();
+} elseif (method_exists($driver, 'vehicleAssignments')) {
+$associatedVehiclesCount = $driver->vehicleAssignments->count();
+}
+$vehiclesStatus = $associatedVehiclesCount > 0 ? 'Vehicles Assigned' : 'No Vehicles';
+
+$stats = [
+'total_documents' => $totalDocuments,
+'approved_documents_count' => $approvedDocuments,
+'pending_documents_count' => $pendingDocuments,
+'rejected_documents_count' => $rejectedDocuments,
+'expiring_documents_count' => $expiringDocuments,
+'expired_documents_count' => $expiredDocuments,
+'records_uploaded' => $recordsUploaded,
+'medical_status' => $medicalStatus,
+'testing_count' => $testingCount,
+'testing_status' => $testingStatus,
+'vehicles_count' => $associatedVehiclesCount,
+'vehicles_status' => $vehiclesStatus,
+];
 @endphp
 
-@push('styles')
-    <style>
-        /* Estilos para las pestañas de documentos categorizados */
-        .ef-tab-button {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            border-bottom: 2px solid transparent;
-            color: #64748b;
-            /* slate-500 */
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .ef-tab-button:hover {
-            color: #334155;
-            /* slate-700 */
-        }
-
-        .ef-tab-button.active {
-            color: #2563eb;
-            /* blue-600 */
-            border-bottom-color: #2563eb;
-            /* blue-600 */
-        }
-
-        .ef-tab-content {
-            display: none;
-        }
-
-        .ef-tab-content.active {
-            display: block;
-        }
-
-                /* Estilos personalizados para los tabs */
-                .ef-tab-button {
-            border-bottom: 2px solid transparent;
-            cursor: pointer;
-            padding: 0.5rem 1rem;
-            font-weight: 500;
-            display: inline-block;
-        }
-
-        .ef-tab-button.active {
-            border-bottom: 2px solid rgb(79, 70, 229);
-            color: rgb(79, 70, 229);
-        }
-
-        .ef-tab-content {
-            display: none;
-        }
-
-        .ef-tab-content.active {
-            display: block;
-        }
-    </style>
-@endpush
-
-
 @section('subcontent')
-    <div class="container">
-        <!-- Page Header -->
-        <div class="flex justify-between items-center py-4 mb-4 border-b">
-            <div class="flex items-center">
-                <a href="{{ route('admin.drivers.index') }}" class="mr-4 text-slate-500 hover:text-slate-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                        class="w-5 h-5">
-                        <line x1="19" y1="12" x2="5" y2="12"></line>
-                        <polyline points="12 19 5 12 12 5"></polyline>
-                    </svg>
-                </a>
-                <h2 class="text-xl font-medium">Driver Details</h2>
-            </div>
-            {{-- <div>
-            <a href="{{ route('admin.drivers.documents.download', $driver->id) }}" class="btn btn-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                Download Documents
-            </a>
-        </div> --}}
-        </div>
 
-        <!-- Driver Profile -->
-        <div class="box box--stacked flex flex-col  p-6 mb-6">
-            <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
-                <div class="w-24 h-24 flex-shrink-0">
-                        @if ($driver->getFirstMediaUrl('profile_photo_driver'))
-                        <x-base.tippy
-                            class="w-full h-full rounded-full object-cover border-4 border-white shadow"
-                            src="{{ $driver->getFirstMediaUrl('profile_photo_driver') }}"
-                            alt="{{ $driver->user->name ?? 'Unknown' }}" as="img"
-                            content="{{ $driver->user->name ?? 'Unknown' }} {{ $driver->last_name }}" />
-                        @else                        
-                        <x-base.tippy
-                            class="w-full h-full rounded-full object-cover border-4 border-white shadow"
-                            src="{{ asset('build/default_profile.png') }}"
-                            alt="{{ $driver->user->name ?? 'Unknown' }}" as="img"
-                            content="{{ $driver->user->name ?? 'Unknown' }} {{ $driver->last_name }}" />
-                        @endif                        
+<!-- Professional Breadcrumbs using x-base component -->
+<div class="mb-6">
+    <x-base.breadcrumb :links="$breadcrumbLinks" />
+</div>
+
+<!-- Professional Header with x-base components -->
+<div class="box box--stacked p-8 mb-8">
+    <div class="flex flex-col lg:flex-row items-center lg:items-center justify-between gap-6">
+        <div class="flex flex-col lg:flex-row  items-center gap-4">
+            <div class="p-3">
+                @if ($driver->getFirstMediaUrl('profile_photo_driver'))
+                <img
+                    class="w-20 h-20 rounded-full object-cover border-2 border-white shadow"
+                    src="{{ $driver->getFirstMediaUrl('profile_photo_driver') }}"
+                    alt="{{ $driver->user->name ?? 'Unknown' }}" as="img"
+                    content="{{ $driver->user->name ?? 'Unknown' }} {{ $driver->last_name }}" />
+                @else
+                <x-base.lucide class="w-8 h-8 text-primary" icon="User" />
+                @endif
             </div>
-                <div class="flex-grow text-center md:text-left">
-                    <h3 class="text-2xl font-bold">
-                        {{ $driver->user->name ?? 'Unknown' }} {{ $driver->middle_name }} {{ $driver->last_name }}
-                    </h3>
-                    <p class="text-slate-500">{{ $driver->user->email ?? 'No email' }}</p>
-                    <div class="flex flex-wrap gap-4 justify-center md:justify-start mt-2">
-                        <div class="flex items-center">
-                            <span
-                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $driver->status == App\Models\UserDriverDetail::STATUS_ACTIVE ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i>
-                                {{ $driver->status == App\Models\UserDriverDetail::STATUS_ACTIVE ? 'Active' : 'Inactive' }}
-                            </span>
-                        </div>
-                        <div class="flex items-center text-slate-500 text-sm">
-                            <i data-lucide="calendar" class="w-4 h-4 mr-1"></i>
-                            Joined {{ $driver->created_at->format('M d, Y') }}
-                        </div>
-                        <div class="flex items-center text-slate-500 text-sm">
-                            <i data-lucide="Building" class="w-4 h-4 mr-1"></i>
-                            {{ $driver->carrier->name ?? 'No carrier' }}
-                        </div>
+            <div>
+                <h2 class="text-xl sm:text-2xl font-bold text-slate-800 mb-2">{{ $driver->user->name ?? 'Unknown' }} {{ $driver->middle_name }} {{ $driver->last_name }}</h1>
+                    <div class="flex items-center gap-3">
+                        <x-base.lucide class="w-5 h-5 text-primary" icon="mail" />
+                        <p class="text-slate-500">{{ $driver->user->email ?? 'No email' }}</p>
+
                     </div>
-                </div>
-                <div class="w-full md:w-auto md:ml-auto">
-                    <div class="bg-slate-50 rounded p-4 text-center">
-                        <p class="text-slate-500 text-sm">Profile Completion</p>
-                        <div class="text-2xl font-bold mt-1">{{ $driver->completion_percentage ?? 0 }}%</div>
-                        <div class="w-full bg-slate-200 rounded-full h-2 mt-2">
-                            <div class="bg-blue-600 h-2 rounded-full"
-                                style="width: {{ $driver->completion_percentage ?? 0 }}%"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    <div class="flex">
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start mt-2">
+                            <div class="flex items-center text-slate-500 text-sm">
+                                <i data-lucide="calendar" class="w-4 h-4 mr-1"></i>
+                                Joined {{ $driver->created_at->format('M d, Y') }}
+                            </div>
+                            <div class="flex items-center text-slate-500 text-sm">
+                                <i data-lucide="Building" class="w-4 h-4 mr-1"></i>
+                                {{ $driver->carrier->name ?? 'No carrier' }}
+                            </div>
 
-        <!-- Tabbed Content -->
-        <div class="box box--stacked flex flex-col mb-6">
-            <div class="border-b border-slate-200">
-                <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="driverTabs" role="tablist">
-                    <li class="mr-2" role="presentation">
-                        <button class="inline-block p-4 border-b-2 border-blue-600 rounded-t-lg active" id="general-tab"
-                            data-tabs-target="#general" type="button" role="tab" aria-controls="general"
-                            aria-selected="true">General Info</button>
-                    </li>
-                    <li class="mr-2" role="presentation">
-                        <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:border-gray-300"
-                            id="licenses-tab" data-tabs-target="#licenses" type="button" role="tab"
-                            aria-controls="licenses" aria-selected="false">Licenses</button>
-                    </li>
-                    <li class="mr-2" role="presentation">
-                        <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:border-gray-300"
-                            id="medical-tab" data-tabs-target="#medical" type="button" role="tab"
-                            aria-controls="medical" aria-selected="false">Medical</button>
-                    </li>
-                    <li class="mr-2" role="presentation">
-                        <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:border-gray-300"
-                            id="history-tab" data-tabs-target="#history" type="button" role="tab"
-                            aria-controls="history" aria-selected="false">Employment</button>
-                    </li>
-                    <li class="mr-2" role="presentation">
-                        <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:border-gray-300"
-                            id="training-tab" data-tabs-target="#training" type="button" role="tab"
-                            aria-controls="training" aria-selected="false">Training & Courses</button>
-                    </li>
-
-                    <li class="mr-2" role="presentation">
-                        <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:border-gray-300"
-                            id="testing-tab" data-tabs-target="#testing" type="button" role="tab"
-                            aria-controls="testing" aria-selected="false">Testing</button>
-                    </li>
-
-                    <li class="mr-2" role="presentation">
-                        <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:border-gray-300"
-                            id="inspections-tab" data-tabs-target="#inspections" type="button" role="tab"
-                            aria-controls="inspections" aria-selected="false">Inspections</button>
-                    </li>
-
-                    <li role="presentation">
-                        <button class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:border-gray-300"
-                            id="documents-tab" data-tabs-target="#documents" type="button" role="tab"
-                            aria-controls="documents" aria-selected="false">Documents</button>
-                    </li>
-                </ul>
-            </div>
-
-            <div id="driverTabsContent">
-                <!-- General Information Tab -->
-                <div class="p-6" id="general" role="tabpanel" aria-labelledby="general-tab">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Personal Information -->
-                        <div class="border rounded-lg p-4">
-                            <h4 class="font-medium text-lg mb-4 pb-2 border-b">Personal Information</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <p class="text-slate-500 text-sm">Full Name</p>
-                                    <p>{{ $driver->user->name ?? 'Unknown' }} {{ $driver->middle_name }}
-                                        {{ $driver->last_name }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-slate-500 text-sm">Email Address</p>
-                                    <p>{{ $driver->user->email ?? 'No email' }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-slate-500 text-sm">Phone Number</p>
-                                    <p>{{ $driver->phone ?? 'No phone' }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-slate-500 text-sm">Date of Birth</p>
-                                    <p>{{ $driver->date_of_birth ? $driver->date_of_birth->format('M d, Y') : 'Not provided' }}
-                                    </p>
-                                </div>
+                            <div class="flex items-center text-slate-500 text-sm">
+                                @if ($driver->status == App\Models\UserDriverDetail::STATUS_ACTIVE)
+                                <x-base.badge variant="success" class="gap-1.5">
+                                    <span class="w-2 h-2 bg-success rounded-full"></span>
+                                    Active
+                                </x-base.badge>
+                                @elseif ($driver->status == App\Models\UserDriverDetail::STATUS_INACTIVE)
+                                <x-base.badge variant="danger" class="gap-1.5">
+                                    <span class="w-2 h-2 bg-danger rounded-full"></span>
+                                    Inactive
+                                </x-base.badge>
+                                @elseif ($driver->status == App\Models\UserDriverDetail::STATUS_PENDING)
+                                <x-base.badge variant="warning" class="gap-1.5">
+                                    <span class="w-2 h-2 bg-warning rounded-full"></span>
+                                    Pending
+                                </x-base.badge>
+                                @else
+                                <x-base.badge variant="secondary" class="gap-1.5">
+                                    <span class="w-2 h-2 bg-slate-400 rounded-full"></span>
+                                    Unknown
+                                </x-base.badge>
+                                @endif
                             </div>
                         </div>
+                    </div>
+            </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+            <x-base.button as="a" href="{{ route('admin.drivers.index') }}" variant="secondary" class="gap-2">
+                <x-base.lucide class="w-4 h-4" icon="ArrowLeft" />
+                Back to List
+            </x-base.button>
+            @if($stats['total_documents'] > 0)
+            <form action="{{ route('admin.drivers.documents.download', $driver->id) }}" method="GET" class="inline">
+                <x-base.button type="submit" variant="primary" class="gap-2">
+                    <x-base.lucide class="w-4 h-4" icon="Download" />
+                    Download All Documents
+                </x-base.button>
+            </form>
+            @endif
+        </div>
+    </div>
+</div>
 
-                        <!-- Carrier Information -->
-                        <div class="border rounded-lg p-4">
-                            <h4 class="font-medium text-lg mb-4 pb-2 border-b">Carrier Information</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <p class="text-slate-500 text-sm">Carrier</p>
-                                    <p>{{ $driver->carrier->name ?? 'No carrier' }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-slate-500 text-sm">Status</p>
-                                    <p
-                                        class="{{ $driver->status == App\Models\UserDriverDetail::STATUS_ACTIVE ? 'text-green-600' : 'text-red-600' }}">
-                                        {{ $driver->status == App\Models\UserDriverDetail::STATUS_ACTIVE ? 'Active' : 'Inactive' }}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p class="text-slate-500 text-sm">Joined Date</p>
-                                    <p>{{ $driver->created_at->format('M d, Y') }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-slate-500 text-sm">Application Status</p>
-                                    <p
-                                        class="{{ $driver->application
+<div class="grid grid-cols-12 gap-6 mt-5">
+    <!-- Professional Information Section -->
+    <div class="col-span-12 lg:col-span-6">
+        <div class="box box--stacked flex flex-col p-6 h-fit">
+            <div class="flex items-center gap-3 mb-6">
+                <x-base.lucide class="w-5 h-5 text-primary" icon="Info" />
+                <h2 class="text-lg font-semibold text-slate-800">Main Information</h2>
+            </div>
+
+            <!-- Professional Photo Section -->
+            <div class="flex justify-center md:justify-start mb-6">
+                @if ($driver->getFirstMediaUrl('profile_photo_driver'))
+                <div class="relative group">
+                    <img src="{{ $driver->getFirstMediaUrl('profile_photo_driver') }}" alt="Driver Photo"
+                        class="w-32 h-32 object-cover border-2 border-dashed border-primary/20 rounded-xl p-1 bg-slate-50/50 group-hover:border-primary/40 transition-colors">
+                </div>
+                @else
+                <div class="w-32 h-32 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl flex items-center justify-center border-2 border-dashed border-slate-200">
+                    <x-base.lucide class="w-12 h-12 text-slate-400" icon="User" />
+                </div>
+                @endif
+            </div>
+
+            <!-- Professional Information Grid -->
+            <div class="space-y-3">
+                <h3 class="text-lg font-semibold text-slate-800 mb-4">Personal Information</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="bg-slate-50/50 rounded-lg p-4 border border-slate-100">
+                        <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Name</label>
+                        <p class="text-sm font-semibold text-slate-800"> {{ $driver->user->name ?? 'Unknown' }} {{ $driver->middle_name }} {{ $driver->last_name }}</p>
+                    </div>
+                    <div class="bg-slate-50/50 rounded-lg p-4 border border-slate-100">
+                        <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Email</label>
+                        <p class="text-sm font-semibold text-slate-800">{{ $driver->user->email ?? 'N/A' }}</p>
+                    </div>
+                    <div class="bg-slate-50/50 rounded-lg p-4 border border-slate-100">
+                        <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Phone</label>
+                        <p class="text-sm font-semibold text-slate-800">{{ $driver->phone ?? 'N/A' }}</p>
+                    </div>
+                    <div class="bg-slate-50/50 rounded-lg p-4 border border-slate-100">
+                        <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Date of Birth</label>
+                        <p class="text-sm font-semibold text-slate-800">{{ $driver->date_of_birth ? $driver->date_of_birth->format('M d, Y') : 'N/A' }}</p>
+                    </div>
+                </div>
+                <h3 class="text-lg font-semibold text-slate-800 mb-4">Carrier Information</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-50/50 rounded-lg p-4 border border-slate-100">
+                        <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Carrier Name</label>
+                        <p class="text-sm font-semibold text-slate-800">{{ $driver->carrier->name ?? 'No carrier' }}</p>
+                    </div>
+                    <div class="bg-slate-50/50 rounded-lg p-4 border border-slate-100">
+                        <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Address</label>
+                        <p class="text-sm font-semibold text-slate-800">{{ $driver->carrier->address ?? 'N/A' }}</p>
+                    </div>
+                    <div class="bg-slate-50/50 rounded-lg p-4 border border-slate-100">
+                        <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Status</label>
+                        <div class="mt-2">
+                            @if ($driver->status == App\Models\UserDriverDetail::STATUS_ACTIVE)
+                            <x-base.badge variant="success" class="gap-1.5">
+                                <span class="w-1.5 h-1.5 bg-success rounded-full"></span>
+                                Active
+                            </x-base.badge>
+                            @elseif ($driver->status == App\Models\UserDriverDetail::STATUS_INACTIVE)
+                            <x-base.badge variant="danger" class="gap-1.5">
+                                <span class="w-1.5 h-1.5 bg-danger rounded-full"></span>
+                                Inactive
+                            </x-base.badge>
+                            @elseif ($driver->status == App\Models\UserDriverDetail::STATUS_PENDING)
+                            <x-base.badge variant="warning" class="gap-1.5">
+                                <span class="w-1.5 h-1.5 bg-warning rounded-full"></span>
+                                Pending
+                            </x-base.badge>
+                            @else
+                            <x-base.badge variant="secondary" class="gap-1.5">
+                                <span class="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
+                                Unknown
+                            </x-base.badge>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="bg-slate-50/50 rounded-lg p-4 border border-slate-100">
+                        <label class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Application Status</label>
+                        <div class="mt-2">
+                            <x-base.badge class="gap-1.5">
+                                <span class="w-1.5 h-1.5 {{ $driver->application
                                             ? ($driver->application->status == 'approved'
                                                 ? 'text-green-600'
                                                 : ($driver->application->status == 'pending'
                                                     ? 'text-amber-600'
                                                     : 'text-red-600'))
-                                            : 'text-slate-500' }}">
-                                        {{ $driver->application ? ucfirst($driver->application->status) : 'No Application' }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Address Information -->
-                        <div class="border rounded-lg p-4 md:col-span-2">
-                            <h4 class="font-medium text-lg mb-4 pb-2 border-b">Address Information</h4>
-                            @if ($driver->application && $driver->application->addresses->count() > 0)
-                                <div class="space-y-4">
-                                    @foreach ($driver->application->addresses as $address)
-                                        <div class="{{ !$loop->last ? 'pb-4 border-b' : '' }}">
-                                            <p class="font-medium">
-                                                {{ $address->primary ? 'Current Address' : 'Previous Address' }}</p>
-                                            <p>{{ $address->address_line1 }}</p>
-                                            @if ($address->address_line2)
-                                                <p>{{ $address->address_line2 }}</p>
-                                            @endif
-                                            <p>{{ $address->city }}, {{ $address->state }} {{ $address->zip_code }}</p>
-                                            <p class="text-slate-500 text-xs mt-1">
-                                                {{ $address->from_date ? $address->from_date->format('M Y') : '' }}
-                                                {{ $address->to_date ? ' - ' . $address->to_date->format('M Y') : ' - Present' }}
-                                            </p>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @else
-                                <p class="text-slate-500">No address information provided</p>
-                            @endif
+                                            : 'text-slate-500' }}"></span>
+                                {{ $driver->application ? ucfirst($driver->application->status) : 'No Application' }}
+                            </x-base.badge>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Licenses Tab -->
-                <div class="hidden p-6" id="licenses" role="tabpanel" aria-labelledby="licenses-tab">
-                    <!-- License Information -->
-                    <div class="border rounded-lg p-4 mb-6">
-                        <h4 class="font-medium text-lg mb-4 pb-2 border-b">License Information</h4>
-                        @if ($driver->licenses && $driver->licenses->count() > 0)
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-sm text-left">
-                                    <thead class="bg-slate-50">
-                                        <tr>
-                                            <th class="px-4 py-2">License Number</th>
-                                            <th class="px-4 py-2">State</th>
-                                            <th class="px-4 py-2">Class</th>
-                                            <th class="px-4 py-2">Type</th>
-                                            <th class="px-4 py-2">Expiration</th>
-                                            <th class="px-4 py-2">Images</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($driver->licenses as $license)
-                                            <tr class="border-b">
-                                                <td class="px-4 py-2">{{ $license->license_number }}</td>
-                                                <td class="px-4 py-2">{{ $license->state_of_issue }}</td>
-                                                <td class="px-4 py-2">{{ $license->license_class }}</td>
-                                                <td class="px-4 py-2">
-                                                    <span
-                                                        class="px-2 py-0.5 rounded-full text-xs font-medium {{ $license->is_cdl ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800' }}">
-                                                        {{ $license->is_cdl ? 'CDL' : 'Standard' }}
-                                                    </span>
-                                                </td>
-                                                <td class="px-4 py-2">
-                                                    {{ $license->expiration_date ? $license->expiration_date->format('M d, Y') : 'N/A' }}
-                                                </td>
-                                                <td class="px-4 py-2">
-                                                    <div class="flex space-x-2">
-                                                        @if ($license->getFirstMediaUrl('license_front'))
-                                                            <a href="{{ $license->getFirstMediaUrl('license_front') }}"
-                                                                target="_blank"
-                                                                class="text-blue-600 hover:underline">Front</a>
-                                                        @endif
-                                                        @if ($license->getFirstMediaUrl('license_back'))
-                                                            <a href="{{ $license->getFirstMediaUrl('license_back') }}"
-                                                                target="_blank"
-                                                                class="text-blue-600 hover:underline">Back</a>
-                                                        @endif
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- Endorsements -->
-                            @if ($driver->licenses->first() && $driver->licenses->first()->endorsements->count() > 0)
-                                <div class="mt-4 pt-4 border-t">
-                                    <h5 class="font-medium mb-2">Endorsements</h5>
-                                    <div class="flex flex-wrap gap-2">
-                                        @foreach ($driver->licenses->first()->endorsements as $endorsement)
-                                            <span
-                                                class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                {{ $endorsement->code }} - {{ $endorsement->name }}
-                                            </span>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
-                        @else
-                            <p class="text-slate-500">No license information provided</p>
-                        @endif
+    <!-- Columna Central - Estadísticas y Pestañas -->
+    <div class="col-span-12 lg:col-span-6 space-y-6">
+        <!-- Professional Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Total Documents Card -->
+            <div class="box box--stacked p-6 hover:shadow-lg transition-all duration-200 group">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Total Documents</p>
+                        <h3 class="text-3xl font-bold text-slate-800 group-hover:text-primary transition-colors">{{ $stats['total_documents'] }}</h3>
                     </div>
-
-                    <!-- Driving Experience -->
-                    <div class="border rounded-lg p-4">
-                        <h4 class="font-medium text-lg mb-4 pb-2 border-b">Driving Experience</h4>
-                        @if ($driver->experiences && $driver->experiences->count() > 0)
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-sm text-left">
-                                    <thead class="bg-slate-50">
-                                        <tr>
-                                            <th class="px-4 py-2">Equipment Type</th>
-                                            <th class="px-4 py-2">Years Experience</th>
-                                            <th class="px-4 py-2">Miles Driven</th>
-                                            <th class="px-4 py-2">Requires CDL</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($driver->experiences as $experience)
-                                            <tr class="border-b">
-                                                <td class="px-4 py-2">{{ $experience->equipment_type }}</td>
-                                                <td class="px-4 py-2">{{ $experience->years_experience }}</td>
-                                                <td class="px-4 py-2">{{ number_format($experience->miles_driven) }}</td>
-                                                <td class="px-4 py-2">
-                                                    <span
-                                                        class="px-2 py-0.5 rounded-full text-xs font-medium {{ $experience->requires_cdl ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800' }}">
-                                                        {{ $experience->requires_cdl ? 'Yes' : 'No' }}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @else
-                            <p class="text-slate-500">No driving experience information provided</p>
-                        @endif
+                    <div class="p-3 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors">
+                        <x-base.lucide class="w-7 h-7 text-primary" icon="FileText" />
                     </div>
                 </div>
-
-                <!-- Medical Tab -->
-                <div class="hidden p-6" id="medical" role="tabpanel" aria-labelledby="medical-tab">
-                    <div class="border rounded-lg p-4">
-                        <h4 class="font-medium text-lg mb-4 pb-2 border-b">Medical Qualification</h4>
-                        @if ($driver->medicalQualification)
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <p class="text-slate-500 text-sm">Medical Examiner</p>
-                                    <p>{{ $driver->medicalQualification->medical_examiner_name }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-slate-500 text-sm">Registry Number</p>
-                                    <p>{{ $driver->medicalQualification->medical_examiner_registry_number }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-slate-500 text-sm">Medical Card Expiration</p>
-                                    <p class="flex items-center">
-                                        {{ $driver->medicalQualification->medical_card_expiration_date ? $driver->medicalQualification->medical_card_expiration_date->format('M d, Y') : 'N/A' }}
-                                        @if ($driver->medicalQualification->medical_card_expiration_date)
-                                            @if ($driver->medicalQualification->medical_card_expiration_date->isPast())
-                                                <span
-                                                    class="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Expired</span>
-                                            @elseif($driver->medicalQualification->medical_card_expiration_date->diffInDays(now()) < 30)
-                                                <span
-                                                    class="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Expiring
-                                                    Soon</span>
-                                            @else
-                                                <span
-                                                    class="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Valid</span>
-                                            @endif
-                                        @endif
-                                    </p>
-                                </div>
-                                <div>
-                                    <p class="text-slate-500 text-sm">Social Security (Last 4)</p>
-                                    <p>
-                                        @if ($driver->medicalQualification->social_security_number)
-                                            XXX-XX-{{ substr($driver->medicalQualification->social_security_number, -4) }}
-                                        @else
-                                            Not provided
-                                        @endif
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- Medical Card -->
-                            <div class="mt-4 pt-4 border-t">
-                                <p class="text-slate-500 text-sm mb-2">Medical Card</p>
-                                @if ($driver->medicalQualification->getFirstMediaUrl('medical_card'))
-                                    <a href="{{ $driver->medicalQualification->getFirstMediaUrl('medical_card') }}"
-                                        target="_blank" class="text-blue-600 hover:underline flex items-center">
-                                        <i data-lucide="external-link" class="w-4 h-4 mr-1"></i>
-                                        View Medical Card
-                                    </a>
-                                @else
-                                    <p class="text-slate-500">No medical card uploaded</p>
-                                @endif
-                            </div>
-                            @if ($driver->getMedia('medical_records')->count() > 0)
-                                <div class="mt-4 pt-4 border-t">
-                                    <h5 class="font-medium">Medical Records</h5>
-                                    <div class="flex flex-wrap gap-3 mt-2">
-                                        @foreach ($driver->getMedia('medical_records') as $record)
-                                            <a href="{{ $record->getUrl() }}" target="_blank"
-                                                class="text-blue-600 hover:underline flex items-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="w-4 h-4 mr-1">
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                    </path>
-                                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                                    <line x1="16" y1="13" x2="8" y2="13">
-                                                    </line>
-                                                    <line x1="16" y1="17" x2="8" y2="17">
-                                                    </line>
-                                                    <polyline points="10 9 9 9 8 9"></polyline>
-                                                </svg>
-                                                {{ $record->file_name }}
-                                            </a>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
-                        @else
-                            <p class="text-slate-500">No medical qualification information provided</p>
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Employment History Tab -->
-                <div class="hidden p-6" id="history" role="tabpanel" aria-labelledby="history-tab">
-                    <!-- Employment History -->
-                    <div class="border rounded-lg p-4">
-                        <h4 class="font-medium text-lg mb-4 pb-2 border-b">Employment History</h4>
-
-                        <!-- Pestañas para diferentes tipos de historial -->
-                        <div class="mb-4 border-b">
-                            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
-                                <li class="mr-2">
-                                    <button type="button"
-                                        class="inline-block p-2 border-b-2 border-blue-600 text-blue-600 active"
-                                        onclick="toggleEmploymentSection('companies')"
-                                        id="companies-tab">Companies</button>
-                                </li>
-                                <li class="mr-2">
-                                    <button type="button"
-                                        class="inline-block p-2 border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300"
-                                        onclick="toggleEmploymentSection('unemployment')"
-                                        id="unemployment-tab">Unemployment Periods</button>
-                                </li>
-                                <li class="mr-2">
-                                    <button type="button"
-                                        class="inline-block p-2 border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300"
-                                        onclick="toggleEmploymentSection('related')" id="related-tab">Related
-                                        Employment</button>
-                                </li>
-                                <li class="mr-2">
-                                    <button type="button"
-                                        class="inline-block p-2 border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300"
-                                        onclick="toggleEmploymentSection('employment-verification')"
-                                        id="employment-verification-tab">Employment Verification</button>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <!-- Sección de Compañías de Empleo -->
-                        <div id="companies-section" class="employment-section">
-                            @if ($driver->employmentCompanies && $driver->employmentCompanies->count() > 0)
-                                <div class="space-y-5">
-                                    @foreach ($driver->employmentCompanies as $employment)
-                                        <div class="bg-gray-50 p-4 rounded-lg">
-                                            <div class="flex justify-between items-start">
-                                                <div>
-                                                    <h5 class="font-medium text-base">
-                                                        {{ $employment->company ? $employment->company->company_name : 'Company' }}
-                                                    </h5>
-                                                    <p class="text-sm text-gray-600">
-                                                        {{ $employment->employed_from ? $employment->employed_from->format('M Y') : '' }}
-                                                        -
-                                                        {{ $employment->employed_to ? $employment->employed_to->format('M Y') : 'Present' }}
-                                                    </p>
-                                                </div>
-                                                <span
-                                                    class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">{{ $employment->positions_held }}</span>
-                                            </div>
-
-                                            <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                @if ($employment->company)
-                                                    <div>
-                                                        <h6 class="text-xs font-medium text-gray-500 uppercase">Company
-                                                            Information</h6>
-                                                        <p class="text-sm mt-1">{{ $employment->company->address ?? '' }}
-                                                        </p>
-                                                        <p class="text-sm">{{ $employment->company->city ?? '' }},
-                                                            {{ $employment->company->state ?? '' }}
-                                                            {{ $employment->company->zip ?? '' }}</p>
-                                                        <p class="text-sm">{{ $employment->company->phone ?? '' }}</p>
-                                                        <p class="text-sm">
-                                                            {{ $employment->email ?? ($employment->company->email ?? '') }}
-                                                        </p>
-                                                    </div>
-                                                @endif
-
-                                                <div>
-                                                    <h6 class="text-xs font-medium text-gray-500 uppercase">Employment
-                                                        Details</h6>
-                                                    <p class="text-sm mt-1"><span class="font-medium">Position:</span>
-                                                        {{ $employment->positions_held }}</p>
-                                                    <p class="text-sm"><span class="font-medium">Reason for
-                                                            leaving:</span> {{ $employment->reason_for_leaving }}</p>
-                                                    @if ($employment->reason_for_leaving == 'other' && $employment->other_reason_description)
-                                                        <p class="text-sm"><span class="font-medium">Other reason:</span>
-                                                            {{ $employment->other_reason_description }}</p>
-                                                    @endif
-                                                    @if ($employment->explanation)
-                                                        <p class="text-sm"><span class="font-medium">Explanation:</span>
-                                                            {{ $employment->explanation }}</p>
-                                                    @endif
-                                                </div>
-                                            </div>
-
-                                            <div class="mt-3 flex flex-wrap gap-2">
-                                                <span
-                                                    class="bg-{{ $employment->subject_to_fmcsr ? 'green' : 'red' }}-100 text-{{ $employment->subject_to_fmcsr ? 'green' : 'red' }}-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                                                    {{ $employment->subject_to_fmcsr ? 'Subject to FMCSR' : 'Not subject to FMCSR' }}
-                                                </span>
-                                                <span
-                                                    class="bg-{{ $employment->safety_sensitive_function ? 'green' : 'red' }}-100 text-{{ $employment->safety_sensitive_function ? 'green' : 'red' }}-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                                                    {{ $employment->safety_sensitive_function ? 'Safety Sensitive Function' : 'No Safety Sensitive Function' }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @else
-                                <p class="text-gray-500">No employment history available.</p>
-                            @endif
-                        </div>
-
-                        <!-- Sección de Períodos de Desempleo -->
-                        <div id="unemployment-section" class="employment-section hidden">
-                            @if ($driver->unemploymentPeriods && $driver->unemploymentPeriods->count() > 0)
-                                <div class="space-y-4">
-                                    @foreach ($driver->unemploymentPeriods as $period)
-                                        <div class="bg-gray-50 p-4 rounded-lg">
-                                            <div class="flex justify-between items-start">
-                                                <div>
-                                                    <h5 class="font-medium text-base">Unemployment Period</h5>
-                                                    <p class="text-sm text-gray-600">
-                                                        {{ $period->start_date ? $period->start_date->format('M d, Y') : '' }}
-                                                        -
-                                                        {{ $period->end_date ? $period->end_date->format('M d, Y') : 'Present' }}
-                                                    </p>
-                                                </div>
-                                                <span
-                                                    class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded">Unemployment</span>
-                                            </div>
-
-                                            @if ($period->comments)
-                                                <div class="mt-3">
-                                                    <h6 class="text-xs font-medium text-gray-500 uppercase">Comments</h6>
-                                                    <p class="text-sm mt-1 bg-gray-100 p-2 rounded">
-                                                        {{ $period->comments }}</p>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @else
-                                <p class="text-gray-500">No unemployment periods recorded.</p>
-                            @endif
-                        </div>
-
-                        <!-- Sección de Empleos Relacionados con Conducción -->
-                        <div id="related-section" class="employment-section hidden">
-                            @if ($driver->relatedEmployments && $driver->relatedEmployments->count() > 0)
-                                <div class="space-y-4">
-                                    @foreach ($driver->relatedEmployments as $related)
-                                        <div class="bg-gray-50 p-4 rounded-lg">
-                                            <div class="flex justify-between items-start">
-                                                <div>
-                                                    <h5 class="font-medium text-base">{{ $related->position }}</h5>
-                                                    <p class="text-sm text-gray-600">
-                                                        {{ $related->start_date ? $related->start_date->format('M d, Y') : '' }}
-                                                        -
-                                                        {{ $related->end_date ? $related->end_date->format('M d, Y') : 'Present' }}
-                                                    </p>
-                                                </div>
-                                                <span
-                                                    class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded">Driving
-                                                    Related</span>
-                                            </div>
-
-                                            @if ($related->comments)
-                                                <div class="mt-3">
-                                                    <h6 class="text-xs font-medium text-gray-500 uppercase">Comments</h6>
-                                                    <p class="text-sm mt-1 bg-gray-100 p-2 rounded">
-                                                        {{ $related->comments }}</p>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @else
-                                <p class="text-gray-500">No driving-related employment recorded.</p>
-                            @endif
-                        </div>
-
-                        <!-- Sección de Verificación de Empleo -->
-                        <div id="employment-verification-section" class="employment-section hidden">
-                            <div class="p-4">
-                                @if ($driver->employmentCompanies && $driver->employmentCompanies->count() > 0)
-                                    @php
-                                        // Agrupar compañías para evitar repeticiones
-                                        $employmentCompanyIds = [];
-                                        $uniqueCompanies = collect();
-
-                                        foreach ($driver->employmentCompanies as $comp) {
-                                            // Si es una compañía maestra o si no tiene compañía maestra, usar su propio ID
-                                            $identifier = $comp->master_company_id ?: 'self_' . $comp->id;
-
-                                            if (!in_array($identifier, $employmentCompanyIds)) {
-                                                $employmentCompanyIds[] = $identifier;
-                                                $uniqueCompanies->push($comp);
-                                            }
-                                        }
-                                    @endphp
-                                    @foreach ($uniqueCompanies as $company)
-                                        <div class="mb-6 border-b border-gray-300 pb-4">
-                                            @php
-                                                $companyName = $company->company_name;
-                                                if (empty($companyName) && $company->masterCompany) {
-                                                    $companyName = $company->masterCompany->name;
-                                                } elseif (empty($companyName)) {
-                                                    $companyName = 'Company ' . $company->id;
-                                                }
-                                            @endphp
-                                             <h3 class="text-lg font-bold mb-2">{{ $companyName }}</h3>
-                                             
-                                             <div class="p-4 bg-blue-50 rounded-md">
-                                                 <div class="flex items-center">
-                                                     <div class="bg-blue-100 p-2 rounded-full">
-                                                         <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                             height="16" viewBox="0 0 24 24" fill="none"
-                                                             stroke="currentColor" stroke-width="2"
-                                                             stroke-linecap="round" stroke-linejoin="round"
-                                                             class="text-blue-600 w-5 h-5">
-                                                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                                             <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                                         </svg>
-                                                     </div>
-                                                     <div class="ml-3">
-                                                         <h3 class="font-medium text-blue-800">Employment Verification</h3>
-                                                         <p class="text-sm text-blue-600">
-                                                             All employment verification documents for this company are available in the
-                                                             <a href="#"
-                                                                 onclick="document.querySelector('#documents-tab').click(); return false;"
-                                                                 class="font-bold underline">
-                                                                 Documents tab
-                                                             </a> under the Employment Verification Documents section.
-                                                         </p>
-                                                     </div>
-                                                 </div>
-                                             </div>
-                                        </div>
-                                    @endforeach
-                                @else
-                                    <p class="text-gray-600 italic">No employment companies found for this driver.</p>
-                                @endif
-                            </div>
-                        </div>
-
-                        @if ($driver->getMedia('driving_records')->count() > 0)
-                            <div class="mt-4 pt-4 border-t">
-                                <h5 class="font-medium">Driving Records</h5>
-                                <div class="flex flex-wrap gap-3 mt-2">
-                                    @foreach ($driver->getMedia('driving_records') as $record)
-                                        <a href="{{ $record->getUrl() }}" target="_blank"
-                                            class="text-blue-600 hover:underline flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                class="w-4 h-4 mr-1">
-                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                                <polyline points="14 2 14 8 20 8"></polyline>
-                                                <line x1="16" y1="13" x2="8" y2="13">
-                                                </line>
-                                                <line x1="16" y1="17" x2="8" y2="17">
-                                                </line>
-                                                <polyline points="10 9 9 9 8 9"></polyline>
-                                            </svg>
-                                            {{ $record->file_name }}
-                                        </a>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- Script para manejar las pestañas de empleo -->
-                    <script>
-                        function toggleEmploymentSection(sectionId) {
-                            // Ocultar todas las secciones
-                            document.querySelectorAll('.employment-section').forEach(section => {
-                                section.classList.add('hidden');
-                            });
-
-                            // Mostrar la sección seleccionada
-                            document.getElementById(sectionId + '-section').classList.remove('hidden');
-
-                            // Actualizar estilos de las pestañas
-                            document.querySelectorAll('[id$="-tab"]').forEach(tab => {
-                                tab.classList.remove('border-blue-600', 'text-blue-600');
-                                tab.classList.add('border-transparent');
-                            });
-
-                            document.getElementById(sectionId + '-tab').classList.add('border-blue-600', 'text-blue-600');
-                            document.getElementById(sectionId + '-tab').classList.remove('border-transparent');
-                        }
-                    </script>
+                <div class="mt-4 flex items-center text-xs text-slate-500">
+                    <x-base.lucide class="w-3 h-3 mr-1" icon="TrendingUp" />
+                    Documents uploaded
                 </div>
             </div>
 
-            <!-- Training & Courses Tab -->
-            <div class="hidden p-6" id="training" role="tabpanel" aria-labelledby="training-tab">
-                <!-- Pestañas para Training Schools y Courses -->
-                <div class="mb-4 border-b">
-                    <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
-                        <li class="mr-2">
-                            <button type="button"
-                                class="inline-block p-2 border-b-2 border-blue-600 text-blue-600 active"
-                                onclick="toggleTrainingSection('schools')" id="schools-tab">Training Schools</button>
-                        </li>
-                        <li class="mr-2">
-                            <button type="button"
-                                class="inline-block p-2 border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300"
-                                onclick="toggleTrainingSection('courses')" id="courses-tab">Courses</button>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Sección de Escuelas de Entrenamiento -->
-                <div id="schools-section" class="training-section">
-                    <div class="border rounded-lg p-4 mb-6">
-                        <h4 class="font-medium text-lg mb-4 pb-2 border-b">Training Schools</h4>
-
-                        @if ($driver->trainingSchools && $driver->trainingSchools->count() > 0)
-                            <div class="space-y-6">
-                                @foreach ($driver->trainingSchools as $school)
-                                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
-                                        <div class="flex justify-between items-start mb-2">
-                                            <div>
-                                                <h5 class="font-medium text-base">{{ $school->school_name }}</h5>
-                                                <p class="text-slate-500">
-                                                    {{ $school->city }}, {{ $school->state }}
-                                                    @if ($school->date_start && $school->date_end)
-                                                        <span class="mx-1">|</span>
-                                                        {{ $school->date_start->format('M d, Y') }} -
-                                                        {{ $school->date_end->format('M d, Y') }}
-                                                    @endif
-                                                </p>
-                                            </div>
-                                            <div>
-                                                @if (isset($school->completed) && $school->completed)
-                                                    <span
-                                                        class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Completed</span>
-                                                @else
-                                                    <span
-                                                        class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">In
-                                                        Progress</span>
-                                                @endif
-                                            </div>
-                                        </div>
-
-                                        <!-- Información de graduación y regulaciones de seguridad -->
-                                        <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <h6 class="text-xs font-medium text-gray-500 uppercase">Graduation Status
-                                                </h6>
-                                                <p class="text-sm mt-1">
-                                                    <span class="font-medium">Did you graduate from this program?</span>
-                                                    <span
-                                                        class="ml-2 {{ $school->graduated ? 'text-green-600' : 'text-red-600' }}">
-                                                        {{ $school->graduated ? 'Yes' : 'No' }}
-                                                    </span>
-                                                </p>
-                                            </div>
-
-                                            <div>
-                                                <h6 class="text-xs font-medium text-gray-500 uppercase">Safety Regulations
-                                                </h6>
-                                                <p class="text-sm mt-1">
-                                                    <span class="font-medium">Subject to FMCSR?</span>
-                                                    <span
-                                                        class="ml-2 {{ $school->subject_to_safety_regulations ? 'text-green-600' : 'text-red-600' }}">
-                                                        {{ $school->subject_to_safety_regulations ? 'Yes' : 'No' }}
-                                                    </span>
-                                                </p>
-                                                <p class="text-sm mt-1">
-                                                    <span class="font-medium">Performed safety-sensitive functions?</span>
-                                                    <span
-                                                        class="ml-2 {{ $school->performed_safety_functions ? 'text-green-600' : 'text-red-600' }}">
-                                                        {{ $school->performed_safety_functions ? 'Yes' : 'No' }}
-                                                    </span>
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <!-- Habilidades entrenadas -->
-                                        @if (isset($school->training_skills) && is_array($school->training_skills) && count($school->training_skills) > 0)
-                                            <div class="mt-3">
-                                                <h6 class="text-xs font-medium text-gray-500 uppercase">Skills Trained</h6>
-                                                <div class="flex flex-wrap gap-2 mt-2">
-                                                    @foreach ($school->training_skills as $skill)
-                                                        <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">
-                                                            {{ $skill }}
-                                                        </span>
-                                                    @endforeach
-                                                </div>
-                                            </div>
-                                        @endif
-
-                                        @if ($school->description)
-                                            <div class="mt-3">
-                                                <h6 class="text-xs font-medium text-gray-500 uppercase">Description</h6>
-                                                <p class="text-sm mt-1">{{ $school->description }}</p>
-                                            </div>
-                                        @endif
-
-                                        <!-- Certificados -->
-                                        @if ($school->getMedia('school_certificates') && $school->getMedia('school_certificates')->count() > 0)
-                                            <div class="mt-3">
-                                                <h6 class="text-xs font-medium text-gray-500 uppercase">Certificates</h6>
-                                                <div class="flex flex-wrap gap-2 mt-2">
-                                                    @foreach ($school->getMedia('school_certificates') as $certificate)
-                                                        <a href="{{ $certificate->getUrl() }}" target="_blank"
-                                                            class="flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded hover:bg-blue-100">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                                height="16" viewBox="0 0 24 24" fill="none"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                stroke-linecap="round" stroke-linejoin="round"
-                                                                class="w-4 h-4 mr-1.5">
-                                                                <path
-                                                                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                                </path>
-                                                                <polyline points="14 2 14 8 20 8"></polyline>
-                                                                <line x1="16" y1="13" x2="8"
-                                                                    y2="13"></line>
-                                                                <line x1="16" y1="17" x2="8"
-                                                                    y2="17"></line>
-                                                                <polyline points="10 9 9 9 8 9"></polyline>
-                                                            </svg>
-                                                            {{ Str::limit($certificate->file_name, 20) }}
-                                                        </a>
-                                                    @endforeach
-                                                </div>
-                                            </div>
-                                        @endif
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <p class="text-slate-500">No training schools information available</p>
-                        @endif
+            <!-- Licences Card -->
+            <div class="box box--stacked p-6 hover:shadow-lg transition-all duration-200 group">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Licences</p>
+                        <h3 class="text-3xl font-bold text-slate-800 group-hover:text-info transition-colors">{{ $driver->licenses ? $driver->licenses->count() : 0 }}</h3>
+                    </div>
+                    <div class="p-3 bg-info/10 rounded-xl group-hover:bg-info/20 transition-colors">
+                        <x-base.lucide class="w-7 h-7 text-info" icon="CreditCard" />
                     </div>
                 </div>
-
-                <!-- Sección de Cursos -->
-                <div id="courses-section" class="training-section hidden">
-                    <div class="border rounded-lg p-4 mb-6">
-                        <h4 class="font-medium text-lg mb-4 pb-2 border-b">Driver Courses</h4>
-
-                        @if ($driver->courses && $driver->courses->count() > 0)
-                            <div class="space-y-6">
-                                @foreach ($driver->courses as $course)
-                                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
-                                        <div class="flex justify-between items-start mb-2">
-                                            <div>
-                                                <h5 class="font-medium text-base">{{ $course->organization_name }}</h5>
-                                                <p class="text-slate-500">
-                                                    {{ $course->city }}, {{ $course->state }}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                @if (isset($course->completed) && $course->completed)
-                                                    <span
-                                                        class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Completed</span>
-                                                @else
-                                                    <span
-                                                        class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">In
-                                                        Progress</span>
-                                                @endif
-                                            </div>
-                                        </div>
-
-                                        <!-- Información detallada del curso -->
-                                        <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <h6 class="text-xs font-medium text-gray-500 uppercase">Certification
-                                                    Details</h6>
-                                                @if ($course->certification_date)
-                                                    <p class="text-sm mt-1">
-                                                        <span class="font-medium">Certification Date:</span>
-                                                        <span
-                                                            class="ml-2">{{ $course->certification_date->format('M d, Y') }}</span>
-                                                    </p>
-                                                @endif
-                                                @if ($course->expiration_date)
-                                                    <p class="text-sm mt-1">
-                                                        <span class="font-medium">Expiration Date:</span>
-                                                        <span
-                                                            class="ml-2">{{ $course->expiration_date->format('M d, Y') }}</span>
-                                                    </p>
-                                                @endif
-                                            </div>
-
-                                            <div>
-                                                @if (isset($course->experience))
-                                                    <h6 class="text-xs font-medium text-gray-500 uppercase">Experience</h6>
-                                                    <p class="text-sm mt-1">{{ $course->experience }}</p>
-                                                @endif
-                                            </div>
-                                        </div>
-
-                                        @if ($course->description)
-                                            <div class="mt-3">
-                                                <h6 class="text-xs font-medium text-gray-500 uppercase">Description</h6>
-                                                <p class="text-sm mt-1">{{ $course->description }}</p>
-                                            </div>
-                                        @endif
-
-                                        <!-- Certificados del curso -->
-                                        @if ($course->getMedia('course_certificates') && $course->getMedia('course_certificates')->count() > 0)
-                                            <div class="mt-3">
-                                                <h6 class="text-xs font-medium text-gray-500 uppercase">Certificates</h6>
-                                                <div class="flex flex-wrap gap-2 mt-2">
-                                                    @foreach ($course->getMedia('course_certificates') as $certificate)
-                                                        <a href="{{ $certificate->getUrl() }}" target="_blank"
-                                                            class="flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded hover:bg-blue-100">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                                height="16" viewBox="0 0 24 24" fill="none"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                stroke-linecap="round" stroke-linejoin="round"
-                                                                class="w-4 h-4 mr-1.5">
-                                                                <path
-                                                                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                                </path>
-                                                                <polyline points="14 2 14 8 20 8"></polyline>
-                                                                <line x1="16" y1="13" x2="8"
-                                                                    y2="13"></line>
-                                                                <line x1="16" y1="17" x2="8"
-                                                                    y2="17"></line>
-                                                                <polyline points="10 9 9 9 8 9"></polyline>
-                                                            </svg>
-                                                            {{ Str::limit($certificate->file_name, 20) }}
-                                                        </a>
-                                                    @endforeach
-                                                </div>
-                                            </div>
-                                        @endif
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <p class="text-slate-500">No courses information available</p>
-                        @endif
-                    </div>
+                <div class="mt-4 flex items-center text-xs text-slate-500">
+                    <x-base.lucide class="w-3 h-3 mr-1" icon="Award" />
+                    Licenses issued
                 </div>
-
-                <!-- Script para manejar las pestañas de training -->
-                <script>
-                    function toggleTrainingSection(sectionId) {
-                        // Ocultar todas las secciones
-                        document.querySelectorAll('.training-section').forEach(section => {
-                            section.classList.add('hidden');
-                        });
-
-                        // Mostrar la sección seleccionada
-                        document.getElementById(sectionId + '-section').classList.remove('hidden');
-
-                        // Actualizar estilos de las pestañas
-                        document.querySelectorAll('#schools-tab, #courses-tab').forEach(tab => {
-                            tab.classList.remove('border-blue-600', 'text-blue-600');
-                            tab.classList.add('border-transparent');
-                        });
-
-                        document.getElementById(sectionId + '-tab').classList.add('border-blue-600', 'text-blue-600');
-                        document.getElementById(sectionId + '-tab').classList.remove('border-transparent');
-                    }
-                </script>
             </div>
 
-            <!-- Testing Tab -->
-            <div class="hidden p-6" id="testing" role="tabpanel" aria-labelledby="testing-tab">
-                <div class="border rounded-lg md:p-2 p-0  mb-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h4 class="font-medium text-lg pb-2">Drug & Alcohol Testing</h4>
+            <!-- Medical Status Card -->
+            <div class="box box--stacked p-6 hover:shadow-lg transition-all duration-200 group">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Medical Status</p>
+                        <h3 class="text-3xl font-bold text-slate-800 group-hover:text-{{ $stats['medical_status'] == 'Valid' ? 'success' : 'danger' }} transition-colors">
+                            {{ $stats['medical_status'] }}
+                        </h3>
                     </div>
-
-                    @if ($driver->testings && $driver->testings->count() > 0)
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left">
-                                <thead>
-                                    <tr>
-                                        <th class="px-4 py-2 whitespace-nowrap">Date</th>
-                                        <th class="px-4 py-2 whitespace-nowrap">Type</th>
-                                        <th class="px-4 py-2 whitespace-nowrap">Result</th>
-                                        <th class="px-4 py-2 whitespace-nowrap">Status</th>
-                                        <th class="px-4 py-2 whitespace-nowrap">Administrator</th>
-                                        <th class="px-4 py-2 whitespace-nowrap">Documents</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($driver->testings as $test)
-                                        <tr>
-                                            <td class="px-4 py-2">
-                                                {{ $test->test_date ? $test->test_date->format('M d, Y') : 'N/A' }}
-                                            </td>
-                                            <td class="px-4 py-2">
-                                                @if (isset(\App\Models\Admin\Driver\DriverTesting::getTestTypes()[$test->test_type]))
-                                                    {{ \App\Models\Admin\Driver\DriverTesting::getTestTypes()[$test->test_type] }}
-                                                @else
-                                                    {{ $test->test_type }}
-                                                @endif
-                                            </td>
-                                            <td class="px-4 py-2">
-                                                @if ($test->test_result)
-                                                    @if (isset(\App\Models\Admin\Driver\DriverTesting::getTestResults()[$test->test_result]))
-                                                        <span
-                                                            class="@if ($test->test_result == 'negative') text-green-600 @elseif($test->test_result == 'positive') text-red-600 @else text-yellow-600 @endif font-medium">
-                                                            {{ \App\Models\Admin\Driver\DriverTesting::getTestResults()[$test->test_result] }}
-                                                        </span>
-                                                    @else
-                                                        {{ $test->test_result }}
-                                                    @endif
-                                                @else
-                                                    Pending
-                                                @endif
-                                            </td>
-                                            <td class="px-4 py-2">
-                                                @php
-                                                    $statuses = \App\Models\Admin\Driver\DriverTesting::getStatuses();
-                                                    $statusDisplay = $statuses[$test->status] ?? ucfirst($test->status);
-                                                @endphp
-                                                <span
-                                                    class="px-2 py-0.5 rounded-full text-xs font-medium
-                                                    @if ($test->status == 'completed' || $test->status == 'approved') bg-green-100 text-green-800
-                                                    @elseif($test->status == 'rejected' || $test->status == 'cancelled') bg-rose-100 text-rose-800
-                                                    @else bg-yellow-100 text-yellow-800 @endif">
-                                                    {{ $statusDisplay }}
-                                                </span>
-                                            </td>
-                                            <td class="px-4 py-2">{{ $test->administered_by }}</td>
-                                            <td class="px-4 py-2">
-                                                <div class="flex space-x-2">
-                                                    @if ($test->getMedia('drug_test_pdf')->count() > 0)
-                                                        <a href="{{ $test->getMedia('drug_test_pdf')->first()->getUrl() }}"
-                                                            target="_blank" class="btn btn-sm btn-primary">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                                height="16" viewBox="0 0 24 24" fill="none"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                stroke-linecap="round" stroke-linejoin="round"
-                                                                class="w-4 h-4 mr-1">
-                                                                <path
-                                                                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                                </path>
-                                                                <polyline points="14 2 14 8 20 8"></polyline>
-                                                                <line x1="16" y1="13" x2="8"
-                                                                    y2="13"></line>
-                                                                <line x1="16" y1="17" x2="8"
-                                                                    y2="17"></line>
-                                                                <polyline points="10 9 9 9 8 9"></polyline>
-                                                            </svg> Report
-                                                        </a>
-                                                    @endif
-                                                    @if ($test->getMedia('test_results')->count() > 0)
-                                                        <a href="{{ $test->getMedia('test_results')->first()->getUrl() }}"
-                                                            target="_blank" class="btn btn-sm btn-secondary">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                                height="16" viewBox="0 0 24 24" fill="none"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                stroke-linecap="round" stroke-linejoin="round"
-                                                                class="w-4 h-4 mr-1">
-                                                                <path
-                                                                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                                </path>
-                                                                <polyline points="14 2 14 8 20 8"></polyline>
-                                                                <line x1="16" y1="13" x2="8"
-                                                                    y2="13"></line>
-                                                                <line x1="16" y1="17" x2="8"
-                                                                    y2="17"></line>
-                                                                <polyline points="10 9 9 9 8 9"></polyline>
-                                                            </svg>
-                                                            Results
-                                                        </a>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="p-3 bg-{{ $stats['medical_status'] == 'Valid' ? 'success' : 'danger' }}/10 rounded-xl group-hover:bg-{{ $stats['medical_status'] == 'Valid' ? 'success' : 'danger' }}/20 transition-colors">
+                        <x-base.lucide class="w-7 h-7 text-{{ $stats['medical_status'] == 'Valid' ? 'success' : 'danger' }}" icon="Heart" />
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-xs text-slate-500">
+                    <x-base.lucide class="w-3 h-3 mr-1" icon="Calendar" />
+                    @if($driver->medicalQualification && $driver->medicalQualification->dot_medical_expiry_date)
+                    Expires: {{ \Carbon\Carbon::parse($driver->medicalQualification->dot_medical_expiry_date)->format('M d, Y') }}
                     @else
-                        <p class="text-slate-500">No testing records available</p>
+                    DOT medical status
                     @endif
                 </div>
             </div>
 
-            <!-- Inspections Tab -->
-            <div class="hidden p-6" id="inspections" role="tabpanel" aria-labelledby="inspections-tab">
-                <div class="border rounded-lg p-4 mb-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h4 class="font-medium text-lg pb-2">Vehicle Inspections</h4>
+            <!-- Records Uploaded Card -->
+            <div class="box box--stacked p-6 hover:shadow-lg transition-all duration-200 group">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Records Uploaded</p>
+                        <h3 class="text-3xl font-bold text-slate-800 group-hover:text-primary transition-colors">{{ $stats['records_uploaded'] }}</h3>
                     </div>
-
-                    @if ($driver->inspections && $driver->inspections->count() > 0)
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left">
-                                <thead>
-                                    <tr>
-                                        <th class="px-4 py-2 whitespace-nowrap">Date</th>
-                                        <th class="px-4 py-2 whitespace-nowrap">Vehicle</th>
-                                        <th class="px-4 py-2 whitespace-nowrap">Type</th>
-                                        <th class="px-4 py-2 whitespace-nowrap">Inspector</th>
-                                        <th class="px-4 py-2 whitespace-nowrap">Status</th>
-                                        <th class="px-4 py-2 whitespace-nowrap">Safe to Operate</th>
-                                        <th class="px-4 py-2 whitespace-nowrap">Documents</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($driver->inspections as $inspection)
-                                        <tr>
-                                            <td class="px-4 py-2">
-                                                {{ $inspection->inspection_date ? $inspection->inspection_date->format('M d, Y') : 'N/A' }}
-                                            </td>
-                                            <td class="px-4 py-2">
-                                                @if ($inspection->vehicle)
-                                                    {{ $inspection->vehicle->unit_number }} -
-                                                    {{ $inspection->vehicle->make }} {{ $inspection->vehicle->model }}
-                                                @else
-                                                    N/A
-                                                @endif
-                                            </td>
-                                            <td class="px-4 py-2">{{ $inspection->inspection_type }}</td>
-                                            <td class="px-4 py-2">{{ $inspection->inspector_name }}</td>
-                                            <td class="px-4 py-2">
-                                                <span
-                                                    class="px-2 py-0.5 rounded-full text-xs font-medium
-                                                    @if ($inspection->status == 'passed') bg-green-100 text-green-800
-                                                    @elseif($inspection->status == 'failed') bg-rose-100 text-rose-800
-                                                    @else bg-yellow-100 text-yellow-800 @endif">
-                                                    {{ ucfirst($inspection->status) }}
-                                                </span>
-                                            </td>
-                                            <td class="px-4 py-2">
-                                                @if ($inspection->is_vehicle_safe_to_operate)
-                                                    <span class="text-green-600">Yes</span>
-                                                @else
-                                                    <span class="text-red-600">No</span>
-                                                @endif
-                                            </td>
-                                            <td class="px-4 py-2">
-                                                <div class="flex space-x-2">
-                                                    @if ($inspection->getMedia('inspection_documents')->count() > 0)
-                                                        @foreach ($inspection->getMedia('inspection_documents') as $document)
-                                                            <a href="{{ $document->getUrl() }}" target="_blank"
-                                                                class="flex btn btn-sm btn-secondary">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                                    height="16" viewBox="0 0 24 24" fill="none"
-                                                                    stroke="currentColor" stroke-width="2"
-                                                                    stroke-linecap="round" stroke-linejoin="round"
-                                                                    class="w-4 h-4 mr-1">
-                                                                    <path
-                                                                        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                                    </path>
-                                                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                                                    <line x1="16" y1="13" x2="8"
-                                                                        y2="13"></line>
-                                                                    <line x1="16" y1="17" x2="8"
-                                                                        y2="17"></line>
-                                                                    <polyline points="10 9 9 9 8 9"></polyline>
-                                                                </svg>
-                                                                {{ $loop->index + 1 }}
-                                                            </a>
-                                                        @endforeach
-                                                    @else
-                                                        <span class="text-slate-500">No documents</span>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @else
-                        <p class="text-slate-500">No inspection records available</p>
-                    @endif
+                    <div class="p-3 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors">
+                        <x-base.lucide class="w-7 h-7 text-primary" icon="FileText" />
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-xs text-slate-500">
+                    <x-base.lucide class="w-3 h-3 mr-1" icon="Database" />
+                    Background records
                 </div>
             </div>
 
-            <!-- Documents Tab -->
-            <div class="hidden p-6" id="documents" role="tabpanel" aria-labelledby="documents-tab">
-                <!-- Header with Actions -->
-                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-blue-100 rounded-lg">
-                            <i data-lucide="folder" class="w-5 h-5 text-blue-600"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900">Driver Documents</h3>
-                            <p class="text-sm text-gray-500">Manage and organize driver documentation</p>
-                        </div>
+            <!-- Testing Card -->
+            <div class="box box--stacked p-6 hover:shadow-lg transition-all duration-200 group">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Testing</p>
+                        <h3 class="text-3xl font-bold text-slate-800 group-hover:text-warning transition-colors">{{ $stats['testing_count'] }}</h3>
                     </div>
-                    
-                    <!-- Action Buttons -->
-                    <div class="flex items-center gap-2">
-                        <button disabled
-                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <i data-lucide="download" class="w-4 h-4 mr-2"></i>
-                            Download Selected (0)
-                        </button>
-                        <button class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700">
-                            <i data-lucide="archive" class="w-4 h-4 mr-2"></i>
-                            Download All
-                        </button>
+                    <div class="p-3 bg-warning/10 rounded-xl group-hover:bg-warning/20 transition-colors">
+                        <x-base.lucide class="w-7 h-7 text-warning" icon="TestTube" />
                     </div>
                 </div>
-
-                <!-- Filters and Search -->
-                <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <!-- Search -->
-                        <div class="relative">
-                            <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"></i>
-                            <input type="text" 
-                                   placeholder="Search documents..."
-                                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        
-                        <!-- Category Filter -->
-                        <div>
-                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">All Categories</option>
-                                <option value="license">License Documents</option>
-                                <option value="medical">Medical Records</option>
-                                <option value="background">Background Checks</option>
-                                <option value="training">Training & Certifications</option>
-                                <option value="other">Other Documents</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Status Filter -->
-                        <div>
-                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">All Status</option>
-                                <option value="approved">Approved</option>
-                                <option value="pending">Pending Review</option>
-                                <option value="rejected">Rejected</option>
-                                <option value="expired">Expired</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Date Range -->
-                        <div>
-                            <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">All Dates</option>
-                                <option value="last_30">Last 30 Days</option>
-                                <option value="last_90">Last 90 Days</option>
-                                <option value="expired">Expired</option>
-                                <option value="expiring_soon">Expiring Soon</option>
-                            </select>
-                        </div>
-                    </div>
-                    
+                <div class="mt-4 flex items-center text-xs text-slate-500">
+                    <x-base.lucide class="w-3 h-3 mr-1" icon="Activity" />
+                    {{ $stats['testing_status'] }}
                 </div>
+            </div>
 
-                <!-- Categorized Documents Section -->
-                <div class="mt-8">
-                    <h3 class="text-xl font-semibold text-gray-900 mb-6">Categorized Documents</h3>
-                    
-                    <!-- Document Categories Grid -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        @foreach($documentsByCategory as $category => $documents)
-                            @if(count($documents) > 0)
-                                <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <h4 class="text-lg font-medium text-gray-900 capitalize">
-                                            {{ str_replace('_', ' ', $category) }}
-                                        </h4>
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            {{ count($documents) }} {{ count($documents) === 1 ? 'document' : 'documents' }}
-                                        </span>
-                                    </div>
-                                    
-                                    <div class="space-y-3">
-                                        @foreach($documents as $document)
-                                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-150">
-                                                <div class="flex items-center space-x-3">
-                                                    <div class="flex-shrink-0">
-                                                        <i data-lucide="file-text" class="w-5 h-5 text-gray-500"></i>
-                                                    </div>
-                                                    <div class="min-w-0 flex-1">
-                                                        <p class="text-sm font-medium text-gray-900 truncate">
-                                                            {{ $document['name'] }}
-                                                        </p>
-                                                        <p class="text-xs text-gray-500">
-                                                            {{ $document['date'] }} • {{ $document['size'] }}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div class="flex items-center space-x-2">
-                                                    <a href="{{ $document['url'] }}" 
-                                                       target="_blank"
-                                                       class="inline-flex items-center p-1.5 text-gray-400 hover:text-blue-600 transition-colors duration-150">
-                                                        <i data-lucide="eye" class="w-4 h-4"></i>
-                                                    </a>
-                                                    <a href="{{ $document['url'] }}" 
-                                                       download
-                                                       class="inline-flex items-center p-1.5 text-gray-400 hover:text-green-600 transition-colors duration-150">
-                                                        <i data-lucide="download" class="w-4 h-4"></i>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
-                        @endforeach
-                        
-                        @if(empty($documentsByCategory) || collect($documentsByCategory)->sum(fn($docs) => count($docs)) === 0)
-                            <div class="col-span-full text-center py-12">
-                                <div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                    <i data-lucide="folder-x" class="w-8 h-8 text-gray-400"></i>
-                                </div>
-                                <h3 class="text-lg font-medium text-gray-900 mb-2">No documents found</h3>
-                                <p class="text-gray-500">This driver has no documents uploaded yet.</p>
-                            </div>
-                        @endif
+            <!-- Associated Vehicles Card -->
+            <div class="box box--stacked p-6 hover:shadow-lg transition-all duration-200 group">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-slate-500 mb-1">Associated Vehicles</p>
+                        <h3 class="text-3xl font-bold text-slate-800 group-hover:text-info transition-colors">{{ $stats['vehicles_count'] }}</h3>
+                    </div>
+                    <div class="p-3 bg-info/10 rounded-xl group-hover:bg-info/20 transition-colors">
+                        <x-base.lucide class="w-7 h-7 text-info" icon="Truck" />
                     </div>
                 </div>
-
-                    <!-- Application Documents -->
-                    <div class="border rounded-lg p-4">
-                        <h4 class="font-medium text-lg mb-4 pb-2 border-b">Application Documents</h4>
-
-                        <div class="space-y-3">
-                            @if ($driver->application && $driver->application->hasMedia('application_pdf'))
-                                <div class="pb-3 mb-3 border-b">
-                                    <p class="font-medium">Complete Application PDF</p>
-                                    <a href="{{ $driver->application->getFirstMediaUrl('application_pdf') }}"
-                                        target="_blank" class="text-blue-600 hover:underline flex items-center mt-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                        </svg>
-                                        View Complete Application
-                                    </a>
-                                </div>
-                            @endif
-
-                            <!-- Employment Verification Documents -->
-                            @php
-                                // Recolectar todos los documentos de verificación (manual y automatico) de todas las compañías
-                                $allManualVerificationDocuments = collect();
-                                $allAutomaticVerificationDocuments = collect();
-
-                                if ($driver->employmentCompanies && $driver->employmentCompanies->count() > 0) {
-                                    foreach ($driver->employmentCompanies as $empCompany) {
-                                        // Documentos manuales
-                                        $manualDocs = $empCompany->getMedia('employment_verification_documents');
-                                        foreach ($manualDocs as $doc) {
-                                            $doc->company_name =
-                                                $empCompany->company_name ?:
-                                                ($empCompany->masterCompany
-                                                    ? $empCompany->masterCompany->name
-                                                    : 'Company ' . $empCompany->id);
-                                            $allManualVerificationDocuments->push($doc);
-                                        }
-
-                                        // Documentos automáticos por verificación por correo
-                                        $tokens = App\Models\Admin\Driver\EmploymentVerificationToken::where(
-                                            'employment_company_id',
-                                            $empCompany->id,
-                                        )
-                                            ->whereNotNull('verified_at')
-                                            ->where('document_path', '!=', null)
-                                            ->get();
-
-                                        foreach ($tokens as $token) {
-                                            if (Storage::disk('public')->exists($token->document_path)) {
-                                                $token->company_name =
-                                                    $empCompany->company_name ?:
-                                                    ($empCompany->masterCompany
-                                                        ? $empCompany->masterCompany->name
-                                                        : 'Company ' . $empCompany->id);
-                                                $allAutomaticVerificationDocuments->push($token);
-                                            }
-                                        }
-                                    }
-                                }
-                            @endphp
-
-                            @if ($allManualVerificationDocuments->count() > 0 || $allAutomaticVerificationDocuments->count() > 0)
-                                <div class="pb-3 mb-3 border-b bg-blue-50 p-3 rounded-md">
-                                    <p class="font-medium text-blue-800 mb-2">Employment Verification Documents</p>
-                                    <div class="space-y-4">
-                                        @if ($allManualVerificationDocuments->count() > 0)
-                                            <div>
-                                                <p class="text-sm font-medium text-slate-600 mb-2">Manually Uploaded
-                                                    Documents</p>
-                                                <div class="space-y-2">
-                                                    @foreach ($allManualVerificationDocuments as $document)
-                                                        <a href="{{ $document->getUrl() }}" target="_blank"
-                                                            class="flex items-center text-blue-600 hover:text-blue-800 bg-white p-2 rounded border border-blue-200 hover:bg-blue-100 transition-colors">
-                                                            <i data-lucide="file-text" class="w-4 h-4 mr-2"></i>
-                                                            <div class="flex flex-col">
-                                                                <span>{{ $document->name }}</span>
-                                                                <span
-                                                                    class="text-xs text-gray-500">{{ $document->company_name }}</span>
-                                                            </div>
-                                                            <span
-                                                                class="ml-auto text-xs text-gray-500">{{ $document->created_at->format('m/d/Y') }}</span>
-                                                        </a>
-                                                    @endforeach
-                                                </div>
-                                            </div>
-                                        @endif
-
-                                        @if ($allAutomaticVerificationDocuments->count() > 0)
-                                            <div>
-                                                <p class="text-sm font-medium text-slate-600 mb-2">Email Verified Documents
-                                                </p>
-                                                <div class="space-y-2">
-                                                    @foreach ($allAutomaticVerificationDocuments as $token)
-                                                        <a href="{{ Storage::disk('public')->url($token->document_path) }}"
-                                                            target="_blank"
-                                                            class="flex items-center text-blue-600 hover:text-blue-800 bg-white p-2 rounded border border-blue-200 hover:bg-blue-100 transition-colors">
-                                                            <i data-lucide="file-check" class="w-4 h-4 mr-2"></i>
-                                                            <div class="flex flex-col">
-                                                                <span>Verification Document</span>
-                                                                <span
-                                                                    class="text-xs text-gray-500">{{ $token->company_name }}</span>
-                                                            </div>
-                                                            <div class="ml-auto flex flex-col items-end">
-                                                                <span
-                                                                    class="text-xs text-green-600 font-medium">Verified</span>
-                                                                <span
-                                                                    class="text-xs text-gray-500">{{ Carbon\Carbon::parse($token->verified_at)->format('m/d/Y') }}</span>
-                                                            </div>
-                                                        </a>
-                                                    @endforeach
-                                                </div>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-                            @endif
-
-                            <!-- Lease Agreement Documents -->
-                            @php
-                                $basePath = storage_path(
-                                    'app/public/driver/' . $driver->id . '/vehicle_verifications/',
-                                );
-                                $leaseAgreementThirdPartyPath = $basePath . 'lease_agreement_third_party.pdf';
-                                $leaseAgreementOwnerPath = $basePath . 'lease_agreement_owner_operator.pdf';
-                                $hasLeaseAgreementThirdParty = file_exists($leaseAgreementThirdPartyPath);
-                                $hasLeaseAgreementOwner = file_exists($leaseAgreementOwnerPath);
-                            @endphp
-
-                            @if ($hasLeaseAgreementThirdParty || $hasLeaseAgreementOwner)
-                                <div>
-                                    <p class="font-medium">Lease Agreements</p>
-                                    <div class="flex flex-col space-y-2 mt-1">
-                                        @if ($hasLeaseAgreementThirdParty)
-                                            <a href="{{ asset('storage/driver/' . $driver->id . '/vehicle_verifications/lease_agreement_third_party.pdf') }}"
-                                                target="_blank" class="text-blue-600 hover:underline flex items-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="w-4 h-4 mr-1">
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                    </path>
-                                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                                    <line x1="16" y1="13" x2="8" y2="13">
-                                                    </line>
-                                                    <line x1="16" y1="17" x2="8" y2="17">
-                                                    </line>
-                                                    <polyline points="10 9 9 9 8 9"></polyline>
-                                                </svg>
-                                                Third Party Lease Agreement
-                                            </a>
-                                        @endif
-
-                                        @if ($hasLeaseAgreementOwner)
-                                            <a href="{{ asset('storage/driver/' . $driver->id . '/vehicle_verifications/lease_agreement_owner_operator.pdf') }}"
-                                                target="_blank" class="text-blue-600 hover:underline flex items-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="w-4 h-4 mr-1">
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                    </path>
-                                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                                    <line x1="16" y1="13" x2="8" y2="13">
-                                                    </line>
-                                                    <line x1="16" y1="17" x2="8" y2="17">
-                                                    </line>
-                                                    <polyline points="10 9 9 9 8 9"></polyline>
-                                                </svg>
-                                                Owner Operator Lease Agreement
-                                            </a>
-                                        @endif
-                                    </div>
-                                </div>
-                            @endif
-
-                            @if ($driver->application && $driver->application->hasMedia('signed_application'))
-                                <div>
-                                    <p class="font-medium">Signed Application</p>
-                                    <a href="{{ $driver->application->getFirstMediaUrl('signed_application') }}"
-                                        target="_blank" class="text-blue-600 hover:underline flex items-center mt-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                        </svg>
-                                        View Signed Application
-                                    </a>
-                                </div>
-                            @endif
-
-                            <!-- Application Status -->
-                            @if ($driver->application)
-                                <div class="mt-4 pt-4 border-t">
-                                    <p class="font-medium mb-2">Application Status</p>
-
-                                    <div class="space-y-2">
-                                        <div class="flex">
-                                            <span class="text-slate-500 w-1/3">Status:</span>
-                                            <span
-                                                class="{{ $driver->application->status == 'approved'
-                                                    ? 'text-green-600'
-                                                    : ($driver->application->status == 'pending'
-                                                        ? 'text-amber-600'
-                                                        : 'text-red-600') }}">
-                                                {{ ucfirst($driver->application->status) }}
-                                            </span>
-                                        </div>
-
-                                        <div class="flex">
-                                            <span class="text-slate-500 w-1/3">Submitted:</span>
-                                            <span>{{ $driver->application->created_at->format('M d, Y') }}</span>
-                                        </div>
-
-                                        @if ($driver->application->completed_at)
-                                            <div class="flex">
-                                                <span class="text-slate-500 w-1/3">Completed:</span>
-                                                {{-- <span>{{ $driver->application->completed_at->format('m/d/Y') }}</span> --}}
-                                            </div>
-                                        @endif
-
-                                        @if ($driver->application->status == 'rejected' && $driver->application->rejection_reason)
-                                            <div class="mt-2 pt-2 border-t">
-                                                <p class="text-red-600 font-medium">Rejection Reason:</p>
-                                                <p class="mt-1 text-sm bg-red-50 p-2 rounded">
-                                                    {{ $driver->application->rejection_reason }}
-                                                </p>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-
+                <div class="mt-4 flex items-center text-xs text-slate-500">
+                    <x-base.lucide class="w-3 h-3 mr-1" icon="Link" />
+                    {{ $stats['vehicles_status'] }}
                 </div>
-                <div class="mt-5">
-                    <!-- Categorized Documents - Implementación simplificada -->
-                    <div class="border rounded-lg p-4 mt-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <h5 class="font-medium">Categorized Documents</h5>
-                            <div class="flex space-x-2">
-                                @if (isset($hasCertification) && $hasCertification)
-                                    <a href="{{ route('admin.drivers.regenerate-application-forms', $driver->id) }}"
-                                        class="flex items-center px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1.5">
-                                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38" />
-                                        </svg>
-                                        Regenerar Application Forms
-                                    </a>
-                                @endif
-                                <a href="{{ route('admin.drivers.documents.download', $driver->id) }}"
-                                    class="flex items-center px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1.5">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                        <polyline points="7 10 12 15 17 10"></polyline>
-                                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                                    </svg>
-                                    Download All Documents
-                                </a>
-                            </div>
+            </div>
+
+        </div>
+
+        <!-- Professional Document Status -->
+        <div class="box box--stacked flex flex-col p-6">
+            <div class="flex items-center gap-3 mb-6">
+                <x-base.lucide class="w-5 h-5 text-primary" icon="BarChart2" />
+                <h2 class="text-lg font-semibold text-success">Upload Files</h2>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Approved Documents -->
+                <div class="bg-slate-50/50 rounded-lg p-4 border border-slate-100">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="flex items-center gap-2">
+                            <x-base.lucide class="w-4 h-4 text-success" icon="CheckCircle" />
+                            <p class="text-sm font-medium text-slate-700">Approved Documents</p>
                         </div>
-
-                        <!-- Vanilla JS Tabs - Sin dependencias ni frameworks -->
-                        <div id="ef-categorized-docs-tabs" class="categorized-docs-container">
-                            <!-- Pestañas de categorías -->
-                            <div class="mb-4 border-b overflow-x-auto">
-                                <div class="flex flex-nowrap -mb-px text-sm font-medium text-center">
-                                    <div class="mr-2">
-                                        <button type="button" class="ef-tab-button"
-                                            data-tab="license-docs">License</button>
-                                    </div>
-                                    <div class="mr-2">
-                                        <button type="button" class="ef-tab-button"
-                                            data-tab="medical-docs">Medical</button>
-                                    </div>
-                                    <div class="mr-2">
-                                        <button type="button" class="ef-tab-button" data-tab="training-docs">Training
-                                            Schools</button>
-                                    </div>
-                                    <div class="mr-2">
-                                        <button type="button" class="ef-tab-button"
-                                            data-tab="courses-docs">Courses</button>
-                                    </div>
-                                    <div class="mr-2">
-                                        <button type="button" class="ef-tab-button"
-                                            data-tab="accidents-docs">Accidents</button>
-                                    </div>
-                                    <div class="mr-2">
-                                        <button type="button" class="ef-tab-button" data-tab="traffic-docs">Traffic
-                                            Violations</button>
-                                    </div>
-                                    <div class="mr-2">
-                                        <button type="button" class="ef-tab-button"
-                                            data-tab="inspections-docs">Inspections</button>
-                                    </div>
-                                    <div class="mr-2">
-                                        <button type="button" class="ef-tab-button"
-                                            data-tab="testing-docs">Testing</button>
-                                    </div>
-                                    <div class="mr-2">
-                                        <button type="button" class="ef-tab-button"
-                                            data-tab="records-docs">Records</button>
-                                    </div>
-                                    <div class="mr-2">
-                                        <button type="button" class="ef-tab-button"
-                                            data-tab="certification-docs">Application Forms</button>
-                                    </div>
-                                    <div class="mr-2">
-                                        <button type="button" class="ef-tab-button"
-                                            data-tab="emp-verification-docs">Employment Verification</button>
-                                    </div>
-                                    <div class="mr-2">
-                                        <button type="button" class="ef-tab-button"
-                                            data-tab="other-docs">Other</button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Contenido de las pestañas -->
-                            <div>
-                                <!-- License Documents -->
-                                <div class="ef-tab-content" data-tab-content="license-docs" role="tabpanel">
-                                    @if (count($documentsByCategory['license']) > 0)
-                                        <ul class="space-y-2">
-                                            @foreach ($documentsByCategory['license'] as $doc)
-                                                <li class="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                                    <div class="flex items-center truncate mr-2">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                            height="16" viewBox="0 0 24 24" fill="none"
-                                                            stroke="currentColor" stroke-width="2"
-                                                            stroke-linecap="round" stroke-linejoin="round"
-                                                            class="w-4 h-4 mr-2 text-slate-500">
-                                                            <path
-                                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                            </path>
-                                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                                            <line x1="16" y1="13" x2="8"
-                                                                y2="13"></line>
-                                                            <line x1="16" y1="17" x2="8"
-                                                                y2="17"></line>
-                                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                                        </svg>
-                                                        <span class="truncate"
-                                                            title="{{ $doc['name'] }}">{{ $doc['name'] }}</span>
-                                                    </div>
-                                                    <div class="flex items-center">
-                                                        <span
-                                                            class="text-xs text-slate-500 mr-2">{{ $doc['size'] }}</span>
-                                                        <a href="{{ $doc['url'] }}" target="_blank"
-                                                            class="text-blue-600 hover:underline">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                                height="16" viewBox="0 0 24 24" fill="none"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                stroke-linecap="round" stroke-linejoin="round"
-                                                                class="w-4 h-4">
-                                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
-                                                                </path>
-                                                                <circle cx="12" cy="12" r="3"></circle>
-                                                            </svg>
-                                                        </a>
-                                                    </div>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @else
-                                        <p class="text-slate-500 text-sm">No license documents available</p>
-                                    @endif
-                                </div>
-
-                                <!-- Medical Documents -->
-                                <div class="ef-tab-content" data-tab-content="medical-docs" role="tabpanel">
-                                    @if (count($documentsByCategory['medical']) > 0)
-                                        <ul class="space-y-2">
-                                            @foreach ($documentsByCategory['medical'] as $doc)
-                                                <li class="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                                    <div class="flex items-center truncate mr-2">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                            height="16" viewBox="0 0 24 24" fill="none"
-                                                            stroke="currentColor" stroke-width="2"
-                                                            stroke-linecap="round" stroke-linejoin="round"
-                                                            class="w-4 h-4 mr-2 text-slate-500">
-                                                            <path
-                                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                            </path>
-                                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                                            <line x1="16" y1="13" x2="8"
-                                                                y2="13"></line>
-                                                            <line x1="16" y1="17" x2="8"
-                                                                y2="17"></line>
-                                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                                        </svg>
-                                                        <span class="truncate"
-                                                            title="{{ $doc['name'] }}">{{ $doc['name'] }}</span>
-                                                    </div>
-                                                    <div class="flex items-center">
-                                                        <span
-                                                            class="text-xs text-slate-500 mr-2">{{ $doc['size'] }}</span>
-                                                        <a href="{{ $doc['url'] }}" target="_blank"
-                                                            class="text-blue-600 hover:underline">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                                height="16" viewBox="0 0 24 24" fill="none"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                stroke-linecap="round" stroke-linejoin="round"
-                                                                class="w-4 h-4">
-                                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
-                                                                </path>
-                                                                <circle cx="12" cy="12" r="3"></circle>
-                                                            </svg>
-                                                        </a>
-                                                    </div>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @else
-                                        <p class="text-slate-500 text-sm">No medical documents available</p>
-                                    @endif
-                                </div>
-
-                                <!-- Training Schools Documents -->
-                                <div class="ef-tab-content" data-tab-content="training-docs" role="tabpanel">
-                                    @if (count($documentsByCategory['training_schools'] ?? []) > 0)
-                                        <ul class="space-y-2">
-                                            @foreach ($documentsByCategory['training_schools'] as $doc)
-                                                <li class="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                                    <div class="flex items-center truncate mr-2">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                            height="16" viewBox="0 0 24 24" fill="none"
-                                                            stroke="currentColor" stroke-width="2"
-                                                            stroke-linecap="round" stroke-linejoin="round"
-                                                            class="w-4 h-4 mr-2 text-slate-500">
-                                                            <path
-                                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                            </path>
-                                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                                            <line x1="16" y1="13" x2="8"
-                                                                y2="13"></line>
-                                                            <line x1="16" y1="17" x2="8"
-                                                                y2="17"></line>
-                                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                                        </svg>
-                                                        <span class="truncate"
-                                                            title="{{ $doc['name'] }}">{{ $doc['name'] }}</span>
-                                                        @if (isset($doc['related_info']))
-                                                            <span
-                                                                class="ml-2 text-xs text-slate-500">({{ $doc['related_info'] }})</span>
-                                                        @endif
-                                                    </div>
-                                                    <div class="flex items-center">
-                                                        <span
-                                                            class="text-xs text-slate-500 mr-2">{{ $doc['size'] }}</span>
-                                                        <a href="{{ $doc['url'] }}" target="_blank"
-                                                            class="text-blue-600 hover:underline">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                                height="16" viewBox="0 0 24 24" fill="none"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                stroke-linecap="round" stroke-linejoin="round"
-                                                                class="w-4 h-4">
-                                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
-                                                                </path>
-                                                                <circle cx="12" cy="12" r="3"></circle>
-                                                            </svg>
-                                                        </a>
-                                                    </div>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @else
-                                        <p class="text-slate-500 text-sm">No training school documents available</p>
-                                    @endif
-                                </div>
-
-                                <!-- Courses Documents -->
-                                <div class="ef-tab-content" data-tab-content="courses-docs" role="tabpanel">
-                                    @if (count($documentsByCategory['courses'] ?? []) > 0)
-                                        <ul class="space-y-2">
-                                            @foreach ($documentsByCategory['courses'] as $doc)
-                                                <li class="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                                    <div class="flex items-center truncate mr-2">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                            height="16" viewBox="0 0 24 24" fill="none"
-                                                            stroke="currentColor" stroke-width="2"
-                                                            stroke-linecap="round" stroke-linejoin="round"
-                                                            class="w-4 h-4 mr-2 text-slate-500">
-                                                            <path
-                                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                            </path>
-                                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                                            <line x1="16" y1="13" x2="8"
-                                                                y2="13"></line>
-                                                            <line x1="16" y1="17" x2="8"
-                                                                y2="17"></line>
-                                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                                        </svg>
-                                                        <span class="truncate"
-                                                            title="{{ $doc['name'] }}">{{ $doc['name'] }}</span>
-                                                        @if (isset($doc['related_info']))
-                                                            <span
-                                                                class="ml-2 text-xs text-slate-500">({{ $doc['related_info'] }})</span>
-                                                        @endif
-                                                    </div>
-                                                    <div class="flex items-center">
-                                                        <span
-                                                            class="text-xs text-slate-500 mr-2">{{ $doc['size'] }}</span>
-                                                        <a href="{{ $doc['url'] }}" target="_blank"
-                                                            class="text-blue-600 hover:underline">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                                height="16" viewBox="0 0 24 24" fill="none"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                stroke-linecap="round" stroke-linejoin="round"
-                                                                class="w-4 h-4">
-                                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
-                                                                </path>
-                                                                <circle cx="12" cy="12" r="3"></circle>
-                                                            </svg>
-                                                        </a>
-                                                    </div>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @else
-                                        <p class="text-slate-500 text-sm">No course documents available</p>
-                                    @endif
-                                </div>
-
-                                <!-- Accidents Documents -->
-                                <div class="ef-tab-content" data-tab-content="accidents-docs" role="tabpanel">
-                                    @if (count($documentsByCategory['accidents'] ?? []) > 0)
-                                        <ul class="space-y-2">
-                                            @foreach ($documentsByCategory['accidents'] as $doc)
-                                                <li class="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                                    <div class="flex items-center truncate mr-2">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                            height="16" viewBox="0 0 24 24" fill="none"
-                                                            stroke="currentColor" stroke-width="2"
-                                                            stroke-linecap="round" stroke-linejoin="round"
-                                                            class="w-4 h-4 mr-2 text-slate-500">
-                                                            <path
-                                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                            </path>
-                                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                                            <line x1="16" y1="13" x2="8"
-                                                                y2="13"></line>
-                                                            <line x1="16" y1="17" x2="8"
-                                                                y2="17"></line>
-                                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                                        </svg>
-                                                        <span class="truncate"
-                                                            title="{{ $doc['name'] }}">{{ $doc['name'] }}</span>
-                                                        @if (isset($doc['related_info']))
-                                                            <span
-                                                                class="ml-2 text-xs text-slate-500">({{ $doc['related_info'] }})</span>
-                                                        @endif
-                                                    </div>
-                                                    <div class="flex items-center">
-                                                        <span
-                                                            class="text-xs text-slate-500 mr-2">{{ $doc['size'] }}</span>
-                                                        <a href="{{ $doc['url'] }}" target="_blank"
-                                                            class="text-blue-600 hover:underline">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                                height="16" viewBox="0 0 24 24" fill="none"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                stroke-linecap="round" stroke-linejoin="round"
-                                                                class="w-4 h-4">
-                                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
-                                                                </path>
-                                                                <circle cx="12" cy="12" r="3"></circle>
-                                                            </svg>
-                                                        </a>
-                                                    </div>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @else
-                                        <p class="text-slate-500 text-sm">No accident documents available</p>
-                                    @endif
-                                </div>
-
-                                <!-- Traffic Documents -->
-                                <div class="ef-tab-content" data-tab-content="traffic-docs" role="tabpanel">
-                                    @if (count($documentsByCategory['traffic'] ?? []) > 0)
-                                        <ul class="space-y-2">
-                                            @foreach ($documentsByCategory['traffic'] as $doc)
-                                                <li class="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                                    <div class="flex items-center truncate mr-2">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                            height="16" viewBox="0 0 24 24" fill="none"
-                                                            stroke="currentColor" stroke-width="2"
-                                                            stroke-linecap="round" stroke-linejoin="round"
-                                                            class="w-4 h-4 mr-2 text-slate-500">
-                                                            <path
-                                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                            </path>
-                                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                                            <line x1="16" y1="13" x2="8"
-                                                                y2="13"></line>
-                                                            <line x1="16" y1="17" x2="8"
-                                                                y2="17"></line>
-                                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                                        </svg>
-                                                        <span class="truncate"
-                                                            title="{{ $doc['name'] }}">{{ $doc['name'] }}</span>
-                                                        @if (isset($doc['related_info']))
-                                                            <span
-                                                                class="ml-2 text-xs text-slate-500">({{ $doc['related_info'] }})</span>
-                                                        @endif
-                                                    </div>
-                                                    <div class="flex items-center">
-                                                        <span
-                                                            class="text-xs text-slate-500 mr-2">{{ $doc['size'] }}</span>
-                                                        <a href="{{ $doc['url'] }}" target="_blank"
-                                                            class="text-blue-600 hover:underline">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                                height="16" viewBox="0 0 24 24" fill="none"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                stroke-linecap="round" stroke-linejoin="round"
-                                                                class="w-4 h-4">
-                                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
-                                                                </path>
-                                                                <circle cx="12" cy="12" r="3"></circle>
-                                                            </svg>
-                                                        </a>
-                                                    </div>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @else
-                                        <p class="text-slate-500 text-sm">No traffic violation documents available</p>
-                                    @endif
-                                </div>
-
-                                <!-- Inspections Documents -->
-                                <div class="ef-tab-content" data-tab-content="inspections-docs" role="tabpanel">
-                                    @if (count($documentsByCategory['inspections'] ?? []) > 0)
-                                        <ul class="space-y-2">
-                                            @foreach ($documentsByCategory['inspections'] as $doc)
-                                                <li class="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                                    <div class="flex items-center truncate mr-2">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                            height="16" viewBox="0 0 24 24" fill="none"
-                                                            stroke="currentColor" stroke-width="2"
-                                                            stroke-linecap="round" stroke-linejoin="round"
-                                                            class="w-4 h-4 mr-2 text-slate-500">
-                                                            <path
-                                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                            </path>
-                                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                                            <line x1="16" y1="13" x2="8"
-                                                                y2="13"></line>
-                                                            <line x1="16" y1="17" x2="8"
-                                                                y2="17"></line>
-                                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                                        </svg>
-                                                        <span class="truncate"
-                                                            title="{{ $doc['name'] }}">{{ $doc['name'] }}</span>
-                                                        @if (isset($doc['related_info']))
-                                                            <span
-                                                                class="ml-2 text-xs text-slate-500">({{ $doc['related_info'] }})</span>
-                                                        @endif
-                                                    </div>
-                                                    <div class="flex items-center">
-                                                        <span
-                                                            class="text-xs text-slate-500 mr-2">{{ $doc['size'] }}</span>
-                                                        <a href="{{ $doc['url'] }}" target="_blank"
-                                                            class="text-blue-600 hover:underline">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                                height="16" viewBox="0 0 24 24" fill="none"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                stroke-linecap="round" stroke-linejoin="round"
-                                                                class="w-4 h-4">
-                                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
-                                                                </path>
-                                                                <circle cx="12" cy="12" r="3"></circle>
-                                                            </svg>
-                                                        </a>
-                                                    </div>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @else
-                                        <p class="text-slate-500 text-sm">No inspection documents available</p>
-                                    @endif
-                                </div>
-
-                                <!-- Testing Documents -->
-                                <div class="ef-tab-content" data-tab-content="testing-docs" role="tabpanel">
-                                    @if (count($documentsByCategory['testing'] ?? []) > 0)
-                                        <ul class="space-y-2">
-                                            @foreach ($documentsByCategory['testing'] as $doc)
-                                                <li class="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                                    <div class="flex items-center truncate mr-2">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                            height="16" viewBox="0 0 24 24" fill="none"
-                                                            stroke="currentColor" stroke-width="2"
-                                                            stroke-linecap="round" stroke-linejoin="round"
-                                                            class="w-4 h-4 mr-2 text-slate-500">
-                                                            <path
-                                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                            </path>
-                                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                                            <line x1="16" y1="13" x2="8"
-                                                                y2="13"></line>
-                                                            <line x1="16" y1="17" x2="8"
-                                                                y2="17"></line>
-                                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                                        </svg>
-                                                        <span class="truncate"
-                                                            title="{{ $doc['name'] }}">{{ $doc['name'] }}</span>
-                                                        @if (isset($doc['related_info']))
-                                                            <span
-                                                                class="ml-2 text-xs text-slate-500">({{ $doc['related_info'] }})</span>
-                                                        @endif
-                                                    </div>
-                                                    <div class="flex items-center">
-                                                        <span
-                                                            class="text-xs text-slate-500 mr-2">{{ $doc['size'] }}</span>
-                                                        <a href="{{ $doc['url'] }}" target="_blank"
-                                                            class="text-blue-600 hover:underline">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                                height="16" viewBox="0 0 24 24" fill="none"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                stroke-linecap="round" stroke-linejoin="round"
-                                                                class="w-4 h-4">
-                                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
-                                                                </path>
-                                                                <circle cx="12" cy="12" r="3"></circle>
-                                                            </svg>
-                                                        </a>
-                                                    </div>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @else
-                                        <p class="text-slate-500 text-sm">No testing documents available</p>
-                                    @endif
-                                </div>
-
-                                <!-- Records Documents -->
-                                <div class="ef-tab-content" data-tab-content="records-docs" role="tabpanel">
-                                    @if (count($documentsByCategory['records'] ?? []) > 0)
-                                        <ul class="space-y-2">
-                                            @foreach ($documentsByCategory['records'] as $doc)
-                                                <li class="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                                    <div class="flex items-center truncate mr-2">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                            height="16" viewBox="0 0 24 24" fill="none"
-                                                            stroke="currentColor" stroke-width="2"
-                                                            stroke-linecap="round" stroke-linejoin="round"
-                                                            class="w-4 h-4 mr-2 text-slate-500">
-                                                            <path
-                                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                            </path>
-                                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                                            <line x1="16" y1="13" x2="8"
-                                                                y2="13"></line>
-                                                            <line x1="16" y1="17" x2="8"
-                                                                y2="17"></line>
-                                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                                        </svg>
-                                                        <span class="truncate"
-                                                            title="{{ $doc['name'] }}">{{ $doc['name'] }}</span>
-                                                        @if (isset($doc['related_info']))
-                                                            <span
-                                                                class="ml-2 text-xs text-slate-500">({{ $doc['related_info'] }})</span>
-                                                        @endif
-                                                    </div>
-                                                    <div class="flex items-center">
-                                                        <span
-                                                            class="text-xs text-slate-500 mr-2">{{ $doc['size'] }}</span>
-                                                        <a href="{{ $doc['url'] }}" target="_blank"
-                                                            class="text-blue-600 hover:underline">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                                height="16" viewBox="0 0 24 24" fill="none"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                stroke-linecap="round" stroke-linejoin="round"
-                                                                class="w-4 h-4">
-                                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
-                                                                </path>
-                                                                <circle cx="12" cy="12" r="3"></circle>
-                                                            </svg>
-                                                        </a>
-                                                    </div>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @else
-                                        <p class="text-slate-500 text-sm">No record documents available</p>
-                                    @endif
-                                </div>
-
-                                <!-- Application Forms Documents (Certification) -->
-                                <div class="ef-tab-content" data-tab-content="certification-docs" role="tabpanel">
-                                    @if (isset($hasCertification) && $hasCertification)
-                                        <div class="mb-4">
-                                            <a href="{{ route('admin.drivers.regenerate-application-forms', $driver->id) }}"
-                                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="w-4 h-4 mr-2">
-                                                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38" />
-                                                </svg>
-                                                Regenerar documentos
-                                            </a>
-                                        </div>
-                                    @endif
-                                    @if (count($documentsByCategory['certification'] ?? []) > 0)
-                                        <ul class="space-y-2">
-                                            @foreach ($documentsByCategory['certification'] as $doc)
-                                                <li class="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                                    <div class="flex items-center truncate mr-2">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                            height="16" viewBox="0 0 24 24" fill="none"
-                                                            stroke="currentColor" stroke-width="2"
-                                                            stroke-linecap="round" stroke-linejoin="round"
-                                                            class="w-4 h-4 mr-2 text-slate-500">
-                                                            <path
-                                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                            </path>
-                                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                                            <line x1="16" y1="13" x2="8"
-                                                                y2="13"></line>
-                                                            <line x1="16" y1="17" x2="8"
-                                                                y2="17"></line>
-                                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                                        </svg>
-                                                        <span class="truncate"
-                                                            title="{{ $doc['name'] }}">{{ $doc['name'] }}</span>
-                                                        @if (isset($doc['related_info']))
-                                                            <span
-                                                                class="ml-2 text-xs text-slate-500">({{ $doc['related_info'] }})</span>
-                                                        @endif
-                                                    </div>
-                                                    <div class="flex items-center">
-                                                        <span
-                                                            class="text-xs text-slate-500 mr-2">{{ $doc['size'] }}</span>
-                                                        <a href="{{ $doc['url'] }}" target="_blank"
-                                                            class="text-blue-600 hover:underline">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                                height="16" viewBox="0 0 24 24" fill="none"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                stroke-linecap="round" stroke-linejoin="round"
-                                                                class="w-4 h-4">
-                                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
-                                                                </path>
-                                                                <circle cx="12" cy="12" r="3"></circle>
-                                                            </svg>
-                                                        </a>
-                                                    </div>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @else
-                                        <p class="text-slate-500 text-sm">No application forms available</p>
-                                    @endif
-                                </div>
-
-                                <!-- Employment Verification Documents -->
-                                <div class="ef-tab-content" data-tab-content="emp-verification-docs" role="tabpanel">
-                                    @if (count($driver->employmentCompanies ?? []) > 0)
-                                        @php $hasVerificationDocs = false; @endphp
-                                        @foreach ($driver->employmentCompanies as $company)
-                                            @if ($company->getMedia('employment_verification_documents')->count() > 0)
-                                                @php $hasVerificationDocs = true; @endphp
-                                                <div class="mb-3">
-                                                    <h6 class="font-medium mb-2">{{ $company->company_name }}</h6>
-                                                    <ul class="space-y-2">
-                                                        @foreach ($company->getMedia('employment_verification_documents') as $document)
-                                                            <li
-                                                                class="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                                                <div class="flex items-center truncate mr-2">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                                        width="16" height="16"
-                                                                        viewBox="0 0 24 24" fill="none"
-                                                                        stroke="currentColor" stroke-width="2"
-                                                                        stroke-linecap="round" stroke-linejoin="round"
-                                                                        class="w-4 h-4 mr-2 text-slate-500">
-                                                                        <path
-                                                                            d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                                        </path>
-                                                                        <polyline points="14 2 14 8 20 8"></polyline>
-                                                                        <line x1="16" y1="13"
-                                                                            x2="8" y2="13"></line>
-                                                                        <line x1="16" y1="17"
-                                                                            x2="8" y2="17"></line>
-                                                                        <polyline points="10 9 9 9 8 9"></polyline>
-                                                                    </svg>
-                                                                    <span class="truncate"
-                                                                        title="{{ $document->file_name }}">{{ $document->file_name }}</span>
-                                                                    @if ($document->hasCustomProperty('notes'))
-                                                                        <span
-                                                                            class="ml-2 text-xs text-slate-500">({{ $document->getCustomProperty('notes') }})</span>
-                                                                    @endif
-                                                                    @if ($document->hasCustomProperty('verification_date'))
-                                                                        <span
-                                                                            class="ml-2 text-xs text-slate-500">{{ Carbon\Carbon::parse($document->getCustomProperty('verification_date'))->format('m/d/Y') }}</span>
-                                                                    @endif
-                                                                </div>
-                                                                <div class="flex items-center">
-                                                                    <span
-                                                                        class="text-xs text-slate-500 mr-2">{{ $document->human_readable_size }}</span>
-                                                                    <a href="{{ $document->getUrl() }}"
-                                                                        target="_blank"
-                                                                        class="text-blue-600 hover:underline">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                                            width="16" height="16"
-                                                                            viewBox="0 0 24 24" fill="none"
-                                                                            stroke="currentColor" stroke-width="2"
-                                                                            stroke-linecap="round"
-                                                                            stroke-linejoin="round" class="w-4 h-4">
-                                                                            <path
-                                                                                d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
-                                                                            </path>
-                                                                            <circle cx="12" cy="12" r="3">
-                                                                            </circle>
-                                                                        </svg>
-                                                                    </a>
-                                                                </div>
-                                                            </li>
-                                                        @endforeach
-                                                    </ul>
-                                                </div>
-                                            @endif
-                                        @endforeach
-
-                                        @if (!$hasVerificationDocs)
-                                            <p class="text-slate-500 text-sm">No employment verification documents
-                                                available</p>
-                                        @endif
-                                    @else
-                                        <p class="text-slate-500 text-sm">No employment companies registered</p>
-                                    @endif
-                                </div>
-
-                                <!-- Other Documents -->
-                                <div class="ef-tab-content" data-tab-content="other-docs" role="tabpanel">
-                                    @if (count($documentsByCategory['other'] ?? []) > 0)
-                                        <ul class="space-y-2">
-                                            @foreach ($documentsByCategory['other'] as $doc)
-                                                <li class="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                                    <div class="flex items-center truncate mr-2">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                            height="16" viewBox="0 0 24 24" fill="none"
-                                                            stroke="currentColor" stroke-width="2"
-                                                            stroke-linecap="round" stroke-linejoin="round"
-                                                            class="w-4 h-4 mr-2 text-slate-500">
-                                                            <path
-                                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                            </path>
-                                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                                            <line x1="16" y1="13" x2="8"
-                                                                y2="13"></line>
-                                                            <line x1="16" y1="17" x2="8"
-                                                                y2="17"></line>
-                                                            <polyline points="10 9 9 9 8 9"></polyline>
-                                                        </svg>
-                                                        <span class="truncate"
-                                                            title="{{ $doc['name'] }}">{{ $doc['name'] }}</span>
-                                                        @if (isset($doc['related_info']))
-                                                            <span
-                                                                class="ml-2 text-xs text-slate-500">({{ $doc['related_info'] }})</span>
-                                                        @endif
-                                                    </div>
-                                                    <div class="flex items-center">
-                                                        <span
-                                                            class="text-xs text-slate-500 mr-2">{{ $doc['size'] }}</span>
-                                                        <a href="{{ $doc['url'] }}" target="_blank"
-                                                            class="text-blue-600 hover:underline">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                                                                height="16" viewBox="0 0 24 24" fill="none"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                stroke-linecap="round" stroke-linejoin="round"
-                                                                class="w-4 h-4">
-                                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z">
-                                                                </path>
-                                                                <circle cx="12" cy="12" r="3"></circle>
-                                                            </svg>
-                                                        </a>
-                                                    </div>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @else
-                                        <p class="text-slate-500 text-sm">No other documents available</p>
-                                    @endif
-                                </div>
-
-
-                            </div>
+                        <x-base.badge variant="success" class="text-xs">
+                            {{ $stats['total_documents'] }} / {{ $stats['total_documents'] }}
+                        </x-base.badge>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-3">
+                        <div class="bg-success h-3 rounded-full transition-all duration-300"
+                            style="width: 100%">
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 
-    <!-- Records Summary -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <!-- Traffic Convictions -->
-        <div class="box box--stacked flex flex-col p-6">
-            <h3 class="font-medium text-lg mb-4 pb-2 border-b flex items-center">
-                <i data-lucide="alert-triangle" class="w-5 h-5 mr-2 text-amber-500"></i>
-                Traffic Convictions
-            </h3>
+    <!--  Columna tabs -->
+    <div class="col-span-12 lg:col-span-12">
+        <!-- Professional Tabs Section -->
+        <div class="box box--stacked flex flex-col p-6 mt-6">
+            <div class="flex items-center gap-3 mb-6">
+                <x-base.lucide class="w-5 h-5 text-primary" icon="LayoutGrid" />
+                <h2 class="text-lg font-semibold text-slate-800">Detailed Information</h2>
+            </div>
 
-            @if ($driver->trafficConvictions && $driver->trafficConvictions->count() > 0)
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-slate-50">
-                            <tr>
-                                <th class="px-4 py-2">Date</th>
-                                <th class="px-4 py-2">Location</th>
-                                <th class="px-4 py-2">Charge</th>
-                                <th class="px-4 py-2">Penalty</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($driver->trafficConvictions as $conviction)
-                                <tr class="border-b">
-                                    <td class="px-4 py-2">
-                                        {{ $conviction->conviction_date ? $conviction->conviction_date->format('M d, Y') : 'N/A' }}
-                                    </td>
-                                    <td class="px-4 py-2">{{ $conviction->location }}</td>
-                                    <td class="px-4 py-2">{{ $conviction->charge }}</td>
-                                    <td class="px-4 py-2">{{ $conviction->penalty }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+            <!-- Professional Tab Navigation -->
+            <div class="border-b border-slate-200">
+                <nav class="flex space-x-1 overflow-x-auto scrollbar-hide flex-col md:flex-row" aria-label="Tabs">
+                    <x-base.tab id="general-tab" :selected="true">
+                        <x-base.tab.button
+                            class="tab-button flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap"
+                            data-target="#tab-content-general"
+                            aria-controls="tab-content-general"
+                            aria-selected="true">
+                            <x-base.lucide class="w-4 h-4" icon="User" />
+                            <span class="hidden sm:inline">General</span>
+                            <span class="sm:hidden">General</span>
+                        </x-base.tab.button>
+                    </x-base.tab>
+
+                    <x-base.tab id="licenses-tab">
+                        <x-base.tab.button
+                            class="tab-button flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap"
+                            data-target="#tab-content-licenses"
+                            aria-controls="tab-content-licenses"
+                            aria-selected="false">
+                            <x-base.lucide class="w-4 h-4" icon="CreditCard" />
+                            <span class="hidden sm:inline">Licenses</span>
+                            <span class="sm:hidden">Licenses</span>
+                        </x-base.tab.button>
+                    </x-base.tab>
+
+                    <x-base.tab id="medical-tab">
+                        <x-base.tab.button
+                            class="tab-button flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap"
+                            data-target="#tab-content-medical"
+                            aria-controls="tab-content-medical"
+                            aria-selected="false">
+                            <x-base.lucide class="w-4 h-4" icon="Heart" />
+                            <span class="hidden sm:inline">Medical</span>
+                            <span class="sm:hidden">Medical</span>
+                        </x-base.tab.button>
+                    </x-base.tab>
+
+                    <x-base.tab id="employment-tab">
+                        <x-base.tab.button
+                            class="tab-button flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap"
+                            data-target="#tab-content-employment"
+                            aria-controls="tab-content-employment"
+                            aria-selected="false">
+                            <x-base.lucide class="w-4 h-4" icon="Briefcase" />
+                            <span class="hidden sm:inline">Employment</span>
+                            <span class="sm:hidden">Work</span>
+                        </x-base.tab.button>
+                    </x-base.tab>
+
+                    <x-base.tab id="training-tab">
+                        <x-base.tab.button
+                            class="tab-button flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap"
+                            data-target="#tab-content-training"
+                            aria-controls="tab-content-training"
+                            aria-selected="false">
+                            <x-base.lucide class="w-4 h-4" icon="GraduationCap" />
+                            <span class="hidden sm:inline">Training</span>
+                            <span class="sm:hidden">Training</span>
+                        </x-base.tab.button>
+                    </x-base.tab>
+
+                    <x-base.tab id="testing-tab">
+                        <x-base.tab.button
+                            class="tab-button flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap"
+                            data-target="#tab-content-testing"
+                            aria-controls="tab-content-testing"
+                            aria-selected="false">
+                            <x-base.lucide class="w-4 h-4" icon="ClipboardCheck" />
+                            <span class="hidden sm:inline">Testing</span>
+                            <span class="sm:hidden">Tests</span>
+                        </x-base.tab.button>
+                    </x-base.tab>
+
+                    <x-base.tab id="inspections-tab">
+                        <x-base.tab.button
+                            class="tab-button flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap"
+                            data-target="#tab-content-inspections"
+                            aria-controls="tab-content-inspections"
+                            aria-selected="false">
+                            <x-base.lucide class="w-4 h-4" icon="Search" />
+                            <span class="hidden sm:inline">Inspections</span>
+                            <span class="sm:hidden">Inspect</span>
+                        </x-base.tab.button>
+                    </x-base.tab>
+
+                    <x-base.tab id="documents-tab">
+                        <x-base.tab.button
+                            class="tab-button flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap"
+                            data-target="#tab-content-documents"
+                            aria-controls="tab-content-documents"
+                            aria-selected="false">
+                            <x-base.lucide class="w-4 h-4" icon="FileText" />
+                            <span class="hidden sm:inline">Documents</span>
+                            <span class="sm:hidden">Docs</span>
+                            @if($stats['total_documents'] > 0)
+                            <x-base.badge variant="success" class="ml-1 text-xs">{{ $stats['total_documents'] }}</x-base.badge>
+                            @endif
+                        </x-base.tab.button>
+                    </x-base.tab>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content mt-6">
+                <!-- Loading Indicator -->
+                <div id="tab-loading" class="hidden flex items-center justify-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span class="ml-2 text-gray-600">Loading...</span>
                 </div>
-            @else
-                <p class="text-slate-500">No traffic convictions reported</p>
-            @endif
-        </div>
 
-        <!-- Accidents -->
-        <div class="box box--stacked flex flex-col p-6">
-            <h3 class="font-medium text-lg mb-4 pb-2 border-b flex items-center">
-                <i data-lucide="Car" class="w-5 h-5 mr-2 text-red-500"></i>
-                Accidents
-            </h3>
-
-            @if ($driver->accidents && $driver->accidents->count() > 0)
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-slate-50">
-                            <tr>
-                                <th class="px-4 py-2">Date</th>
-                                <th class="px-4 py-2">Nature</th>
-                                <th class="px-4 py-2">Injuries</th>
-                                <th class="px-4 py-2">Fatalities</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($driver->accidents as $accident)
-                                <tr class="border-b">
-                                    <td class="px-4 py-2">
-                                        {{ $accident->accident_date ? $accident->accident_date->format('M d, Y') : 'N/A' }}
-                                    </td>
-                                    <td class="px-4 py-2">{{ $accident->nature_of_accident }}</td>
-                                    <td class="px-4 py-2">
-                                        <span
-                                            class="px-2 py-0.5 rounded-full text-xs font-medium {{ $accident->had_injuries ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' }}">
-                                            {{ $accident->had_injuries ? $accident->number_of_injuries : 'None' }}
-                                        </span>
-                                    </td>
-                                    <td class="px-4 py-2">
-                                        <span
-                                            class="px-2 py-0.5 rounded-full text-xs font-medium {{ $accident->had_fatalities ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' }}">
-                                            {{ $accident->had_fatalities ? $accident->number_of_fatalities : 'None' }}
-                                        </span>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                <!-- Tab General -->
+                <div id="tab-content-general" class="tab-pane active transition-opacity duration-300 ease-in-out" role="tabpanel" aria-labelledby="tab-general">
+                    @include('admin.drivers.list-driver.tabs.general', ['driver' => $driver])
                 </div>
-            @else
-                <p class="text-slate-500">No accidents reported</p>
-            @endif
+
+                <!-- Tab Licenses -->
+                <div id="tab-content-licenses" class="tab-pane hidden transition-opacity duration-300 ease-in-out" role="tabpanel" aria-labelledby="tab-licenses">
+                    @include('admin.drivers.list-driver.tabs.licenses', ['driver' => $driver])
+                </div>
+
+                <!-- Tab Medical -->
+                <div id="tab-content-medical" class="tab-pane hidden transition-opacity duration-300 ease-in-out" role="tabpanel" aria-labelledby="tab-medical">
+                    @include('admin.drivers.list-driver.tabs.medical', ['driver' => $driver])
+                </div>
+
+                <!-- Tab Employment -->
+                <div id="tab-content-employment" class="tab-pane hidden transition-opacity duration-300 ease-in-out" role="tabpanel" aria-labelledby="tab-employment">
+                    @include('admin.drivers.list-driver.tabs.employment', ['driver' => $driver])
+                </div>
+
+                <!-- Tab Training -->
+                <div id="tab-content-training" class="tab-pane hidden transition-opacity duration-300 ease-in-out" role="tabpanel" aria-labelledby="tab-training">
+                    @include('admin.drivers.list-driver.tabs.training', ['driver' => $driver])
+                </div>
+
+                <!-- Tab Testing -->
+                <div id="tab-content-testing" class="tab-pane hidden transition-opacity duration-300 ease-in-out" role="tabpanel" aria-labelledby="tab-testing">
+                    @include('admin.drivers.list-driver.tabs.testing', ['driver' => $driver])
+                </div>
+
+                <!-- Tab Inspections -->
+                <div id="tab-content-inspections" class="tab-pane hidden transition-opacity duration-300 ease-in-out" role="tabpanel" aria-labelledby="tab-inspections">
+                    @include('admin.drivers.list-driver.tabs.inspections', ['driver' => $driver])
+                </div>
+
+                <!-- Tab Documents -->
+                <div id="tab-content-documents" class="tab-pane hidden transition-opacity duration-300 ease-in-out" role="tabpanel" aria-labelledby="tab-documents">
+                    @include('admin.drivers.list-driver.tabs.documents', ['driver' => $driver])
+                </div>
+            </div>
         </div>
     </div>
-    </div>
 
-    <!-- JavaScript for Tab Functionality -->
+    @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const tabButtons = document.querySelectorAll('[role="tab"]');
-            const tabPanels = document.querySelectorAll('[role="tabpanel"]');
+        /**
+         * Professional Driver Tab System
+         * Handles tab switching, loading states, and active class management
+         */
+        class DriverTabManager {
+            constructor() {
+                this.activeTab = null;
+                this.tabButtons = document.querySelectorAll('.tab-button');
+                this.tabContents = document.querySelectorAll('.tab-pane');
+                this.loadingIndicator = document.getElementById('tab-loading');
 
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    // Deactivate all tabs
-                    tabButtons.forEach(btn => {
-                        btn.classList.remove('border-blue-600');
-                        btn.classList.add('border-transparent');
-                        btn.setAttribute('aria-selected', 'false');
-                    });
-
-                    // Hide all panels
-                    tabPanels.forEach(panel => {
-                        panel.classList.add('hidden');
-                    });
-
-                    // Activate current tab
-                    button.classList.remove('border-transparent');
-                    button.classList.add('border-blue-600');
-                    button.setAttribute('aria-selected', 'true');
-
-                    // Show current panel
-                    const panelId = button.getAttribute('data-tabs-target').substring(1);
-                    const panel = document.getElementById(panelId);
-                    panel.classList.remove('hidden');
-                });
-            });
-        });
-    </script>
-@endsection
-
-@push('scripts')
-    <script>
-        // Script para manejar las pestañas de documentos categorizados
-        document.addEventListener('DOMContentLoaded', function() {
-            const tabButtons = document.querySelectorAll('#license-tab, #medical-tab, #record-tab, #other-tab');
-            const tabContents = document.querySelectorAll(
-                '#license-docs, #medical-docs, #record-docs, #other-docs');
-
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const target = document.querySelector(button.dataset.tabsTarget);
-
-                    // Ocultar todos los contenidos de pestañas
-                    tabContents.forEach(content => {
-                        content.classList.add('hidden');
-                        content.classList.remove('block');
-                    });
-
-                    // Mostrar el contenido de la pestaña seleccionada
-                    target.classList.remove('hidden');
-                    target.classList.add('block');
-
-                    // Actualizar estilos de los botones
-                    tabButtons.forEach(btn => {
-                        btn.classList.remove('border-blue-600');
-                        btn.classList.add('border-transparent', 'hover:border-gray-300');
-                        btn.setAttribute('aria-selected', 'false');
-                    });
-
-                    button.classList.remove('border-transparent', 'hover:border-gray-300');
-                    button.classList.add('border-blue-600');
-                    button.setAttribute('aria-selected', 'true');
-                });
-            });
-        });
-
-        window.addEventListener('load', function() {
-            // Sobrescribir funciones de scripts globales que causan errores
-            if (window.tab) window.tab = function() {
-                return {};
-            };
-            if (window.dom) window.dom = function() {
-                return {};
-            };
-
-            // Manejar errores de iconos Lucide
-            if (window.lucide) {
-                // Sobrescribir createIcons para ignorar errores
-                const originalCreateIcons = window.lucide.createIcons;
-                window.lucide.createIcons = function(attrs) {
-                    try {
-                        // Registrar iconos faltantes
-                        if (!window.lucide.icons['circle-check-big']) {
-                            window.lucide.icons['circle-check-big'] = window.lucide.icons['check-circle'] || {};
-                        }
-                        return originalCreateIcons(attrs);
-                    } catch (e) {
-                        console.log('Error controlado en lucide.createIcons:', e);
-                        return {};
-                    }
-                };
+                this.init();
             }
 
-            // Sistema de tabs independiente con vanilla JavaScript
-            function initTabs() {
-                const tabsContainer = document.getElementById('ef-categorized-docs-tabs');
-                if (!tabsContainer) return;
-
-                const tabButtons = tabsContainer.querySelectorAll('.ef-tab-button');
-                const tabContents = tabsContainer.querySelectorAll('.ef-tab-content');
-
-                // Función para activar un tab específico
-                function activateTab(tabId) {
-                    // Activar/desactivar botones
-                    tabButtons.forEach(btn => {
-                        if (btn.getAttribute('data-tab') === tabId) {
-                            btn.classList.add('active');
-                        } else {
-                            btn.classList.remove('active');
-                        }
-                    });
-
-                    // Mostrar/ocultar contenido
-                    tabContents.forEach(content => {
-                        if (content.getAttribute('data-tab-content') === tabId) {
-                            content.classList.add('active');
-                        } else {
-                            content.classList.remove('active');
-                        }
-                    });
-                }
-
-                // Asignar eventos click a los botones
-                tabButtons.forEach(button => {
-                    button.addEventListener('click', function(e) {
+            init() {
+                // Add click event listeners to tab buttons
+                this.tabButtons.forEach(button => {
+                    button.addEventListener('click', (e) => {
                         e.preventDefault();
-                        const tabId = this.getAttribute('data-tab');
-                        if (tabId) activateTab(tabId);
+                        const targetId = button.getAttribute('data-target');
+                        this.switchTab(targetId, button);
                     });
                 });
 
-                // Activar el primer tab por defecto
-                if (tabButtons.length > 0) {
-                    const firstTabId = tabButtons[0].getAttribute('data-tab');
-                    if (firstTabId) activateTab(firstTabId);
+                // Initialize active tab based on URL hash or default to general
+                this.initializeActiveTab();
+
+                // Handle browser back/forward navigation
+                window.addEventListener('popstate', () => {
+                    this.initializeActiveTab();
+                });
+
+                // Mobile responsive tab selection
+                this.handleMobileTabSelection();
+
+                // Keyboard navigation support
+                this.addKeyboardNavigation();
+            }
+
+            showLoading() {
+                if (this.loadingIndicator) {
+                    this.loadingIndicator.classList.remove('hidden');
                 }
             }
 
-            // Descativar cualquier inicialización de tabs del DOM global
-            document.querySelectorAll('.tab').forEach(function(el) {
-                if (el._x_dataStack) {
-                    try {
-                        delete el._x_dataStack;
-                    } catch (e) {}
+            hideLoading() {
+                if (this.loadingIndicator) {
+                    this.loadingIndicator.classList.add('hidden');
                 }
-            });
-
-            // Inicializar nuestro sistema de tabs
-            try {
-                initTabs();
-            } catch (e) {
-                console.log('Error al inicializar tabs:', e);
             }
 
-            // Forzar que los scripts problematicos no se ejecuten
-            const originalDefineProperty = Object.defineProperty;
-            Object.defineProperty = function(obj, prop, descriptor) {
-                if (prop === 'on' && obj === undefined) {
-                    return obj; // Prevenir la asignación que causa el error
+            switchTab(targetId, button) {
+                // Show loading state
+                this.showLoading();
+
+                // Update URL hash without triggering page scroll
+                const tabName = targetId.replace('#tab-content-', '');
+                history.pushState(null, null, `#${tabName}`);
+
+                // Remove active class from all buttons and contents
+                this.tabButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.setAttribute('aria-selected', 'false');
+                    btn.parentElement.classList.remove('active');
+                });
+
+                this.tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    content.classList.add('hidden');
+                });
+
+                // Add active class to clicked button
+                button.classList.add('active');
+                button.setAttribute('aria-selected', 'true');
+                button.parentElement.classList.add('active');
+
+                // Show target content
+                const targetContent = document.querySelector(targetId);
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                    targetContent.classList.remove('hidden');
+
+                    // Smooth scroll to tab content on mobile
+                    if (window.innerWidth < 768) {
+                        targetContent.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
                 }
-                return originalDefineProperty(obj, prop, descriptor);
-            };
+
+                // Hide loading state after a brief delay
+                setTimeout(() => {
+                    this.hideLoading();
+                }, 300);
+
+                this.activeTab = targetId;
+            }
+
+            initializeActiveTab() {
+                const hash = window.location.hash.replace('#', '');
+                let targetTab = '#tab-content-general'; // Default tab
+
+                if (hash) {
+                    const possibleTarget = `#tab-content-${hash}`;
+                    if (document.querySelector(possibleTarget)) {
+                        targetTab = possibleTarget;
+                    }
+                }
+
+                const targetButton = document.querySelector(`[data-target="${targetTab}"]`);
+                if (targetButton) {
+                    this.switchTab(targetTab, targetButton);
+                }
+            }
+
+            handleMobileTabSelection() {
+                // Add touch-friendly interactions for mobile
+                if ('ontouchstart' in window) {
+                    this.tabButtons.forEach(button => {
+                        button.addEventListener('touchstart', () => {
+                            button.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                        });
+
+                        button.addEventListener('touchend', () => {
+                            setTimeout(() => {
+                                button.style.backgroundColor = '';
+                            }, 150);
+                        });
+                    });
+                }
+            }
+
+            addKeyboardNavigation() {
+                this.tabButtons.forEach((button, index) => {
+                    button.addEventListener('keydown', (e) => {
+                        let targetIndex = index;
+
+                        switch (e.key) {
+                            case 'ArrowLeft':
+                                e.preventDefault();
+                                targetIndex = index > 0 ? index - 1 : this.tabButtons.length - 1;
+                                break;
+                            case 'ArrowRight':
+                                e.preventDefault();
+                                targetIndex = index < this.tabButtons.length - 1 ? index + 1 : 0;
+                                break;
+                            case 'Home':
+                                e.preventDefault();
+                                targetIndex = 0;
+                                break;
+                            case 'End':
+                                e.preventDefault();
+                                targetIndex = this.tabButtons.length - 1;
+                                break;
+                            default:
+                                return;
+                        }
+
+                        this.tabButtons[targetIndex].focus();
+                        this.tabButtons[targetIndex].click();
+                    });
+                });
+            }
+        }
+
+        // Initialize the tab manager when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new DriverTabManager();
         });
     </script>
-@endpush
+    @endpush
+    @endsection

@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Models\Carrier;
+use App\Models\CarrierDocument;
 use App\Models\Admin\Vehicle\Vehicle;
 use App\Observers\CarrierObserver;
+use App\Observers\CarrierDocumentObserver;
 // use App\Observers\DriverObserver; // Comentado: Driver model no existe
 // use App\Observers\VehicleObserver; // Comentado: usar Vehicle específico si es necesario
 use Illuminate\Support\ServiceProvider;
@@ -26,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Registrar observers para invalidación automática de caché
         Carrier::observe(CarrierObserver::class);
+        CarrierDocument::observe(CarrierDocumentObserver::class);
         // Driver::observe(DriverObserver::class); // Comentado: Driver model no existe
         // Vehicle::observe(VehicleObserver::class); // Comentado: usar Vehicle específico si es necesario
         

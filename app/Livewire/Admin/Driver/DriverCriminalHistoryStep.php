@@ -32,8 +32,8 @@ class DriverCriminalHistoryStep extends Component
     protected function rules()
     {
         $rules = [
-            'has_criminal_charges' => 'nullable|boolean',
-            'has_felony_conviction' => 'nullable|boolean',
+            'has_criminal_charges' => 'required|boolean',
+            'has_felony_conviction' => 'required|boolean',
             'has_minister_permit' => 'nullable|boolean',
             'fcra_consent' => 'accepted',
             'background_info_consent' => 'accepted'
@@ -46,6 +46,8 @@ class DriverCriminalHistoryStep extends Component
     protected function messages()
     {
         return [
+            'has_criminal_charges.required' => 'Debe seleccionar si tiene cargos criminales pendientes.',
+            'has_felony_conviction.required' => 'Debe seleccionar si tiene condenas por delitos graves.',
             'fcra_consent.accepted' => 'You must accept the FCRA consent to continue.',
             'background_info_consent.accepted' => 'You must accept the background information consent to continue.'
         ];

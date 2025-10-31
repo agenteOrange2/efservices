@@ -120,6 +120,69 @@
                             @enderror
                         </div>
 
+                        <!-- Banking Routing Number -->
+                        <div class="mb-4 sm:mb-6">
+                            <x-base.form-label for="banking_routing_number" class="text-sm sm:text-base font-medium mb-2">
+                                Banking Routing Number <span class="text-red-500">*</span>
+                            </x-base.form-label>
+                            <x-base.form-input
+                                id="banking_routing_number"
+                                name="banking_routing_number"
+                                type="text"
+                                placeholder="Enter your bank routing number"
+                                value="{{ old('banking_routing_number', $bankingDetails->banking_routing_number ?? '') }}"
+                                class="w-full text-sm sm:text-base py-2.5 sm:py-3"
+                                maxlength="9"
+                                required
+                            />
+                            <div class="text-xs text-slate-500 mt-1">9-digit routing number found on your checks or bank statements</div>
+                            @error('banking_routing_number')
+                                <div class="text-red-500 text-sm mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Zip Code -->
+                        <div class="mb-4 sm:mb-6">
+                            <x-base.form-label for="zip_code" class="text-sm sm:text-base font-medium mb-2">
+                                Zip Code <span class="text-red-500">*</span>
+                            </x-base.form-label>
+                            <x-base.form-input
+                                id="zip_code"
+                                name="zip_code"
+                                type="text"
+                                placeholder="Enter your zip code"
+                                value="{{ old('zip_code', $bankingDetails->zip_code ?? '') }}"
+                                class="w-full text-sm sm:text-base py-2.5 sm:py-3"
+                                maxlength="10"
+                                required
+                            />
+                            <div class="text-xs text-slate-500 mt-1">5-digit zip code or 9-digit zip+4 format (12345 or 12345-6789)</div>
+                            @error('zip_code')
+                                <div class="text-red-500 text-sm mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Security Code -->
+                        <div class="mb-4 sm:mb-6">
+                            <x-base.form-label for="security_code" class="text-sm sm:text-base font-medium mb-2">
+                                Security Code <span class="text-red-500">*</span>
+                            </x-base.form-label>
+                            <x-base.form-input
+                                id="security_code"
+                                name="security_code"
+                                type="password"
+                                placeholder="Enter security code"
+                                value="{{ old('security_code', $bankingDetails->security_code ?? '') }}"
+                                class="w-full text-sm sm:text-base py-2.5 sm:py-3"
+                                maxlength="4"
+                                required
+                            />
+                            <div class="text-xs text-slate-500 mt-1">3-4 digit security code (CVV/CVC) for verification</div>
+                            @error('security_code')
+                                <div class="text-red-500 text-sm mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
                         <!-- Important Notice -->
                         <div class="mb-4 sm:mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                             <div class="flex items-start">
@@ -256,6 +319,10 @@
             const accountNumberInput = document.getElementById('account_number');
             const accountHolderInput = document.getElementById('account_holder_name');
 
+            const routingNumberInput = document.getElementById('banking_routing_number');
+            const zipCodeInput = document.getElementById('zip_code');
+            const securityCodeInput = document.getElementById('security_code');
+
             // Format account number input (numbers only)
             accountNumberInput.addEventListener('input', function(e) {
                 // Remove any non-numeric characters
@@ -266,6 +333,31 @@
             accountHolderInput.addEventListener('input', function(e) {
                 // Allow only letters, spaces, hyphens, and periods
                 e.target.value = e.target.value.replace(/[^a-zA-Z\s\-\.]/g, '');
+            });
+
+            // Format routing number input (numbers only, max 9 digits)
+            routingNumberInput.addEventListener('input', function(e) {
+                // Remove any non-numeric characters
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            });
+
+            // Format zip code input (numbers and hyphen only)
+            zipCodeInput.addEventListener('input', function(e) {
+                // Remove any characters except numbers and hyphen
+                let value = e.target.value.replace(/[^0-9\-]/g, '');
+                
+                // Format as 12345-6789 if more than 5 digits
+                if (value.length > 5 && !value.includes('-')) {
+                    value = value.substring(0, 5) + '-' + value.substring(5, 9);
+                }
+                
+                e.target.value = value;
+            });
+
+            // Format security code input (numbers only, max 4 digits)
+            securityCodeInput.addEventListener('input', function(e) {
+                // Remove any non-numeric characters
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
             });
 
             // Form submission
